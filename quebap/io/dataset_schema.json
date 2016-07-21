@@ -1,0 +1,60 @@
+{
+	"title": "quebap schema",
+	"type": "array",
+	"items": {
+		"type":"object",
+		"properties": {
+			"support": {
+				"type": "array",
+				"items": {
+					"id": "document",
+					"type": "object",
+					"properties": {
+						"text": { "type" : "string" },
+						"tokens": { "type": "array" }
+					},
+					"required": ["text"],
+				},
+				"type": "string"
+			},
+			"questions": {
+				"type": "array",
+				"items": {
+					"type":"object",
+					"properties": {
+						"question": {"type": "string" },
+						"candidates": {
+							"type":"array",
+							"items": {
+								"type":"object",
+								"properties": {
+									"text":{"type":"string" },
+									"label": {"type": "string" },
+									"span": {
+										"type": "array",
+										"items": {"type":"int"}
+									}
+								}
+							}
+						},
+						"answers": {
+							"type":"array",
+							"items": {
+								"type":"object",
+								"properties": {
+									"text":{"type":"string" },
+									"index": {"type": "int" },
+									"span": {
+										"type": "array",
+										"items": {"type":"int"}
+									}
+								}
+							}
+						},
+						"required": ["candidates", "answers", "question"]
+					}
+				}
+            }
+        }
+    }
+}
