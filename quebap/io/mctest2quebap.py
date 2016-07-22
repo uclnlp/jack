@@ -71,46 +71,6 @@ def parse_mctest_questions(question_list, ans_tabs):
         questions.append(qdict)
     return questions
 
-def convert_squad(file_path):
-    question_sets = []
-    with open(file_path) as data_file:
-        data = json.load(data_file)['data']
-        for article in data:
-            for paragraph in article['paragraphs']:
-                qa_set = {
-                    'support': [parse_support(paragraph)],
-                    'questions': [parse_question(qa_dict) for qa_dict in paragraph['qas']]
-                }
-                question_sets.append(qa_set)
-    return question_sets
-
-def parse_support(para_dict):
-    return {
-        'document': {
-            'text': para_dict['context']
-        }
-    }
-
-def parse_question(qa_dict):
-    # Process answers first...
-    # What to do when multiple annotators answer a question??  Majority?
-    # Here just the first provided is selected
-    chosen_answer = qa_dict['answers'][0]
-    chosen_answer_text = chosen_answer['text']
-    chosen_answer_start = chosen_answer['answer_start']
-    result_answer_dict = {
-        'text': chosen_answer_text,
-        'span': []
-#{
-#            'start': chosen_answer_start,
-#            'end': chosen_answer_start + len(chosen_answer_text)
-#        }
-    }
-    return {
-        'question': qa_dict['question'],
-        'answers': [result_answer_dict]
-    }
-
 def main():
     import sys
     if len(sys.argv) == 3:
