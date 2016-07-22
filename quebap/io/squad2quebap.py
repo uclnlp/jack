@@ -25,20 +25,30 @@ def parse_question(qa_dict):
     # Process answers first...
     # What to do when multiple annotators answer a question??  Majority?
     # Here just the first provided is selected
-    chosen_answer = qa_dict['answers'][0]
-    chosen_answer_text = chosen_answer['text']
-    chosen_answer_start = chosen_answer['answer_start']
-    result_answer_dict = {
-        'text': chosen_answer_text,
-        'span': []
+    answers = [parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
+
+#    chosen_answer = qa_dict['answers'][0]
+#    chosen_answer_text = chosen_answer['text']
+#    chosen_answer_start = chosen_answer['answer_start']
+#    result_answer_dict = {
+#        'span': [chosen_answer_start + len(chosen_answer_text)]
 #{
 #            'start': chosen_answer_start,
 #            'end': chosen_answer_start + len(chosen_answer_text)
 #        }
-    }
+#    }
     return {
         'question': qa_dict['question'],
-        'answers': [result_answer_dict]
+        'answers': answers #[result_answer_dict]
+    }
+
+def parse_answer(answer_dict):
+    answer_text = answer_dict['text']
+    answer_start = answer_dict['answer_start']
+    answer_end = answer_start + len(answer_text)
+    return {
+        'text': answer_text,
+        'span': [answer_start, answer_end]
     }
 
 # Usage:
