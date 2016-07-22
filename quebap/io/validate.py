@@ -2,8 +2,8 @@ import json
 import jsonschema
 from sys import argv
 
-schema = eval(open(argv[1]).read())
-data = eval(open(argv[2]).read())
+schema = open(argv[1]).read()
+data = open(argv[2]).read()
 
 try:
 	jdata = json.loads(data)
