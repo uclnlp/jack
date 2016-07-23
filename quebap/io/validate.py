@@ -2,13 +2,16 @@ import json
 import jsonschema
 from sys import argv
 
-schema = open(argv[1]).read()
-data = open(argv[2]).read()
+with open(argv[1]) as f:
+    data = json.load(f)
+
+with open(argv[2]) as f:
+    schema = json.load(f)
+
+
 
 try:
-	jdata = json.loads(data)
-	jschema = json.loads(schema)
-	jsonschema.validate(jdata, jschema)
+	jsonschema.validate(data, schema)
 	print('JSON successfully validated.')
 except jsonschema.ValidationError as e:
 	print(e.message)

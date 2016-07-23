@@ -1,5 +1,7 @@
 {
+	"$schema": "http://json-schema.org/draft-04/schema#",
 	"title": "quebap schema",
+	"description": "The quebap dataset schema.",
 	"type": "array",
 	"items": {
 		"type":"object",
@@ -13,9 +15,8 @@
 						"text": { "type" : "string" },
 						"tokens": { "type": "array" }
 					},
-					"required": ["text"],
-				},
-				"type": "string"
+					"required": ["text"]
+				}
 			},
 			"questions": {
 				"type": "array",
@@ -28,11 +29,13 @@
 							"items": {
 								"type":"object",
 								"properties": {
-									"text":{"type":"string" },
+									"text": {"type":"string" },
 									"label": {"type": "string" },
 									"span": {
 										"type": "array",
-										"items": {"type":"int"}
+										"items": {
+											"type":"integer"
+										}
 									}
 								}
 							}
@@ -43,15 +46,14 @@
 								"type":"object",
 								"properties": {
 									"text":{"type":"string" },
-									"index": {"type": "int" },
+									"index": {"type": "integer" },
 									"span": {
 										"type": "array",
-										"items": {"type":"int"}
+										"items": {"type":"integer"}
 									}
 								}
 							}
-						},
-						"required": ["candidates", "answers", "question"]
+						}
 					}
 				}
             }
