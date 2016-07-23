@@ -1,6 +1,5 @@
 import json
 
-
 def convert_squad(file_path):
     question_sets = []
     with open(file_path) as data_file:
@@ -16,30 +15,14 @@ def convert_squad(file_path):
 
 def parse_support(para_dict):
     return {
-        'document': {
             'text': para_dict['context']
-        }
     }
 
 def parse_question(qa_dict):
-    # Process answers first...
-    # What to do when multiple annotators answer a question??  Majority?
-    # Here just the first provided is selected
     answers = [parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
-
-#    chosen_answer = qa_dict['answers'][0]
-#    chosen_answer_text = chosen_answer['text']
-#    chosen_answer_start = chosen_answer['answer_start']
-#    result_answer_dict = {
-#        'span': [chosen_answer_start + len(chosen_answer_text)]
-#{
-#            'start': chosen_answer_start,
-#            'end': chosen_answer_start + len(chosen_answer_text)
-#        }
-#    }
     return {
         'question': qa_dict['question'],
-        'answers': answers #[result_answer_dict]
+        'answers': answers
     }
 
 def parse_answer(answer_dict):

@@ -18,23 +18,16 @@ def convert_mctest(tsv_file, ans_file):
 def parse_mctest_instance(tsv_chunk, ans_chunk):
     tsv_tabs = tsv_chunk.strip().split('\t')
     ans_tabs = ans_chunk.strip().split('\t')
-#    print('ans tabs:', ans_tabs)
-
     id = tsv_tabs[0]
     ann = tsv_tabs[1]
     passage = tsv_tabs[2]
-
     # the dictionary for populating a set of passage/questions/answers
     qset_dict = {}
     qset_dict['support'] = [{
-        'document': {
             'text': clean_mctest_text(passage)
-        }
     }]
-
     # collect questions / answers
     qset_dict['questions'] = parse_mctest_questions(tsv_tabs[3:], ans_tabs)
-
     return qset_dict
 
 def parse_mctest_questions(question_list, ans_tabs):
@@ -45,13 +38,10 @@ def parse_mctest_questions(question_list, ans_tabs):
         # parse answers
         candidates = []
         correct_answer = ans_tabs[int(i / 5)]
-#        print('correct: ', correct_answer)
         for j in range(1,5):
             label = labels[j-1]
-#            print('label: ', label)
             answer = {
                 'label' : label,
-#                'index' : labels.index(label), #label == correct_answer,
                 'text' : question_list[i+j]
             }
             candidates.append(answer)
@@ -63,7 +53,6 @@ def parse_mctest_questions(question_list, ans_tabs):
         # parse question
         qcols = question_list[i].split(':')
         qdict  = {
-#            'question-type' : qcols[0],
             'question' : qcols[1],
             'candidates' : candidates,
             'answers': [answer]
@@ -76,8 +65,5 @@ def main():
     if len(sys.argv) == 3:
         corpus = convert_mctest(sys.argv[1], sys.argv[2])
         print(json.dumps(corpus, indent=2))
-#    if len(sys.argv) == 3:
-#        with open(sys.argv[2], 'w') as outfile:
-#            json.dump(corpus, outfile, indent=2)
 
 if __name__ == "__main__": main()
