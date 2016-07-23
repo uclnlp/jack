@@ -28,3 +28,23 @@ This can be validated with the `/io/validate.py`. It takes two arguments, the fi
 python3 validate.py mc160.quebap.json dataset_schema.json
 ```
 The schema we use is `/io/dataset_schema.json`.
+
+#Adding Stanford CoreNLP Annotations to Quebap Files
+To add annotations to existing quebap JSON files, use the tools in quebap/preprocess.  This depends on Stanford CoreNLP, so you first must install the python wrapper
+```
+pip3 install pycorenlp
+```
+Second, you must download the code and models.  From the top-level quebap directory:
+```
+cd setup
+./download_corenlp.sh
+```
+Third, start the annotation server:
+```
+./run_corenlp.sh
+```
+Cheers to Matko for these scripts.  Finally we are ready to annotate.  Assuming you have a quebap-formatted JSON file in your quebap directory from the preceding section:
+```
+python3 preprocess/annotate.py mc160.quebap.json > mc160.quebap.ann.json
+```
+You now have access to token and sentence offsets, postags for each token, and constituent trees for each sentence.
