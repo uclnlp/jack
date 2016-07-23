@@ -20,3 +20,11 @@ How well did we do?  We can score this using the default evaluation script in qu
 python3 eval.py mc160.answers.json mc160.quebap.json
 ```
 This will output a measure of rank accuracy.  The default is to score only the single best answer for each question (k=1), reproducing the standard accuracy used in classification and labeling tasks.
+
+#Validating the Dataset Format
+When preparing a new dataset it should stick to a pre-specified json schema.
+This can be validated with the `/io/validate.py`. It takes two arguments, the first one specifying the dataset, the second one the schema format. For the above described dataset `mc160.quebap.json` it would work like this (assuming `mc160.quebap.json` would be in the same directory):
+```
+python3 validate.py mc160.quebap.json dataset_schema.json
+```
+The schema we use is `/io/dataset_schema.json`.
