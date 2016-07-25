@@ -6,14 +6,21 @@ import copy
 import abc
 
 
+def tree_string(tree):
+    return tree if isinstance(tree, str) else tree.label()
+
+
 def find_labels(t, labels=('VP', 'CC', 'VP')):
-    actual_labels = tuple([c.label() for c in t if not isinstance(c, str)])
-    if actual_labels == labels:
+    return find_tree(t, lambda t: tuple([tree_string(c) for c in t]) == labels)
+
+
+def find_tree(t, predicate):
+    if predicate(t):
         return [t]
     else:
         return [result
                 for c in t if not isinstance(c, str)
-                for result in find_labels(c)]
+                for result in find_tree(c, predicate)]
 
 
 def transform_tree(tree, func, include_terminals=False):
@@ -106,10 +113,18 @@ class ProposeNextActions(Action):
 
     def do_action(self, grammar: defaultdict, proposal_queue: list):
         tree = self.instance.support_trees[0]
-        conjuncts = find_labels(tree, labels=('VP', 'CC', 'VP'))
+        # conjuncts = find_labels(tree, labels=('VP', 'CC', 'VP'))
+        conjuncts = find_tree(tree, lambda t: len(t) == 3 and tree_string(t[0]) == tree_string(t[2]) and tree_string(
+            t[1]) == 'CC')
         if len(conjuncts) > 0:
             for vp_cc_vp in conjuncts:
                 proposal_queue += [DropConjunct(self.instance, vp_cc_vp, 2), DropConjunct(self.instance, vp_cc_vp, 0)]
+            return
+
+        pp_attachments = find_tree(tree, lambda t: len(t) == 2 and tree_string(t[1]) == 'PP')
+        if len(pp_attachments) > 0:
+            for pp_attachment in pp_attachments:
+                proposal_queue += [DropPP(self.instance, pp_attachment)]
             return
 
 
@@ -129,7 +144,6 @@ class FixInstance(Action):
 
 
 def incomplete_tree_to_string(tree):
-    print(tree.leaves())
     text = [l if isinstance(l, str) else "[ " + l.label() + " ]" for l in tree.leaves()]
     return " ".join(text)
 
@@ -140,7 +154,7 @@ class FixQuestionAnswer(Action):
 
     def do_action(self, grammar, proposal_queue: list):
         print(self.instance)
-        input_text = input("Correct '[Question]? [Answer]' pair, empty if already connect: ")
+        input_text = input("> Correct '[Question]? [Answer]' pair, empty if already connect: ")
         if input_text != '':
             question, answer = input_text.split("?")
             new_instance = self.instance.copy(answer=answer, answer_trees=parse_trees(answer))
@@ -157,10 +171,9 @@ class DropConjunct(Action):
         rhs_text = " ".join(rhs.leaves())
         new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
         print(new_instance)
-        current_input = input("Is this still correct ([y]es/[n]o)? ")
+        current_input = input("> Is this still correct ([y]es/[n]o)? ")
         if current_input == '' or current_input[0] == 'y':
             # todo: create one version where a generic VP is used instead of the VP to drop
-            proposal_queue.append(ProposeNextActions(new_instance))
             new_conjunct_children = [child for child in self.conjunct_parent]
             replacement_label = self.conjunct_parent[self.conjunct_index_to_remove].label()
             new_conjunct_children[self.conjunct_index_to_remove] = Tree(replacement_label, [
@@ -179,11 +192,28 @@ class DropConjunct(Action):
             grammar['T'].append(new_instance)
             grammar['T'].append(second_instance)
 
+            proposal_queue += [ProposeNextActions(new_instance)]
+
     def __init__(self, instance: Instance, conjunct_parent: Tree, conjunct_index_to_keep: int):
         self.instance = instance
         self.conjunct_index_to_keep = conjunct_index_to_keep
         self.conjunct_index_to_remove = 0 if self.conjunct_index_to_keep == 2 else 2
         self.conjunct_parent = conjunct_parent
+
+
+class DropPP(Action):
+    def do_action(self, grammar, proposal_queue):
+        tree = self.instance.support_trees[0]
+        rhs = transform_tree(tree, lambda t: t[0] if t == self.parent else None)
+        rhs_text = " ".join(rhs.leaves())
+        new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
+        print(new_instance)
+        current_input = input("> Is this still correct ([y]es/[n]o)? ")
+
+
+    def __init__(self, instance, parent):
+        self.instance = instance
+        self.parent = parent
 
 
 class ChooseNextInstance(Action):
@@ -202,6 +232,7 @@ def interaction_loop():
     while len(queue) > 0:
         action = queue.pop()
         action.do_action(grammar, queue)
+
     for non_terminal, rhs_list in grammar.items():
         print(non_terminal)
         for rhs in rhs_list:
