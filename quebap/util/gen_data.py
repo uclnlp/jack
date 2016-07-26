@@ -201,6 +201,17 @@ class DropConjunct(Action):
         self.conjunct_parent = conjunct_parent
 
 
+def ask_user(question, choices=('Yes', 'No')):
+    choice_strings = ["[{abbr}]{rest}".format(abbr=choice[0], rest=choice[1:]) for choice in choices]
+    answer = input("> {question} ({choices})".format(question=question, choices="|".join(choice_strings))).strip()
+    if answer == "":
+        return choices[0]
+    for choice in choices:
+        if answer == choice[0] or answer == choice:
+            return choice
+    raise RuntimeError("Wrong input {}".format(answer))
+
+
 class DropPP(Action):
     def do_action(self, grammar, proposal_queue):
         tree = self.instance.support_trees[0]
@@ -208,8 +219,15 @@ class DropPP(Action):
         rhs_text = " ".join(rhs.leaves())
         new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
         print(new_instance)
-        current_input = input("> Is this still correct ([y]es/[n]o)? ")
-
+        answer = ask_user("Is this still correct", ("Yes", "No"))
+        if answer == "Yes":
+            generic_parent = Tree(self.parent.label(), [self.parent[0], Tree("PP", ["[ PP ]"])])
+            rhs_2 = transform_tree(tree, lambda t: generic_parent if t == self.parent else None)
+            rhs_2_text = " ".join(rhs_2.leaves())
+            new_instance_2 = self.instance.copy(support=rhs_2_text, support_trees=[rhs_2])
+            grammar['T'].append(new_instance)
+            grammar['T'].append(new_instance_2)
+            proposal_queue += [ProposeNextActions(new_instance)]
 
     def __init__(self, instance, parent):
         self.instance = instance
@@ -232,6 +250,8 @@ def interaction_loop():
     while len(queue) > 0:
         action = queue.pop()
         action.do_action(grammar, queue)
+        if len(queue) == 0 and len(examples) > 0:
+            queue += [ChooseNextInstance(examples)]
 
     for non_terminal, rhs_list in grammar.items():
         print(non_terminal)
