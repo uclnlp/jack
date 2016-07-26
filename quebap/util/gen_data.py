@@ -38,6 +38,7 @@ def transform_tree(tree, func, include_terminals=False):
 
 
 examples = [
+    "LOCATION1 is n't the best place to live , I use to work there LOCATION1 is not a very good place",
     "LOCATION1 is the trendiest place in the capital and completely shed the old image Thinking of moving to London",
     "LOCATION1 is quite a long way out of London , but its very green",
     "i live in the LOCATION1   wouldn't recommend it",
@@ -125,6 +126,14 @@ class ProposeNextActions(Action):
         if len(pp_attachments) > 0:
             for pp_attachment in pp_attachments:
                 proposal_queue += [DropPP(self.instance, pp_attachment)]
+            return
+
+        frag_labels = {'SBAR', 'FRAG'}
+        with_frags = find_tree(tree, lambda t: len(t) >= 2 and tree_string(t[-2]) == ',' and tree_string(
+            t[-1]) in frag_labels)
+        if len(with_frags) > 0:
+            for with_frag in with_frags:
+                proposal_queue += [DropFragmentOrSBar(self.instance, with_frag)]
             return
 
 
@@ -222,6 +231,28 @@ class DropPP(Action):
         answer = ask_user("Is this still correct", ("Yes", "No"))
         if answer == "Yes":
             generic_parent = Tree(self.parent.label(), [self.parent[0], Tree("PP", ["[ PP ]"])])
+            rhs_2 = transform_tree(tree, lambda t: generic_parent if t == self.parent else None)
+            rhs_2_text = " ".join(rhs_2.leaves())
+            new_instance_2 = self.instance.copy(support=rhs_2_text, support_trees=[rhs_2])
+            grammar['T'].append(new_instance)
+            grammar['T'].append(new_instance_2)
+            proposal_queue += [ProposeNextActions(new_instance)]
+
+    def __init__(self, instance, parent):
+        self.instance = instance
+        self.parent = parent
+
+
+class DropFragmentOrSBar(Action):
+    def do_action(self, grammar, proposal_queue):
+        tree = self.instance.support_trees[0]
+        rhs = transform_tree(tree, lambda t: Tree(t.label(), t[:-2]) if t == self.parent else None)
+        rhs_text = " ".join(rhs.leaves())
+        new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
+        print(new_instance)
+        answer = ask_user("Is this still correct", ("Yes", "No"))
+        if answer == "Yes":
+            generic_parent = Tree(self.parent.label(), self.parent[:-1] + [Tree("SBAR", ["[ SBAR ]"])])
             rhs_2 = transform_tree(tree, lambda t: generic_parent if t == self.parent else None)
             rhs_2_text = " ".join(rhs_2.leaves())
             new_instance_2 = self.instance.copy(support=rhs_2_text, support_trees=[rhs_2])
