@@ -24,7 +24,7 @@ def annotate_corpus(data):
     inc = 0
     annotated = []
     for i, instance in enumerate(data):
-#        annotated.append(annotate_instance(instance))
+        annotated.append(annotate_instance(instance))
         if i / partition_size > inc+1 or i == total-1:
             inc += 1
             sys.stdout.write("\r[" + ("=" * inc) +  " " * (partitions - inc) + "]" +  str(inc*2) + "%")
