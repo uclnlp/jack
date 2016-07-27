@@ -1,0 +1,35 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "output schema",
+	"description": "The schema for predictions of a model.",
+	"type": "array",
+	"items": {
+		"instances": {
+			"type": "array",
+			"items": {
+				"type":"array",
+				"items": {
+					"type":"object",
+					"properties": {
+						"candidates": {
+							"type":"array",
+							"items": {
+								"type":"object",
+								"properties": {
+									"text": {"type":"string" },
+									"label": {"type": "string" },
+									"span": {
+										"type": "array",
+										"items": {
+											"type":"integer"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+        }
+    }
+}
