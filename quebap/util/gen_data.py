@@ -38,11 +38,18 @@ def transform_tree(tree, func, include_terminals=False):
 
 
 examples = [
-    "LOCATION1 is n't the best place to live , I use to work there LOCATION1 is not a very good place",
+    # "LOCATION1 is n't the best place to live , I use to work there LOCATION1 is not a very good place",
     "LOCATION1 is the trendiest place in the capital and completely shed the old image Thinking of moving to London",
-    "LOCATION1 is quite a long way out of London , but its very green",
-    "i live in the LOCATION1   wouldn't recommend it",
+    # "LOCATION1 is quite a long way out of London , but its very green",
+    # "i live in the LOCATION1   wouldn't recommend it",
 ]
+
+import json
+
+with open('../../../../corpora/sentihood/single.json') as data_file:
+    data = json.load(data_file)
+
+examples_all = [instance['relevant_text'] for instance in data]
 
 nlp = StanfordCoreNLP('http://localhost:9000')
 
@@ -114,6 +121,15 @@ class ProposeNextActions(Action):
 
     def do_action(self, grammar: defaultdict, proposal_queue: list):
         tree = self.instance.support_trees[0]
+
+        low_level_S_trees = [result
+                             for root_child in tree
+                             for root_grand_parent in root_child
+                             for result in find_tree(root_grand_parent, lambda t: t.label() == 'S' and len(t) > 1)]
+
+        if len(low_level_S_trees) > 0:
+            for s_tree in low_level_S_trees:
+                proposal_queue += [KeepOnlyTree(self.instance, s_tree)]
         # conjuncts = find_labels(tree, labels=('VP', 'CC', 'VP'))
         conjuncts = find_tree(tree, lambda t: len(t) == 3 and tree_string(t[0]) == tree_string(t[2]) and tree_string(
             t[1]) == 'CC')
@@ -173,6 +189,21 @@ class FixQuestionAnswer(Action):
         grammar['T'].append(new_instance)
 
 
+class AskForAdditionalAnnotation(Action):
+    def __init__(self, instance):
+        self.instance = instance
+
+    def do_action(self, grammar, proposal_queue: list):
+        print(self.instance)
+        input_text = input("> Additional '[Question]? [Answer]' pair, empty to proceed: ")
+        if input_text != '':
+            question, answer = input_text.split("?")
+            new_instance = self.instance.copy(answer=answer, answer_trees=parse_trees(answer))
+            proposal_queue.append(AskForAdditionalAnnotation(new_instance))
+            proposal_queue.append(ProposeNextActions(new_instance))
+            grammar['T'].append(new_instance)
+
+
 class DropConjunct(Action):
     def do_action(self, grammar, proposal_queue):
         tree = self.instance.support_trees[0]
@@ -216,7 +247,7 @@ def ask_user(question, choices=('Yes', 'No')):
     if answer == "":
         return choices[0]
     for choice in choices:
-        if answer == choice[0] or answer == choice:
+        if answer.lower() == choice[0].lower() or answer.lower() == choice.lower():
             return choice
     raise RuntimeError("Wrong input {}".format(answer))
 
@@ -243,6 +274,22 @@ class DropPP(Action):
         self.parent = parent
 
 
+class KeepOnlyTree(Action):
+    def do_action(self, grammar, proposal_queue):
+        rhs = self.tree
+        rhs_text = " ".join(rhs.leaves())
+        new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
+        print(new_instance)
+        answer = ask_user("Is this still correct", ("Yes", "No"))
+        if answer == "Yes":
+            grammar['T'].append(new_instance)
+            proposal_queue += [ProposeNextActions(new_instance)]
+
+    def __init__(self, instance, tree):
+        self.tree = tree
+        self.instance = instance
+
+
 class DropFragmentOrSBar(Action):
     def do_action(self, grammar, proposal_queue):
         tree = self.instance.support_trees[0]
@@ -267,22 +314,24 @@ class DropFragmentOrSBar(Action):
 
 class ChooseNextInstance(Action):
     def do_action(self, grammar, proposal_queue):
-        proposal_queue.append(FixQuestionAnswer(Instance(examples[0], default_question(), default_answer())))
-        del examples[0]
+        proposal_queue.append(AskForAdditionalAnnotation(Instance(self.examples[0], default_question(), default_answer())))
+        proposal_queue.append(FixQuestionAnswer(Instance(self.examples[0], default_question(), default_answer())))
+        del self.examples[0]
 
     def __init__(self, examples):
         self.examples = examples
 
 
 def interaction_loop():
-    queue = [ChooseNextInstance(examples)]
+    examples_left = list(examples)
+    queue = [ChooseNextInstance(examples_left)]
     grammar = defaultdict(list)
 
     while len(queue) > 0:
         action = queue.pop()
         action.do_action(grammar, queue)
-        if len(queue) == 0 and len(examples) > 0:
-            queue += [ChooseNextInstance(examples)]
+        if len(queue) == 0 and len(examples_left) > 0:
+            queue += [ChooseNextInstance(examples_left)]
 
     for non_terminal, rhs_list in grammar.items():
         print(non_terminal)
