@@ -10,13 +10,6 @@ def read_data(data_filename):
         data = json.load(data_file)
         return data
 
-
-#for i in range(21):
-    # the exact output you're looking for:
-#    sys.stdout.write("[%-20s] %d%%" % ('='*i, 5*i))
-#    sys.stdout.flush()
-#    sleep(0.25)
-
 def annotate_corpus(data):
     total = len(data)
     partitions = 50
@@ -27,10 +20,9 @@ def annotate_corpus(data):
         annotated.append(annotate_instance(instance))
         if i / partition_size > inc+1 or i == total-1:
             inc += 1
-            sys.stdout.write("\r[" + ("=" * inc) +  " " * (partitions - inc) + "]" +  str(inc*2) + "%")
+            sys.stderr.write("\r[" + ("=" * inc) +  " " * (partitions - inc) + "]" +  str(inc*2) + "%")
             sys.stderr.flush()
     return annotated
-#    return [annotate_instance(instance) for instance in data]
 
 def annotate_instance(instance):
     # weird mix of mutable + returns here, but okay for now
