@@ -4,6 +4,9 @@ from collections import defaultdict
 from nltk.tree import Tree
 import copy
 import abc
+from os import path
+import json
+from random import shuffle
 
 
 def tree_string(tree):
@@ -37,12 +40,35 @@ def transform_tree(tree, func, include_terminals=False):
         return result
 
 
-examples = [
-    "LOCATION1 is n't the best place to live , I use to work there LOCATION1 is not a very good place",
-    "LOCATION1 is the trendiest place in the capital and completely shed the old image Thinking of moving to London",
-    "LOCATION1 is quite a long way out of London , but its very green",
-    "i live in the LOCATION1   wouldn't recommend it",
-]
+def read_data(files):
+    sentences = []
+    for file in files:
+        if path.isfile(file):
+            with open(file, 'r') as myfile:
+                json_txt = myfile.read()
+                json_dicts = json.loads(json_txt)
+                for json_dict in json_dicts:
+                    sentence = json_dict['text']
+                    if "location2" not in sentence.lower():
+                        sentences.append(sentence.replace("LOCATION1", "target_loc"))
+                    else:
+                        sent1 = sentence.replace("LOCATION1", "target_loc")
+                        sent2 = sentence.replace("LOCATION2", "target_loc")
+                        sentences.append(sent1)
+                        sentences.append(sent2)
+        else:
+            print("file " + file + " Not Found!!")
+    return sentences
+
+
+examples = read_data(["../data/urban/raw/single_train.json"])#, "../data/urban/raw/multi_train.json"])
+shuffle(examples)
+# examples = [
+# "LOCATION1 is n't the best place to live , I use to work there LOCATION1 is not a very good place",
+# "LOCATION1 is the trendiest place in the capital and completely shed the old image Thinking of moving to London",
+# "LOCATION1 is quite a long way out of London , but its very green",
+# "i live in the LOCATION1   wouldn't recommend it",
+# ]
 
 nlp = StanfordCoreNLP('http://localhost:9000')
 
@@ -54,7 +80,7 @@ class Consistency(Enum):
 
 
 def default_question():
-    return "g"
+    return "p"
 
 
 def default_answer():
@@ -146,6 +172,8 @@ class FixInstance(Action):
         answer = input("Is this correct (y/n)? ")
         if answer == '' or answer[0].lower() == 'n':
             to_fix = input("What do you want to fix ([s]upport/[q]uestion/[a]nswer)? ")
+            if to_fix == 'q':
+                raise ValueError("User requested to terminate!")
             if to_fix == '' or to_fix[0].lower() == 'a':
                 fix = input("Answer? ")
                 new_instance = self.instance.copy(answer=fix, answer_trees=parse_trees(fix))
@@ -163,8 +191,10 @@ class FixQuestionAnswer(Action):
 
     def do_action(self, grammar, proposal_queue: list):
         print(self.instance)
-        input_text = input("> Correct '[Question]? [Answer]' pair, empty if already connect: ")
-        if input_text != '':
+        input_text = input("> Correct '[Question]? [Answer]' pair, empty if already correct: ")
+        if input_text == 'q':
+            raise ValueError("User requested to terminate!")
+        elif input_text != '':
             question, answer = input_text.split("?")
             new_instance = self.instance.copy(answer=answer, answer_trees=parse_trees(answer))
         else:
@@ -180,7 +210,7 @@ class DropConjunct(Action):
         rhs_text = " ".join(rhs.leaves())
         new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
         print(new_instance)
-        current_input = input("> Is this still correct ([y]es/[n]o)? ")
+        current_input = input("> Is this still correct ([y]es|[n]o)? ")
         if current_input == '' or current_input[0] == 'y':
             # todo: create one version where a generic VP is used instead of the VP to drop
             new_conjunct_children = [child for child in self.conjunct_parent]
@@ -202,6 +232,8 @@ class DropConjunct(Action):
             grammar['T'].append(second_instance)
 
             proposal_queue += [ProposeNextActions(new_instance)]
+        elif current_input == 'q':
+            raise ValueError("User requested to terminate!")
 
     def __init__(self, instance: Instance, conjunct_parent: Tree, conjunct_index_to_keep: int):
         self.instance = instance
@@ -210,11 +242,13 @@ class DropConjunct(Action):
         self.conjunct_parent = conjunct_parent
 
 
-def ask_user(question, choices=('Yes', 'No')):
+def ask_user(question, choices=('yes', 'no')):
     choice_strings = ["[{abbr}]{rest}".format(abbr=choice[0], rest=choice[1:]) for choice in choices]
-    answer = input("> {question} ({choices})".format(question=question, choices="|".join(choice_strings))).strip()
+    answer = input("> {question} ({choices})".format(question=question, choices="/".join(choice_strings))).strip()
     if answer == "":
         return choices[0]
+    elif answer == "q":
+        raise ValueError("User requested to terminate!")
     for choice in choices:
         if answer == choice[0] or answer == choice:
             return choice
@@ -228,8 +262,8 @@ class DropPP(Action):
         rhs_text = " ".join(rhs.leaves())
         new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
         print(new_instance)
-        answer = ask_user("Is this still correct", ("Yes", "No"))
-        if answer == "Yes":
+        answer = ask_user("Is this still correct", ("yes", "no"))
+        if answer == "yes":
             generic_parent = Tree(self.parent.label(), [self.parent[0], Tree("PP", ["[ PP ]"])])
             rhs_2 = transform_tree(tree, lambda t: generic_parent if t == self.parent else None)
             rhs_2_text = " ".join(rhs_2.leaves())
@@ -250,8 +284,8 @@ class DropFragmentOrSBar(Action):
         rhs_text = " ".join(rhs.leaves())
         new_instance = self.instance.copy(support=rhs_text, support_trees=[rhs])
         print(new_instance)
-        answer = ask_user("Is this still correct", ("Yes", "No"))
-        if answer == "Yes":
+        answer = ask_user("Is this still correct", ("yes", "no"))
+        if answer == "yes":
             generic_parent = Tree(self.parent.label(), self.parent[:-1] + [Tree("SBAR", ["[ SBAR ]"])])
             rhs_2 = transform_tree(tree, lambda t: generic_parent if t == self.parent else None)
             rhs_2_text = " ".join(rhs_2.leaves())
@@ -275,19 +309,42 @@ class ChooseNextInstance(Action):
 
 
 def interaction_loop():
+    import time
+
     queue = [ChooseNextInstance(examples)]
     grammar = defaultdict(list)
 
-    while len(queue) > 0:
-        action = queue.pop()
-        action.do_action(grammar, queue)
-        if len(queue) == 0 and len(examples) > 0:
-            queue += [ChooseNextInstance(examples)]
+    start_time = time.time()
+    try:
+        while len(queue) > 0:
+            action = queue.pop()
+            action.do_action(grammar, queue)
+            if len(queue) == 0 and len(examples) > 0:
+                answer = ask_user("Do you want to do more annotations?", ("yes", "no"))
+                if answer == "yes":
+                    queue += [ChooseNextInstance(examples)]
+    except Exception as error:
+        print(repr(error))
+        elapsed_time = str(int(time.time() - start_time))
+        output_dict = []
+        for non_terminal, rhs_list in grammar.items():
+            print(non_terminal)
+            for rhs in rhs_list:
+                rhs_dict = {}
+                rhs_dict['support'] = rhs.support
+                rhs_dict['question'] = rhs.question
+                rhs_dict['answer'] = rhs.answer
+                print(rhs)
+                output_dict.append(rhs_dict)
 
-    for non_terminal, rhs_list in grammar.items():
-        print(non_terminal)
-        for rhs in rhs_list:
-            print(rhs)
+        # Write to jason and file
+        ts = str(int(time.time()))
+
+        json_ser = json.dumps(output_dict)
+        print(json_ser)
+        out_file = open("../data/urban/annotated/annotation_" + ts + "_elapsed_" + elapsed_time + "_.json", 'w')
+        out_file.write(json_ser)
+        out_file.close()
 
 
 interaction_loop()
