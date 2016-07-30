@@ -12,6 +12,7 @@
 					"id": "document",
 					"type": "object",
 					"properties": {
+						"id": { "type": "string" },
 						"text": { "type" : "string" },
 						"tokens": { "type": "array" }
 					},
@@ -29,6 +30,7 @@
 							"items": {
 								"type":"object",
 								"properties": {
+									"id": { "type": "string" },
 									"text": {"type":"string" },
 									"label": {"type": "string" },
 									"span": {
