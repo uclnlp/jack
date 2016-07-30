@@ -18,6 +18,7 @@
 								"properties": {
 									"text": {"type":"string" },
 									"label": {"type": "string" },
+									"score": {"type": "number"},
 									"span": {
 										"type": "array",
 										"items": {
@@ -30,6 +31,6 @@
 					}
 				}
 			}
-        }
     }
+  }
 }
