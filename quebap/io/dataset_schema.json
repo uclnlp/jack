@@ -6,6 +6,7 @@
 	"items": {
 		"type":"object",
 		"properties": {
+			"id": { "type": "string" },
 			"support": {
 				"type": "array",
 				"items": {
