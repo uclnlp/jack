@@ -49,6 +49,7 @@
 								"type":"object",
 								"properties": {
 									"text":{"type":"string" },
+									"label": {"type": "string" },
 									"index": {"type": "integer" },
 									"span": {
 										"type": "array",
