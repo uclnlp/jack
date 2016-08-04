@@ -1,86 +1,57 @@
 from __future__ import absolute_import
 
-import os
-import re
 import numpy as np
+import json
+from nltk import word_tokenize, sent_tokenize
 
 
-def load_task(data_dir, task_id, only_supporting=False):
+def load_task(train_file, dev_file, test_file):
     '''
-    TODO: adapt this for the quebap format
-    Load the nth task. There are 20 tasks in total.
-
     Returns a tuple containing the training and testing data for the task.
     '''
-    assert task_id > 0 and task_id < 21
-
-    files = os.listdir(data_dir)
-    files = [os.path.join(data_dir, f) for f in files]
-    s = 'qa{}_'.format(task_id)
-    train_file = [f for f in files if s in f and 'train' in f][0]
-    test_file = [f for f in files if s in f and 'test' in f][0]
-    train_data = get_stories(train_file, only_supporting)
-    test_data = get_stories(test_file, only_supporting)
-    print(train_file, test_file)
-    return train_data, test_data
-
-def tokenize(sent):
-    '''Return the tokens of a sentence including punctuation.
-    >>> tokenize('Bob dropped the apple. Where is the apple?')
-    ['Bob', 'dropped', 'the', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']
-    '''
-    return [x.strip() for x in re.split('(\W+)?', sent) if x.strip()]
+    train_data = get_stories(train_file)
+    dev_data = get_stories(dev_file)
+    test_data = get_stories(test_file)
+    print(train_file, dev_file, test_file)
+    return train_data, dev_data, test_data
 
 
-def parse_stories(lines, only_supporting=False):
-    '''Parse stories provided in the bAbI tasks format
-    If only_supporting is true, only the sentences that support the answer are kept.
-    '''
-    data = []
-    story = []
-    for line in lines:
-        line = str.lower(line)
-        nid, line = line.split(' ', 1)
-        nid = int(nid)
-        if nid == 1:
-            story = []
-        if '\t' in line: # question
-            q, a, supporting = line.split('\t')
-            q = tokenize(q)
-            #a = tokenize(a)
-            # answer is one vocab word even if it's actually multiple words
-            a = [a]
-            substory = None
-
-            # remove question marks
-            if q[-1] == "?":
-                q = q[:-1]
-
-            if only_supporting:
-                # Only select the related substory
-                supporting = map(int, supporting.split())
-                substory = [story[i - 1] for i in supporting]
-            else:
-                # Provide all the substories
-                substory = [x for x in story if x]
-
-            data.append((substory, q, a))
-            story.append('')
-        else: # regular sentence
-            # remove periods
-            sent = tokenize(line)
-            if sent[-1] == ".":
-                sent = sent[:-1]
-            story.append(sent)
-    return data
-
-
-def get_stories(f, only_supporting=False):
+def get_stories(f):
     '''Given a file name, read the file, retrieve the stories, and then convert the sentences into a single story.
     If max_length is supplied, any stories longer than max_length tokens will be discarded.
     '''
     with open(f) as f:
-        return parse_stories(f.readlines(), only_supporting=only_supporting)
+        return parse_stories(json.load(f))
+
+
+def parse_stories(jsonfile):
+    '''
+    Parse stories provided in the quebap format
+    '''
+    data = []
+    for inst in jsonfile:
+        #print(inst)
+        story = []
+        for t in inst["support"]:
+            sents = sent_tokenize(t["text"])
+            for s in sents:
+                story.append(word_tokenize(s))
+            #story.extend(sent_tokenize(word_tokenize(t["text"])))
+        for qq in inst["questions"]:
+            q = word_tokenize(qq["question"].replace("?", ""))
+            for qa in qq["answers"]:
+                # take the first answer since they all seem to be the same for squad (apart from the differing white space)
+                a = word_tokenize(qa["text"])
+                break
+
+            data.append((story, q, a))
+
+    return data
+
+
+
+
+
 
 def vectorize_data(data, word_idx, sentence_size, memory_size):
     """
@@ -96,7 +67,9 @@ def vectorize_data(data, word_idx, sentence_size, memory_size):
     S = []
     Q = []
     A = []
-    for story, query, answer in data:
+    for inst in data:
+        #print(inst)
+        story, query, answer = inst
         ss = []
         for i, sentence in enumerate(story, 1):
             ls = max(0, sentence_size - len(sentence))
