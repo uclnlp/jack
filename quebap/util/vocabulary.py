@@ -1,6 +1,5 @@
 import itertools
 
-
 class Vocabulary:
     def __init__(self, vocab=None):
         self.__word2idx = {}
@@ -15,8 +14,10 @@ class Vocabulary:
                ' First 5 elements: ' + str(list(itertools.islice(self.__word2idx.keys(), 0, 5)))
 
     def add_iterable(self, itr):
+        last = -1
         for item in itr:
-            yield self.add_word(item)
+            last = self.add_word(item)
+        return last
 
     def add_word(self, word):
         if word not in self.__word2idx:
