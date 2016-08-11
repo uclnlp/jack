@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from util import *
+from copy import copy
 
 
 def define_model_F_score(tuples, entity_pair_embeddings, relation_embeddings):
@@ -27,16 +28,21 @@ def define_model_F_score(tuples, entity_pair_embeddings, relation_embeddings):
     return dot_products
 
 
-def nll_loss(dot_products_true, dot_products_false, normalize=True):
+def nll_loss(dot_products, gold_labels, normalize=True):
     '''
     Given a set of dot product scores for positive facts [batchsize x 1]
     and a set of dot product scores for negative facts [batchsize x 1]
     compute negative log-likelihood loss and return single scalar value.
     Normalization divides loss by batchsize.
     '''
+    # filter the dot products of true facts from those of false facts
+    dot_products_false, dot_products_true = \
+                            tf.dynamic_partition(dot_products, gold_labels, 2)
+
+    # compute nll loss contribution for each part
     true_contribution = tf.nn.softplus(-dot_products_true)
     false_contribution = tf.nn.softplus(dot_products_false)
-    if normalize:
+    if normalize:   # batch-normalization
         total_batch_loss = tf.reduce_mean(true_contribution \
                                             + false_contribution)/2.0
     else:
@@ -44,18 +50,54 @@ def nll_loss(dot_products_true, dot_products_false, normalize=True):
     return total_batch_loss
 
 
+def batcher(batchsize, training_data, negative_domain_size):
+    '''
+    Create batch of training instances, half true facts, half false facts.
+    '''
+    ### create positive training instances
+    n = training_data.shape[0]
+    random_example_indices = np.random.randint(low=0, high=n, size=batchsize)
+    true_training_instances = training_data[random_example_indices,:]
+
+    ### create negative training instances
+    # pick random indices (of entity pairs)
+    random_negative_indices = np.random.randint(0, negative_domain_size,
+                                                size=batchsize)
+    # copy the true training instances,
+    false_training_instances = copy(true_training_instances)
+    # but replace the entity pair entry with random values.
+    false_training_instances[:,1] = random_negative_indices
+
+    ### gold values (True/ False)
+    gold_true = np.ones([batchsize], dtype=int)
+    gold_false = np.zeros([batchsize], dtype=int)
+
+    ### concatenate and shuffle order randomly
+    training_facts = np.concatenate((true_training_instances,
+                                         false_training_instances))
+    gold = np.concatenate(( gold_true, gold_false))
+    perm = np.random.permutation(batchsize*2)
+    facts_shuffled = training_facts[perm, :]
+    gold_shuffled = gold[perm]
+    return facts_shuffled, gold_shuffled
+
+
 def test():
     k = 5
-    batchsize = 17
+    batchsize = 3
     n = 10
-    tuples_true = tf.Variable(np.random.randint(0, n, [batchsize, 2]))
-    tuples_false = tf.Variable(np.random.randint(0, n, [batchsize, 2]))
     E2_emb = tf.Variable(np.random.normal(0.0, 1.0, [n, k]))
     R_emb = tf.Variable(np.random.normal(0.0, 1.0, [n, k]))
-    dot_products_true = define_model_F_score(tuples_true, E2_emb, R_emb)
-    dot_products_false = define_model_F_score(tuples_false, E2_emb, R_emb)
-    loss = nll_loss(dot_products_true, dot_products_false)
+    data = np.random.randint(0, n, [10, 2])
+    facts, gold = batcher(batchsize, data, 10)
+    print('data', data)
+    print('true and false facts shuffled', facts)
+    print('gold shuffled', gold)
+    dot_product_scores = define_model_F_score(facts, E2_emb, R_emb)
+    loss = nll_loss(dot_product_scores, gold, normalize=True)
     tfrunprint(loss)
+
+
 
 if __name__ == "__main__":
     test()
