@@ -87,7 +87,7 @@ def batcher(batchsize, training_data, negative_domain_size):
     return facts_shuffled, gold_shuffled
 
 
-def initialize_embeddings(n_entity_pairs, n_relations, k, sigma=0.1):
+def initialize_embeddings(n_entity_pairs, n_relations, k, sigma=1.0):
     '''
     Initialise Gaussian embeddings for entity pairs and relations with sigma
     the standard deviation and k the latent dimensionality.
