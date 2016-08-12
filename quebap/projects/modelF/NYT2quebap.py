@@ -25,36 +25,36 @@ def load_naacl2013(path, mode):
                 if typ.lower()==mode.lower():
                     facts.append(((rel,tup),truth,typ))
 
-    #global candidates: all entity tuples appearing in the training data (for model F, test data should have no tuples not occurring in training data) 
-    tup_candidates = sorted(list(set([f[0][1] for f in facts if typ.lower()=='train'])))
+    #global candidates: all entity tuples appearing in the training data (for model F, test data should have no tuples not occurring in training data)
+    tup_candidates = sorted(list(set([f[0][1] for f in facts if f[2].lower()=='train'])))
 
     if mode.lower()=='train':
         return create_train_quebap(facts,tup_candidates)
     elif mode.lower()=='test':
         return create_test_quebap(facts)
-    
 
-    
+
+
 def create_train_quebap(trainfacts,tuples):
     """one quebap per positive train fact"""
     instances = [{'support':[],
                   'questions':[{'question':fact[0][0],
                                 'candidates':'#/globals/candidates',
                                 'answers':[{'text':fact[0][1]}]
-                                }] 
+                                }]
                   }  for fact in trainfacts if fact[1]]#only add true facts for training (data should be consistent with that)
     #@Johannes: originally we had 'instances' as the quebap format; now: added metadata field 'meta' and 'globals' field with the overall candidates.
     return {'meta':'MFmodel-train',
             'globals':{'candidates':[{'text':tup} for tup in tuples]},
-            'instances':instances       
-          }  
+            'instances':instances
+          }
 
-    
+
 def create_test_quebap(testfacts):
     """one quebap with all correct answers per relation in the test data"""
     #map test relations to all true/false entity tuples
     relmap = {}
-    for fact in testfacts: 
+    for fact in testfacts:
         rel,tup = fact[0]
         truth = fact[1]
         if not rel in relmap:
@@ -62,7 +62,7 @@ def create_test_quebap(testfacts):
         relmap[rel]['candidates'].add(tup)
         if truth:
             relmap[rel]['answers'].add(tup)
-    #test instances: 
+    #test instances:
     instances = [{'support':[],
                   'questions':[{'question':rel,
                                'candidates':[{'text':c} for c in relmap[rel]['candidates']],
@@ -71,8 +71,8 @@ def create_test_quebap(testfacts):
                   } for rel in relmap]
     return {'meta':'MFmodel-test',
             'globals':{},
-            'instances':instances       
-          }  
+            'instances':instances
+          }
 
 
 
