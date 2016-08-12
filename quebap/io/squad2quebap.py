@@ -21,7 +21,9 @@ def parse_support(para_dict):
 def parse_question(qa_dict):
     answers = [parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
     return {
-        'question': qa_dict['question'],
+        'question': {
+            'text': qa_dict['question']
+        },
         'answers': answers
     }
 

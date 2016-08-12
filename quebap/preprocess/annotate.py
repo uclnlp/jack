@@ -26,12 +26,13 @@ def annotate_corpus(data):
 
 def annotate_instance(instance):
     # weird mix of mutable + returns here, but okay for now
-    instance['support'] = [annotate_support(support) for support in instance['support']]
+    instance['support'] = [annotate_text(support['text']) for support in instance['support']]
+    instance['questions'] = [{'question': annotate_text(question['question']['text'])} for question in instance['questions']]
     return instance
 
-def annotate_support(support):
-    support_text = support['text']
-    annotations = annotate_text(support_text)
+def annotate_text(text):
+#    support_text = support['text']
+    annotations = annotate_with_corenlp(text)
     try:
         annotations.keys()
     except:
@@ -50,16 +51,15 @@ def annotate_support(support):
     except:
         print('Error annotating text: \n', support_text)
         sys.exit
-#    return_dict = {'text': support_text}
     return {
-        'text': support_text,
+        'text': text,
         'tokens': token_offsets,
         'sentences': sentence_offsets,
         'postags': postags,
         'parses': parses
     }
 
-def annotate_text(text):
+def annotate_with_corenlp(text):
     text = clean_for_annotator(text)
     ann_str = 'tokenize,ssplit,pos,parse' #,depparse,
     output = nlp.annotate(text,
