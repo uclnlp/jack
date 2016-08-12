@@ -42,7 +42,7 @@ def __convert_snli_instance(instance):
         queb = {}
         queb['id'] = instance['pairID']
         queb['support'] = [{'id':instance['captionID'],'text':instance['sentence1']}] 
-        queb['questions'] = [{'question':instance['sentence2'], 'candidates':__candidates, 'answers':[{'label':instance['gold_label']}]}]
+        queb['questions'] = [{'question':instance['sentence2'], 'candidates':__candidates, 'answers':[{'index':__candidate_labels.index(instance['gold_label'])}]}]
 
         return queb
         
