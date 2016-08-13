@@ -39,12 +39,55 @@ def load_train_data_from_quebap(filepath):
     return fact_matrix, gold, entity_pair_lexicon, relation_lexicon
 
 
+def load_test_data_from_from_quebap(filepath, entity_pair_lexicon,
+                                    relation_lexicon):
+    '''
+    Read in NYT test data from quebap file, using filepath as location.
+    entity_pair_lexicon and relation_lexicon are lexica for giving indices to
+    the relation type/ entity pair strings and having this consistent with the
+    training set. Outputs:
+        - list of test entity pairs
+    '''
+    with open(filepath, 'r') as f:
+        quebap_file_contents = json.load(f)
+
+    ### get (negative) entity pair candidates to use during testing
+    global_test_candidates = quebap_file_contents['globals']['candidates']
+    preliminary_test_entity_pairs = [c['text'] for c in global_test_candidates]
+
+    # Filter out entity pairs that didn't appear in the training set,
+    # i.e. that are not in the lexicon.
+    known_entity_pairs = set([x[0] for x in entity_pair_lexicon.items()])
+    test_entity_pairs = list(known_entity_pairs.intersection \
+                                        (set(preliminary_test_entity_pairs)))
+
+    # go over all instances, extract relation and true entity pair strings,
+    # convert into indices.
+    relation_indices, e2_indices = [], []
+    for instance in quebap_file_contents['instances']:
+        rel_string = instance['questions'][0]['question']
+        answer_strings = [a['text'] for a in instance['questions'][0]['answers']]
+        relation_indices.append( relation_lexicon._key2id[rel_string] )
+        e2_indices.append([entity_pair_lexicon._key2id[a] for a in answer_strings if a in known_entity_pairs])
+
+    # convert test entity pairs into indices
+    test_entity_pairs = [entity_pair_lexicon._key2id[ep] for ep in test_entity_pairs]
+    print(relation_indices)
+    print(e2_indices)
+    return test_entity_pairs, relation_indices, e2_indices
+
+
+
+
 def main():
     import sys
-
     # load training data
     train_facts, gold, e_lexicon, r_lexicon = \
                     load_train_data_from_quebap('naacl2013_train.quebap.json')
+
+    load_test_data_from_from_quebap('naacl2013_test.quebap.json', e_lexicon,
+                                        r_lexicon)
+    return -1
 
     # initialize embeddings
     n_entity_pairs = len(e_lexicon)
