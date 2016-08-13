@@ -122,17 +122,17 @@ def training(loss, batch_function, placeholders, data, batchsize=32,
             inter_op_parallelism_threads=1,
             intra_op_parallelism_threads=1,
             )
-    with tf.Session(config=config) as sess:
-        sess.run(tf.initialize_all_variables())
-        t0 = time()
-        for iteration in range(0, n_iterations):
-            minibatch_facts, minibatch_gold = batch_function(batchsize, data)
-            feed = {placeholders["facts"]: minibatch_facts,
-                    placeholders["gold"]: minibatch_gold
-                    }
-            _, loss__ = sess.run((update_op, loss), feed_dict=feed)
-            print(iteration, loss__)
-    return
+    sess = tf.Session(config=config)
+    sess.run(tf.initialize_all_variables())
+    t0 = time()
+    for iteration in range(0, n_iterations):
+        minibatch_facts, minibatch_gold = batch_function(batchsize, data)
+        feed = {placeholders["facts"]: minibatch_facts,
+                placeholders["gold"]: minibatch_gold
+                }
+        _, loss__ = sess.run((update_op, loss), feed_dict=feed)
+        print(iteration, loss__)
+    return sess
 
 
 

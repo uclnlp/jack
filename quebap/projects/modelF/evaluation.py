@@ -27,7 +27,7 @@ def precision_at_X(true_ranks, X):
     return np.mean(hits_list)
 
 
-def mean_average_precision(true_ranks):
+def average_precision(true_ranks):
     precision_values = []
     for X in range(1, max(true_ranks)+1):
         if X in true_ranks:
@@ -41,6 +41,6 @@ if __name__ == "__main__":
     print(precision_at_X([1], 10))
     print(precision_at_X([1,3], 10))
     print(precision_at_X([1,3], 2))
-    print(mean_average_precision([1]))
-    print(mean_average_precision([3]))
-    print(mean_average_precision([1,4]))
+    print(average_precision([1]))
+    print(average_precision([3]))
+    print(average_precision([1,4]))

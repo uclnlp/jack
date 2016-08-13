@@ -58,11 +58,13 @@ def create_test_quebap(testfacts, tuples):
     for fact in testfacts:
         rel,tup = fact[0]
         truth = fact[1]
-        if not rel in relmap and truth:
+        if not truth:
+            continue
+        if not rel in relmap:
             relmap[rel]={'candidates':set(),'answers':set()}
-        if truth:
-            #relmap[rel]['candidates'].add(tup)
-            relmap[rel]['answers'].add(tup)
+
+        #relmap[rel]['candidates'].add(tup)
+        relmap[rel]['answers'].add(tup)
 
     #test instances:
     instances = [{'support':[],
