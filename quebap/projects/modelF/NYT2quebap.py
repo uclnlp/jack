@@ -26,12 +26,13 @@ def load_naacl2013(path, mode):
                     facts.append(((rel,tup),truth,typ))
 
     #global candidates: all entity tuples appearing in the training data (for model F, test data should have no tuples not occurring in training data)
-    tup_candidates = sorted(list(set([f[0][1] for f in facts if f[2].lower()=='train'])))
+    tup_candidates_train = sorted(list(set([f[0][1] for f in facts if f[2].lower()=='train'])))
+    tup_candidates_test = sorted(list(set([f[0][1] for f in facts if f[2].lower()=='test'])))
 
     if mode.lower()=='train':
-        return create_train_quebap(facts,tup_candidates)
+        return create_train_quebap(facts,tup_candidates_train)
     elif mode.lower()=='test':
-        return create_test_quebap(facts)
+        return create_test_quebap(facts, tup_candidates_test)
 
 
 
@@ -50,18 +51,19 @@ def create_train_quebap(trainfacts,tuples):
           }
 
 
-def create_test_quebap(testfacts):
+def create_test_quebap(testfacts, tuples):
     """one quebap with all correct answers per relation in the test data"""
     #map test relations to all true/false entity tuples
     relmap = {}
     for fact in testfacts:
         rel,tup = fact[0]
         truth = fact[1]
-        if not rel in relmap:
+        if not rel in relmap and truth:
             relmap[rel]={'candidates':set(),'answers':set()}
-        relmap[rel]['candidates'].add(tup)
         if truth:
+            #relmap[rel]['candidates'].add(tup)
             relmap[rel]['answers'].add(tup)
+
     #test instances:
     instances = [{'support':[],
                   'questions':[{'question':rel,
@@ -70,7 +72,7 @@ def create_test_quebap(testfacts):
                                }]
                   } for rel in relmap]
     return {'meta':'MFmodel-test',
-            'globals':{},
+            'globals':{'candidates':[{'text':tup} for tup in tuples]},
             'instances':instances
           }
 
@@ -82,7 +84,7 @@ def main():
         data = load_naacl2013(sys.argv[1],sys.argv[2])
         print(json.dumps(data, indent=2))
     else:
-        print("""usage: python3 NYT2quebap path/to/naacl2013.txt mode >  naacl2013_mode.quebap.json
+        print("""usage: python3 NYT2quebap.py path/to/naacl2013.txt mode >  naacl2013_mode.quebap.json
               in which mode = train or test""")
 
 if __name__ == "__main__":
