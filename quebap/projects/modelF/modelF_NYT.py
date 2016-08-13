@@ -72,10 +72,19 @@ def load_test_data_from_from_quebap(filepath, entity_pair_lexicon,
 
     # convert test entity pairs into indices
     test_entity_pairs = [entity_pair_lexicon._key2id[ep] for ep in test_entity_pairs]
-    print(relation_indices)
-    print(e2_indices)
+
+    # filter out relations with an answer entity pair not in known_entity_pairs
+    for i, (r,e2) in enumerate(zip(relation_indices, e2_indices)):
+        if len(e2) == 0:
+            relation_indices.remove(r)
+            e2_indices.remove(e2)
+            
+    # 25 relation types left overall.
     return test_entity_pairs, relation_indices, e2_indices
 
+
+def test_procedure():
+    pass
 
 
 
