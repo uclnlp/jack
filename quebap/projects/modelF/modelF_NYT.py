@@ -6,6 +6,7 @@ import tensorflow as tf
 
 from model import define_model_F_score, nll_loss
 from model import initialize_embeddings, batcher, training
+from evaluation import ranking, average_precision
 
 
 def load_train_data_from_quebap(filepath):
@@ -78,14 +79,62 @@ def load_test_data_from_from_quebap(filepath, entity_pair_lexicon,
         if len(e2) == 0:
             relation_indices.remove(r)
             e2_indices.remove(e2)
-            
+
     # 25 relation types left overall.
     return test_entity_pairs, relation_indices, e2_indices
 
 
-def test_procedure():
-    pass
 
+def test_procedure(relation_indices, e2_indices, test_entity_pairs,
+                   placeholders, score, sess=None):
+    '''
+    Computes MAP for every relation type in test set.
+    Go through all relation types r and compute scores for all test_entity_pairs
+    together with r.
+    The test relation types are listed in relation_indices.
+    Correct answers are listed in e2_indices, same length as relation_indices
+    'placeholders' and 'score' are tensorflow nodes.
+    Session 'sess' is the tensorflow session from training.
+    '''
+    if sess == None:
+        sess = tf.Session()
+
+    average_precision_values = []
+
+    # loop over all relation types
+    for relation, ent_pairs in zip(relation_indices, e2_indices):
+        # build fact matrix with true answers
+        fact_matrix_true = np.zeros([len(ent_pairs), 2], dtype=int)
+        for i in range(0, len(ent_pairs)):
+            fact_matrix_true[i, 0] = relation
+            fact_matrix_true[i, 1] = ent_pairs[i]
+
+        # build fact matrix with false answers
+        fact_matrix_false = np.zeros([len(test_entity_pairs), 2], dtype=int)
+        for i in range(0, len(test_entity_pairs)):
+            fact_matrix_false[i, 0] = relation
+            fact_matrix_false[i, 1] = test_entity_pairs[i]
+
+        # compute (dot product) scores for true facts
+        feed_true = {placeholders["facts"]: fact_matrix_true}
+        scores_true_facts = sess.run(score, feed_dict=feed_true)
+
+        # compute scores for false facts
+        feed_false = {placeholders["facts"]: fact_matrix_false}
+        scores_false_facts = sess.run(score, feed_dict=feed_false)
+
+        # compute ranking
+        #print(relation, "True", np.mean(scores_true_facts))
+        #print(relation, "False", np.mean(scores_false_facts))
+        # transform into lists, compute ranking.
+        true_ranks = ranking([x[0] for x in scores_true_facts], \
+                                        [y[0] for y in scores_false_facts])
+
+        N_total_ranks = fact_matrix_true.shape[1] + fact_matrix_false.shape[1]
+        average_precision_values.append(average_precision(true_ranks))
+        print("True ranks", sorted(true_ranks))
+    MAP = np.mean(average_precision_values)
+    print("Mean average precision:", MAP)
 
 
 def main():
@@ -94,14 +143,13 @@ def main():
     train_facts, gold, e_lexicon, r_lexicon = \
                     load_train_data_from_quebap('naacl2013_train.quebap.json')
 
+    test_entity_pairs, relation_indices, e2_indices = \
     load_test_data_from_from_quebap('naacl2013_test.quebap.json', e_lexicon,
                                         r_lexicon)
-    return -1
-
     # initialize embeddings
     n_entity_pairs = len(e_lexicon)
     n_relations = len(r_lexicon)
-    k = 20
+    k = 30
     E2_emb, R_emb = initialize_embeddings(n_entity_pairs, n_relations, k)
 
     # define input/output placeholders
@@ -117,7 +165,15 @@ def main():
 
     # specify number of entity pairs for batcher
     batch_function = (lambda bs, d: batcher(bs, d, n_entity_pairs))
-    training(loss, batch_function, placeholders, train_facts, batchsize=8192, n_iterations=2000)
+    #test_procedure(relation_indices, e2_indices, test_entity_pairs,
+    #                   placeholders, dot_product_scores)
+
+    sess = training(loss, batch_function, placeholders, train_facts,
+                    batchsize=16384, n_iterations=1000, learning_rate=0.1)
+
+    test_procedure(relation_indices, e2_indices, test_entity_pairs,
+                       placeholders, dot_product_scores, sess)
+    sess.close()
 
     return -1
     if len(sys.argv) == 3:
