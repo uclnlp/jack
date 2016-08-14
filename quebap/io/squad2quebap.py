@@ -34,7 +34,8 @@ def parse_question(qa_dict):
     answers = [parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
     return {
         'question': {
-            'text': qa_dict['question']
+            'text': qa_dict['question'],
+            'id': qa_dict['id']
         },
         'answers': answers
     }

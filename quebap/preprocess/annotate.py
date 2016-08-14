@@ -19,12 +19,8 @@ def annotate_corpus(corpus, tokenize=False, sent_split=False, postag=False, pars
     annotated = []
     ann_str = core_nlp_annotations_str(tokenize, sent_split, postag, parse, dep_parse)
     l = len(ann_str)
-#    print(ann_str)
     for i, instance in enumerate(data):
 # weird mix of mutable + returns here, but okay for now
-#        annotated.append(annotate_instance(instance))
-#        print(instance.keys())
-#        print(instance['support'][0]['text'])
         instance['support'] = [annotate_text(support['text'],
                                                   tokenize=tokenize,
                                                   sent_split=sent_split,
@@ -45,7 +41,7 @@ def annotate_corpus(corpus, tokenize=False, sent_split=False, postag=False, pars
     return {
         'meta': {
             'source': corpus['meta']['source'],
-            'annotations': core_nlp_annotations_str(tokenize, sent_split, postag, parse, dep_parse)
+            'annotations': 'core_nlp:' + core_nlp_annotations_str(tokenize, sent_split, postag, parse, dep_parse)
         },
         'data': annotated
     }
@@ -65,8 +61,7 @@ def annotate_text(text, tokenize=False, sent_split=False, postag=False, parse=Fa
     postags = []
     parses = []
     dep_parses = []
-#    try:
-    if True:
+    try:
         for sentence in annotations['sentences']:
             if tokenize:
                 for token in sentence['tokens']:
@@ -79,9 +74,9 @@ def annotate_text(text, tokenize=False, sent_split=False, postag=False, parse=Fa
                 parses.append(clean_parse(sentence['parse']))
             if 'depparse' in sentence:
                 dep_parses.append(sentence['depparse'])
-#    except:
-#        print('Error annotating text: \n', text)
-#        sys.exit
+    except:
+        print('Error annotating text: \n', text)
+        sys.exit
     result = {}
     result['text'] = text
     if tokenize:
@@ -95,13 +90,6 @@ def annotate_text(text, tokenize=False, sent_split=False, postag=False, parse=Fa
     if dep_parse:
         result['dep_parses'] = dep_parses
     return result
-#    return {
-#        'text': text,
-#        'tokens': token_offsets,
-#        'sentences': sentence_offsets,
-#        'postags': postags,
-#        'parses': parses
-#    }
 
 def annotate_with_corenlp(text, tokenize=False, sent_split=False, postag=False, parse=False, dep_parse=False):
     text = text #clean_for_annotator(text)
@@ -116,9 +104,9 @@ def annotate_with_corenlp(text, tokenize=False, sent_split=False, postag=False, 
 
 def core_nlp_annotations_str(tokenize=False, sent_split=False, postag=False, parse=False, dep_parse=False):
     ann_flags = []
-#    if tokenize:
+    # currenty we have to tokenize and sentence split for the JSON processing
+    # methods to work properly
     ann_flags.append('tokenize')
-#    if sent_split:
     ann_flags.append('ssplit')
     if postag:
         ann_flags.append('pos')
@@ -127,10 +115,6 @@ def core_nlp_annotations_str(tokenize=False, sent_split=False, postag=False, par
     if parse:
         ann_flags.append('parse')
     return ','.join(ann_flags)
-
-#def clean_for_annotator(text):
-#    text = text.replace('–', '-')
-#    return text
 
 def clean_parse(parse):
     parse_str = str(parse)
