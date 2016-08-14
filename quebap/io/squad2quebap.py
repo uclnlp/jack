@@ -1,6 +1,12 @@
 import json
 
 def convert_squad(file_path):
+    # meta info
+    if '/' in file_path:
+        filename = file_path[file_path.rfind('/')+1:] # Maybe support a system-specific delimiter
+    else:
+        filename = file_path
+    # data
     question_sets = []
     with open(file_path) as data_file:
         data = json.load(data_file)['data']
@@ -11,7 +17,13 @@ def convert_squad(file_path):
                     'questions': [parse_question(qa_dict) for qa_dict in paragraph['qas']]
                 }
                 question_sets.append(qa_set)
-    return question_sets
+    corpus_dict = {
+        'meta': {
+            'source': filename
+        },
+        'data': question_sets
+    }
+    return corpus_dict
 
 def parse_support(para_dict):
     return {
