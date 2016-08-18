@@ -573,7 +573,7 @@ def write_annotations(grammar, start_time, end_time):
 def write_examples_left(examples_left):
     dicts = [{"text": e} for e in examples_left]
     json_ser_ex = json.dumps(dicts)
-    out_file = open(data_dir+ "examples_left.json", 'w')
+    out_file = open(data_dir + "examples_left.json", 'w')
     out_file.write(json_ser_ex)
     out_file.close()
 
