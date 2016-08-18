@@ -1,4 +1,4 @@
-box: wercker/python
+box: python
 services:
     # - wercker/postgresql # Don't forget to add your databases as a service
 
