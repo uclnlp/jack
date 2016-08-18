@@ -31,9 +31,9 @@ build:
 #        install_wheel: false # Enable wheel to speed up builds (experimental)
 
     # # Use this virtualenv step for python 3.2
-     - virtualenv
-         name: setup virtual environment
-         python_location: /usr/bin/python3.5
+#     - virtualenv
+#         name: setup virtual environment
+#         python_location: /usr/bin/python3.5
 
     # A step that executes `pip install` command.
     - pip-install
