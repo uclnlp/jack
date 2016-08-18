@@ -1,4 +1,4 @@
-from quebap.projects.modelF.evaluation import RR
+from . evaluation import RR
 
 
 def test_reciprocal_rank():
