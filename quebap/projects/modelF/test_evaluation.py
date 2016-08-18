@@ -6,4 +6,4 @@ def test_reciprocal_rank():
 
 
 def test_reciprocal_rank_2():
-    assert RR(2) == 0.51
+    assert RR(2) == 0.52
