@@ -1,12 +1,12 @@
 import json
-from structs import FrozenIdentifier
+from . structs import FrozenIdentifier
 
 import numpy as np
 import tensorflow as tf
 
-from model import define_model_F_score, nll_loss
-from model import initialize_embeddings, batcher, training
-from evaluation import ranking, average_precision
+from . model import define_model_F_score, nll_loss
+from . model import initialize_embeddings, batcher, training
+from . evaluation import ranking, average_precision
 
 
 def load_train_data_from_quebap(filepath):

@@ -1,2 +1,3 @@
+tensorflow
 pytest
 numpy
