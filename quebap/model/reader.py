@@ -76,14 +76,19 @@ class AtomicBatcher:
                           for inst in batch]
 
             # sample negative candidate
-            neg = [self.random.randint(0, len(self.candidate_lexicon) - 1) for _ in range(0, batch_size)]
-
-            # todo: should go over all questions for same support
-            yield {
-                self.question_ids: question_ids,
-                self.candidate_ids: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
-                self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
-            }
+            if test:
+                yield {
+                    self.question_ids: question_ids,
+                    self.candidate_ids: [list(range(0, self.num_candidates))] * batch_size
+                }
+            else:
+                neg = [self.random.randint(0, len(self.candidate_lexicon) - 1) for _ in range(0, batch_size)]
+                # todo: should go over all questions for same support
+                yield {
+                    self.question_ids: question_ids,
+                    self.candidate_ids: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
+                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
+                }
 
     def convert_to_predictions(self, candidate_ids_values, scores_values):
         """
