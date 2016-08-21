@@ -85,6 +85,28 @@ class AtomicBatcher:
                 self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
             }
 
+    def convert_to_predictions(self, candidate_ids_values, scores_values):
+        """
+        Converts scores and candidate ideas to a prediction output
+        :param candidate_ids_values: [batch_size, num_candidates] int matrix of candidates
+        :param scores_values: [batch_size, num_candidates] float matrix of scores for each candidate
+        :return: a list of scored candidate lists consistent with output_schema.json
+        """
+        all_results = []
+        for scores_per_question, candidates_per_question in zip(scores_values, candidate_ids_values):
+            result_for_question = []
+            for score, candidate_id in zip(scores_per_question, candidates_per_question):
+                candidate_text = self.candidate_lexicon.key_by_id(candidate_id)
+                candidate = {
+                    'text': candidate_text,
+                    'score': score
+                }
+                result_for_question.append(candidate)
+            question = {'candidates': sorted(result_for_question, key=lambda x: -x['score'])}
+            quebap = {'questions': [question]}
+            all_results.append(quebap)
+        return all_results
+
 
 def create_dense_embedding(ids, repr_dim, num_symbols):
     """
@@ -155,10 +177,33 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
 
     # todo: also run dev during training
+    predictions = []
     for batch in reader.batcher.create_batches(test_data, test=True):
         scores = sess.run(reader.scores, feed_dict=batch)
-        print(scores)
-        # create
+        candidates_ids = batch[reader.batcher.candidate_ids]
+        predictions += reader.batcher.convert_to_predictions(candidates_ids, scores)
+
+    print(accuracy(test_data, {'instances': predictions}))
+
+
+def accuracy(gold, guess):
+    """
+    Calculates how often the top predicted answer matches the first gold answer.
+    :param gold: quebap dataset with gold answers.
+    :param guess: quebap dataset with predicted answers
+    :return: accuracy (matches / total number of questions)
+    """
+    # test whether the top answer is the gold answer
+    correct = 0
+    total = 0
+    for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
+        for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
+            top = gold_question['candidates'][0]['text']
+            target = guess_question['answers'][0]['text']
+            if top == target:
+                correct += 1
+            total += 1
+    return correct / total
 
 
 def main():
@@ -178,6 +223,7 @@ def main():
 
     reader = readers[args.model](quebaps, **vars(args))
 
+    # below: legacy code for testing
     train_data = reader.batcher.create_batches(quebaps, args.batch_size)
     print(list(itertools.islice(train_data, 2)))
 
@@ -187,6 +233,10 @@ def main():
     feed_dict = next(train_data)
     print(sess.run(reader.scores, feed_dict=feed_dict))
     print(sess.run(reader.loss, feed_dict=feed_dict))
+
+    scores = sess.run(reader.scores, feed_dict=feed_dict)
+    predictions = reader.batcher.convert_to_predictions(feed_dict[reader.batcher.candidate_ids], scores)
+    print(predictions)
 
 
 if __name__ == "__main__":
