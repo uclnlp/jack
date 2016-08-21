@@ -212,16 +212,16 @@ def accuracy(gold, guess):
     return correct / total
 
 
-def shorten_quebaps(quebaps, begin, end):
+def shorten_reading_dataset(reading_dataset, begin, end):
     """
     Shortens the instances list of the dataset, keeping all meta information intact.
-    :param quebaps: quebap dataset
+    :param reading_dataset: quebap dataset
     :param begin: first element to keep
     :param end: index of last element to keep + 1
     :return: dataset with shortened instances.
     """
-    result = copy.copy(quebaps)
-    result['instances'] = quebaps['instances'][begin:end]
+    result = copy.copy(reading_dataset)
+    result['instances'] = reading_dataset['instances'][begin:end]
     return result
 
 
@@ -243,11 +243,11 @@ def main():
 
     args = parser.parse_args()
 
-    quebaps = shorten_quebaps(json.load(args.train), args.train_begin, args.train_end)
+    reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
 
-    reader = readers[args.model](quebaps, **vars(args))
+    reader = readers[args.model](reading_dataset, **vars(args))
 
-    train_reader(reader, quebaps, quebaps, args.epochs, args.batch_size)
+    train_reader(reader, reading_dataset, reading_dataset, args.epochs, args.batch_size)
 
 
 if __name__ == "__main__":
