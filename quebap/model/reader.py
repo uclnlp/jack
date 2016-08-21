@@ -1,7 +1,7 @@
-import itertools
+import argparse
+import copy
 import json
 import random
-import argparse
 
 import tensorflow as tf
 
@@ -173,10 +173,16 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
     sess.run(tf.initialize_all_variables())
 
     for epoch in range(0, num_epochs):
+        avg_loss = 0
+        count = 0
         for batch in reader.batcher.create_batches(train_data, batch_size=batch_size):
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
+            avg_loss += loss
+            count += 1
+            if count % 1000 == 0:
+                print("Avg Loss: {}".format(avg_loss / count))
 
-    # todo: also run dev during training
+                # todo: also run dev during training
     predictions = []
     for batch in reader.batcher.create_batches(test_data, test=True):
         scores = sess.run(reader.scores, feed_dict=batch)
@@ -198,12 +204,25 @@ def accuracy(gold, guess):
     total = 0
     for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
         for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
-            top = gold_question['candidates'][0]['text']
-            target = guess_question['answers'][0]['text']
+            top = gold_question['answers'][0]['text']
+            target = guess_question['candidates'][0]['text']
             if top == target:
                 correct += 1
             total += 1
     return correct / total
+
+
+def shorten_quebaps(quebaps, begin, end):
+    """
+    Shortens the instances list of the dataset, keeping all meta information intact.
+    :param quebaps: quebap dataset
+    :param begin: first element to keep
+    :param end: index of last element to keep + 1
+    :return: dataset with shortened instances.
+    """
+    result = copy.copy(quebaps)
+    result['instances'] = quebaps['instances'][begin:end]
+    return result
 
 
 def main():
@@ -214,29 +233,21 @@ def main():
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--train', type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--test', type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--batch_size', default=5, type=int)
-    parser.add_argument('--repr_dim', default=5, type=int)
-    parser.add_argument('--model', default='model_f', choices=sorted(readers.keys()))
+    parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
+    parser.add_argument('--repr_dim', default=5, type=int, help="Size of the hidden representation")
+    parser.add_argument('--model', default='model_f', choices=sorted(readers.keys()), help="Reading model to use")
+    parser.add_argument('--epochs', default=1, type=int, help="Number of epochs to train for")
+    parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Index of first training instance.")
+    parser.add_argument('--train_end', default=-1, metavar='E', type=int,
+                        help="Index of last training instance plus 1.")
+
     args = parser.parse_args()
 
-    quebaps = json.load(args.train)
+    quebaps = shorten_quebaps(json.load(args.train), args.train_begin, args.train_end)
 
     reader = readers[args.model](quebaps, **vars(args))
 
-    # below: legacy code for testing
-    train_data = reader.batcher.create_batches(quebaps, args.batch_size)
-    print(list(itertools.islice(train_data, 2)))
-
-    sess = tf.Session()
-    sess.run(tf.initialize_all_variables())
-
-    feed_dict = next(train_data)
-    print(sess.run(reader.scores, feed_dict=feed_dict))
-    print(sess.run(reader.loss, feed_dict=feed_dict))
-
-    scores = sess.run(reader.scores, feed_dict=feed_dict)
-    predictions = reader.batcher.convert_to_predictions(feed_dict[reader.batcher.candidate_ids], scores)
-    print(predictions)
+    train_reader(reader, quebaps, quebaps, args.epochs, args.batch_size)
 
 
 if __name__ == "__main__":
