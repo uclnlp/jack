@@ -28,6 +28,79 @@ class MultipleChoiceReader:
         self.batcher = batcher
 
 
+class SequenceBatcher:
+    def __init__(self, reference_data, candidate_split=",", question_split="-"):
+        self.reference_data = reference_data
+        self.pad = "PAD"
+        self.candidate_split = candidate_split
+        self.question_split = question_split
+        global_candidates = reference_data['globals']['candidates']
+        self.all_candidate_tokens = [self.pad] + sorted({token
+                                                         for c in global_candidates
+                                                         for token in c['text'].split(candidate_split)})
+        instances = reference_data['instances']
+        self.all_question_tokens = [self.pad] + sorted({token
+                                                        for inst in instances
+                                                        for token in
+                                                        inst['questions'][0]['question'].split(question_split)})
+
+        self.question_lexicon = FrozenIdentifier(self.all_question_tokens)
+        self.candidate_lexicon = FrozenIdentifier(self.all_candidate_tokens)
+
+        self.question_seqs = tf.placeholder(tf.int32, (None, None))  # [batch_size, num_tokens]
+        self.candidate_seqs = tf.placeholder(tf.int32, (None, None, None))  # [batch_size, num_candidates, num_tokens]
+        self.target_values = tf.placeholder(tf.float32, (None, None))
+        self.num_candidate_tokens = len(self.candidate_lexicon)
+        self.num_questions_tokens = len(self.question_lexicon)
+        self.max_candidate_length = max([len(self.string_to_seq(c['text'], self.candidate_split))
+                                         for c in global_candidates])
+        self.global_candidate_seqs = [self.pad_seq([self.candidate_lexicon[t]
+                                                    for t in self.string_to_seq(c['text'], self.candidate_split)],
+                                                   self.max_candidate_length)
+                                      for c in global_candidates]
+        self.random = random.Random(0)
+
+    def string_to_seq(self, seq, split, max_length=None):
+        result = seq.split(split)
+        return result if max_length is None else result + [self.pad for _ in range(0, max_length - len(result))]
+
+    def pad_seq(self, seq, target_length):
+        return seq + [self.pad for _ in range(0, target_length - len(seq))]
+
+    def create_batches(self, data=None, batch_size=1, test=False):
+        instances = self.reference_data['instances'] if data is None else data['instances']
+        for b in range(0, len(instances) // batch_size):
+            batch = instances[b * batch_size: (b + 1) * batch_size]
+
+            question_seqs = [[self.question_lexicon[t] for t in
+                              self.string_to_seq(inst['questions'][0]['question'], self.question_split)]
+                             for inst in batch]
+            answer_seqs = [[self.candidate_lexicon[t] for t in
+                            self.string_to_seq(inst['questions'][0]['answers'][0]['text'], self.candidate_split)]
+                           for inst in batch]
+
+            max_question_length = max([len(q) for q in question_seqs])
+            max_answer_length = max([len(a) for a in answer_seqs])
+
+            answer_seqs_padded = [self.pad_seq(batch_item, max_answer_length) for batch_item in answer_seqs]
+            question_seqs_padded = [self.pad_seq(batch_item, max_question_length) for batch_item in question_seqs]
+
+            # sample negative candidate
+            if test:
+                yield {
+                    self.question_seqs: question_seqs_padded,
+                    self.candidate_seqs: answer_seqs_padded
+                }
+            else:
+                neg_candidates = [self.random.choice(answer_seqs_padded) for _ in range(0, batch_size)]
+                # todo: should go over all questions for same support
+                yield {
+                    self.question_seqs: question_seqs_padded,
+                    self.candidate_seqs: [(pos, neg) for pos, neg in zip(answer_seqs_padded, neg_candidates)],
+                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
+                }
+
+
 class AtomicBatcher:
     """
     This batcher wraps quebaps into placeholders:
