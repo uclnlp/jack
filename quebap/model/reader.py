@@ -23,13 +23,15 @@ class Batcher(metaclass=ABCMeta):
     a [batch_size, num_candidates] float matrix, where num_candidates is determined by the batcher.
     """
 
-    def __init__(self, candidates, questions, target_values):
+    def __init__(self, candidates, questions, target_values, support):
         """
         Create the batcher.
         :param candidates: a placeholder of shape [batch_size, num_candidates, ...]
         :param questions: a placeholder of shape [batch_size, ...] of question representations.
         :param target_values: a float placeholder of shape [batch_size, num_candidates]
+        :param support: a placeholder of shape [batch_size, num_support, ...] representing support documents.
         """
+        self.support = support
         self.target_values = target_values
         self.questions = questions
         self.candidates = candidates
@@ -76,6 +78,10 @@ class MultipleChoiceReader:
         self.batcher = batcher
 
 
+def pad_seq(seq, target_length, pad):
+    return seq + [pad for _ in range(0, target_length - len(seq))]
+
+
 class SequenceBatcher(Batcher):
     """
     Converts reading instances into tensors of integer sequences representing tokens. A question batch
@@ -85,17 +91,20 @@ class SequenceBatcher(Batcher):
     for each candidate. (target_values placeholder)
     """
 
-    def __init__(self, reference_data, candidate_split=",", question_split="-"):
+    def __init__(self, reference_data, candidate_split=",", question_split="-", support_split=" "):
         """
         Create a new SequenceBatcher.
         :param reference_data: the training data that determines the lexicon.
         :param candidate_split: the regular expression used for tokenizing candidates.
         :param question_split: the regular expression used for tokenizing questions.
+        :param support_split: the regular expression used for tokenizing support documents.
         """
         self.reference_data = reference_data
-        self.pad = "PAD"
+        self.pad = "<PAD>"
+        self.empty = "<EMPTY>"
         self.candidate_split = candidate_split
         self.question_split = question_split
+        self.support_split = support_split
 
         questions = tf.placeholder(tf.int32, (None, None), name="question")  # [batch_size, num_tokens]
         candidates = tf.placeholder(tf.int32, (None, None, None),
@@ -107,15 +116,25 @@ class SequenceBatcher(Batcher):
         global_candidates = reference_data['globals']['candidates']
         self.all_candidate_tokens = [self.pad] + sorted({token
                                                          for c in global_candidates
-                                                         for token in c['text'].split(candidate_split)})
+                                                         for token in
+                                                         self.string_to_seq(c['text'], candidate_split)})
         instances = reference_data['instances']
         self.all_question_tokens = [self.pad] + sorted({token
                                                         for inst in instances
                                                         for token in
-                                                        inst['questions'][0]['question'].split(question_split)})
+                                                        self.string_to_seq(inst['questions'][0]['question'],
+                                                                           question_split)})
+
+        self.all_support_tokens = [self.pad, self.empty] + sorted({token
+                                                                   for inst in instances
+                                                                   for support in inst['support']
+                                                                   for token in
+                                                                   self.string_to_seq(support['text'],
+                                                                                      self.candidate_split)})
 
         self.question_lexicon = FrozenIdentifier(self.all_question_tokens)
         self.candidate_lexicon = FrozenIdentifier(self.all_candidate_tokens)
+        self.support_lexicon = FrozenIdentifier(self.all_support_tokens)
 
         self.num_candidate_symbols = len(self.candidate_lexicon)
         self.num_questions_symbols = len(self.question_lexicon)
@@ -132,7 +151,7 @@ class SequenceBatcher(Batcher):
         return result if max_length is None else result + [self.pad for _ in range(0, max_length - len(result))]
 
     def pad_seq(self, seq, target_length):
-        return seq + [self.pad for _ in range(0, target_length - len(seq))]
+        return pad_seq(seq, target_length, self.pad)
 
     def convert_to_predictions(self, candidates, scores):
         """
@@ -177,18 +196,30 @@ class SequenceBatcher(Batcher):
             answer_seqs = [[self.candidate_lexicon[t] for t in
                             self.string_to_seq(inst['questions'][0]['answers'][0]['text'], self.candidate_split)]
                            for inst in batch]
+            support_seqs = [[[self.support_lexicon[t]
+                              for t in self.string_to_seq(support['text'], self.support_split)]
+                             for support in inst['support']]
+                            for inst in batch]
 
             max_question_length = max([len(q) for q in question_seqs])
             max_answer_length = max([len(a) for a in answer_seqs])
+            max_support_length = max([len(a) for support in support_seqs for a in support])
+            max_num_support = max(len(support) for support in support_seqs)
 
+            empty_support = self.pad_seq([], max_support_length)
             answer_seqs_padded = [self.pad_seq(batch_item, max_answer_length) for batch_item in answer_seqs]
             question_seqs_padded = [self.pad_seq(batch_item, max_question_length) for batch_item in question_seqs]
+            # [batch_size, max_num_support, max_support_length]
+            support_seqs_padded = [
+                pad_seq([self.pad_seq(s, max_support_length) for s in batch_item], max_num_support, empty_support)
+                for batch_item in support_seqs]
 
             # sample negative candidate
             if test:
                 yield {
                     self.questions: question_seqs_padded,
-                    self.candidates: answer_seqs_padded
+                    self.candidates: answer_seqs_padded,
+                    self.support: support_seqs_padded
                 }
             else:
                 neg_candidates = [self.random.choice(answer_seqs_padded) for _ in range(0, batch_size)]
@@ -196,7 +227,8 @@ class SequenceBatcher(Batcher):
                 yield {
                     self.questions: question_seqs_padded,
                     self.candidates: [(pos, neg) for pos, neg in zip(answer_seqs_padded, neg_candidates)],
-                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
+                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)],
+                    self.support: support_seqs_padded
                 }
 
 
@@ -220,17 +252,21 @@ class AtomicBatcher(Batcher):
         all_candidates = set([c['text'] for c in global_candidates])
         instances = reference_data['instances']
         all_questions = set([inst['questions'][0]['question'] for inst in instances])
+        all_support = set(support['text'] for inst in instances for support in inst['support'])
         self.question_lexicon = FrozenIdentifier(all_questions)
         self.candidate_lexicon = FrozenIdentifier(all_candidates)
+        self.support_lexicon = FrozenIdentifier(all_support)
 
-        questions = tf.placeholder(tf.int32, (None,))
-        candidates = tf.placeholder(tf.int32, (None, None))
-        target_values = tf.placeholder(tf.float32, (None, None))
-        super().__init__(candidates, questions, target_values)
+        questions = tf.placeholder(tf.int32, (None,), name='questions')
+        candidates = tf.placeholder(tf.int32, (None, None), name="candidates")
+        target_values = tf.placeholder(tf.float32, (None, None), name="target_values")
+        support = tf.placeholder(tf.float32, (None, None), name="support")
+        super().__init__(candidates, questions, target_values, support)
 
         self.random = random.Random(0)
         self.num_candidates = len(self.candidate_lexicon)
         self.num_questions = len(self.question_lexicon)
+        self.num_support = len(self.support_lexicon)
 
     def create_batches(self, data=None, batch_size=1, test=False):
         """
@@ -249,11 +285,14 @@ class AtomicBatcher(Batcher):
             answer_ids = [self.candidate_lexicon[inst['questions'][0]['answers'][0]['text']]
                           for inst in batch]
 
+            support_ids = [[self.support_lexicon[support['text']] for support in inst['support']] for inst in batch]
+
             # sample negative candidate
             if test:
                 yield {
                     self.questions: question_ids,
-                    self.candidates: [list(range(0, self.num_candidates))] * batch_size
+                    self.candidates: [list(range(0, self.num_candidates))] * batch_size,
+                    self.support: support_ids
                 }
             else:
                 neg = [self.random.randint(0, len(self.candidate_lexicon) - 1) for _ in range(0, batch_size)]
@@ -261,7 +300,8 @@ class AtomicBatcher(Batcher):
                 yield {
                     self.questions: question_ids,
                     self.candidates: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
-                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
+                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)],
+                    self.support: support_ids
                 }
 
     def convert_to_predictions(self, candidates, scores):
