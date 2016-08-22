@@ -101,7 +101,6 @@ class SequenceBatcher(Batcher):
         """
         self.reference_data = reference_data
         self.pad = "<PAD>"
-        self.empty = "<EMPTY>"
         self.candidate_split = candidate_split
         self.question_split = question_split
         self.support_split = support_split
@@ -126,12 +125,12 @@ class SequenceBatcher(Batcher):
                                                         self.string_to_seq(inst['questions'][0]['question'],
                                                                            question_split)})
 
-        self.all_support_tokens = [self.pad, self.empty] + sorted({token
-                                                                   for inst in instances
-                                                                   for support in inst['support']
-                                                                   for token in
-                                                                   self.string_to_seq(support['text'],
-                                                                                      self.candidate_split)})
+        self.all_support_tokens = [self.pad] + sorted({token
+                                                       for inst in instances
+                                                       for support in inst['support']
+                                                       for token in
+                                                       self.string_to_seq(support['text'],
+                                                                          self.candidate_split)})
 
         self.question_lexicon = FrozenIdentifier(self.all_question_tokens)
         self.candidate_lexicon = FrozenIdentifier(self.all_candidate_tokens)
@@ -210,7 +209,7 @@ class SequenceBatcher(Batcher):
             max_support_length = max([len(a) for support in support_seqs for a in support] + [1])
             max_num_support = max([len(support) for support in support_seqs] + [1])
 
-            empty_support = pad_seq([], max_support_length, self.support_lexicon[self.empty])
+            empty_support = pad_seq([], max_support_length, self.support_lexicon[self.pad])
             answer_seqs_padded = [self.pad_seq(batch_item, max_answer_length) for batch_item in answer_seqs]
             question_seqs_padded = [self.pad_seq(batch_item, max_question_length) for batch_item in question_seqs]
             # [batch_size, max_num_support, max_support_length]
@@ -252,15 +251,15 @@ class AtomicBatcher(Batcher):
         :param reference_data: the quebap dataset to use for initialising the question/candidate to id mapping.
         """
         self.reference_data = reference_data
+        self.empty = "<EMPTY>"
         global_candidates = reference_data['globals']['candidates']
         all_candidates = set([c['text'] for c in global_candidates])
         instances = reference_data['instances']
         all_questions = set([inst['questions'][0]['question'] for inst in instances])
-        all_support = set(support['text'] for inst in instances for support in inst['support'])
+        all_support = set([support['text'] for inst in instances for support in inst['support']] + [self.empty])
         self.question_lexicon = FrozenIdentifier(all_questions)
         self.candidate_lexicon = FrozenIdentifier(all_candidates)
         self.support_lexicon = FrozenIdentifier(all_support)
-        self.empty = "<EMPTY>"
 
         questions = tf.placeholder(tf.int32, (None,), name='questions')
         candidates = tf.placeholder(tf.int32, (None, None), name="candidates")
