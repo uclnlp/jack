@@ -57,6 +57,7 @@ def annotate_text(text, tokenize=False, sent_split=False, postag=False, parse=Fa
     except:
         annotations = json.loads(annotations, encoding='utf-8', strict=False)
     token_offsets = []
+    tokens = []
     sentence_offsets = []
     postags = []
     parses = []
@@ -66,6 +67,7 @@ def annotate_text(text, tokenize=False, sent_split=False, postag=False, parse=Fa
             if tokenize:
                 for token in sentence['tokens']:
                     token_offsets.append([token['characterOffsetBegin'], token['characterOffsetEnd']])
+                    tokens.append(token['word'])
                     if 'pos' in token:
                         postags.append(token['pos'])
             if sent_split:
@@ -80,7 +82,8 @@ def annotate_text(text, tokenize=False, sent_split=False, postag=False, parse=Fa
     result = {}
     result['text'] = text
     if tokenize:
-        result['tokens'] = token_offsets
+        result['tokens'] = tokens
+        result['token_offsets'] = token_offsets
     if sent_split:
         result['sentences'] = sentence_offsets
     if postag:

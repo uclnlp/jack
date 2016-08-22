@@ -8,12 +8,10 @@ with open(argv[1]) as f:
 with open(argv[2]) as f:
     schema = json.load(f)
 
-
-
 try:
-	jsonschema.validate(data, schema)
-	print('JSON successfully validated.')
+    jsonschema.validate(data, schema)
+    print('JSON successfully validated.')
 except jsonschema.ValidationError as e:
-	print(e.message)
+    print(e.message)
 except jsonschema.SchemaError as e:
-	print(e)
+    print(e)

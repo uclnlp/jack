@@ -1,5 +1,6 @@
 import json
 
+
 def load_cbt_file(path=None, part='train', mode='NE'):
     """ Path should be given and function will load raw data.
     If it is no given however, there's three parts:
@@ -15,11 +16,11 @@ def load_cbt_file(path=None, part='train', mode='NE'):
     'all' is not suitable for QA format, it seems to be just raw text.
     """
     if path is None:
-        #path='/Users/Johannes/PhD/kebab/pre/CBTest/data/'
+        # path='/Users/Johannes/PhD/kebab/pre/CBTest/data/'
         if mode == 'all':
-            path+='cbt_' + part + '.txt'
+            path += 'cbt_' + part + '.txt'
         else:
-            path+='cbtest_' + mode + '_' + part
+            path += 'cbtest_' + mode + '_' + part
             if part == 'valid':
                 path += '_2000ex.txt'
             elif part == 'test':
@@ -30,12 +31,15 @@ def load_cbt_file(path=None, part='train', mode='NE'):
 
 
 def split_cbt(raw_data):
-    ''' splits raw cbt data into parts corresponding to each instance
-    '''
+    """
+    splits raw cbt data into parts corresponding to each instance
+    :param raw_data:
+    :return:
+    """
     story_instances = []
     instance = []
     for l in raw_data.split('\n')[:-1]:
-        if l == '': #reset instance every time an empty line is encountered
+        if l == '':  # reset instance every time an empty line is encountered
             story_instances.append(instance)
             instance = []
             continue
@@ -44,9 +48,12 @@ def split_cbt(raw_data):
 
 
 def parse_cbt_example(instance):
-    """ returns dictionary with support, question, correct answer and candidates.
     """
-    D = {}
+    returns dictionary with support, question, correct answer and candidates.
+    :param instance:
+    :return:
+    """
+    # D = {}
     support = []
     for line in instance:
         line_number, line_content = line.split(" ", 1)
@@ -55,31 +62,30 @@ def parse_cbt_example(instance):
         else:
             question, answer, candidates_string = line_content.split('\t', 2)
     candidates_list = candidates_string.strip('\t').split('|')
-    qdict  = {
-        'question' : question,
-        'candidates' : [
+    qdict = {
+        'question': question,
+        'candidates': [
             {
-            'text' : cand
+                'text' : cand
             } for cand in candidates_list
         ],
         'answers': [{'text': answer}]
     }
     questions = [qdict]
-    qset_dict = {}
-    qset_dict['support'] = [
-            {
-            'text': supp
-            } for supp in support
-    ]
-    qset_dict['questions'] = questions
+    qset_dict = {
+                    'suport': [{'text': supp} for supp in support],
+                    'questions': questions
+                }
+
     return qset_dict
 
 
-
 def convert_cbtest(path):
-    """ convert Children Book Test file into quebap format. Path should indicate
+    """
+    convert Children Book Test file into quebap format. Path should indicate
     the file which should be converted, e.g.
-    path = '.../data/cbtest_CN_train.txt'
+    :param path: '.../data/cbtest_CN_train.txt'
+    :return:
     """
     raw_data = load_cbt_file(path)
     instances = split_cbt(raw_data)
@@ -90,10 +96,10 @@ def convert_cbtest(path):
 
 
 def main():
-    #some tests:
-    #raw_data = load_cbt_file(path=None, part='valid', mode='NE')
-    #instances = split_cbt(raw_data)
-    #_ = parse_cbt_example(instances[0])
+    # some tests:
+    # raw_data = load_cbt_file(path=None, part='valid', mode='NE')
+    # instances = split_cbt(raw_data)
+    # = parse_cbt_example(instances[0])
     import sys
     if len(sys.argv) == 2:
         corpus = convert_cbtest(path=sys.argv[1])
