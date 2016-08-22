@@ -6,6 +6,53 @@ import random
 import tensorflow as tf
 
 from quebap.projects.modelF.structs import FrozenIdentifier
+from abc import *
+
+
+class Batcher(metaclass=ABCMeta):
+    """
+    A batcher is in charge of converting a reading dataset into batches of tensor flow feed_dicts, and batches
+    of tensor values back to reading datasets. A batcher for a MultipleChoiceReader maintains three placeholders:
+    * candidates, to represent answer candidates
+    * questions, to represent questions
+    * target_values, to represent assignments of each candidate to 0/1 truth values.
+    * TODO: support
+
+    The batcher can represent candidates, support and questions in any way it likes, but target_values need to be
+    a [batch_size, num_candidates] float matrix.
+    """
+
+    def __init__(self, candidates, questions, target_values):
+        """
+        Create the batcher.
+        :param candidates: a placeholder of shape [batch_size, num_candidates, ...]
+        :param questions: a placeholder of shape [batch_size, ...] of question representations.
+        :param target_values: a float placeholder of shape [batch_size, num_candidates]
+        """
+        self.target_values = target_values
+        self.questions = questions
+        self.candidates = candidates
+
+    @abstractmethod
+    def convert_to_predictions(self, candidates, scores):
+        """
+        Take a candidate tensor and corresponding scores, and convert into a batch of reading instances.
+        :param candidates: a tensor representing candidates.
+        :param scores: a tensor representing candidate scores.
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def create_batches(self, data, batch_size: int, test: bool):
+        """
+        Take reading dataset and return a generator of feed_dicts that represent the batched data.
+        :param data: Input data to convert and batch.
+        :param batch_size: How big should the batch be.
+        :param test: is this data for testing (True) or training (False).
+        :return: a generator of feed dicts for the batchers placeholders.
+        """
+        pass
 
 
 class MultipleChoiceReader:
@@ -16,7 +63,7 @@ class MultipleChoiceReader:
     answer candidates, and a training loss TF node.
     """
 
-    def __init__(self, batcher, scores, loss):
+    def __init__(self, batcher: Batcher, scores, loss):
         """
 
         :param batcher: batcher with a create_batches function (see AtomicBatcher)
@@ -28,12 +75,34 @@ class MultipleChoiceReader:
         self.batcher = batcher
 
 
-class SequenceBatcher:
+class SequenceBatcher(Batcher):
+    """
+    Converts reading instances into tensors of integer sequences representing tokens. A question batch
+    is tranformed into a [batch_size, max_length] integer matrix (question placeholder),
+    a list of candidates into a [batch_size, num_candidates, max_length] integer tensor (candidates placeholder)
+    the answers are a 0/1 float [batch_size, num_candidates] matrix indicating a true (1) or false (0) label
+    for each candidate. (target_values placeholder)
+    """
+
     def __init__(self, reference_data, candidate_split=",", question_split="-"):
+        """
+        Create a new SequenceBatcher.
+        :param reference_data: the training data that determines the lexicon.
+        :param candidate_split: the regular expression used for tokenizing candidates.
+        :param question_split: the regular expression used for tokenizing questions.
+        """
         self.reference_data = reference_data
         self.pad = "PAD"
         self.candidate_split = candidate_split
         self.question_split = question_split
+
+        questions = tf.placeholder(tf.int32, (None, None), name="question")  # [batch_size, num_tokens]
+        candidates = tf.placeholder(tf.int32, (None, None, None),
+                                    name="candidates")  # [batch_size, num_candidates, num_tokens]
+        target_values = tf.placeholder(tf.float32, (None, None), name="target")
+
+        super().__init__(candidates, questions, target_values)
+
         global_candidates = reference_data['globals']['candidates']
         self.all_candidate_tokens = [self.pad] + sorted({token
                                                          for c in global_candidates
@@ -47,11 +116,8 @@ class SequenceBatcher:
         self.question_lexicon = FrozenIdentifier(self.all_question_tokens)
         self.candidate_lexicon = FrozenIdentifier(self.all_candidate_tokens)
 
-        self.question_seqs = tf.placeholder(tf.int32, (None, None))  # [batch_size, num_tokens]
-        self.candidate_seqs = tf.placeholder(tf.int32, (None, None, None))  # [batch_size, num_candidates, num_tokens]
-        self.target_values = tf.placeholder(tf.float32, (None, None))
-        self.num_candidate_tokens = len(self.candidate_lexicon)
-        self.num_questions_tokens = len(self.question_lexicon)
+        self.num_candidate_symbols = len(self.candidate_lexicon)
+        self.num_questions_symbols = len(self.question_lexicon)
         self.max_candidate_length = max([len(self.string_to_seq(c['text'], self.candidate_split))
                                          for c in global_candidates])
         self.global_candidate_seqs = [self.pad_seq([self.candidate_lexicon[t]
@@ -67,7 +133,39 @@ class SequenceBatcher:
     def pad_seq(self, seq, target_length):
         return seq + [self.pad for _ in range(0, target_length - len(seq))]
 
+    def convert_to_predictions(self, candidates, scores):
+        """
+        Convert a batched candidate tensor and batched scores back into a python dictionary in quebap format.
+        :param candidates: candidate representation as generated by this batcher.
+        :param scores: scores tensor of the shape of the target_value placeholder.
+        :return: sequence of reading instances corresponding to the input.
+        """
+        all_results = []
+        for scores_per_question, candidates_per_question in zip(scores, candidates):
+            result_for_question = []
+            for score, candidate_seq in zip(scores_per_question, candidates_per_question):
+                candidate_tokens = [self.candidate_lexicon.key_by_id(sym) for sym in candidate_seq if
+                                    sym != self.candidate_lexicon[self.pad]]
+                candidate_text = self.candidate_split.join(candidate_tokens)
+                candidate = {
+                    'text': candidate_text,
+                    'score': score
+                }
+                result_for_question.append(candidate)
+            question = {'answers': sorted(result_for_question, key=lambda x: -x['score'])}
+            quebap = {'questions': [question]}
+            all_results.append(quebap)
+        return all_results
+
     def create_batches(self, data=None, batch_size=1, test=False):
+        """
+        Take a dataset and create a generator of (batched) feed_dict objects. At training time this
+        batcher sub-samples the candidates (currently one positive and one negative candidate).
+        :param data: the input dataset.
+        :param batch_size: size of each batch.
+        :param test: should this be generated for test time? If so, the candidates are all possible candidates.
+        :return: a generator of batches.
+        """
         instances = self.reference_data['instances'] if data is None else data['instances']
         for b in range(0, len(instances) // batch_size):
             batch = instances[b * batch_size: (b + 1) * batch_size]
@@ -88,20 +186,20 @@ class SequenceBatcher:
             # sample negative candidate
             if test:
                 yield {
-                    self.question_seqs: question_seqs_padded,
-                    self.candidate_seqs: answer_seqs_padded
+                    self.questions: question_seqs_padded,
+                    self.candidates: answer_seqs_padded
                 }
             else:
                 neg_candidates = [self.random.choice(answer_seqs_padded) for _ in range(0, batch_size)]
                 # todo: should go over all questions for same support
                 yield {
-                    self.question_seqs: question_seqs_padded,
-                    self.candidate_seqs: [(pos, neg) for pos, neg in zip(answer_seqs_padded, neg_candidates)],
+                    self.questions: question_seqs_padded,
+                    self.candidates: [(pos, neg) for pos, neg in zip(answer_seqs_padded, neg_candidates)],
                     self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
                 }
 
 
-class AtomicBatcher:
+class AtomicBatcher(Batcher):
     """
     This batcher wraps quebaps into placeholders:
     1. question_ids: A [batch_size] int vector where each component represents a single question using a single symbol.
@@ -124,8 +222,8 @@ class AtomicBatcher:
         self.question_lexicon = FrozenIdentifier(all_questions)
         self.candidate_lexicon = FrozenIdentifier(all_candidates)
 
-        self.question_ids = tf.placeholder(tf.int32, (None,))
-        self.candidate_ids = tf.placeholder(tf.int32, (None, None))
+        self.questions = tf.placeholder(tf.int32, (None,))
+        self.candidates = tf.placeholder(tf.int32, (None, None))
         self.target_values = tf.placeholder(tf.float32, (None, None))
         self.random = random.Random(0)
         self.num_candidates = len(self.candidate_lexicon)
@@ -151,27 +249,27 @@ class AtomicBatcher:
             # sample negative candidate
             if test:
                 yield {
-                    self.question_ids: question_ids,
-                    self.candidate_ids: [list(range(0, self.num_candidates))] * batch_size
+                    self.questions: question_ids,
+                    self.candidates: [list(range(0, self.num_candidates))] * batch_size
                 }
             else:
                 neg = [self.random.randint(0, len(self.candidate_lexicon) - 1) for _ in range(0, batch_size)]
                 # todo: should go over all questions for same support
                 yield {
-                    self.question_ids: question_ids,
-                    self.candidate_ids: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
+                    self.questions: question_ids,
+                    self.candidates: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
                     self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)]
                 }
 
-    def convert_to_predictions(self, candidate_ids_values, scores_values):
+    def convert_to_predictions(self, candidates, scores):
         """
         Converts scores and candidate ideas to a prediction output
-        :param candidate_ids_values: [batch_size, num_candidates] int matrix of candidates
-        :param scores_values: [batch_size, num_candidates] float matrix of scores for each candidate
+        :param candidates: [batch_size, num_candidates] int matrix of candidates
+        :param scores: [batch_size, num_candidates] float matrix of scores for each candidate
         :return: a list of scored candidate lists consistent with output_schema.json
         """
         all_results = []
-        for scores_per_question, candidates_per_question in zip(scores_values, candidate_ids_values):
+        for scores_per_question, candidates_per_question in zip(scores, candidates):
             result_for_question = []
             for score, candidate_id in zip(scores_per_question, candidates_per_question):
                 candidate_text = self.candidate_lexicon.key_by_id(candidate_id)
@@ -180,7 +278,7 @@ class AtomicBatcher:
                     'score': score
                 }
                 result_for_question.append(candidate)
-            question = {'candidates': sorted(result_for_question, key=lambda x: -x['score'])}
+            question = {'answers': sorted(result_for_question, key=lambda x: -x['score'])}
             quebap = {'questions': [question]}
             all_results.append(quebap)
         return all_results
@@ -226,15 +324,41 @@ def create_model_f_reader(reference_data, **options):
     :return: ModelF
     """
     batcher = AtomicBatcher(reference_data)
-    question_encoder = create_dense_embedding(batcher.question_ids, options['repr_dim'], batcher.num_questions)
-    candidate_encoder = create_dense_embedding(batcher.candidate_ids, options['repr_dim'], batcher.num_candidates)
-    scores = create_dot_product_scorer(question_encoder, candidate_encoder)
+    question_encoding = create_dense_embedding(batcher.questions, options['repr_dim'], batcher.num_questions)
+    candidate_encoding = create_dense_embedding(batcher.candidates, options['repr_dim'], batcher.num_candidates)
+    scores = create_dot_product_scorer(question_encoding, candidate_encoding)
+    loss = create_softmax_loss(scores, batcher.target_values)
+    return MultipleChoiceReader(batcher, scores, loss)
+
+
+def create_bag_of_embeddings_reader(reference_data, **options):
+    """
+    A reader that creates sequence representations of the input reading instance, and then
+    models each question and candidate as the sum of the embeddings of their tokens.
+    :param reference_data: the reference training set that determines the vocabulary.
+    :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
+    :return: a MultipleChoiceReader.
+    """
+    batcher = SequenceBatcher(reference_data,
+                              candidate_split=options['candidate_split'],
+                              question_split=options['question_split'])
+
+    # get embeddings for each question token
+    # [batch_size, max_question_length, repr_dim]
+    question_embeddings = create_dense_embedding(batcher.questions, options['repr_dim'], batcher.num_questions_symbols)
+    question_encoding = tf.reduce_sum(question_embeddings, 1)  # [batch_size, repr_dim]
+
+    # [batch_size, num_candidates, max_question_length, repr_dim
+    candidate_embeddings = create_dense_embedding(batcher.candidates, options['repr_dim'],
+                                                  batcher.num_candidate_symbols)
+    candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
+    scores = create_dot_product_scorer(question_encoding, candidate_encoding)
     loss = create_softmax_loss(scores, batcher.target_values)
     return MultipleChoiceReader(batcher, scores, loss)
 
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
-                 optimiser=tf.train.AdamOptimizer()):
+                 optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):
     """
     Train a reader, and test on test set.
     :param reader: The reader to train
@@ -262,9 +386,9 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
 
                 # todo: also run dev during training
     predictions = []
-    for batch in reader.batcher.create_batches(test_data, test=True):
+    for batch in reader.batcher.create_batches(test_data, test=not use_train_generator_for_test):
         scores = sess.run(reader.scores, feed_dict=batch)
-        candidates_ids = batch[reader.batcher.candidate_ids]
+        candidates_ids = batch[reader.batcher.candidates]
         predictions += reader.batcher.convert_to_predictions(candidates_ids, scores)
 
     print(accuracy(test_data, {'instances': predictions}))
@@ -283,7 +407,7 @@ def accuracy(gold, guess):
     for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
         for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
             top = gold_question['answers'][0]['text']
-            target = guess_question['candidates'][0]['text']
+            target = guess_question['answers'][0]['text']
             if top == target:
                 correct += 1
             total += 1
@@ -305,7 +429,8 @@ def shorten_reading_dataset(reading_dataset, begin, end):
 
 def main():
     readers = {
-        'model_f': create_model_f_reader
+        'model_f': create_model_f_reader,
+        'boe': create_bag_of_embeddings_reader
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
@@ -318,6 +443,12 @@ def main():
     parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Index of first training instance.")
     parser.add_argument('--train_end', default=-1, metavar='E', type=int,
                         help="Index of last training instance plus 1.")
+    parser.add_argument('--candidate_split', default="$", type=str, metavar="S",
+                        help="Regular Expression for tokenizing candidates")
+    parser.add_argument('--question_split', default="-", type=str, metavar="S",
+                        help="Regular Expression for tokenizing questions")
+    parser.add_argument('--use_train_generator_for_test', default=False, type=bool, metavar="B",
+                        help="Should the training candidate generator be used when testing")
 
     args = parser.parse_args()
 
@@ -325,7 +456,8 @@ def main():
 
     reader = readers[args.model](reading_dataset, **vars(args))
 
-    train_reader(reader, reading_dataset, reading_dataset, args.epochs, args.batch_size)
+    train_reader(reader, reading_dataset, reading_dataset, args.epochs, args.batch_size,
+                 use_train_generator_for_test=True)
 
 
 if __name__ == "__main__":
