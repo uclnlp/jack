@@ -2,8 +2,10 @@ import json
 
 labels = ["A", "B", "C", "D"]
 
+
 def clean_mctest_text(text):
     return text.replace('\\newline', '  ')
+
 
 def convert_mctest(tsv_file, ans_file):
     with open(tsv_file) as tsv_data:
@@ -15,50 +17,51 @@ def convert_mctest(tsv_file, ans_file):
         corpus.append(parse_mctest_instance(tsv, ans))
     return corpus
 
+
 def parse_mctest_instance(tsv_chunk, ans_chunk):
     tsv_tabs = tsv_chunk.strip().split('\t')
     ans_tabs = ans_chunk.strip().split('\t')
-    id = tsv_tabs[0]
-    ann = tsv_tabs[1]
+    # id = tsv_tabs[0]
+    # ann = tsv_tabs[1]
     passage = tsv_tabs[2]
     # the dictionary for populating a set of passage/questions/answers
-    qset_dict = {}
-    qset_dict['support'] = [{
-            'text': clean_mctest_text(passage)
-    }]
-    # collect questions / answers
-    qset_dict['questions'] = parse_mctest_questions(tsv_tabs[3:], ans_tabs)
+    qset_dict = {
+                    'support': [{'text': clean_mctest_text(passage)}],
+                    'questionsL': parse_mctest_questions(tsv_tabs[3:], ans_tabs)
+                }
     return qset_dict
 
+
 def parse_mctest_questions(question_list, ans_tabs):
-#    print(ans_tabs)
+    # print(ans_tabs)
     questions = []
     for i in range(0, len(question_list), 5):
-        qdict = {}
+        # qdict = {}
         # parse answers
         candidates = []
         correct_answer = ans_tabs[int(i / 5)]
-        for j in range(1,5):
+        for j in range(1, 5):
             label = labels[j-1]
             answer = {
-                'label' : label,
-                'text' : question_list[i+j]
+                'label': label,
+                'text': question_list[i + j]
             }
             candidates.append(answer)
         correct_index = labels.index(correct_answer)
         answer = {
             'index': correct_index,
-            'text': question_list[i+correct_index+1]
+            'text': question_list[i + correct_index + 1]
         }
         # parse question
         qcols = question_list[i].split(':')
-        qdict  = {
-            'question' : qcols[1],
-            'candidates' : candidates,
+        qdict = {
+            'question': qcols[1],
+            'candidates': candidates,
             'answers': [answer]
         }
         questions.append(qdict)
     return questions
+
 
 def main():
     import sys
@@ -66,4 +69,5 @@ def main():
         corpus = convert_mctest(sys.argv[1], sys.argv[2])
         print(json.dumps(corpus, indent=2))
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

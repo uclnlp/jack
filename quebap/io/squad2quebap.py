@@ -1,9 +1,10 @@
 import json
 
+
 def convert_squad(file_path):
     # meta info
     if '/' in file_path:
-        filename = file_path[file_path.rfind('/')+1:] # Maybe support a system-specific delimiter
+        filename = file_path[file_path.rfind('/')+1:]   # Maybe support a system-specific delimiter
     else:
         filename = file_path
     # data
@@ -25,10 +26,12 @@ def convert_squad(file_path):
     }
     return corpus_dict
 
+
 def parse_support(para_dict):
     return {
             'text': para_dict['context']
     }
+
 
 def parse_question(qa_dict):
     answers = [parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
@@ -40,6 +43,7 @@ def parse_question(qa_dict):
         'answers': answers
     }
 
+
 def parse_answer(answer_dict):
     answer_text = answer_dict['text']
     answer_start = answer_dict['answer_start']
@@ -48,6 +52,7 @@ def parse_answer(answer_dict):
         'text': answer_text,
         'span': [answer_start, answer_end]
     }
+
 
 # Usage:
 # From other code, call convert_squad(filename)
@@ -62,4 +67,5 @@ def main():
         with open(sys.argv[2], 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
