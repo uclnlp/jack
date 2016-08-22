@@ -110,8 +110,9 @@ class SequenceBatcher(Batcher):
         candidates = tf.placeholder(tf.int32, (None, None, None),
                                     name="candidates")  # [batch_size, num_candidates, num_tokens]
         target_values = tf.placeholder(tf.float32, (None, None), name="target")
+        support = tf.placeholder(tf.float32, (None, None, None), name="support")
 
-        super().__init__(candidates, questions, target_values)
+        super().__init__(candidates, questions, target_values, support)
 
         global_candidates = reference_data['globals']['candidates']
         self.all_candidate_tokens = [self.pad] + sorted({token
@@ -203,10 +204,13 @@ class SequenceBatcher(Batcher):
 
             max_question_length = max([len(q) for q in question_seqs])
             max_answer_length = max([len(a) for a in answer_seqs])
-            max_support_length = max([len(a) for support in support_seqs for a in support])
-            max_num_support = max(len(support) for support in support_seqs)
+            # we ensure that the number of elements in support, and the number of support documents is at least 1
+            # this ensures that in case of empty support we get a single [<EMPTY>] support set that supports treating
+            # support uniformly downstream.
+            max_support_length = max([len(a) for support in support_seqs for a in support] + [1])
+            max_num_support = max([len(support) for support in support_seqs] + [1])
 
-            empty_support = self.pad_seq([], max_support_length)
+            empty_support = pad_seq([], max_support_length, self.support_lexicon[self.empty])
             answer_seqs_padded = [self.pad_seq(batch_item, max_answer_length) for batch_item in answer_seqs]
             question_seqs_padded = [self.pad_seq(batch_item, max_question_length) for batch_item in question_seqs]
             # [batch_size, max_num_support, max_support_length]
