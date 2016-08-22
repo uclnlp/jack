@@ -13,13 +13,14 @@ class Batcher(metaclass=ABCMeta):
     """
     A batcher is in charge of converting a reading dataset into batches of tensor flow feed_dicts, and batches
     of tensor values back to reading datasets. A batcher for a MultipleChoiceReader maintains three placeholders:
-    * candidates, to represent answer candidates
+    * candidates, to represent answer candidates. The number of candidates is determined by the batcher. It can
+    choose all candidates for each question, or sub-sample as needed (for example during training).
     * questions, to represent questions
     * target_values, to represent assignments of each candidate to 0/1 truth values.
     * TODO: support
 
     The batcher can represent candidates, support and questions in any way it likes, but target_values need to be
-    a [batch_size, num_candidates] float matrix.
+    a [batch_size, num_candidates] float matrix, where num_candidates is determined by the batcher.
     """
 
     def __init__(self, candidates, questions, target_values):
@@ -52,7 +53,7 @@ class Batcher(metaclass=ABCMeta):
         :param test: is this data for testing (True) or training (False).
         :return: a generator of feed dicts for the batchers placeholders.
         """
-        pass
+        return {}
 
 
 class MultipleChoiceReader:
@@ -222,9 +223,11 @@ class AtomicBatcher(Batcher):
         self.question_lexicon = FrozenIdentifier(all_questions)
         self.candidate_lexicon = FrozenIdentifier(all_candidates)
 
-        self.questions = tf.placeholder(tf.int32, (None,))
-        self.candidates = tf.placeholder(tf.int32, (None, None))
-        self.target_values = tf.placeholder(tf.float32, (None, None))
+        questions = tf.placeholder(tf.int32, (None,))
+        candidates = tf.placeholder(tf.int32, (None, None))
+        target_values = tf.placeholder(tf.float32, (None, None))
+        super().__init__(candidates, questions, target_values)
+
         self.random = random.Random(0)
         self.num_candidates = len(self.candidate_lexicon)
         self.num_questions = len(self.question_lexicon)
