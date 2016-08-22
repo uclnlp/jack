@@ -260,6 +260,7 @@ class AtomicBatcher(Batcher):
         self.question_lexicon = FrozenIdentifier(all_questions)
         self.candidate_lexicon = FrozenIdentifier(all_candidates)
         self.support_lexicon = FrozenIdentifier(all_support)
+        self.empty = "<EMPTY>"
 
         questions = tf.placeholder(tf.int32, (None,), name='questions')
         candidates = tf.placeholder(tf.int32, (None, None), name="candidates")
@@ -289,14 +290,19 @@ class AtomicBatcher(Batcher):
             answer_ids = [self.candidate_lexicon[inst['questions'][0]['answers'][0]['text']]
                           for inst in batch]
 
-            support_ids = [[self.support_lexicon[support['text']] for support in inst['support']] for inst in batch]
+            support_ids = [[self.support_lexicon[support['text']] for support in inst['support']]
+                           for inst in batch]
+
+            max_num_support = max([len(batch_element) for batch_element in support_ids])
+
+            support_ids_padded = [pad_seq(batch_element, max_num_support, self.empty) for batch_element in support_ids]
 
             # sample negative candidate
             if test:
                 yield {
                     self.questions: question_ids,
                     self.candidates: [list(range(0, self.num_candidates))] * batch_size,
-                    self.support: support_ids
+                    self.support: support_ids_padded
                 }
             else:
                 neg = [self.random.randint(0, len(self.candidate_lexicon) - 1) for _ in range(0, batch_size)]
@@ -305,7 +311,7 @@ class AtomicBatcher(Batcher):
                     self.questions: question_ids,
                     self.candidates: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
                     self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)],
-                    self.support: support_ids
+                    self.support: support_ids_padded
                 }
 
     def convert_to_predictions(self, candidates, scores):
