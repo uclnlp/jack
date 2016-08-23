@@ -538,7 +538,8 @@ def shorten_reading_dataset(reading_dataset, begin, end):
 def main():
     readers = {
         'model_f': create_model_f_reader,
-        'boe': create_bag_of_embeddings_reader
+        'boe': create_bag_of_embeddings_reader,
+        'boe_support': create_support_bag_of_embeddings_reader
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
