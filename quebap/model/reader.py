@@ -12,15 +12,19 @@ from abc import *
 class Batcher(metaclass=ABCMeta):
     """
     A batcher is in charge of converting a reading dataset into batches of tensor flow feed_dicts, and batches
-    of tensor values back to reading datasets. A batcher for a MultipleChoiceReader maintains three placeholders:
+    of tensor values back to reading datasets. A batcher for a MultipleChoiceReader maintains four placeholders:
     * candidates, to represent answer candidates. The number of candidates is determined by the batcher. It can
     choose all candidates for each question, or sub-sample as needed (for example during training).
     * questions, to represent questions
     * target_values, to represent assignments of each candidate to 0/1 truth values.
-    * TODO: support
+    * support, to represent a collection of support documents.
 
-    The batcher can represent candidates, support and questions in any way it likes, but target_values need to be
-    a [batch_size, num_candidates] float matrix, where num_candidates is determined by the batcher.
+    The batcher can represent candidates, support, target_values and questions almost in any way it likes.
+    A few exceptions:
+    * all placeholder shapes start with [batch_size, ...]
+    * target_values need to be a [batch_size, num_candidates] float matrix, where num_candidates is determined by
+    the batcher.
+    * candidate representation shapes should start with  [batch_size, num_candidates, ...]
     """
 
     def __init__(self, candidates, questions, target_values, support):
@@ -138,6 +142,7 @@ class SequenceBatcher(Batcher):
 
         self.num_candidate_symbols = len(self.candidate_lexicon)
         self.num_questions_symbols = len(self.question_lexicon)
+        self.num_support_symbols = len(self.support_lexicon)
         self.max_candidate_length = max([len(self.string_to_seq(c['text'], self.candidate_split))
                                          for c in global_candidates])
         self.global_candidate_seqs = [self.pad_seq([self.candidate_lexicon[t]
@@ -409,6 +414,57 @@ def create_bag_of_embeddings_reader(reference_data, **options):
     return MultipleChoiceReader(batcher, scores, loss)
 
 
+def create_support_bag_of_embeddings_reader(reference_data, **options):
+    """
+    A reader that creates sequence representations of the input reading instance, and then
+    models each question and candidate as the sum of the embeddings of their tokens.
+    :param reference_data: the reference training set that determines the vocabulary.
+    :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
+    :return: a MultipleChoiceReader.
+    """
+    batcher = SequenceBatcher(reference_data,
+                              candidate_split=options['candidate_split'],
+                              question_split=options['question_split'],
+                              support_split=options['support_split'])
+
+    candidate_dim = options['repr_dim']
+    support_dim = options['support_dim']
+
+    # question embeddings: for each symbol a [support_dim, candidate_dim] matrix
+    question_embeddings = tf.Variable(tf.random_normal((batcher.num_questions_symbols, support_dim, candidate_dim)))
+
+    # [batch_size, max_question_length, support_dim, candidate_dim]
+    question_encoding_raw = tf.gather(question_embeddings, batcher.questions)
+
+    # question encoding should have shape: [batch_size, 1, support_dim, candidate_dim], so reduce and keep
+    question_encoding = tf.reduce_sum(question_encoding_raw, 1, keep_dims=True)
+
+    # candidate embeddings: for each symbol a [candidate_dim] vector
+    candidate_embeddings = tf.Variable(tf.random_normal((batcher.num_candidate_symbols, candidate_dim)))
+    # [batch_size, num_candidates, max_candidate_length, candidate_dim]
+    candidate_encoding_raw = tf.gather(candidate_embeddings, batcher.candidates)
+
+    # candidate embeddings should have shape: [batch_size, num_candidates, 1, candidate_dim]
+    candidate_encoding = tf.reduce_sum(candidate_encoding_raw, 2, keep_dims=True)
+
+    # each symbol has [support_dim] vector
+    support_embeddings = tf.Variable(tf.random_normal((batcher.num_support_symbols, support_dim)))
+
+    # [batch_size, max_support_num, max_support_length, support_dim]
+    support_encoding_raw = tf.gather(support_embeddings, batcher.support)
+
+    # support encoding should have shape: [batch_size, 1, support_dim, 1]
+    support_encoding = tf.expand_dims(tf.expand_dims(tf.reduce_sum(support_encoding_raw, (1, 2)), 1), 3)
+
+    # scoring with a dot product
+    # [batch_size, num_candidates, support_dim, candidate_dim]
+    combined = question_encoding * candidate_encoding * support_encoding
+    scores = tf.reduce_sum(combined, (2, 3))
+
+    loss = create_softmax_loss(scores, batcher.target_values)
+    return MultipleChoiceReader(batcher, scores, loss)
+
+
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
                  optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):
     """
@@ -490,6 +546,7 @@ def main():
     parser.add_argument('--test', type=argparse.FileType('r'), help="Quebap test file")
     parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
     parser.add_argument('--repr_dim', default=5, type=int, help="Size of the hidden representation")
+    parser.add_argument('--support_dim', default=5, type=int, help="Size of the hidden representation for support")
     parser.add_argument('--model', default='model_f', choices=sorted(readers.keys()), help="Reading model to use")
     parser.add_argument('--epochs', default=1, type=int, help="Number of epochs to train for")
     parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Index of first training instance.")
@@ -499,6 +556,8 @@ def main():
                         help="Regular Expression for tokenizing candidates")
     parser.add_argument('--question_split', default="-", type=str, metavar="S",
                         help="Regular Expression for tokenizing questions")
+    parser.add_argument('--support_split', default="-", type=str, metavar="S",
+                        help="Regular Expression for tokenizing support")
     parser.add_argument('--use_train_generator_for_test', default=False, type=bool, metavar="B",
                         help="Should the training candidate generator be used when testing")
 
