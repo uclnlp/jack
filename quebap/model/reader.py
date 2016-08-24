@@ -4,6 +4,7 @@ import json
 import random
 
 import tensorflow as tf
+import numpy as np
 
 from quebap.projects.modelF.structs import FrozenIdentifier
 from abc import *
@@ -341,6 +342,139 @@ class AtomicBatcher(Batcher):
         return all_results
 
 
+def count_feature_calculator(instances, candidates):
+    """
+    This function computes occurrence count features for all candidates across
+    the support given in an instance.
+    :param instances: List of quebap instances.
+    :param candidates: List of candidate strings to compute count features for.
+    :return feature_values: A [n_instances, n_features] float matrix with the computed feature values.
+    """
+    feature_values = np.zeros([len(instances), len(candidates)], dtype=float)
+    for i_inst, inst in enumerate(instances):
+        supporting_documents = [support['text'] for support in inst['support']]
+        for i_cand, candidate in enumerate(candidates):
+            count = 0.0
+            for doc in supporting_documents:
+                count += doc.count(candidate)
+            feature_values[i_inst, i_cand] = count
+    return feature_values
+
+
+class Feature_Batcher(Batcher):
+    """
+    This batcher wraps quebaps into placeholders, computing features as well:
+    1. question_ids: A [batch_size] int vector where each component represents a single question using a single symbol.
+    2. candidate_ids: A [batch_size, num_candidates] int matrix where each component represents a candidate answer using
+    a single label.
+    3. target_values: A [batch_size, num_candidates] float matrix representing the truth state of each candidate using
+    1/0 values.
+    4. feature_values: A [batch_size, num_features] float matrix representing the feature value of each feature.
+    """
+    #TODO
+
+    def __init__(self, reference_data, feature_calculator):
+        """
+        Create a new feature batcher.
+        :param reference_data: the quebap dataset to use for initialising the question/candidate to id mapping.
+        :param feature_calculator: the function used to compute features, see e.g. count_feature_calculator().
+        """
+        self.reference_data = reference_data
+        self.empty = "<EMPTY>"
+        global_candidates = reference_data['globals']['candidates']
+        all_candidates = set([c['text'] for c in global_candidates])
+        instances = reference_data['instances']
+        all_questions = set([inst['questions'][0]['question'] for inst in instances])
+        all_support = set([support['text'] for inst in instances for support in inst['support']] + [self.empty])
+        self.question_lexicon = FrozenIdentifier(all_questions)
+        self.candidate_lexicon = FrozenIdentifier(all_candidates)
+        self.support_lexicon = FrozenIdentifier(all_support)
+
+        self.feature_calculator = feature_calculator
+
+        questions = tf.placeholder(tf.int32, (None,), name='questions')
+        candidates = tf.placeholder(tf.int32, (None, None), name="candidates")
+        target_values = tf.placeholder(tf.float32, (None, None), name="target_values")
+        feature_values = tf.placeholder(tf.float32, (None, None), name="feature_values")
+        support = tf.placeholder(tf.float32, (None, None), name="support")
+        self.feature_values = feature_values
+        super().__init__(candidates, questions, target_values, support)
+
+        self.random = random.Random(0)
+        self.num_candidates = len(self.candidate_lexicon)
+        self.num_questions = len(self.question_lexicon)
+        self.num_support = len(self.support_lexicon)
+
+
+    def create_batches(self, data=None, batch_size=1, test=False):
+        """
+        Creates a generator of batch feed_dicts. For training sets a single positive answer and a single negative
+        answer are sampled for each question in the batch.
+        :param data: data to convert into a generator of feed dicts, one per batch.
+        :param batch_size: how large should each batch be.
+        :param test: is this a training or test set.
+        :return: a generator of batched feed_dicts.
+        """
+        instances = self.reference_data['instances'] if data is None else data['instances']
+        for b in range(0, len(instances) // batch_size):
+            batch = instances[b * batch_size: (b + 1) * batch_size]
+            question_ids = [self.question_lexicon[inst['questions'][0]['question']]
+                            for inst in batch]
+            answer_ids = [self.candidate_lexicon[inst['questions'][0]['answers'][0]['text']]
+                          for inst in batch]
+
+            support_ids = [[self.support_lexicon[support['text']] for support in inst['support']]
+                           for inst in batch]
+
+            max_num_support = max([len(batch_element) for batch_element in support_ids])
+
+            support_ids_padded = [pad_seq(batch_element, max_num_support, self.empty) for batch_element in support_ids]
+
+            feature_values = self.compute_features(instances, self.candidate_lexicon)
+
+            # sample negative candidate
+            if test:
+                yield {
+                    self.questions: question_ids,
+                    self.candidates: [list(range(0, self.num_candidates))] * batch_size,
+                    self.support: support_ids_padded,
+                    self.feature_values: feature_values
+                }
+            else:
+                neg = [self.random.randint(0, len(self.candidate_lexicon) - 1) for _ in range(0, batch_size)]
+                # todo: should go over all questions for same support
+                yield {
+                    self.questions: question_ids,
+                    self.candidates: [(pos, neg) for pos, neg in zip(answer_ids, neg)],
+                    self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)],
+                    self.support: support_ids_padded,
+                    self.feature_values: feature_values
+                }
+
+
+    def convert_to_predictions(self, candidates, scores):
+        """
+        Converts scores and candidate ideas to a prediction output
+        :param candidates: [batch_size, num_candidates] int matrix of candidates
+        :param scores: [batch_size, num_candidates] float matrix of scores for each candidate
+        :return: a list of scored candidate lists consistent with output_schema.json
+        """
+        all_results = []
+        for scores_per_question, candidates_per_question in zip(scores, candidates):
+            result_for_question = []
+            for score, candidate_id in zip(scores_per_question, candidates_per_question):
+                candidate_text = self.candidate_lexicon.key_by_id(candidate_id)
+                candidate = {
+                    'text': candidate_text,
+                    'score': score
+                }
+                result_for_question.append(candidate)
+            question = {'answers': sorted(result_for_question, key=lambda x: -x['score'])}
+            quebap = {'questions': [question]}
+            all_results.append(quebap)
+        return all_results
+
+
 def create_dense_embedding(ids, repr_dim, num_symbols):
     """
     :param ids: tensor [d1, ... ,dn] of int32 symbols
@@ -371,6 +505,21 @@ def create_softmax_loss(scores, target_values):
     :return: [batch_size] vector of losses (or single number of total loss).
     """
     return tf.nn.softmax_cross_entropy_with_logits(scores, target_values)
+
+
+def create_log_linear_reader(reference_data, **options):
+    """
+    Create a log-linear reader, i.e. with a log-linear combination of text features.
+    :param options: 'repr_dim', dimension of representation .
+    :return: ModelLogLinear
+    """
+
+    batcher = Feature_Batcher(reference_data)
+    candidate_encoding = create_dense_embedding(batcher.candidates, options['repr_dim'], batcher.num_candidates)
+    features = batcher.features
+    scores = create_dot_product_scorer(features, candidate_encoding)
+    loss = create_softmax_loss(scores, batcher.target_values)
+    return MultipleChoiceReader(batcher, scores, loss)
 
 
 def create_model_f_reader(reference_data, **options):
@@ -537,6 +686,7 @@ def shorten_reading_dataset(reading_dataset, begin, end):
 
 def main():
     readers = {
+        'log_linear': create_log_linear_reader,
         'model_f': create_model_f_reader,
         'boe': create_bag_of_embeddings_reader,
         'boe_support': create_support_bag_of_embeddings_reader
