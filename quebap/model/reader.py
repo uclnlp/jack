@@ -87,7 +87,6 @@ def pad_seq(seq, target_length, pad):
     return seq + [pad for _ in range(0, target_length - len(seq))]
 
 
-
 class SequenceBatcher(Batcher):
     """
     Converts reading instances into tensors of integer sequences representing tokens. A question batch
@@ -278,7 +277,7 @@ class SequenceBatcherDynamic(Batcher):
         self.question_split = question_split
         self.support_split = support_split
 
-        self.question_lengths = tf.placeholder(tf.int32, (None), name="question_lengths") # [question_lengths]
+        self.question_lengths = tf.placeholder(tf.int32, (None), name="question_lengths")  # [question_lengths]
 
         questions = tf.placeholder(tf.int32, (None, None), name="question")  # [batch_size, num_tokens]
         candidates = tf.placeholder(tf.int32, (None, None, None),
@@ -354,7 +353,6 @@ class SequenceBatcherDynamic(Batcher):
             all_results.append(quebap)
         return all_results
 
-
     def create_batches(self, data=None, batch_size=1, test=False):
         """
         Take a dataset and create a generator of (batched) feed_dict objects. At training time this
@@ -416,7 +414,6 @@ class SequenceBatcherDynamic(Batcher):
                     self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)],
                     self.support: support_seqs_padded
                 }
-
 
 
 class AtomicBatcher(Batcher):
@@ -549,7 +546,8 @@ class Feature_Batcher(Batcher):
     1/0 values.
     4. feature_values: A [batch_size, num_features] float matrix representing the feature value of each feature.
     """
-    #TODO
+
+    # TODO
 
     def __init__(self, reference_data, feature_calculator):
         """
@@ -582,7 +580,6 @@ class Feature_Batcher(Batcher):
         self.num_candidates = len(self.candidate_lexicon)
         self.num_questions = len(self.question_lexicon)
         self.num_support = len(self.support_lexicon)
-
 
     def create_batches(self, data=None, batch_size=1, test=False):
         """
@@ -628,7 +625,6 @@ class Feature_Batcher(Batcher):
                     self.support: support_ids_padded,
                     self.feature_values: feature_values
                 }
-
 
     def convert_to_predictions(self, candidates, scores):
         """
@@ -685,8 +681,11 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
         sequence_length=seq_lengths,
         inputs=embedded_inputs)
 
-    output = tf.transpose(outputs, [1, 0, 2])
-    last = tf.gather(output, int(output.get_shape()[0]) - 1)
+    shape = tf.shape(outputs)  # [batch_size, max_length, out_dim]
+    slice_size = shape * [1, 0, 1] + [0, 1, 0]  # [batch_size, 1 , out_dim]
+    slice_begin = shape * [0, 1, 0] + [0, -1, 0]  # [1, max_length-1, 1]
+    last_expanded = tf.slice(outputs, slice_begin, slice_size)  # [batch_size, 1, out_dim]
+    last = tf.squeeze(last_expanded, [1])  # [batch_size, out_dim]
 
     return last
 
@@ -778,15 +777,16 @@ def create_sequence_embeddings_reader(reference_data, **options):
     :return: a MultipleChoiceReader.
     """
     batcher = SequenceBatcherDynamic(reference_data,
-                              candidate_split=options['candidate_split'],
-                              question_split=options['question_split'])
+                                     candidate_split=options['candidate_split'],
+                                     question_split=options['question_split'])
 
     # get embeddings for each question token
     # [batch_size, max_question_length, repr_dim]
     # inputs, seq_lengths, repr_dim, vocab_size
 
-    question_encoding = create_sequence_embedding(batcher.questions, batcher.question_lengths, options['repr_dim'], batcher.num_questions_symbols)
-    #question_encoding = tf.reduce_sum(question_embeddings, 1)  # [batch_size, repr_dim]
+    question_encoding = create_sequence_embedding(batcher.questions, batcher.question_lengths, options['repr_dim'],
+                                                  batcher.num_questions_symbols)
+    # question_encoding = tf.reduce_sum(question_embeddings, 1)  # [batch_size, repr_dim]
 
     # [batch_size, num_candidates, max_question_length, repr_dim
     candidate_embeddings = create_dense_embedding(batcher.candidates, options['repr_dim'],
