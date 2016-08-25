@@ -6,11 +6,8 @@ whereby each instance receives support under the form of 'related' instances
 
 import json
 
-
-
 __candidate_labels = ['entailment','neutral','contradiction']    
 __candidates = [{'label':cl} for cl in __candidate_labels]
-
 
 
 def convert_snli(snli_file_jsonl):
@@ -33,8 +30,6 @@ def convert_snli(snli_file_jsonl):
         return [d for d in data if d] #filter out invalid ones 
     
 
-    
-
 def __convert_snli_instance(instance):
     try: 
         if not instance['gold_label'] in __candidate_labels:
@@ -50,17 +45,11 @@ def __convert_snli_instance(instance):
         return None
         
 
-    
-
-
-
 def main():
     import sys
     if len(sys.argv) == 2:
         corpus = convert_snli(sys.argv[1])
         print(json.dumps(corpus, indent=2))
-
-
 
 if __name__ == "__main__":
     main()
