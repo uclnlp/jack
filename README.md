@@ -8,6 +8,9 @@ UCLMR KB and QA system/tools.
 - [Comply with PEB 8 Style Guide](https://www.python.org/dev/peps/pep-0008/)
 - Make sure all your code runs from the top level directory, e.g., `$ python3 ./quebap/io/SNLI2quebap_v1.py`
 
+#Training
+`$ python3 ./quebap/train.py --train path/to/train --test path/to/test --model your_model_name`
+
 #Completing the loop with MCTest
 Let's say you have MCTest downloaded, and at least have two data files, mc160.train.tsv and mc160.train.ans, in your working directory.  We can convert these (together) into quebap format, via stdout, as follows:
 ```
