@@ -7,7 +7,7 @@ whereby each instance receives support under the form of 'related' instances
 import json
 
 __candidate_labels = ['entailment','neutral','contradiction']    
-__candidates = [{'label':cl} for cl in __candidate_labels]
+__candidates = [{'text':cl} for cl in __candidate_labels]
 
 
 def convert_snli(snli_file_jsonl):
@@ -46,7 +46,8 @@ def __convert_snli_instance(instance):
         queb['questions'] = [
             {'question': instance['sentence2'],
              'answers': [
-                 {'index': __candidate_labels.index(instance['gold_label'])}]}]
+                 # {'index': __candidate_labels.index(instance['gold_label'])},
+                 {'text': __candidate_labels[__candidate_labels.index(instance['gold_label'])]}]}]
 
         return queb
 
@@ -64,6 +65,14 @@ def main():
             corpus = convert_snli("./quebap/data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % corpus_name)
             with open("./quebap/data/SNLI/snli_1.0/snli_1.0_%s_quebap.jsonl" % corpus_name, 'w') as outfile:
                 json.dump(corpus, outfile, indent=2)
+
+        # create snippet
+        corpus = convert_snli("./quebap/data/SNLI/snli_1.0/snli_1.0_train.jsonl")
+        corpus['instances'] = corpus['instances'][:10]
+        with open("./quebap/data/SNLI/snli_1.0/snli_1.0_debug_quebap.jsonl", 'w') as outfile:
+            json.dump(corpus, outfile, indent=2)
+        with open("./quebap/data/snippet/SNLI_v1/snippet_quebapformat.json", 'w') as outfile:
+            json.dump(corpus, outfile, indent=2)
 
 if __name__ == "__main__":
     main()

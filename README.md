@@ -53,4 +53,3 @@ Cheers to Matko for these scripts.  Finally we are ready to annotate.  Assuming 
 python3 preprocess/annotate.py mc160.quebap.json > mc160.quebap.ann.json
 ```
 You now have access to token and sentence offsets, postags for each token, and constituent trees for each sentence.
-vel directory, e.g., `$ python3 ./quebap/io/SNLI2quebap_v1`
