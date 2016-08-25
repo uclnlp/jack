@@ -1,0 +1,30 @@
+  {
+    "questions": [
+      {
+        "candidates": [
+          {
+            "label": "entailment"
+          },
+          {
+            "label": "neutral"
+          },
+          {
+            "label": "contradiction"
+          }
+        ],
+        "answers": [
+          {
+            "index": 1
+          }
+        ],
+        "question": "A person is training his horse for a competition."
+      }
+    ],
+    "id": "3416050480.jpg#4r1n",
+    "support": [
+      {
+        "text": "A person on a horse jumps over a broken down airplane.",
+        "id": "3416050480.jpg#4"
+      }
+    ]
+  }
