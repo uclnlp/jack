@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/Users/Isabelle/Documents/UCLMR/quebap")
-
 import argparse
 import copy
 import json
@@ -678,10 +675,10 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
 
     # test to see if the embedding lookup is working
     # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
-    embedding_aggregated = tf.reduce_sum(embedded_inputs, [1])
+    # embedding_aggregated = tf.reduce_sum(embedded_inputs, [1])
 
     # Below is what we actually want, the dynamic rnn. Getting the final state out of it is not working though.
-    """cell = tf.nn.rnn_cell.LSTMCell(num_units=repr_dim, state_is_tuple=True)
+    cell = tf.nn.rnn_cell.LSTMCell(num_units=repr_dim, state_is_tuple=True)
     outputs, last_states = tf.nn.dynamic_rnn(
         cell=cell,
         dtype=tf.float32,
@@ -691,9 +688,9 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
     output = tf.transpose(outputs, [1, 0, 2])
     last = tf.gather(output, int(output.get_shape()[0]) - 1)
 
-    return last"""
+    return last
 
-    return embedding_aggregated
+    # return embedding_aggregated
 
 
 def create_dot_product_scorer(question_encodings, candidate_encodings):
