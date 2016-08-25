@@ -114,6 +114,8 @@ class SequenceBatcher(Batcher):
         self.support_split = support_split
 
         self.question_lengths = tf.placeholder(tf.int32, (None), name="question_lengths")  # [question_lengths]
+        self.candidate_lengths = tf.placeholder(tf.int32, (None), name="candidate_lengths")  # [candidate_lengths]
+        self.support_lengths = tf.placeholder(tf.int32, (None), name="support_lengths")  # [support_lengths]
 
         questions = tf.placeholder(tf.int32, (None, None), name="question")  # [batch_size, num_tokens]
         candidates = tf.placeholder(tf.int32, (None, None, None),
@@ -213,9 +215,6 @@ class SequenceBatcher(Batcher):
                              for support in inst['support']]
                             for inst in batch]
 
-            question_length = tf.placeholder(tf.int32, (None), name="question_length")
-            question_length = [len(q) for q in question_seqs]
-
             max_question_length = max([len(q) for q in question_seqs])
             max_answer_length = max([len(a) for a in answer_seqs])
             # we ensure that the number of elements in support, and the number of support documents is at least 1
@@ -232,13 +231,26 @@ class SequenceBatcher(Batcher):
                 pad_seq([self.pad_seq(s, max_support_length) for s in batch_item], max_num_support, empty_support)
                 for batch_item in support_seqs]
 
+
+            question_length = tf.placeholder(tf.int32, (None), name="question_length")
+            question_length = [len(q) for q in question_seqs]
+
+            candidate_length = tf.placeholder(tf.int32, (None), name="candidate_length")
+            candidate_length = [len(q) for q in self.global_candidate_seqs]
+
+            support_length = tf.placeholder(tf.int32, (None), name="support_length")
+            support_length = [len(q) for q in support_seqs]
+
+
             # sample negative candidate
             if test:
                 yield {
                     self.questions: question_seqs_padded,
                     self.question_lengths: question_length,
                     self.candidates: answer_seqs_padded,
-                    self.support: support_seqs_padded
+                    self.candidate_lengths: candidate_length,
+                    self.support: support_seqs_padded,
+                    self.support_lengths: support_length
                 }
             else:
                 neg_candidates = [self.random.choice(answer_seqs_padded) for _ in range(0, batch_size)]
@@ -247,8 +259,10 @@ class SequenceBatcher(Batcher):
                     self.questions: question_seqs_padded,
                     self.question_lengths: question_length,
                     self.candidates: [(pos, neg) for pos, neg in zip(answer_seqs_padded, neg_candidates)],
+                    self.candidate_lengths: candidate_length,
                     self.target_values: [(1.0, 0.0) for _ in range(0, batch_size)],
-                    self.support: support_seqs_padded
+                    self.support: support_seqs_padded,
+                    self.support_lengths: support_length
                 }
 
 
@@ -497,7 +511,7 @@ def create_dense_embedding(ids, repr_dim, num_symbols):
     return encodings
 
 
-def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
+def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope):
     """
     :param inputs: tensor [d1, ... ,dn] of int32 symbols
     :param seq_lengths: [s1, ..., sn] lengths of instances in the batch
@@ -506,7 +520,7 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
     :return: return [batch_size, repr_dim] tensor representation of symbols.
     """
     embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
-                                   name="embedding_matrix", trainable=True)
+                                   name=emb_name, trainable=True)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -514,13 +528,14 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
     # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
     # embedding_aggregated = tf.reduce_sum(embedded_inputs, [1])
 
-    cell = tf.nn.rnn_cell.LSTMCell(num_units=repr_dim, state_is_tuple=True)
-    # returning [batch_size, max_time, cell.output_size]
-    outputs, last_states = tf.nn.dynamic_rnn(
-        cell=cell,
-        dtype=tf.float32,
-        sequence_length=seq_lengths,
-        inputs=embedded_inputs)
+    with tf.variable_scope(rnn_scope):
+        cell = tf.nn.rnn_cell.LSTMCell(num_units=repr_dim, state_is_tuple=True)
+        # returning [batch_size, max_time, cell.output_size]
+        outputs, last_states = tf.nn.dynamic_rnn(
+            cell=cell,
+            dtype=tf.float32,
+            sequence_length=seq_lengths,
+            inputs=embedded_inputs)
 
     # Getting the correct state out of dynamic rnn by gathering using lengths
     batch_size, max_seq_length, hidden_size = tf.unpack(tf.shape(outputs))
@@ -627,8 +642,7 @@ def create_sequence_embeddings_reader(reference_data, **options):
     # inputs, seq_lengths, repr_dim, vocab_size
 
     question_encoding = create_sequence_embedding(batcher.questions, batcher.question_lengths, options['repr_dim'],
-                                                  batcher.num_questions_symbols)
-    # question_encoding = tf.reduce_sum(question_embeddings, 1)  # [batch_size, repr_dim]
+                                                  batcher.num_questions_symbols, "embedding_matrix_q", "RNN_q")
 
     # [batch_size, num_candidates, max_question_length, repr_dim
     candidate_embeddings = create_dense_embedding(batcher.candidates, options['repr_dim'],
