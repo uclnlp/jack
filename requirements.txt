@@ -1,3 +1,2 @@
 pytest
 numpy
-tensorflow>=0.7.1
