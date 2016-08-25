@@ -1,23 +1,6 @@
 {
-  "globals": [
-    {
-      "label": "entailment"
-    },
-    {
-      "label": "neutral"
-    },
-    {
-      "label": "contradiction"
-    }
-  ],
   "instances": [
     {
-      "support": [
-        {
-          "text": "A person on a horse jumps over a broken down airplane.",
-          "id": "3416050480.jpg#4"
-        }
-      ],
       "questions": [
         {
           "answers": [
@@ -28,7 +11,27 @@
           "question": "A person is training his horse for a competition."
         }
       ],
+      "support": [
+        {
+          "id": "3416050480.jpg#4",
+          "text": "A person on a horse jumps over a broken down airplane."
+        }
+      ],
       "id": "3416050480.jpg#4r1n"
-    }],
-  "meta": "SNLI"
+    }
+  ],
+  "meta": "SNLI",
+  "globals": {
+    "candidates": [
+      {
+        "label": "entailment"
+      },
+      {
+        "label": "neutral"
+      },
+      {
+        "label": "contradiction"
+      }
+    ]
+  }
 }

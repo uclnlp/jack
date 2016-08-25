@@ -26,28 +26,13 @@ def convert_snli(snli_file_jsonl):
 
     with open(snli_file_jsonl,'r') as f:
         data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
-        
+
         #return [d for d in data if d] #filter out invalid ones
 
         return {'meta': 'SNLI',
-                'globals': __candidates,
+                'globals': {'candidates': __candidates},
                 'instances': data
                 }
-    
-
-def __convert_snli_instance_old(instance):
-    try: 
-        if not instance['gold_label'] in __candidate_labels:
-            raise IOError('invalid gold label')
-        queb = {}
-        queb['id'] = instance['pairID']
-        queb['support'] = [{'id':instance['captionID'],'text':instance['sentence1']}] 
-        queb['questions'] = [{'question':instance['sentence2'], 'candidates':__candidates, 'answers':[{'index':__candidate_labels.index(instance['gold_label'])}]}]
-
-        return queb
-        
-    except IOError:
-        return None
 
 
 def __convert_snli_instance(instance):
