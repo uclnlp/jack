@@ -27,11 +27,9 @@ def convert_snli(snli_file_jsonl):
     with open(snli_file_jsonl,'r') as f:
         data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
 
-        #return [d for d in data if d] #filter out invalid ones
-
         return {'meta': 'SNLI',
                 'globals': {'candidates': __candidates},
-                'instances': data
+                'instances': [d for d in data if d]  # filter out invalid ones
                 }
 
 
