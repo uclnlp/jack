@@ -4,6 +4,10 @@ UCLMR KB and QA system/tools.
 
 [Link](https://docs.google.com/document/d/1AaynDviR26bqofoImEcPxQgBcpvRBIcgLjScn-Hr6xk/edit) to Google Doc for overview/ inventory, etc.
 
+#Rules
+- [Comply with PEB 8 Style Guide](https://www.python.org/dev/peps/pep-0008/)
+- Make sure all your code runs from the top le
+
 #Completing the loop with MCTest
 Let's say you have MCTest downloaded, and at least have two data files, mc160.train.tsv and mc160.train.ans, in your working directory.  We can convert these (together) into quebap format, via stdout, as follows:
 ```
@@ -49,3 +53,4 @@ Cheers to Matko for these scripts.  Finally we are ready to annotate.  Assuming 
 python3 preprocess/annotate.py mc160.quebap.json > mc160.quebap.ann.json
 ```
 You now have access to token and sentence offsets, postags for each token, and constituent trees for each sentence.
+vel directory, e.g., `$ python3 ./quebap/io/SNLI2quebap_v1`
