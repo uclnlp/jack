@@ -498,25 +498,31 @@ def create_dense_embedding(ids, repr_dim, num_symbols):
 
 
 def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
-    # has to return [batch_size, repr_dim]
-
+    """
+    :param inputs: tensor [d1, ... ,dn] of int32 symbols
+    :param seq_lengths: [s1, ..., sn] lengths of instances in the batch
+    :param repr_dim: dimension of embeddings
+    :param vocab_size: number of symbols
+    :return: return [batch_size, repr_dim] tensor representation of symbols.
+    """
     embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
                                    name="embedding_matrix", trainable=True)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
-    # test to see if the embedding lookup is working
+    # dummy test to see if the embedding lookup is working
     # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
     # embedding_aggregated = tf.reduce_sum(embedded_inputs, [1])
 
-    # Below is what we actually want, the dynamic rnn. Getting the final state out of it is not working though.
     cell = tf.nn.rnn_cell.LSTMCell(num_units=repr_dim, state_is_tuple=True)
+    # returning [batch_size, max_time, cell.output_size]
     outputs, last_states = tf.nn.dynamic_rnn(
         cell=cell,
         dtype=tf.float32,
         sequence_length=seq_lengths,
         inputs=embedded_inputs)
 
+    # Getting final state out of dynamic rnn
     shape = tf.shape(outputs)  # [batch_size, max_length, out_dim]
     slice_size = shape * [1, 0, 1] + [0, 1, 0]  # [batch_size, 1 , out_dim]
     slice_begin = shape * [0, 1, 0] + [0, -1, 0]  # [1, max_length-1, 1]
@@ -525,7 +531,6 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
 
     return last
 
-    # return embedding_aggregated
 
 
 def create_dot_product_scorer(question_encodings, candidate_encodings):
