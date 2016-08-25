@@ -522,12 +522,10 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size):
         sequence_length=seq_lengths,
         inputs=embedded_inputs)
 
-    # Getting final state out of dynamic rnn
-    shape = tf.shape(outputs)  # [batch_size, max_length, out_dim]
-    slice_size = shape * [1, 0, 1] + [0, 1, 0]  # [batch_size, 1 , out_dim]
-    slice_begin = shape * [0, 1, 0] + [0, -1, 0]  # [1, max_length-1, 1]
-    last_expanded = tf.slice(outputs, slice_begin, slice_size)  # [batch_size, 1, out_dim]
-    last = tf.squeeze(last_expanded, [1])  # [batch_size, out_dim]
+    # Getting the correct state out of dynamic rnn by gathering using lengths
+    batch_size, max_seq_length, hidden_size = tf.unpack(tf.shape(outputs))
+    index = tf.range(0, batch_size) * max_seq_length + (seq_lengths - 1)
+    last = tf.gather(tf.reshape(outputs, [-1, hidden_size]), index)
 
     return last
 
