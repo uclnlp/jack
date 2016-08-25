@@ -55,7 +55,7 @@ class Batcher(metaclass=ABCMeta):
     def create_batches(self, data, batch_size: int, test: bool):
         """
         Take reading dataset and return a generator of feed_dicts that represent the batched data.
-        :param data: Input data to convert and batch.
+        :param data: Input data in quebap format to convert and batch.
         :param batch_size: How big should the batch be.
         :param test: is this data for testing (True) or training (False).
         :return: a generator of feed dicts for the batchers placeholders.
