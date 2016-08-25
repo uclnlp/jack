@@ -353,7 +353,7 @@ class AtomicBatcher(Batcher):
         return all_results
 
 
-def count_feature_calculator(instances, candidates):
+def count_features(instances, candidates):
     """
     This function computes occurrence count features for all candidates across
     the support given in an instance.
@@ -389,7 +389,7 @@ class Feature_Batcher(Batcher):
         """
         Create a new feature batcher.
         :param reference_data: the quebap dataset to use for initialising the question/candidate to id mapping.
-        :param feature_calculator: the function used to compute features, see e.g. count_feature_calculator().
+        :param feature_calculator: the function used to compute features, see e.g. count_features().
         """
         self.reference_data = reference_data
         self.empty = "<EMPTY>"
@@ -441,7 +441,7 @@ class Feature_Batcher(Batcher):
 
             support_ids_padded = [pad_seq(batch_element, max_num_support, self.empty) for batch_element in support_ids]
 
-            feature_values = self.compute_features(instances, self.candidate_lexicon)
+            feature_values = self.feature_calculator(instances, self.candidate_lexicon)
 
             # sample negative candidate
             if test:
@@ -560,10 +560,13 @@ def create_log_linear_reader(reference_data, **options):
     :return: ModelLogLinear
     """
 
-    batcher = Feature_Batcher(reference_data)
-    candidate_encoding = create_dense_embedding(batcher.candidates, options['repr_dim'], batcher.num_candidates)
-    features = batcher.features
-    scores = create_dot_product_scorer(features, candidate_encoding)
+    batcher = Feature_Batcher(reference_data, eval(options['feature_type']))
+
+    #here: [n_candidates = n_features]
+    candidate_weights = create_dense_embedding(batcher.candidates, batcher.num_candidates, batcher.num_candidates)    #[n_candidates, n_features]
+    features = batcher.feature_values   #[batchsize, n_features] = [batchsize, n_candidates]
+
+    scores = create_dot_product_scorer(features, candidate_weights)
     loss = create_softmax_loss(scores, batcher.target_values)
     return MultipleChoiceReader(batcher, scores, loss)
 
@@ -787,6 +790,8 @@ def main():
                         help="Regular Expression for tokenizing support")
     parser.add_argument('--use_train_generator_for_test', default=False, type=bool, metavar="B",
                         help="Should the training candidate generator be used when testing")
+    parser.add_argument('--feature_type', default=None, type=str, metavar="F",
+                        help="When using features: type of features.")
 
     args = parser.parse_args()
 
