@@ -114,9 +114,9 @@ class SequenceBatcher(Batcher):
         self.question_split = question_split
         self.support_split = support_split
 
-        self.question_lengths = tf.placeholder(tf.int32, (None), name="question_lengths")  # [question_lengths]
-        self.candidate_lengths = tf.placeholder(tf.int32, (None), name="candidate_lengths")  # [candidate_lengths]
-        self.support_lengths = tf.placeholder(tf.int32, (None), name="support_lengths")  # [support_lengths]
+        self.question_lengths = tf.placeholder(tf.int32, (None), name="question_lengths")  # [batch_size]
+        self.candidate_lengths = tf.placeholder(tf.int32, (None, None), name="candidate_lengths")  # [batch_size, num_candidates]
+        self.support_lengths = tf.placeholder(tf.int32, (None, None), name="support_lengths")  # [batch_size, num_support]
 
         questions = tf.placeholder(tf.int32, (None, None), name="question")  # [batch_size, num_tokens]
         candidates = tf.placeholder(tf.int32, (None, None, None),
@@ -232,16 +232,12 @@ class SequenceBatcher(Batcher):
                 pad_seq([self.pad_seq(s, max_support_length) for s in batch_item], max_num_support, empty_support)
                 for batch_item in support_seqs]
 
-
-            question_length = tf.placeholder(tf.int32, (None), name="question_length")
             question_length = [len(q) for q in question_seqs]
 
-            candidate_length = tf.placeholder(tf.int32, (None), name="candidate_length")
-            candidate_length = [len(q) for q in self.global_candidate_seqs]
+            # workaround because candidates are always the same (the global ones) for this batcher
+            candidate_length = [[len(c) for c in self.global_candidate_seqs] for inst in batch]
 
-            support_length = tf.placeholder(tf.int32, (None), name="support_length")
-            support_length = [len(q) for q in support_seqs]
-
+            support_length = [[len(s) for s in inst] for inst in batch]
 
             # sample negative candidate
             if test:
