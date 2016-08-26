@@ -5,6 +5,7 @@ import random
 
 import tensorflow as tf
 import numpy as np
+import quebap.util.tfutil as tfutil
 
 from quebap.projects.modelF.structs import FrozenIdentifier
 from abc import *
@@ -537,13 +538,7 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
-    # Getting the correct state out of dynamic rnn by gathering using lengths
-    batch_size, max_seq_length, hidden_size = tf.unpack(tf.shape(outputs))
-    index = tf.range(0, batch_size) * max_seq_length + (seq_lengths - 1)
-    last = tf.gather(tf.reshape(outputs, [-1, hidden_size]), index)
-
-    return last
-
+    return tfutil.get_by_index(outputs, seq_lengths)
 
 
 def create_dot_product_scorer(question_encodings, candidate_encodings):
