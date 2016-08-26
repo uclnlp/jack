@@ -49,9 +49,7 @@ def create_qa_example():
     instances = [qset_dict1, qset_dict2]
 
     corpus_dict = {
-        'meta': {
-            'source': "scienceQA_snippet.json"
-        },
+        'meta': "scienceQA_snippet.json",
         'instances': instances
     }
 
