@@ -1,4 +1,4 @@
-from quebap.model.reader import *
+from quebap.model.tensorizer import *
 
 
 def create_global_answer_candidates(candidates):
@@ -34,11 +34,11 @@ data = {
 }
 
 
-def test_sequence_batcher():
-    batcher = SequenceBatcher(data)
-    batch = next(batcher.create_batches(data, 2))
-    converted = batcher.convert_to_predictions(batch[batcher.candidates], batch[batcher.target_values])
+def test_sequence_tensorizer():
+    tensorizer = SequenceTensorizer(data)
+    batch = next(tensorizer.create_batches(data, 2))
+    converted = tensorizer.convert_to_predictions(batch[tensorizer.candidates], batch[tensorizer.target_values])
     assert converted[0]['questions'][0]['answers'][0] == {'score': 1.0, 'text': 'A,B'}
     assert converted[1]['questions'][0]['answers'][0] == {'score': 1.0, 'text': 'C,A'}
 
-test_sequence_batcher()
+test_sequence_tensorizer()

@@ -1,3 +1,12 @@
+"""
+         __  _ __
+  __  __/ /_(_) /
+ / / / / __/ / /
+/ /_/ / /_/ / /
+\__,_/\__/_/_/ v0.2
+Making useful stuff happen since 2016
+"""
+
 import tensorflow as tf
 
 
@@ -23,15 +32,17 @@ def get_last(tensor):
     return tf.squeeze(tf.slice(tensor, slice_begin, slice_size), [1])
 
 
-def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True, value=-1000.0):
+def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
+                     value=-1000.0):
     """
     Creates a [batch_size, max_length] mask.
     :param lengths: int64 1-dim tensor of batch_size lengths
     :param batch_size: int32 0-dim tensor or python int
     :param max_length: int32 0-dim tensor or python int
-    :param mask_right: if True, everything before "lengths" becomes zero and the rest "value", else vice versa
+    :param mask_right: if True, everything before "lengths" becomes zero and the
+        rest "value", else vice versa
     :param value: value for the mask
-    :return: [batch_size, max_length] mask of zeros and "value"s
+    :return: [batch_size x max_length] mask of zeros and "value"s
     """
     if max_length is None:
         max_length = tf.reduce_max(lengths)
@@ -44,3 +55,69 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
         mask = tf.less(tf.cast(mask, tf.int64), tf.expand_dims(lengths, 1))
     mask = tf.cast(tf.cast(mask, tf.float32) * value, tf.float32)
     return mask
+
+
+def tfrun(tensor):
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        return sess.run(tensor)
+
+
+def tfrunprint(tensor, suffix="", prefix=""):
+    if prefix == "":
+        print(tfrun(tensor), suffix)
+    else:
+        print(prefix, tfrun(tensor), suffix)
+
+
+def tfrunprintshape(tensor, suffix="", prefix=""):
+    tfrunprint(tf.shape(tensor), suffix, prefix)
+
+
+def tfprint(tensor, fun=None, prefix=""):
+    if fun is None:
+        fun = lambda x: x
+    return tf.Print(tensor, [fun(tensor)], prefix)
+
+
+def tfprints(tensors, fun=None, prefix=""):
+    if fun is None:
+        fun = lambda x: x
+    prints = []
+    for i in range(0, len(tensors)):
+        prints.append(tf.Print(tensors[i], [fun(tensors[i])], prefix))
+    return prints
+
+
+def tfprintshapes(tensors, prefix=""):
+    return tfprints(tensors, lambda x: tf.shape(x), prefix)
+
+
+def tfprintshape(tensor, prefix=""):
+    return tfprint(tensor, lambda x: tf.shape(x), prefix)
+
+
+def gather_in_dim(params, indices, dim, name=None):
+    """
+    Gathers slices in a defined dimension. If dim == 0 this is doing the same
+      thing as tf.gather.
+    """
+    if dim == 0:
+        return tf.gather(params, indices, name)
+    else:
+        dims = [i for i in range(0, len(params.get_shape()))]
+        to_dims = list(dims)
+        to_dims[0] = dim
+        to_dims[dim] = 0
+
+        transposed = tf.transpose(params, to_dims)
+        gathered = tf.gather(transposed, indices)
+        reverted = tf.transpose(gathered, to_dims)
+
+        return reverted
+
+
+def unit_length(tensor):
+    l2norm_sq = tf.reduce_sum(tensor * tensor, 1, keep_dims=True)
+    l2norm = tf.rsqrt(l2norm_sq)
+    return tensor * l2norm
