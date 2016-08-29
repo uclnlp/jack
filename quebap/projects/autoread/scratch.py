@@ -119,15 +119,9 @@ if __name__ == '__main__':
     inputs = np.random.randint(0, vocab_size, size=(batch_size, max_seq_length))
     seq_lengths = np.random.randint(2, max_seq_length + 1, batch_size)
 
-    inputs = tf.slice(inputs, (0, 0), tf.pack(
+    inputs_sliced = tf.slice(inputs, (0, 0), tf.pack(
         [-1, tf.cast(tf.reduce_max(seq_lengths), tf.int32)]
     ))
-
-    print("inputs")
-    print(inputs)
-
-    print("seq_lengths")
-    print(seq_lengths)
 
     with tf.variable_scope("autoread",
                            initializer=tf.contrib.layers.xavier_initializer()):
@@ -135,17 +129,20 @@ if __name__ == '__main__':
         keep_prob = tf.get_variable("keep_prob", shape=[], trainable=False,
                                     initializer=tf.constant_initializer(0.5))
 
-        embedded_inputs = embedder(inputs, input_size,
+        embedded_inputs = embedder(inputs_sliced, input_size,
                                    dropout_noiserizer(keep_prob))
 
         outputs = text2vecs(embedded_inputs, seq_lengths, hidden_size)
         logits = symbolizer(outputs, vocab_size)
-        loss = unsupervised_loss(logits, inputs, seq_lengths)
+        loss = unsupervised_loss(logits, inputs_sliced, seq_lengths)
+        symbols = tf.argmax(logits, 2)
+
+        optim_op = tf.train.AdamOptimizer().minimize(loss)
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
-            print("logits")
-            print(sess.run(logits))
-            print()
-            print("loss")
-            print(sess.run(loss))
+            for _ in range(1000):
+                _, loss_current, symbols_current = \
+                    sess.run([optim_op, loss, symbols])
+                print("inputs:\n%s\n\nsymbols:\n%s\n\nloss: %.3f\n" %
+                      (str(inputs), str(symbols_current), loss_current))
