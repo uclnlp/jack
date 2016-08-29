@@ -35,7 +35,7 @@ def get_last(tensor):
 def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
                      value=-1000.0):
     """
-    Creates a [batch_size, max_length] mask.
+    Creates a [batch_size x max_length] mask.
     :param lengths: int64 1-dim tensor of batch_size lengths
     :param batch_size: int32 0-dim tensor or python int
     :param max_length: int32 0-dim tensor or python int
@@ -45,15 +45,16 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
     :return: [batch_size x max_length] mask of zeros and "value"s
     """
     if max_length is None:
-        max_length = tf.reduce_max(lengths)
+        max_length = tf.cast(tf.reduce_max(lengths), tf.int32)
     if batch_size is None:
         batch_size = tf.shape(lengths)[0]
+    # [batch_size x max_length]
     mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.pack([batch_size, -1]))
     if mask_right:
         mask = tf.greater_equal(tf.cast(mask, tf.int64), tf.expand_dims(lengths, 1))
     else:
         mask = tf.less(tf.cast(mask, tf.int64), tf.expand_dims(lengths, 1))
-    mask = tf.cast(tf.cast(mask, tf.float32) * value, tf.float32)
+    mask = tf.cast(mask, tf.float32) * value
     return mask
 
 
