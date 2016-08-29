@@ -1,0 +1,80 @@
+{
+  "meta": "simpleQuestions.json",
+  "instances": [
+    {
+      "questions": [
+        {
+          "answers": [
+            "www.freebase.com/m/01cj3p"
+          ],
+          "question": "what is the book e about"
+        }
+      ],
+      "support": [
+        {
+          "text": "www.freebase.com/m/04whkz5 www.freebase.com/book/written_work/subjects"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            "www.freebase.com/m/0sjc7c1"
+          ],
+          "question": "to what release does the release track cardiac arrest come from"
+        }
+      ],
+      "support": [
+        {
+          "text": "www.freebase.com/m/0tp2p24 www.freebase.com/music/release_track/release"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            "www.freebase.com/m/07ssc"
+          ],
+          "question": "what country was the film the debt from"
+        }
+      ],
+      "support": [
+        {
+          "text": "www.freebase.com/m/04j0t75 www.freebase.com/film/film/country"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            "www.freebase.com/m/0p600l"
+          ],
+          "question": "what songs have nobuo uematsu produced?"
+        }
+      ],
+      "support": [
+        {
+          "text": "www.freebase.com/m/0ftqr www.freebase.com/music/producer/tracks_produced"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            "www.freebase.com/m/0677ng"
+          ],
+          "question": "Who produced eve-olution?"
+        }
+      ],
+      "support": [
+        {
+          "text": "www.freebase.com/m/036p007 www.freebase.com/music/release/producers"
+        }
+      ]
+    }
+  ]
+}

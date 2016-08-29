@@ -1,0 +1,5 @@
+www.freebase.com/m/04whkz5	www.freebase.com/book/written_work/subjects	www.freebase.com/m/01cj3p	what is the book e about
+www.freebase.com/m/0tp2p24	www.freebase.com/music/release_track/release	www.freebase.com/m/0sjc7c1	to what release does the release track cardiac arrest come from
+www.freebase.com/m/04j0t75	www.freebase.com/film/film/country	www.freebase.com/m/07ssc	what country was the film the debt from
+www.freebase.com/m/0ftqr	www.freebase.com/music/producer/tracks_produced	www.freebase.com/m/0p600l	what songs have nobuo uematsu produced?
+www.freebase.com/m/036p007	www.freebase.com/music/release/producers	www.freebase.com/m/0677ng	Who produced eve-olution?
