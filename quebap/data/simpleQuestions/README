@@ -1,0 +1,5 @@
+Note that the full context for all questions are the triples in the subfolder freebase-subsets.
+The exact triples selected as full context for each question are not distributed, only the Freebase triple the question was based on.
+From this triple, the full context can be looked up.
+Therefore the conversion script only converts the subject and rel of the triple as context.
+See the paper [http://arxiv.org/pdf/1506.02075v1.pdf] for how the full context for each question is obtained.
