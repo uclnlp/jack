@@ -61,8 +61,10 @@ def main():
     # instances = split_cbt(raw_data)
     # = parse_cbt_example(instances[0])
     corpus = create_qa_example()
-    with open("../../quebap/data/snippet/scienceQA/scienceQA_snippet.json", 'w') as outfile:
+    with open("../../quebap/data/snippet/scienceQA/scienceQA_snippet_tiny.json", 'w') as outfile:
         json.dump(corpus, outfile, indent=2)
+
+    outfile.close()
 
 if __name__ == "__main__":
     main()
