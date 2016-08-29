@@ -1,3 +1,12 @@
+"""
+            __                       __
+ ___ ___ __/ /____  _______ ___ ____/ /
+/ _ `/ // / __/ _ \/ __/ -_) _ `/ _  /
+\_,_/\_,_/\__/\___/_/  \__/\_,_/\_,_/ v0.1
+
+Learning to read, unsupervised
+"""
+
 import tensorflow as tf
 import numpy as np
 import quebap.util.tfutil as tfutil
@@ -32,9 +41,9 @@ def embedder(inputs, input_size, noiserizer=dropout_noiserizer):
     return noiserizer(embedded_inputs)
 
 
-def text2vecs(embedded_inputs, seq_lengths, hidden_size,
-              cell_constructor=tf.nn.rnn_cell.LSTMCell,
-              bidirectional=True, projected_fwbw=True):
+def reader(embedded_inputs, seq_lengths, hidden_size,
+           cell_constructor=tf.nn.rnn_cell.LSTMCell,
+           bidirectional=True, projected_fwbw=True):
     """
     :param embedded_inputs: [batch_size x max_seq_length x input_size]
     :param seq_lengths: [batch_size]
@@ -132,7 +141,7 @@ if __name__ == '__main__':
         embedded_inputs = embedder(inputs_sliced, input_size,
                                    dropout_noiserizer(keep_prob))
 
-        outputs = text2vecs(embedded_inputs, seq_lengths, hidden_size)
+        outputs = reader(embedded_inputs, seq_lengths, hidden_size)
         logits = symbolizer(outputs, vocab_size)
         loss = unsupervised_loss(logits, inputs_sliced, seq_lengths)
         symbols = tf.argmax(logits, 2)
@@ -141,8 +150,8 @@ if __name__ == '__main__':
 
         with tf.Session() as sess:
             sess.run(tf.initialize_all_variables())
-            for _ in range(1000):
+            for i in range(1000):
                 _, loss_current, symbols_current = \
                     sess.run([optim_op, loss, symbols])
-                print("inputs:\n%s\n\nsymbols:\n%s\n\nloss: %.3f\n" %
-                      (str(inputs), str(symbols_current), loss_current))
+                print("inputs:\n%s\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
+                      (str(inputs), str(symbols_current), i, loss_current))
