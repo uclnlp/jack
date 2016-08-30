@@ -18,11 +18,11 @@ class ParallelInputRNNCell(RNNCell):
 
     def __call__(self, inputs, state, scope=None):
         input1, input2 = tf.split(1, 2, inputs)
-        _, state = self._cell(input1, state)
+        _, new_state = self._cell(input1, state)
         tf.get_variable_scope().reuse_variables()
-        output, _ = self._cell(input2, state)
+        new_output, _ = self._cell(input2, state)
 
-        return output, state
+        return new_output, new_state
 
     @property
     def output_size(self):
