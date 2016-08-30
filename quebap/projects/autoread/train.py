@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_float("dropout", 0.0, "Dropout.")
 tf.app.flags.DEFINE_float("cloze_dropout", 1.0, "Dropout for token to predict.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-2, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay", 0.5, "Learning rate decay when loss on validation set does not improve.")
-tf.app.flags.DEFINE_integer("batch_size", 11, "Number of examples in each batch for training.")
+tf.app.flags.DEFINE_integer("batch_size", 64, "Number of examples in each batch for training.")
 tf.app.flags.DEFINE_string("devices", "/cpu:0", "Use this device.")
 tf.app.flags.DEFINE_integer("max_iterations", -1, "Maximum number of batches during training. -1 means until convergence")
 tf.app.flags.DEFINE_integer("ckpt_its", 1000, "Number of iterations until running checkpoint. Negative means after every epoch.")
@@ -66,7 +66,7 @@ with tf.Session(config=config) as sess:
     print("Valid sets: ", dev_fns)
     valid_sampler = sampler_for(FLAGS.dataset)(sess, FLAGS.data, dev_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
                                  max_answer_vocab=FLAGS.max_vocab,
-                                 max_length=FLAGS.max_context_length, vocab=word_ids)
+                                 max_length=FLAGS.max_context_length, vocab=word_ids, epoch_batches=100)
     #test_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.testset_prefix)]
     #print("Test sets: ", test_fns)
     #test_sampler = BatchSampler(sess, FLAGS.data, test_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
@@ -130,8 +130,8 @@ with tf.Session(config=config) as sess:
             ctr += 1
             sys.stdout.write("\r%d - %.3f" % (ctr, l /ctr))
             sys.stdout.flush()
-        sess.run(m.cloze_keep_prob.initializer())
-        sess.run(m.keep_prob.initializer())
+        sess.run(m.cloze_keep_prob.initializer)
+        sess.run(m.keep_prob.initializer)
         l /= ctr
         print("loss: %.3f" % l)
         print("####################################")

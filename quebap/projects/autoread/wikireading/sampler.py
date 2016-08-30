@@ -5,7 +5,7 @@ import numpy as np
 
 class BatchSampler():
 
-    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab):
+    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, epoch_batches=None):
         self.__fns = [os.path.join(dir, fn) for fn in filenames]
         assert self.__fns, \
             "Created sampler with no examples: directory %s , filenames %s" % (dir, filenames)
@@ -21,6 +21,8 @@ class BatchSampler():
         self.unk_id = vocab["<UNK>"]
         self.start_id = vocab["<S>"]
         self.end_id = vocab["</S>"]
+        self._epoch_batches = epoch_batches
+        self.num_batches = 0
         self.epoch = 0
 
     def get_batch(self):
@@ -41,12 +43,16 @@ class BatchSampler():
                 a.append([self.start_id] + answers[j:br] + [self.end_id])
                 j = br
             a.append([self.start_id] + answers[j:] + [self.end_id])
-
             batch_qas.append(QASetting(question, a, context))
 
-        completed = self.__sess.run(self.__reader.num_work_units_completed())
-        if completed - self.epoch * len(self.__fns) == len(self.__fns):
-            self.epoch += 1
+        self.num_batches += 1
+        if self._epoch_batches is None:
+            completed = self.__sess.run(self.__reader.num_work_units_completed())
+            if completed - self.epoch * len(self.__fns) == len(self.__fns):
+                self.epoch += 1
+        else:
+            if self.num_batches % self._epoch_batches == 0:
+                self.epoch += 1
 
         return batch_qas
 
@@ -57,8 +63,8 @@ class BatchSampler():
 class ContextBatchSampler(BatchSampler):
 
 
-    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab):
-        BatchSampler.__init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab)
+    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, epoch_batches=None):
+        BatchSampler.__init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, epoch_batches=epoch_batches)
 
     def get_batch(self):
         batch = BatchSampler.get_batch(self)
