@@ -57,7 +57,8 @@ class AutoReader():
                     with tf.device("/cpu:0"):
                         self.input_embeddings = \
                             tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
-                                            trainable=True)
+                                            initializer=self._init, trainable=True)
+
                         self._batch_size = tf.shape(self._inputs)[0]
                         self._batch_size_32 = tf.squeeze(self._batch_size)
 
@@ -69,7 +70,7 @@ class AutoReader():
                 if is_train:
                     self.learning_rate = tf.Variable(float(learning_rate), trainable=False, name="lr")
                     self.global_step = tf.Variable(0, trainable=False, name="step")
-                    self._opt = tf.train.AdamOptimizer(self.learning_rate)
+                    self._opt = tf.train.AdamOptimizer(self.learning_rate, beta1=0.0)
                     # loss: [B * T]
 
                     # remove first answer_word and flatten answers to align with logits
