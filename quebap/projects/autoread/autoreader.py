@@ -74,10 +74,9 @@ class AutoReader():
                     # loss: [B * T]
 
                     # remove first answer_word and flatten answers to align with logits
-                    logits = self.symbolizer(tf.reshape(self.outputs, [-1, self._size]))
-                    self.logits = tf.reshape(logits, tf.pack([self._batch_size, -1, vocab_size]))
+                    self.logits = self.symbolizer(self.outputs)
                     self.symbols = tf.arg_max(self.logits, 2)
-                    self.loss = self.unsupervised_loss(logits)
+                    self.loss = self.unsupervised_loss(self.logits)
 
                     self._grads = tf.gradients(self.loss, self.model_params, colocate_gradients_with_ops=True)
                     grads, _ = tf.clip_by_global_norm(self._grads, 5.0)
@@ -153,11 +152,11 @@ class AutoReader():
         """
         mask = tfutil.mask_for_lengths(self._seq_lengths, mask_right=False, value=1.0)
         mask_reshaped = tf.reshape(mask, shape=(-1,))
-        #logits_reshaped = tf.reshape(logits, shape=(-1, self._vocab_size))
+        logits_reshaped = tf.reshape(logits, shape=(-1, self._vocab_size))
         targets_reshaped = tf.reshape(self._inputs, shape=(-1,))
 
         # return tf.nn.softmax_cross_entropy_with_logits(masked_logits, targets)
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets_reshaped)
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits_reshaped, targets_reshaped)
         loss_masked = loss * mask_reshaped
         return tf.reduce_sum(loss_masked) / tf.reduce_sum(mask_reshaped)
 
