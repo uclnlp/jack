@@ -18,9 +18,9 @@ class BatchSampler():
         self.__max_answer_vocab = max_answer_vocab
         self._max_length = max_length
         self.__batch_size = batch_size
-        self.__unk_id = vocab["<UNK>"]
-        self.__start_id = vocab["<S>"]
-        self.__end_id = vocab["</S>"]
+        self.unk_id = vocab["<UNK>"]
+        self.start_id = vocab["<S>"]
+        self.end_id = vocab["</S>"]
         self.epoch = 0
 
     def get_batch(self):
@@ -28,19 +28,19 @@ class BatchSampler():
         for i in range(self.__batch_size):
             for k, v in zip(self.__example.keys(), self.__sess.run(list(self.__example.values()))):
                 if k == "document_sequence":
-                    context = [w if w < self.__max_vocab else self.__unk_id for w in v.values[:self._max_length]]
+                    context = [w if w < self.__max_vocab else self.unk_id for w in v.values[:self._max_length]]
                 elif k == "question_sequence":
-                    question = [w if w < self.__max_vocab else self.__unk_id for w in v.values]
+                    question = [w if w < self.__max_vocab else self.unk_id for w in v.values]
                 elif k == "answer_sequence":
-                    answers = [w if w < self.__max_vocab else self.__unk_id for w in v.values]
+                    answers = [w if w < self.__max_vocab else self.unk_id for w in v.values]
                 elif k == "answer_breaks":
                     answer_breaks = v.values
             a = []
             j = 0
             for br in answer_breaks:
-                a.append([self.__start_id] + answers[j:br] + [self.__end_id])
+                a.append([self.start_id] + answers[j:br] + [self.end_id])
                 j = br
-            a.append([self.__start_id] + answers[j:] + [self.__end_id])
+            a.append([self.start_id] + answers[j:] + [self.end_id])
 
             batch_qas.append(QASetting(question, a, context))
 
