@@ -99,7 +99,9 @@ class AutoReader():
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
 
     def _noiserizer(self, inputs, noise):
-        return tf.nn.dropout(inputs, noise)
+        return tf.cond(tf.equal(noise, 0.0),
+                       lambda: inputs,
+                       lambda: tf.nn.dropout(inputs, noise))
 
     def _birnn_projected(self, inputs):
         """

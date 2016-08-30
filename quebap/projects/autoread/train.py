@@ -23,8 +23,8 @@ tf.app.flags.DEFINE_integer("max_vocab", -1, "maximum vocabulary size")
 tf.app.flags.DEFINE_string("composition", 'GRU', "'LSTM', 'GRU'")
 
 #training
-tf.app.flags.DEFINE_float("dropout", 0.2, "Dropout.")
-tf.app.flags.DEFINE_float("cloze_dropout", 0.8, "Dropout for token to predict.")
+tf.app.flags.DEFINE_float("dropout", 0.0, "Dropout.")
+tf.app.flags.DEFINE_float("cloze_dropout", 1.0, "Dropout for token to predict.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-2, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay", 0.5, "Learning rate decay when loss on validation set does not improve.")
 tf.app.flags.DEFINE_integer("batch_size", 11, "Number of examples in each batch for training.")
