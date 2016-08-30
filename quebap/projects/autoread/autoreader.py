@@ -70,7 +70,7 @@ class AutoReader():
                 if is_train:
                     self.learning_rate = tf.Variable(float(learning_rate), trainable=False, name="lr")
                     self.global_step = tf.Variable(0, trainable=False, name="step")
-                    self._opt = tf.train.AdamOptimizer(self.learning_rate, beta1=0.0)
+                    self._opt = tf.train.AdamOptimizer(self.learning_rate)
                     # loss: [B * T]
 
                     # remove first answer_word and flatten answers to align with logits
