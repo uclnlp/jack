@@ -1,3 +1,12 @@
+"""
+            __                       __
+ ___ ___ __/ /____  _______ ___ ____/ /
+/ _ `/ // / __/ _ \/ __/ -_) _ `/ _  /
+\_,_/\_,_/\__/\___/_/  \__/\_,_/\_,_/ v0.1
+
+Learning to read, unsupervised
+"""
+
 from tensorflow.python.ops.rnn_cell import GRUCell, BasicLSTMCell, RNNCell
 import tensorflow as tf
 
@@ -5,6 +14,11 @@ from quebap.util import tfutil
 
 
 class ParallelInputRNNCell(RNNCell):
+
+    # todo!
+    @property
+    def input_size(self):
+        pass
 
     def __init__(self, cell):
         self._cell = cell
@@ -161,7 +175,6 @@ class AutoReader():
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits_reshaped, targets_reshaped)
         loss_masked = loss * mask_reshaped
         return tf.reduce_sum(loss_masked) / tf.reduce_sum(mask_reshaped)
-
 
     def run(self, sess, goal, batch):
         feed_dict = {
