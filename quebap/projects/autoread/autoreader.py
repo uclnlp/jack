@@ -32,7 +32,7 @@ class ParallelInputRNNCell(RNNCell):
 class AutoReader():
     def __init__(self, size, vocab_size, max_context_length,
                  is_train=True, learning_rate=1e-2, keep_prob=1.0, cloze_keep_prob=0.5,
-                 composition="GRU", devices=None, name="AutoReader"):
+                 composition="GRU", devices=None, name="AutoReader", unk_id=-1):
         self._vocab_size = vocab_size
         self._max_context_length = max_context_length
         self._size = size
@@ -41,6 +41,7 @@ class AutoReader():
         self._device0 = devices[0] if devices is not None else "/cpu:0"
         self._device1 = devices[1 % len(devices)] if devices is not None else "/cpu:0"
         self._is_train = is_train
+        self._unk_id = unk_id
 
         if composition == "GRU":
             self._cell = GRUCell(self._size)
@@ -155,8 +156,8 @@ class AutoReader():
         mask_reshaped = tf.reshape(mask, shape=(-1,))
         logits_reshaped = tf.reshape(logits, shape=(-1, self._vocab_size))
         targets_reshaped = tf.reshape(targets, shape=(-1,))
+        mask_reshaped = mask_reshaped * tf.cast(tf.not_equal(tf.cast(self._unk_id, tf.int64), targets_reshaped), tf.float32)
 
-        # return tf.nn.softmax_cross_entropy_with_logits(masked_logits, targets)
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits_reshaped, targets_reshaped)
         loss_masked = loss * mask_reshaped
         return tf.reduce_sum(loss_masked) / tf.reduce_sum(mask_reshaped)

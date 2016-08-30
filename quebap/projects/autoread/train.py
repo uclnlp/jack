@@ -76,7 +76,8 @@ with tf.Session(config=config) as sess:
     devices = FLAGS.devices.split(",")
     m = AutoReader(FLAGS.size, FLAGS.max_vocab, FLAGS.max_context_length,
                    learning_rate=FLAGS.learning_rate, devices=devices,
-                   keep_prob=1.0-FLAGS.dropout, cloze_keep_prob=1.0 - FLAGS.cloze_dropout, composition=FLAGS.composition)
+                   keep_prob=1.0-FLAGS.dropout, cloze_keep_prob=1.0 - FLAGS.cloze_dropout,
+                   composition=FLAGS.composition, unk_id=sampler.unk_id)
 
     print("Created model!")
 
