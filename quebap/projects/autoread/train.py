@@ -23,7 +23,8 @@ tf.app.flags.DEFINE_integer("max_vocab", -1, "maximum vocabulary size")
 tf.app.flags.DEFINE_string("composition", 'GRU', "'LSTM', 'GRU'")
 
 #training
-tf.app.flags.DEFINE_float("dropout", 0.5, "Dropout.")
+tf.app.flags.DEFINE_float("dropout", 0.2, "Dropout.")
+tf.app.flags.DEFINE_float("cloze_dropout", 0.8, "Dropout for token to predict.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-2, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay", 0.5, "Learning rate decay when loss on validation set does not improve.")
 tf.app.flags.DEFINE_integer("batch_size", 25, "Number of examples in each batch for training.")
@@ -38,6 +39,7 @@ tf.app.flags.DEFINE_string("init_model_path", None, "Path to model to initialize
 tf.app.flags.DEFINE_string("embeddings", None, "Init with word embeddings from given path in w2v binary format.")
 tf.app.flags.DEFINE_string("max_context_length", 300, "Maximum length of context.")
 tf.app.flags.DEFINE_string("dataset", "wikireading", "dataset on which we want to train")
+
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -74,7 +76,7 @@ with tf.Session(config=config) as sess:
     devices = FLAGS.devices.split(",")
     m = AutoReader(FLAGS.size, FLAGS.max_vocab, FLAGS.max_context_length,
                    learning_rate=FLAGS.learning_rate, devices=devices,
-                   keep_prob=1.0-FLAGS.dropout, composition=FLAGS.composition)
+                   keep_prob=1.0-FLAGS.dropout, cloze_keep_prob=1.0 - FLAGS.cloze_dropout, composition=FLAGS.composition)
 
     print("Created model!")
 
@@ -120,13 +122,13 @@ with tf.Session(config=config) as sess:
         e = valid_sampler.epoch
         l = 0.0
         ctr = 0
-        sess.run(m.train_keep_prob.set(0.0))
+        sess.run(m.cloze_keep_prob.set(0.0))
         while valid_sampler.epoch == e:
             l += m.run(sess, m.loss, valid_sampler.get_batch())
             ctr += 1
             sys.stdout.write("\r%d - %.3f" % (ctr, l /ctr))
             sys.stdout.flush()
-        sess.run(m.train_keep_prob.initializer())
+        sess.run(m.cloze_keep_prob.initializer())
         l /= ctr
         print("loss: %.3f" % l)
         print("####################################")

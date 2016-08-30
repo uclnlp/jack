@@ -31,7 +31,7 @@ class ParallelInputRNNCell(RNNCell):
 
 class AutoReader():
     def __init__(self, size, vocab_size, max_context_length,
-                 is_train=True, learning_rate=1e-2, keep_prob=1.0, train_keep_prob=0.5,
+                 is_train=True, learning_rate=1e-2, keep_prob=1.0, cloze_keep_prob=0.5,
                  composition="GRU", devices=None, name="AutoReader"):
         self._vocab_size = vocab_size
         self._max_context_length = max_context_length
@@ -52,7 +52,7 @@ class AutoReader():
             with tf.variable_scope(name, initializer=tf.contrib.layers.xavier_initializer()):
                 self._init_inputs()
                 self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(keep_prob))
-                self.train_keep_prob = tf.get_variable("train_keep_prob", [], initializer=tf.constant_initializer(train_keep_prob))
+                self.cloze_keep_prob = tf.get_variable("train_keep_prob", [], initializer=tf.constant_initializer(cloze_keep_prob))
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
                         self._batch_size = tf.shape(self._inputs)[0]
@@ -80,9 +80,9 @@ class AutoReader():
                                                             global_step=self.global_step)
 
                     self.all_params = [p for p in tf.all_variables() if name in p.name]
-                    self.all_saver = tf.train.Saver(self.all_params)
+                    self.all_saver = tf.train.Saver(self.all_params, max_to_keep=2)
 
-                self.model_saver = tf.train.Saver(self.model_params)
+                self.model_saver = tf.train.Saver(self.model_params, max_to_keep=2)
 
     def _init_inputs(self):
         with tf.device("/cpu:0"):
@@ -109,7 +109,7 @@ class AutoReader():
 
             embedded = self._noiserizer(embedded_inputs, self.keep_prob)
             if self._is_train:
-                embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.train_keep_prob)])
+                embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_keep_prob)])
 
         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
 
