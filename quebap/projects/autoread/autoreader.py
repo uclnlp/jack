@@ -59,11 +59,14 @@ class AutoReader():
                             tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
                                             initializer=self._init, trainable=True)
 
+                        max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
+                        inputs = tf.slice(self._inputs, (0, 0), tf.pack((-1, max_length)))
+
                         self._batch_size = tf.shape(self._inputs)[0]
                         self._batch_size_32 = tf.squeeze(self._batch_size)
 
                 with tf.variable_scope("encoding"):
-                    self.outputs = self._birnn_projected()
+                    self.outputs = self._birnn_projected(inputs)
 
                 self.model_params = [p for p in tf.trainable_variables() if name in p.name]
 
@@ -76,7 +79,7 @@ class AutoReader():
                     # remove first answer_word and flatten answers to align with logits
                     self.logits = self.symbolizer(self.outputs)
                     self.symbols = tf.arg_max(self.logits, 2)
-                    self.loss = self.unsupervised_loss(self.logits)
+                    self.loss = self.unsupervised_loss(self.logits, inputs)
 
                     self._grads = tf.gradients(self.loss, self.model_params, colocate_gradients_with_ops=True)
                     grads, _ = tf.clip_by_global_norm(self._grads, 5.0)
@@ -96,7 +99,7 @@ class AutoReader():
     def _noiserizer(self, inputs, noise):
         return tf.nn.dropout(inputs, noise)
 
-    def _birnn_projected(self):
+    def _birnn_projected(self, inputs):
         """
         Encodes all embedded inputs with bi-rnn, up to max(self._seq_lengths)
         :return: [B, T, S] encoded input
@@ -105,7 +108,7 @@ class AutoReader():
         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
             # [batch_size x max_seq_length x input_size]
-            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, tf.slice(self._inputs,(0,0), tf.pack((-1, max_length))))
+            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
 
             embedded = self._noiserizer(embedded_inputs, self.keep_prob)
             if self._is_train:
@@ -143,7 +146,7 @@ class AutoReader():
         return tf.contrib.layers.fully_connected(outputs, self._vocab_size,
                                                  activation_fn=None)
 
-    def unsupervised_loss(self, logits):
+    def unsupervised_loss(self, logits, targets):
         """
         :param logits: [batch_size * max_seq_length x vocab_size]
         :return:
@@ -151,7 +154,7 @@ class AutoReader():
         mask = tfutil.mask_for_lengths(self._seq_lengths, mask_right=False, value=1.0)
         mask_reshaped = tf.reshape(mask, shape=(-1,))
         logits_reshaped = tf.reshape(logits, shape=(-1, self._vocab_size))
-        targets_reshaped = tf.reshape(self._inputs, shape=(-1,))
+        targets_reshaped = tf.reshape(targets, shape=(-1,))
 
         # return tf.nn.softmax_cross_entropy_with_logits(masked_logits, targets)
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits_reshaped, targets_reshaped)
