@@ -1,12 +1,37 @@
-from tensorflow.python.ops.rnn_cell import GRUCell, BasicLSTMCell
+from tensorflow.python.ops.rnn_cell import GRUCell, BasicLSTMCell, RNNCell
 import tensorflow as tf
 
 from quebap.util import tfutil
 
 
+class ParallelInputRNNCell(RNNCell):
+
+    def __init__(self, cell):
+        self._cell = cell
+
+    def zero_state(self, batch_size, dtype):
+        return self._cell.zero_state(batch_size, dtype)
+
+    @property
+    def state_size(self):
+        return self._cell.state_size
+
+    def __call__(self, inputs, state, scope=None):
+        input1, input2 = tf.split(1, 2, inputs)
+        _, state = self._cell(input1, state)
+        tf.get_variable_scope().reuse_variables()
+        output, _ = self._cell(input2, state)
+
+        return output, state
+
+    @property
+    def output_size(self):
+        return self._cell.output_size
+
+
 class AutoReader():
     def __init__(self, size, vocab_size, max_context_length,
-                 is_train=True, learning_rate=1e-2, keep_prob=1.0,
+                 is_train=True, learning_rate=1e-2, keep_prob=1.0, train_keep_prob=0.5,
                  composition="GRU", devices=None, name="AutoReader"):
         self._vocab_size = vocab_size
         self._max_context_length = max_context_length
@@ -15,6 +40,7 @@ class AutoReader():
         self._composition = composition
         self._device0 = devices[0] if devices is not None else "/cpu:0"
         self._device1 = devices[1 % len(devices)] if devices is not None else "/cpu:0"
+        self._is_train = is_train
 
         if composition == "GRU":
             self._cell = GRUCell(self._size)
@@ -26,16 +52,14 @@ class AutoReader():
             with tf.variable_scope(name, initializer=tf.contrib.layers.xavier_initializer()):
                 self._init_inputs()
                 self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(keep_prob))
+                self.train_keep_prob = tf.get_variable("train_keep_prob", [], initializer=tf.constant_initializer(train_keep_prob))
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
                         self._batch_size = tf.shape(self._inputs)[0]
                         self._batch_size_32 = tf.squeeze(self._batch_size)
 
-                        # [B, MAX_T, S] embedded context
-                        embedded_context = self.embedder()
-
                 with tf.variable_scope("encoding"):
-                    self.outputs = self._birnn_projected(embedded_context)
+                    self.outputs = self._birnn_projected()
 
                 self.model_params = [p for p in tf.trainable_variables() if name in p.name]
 
@@ -65,46 +89,41 @@ class AutoReader():
             self._inputs = tf.placeholder(tf.int64, shape=[None, self._max_context_length], name="context")
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
 
-    def _noiserizer(self, inputs):
-        return tf.nn.dropout(inputs, self.keep_prob)
+    def _noiserizer(self, inputs, noise):
+        return tf.nn.dropout(inputs, noise)
 
-    def embedder(self):
-        """
-        :param inputs:
-        :param input_size:
-        :return:
-        """
-        with tf.variable_scope("embedder",
-                               initializer=tf.random_normal_initializer()):
-            self.input_embeddings = \
-                tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
-                                trainable=True)
-
-        # [batch_size x max_seq_length x input_size]
-        embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, self._inputs)
-
-        return self._noiserizer(embedded_inputs)
-
-
-
-    def _birnn_projected(self, embedded):
+    def _birnn_projected(self):
         """
         Encodes all embedded inputs with bi-rnn
         :return: [B, T, S] encoded input
         """
+        cell = ParallelInputRNNCell(self._cell) if self._is_train else self._cell
+
+        with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
+            self.input_embeddings = \
+                tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
+                                trainable=True)
+
+            # [batch_size x max_seq_length x input_size]
+            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, self._inputs)
+
+            embedded = self._noiserizer(embedded_inputs, self.keep_prob)
+            if self._is_train:
+                embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.train_keep_prob)])
+
         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
 
         with tf.device(self._device1):
             # use other device for backward rnn
             with tf.variable_scope("backward"):
                 rev_embedded = tf.reverse_sequence(embedded, self._seq_lengths, 1, 0)
-                outs_bw = tf.nn.dynamic_rnn(self._cell, rev_embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
+                outs_bw = tf.nn.dynamic_rnn(cell, rev_embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
                 outs_bw = tf.reverse_sequence(outs_bw, self._seq_lengths, 1, 0)
                 out_bw = tf.reshape(outs_bw, [-1, self._size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
-                outs_fw = tf.nn.dynamic_rnn(self._cell, embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
+                outs_fw = tf.nn.dynamic_rnn(cell, embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
                 out_fw = tf.reshape(outs_fw, [-1, self._size])
             # form query from forward and backward compositions
 

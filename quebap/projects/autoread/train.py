@@ -120,11 +120,13 @@ with tf.Session(config=config) as sess:
         e = valid_sampler.epoch
         l = 0.0
         ctr = 0
+        sess.run(m.train_keep_prob.set(0.0))
         while valid_sampler.epoch == e:
             l += m.run(sess, m.loss, valid_sampler.get_batch())
             ctr += 1
             sys.stdout.write("\r%d - %.3f" % (ctr, l /ctr))
             sys.stdout.flush()
+        sess.run(m.train_keep_prob.initializer())
         l /= ctr
         print("loss: %.3f" % l)
         print("####################################")
