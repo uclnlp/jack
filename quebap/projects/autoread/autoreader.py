@@ -98,20 +98,18 @@ class AutoReader():
 
     def _birnn_projected(self):
         """
-        Encodes all embedded inputs with bi-rnn
+        Encodes all embedded inputs with bi-rnn, up to max(self._seq_lengths)
         :return: [B, T, S] encoded input
         """
         cell = ParallelInputRNNCell(self._cell) if self._is_train else self._cell
-
+        max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
             # [batch_size x max_seq_length x input_size]
-            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, self._inputs)
+            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, tf.slice(self._inputs,(0,0), tf.pack((-1, max_length))))
 
             embedded = self._noiserizer(embedded_inputs, self.keep_prob)
             if self._is_train:
                 embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_keep_prob)])
-
-        max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
 
         with tf.device(self._device1):
             # use other device for backward rnn
