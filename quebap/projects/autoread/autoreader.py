@@ -55,6 +55,9 @@ class AutoReader():
                 self.cloze_keep_prob = tf.get_variable("train_keep_prob", [], initializer=tf.constant_initializer(cloze_keep_prob))
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
+                        self.input_embeddings = \
+                            tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
+                                            trainable=True)
                         self._batch_size = tf.shape(self._inputs)[0]
                         self._batch_size_32 = tf.squeeze(self._batch_size)
 
@@ -100,10 +103,6 @@ class AutoReader():
         cell = ParallelInputRNNCell(self._cell) if self._is_train else self._cell
 
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
-            self.input_embeddings = \
-                tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
-                                trainable=True)
-
             # [batch_size x max_seq_length x input_size]
             embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, self._inputs)
 
