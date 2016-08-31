@@ -158,6 +158,7 @@ class AutoReader():
                     )
 
                     encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
+                    encoded.set_shape((None, None, self._size))
 
                     return encoded
 
@@ -184,6 +185,7 @@ class AutoReader():
             #encoded = tf.add_n([encoded, outs_fw, outs_bw])
 
         #[B, T, S]
+        encoded.set_shape((None, None, self._size))
         return encoded
 
     def symbolizer(self, outputs):
