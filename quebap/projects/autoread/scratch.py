@@ -17,11 +17,13 @@ if __name__ == '__main__':
         [-1, tf.cast(tf.reduce_max(seq_lengths), tf.int32)]
     ))
 
-    autoreader = AutoReader(input_size, vocab_size, max_seq_length, keep_prob=1.0, cloze_keep_prob=0.9)
+    autoreader = AutoReader(input_size, vocab_size, max_seq_length,
+                            noise=0.0, cloze_noise=1.0,
+                            learning_rate=0.01)
     outputs = autoreader.outputs
-    logits = autoreader.symbolizer(outputs)
-    symbols = tf.argmax(logits, 2)
-    loss = autoreader.unsupervised_loss(logits, inputs_sliced)
+    logits = autoreader.logits
+    symbols = autoreader.symbols
+    loss = autoreader.loss
 
     optim_op = autoreader.update
 
@@ -30,6 +32,7 @@ if __name__ == '__main__':
 
         for i in range(1000):
             batch = (inputs, seq_lengths)
-            loss_current, symbols_current = autoreader.run(sess, [loss, symbols], batch)
-            print("inputs:\n%s\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
-                  (str(inputs), str(symbols_current), i, loss_current))
+            _, loss_current, symbols_current = \
+                autoreader.run(sess, [optim_op, loss, symbols], batch)
+            print("inputs:\n%s\n\nlengths:\n%s\n\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
+                  (str(inputs), str(seq_lengths), str(symbols_current), i, loss_current))

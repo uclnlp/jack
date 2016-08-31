@@ -76,7 +76,7 @@ with tf.Session(config=config) as sess:
     devices = FLAGS.devices.split(",")
     m = AutoReader(FLAGS.size, FLAGS.max_vocab, FLAGS.max_context_length,
                    learning_rate=FLAGS.learning_rate, devices=devices,
-                   keep_prob=1.0-FLAGS.dropout, cloze_keep_prob=1.0 - FLAGS.cloze_dropout,
+                   noise=FLAGS.dropout, cloze_noise=FLAGS.cloze_dropout,
                    composition=FLAGS.composition, unk_id=sampler.unk_id)
 
     print("Created model!")
@@ -123,15 +123,15 @@ with tf.Session(config=config) as sess:
         e = valid_sampler.epoch
         l = 0.0
         ctr = 0
-        sess.run(m.cloze_keep_prob.assign(0.0))
-        sess.run(m.keep_prob.assign(1.0))
+        sess.run(m.cloze_noise.assign(0.0))
+        sess.run(m.noise.assign(1.0))
         while valid_sampler.epoch == e:
             l += m.run(sess, m.loss, valid_sampler.get_batch())
             ctr += 1
             sys.stdout.write("\r%d - %.3f" % (ctr, l /ctr))
             sys.stdout.flush()
-        sess.run(m.cloze_keep_prob.initializer)
-        sess.run(m.keep_prob.initializer)
+        sess.run(m.cloze_noise.initializer)
+        sess.run(m.noise.initializer)
         l /= ctr
         print("loss: %.3f" % l)
         print("####################################")

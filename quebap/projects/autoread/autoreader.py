@@ -45,7 +45,7 @@ class ParallelInputRNNCell(RNNCell):
 
 class AutoReader():
     def __init__(self, size, vocab_size, max_context_length,
-                 is_train=True, learning_rate=1e-2, keep_prob=1.0, cloze_keep_prob=0.0,
+                 is_train=True, learning_rate=1e-2, noise=1.0, cloze_noise=0.0,
                  composition="GRU", devices=None, name="AutoReader", unk_id=-1):
         self._vocab_size = vocab_size
         self._max_context_length = max_context_length
@@ -66,8 +66,8 @@ class AutoReader():
         with tf.device(self._device0):
             with tf.variable_scope(name, initializer=tf.contrib.layers.xavier_initializer()):
                 self._init_inputs()
-                self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(keep_prob), trainable=False)
-                self.cloze_keep_prob = tf.get_variable("train_keep_prob", [], initializer=tf.constant_initializer(cloze_keep_prob), trainable=False)
+                self.noise = tf.get_variable("noise", [], initializer=tf.constant_initializer(noise), trainable=False)
+                self.cloze_noise = tf.get_variable("train_noise", [], initializer=tf.constant_initializer(cloze_noise), trainable=False)
 
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
@@ -113,9 +113,9 @@ class AutoReader():
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
 
     def _noiserizer(self, inputs, noise):
-        return tf.cond(tf.equal(noise, 0.0),
-                       lambda: inputs,
-                       lambda: tf.nn.dropout(inputs, noise))
+        return tf.cond(tf.equal(noise, 1.0),
+                       lambda: tf.zeros_like(inputs),
+                       lambda: tf.nn.dropout(inputs, 1-noise))
 
     def _birnn_projected(self, inputs):
         """
@@ -128,9 +128,9 @@ class AutoReader():
             # [batch_size x max_seq_length x input_size]
             embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
 
-            embedded = self._noiserizer(embedded_inputs, self.keep_prob)
+            embedded = self._noiserizer(embedded_inputs, self.noise)
             if self._is_train:
-                embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_keep_prob)])
+                embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_noise)])
 
         with tf.device(self._device1):
             # use other device for backward rnn
