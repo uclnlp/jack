@@ -22,7 +22,7 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
     for epoch in range(0, num_epochs):
         avg_loss = 0
         count = 0
-        for batch in reader.batcher.create_batches(train_data, batch_size=batch_size):
+        for batch in reader.tensorizer.create_batches(train_data, batch_size=batch_size):
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
             avg_loss += loss
             count += 1
@@ -31,10 +31,10 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
 
                 # todo: also run dev during training
     predictions = []
-    for batch in reader.batcher.create_batches(test_data, test=not use_train_generator_for_test):
+    for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test):
         scores = sess.run(reader.scores, feed_dict=batch)
-        candidates_ids = batch[reader.batcher.candidates]
-        predictions += reader.batcher.convert_to_predictions(candidates_ids, scores)
+        candidates_ids = batch[reader.tensorizer.candidates]
+        predictions += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
 
     print(accuracy(test_data, {'instances': predictions}))
 
