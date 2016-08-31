@@ -177,19 +177,4 @@ with tf.Session(config=config) as sess:
                                                                                     m.learning_rate.eval(),
                                                                                     step_time, loss))
             step_time, loss = 0.0, 0.0
-            result = validate()
-            if result > ckpt_result + 1e-4:
-                print("Stop learning!")
-                break
-            else:
-                ckpt_result = result
-
-    best_valid_loss = max(previous_loss) if previous_loss else 0.0
-   # print("Restore model to best on validation, with Accuracy: %.3f" % best_valid_acc)
-    m.all_saver.restore(sess, best_path[0])
-    model_name = best_path[0].split("/")[-1]
-    m.model_saver.save(sess, os.path.join(train_dir, "final_model.tf"), write_meta_graph=False)
-   # print("########## Test ##############")
-   # MAP = eval.eval_dataset(sess, m, test_sampler, True)
-   # print("MAP: %.3f" % MAP)
-   # print("##############################")
+            ckpt_result = validate()
