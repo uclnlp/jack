@@ -69,7 +69,7 @@ class ContextBatchSampler(BatchSampler):
 
     def get_batch(self):
         batch = BatchSampler.get_batch(self)
-        batch_array = np.zeros([len(batch), self._max_length])
+        batch_array = np.zeros([len(batch), self._max_length], np.int64)
         batch_lengths = np.zeros([len(batch)], np.int64)
         for i, qa_setting in enumerate(batch):
             batch_array[i][:len(qa_setting.context)] = qa_setting.context

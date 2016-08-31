@@ -28,6 +28,7 @@ class ParallelInputRNNCell(RNNCell):
         # input1: without noise
         # input2: with noise
         input1, input2 = tf.split(1, 2, inputs)
+
         # state of forward without noise
         _, new_state = self._cell(input1, state, scope)
         tf.get_variable_scope().reuse_variables()
@@ -89,7 +90,7 @@ class AutoReader():
                 if is_train:
                     self.learning_rate = tf.Variable(float(learning_rate), trainable=False, name="lr")
                     self.global_step = tf.Variable(0, trainable=False, name="step")
-                    self._opt = tf.train.AdamOptimizer(self.learning_rate) #, beta1=0.0)
+                    self._opt = tf.train.AdamOptimizer(self.learning_rate, beta1=0.0)
                     # loss: [B * T]
 
                     # remove first answer_word and flatten answers to align with logits
@@ -122,43 +123,65 @@ class AutoReader():
         Encodes all embedded inputs with bi-rnn, up to max(self._seq_lengths)
         :return: [B, T, S] encoded input
         """
-        cell = ParallelInputRNNCell(self._cell) if self._is_train else self._cell
+        #cell = ParallelInputRNNCell(self._cell) if self._is_train else self._cell
+
+        cell = self._cell
+
         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
             # [batch_size x max_seq_length x input_size]
             embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
-
             embedded = self._noiserizer(embedded_inputs, self.noise)
-            if self._is_train:
-                # (normal input, noisy input)
-                embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_noise)])
+
+            #if self._is_train:
+            #    # (normal input, noisy input)
+            #    embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_noise)])
+
+
+            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, self.cloze_noise), [-1, self._size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
-                outs_fw = tf.nn.dynamic_rnn(cell, embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
+                init_state_fw = tf.expand_dims(cell.zero_state(self._batch_size, dtype=tf.float32), 1)
+
+                outs_fw_tmp = tf.nn.dynamic_rnn(cell, embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
+
+                outs_fw = tf.slice(tf.concat(1, [init_state_fw, outs_fw_tmp]),
+                                   [0, 0, 0], tf.pack([-1, max_length, -1]))
+                out_fw = tf.reshape(outs_fw, [-1, self._size])
 
                 if self._forward_only:
-                    return outs_fw
+                    encoded = tf.contrib.layers.fully_connected(
+                        tf.concat(1, [out_fw, cloze_embedding]),
+                        self._size,
+                        weights_initializer=None
+                    )
 
-                out_fw = tf.reshape(outs_fw, [-1, self._size])
-            # form query from forward and backward compositions
+                    encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
+
+                    return encoded
 
         with tf.device(self._device1):
             # use other device for backward rnn
             with tf.variable_scope("backward"):
+                init_state_bw = tf.expand_dims(cell.zero_state(self._batch_size, dtype=tf.float32), 1)
+
                 rev_embedded = tf.reverse_sequence(embedded, self._seq_lengths, 1, 0)
-                outs_bw = tf.nn.dynamic_rnn(cell, rev_embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
+                outs_bw_tmp = tf.nn.dynamic_rnn(cell, rev_embedded, self._seq_lengths, dtype=tf.float32, time_major=False)[0]
+
+                outs_bw = tf.slice(tf.concat(1, [init_state_bw, outs_bw_tmp]),
+                                   [0, 0, 0], tf.pack([-1, max_length, -1]))
+
                 outs_bw = tf.reverse_sequence(outs_bw, self._seq_lengths, 1, 0)
                 out_bw = tf.reshape(outs_bw, [-1, self._size])
 
             encoded = tf.contrib.layers.fully_connected(
-                tf.concat(1, [out_fw, out_bw]), self._size,
-                activation_fn=tf.tanh, weights_initializer=None,
-                biases_initializer=None
+                tf.concat(1, [out_fw, out_bw, cloze_embedding]), self._size,
+                weights_initializer=None
             )
 
             encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
-            encoded = tf.add_n([encoded, outs_fw, outs_bw])
+            #encoded = tf.add_n([encoded, outs_fw, outs_bw])
 
         #[B, T, S]
         return encoded

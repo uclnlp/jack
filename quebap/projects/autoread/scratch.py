@@ -9,7 +9,7 @@ if __name__ == '__main__':
     unk_id = vocab_size-1
     vocab_size_full = vocab_size * 1.1
     batch_size = 10
-    max_seq_length = 20
+    max_seq_length = 10
 
     # [mb x seq_length]
     inputs = np.random.randint(0, vocab_size_full,
@@ -44,3 +44,4 @@ if __name__ == '__main__':
                 autoreader.run(sess, [optim_op, loss, symbols], batch)
             print("inputs:\n%s\n\nlengths:\n%s\n\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
                   (str(inputs), str(seq_lengths), str(symbols_current), i, loss_current))
+
