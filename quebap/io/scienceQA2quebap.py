@@ -36,7 +36,7 @@ def convert_scienceQA_to_quebap(scienceQAFile):
                     'answers': answers_last_split
                 }
                 qset_dict = {
-                    'support': [{'text': supp} for supp in support],
+                    'support': support,
                     'questions': [qdict]
                 }
 
@@ -60,7 +60,7 @@ def convert_scienceQA_to_quebap(scienceQAFile):
         'answers': answers_last_split
     }
     qset_dict = {
-        'support': [{'text': supp} for supp in support],
+        'support': support,
         'questions': [qdict]
     }
 
