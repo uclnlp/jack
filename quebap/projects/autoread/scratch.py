@@ -3,14 +3,18 @@ import numpy as np
 from quebap.projects.autoread.autoreader import AutoReader
 
 if __name__ == '__main__':
-    input_size = 7
-    hidden_size = 7
-    vocab_size = 20
-    batch_size = 3
-    max_seq_length = 5
+    input_size = 10
+    hidden_size = 10
+    vocab_size = 50
+    unk_id = vocab_size-1
+    vocab_size_full = vocab_size * 1.1
+    batch_size = 10
+    max_seq_length = 20
 
     # [mb x seq_length]
-    inputs = np.random.randint(0, vocab_size, size=(batch_size, max_seq_length))
+    inputs = np.random.randint(0, vocab_size_full,
+                               size=(batch_size, max_seq_length))
+    inputs = np.minimum(inputs, unk_id)
     seq_lengths = np.random.randint(2, max_seq_length + 1, batch_size)
 
     inputs_sliced = tf.slice(inputs, (0, 0), tf.pack(
@@ -18,11 +22,15 @@ if __name__ == '__main__':
     ))
 
     autoreader = AutoReader(input_size, vocab_size, max_seq_length,
-                            noise=0.0, cloze_noise=1.0,
-                            learning_rate=0.01)
+                            noise=0.0, cloze_noise=0.0,
+                            learning_rate=0.01, unk_id=unk_id,
+                            forward_only=True)
     outputs = autoreader.outputs
     logits = autoreader.logits
-    symbols = autoreader.symbols
+    unk_mask = autoreader.unk_mask
+    symbols = autoreader.symbols * tf.reshape(
+        tf.cast(autoreader.unk_mask, tf.int64), tf.shape(autoreader.symbols)
+    )
     loss = autoreader.loss
 
     optim_op = autoreader.update
