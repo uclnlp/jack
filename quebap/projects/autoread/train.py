@@ -65,8 +65,7 @@ with tf.Session(config=config) as sess:
     dev_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.devset_prefix)]
     print("Valid sets: ", dev_fns)
     valid_sampler = sampler_for(FLAGS.dataset)(sess, FLAGS.data, dev_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
-                                 max_length=FLAGS.max_context_length, vocab=word_ids, batches_per_epoch=100,
-                                               word_freq=word_freq, beta=FLAGS.beta)
+                                 max_length=FLAGS.max_context_length, vocab=word_ids, batches_per_epoch=100)
     #test_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.testset_prefix)]
     #print("Test sets: ", test_fns)
     #test_sampler = BatchSampler(sess, FLAGS.data, test_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
