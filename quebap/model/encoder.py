@@ -17,6 +17,7 @@ def reader(inputs, context, seq_lengths, repr_dim, vocab_size, emb_name="embeddi
       representations
     """
 
+    # initialise embedding matrix
     embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
                                    name=emb_name, trainable=True)
 
@@ -29,8 +30,9 @@ def reader(inputs, context, seq_lengths, repr_dim, vocab_size, emb_name="embeddi
     # embedding_aggregated = tf.reduce_sum(embedded_inputs, [1])
 
     # is this right?
-    batch_size, state_size = tf.unpack(tf.shape(context))
-    last_context_state = tfutil.get_by_index(context, state_size)
+    #batch_size, state_size = tf.unpack(tf.shape(context))
+    #last_context_state = tfutil.get_by_index(context, state_size)
+    last_context_state = tfutil.get_last(context)
 
     # initialise with state of context
     with tf.variable_scope(rnn_scope):
