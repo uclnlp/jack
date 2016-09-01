@@ -259,7 +259,7 @@ class QATensorizer(Tensorizer):
             support_indices = [[len(s) for s in inst] for inst in batch]
 
             # todo: sample negative candidate
-            feed_dict =  {
+            feed_dict = {
                 self.questions: question_seqs_padded,
                 self.question_lengths: question_length,
                 self.candidates: answer_seqs_padded,
