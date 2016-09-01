@@ -76,7 +76,7 @@ with tf.Session(config=config) as sess:
     devices = FLAGS.devices.split(",")
     m = AutoReader(FLAGS.size, FLAGS.max_vocab, FLAGS.max_context_length,
                    learning_rate=FLAGS.learning_rate, devices=devices,
-                   noise=FLAGS.dropout, cloze_noise=FLAGS.cloze_dropout,
+                   dropout=FLAGS.dropout, cloze_noise=FLAGS.cloze_dropout,
                    composition=FLAGS.composition, unk_id=sampler.unk_id)
 
     print("Created model!")
@@ -86,6 +86,9 @@ with tf.Session(config=config) as sess:
 
     previous_loss = list()
     epoch = 0
+
+    print("Initializing variables ...")
+    sess.run(tf.initialize_all_variables())
 
     if FLAGS.init_model_path:
         print("Loading from path " + FLAGS.init_model_path)
@@ -99,8 +102,6 @@ with tf.Session(config=config) as sess:
     else:
         if not os.path.exists(train_dir):
             os.makedirs(train_dir)
-        print("Initializing variables ...")
-        sess.run(tf.initialize_all_variables())
         if FLAGS.embeddings is not None:
             print("Init embeddings with %s..." % FLAGS.embeddings)
             e = embeddings.load_embedding(FLAGS.embeddings)
@@ -124,14 +125,14 @@ with tf.Session(config=config) as sess:
         l = 0.0
         ctr = 0
         sess.run(m.cloze_noise.assign(1.0))
-        sess.run(m.noise.assign(0.0))
+        sess.run(m.keep_prob.assign(0.0))
         while valid_sampler.epoch == e:
             l += m.run(sess, m.loss, valid_sampler.get_batch())
             ctr += 1
             sys.stdout.write("\r%d - %.3f" % (ctr, l /ctr))
             sys.stdout.flush()
         sess.run(m.cloze_noise.initializer)
-        sess.run(m.noise.initializer)
+        sess.run(m.keep_prob.initializer)
         l /= ctr
         print("loss: %.3f" % l)
         print("####################################")
