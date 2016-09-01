@@ -1,0 +1,145 @@
+{
+  "instances": [
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "During the siege , George Robertson had appointed Shuja-ul-Mulk , who was a XXXXX boy only 12 years old and the youngest surviving son of Aman-ul-Mulk , as the ruler of Chitral ."
+        }
+      ],
+      "id": "1",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "brighter"
+            }
+          ],
+          "question": "The actual field is not much different than that of a 40mm , only it is smaller and quite a bit noticeably XXXXX , which is probably the main benefit ."
+        }
+      ],
+      "id": "2",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "The roses have grown out of control , wild and carefree , their XXXXX blooming faces turned to bathe in the early autumn sun ."
+        }
+      ],
+      "id": "3",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "He was XXXXX and independent and proud ."
+        }
+      ],
+      "id": "4",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "brightest"
+            }
+          ],
+          "question": "In fact , during at least six distinct periods in Army history since World War I , lack of trust and confidence in senior leaders caused the so-called best and XXXXX to leave the Army in droves ."
+        }
+      ],
+      "id": "5",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "brightest"
+            }
+          ],
+          "question": "An evening of classical symphonic music , played by the next generation stars in the American orchestral scene , can be savored at the New World Symphony , a special Miami institution that nurtures the best and XXXXX young symphonic musicians ."
+        }
+      ],
+      "id": "6",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "There are sound reasons for concluding that the long-run picture remains XXXXX , and even recent signals about the current course of the economy have turned from unremittingly negative through the late fall of last year to a far more mixed set of signals recently ."
+        }
+      ],
+      "id": "7",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "Snow covered areas appear XXXXX blue in the image which was taken in early spring and shows deep snow cover ."
+        }
+      ],
+      "id": "8",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "She turns eyes XXXXX with excitement towards Fiona , still tugging on the string of the minitiature airship-cum-dance card she has just received at the door ."
+        }
+      ],
+      "id": "9",
+      "support": []
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "bright"
+            }
+          ],
+          "question": "A short excerpt : I was praying in private until someone got the XXXXX idea of starting a Presidential Prayer Team ."
+        }
+      ],
+      "id": "10",
+      "support": []
+    }
+  ],
+  "meta": "SemEval-2007 Task 10: Lexical Substitution"
+}

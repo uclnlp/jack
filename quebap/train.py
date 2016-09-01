@@ -1,6 +1,6 @@
 import tensorflow as tf
-import quebap.model.tensorizer as reader
-from quebap.model.tensorizer import *
+import quebap.tensorizer as reader
+from quebap.tensorizer import *
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
                  optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):

@@ -28,14 +28,16 @@ max_question_length = 10
 
 def load_vocab(fn):
     ids = dict()
+    counts = dict()
     vocab = list()
     with open(fn, "rb") as f:
         for l in f:
             [i, word, count] = l.decode("utf-8").strip().split("\t")
+            counts[word] = count
             i = int(i)
             if i == len(vocab):
                 vocab.append(word)
             else:
                 vocab[i] = word
             ids[word] = i
-    return ids, vocab
+    return ids, vocab, counts

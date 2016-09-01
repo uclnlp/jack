@@ -88,7 +88,7 @@ def pad_seq(seq, target_length, pad):
     return seq + [pad for _ in range(0, target_length - len(seq))]
 
 
-class QATensorizer(Tensorizer):
+class GenericTensorizer(Tensorizer):
     """
     todo
     """
@@ -103,7 +103,6 @@ class QATensorizer(Tensorizer):
         self.candidate_split = candidate_split
         self.question_split = question_split
         self.support_split = support_split
-
 
         # [batch_size, seq_length]
         questions = tf.placeholder(tf.int32, (None, None), name="question")
@@ -123,21 +122,32 @@ class QATensorizer(Tensorizer):
 
         super().__init__(candidates, questions, target_values, support)
 
-        # todo
-
-        global_candidates = reference_data['globals']['candidates']
-        self.all_candidate_tokens = \
-            [self.pad] + sorted(
-                {token for c in global_candidates
-                 for token in self.string_to_seq(c['text'], candidate_split)}
-            )
-
         instances = reference_data['instances']
+
+        global_candidates = {}
+        self.has_global_candidates = 'globals' in reference_data
+
+        all_candidate_seqs = [instance["questions"][0]["answers"][0]["text"]
+                              for instance in instances]
+
+        if self.has_global_candidates:
+            global_candidates = reference_data['globals']['candidates']
+            self.all_candidate_tokens = \
+                [self.pad] + sorted(
+                    {token for c in global_candidates
+                     for token in self.string_to_seq(c['text'], candidate_split)}
+                )
+        else:
+            # todo: split!
+            self.all_candidate_tokens = [self.pad] + sorted(set(all_candidate_seqs))
+
         self.all_question_tokens = \
             [self.pad] + sorted(
                 {token for inst in instances
                  for token in
-                 self.string_to_seq(inst['questions'][0]['question'], question_split)})
+                 self.string_to_seq(inst['questions'][0]['question'],
+                                    question_split)})
+
         self.all_support_tokens = \
             [self.pad] + sorted(
                 {token for inst in instances
@@ -151,9 +161,21 @@ class QATensorizer(Tensorizer):
         self.num_candidate_symbols = len(self.candidate_lexicon)
         self.num_questions_symbols = len(self.question_lexicon)
         self.num_support_symbols = len(self.support_lexicon)
-        self.max_candidate_length = \
-            max([len(self.string_to_seq(c['text'], self.candidate_split))
-                 for c in global_candidates])
+
+        candidate_lengths = []
+        if self.has_global_candidates:
+            candidate_lengths = \
+                [len(self.string_to_seq(c['text'], self.candidate_split))
+                 for c in global_candidates]
+        else:
+            candidate_lengths = \
+                [len(self.string_to_seq(c, self.candidate_split))
+                 for c in all_candidate_seqs]
+
+        self.max_candidate_length = 0
+        if len(candidate_lengths) > 0:
+            self.max_candidate_length = max(candidate_lengths)
+
         self.global_candidate_seqs = \
             [self.pad_seq(
                 [self.candidate_lexicon[t]
@@ -170,7 +192,6 @@ class QATensorizer(Tensorizer):
     def pad_seq(self, seq, target_length):
         return pad_seq(seq, target_length, self.pad)
 
-
     def convert_to_predictions(self, candidates, scores):
         """
         Convert a batched candidate tensor and batched scores back into a python dictionary in quebap format.
@@ -181,7 +202,6 @@ class QATensorizer(Tensorizer):
 
         # todo
         pass
-
 
     def create_batches(self, data=None, batch_size=1, test=False):
         """
@@ -253,10 +273,15 @@ class QATensorizer(Tensorizer):
 
             # workaround because candidates are always the same
             # (the global ones) for this tensorizer
-            candidate_length = [[len(c) for c in self.global_candidate_seqs] for
-                                inst in batch]
+            if self.has_global_candidates:
+                candidate_length = [[len(c) for c in self.global_candidate_seqs]
+                                    for inst in batch]
+            else:
+                candidate_length = [[1.0]] * batch_size
 
-            support_indices = [[len(s) for s in inst] for inst in batch]
+            support_indices = [[len(self.string_to_seq(support['text'], self.support_split))
+                                for support in inst['support']]
+                               for inst in batch] # [[len(s) for s in inst] for inst in batch]
 
             # todo: sample negative candidate
             feed_dict = {

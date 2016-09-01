@@ -3,10 +3,11 @@ from quebap.projects.autoread.wikireading import *
 from quebap.projects.autoread.wikireading.qa import QASetting
 import numpy as np
 from tensorflow.models.rnn.ptb import reader
+import math
 
 
 class BatchSampler():
-    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, epoch_batches=None):
+    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, batches_per_epoch=None):
         self.__fns = [os.path.join(dir, fn) for fn in filenames]
         assert self.__fns, \
             "Created sampler with no examples: directory %s , filenames %s" % (dir, filenames)
@@ -22,7 +23,7 @@ class BatchSampler():
         self.unk_id = vocab["<UNK>"]
         self.start_id = vocab["<S>"]
         self.end_id = vocab["</S>"]
-        self._epoch_batches = epoch_batches
+        self._batches_per_epoch = batches_per_epoch
         self.num_batches = 0
         self.epoch = 0
 
@@ -47,12 +48,12 @@ class BatchSampler():
             batch_qas.append(QASetting(question, a, context))
 
         self.num_batches += 1
-        if self._epoch_batches is None:
+        if self._batches_per_epoch is None:
             completed = self.__sess.run(self.__reader.num_work_units_completed())
             if completed - self.epoch * len(self.__fns) == len(self.__fns):
                 self.epoch += 1
         else:
-            if self.num_batches % self._epoch_batches == 0:
+            if self.num_batches % self._batches_per_epoch == 0:
                 self.epoch += 1
 
         return batch_qas
@@ -64,17 +65,26 @@ class BatchSampler():
 class ContextBatchSampler(BatchSampler):
 
 
-    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, epoch_batches=None):
-        BatchSampler.__init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_answer_vocab, vocab, epoch_batches=epoch_batches)
+    def __init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, vocab, batches_per_epoch=None,
+                 word_freq=dict(), beta=0.5):
+        BatchSampler.__init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_vocab, vocab,
+                              batches_per_epoch=batches_per_epoch)
+        self._word_freq = [1.0] * len(vocab)
+        for w, freq in word_freq.items():
+            self._word_freq[vocab[w]] = max(float(freq), 1.0)
+        self._beta = beta
 
     def get_batch(self):
         batch = BatchSampler.get_batch(self)
         batch_array = np.zeros([len(batch), self._max_length], np.int64)
         batch_lengths = np.zeros([len(batch)], np.int64)
+        batch_weights = np.zeros([len(batch), self._max_length])
         for i, qa_setting in enumerate(batch):
             batch_array[i][:len(qa_setting.context)] = qa_setting.context
+            normalizer = len(qa_setting.context)/sum(1.0/math.pow(self._word_freq[w], self._beta) for w in qa_setting.context)
+            batch_weights[i][:len(qa_setting.context)] = [1.0/math.pow(self._word_freq[w], self._beta) * normalizer for w in qa_setting.context]
             batch_lengths[i] = len(qa_setting.context)
-        return batch_array, batch_lengths
+        return batch_array, batch_lengths, batch_weights
 
 
 class TextBatchSampler:

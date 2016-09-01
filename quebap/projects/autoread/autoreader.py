@@ -67,7 +67,7 @@ class AutoReader():
         with tf.device(self._device0):
             with tf.variable_scope(name, initializer=tf.contrib.layers.xavier_initializer()):
                 self._init_inputs()
-                self.keep_prob = tf.get_variable("noise", [], initializer=tf.constant_initializer(1.0-dropout), trainable=False)
+                self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(1.0-dropout), trainable=False)
                 self.cloze_noise = tf.get_variable("train_noise", [], initializer=tf.constant_initializer(cloze_noise), trainable=False)
 
                 with tf.variable_scope("embeddings"):
@@ -111,6 +111,7 @@ class AutoReader():
     def _init_inputs(self):
         with tf.device("/cpu:0"):
             self._inputs = tf.placeholder(tf.int64, shape=[None, self._max_context_length], name="context")
+            self._weights = tf.placeholder(tf.float32, shape=[None, self._max_context_length], name="context")
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
 
     def _noiserizer(self, inputs, noise):
@@ -210,13 +211,17 @@ class AutoReader():
 
         self.unk_mask = mask_unk
 
+        weights = tf.slice(self._weights, [0, 0], tf.shape(targets))
+        weights_reshaped = tf.reshape(weights, shape=(-1,))
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits_reshaped, targets_reshaped)
-        loss_masked = loss * mask_final
-        return tf.reduce_sum(loss_masked) / tf.reduce_sum(mask_final)
+        loss_masked = loss * mask_final * weights_reshaped
+
+        return tf.reduce_sum(loss_masked) / tf.reduce_sum(mask_final * weights_reshaped)
 
     def run(self, sess, goal, batch):
         feed_dict = {
             self._inputs: batch[0],
+            self._weights: batch[2],
             self._seq_lengths:  batch[1]
         }
 
