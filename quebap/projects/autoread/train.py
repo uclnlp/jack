@@ -84,7 +84,7 @@ with tf.Session(config=config) as sess:
     best_path = []
     checkpoint_path = os.path.join(train_dir, "model.ckpt")
 
-    previous_mrr = list()
+    previous_loss = list()
     epoch = 0
 
     print("Initializing variables ...")
@@ -120,41 +120,38 @@ with tf.Session(config=config) as sess:
 
     def validate():
         # Run evals as cloze-QA on development set and print(their loss.)
-        print("########## Validation ##############") #MRR
+        print("########## Validation ##############")
         e = valid_sampler.epoch
-        mrr = 0.0
+        l = 0.0
         ctr = 0
         sess.run(m.cloze_noise.assign(1.0))
         sess.run(m.keep_prob.assign(0.0))
         while valid_sampler.epoch == e:
-            batch = valid_sampler.get_batch()
-            logits = m.run(sess, m.logits, batch)
-            for j in range(batch[0].shape[0]):
-                b = batch[0][j]
-                l = logits[j]
-                mrr += sum(1.0 / (1+np.argwhere(np.equal(np.argsort(l[idx])[::-1], b[idx]))[0][0]) for idx in range(batch[1][j]))
-                ctr += batch[1][j]
-
-            sys.stdout.write("\r%d - MRR: %.4f" % (ctr, mrr /ctr))
+            l += m.run(sess, m.loss, valid_sampler.get_batch())
+            ctr += 1
+            sys.stdout.write("\r%d - %.3f" % (ctr, l / ctr))
             sys.stdout.flush()
         sess.run(m.cloze_noise.initializer)
         sess.run(m.keep_prob.initializer)
-        mrr /= ctr
+        l /= ctr
+        print("loss: %.3f" % l)
         print("####################################")
 
-        if not best_path or mrr > max(previous_mrr):
+        if not best_path or l < min(previous_loss):
             if best_path:
-                best_path[0] = m.all_saver.save(sess, checkpoint_path, global_step=m.global_step, write_meta_graph=False)
+                best_path[0] = m.all_saver.save(sess, checkpoint_path, global_step=m.global_step,
+                                                write_meta_graph=False)
             else:
-                best_path.append(m.all_saver.save(sess, checkpoint_path, global_step=m.global_step, write_meta_graph=False))
+                best_path.append(
+                    m.all_saver.save(sess, checkpoint_path, global_step=m.global_step, write_meta_graph=False))
 
-        if previous_mrr and mrr < previous_mrr[-1] - 1e-3:
+        if previous_loss and l > previous_loss[-1]:
             # if no significant improvement decay learningrate
             print("Decaying learningrate.")
             sess.run(m.learning_rate.assign(m.learning_rate * FLAGS.learning_rate_decay))
 
-        previous_mrr.append(mrr)
-        return mrr
+        previous_loss.append(l)
+        return l
 
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess, coord=coord)
