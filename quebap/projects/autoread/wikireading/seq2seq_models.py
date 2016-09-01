@@ -59,7 +59,8 @@ class QASeq2SeqModel:
         with tf.device(self._device0):
             with tf.variable_scope(name, initializer=tf.contrib.layers.xavier_initializer()):
                 self._init_inputs()
-                self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(keep_prob))
+                self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(keep_prob),
+                                                 trainable=False)
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
                         # embeddings

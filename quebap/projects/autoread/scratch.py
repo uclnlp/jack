@@ -3,25 +3,35 @@ import numpy as np
 from quebap.projects.autoread.autoreader import AutoReader
 
 if __name__ == '__main__':
-    input_size = 7
-    hidden_size = 7
-    vocab_size = 20
-    batch_size = 3
-    max_seq_length = 5
+    input_size = 10
+    hidden_size = 10
+    vocab_size = 50
+    unk_id = vocab_size-1
+    vocab_size_full = vocab_size * 1.1
+    batch_size = 10
+    max_seq_length = 10
 
     # [mb x seq_length]
-    inputs = np.random.randint(0, vocab_size, size=(batch_size, max_seq_length))
+    inputs = np.random.randint(0, vocab_size_full,
+                               size=(batch_size, max_seq_length))
+    inputs = np.minimum(inputs, unk_id)
     seq_lengths = np.random.randint(2, max_seq_length + 1, batch_size)
 
     inputs_sliced = tf.slice(inputs, (0, 0), tf.pack(
         [-1, tf.cast(tf.reduce_max(seq_lengths), tf.int32)]
     ))
 
-    autoreader = AutoReader(input_size, vocab_size, max_seq_length, keep_prob=1.0, cloze_keep_prob=0.9)
+    autoreader = AutoReader(input_size, vocab_size, max_seq_length,
+                            dropout=0.0, cloze_noise=0.0,
+                            learning_rate=0.01, unk_id=unk_id,
+                            forward_only=True)
     outputs = autoreader.outputs
-    logits = autoreader.symbolizer(outputs)
-    symbols = tf.argmax(logits, 2)
-    loss = autoreader.unsupervised_loss(logits, inputs_sliced)
+    logits = autoreader.logits
+    unk_mask = autoreader.unk_mask
+    symbols = autoreader.symbols * tf.reshape(
+        tf.cast(autoreader.unk_mask, tf.int64), tf.shape(autoreader.symbols)
+    )
+    loss = autoreader.loss
 
     optim_op = autoreader.update
 
@@ -30,6 +40,8 @@ if __name__ == '__main__':
 
         for i in range(1000):
             batch = (inputs, seq_lengths)
-            loss_current, symbols_current = autoreader.run(sess, [loss, symbols], batch)
-            print("inputs:\n%s\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
-                  (str(inputs), str(symbols_current), i, loss_current))
+            _, loss_current, symbols_current = \
+                autoreader.run(sess, [optim_op, loss, symbols], batch)
+            print("inputs:\n%s\n\nlengths:\n%s\n\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
+                  (str(inputs), str(seq_lengths), str(symbols_current), i, loss_current))
+
