@@ -14,7 +14,7 @@ def convert_scienceQA_to_quebap(scienceQAFile):
     candidates = []
 
     for l in f:
-        l = l.strip().split("\t")
+        l = l.strip().lower().split("\t")  # do the lower case preprocessing here
         quest, answs, cands, context, contextID = l
 
         # append
