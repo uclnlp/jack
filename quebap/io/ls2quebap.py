@@ -4,10 +4,9 @@ Substitution to the quebap format.
 """
 
 import json
-import sys
 import xmltodict
-import pprint
 import re
+import os
 
 if __name__ == "__main__":
     for corpus_name in ["trial"]:
@@ -45,3 +44,18 @@ if __name__ == "__main__":
             with open("./quebap/data/LS/%s/lexsub_%s_cleaned.jsonl" % \
                               (corpus_name, corpus_name), 'w') as outfile:
                 json.dump(quebap, outfile, indent=2)
+
+
+
+            # create snippet
+            quebap['instances'] = quebap['instances'][:10]
+
+            def save_debug(directory_path, file_name):
+                if not os.path.exists(directory_path):
+                    os.makedirs(directory_path)
+
+                with open(directory_path + "/" + file_name, 'w') as outfile:
+                    json.dump(quebap, outfile, indent=2)
+
+            save_debug("./quebap/data/LS/debug", "lexsub_debug_cleaned.jsonl")
+            save_debug("./quebap/data/snippet/LS", "snippet_quebapformat.json")

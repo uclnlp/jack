@@ -1,5 +1,6 @@
-from quebap.model.tensorizer import *
+from quebap.tensorizer import *
 from quebap.util.tfutil import *
+
 
 def create_global_answer_candidates(candidates):
     return {
@@ -42,68 +43,13 @@ def test_sequence_tensorizer():
     assert converted[1]['questions'][0]['answers'][0] == {'score': 1.0, 'text': 'C,A'}
 
 
-qa_data = \
-    {
-      "meta": "SNLI",
-      "globals": {
-        "candidates": [
-          {
-            "text": "entailment"
-          },
-          {
-            "text": "neutral"
-          },
-          {
-            "text": "contradiction"
-          }
-        ]
-      },
-      "instances": [
-        {
-          "support": [
-            {
-              "text": "A boy is jumping on skateboard in the middle of a red bridge.",
-              "id": "3691670743.jpg#0"
-            }
-          ],
-          "questions": [
-            {
-              "answers": [
-                {
-                  "text": "neutral"
-                }
-              ],
-              "question": "The boy is wearing safety equipment."
-            }
-          ],
-          "id": "3691670743.jpg#0r1n"
-        },
-        {
-          "support": [
-            {
-              "text": "An older man sits with his orange juice at a small table in a coffee shop while employees in bright colored shirts smile in the background.",
-              "id": "4804607632.jpg#0"
-            }
-          ],
-          "questions": [
-            {
-              "answers": [
-                {
-                  "text": "neutral"
-                }
-              ],
-              "question": "An older man drinks his juice as he waits for his daughter to get off work."
-            }
-          ],
-          "id": "4804607632.jpg#0r1n"
-        }
-      ]
-    }
-
-
 def test_qa_tensorizer():
-    tensorizer = QATensorizer(qa_data)
-    feed_dict = next(tensorizer.create_batches(qa_data, batch_size=2))
+    with open('./quebap/data/snippet/LS/snippet_quebapformat.json') as data_file:
+    #with open('../quebap/quebap/data/snippet/SNLI_v1/snippet_quebapformat.json') as data_file:
+        data = json.load(data_file)
+
+    tensorizer = GenericTensorizer(data)
+    feed_dict = next(tensorizer.create_batches(data, batch_size=4))
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
