@@ -69,9 +69,11 @@ class ContextBatchSampler(BatchSampler):
                  word_freq=dict(), beta=0.5):
         BatchSampler.__init__(self, sess, dir, filenames, batch_size, max_length, max_vocab, max_vocab, vocab,
                               batches_per_epoch=batches_per_epoch)
-        self._word_freq = [1.0] * len(vocab)
+        self._word_freq = [1.0] * max_vocab
         for w, freq in word_freq.items():
-            self._word_freq[vocab[w]] = max(float(freq), 1.0)
+            idx = vocab[w]
+            if idx < max_vocab:
+                self._word_freq[idx] = max(float(freq), 1.0)
         self._beta = beta
 
     def get_batch(self):
@@ -81,7 +83,7 @@ class ContextBatchSampler(BatchSampler):
         batch_weights = np.zeros([len(batch), self._max_length])
         for i, qa_setting in enumerate(batch):
             batch_array[i][:len(qa_setting.context)] = qa_setting.context
-            normalizer = len(qa_setting.context)/sum(1.0/math.pow(self._word_freq[w], self._beta) for w in qa_setting.context)
+            normalizer = sum(len(qa_setting.context)/math.pow(self._word_freq[w], self._beta) for w in qa_setting.context)
             batch_weights[i][:len(qa_setting.context)] = [1.0/math.pow(self._word_freq[w], self._beta) * normalizer for w in qa_setting.context]
             batch_lengths[i] = len(qa_setting.context)
         return batch_array, batch_lengths, batch_weights
