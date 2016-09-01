@@ -1,6 +1,11 @@
-import tensorflow as tf
-import quebap.tensorizer as reader
+import argparse
+import json
+
+from quebap.model.models import create_log_linear_reader, \
+    create_model_f_reader, create_bag_of_embeddings_reader, \
+    create_sequence_embeddings_reader, create_support_bag_of_embeddings_reader
 from quebap.tensorizer import *
+
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
                  optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):
@@ -38,8 +43,9 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
 
     print(accuracy(test_data, {'instances': predictions}))
 
+
 def main():
-    readers = {
+    reader_models = {
         'log_linear': create_log_linear_reader,
         'model_f': create_model_f_reader,
         'boe': create_bag_of_embeddings_reader,
@@ -53,7 +59,7 @@ def main():
     parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
     parser.add_argument('--repr_dim', default=5, type=int, help="Size of the hidden representation")
     parser.add_argument('--support_dim', default=5, type=int, help="Size of the hidden representation for support")
-    parser.add_argument('--model', default='model_f', choices=sorted(readers.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='model_f', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--epochs', default=1, type=int, help="Number of epochs to train for")
     parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Index of first training instance.")
     parser.add_argument('--train_end', default=-1, metavar='E', type=int,
@@ -73,9 +79,9 @@ def main():
 
     reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
 
-    reader = readers[args.model](reading_dataset, **vars(args))
+    reader_model = reader_models[args.model](reading_dataset, **vars(args))
 
-    train_reader(reader, reading_dataset, reading_dataset, args.epochs, args.batch_size,
+    train_reader(reader_model, reading_dataset, reading_dataset, args.epochs, args.batch_size,
                  use_train_generator_for_test=True)
 
 

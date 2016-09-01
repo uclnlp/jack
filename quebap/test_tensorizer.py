@@ -1,6 +1,6 @@
 from quebap.tensorizer import *
 from quebap.util.tfutil import *
-
+import json
 
 def create_global_answer_candidates(candidates):
     return {
