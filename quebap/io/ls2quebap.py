@@ -31,15 +31,12 @@ if __name__ == "__main__":
 
                         # print("%s\t%s\t%s" % (id, word, context_masked))
 
-                        queb = {}
-                        queb['id'] = id
-                        queb['support'] = []
-                        queb['questions'] = [
+                        queb = {'id': id, 'support': [], 'questions': [
                             {'question': context_masked,
                              'answers': [
                                  {'text': word}
                              ]}
-                        ]
+                        ]}
 
                         instances.append(queb)
 

@@ -170,7 +170,6 @@ class QATensorizer(Tensorizer):
     def pad_seq(self, seq, target_length):
         return pad_seq(seq, target_length, self.pad)
 
-
     def convert_to_predictions(self, candidates, scores):
         """
         Convert a batched candidate tensor and batched scores back into a python dictionary in quebap format.
@@ -181,7 +180,6 @@ class QATensorizer(Tensorizer):
 
         # todo
         pass
-
 
     def create_batches(self, data=None, batch_size=1, test=False):
         """
