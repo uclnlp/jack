@@ -43,7 +43,7 @@ class ParallelInputRNNCell(RNNCell):
 
 class AutoReader():
     def __init__(self, size, vocab_size, max_context_length,
-                 is_train=True, learning_rate=1e-2, noise=1.0, cloze_noise=0.0,
+                 is_train=True, learning_rate=1e-2, dropout=1.0, cloze_noise=0.0,
                  composition="GRU", devices=None, name="AutoReader", unk_id=-1,
                  forward_only=False):
         self.unk_mask = None
@@ -67,7 +67,7 @@ class AutoReader():
         with tf.device(self._device0):
             with tf.variable_scope(name, initializer=tf.contrib.layers.xavier_initializer()):
                 self._init_inputs()
-                self.noise = tf.get_variable("noise", [], initializer=tf.constant_initializer(noise), trainable=False)
+                self.keep_prob = tf.get_variable("noise", [], initializer=tf.constant_initializer(1.0-dropout), trainable=False)
                 self.cloze_noise = tf.get_variable("train_noise", [], initializer=tf.constant_initializer(cloze_noise), trainable=False)
 
                 with tf.variable_scope("embeddings"):
@@ -116,7 +116,7 @@ class AutoReader():
     def _noiserizer(self, inputs, noise):
         return tf.cond(tf.equal(noise, 1.0),
                        lambda: tf.zeros_like(inputs),
-                       lambda: tf.nn.dropout(inputs, 1-noise))
+                       lambda: tf.nn.dropout(inputs, 1-noise) * (1-noise))
 
     def _birnn_projected(self, inputs):
         """
@@ -131,7 +131,7 @@ class AutoReader():
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
             # [batch_size x max_seq_length x input_size]
             embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
-            embedded = self._noiserizer(embedded_inputs, self.noise)
+            embedded = tf.nn.dropout(embedded_inputs, self.keep_prob)
 
             #if self._is_train:
             #    # (normal input, noisy input)

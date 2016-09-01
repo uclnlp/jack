@@ -22,7 +22,7 @@ if __name__ == '__main__':
     ))
 
     autoreader = AutoReader(input_size, vocab_size, max_seq_length,
-                            noise=0.0, cloze_noise=0.0,
+                            dropout=0.0, cloze_noise=0.0,
                             learning_rate=0.01, unk_id=unk_id,
                             forward_only=True)
     outputs = autoreader.outputs
