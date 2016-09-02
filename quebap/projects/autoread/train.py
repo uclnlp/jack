@@ -124,7 +124,7 @@ with tf.Session(config=config) as sess:
         l = 0.0
         ctr = 0
         sess.run(m.cloze_noise.assign(1.0))
-        sess.run(m.keep_prob.assign(0.0))
+        sess.run(m.keep_prob.assign(1.0))
         while valid_sampler.epoch == e:
             l += m.run(sess, m.loss, valid_sampler.get_batch())
             ctr += 1
