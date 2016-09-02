@@ -13,8 +13,8 @@ from quebap.projects.autoread.autoreader import AutoReader
 from quebap.projects.autoread.wikireading import load_vocab
 
 tf.app.flags.DEFINE_string('data', None, 'Path to extracted TFRecord data. Assuming contains document.vocab')
-tf.app.flags.DEFINE_string("trainset_prefix", "test-00000-of-00015", "Comma separated datasets to train on.")
-tf.app.flags.DEFINE_string("devset_prefix", "test-00001-of-00015", "Development set")
+tf.app.flags.DEFINE_string("trainset_prefix", "train", "Comma separated datasets to train on.")
+tf.app.flags.DEFINE_string("validset_prefix", "valid", "Development set")
 #tf.app.flags.DEFINE_string("testset_prefix", "test", "Test set.")
 
 # model
@@ -62,7 +62,7 @@ with tf.Session(config=config) as sess:
                            max_length=FLAGS.max_context_length, vocab=word_ids, word_freq=word_freq, beta=FLAGS.beta)
 
     train_dir = os.path.join(FLAGS.save_dir)
-    dev_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.devset_prefix)]
+    dev_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.validset_prefix)]
     print("Valid sets: ", dev_fns)
     valid_sampler = sampler_for(FLAGS.dataset)(sess, FLAGS.data, dev_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
                                  max_length=FLAGS.max_context_length, vocab=word_ids, batches_per_epoch=100)
