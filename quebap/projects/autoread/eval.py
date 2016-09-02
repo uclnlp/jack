@@ -7,10 +7,6 @@ import numpy as np
 
 PLACEHOLDER = "XXXXX"
 
-"""HACK
-
-"""
-
 
 def load_vocab(path, max_vocab_size=50000):
     vocab = {}
@@ -52,6 +48,7 @@ if __name__ == '__main__':
     tensorizer = GenericTensorizer(data)
 
     # quebap_vocab = tensorizer.question_lexicon
+    quebap_question_vocab_ixmap = AutoReader.vocab_to_ixmap(tensorizer.question_lexicon)
     quebap_vocab = tensorizer.support_lexicon
     quebap_vocab_ixmap = AutoReader.vocab_to_ixmap(quebap_vocab)
     vocab = AutoReader.load_vocab()
@@ -61,13 +58,13 @@ if __name__ == '__main__':
         "size": 300,
         "vocab_size": len(vocab),
         "is_train": False,
-        "word_embeddings": ""  # "word2vec"
+        "word_embeddings": "word2vec"  # "word2vec"
     }
 
     batch_size = 1
     k = 5
 
-    reader = AutoReader.create_from_config(config, word_embeddings=config["word_embeddings"])
+    reader = AutoReader.create_from_config(config)
     outputs = reader.outputs
     logits = reader.logits
 
@@ -75,11 +72,13 @@ if __name__ == '__main__':
 
     top_k = tf.nn.top_k(logits, k)
 
-    HACK = True
+    HACK = False
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
-        init_with_word_embeddings(sess, reader)
+        if config["word_embeddings"] == "word2vec":
+            init_with_word_embeddings(sess, reader)
+
         if HACK:
             # sum of word vectors baseline
             reader.outputs = \
@@ -89,7 +88,8 @@ if __name__ == '__main__':
                     reader._seq_lengths), tf.int32), 1]))
 
         for quebap_batch in tensorizer.create_batches(data, batch_size=batch_size):
-            question_word_position = quebap_batch[tensorizer.questions][0][0]
+            question_word_position = \
+                int(quebap_question_vocab_ixmap[quebap_batch[tensorizer.questions][0][0]])
             seq = quebap_batch[tensorizer.support][0]
             reindex_seq(seq, quebap_vocab_ixmap, vocab)
             batch = [seq, quebap_batch[tensorizer.support_indices][0],
@@ -100,9 +100,7 @@ if __name__ == '__main__':
             seq_words = seq_to_symbols(seq, vocab_ixmap)
             top_k_words = seq_to_symbols(results[0][1][0], vocab_ixmap)
 
-            print(quebap_batch[tensorizer.questions])
-            print(question_word_position)
-
+            print()
             for current_batch in range(batch_size):
                 for ix in range(len(seq_words)):
                     seq_word = seq_words[ix][current_batch]
