@@ -159,7 +159,6 @@ class GenericTensorizer(Tensorizer):
         self.num_questions_symbols = len(self.question_lexicon)
         self.num_support_symbols = len(self.support_lexicon)
 
-        candidate_lengths = []
         if self.has_global_candidates:
             candidate_lengths = \
                 [len(self.string_to_seq(c['text'], self.candidate_split))

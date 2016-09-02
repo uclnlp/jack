@@ -73,7 +73,7 @@ with tf.Session(config=config) as sess:
     #                            max_length=FLAGS.max_context_length, vocab=word_ids)
 
     devices = FLAGS.devices.split(",")
-    m = AutoReader(FLAGS.size, FLAGS.max_vocab, FLAGS.max_context_length,
+    m = AutoReader(FLAGS.size, FLAGS.max_vocab,
                    learning_rate=FLAGS.learning_rate, devices=devices,
                    dropout=FLAGS.dropout, cloze_noise=FLAGS.cloze_dropout,
                    composition=FLAGS.composition, unk_id=sampler.unk_id)

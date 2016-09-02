@@ -42,13 +42,12 @@ class ParallelInputRNNCell(RNNCell):
 
 
 class AutoReader():
-    def __init__(self, size, vocab_size, max_context_length,
+    def __init__(self, size, vocab_size,
                  is_train=True, learning_rate=1e-2, dropout=1.0, cloze_noise=0.0,
                  composition="GRU", devices=None, name="AutoReader", unk_id=-1,
                  forward_only=False):
         self.unk_mask = None
         self._vocab_size = vocab_size
-        self._max_context_length = max_context_length
         self._size = size
         self._is_train = is_train
         self._composition = composition
@@ -110,8 +109,8 @@ class AutoReader():
 
     def _init_inputs(self):
         with tf.device("/cpu:0"):
-            self._inputs = tf.placeholder(tf.int64, shape=[None, self._max_context_length], name="context")
-            self._weights = tf.placeholder(tf.float32, shape=[None, self._max_context_length], name="context")
+            self._inputs = tf.placeholder(tf.int64, shape=[None, None], name="context")
+            self._weights = tf.placeholder(tf.float32, shape=[None, None], name="context_weigths")
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
 
     def _noiserizer(self, inputs, noise):
@@ -221,8 +220,31 @@ class AutoReader():
     def run(self, sess, goal, batch):
         feed_dict = {
             self._inputs: batch[0],
-            self._weights: batch[2],
-            self._seq_lengths:  batch[1]
+            self._seq_lengths: batch[1],
+            self._weights: batch[2]
         }
 
         return sess.run(goal, feed_dict=feed_dict)
+
+    @staticmethod
+    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=0.0):
+        """
+        :param config: dictionary of parameters for creating an autoreader
+        :return:
+        """
+
+        # todo: load parameters of the model
+        # todo: dump config dictionary as json
+        return AutoReader(
+            config["size"],
+            config["vocab_size"],
+            config.get("is_train", True),
+            config.get("learning_rate", 1e-2),
+            dropout,
+            cloze_noise,
+            config.get("composition", "GRU"),
+            devices,
+            config.get("name", "AutoReader"),
+            config.get("unk_id", -1),
+            config.get("forward_only", False),
+        )

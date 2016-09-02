@@ -11,7 +11,7 @@ def reader(inputs, context, seq_lengths, repr_dim, vocab_size, emb_name="embeddi
     """
     todo: a reusable RNN based reader
 
-    :param input: [batch_size x seq_length] input of int32 word ids
+    :param inputs: [batch_size x seq_length] input of int32 word ids
     :param context: [batch_size x state_size] representation of context
       (e.g. previous paragraph representation)
     :param indices: [batch_size x num_indices] indices of output representations
