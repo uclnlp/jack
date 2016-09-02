@@ -110,8 +110,8 @@ class AutoReader():
     def _init_inputs(self):
         with tf.device("/cpu:0"):
             self._inputs = tf.placeholder(tf.int64, shape=[None, None], name="context")
-            self._weights = tf.placeholder(tf.float32, shape=[None, None], name="context_weigths")
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
+            self._weights = tf.placeholder(tf.float32, shape=[None, None], name="context_weigths")
 
     def _noiserizer(self, inputs, noise):
         return tf.cond(tf.equal(noise, 1.0),

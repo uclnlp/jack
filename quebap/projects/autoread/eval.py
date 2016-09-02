@@ -51,7 +51,8 @@ if __name__ == '__main__':
         data = json.load(f)
     tensorizer = GenericTensorizer(data)
 
-    quebap_vocab = tensorizer.question_lexicon
+    # quebap_vocab = tensorizer.question_lexicon
+    quebap_vocab = tensorizer.support_lexicon
     quebap_vocab_ixmap = AutoReader.vocab_to_ixmap(quebap_vocab)
     vocab = AutoReader.load_vocab()
     vocab_ixmap = AutoReader.vocab_to_ixmap(vocab)
@@ -60,13 +61,13 @@ if __name__ == '__main__':
         "size": 300,
         "vocab_size": len(vocab),
         "is_train": False,
+        "word_embeddings": ""  # "word2vec"
     }
 
     batch_size = 1
     k = 5
 
-    reader = AutoReader.create_from_config(config)
-
+    reader = AutoReader.create_from_config(config, word_embeddings=config["word_embeddings"])
     outputs = reader.outputs
     logits = reader.logits
 
@@ -88,22 +89,26 @@ if __name__ == '__main__':
                     reader._seq_lengths), tf.int32), 1]))
 
         for quebap_batch in tensorizer.create_batches(data, batch_size=batch_size):
-            seq = quebap_batch[tensorizer.questions]
+            question_word_position = quebap_batch[tensorizer.questions][0][0]
+            seq = quebap_batch[tensorizer.support][0]
             reindex_seq(seq, quebap_vocab_ixmap, vocab)
-            batch = [seq, quebap_batch[tensorizer.question_lengths],
+            batch = [seq, quebap_batch[tensorizer.support_indices][0],
                      np.ones((batch_size,
-                              len(quebap_batch[tensorizer.questions][0])))]
+                              len(quebap_batch[tensorizer.support][0][0])))]
 
             results = reader.run(sess, [top_k], batch)
             seq_words = seq_to_symbols(seq, vocab_ixmap)
             top_k_words = seq_to_symbols(results[0][1][0], vocab_ixmap)
 
-            print()
+            print(quebap_batch[tensorizer.questions])
+            print(question_word_position)
+
             for current_batch in range(batch_size):
                 for ix in range(len(seq_words)):
                     seq_word = seq_words[ix][current_batch]
                     top_k_word = [top_k_words[i][ix] for i in range(len(top_k_words))]
-                    if seq_word == PLACEHOLDER:
+                    # if seq_word == PLACEHOLDER:
+                    if ix == question_word_position:
                         print("%s\t%s" % (seq_word, "\t".join(top_k_word)))
                     else:
                         print(seq_word)
