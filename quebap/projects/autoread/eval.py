@@ -58,7 +58,7 @@ if __name__ == '__main__':
         "size": 300,
         "vocab_size": len(vocab),
         "is_train": False,
-        "word_embeddings": "word2vec"  # "word2vec"
+        "word_embeddings": "word2vec"
     }
 
     batch_size = 1
@@ -67,25 +67,23 @@ if __name__ == '__main__':
     reader = AutoReader.create_from_config(config)
     outputs = reader.outputs
     logits = reader.logits
-
-    # todo: add op for getting k-best decoded symbols
-
     top_k = tf.nn.top_k(logits, k)
 
-    HACK = False
+    SKIP_RNN = True
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         if config["word_embeddings"] == "word2vec":
             init_with_word_embeddings(sess, reader)
 
-        if HACK:
-            # sum of word vectors baseline
-            reader.outputs = \
-                tf.tile(tf.reduce_mean(
-                    reader.outputs, 1, keep_dims=True
-                ), tf.pack([1, tf.cast(tf.reduce_max(
-                    reader._seq_lengths), tf.int32), 1]))
+        if SKIP_RNN:
+            top_k = tf.nn.top_k(
+              tf.batch_matmul(
+                reader.embedded_inputs,
+                tf.tile(tf.expand_dims(reader.input_embeddings, 0),
+                        [batch_size, 1, 1]),
+                adj_y=True),
+              k)
 
         for quebap_batch in tensorizer.create_batches(data, batch_size=batch_size):
             question_word_position = \

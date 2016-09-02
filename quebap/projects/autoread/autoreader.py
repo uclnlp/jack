@@ -130,8 +130,8 @@ class AutoReader():
         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
             # [batch_size x max_seq_length x input_size]
-            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
-            embedded = tf.nn.dropout(embedded_inputs, self.keep_prob)
+            self.embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
+            embedded = tf.nn.dropout(self.embedded_inputs, self.keep_prob)
 
             #if self._is_train:
             #    # (normal input, noisy input)
@@ -139,7 +139,7 @@ class AutoReader():
 
             noise = tf.random_uniform([], self.cloze_noise, self.max_noise)
 
-            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self.size])
+            cloze_embedding = tf.reshape(self._noiserizer(self.embedded_inputs, noise), [-1, self.size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
