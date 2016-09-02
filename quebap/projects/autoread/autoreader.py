@@ -137,8 +137,9 @@ class AutoReader():
             #    # (normal input, noisy input)
             #    embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_noise)])
 
+            noise = tf.random_uniform([], self.cloze_noise, 1.0)
 
-            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, self.cloze_noise), [-1, self._size])
+            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self._size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
