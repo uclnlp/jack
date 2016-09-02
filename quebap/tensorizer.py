@@ -168,7 +168,6 @@ class GenericTensorizer(Tensorizer):
         self.num_questions_symbols = len(self.question_lexicon)
         self.num_support_symbols = len(self.support_lexicon)
 
-        candidate_lengths = []
         if self.has_global_candidates:
             candidate_lengths = \
                 [len(self.string_to_seq(c['text'], self.candidate_split))
@@ -333,13 +332,13 @@ class GenericTensorizer(Tensorizer):
                                 for support in inst['support']]
                                for inst in batch] # [[len(s) for s in inst] for inst in batch]
 
-            print(tf.shape(self.questions), tf.shape(question_seqs_padded))
-            print(tf.shape(self.question_lengths), tf.shape(question_length))
-            print(tf.shape(self.candidates), tf.shape(answer_seqs_padded))
-            print(tf.shape(self.candidate_lengths), tf.shape(candidate_length))
-            print(tf.shape(self.target_values), tf.shape([[1.0] for _ in range(0, batch_size)]))
-            print(tf.shape(self.support), tf.shape(support_seqs_padded))
-            print(tf.shape(self.support_indices), tf.shape(support_indices))
+            # print(tf.shape(self.questions), tf.shape(question_seqs_padded))
+            # print(tf.shape(self.question_lengths), tf.shape(question_length))
+            # print(tf.shape(self.candidates), tf.shape(answer_seqs_padded))
+            # print(tf.shape(self.candidate_lengths), tf.shape(candidate_length))
+            # print(tf.shape(self.target_values), tf.shape([[1.0] for _ in range(0, batch_size)]))
+            # print(tf.shape(self.support), tf.shape(support_seqs_padded))
+            # print(tf.shape(self.support_indices), tf.shape(support_indices))
 
             # todo: sample negative candidate
             feed_dict = {

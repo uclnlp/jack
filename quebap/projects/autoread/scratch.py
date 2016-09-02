@@ -44,4 +44,3 @@ if __name__ == '__main__':
                 autoreader.run(sess, [optim_op, loss, symbols], batch)
             print("inputs:\n%s\n\nlengths:\n%s\n\n\nsymbols:\n%s\n\n%5d loss: %.3f\n\n" %
                   (str(inputs), str(seq_lengths), str(symbols_current), i, loss_current))
-

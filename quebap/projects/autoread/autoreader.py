@@ -42,13 +42,12 @@ class ParallelInputRNNCell(RNNCell):
 
 
 class AutoReader():
-    def __init__(self, size, vocab_size, max_context_length,
+    def __init__(self, size, vocab_size,
                  is_train=True, learning_rate=1e-2, dropout=1.0, cloze_noise=0.0,
                  composition="GRU", devices=None, name="AutoReader", unk_id=-1,
                  forward_only=False):
         self.unk_mask = None
         self._vocab_size = vocab_size
-        self._max_context_length = max_context_length
         self._size = size
         self._is_train = is_train
         self._composition = composition
@@ -69,6 +68,7 @@ class AutoReader():
                 self._init_inputs()
                 self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(1.0-dropout), trainable=False)
                 self.cloze_noise = tf.get_variable("train_noise", [], initializer=tf.constant_initializer(cloze_noise), trainable=False)
+                self.max_noise = tf.get_variable("max_noise", [], initializer=tf.constant_initializer(1.0), trainable=False)
 
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
@@ -87,6 +87,9 @@ class AutoReader():
 
                 self.model_params = [p for p in tf.trainable_variables() if name in p.name]
 
+                self.logits = self.symbolizer(self.outputs)
+                self.symbols = tf.arg_max(self.logits, 2)
+
                 if is_train:
                     self.learning_rate = tf.Variable(float(learning_rate), trainable=False, name="lr")
                     self.global_step = tf.Variable(0, trainable=False, name="step")
@@ -94,10 +97,7 @@ class AutoReader():
                     # loss: [B * T]
 
                     # remove first answer_word and flatten answers to align with logits
-                    self.logits = self.symbolizer(self.outputs)
-                    self.symbols = tf.arg_max(self.logits, 2)
                     self.loss = self.unsupervised_loss(self.logits, inputs)
-
                     self._grads = tf.gradients(self.loss, self.model_params, colocate_gradients_with_ops=True)
                     grads, _ = tf.clip_by_global_norm(self._grads, 5.0)
                     self.update = self._opt.apply_gradients(zip(grads, self.model_params),
@@ -110,8 +110,8 @@ class AutoReader():
 
     def _init_inputs(self):
         with tf.device("/cpu:0"):
-            self._inputs = tf.placeholder(tf.int64, shape=[None, self._max_context_length], name="context")
-            self._weights = tf.placeholder(tf.float32, shape=[None, self._max_context_length], name="context")
+            self._inputs = tf.placeholder(tf.int64, shape=[None, None], name="context")
+            self._weights = tf.placeholder(tf.float32, shape=[None, None], name="context_weigths")
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
 
     def _noiserizer(self, inputs, noise):
@@ -138,8 +138,9 @@ class AutoReader():
             #    # (normal input, noisy input)
             #    embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_noise)])
 
+            noise = tf.random_uniform([], self.cloze_noise, self.max_noise)
 
-            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, self.cloze_noise), [-1, self._size])
+            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self._size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
@@ -221,8 +222,31 @@ class AutoReader():
     def run(self, sess, goal, batch):
         feed_dict = {
             self._inputs: batch[0],
-            self._weights: batch[2],
-            self._seq_lengths:  batch[1]
+            self._seq_lengths: batch[1],
+            self._weights: batch[2]
         }
 
         return sess.run(goal, feed_dict=feed_dict)
+
+    @staticmethod
+    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=0.0):
+        """
+        :param config: dictionary of parameters for creating an autoreader
+        :return:
+        """
+
+        # todo: load parameters of the model
+        # todo: dump config dictionary as json
+        return AutoReader(
+            config["size"],
+            config["vocab_size"],
+            config.get("is_train", True),
+            config.get("learning_rate", 1e-2),
+            dropout,
+            cloze_noise,
+            config.get("composition", "GRU"),
+            devices,
+            config.get("name", "AutoReader"),
+            config.get("unk_id", -1),
+            config.get("forward_only", False),
+        )
