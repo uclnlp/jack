@@ -293,12 +293,10 @@ class GenericTensorizer(Tensorizer):
                 max_num_cands = max([len(cands) for cands in answer_seqs])
 
                 empty_answers = pad_seq([], max_answer_length,
-                                        self.support_lexicon[self.pad])
-
-                # fixme: converting inner list to array with np.asarray(). This should make the dimensionalities match (see below), but doesn't
-                answer_seqs_padded = np.asarray([
+                                        self.candidate_lexicon[self.pad])
+                answer_seqs_padded = [
                     pad_seq([self.pad_seq(s, max_candidate_length) for s in batch_item], max_num_cands, empty_answers)
-                    for batch_item in support_seqs])
+                    for batch_item in answer_seqs]
 
             else:
                 answer_seqs_padded = [[self.pad_seq(batch_item, max_answer_length)] for batch_item in answer_seqs]
@@ -319,20 +317,24 @@ class GenericTensorizer(Tensorizer):
                 candidate_length = [[len(c) for c in self.global_candidate_seqs]
                                     for inst in batch]
             elif self.has_local_candidates:
-                candidate_length = [[len(c) for c in inst] for inst in answer_seqs]
+                # number of local candidates per instance differs, has to be padded
+                candidate_length = [[len(c) for c in pad_seq(inst, max_num_cands, [])] for inst in answer_seqs]
             else:
                 candidate_length = [[1.0]] * batch_size
 
 
-            support_indices = [[len(self.string_to_seq(support['text'], self.support_split))
+            if self.has_local_candidates:
+                support_indices = [[len(self.string_to_seq(support['text'], self.support_split))
+                                    for support in pad_seq(inst['support'], max_num_support, {"text": "", "id": ""})]
+                                   for inst in batch]  # [[len(s) for s in inst] for inst in batch]
+            else:
+                # todo: check if the padding, as above for the local candidates, is needed here too and add if so
+                support_indices = [[len(self.string_to_seq(support['text'], self.support_split))
                                 for support in inst['support']]
                                for inst in batch] # [[len(s) for s in inst] for inst in batch]
 
-
             print(tf.shape(self.questions), tf.shape(question_seqs_padded))
             print(tf.shape(self.question_lengths), tf.shape(question_length))
-
-            #fixme: answer_seqs_padded dimensionality not correct yet
             print(tf.shape(self.candidates), tf.shape(answer_seqs_padded))
             print(tf.shape(self.candidate_lengths), tf.shape(candidate_length))
             print(tf.shape(self.target_values), tf.shape([[1.0] for _ in range(0, batch_size)]))
