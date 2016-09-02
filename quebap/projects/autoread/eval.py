@@ -1,5 +1,6 @@
 import json
 from quebap.projects.autoread.autoreader import AutoReader
+from quebap.projects.autoread.util import init_with_word_embeddings
 from quebap.tensorizer import GenericTensorizer
 import tensorflow as tf
 import numpy as np
@@ -15,13 +16,6 @@ def load_vocab(path, max_vocab_size=50000):
             vocab[splits[1]] = int(splits[0])
     vocab[PLACEHOLDER] = len(vocab)
     return vocab
-
-
-def vocab_to_ixmap(vocab):
-    ixmap = {}
-    for word in vocab:
-        ixmap[vocab[word]] = word
-    return ixmap
 
 
 def reindex_seq(seq, source_vocab_ixmap, target_vocab):
@@ -53,15 +47,18 @@ if __name__ == '__main__':
         data = json.load(f)
     tensorizer = GenericTensorizer(data)
 
-    quebap_vocab = tensorizer.question_lexicon
-    quebap_vocab_ixmap = vocab_to_ixmap(quebap_vocab)
-    vocab = load_vocab("./quebap/projects/autoread/document.vocab")
-    vocab_ixmap = vocab_to_ixmap(vocab)
+    # quebap_vocab = tensorizer.question_lexicon
+    quebap_question_vocab_ixmap = AutoReader.vocab_to_ixmap(tensorizer.question_lexicon)
+    quebap_vocab = tensorizer.support_lexicon
+    quebap_vocab_ixmap = AutoReader.vocab_to_ixmap(quebap_vocab)
+    vocab = AutoReader.load_vocab()
+    vocab_ixmap = AutoReader.vocab_to_ixmap(vocab)
 
     config = {
-        "size": 3,  # todo
+        "size": 300,
         "vocab_size": len(vocab),
         "is_train": False,
+        "word_embeddings": "word2vec"
     }
 
     batch_size = 1
@@ -70,32 +67,44 @@ if __name__ == '__main__':
     reader = AutoReader.create_from_config(config)
     outputs = reader.outputs
     logits = reader.logits
-
-    # todo: add op for getting k-best decoded symbols
-
     top_k = tf.nn.top_k(logits, k)
+
+    SKIP_RNN = True
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
+        if config["word_embeddings"] == "word2vec":
+            init_with_word_embeddings(sess, reader)
+
+        if SKIP_RNN:
+            top_k = tf.nn.top_k(
+              tf.batch_matmul(
+                reader.embedded_inputs,
+                tf.tile(tf.expand_dims(reader.input_embeddings, 0),
+                        [batch_size, 1, 1]),
+                adj_y=True),
+              k)
 
         for quebap_batch in tensorizer.create_batches(data, batch_size=batch_size):
-            seq = quebap_batch[tensorizer.questions]
+            question_word_position = \
+                int(quebap_question_vocab_ixmap[quebap_batch[tensorizer.questions][0][0]])
+            seq = quebap_batch[tensorizer.support][0]
             reindex_seq(seq, quebap_vocab_ixmap, vocab)
-            batch = [seq, quebap_batch[tensorizer.question_lengths],
+            batch = [seq, quebap_batch[tensorizer.support_indices][0],
                      np.ones((batch_size,
-                              len(quebap_batch[tensorizer.questions][0])))]
+                              len(quebap_batch[tensorizer.support][0][0])))]
 
             results = reader.run(sess, [top_k], batch)
             seq_words = seq_to_symbols(seq, vocab_ixmap)
             top_k_words = seq_to_symbols(results[0][1][0], vocab_ixmap)
 
             print()
-            #print("INPUT\t"+"\t".join([str(i+1) for i in range(k)]))
             for current_batch in range(batch_size):
                 for ix in range(len(seq_words)):
                     seq_word = seq_words[ix][current_batch]
                     top_k_word = [top_k_words[i][ix] for i in range(len(top_k_words))]
-                    if seq_word == PLACEHOLDER:
+                    # if seq_word == PLACEHOLDER:
+                    if ix == question_word_position:
                         print("%s\t%s" % (seq_word, "\t".join(top_k_word)))
                     else:
                         print(seq_word)
