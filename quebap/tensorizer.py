@@ -126,9 +126,7 @@ class GenericTensorizer(Tensorizer):
 
         global_candidates = {}
         self.has_global_candidates = 'globals' in reference_data
-
-        all_candidate_seqs = [instance["questions"][0]["answers"][0]["text"]
-                              for instance in instances]
+        self.has_local_candidates = 'candidates' in instances[0]['questions'][0]
 
         if self.has_global_candidates:
             global_candidates = reference_data['globals']['candidates']
@@ -137,8 +135,19 @@ class GenericTensorizer(Tensorizer):
                     {token for c in global_candidates
                      for token in self.string_to_seq(c['text'], candidate_split)}
                 )
+        elif self.has_local_candidates:
+            all_candidate_seqs = [token
+                                  for inst in instances
+                                  for question in inst['questions']
+                                  for candidate in question['candidates']
+                                  for token in
+                                  self.string_to_seq(candidate['text'], self.candidate_split)
+                                  ]
+            self.all_candidate_tokens = [self.pad] + sorted(set(all_candidate_seqs))
         else:
             # todo: split!
+            all_candidate_seqs = [instance["questions"][0]["answers"][0]["text"]
+                                  for instance in instances]
             self.all_candidate_tokens = [self.pad] + sorted(set(all_candidate_seqs))
 
         self.all_question_tokens = \
@@ -167,6 +176,15 @@ class GenericTensorizer(Tensorizer):
             candidate_lengths = \
                 [len(self.string_to_seq(c['text'], self.candidate_split))
                  for c in global_candidates]
+        elif self.has_local_candidates:
+            all_candidate_seqs = [[[self.candidate_lexicon[t]
+                                for t in self.string_to_seq(candidate['text'], self.candidate_split)]
+                               for candidate in inst['questions'][0]['candidates']]
+                              for inst in instances]
+            # then we want the candidates to be defined locally, for each instance
+            # [batch_size, num_candidates, candidate_lengths]
+            self.candidate_lengths = tf.placeholder(tf.int32, (None, None), name="candidate_lengths")
+            candidate_lengths = [[len(c) for c in inst] for inst in all_candidate_seqs]
         else:
             candidate_lengths = \
                 [len(self.string_to_seq(c, self.candidate_split))
@@ -175,6 +193,9 @@ class GenericTensorizer(Tensorizer):
         self.max_candidate_length = 0
         if len(candidate_lengths) > 0:
             self.max_candidate_length = max(candidate_lengths)
+
+        if self.has_local_candidates:
+            self.max_candidate_length = max([a for cand in candidate_lengths for a in cand])
 
         self.global_candidate_seqs = \
             [self.pad_seq(
@@ -227,11 +248,17 @@ class GenericTensorizer(Tensorizer):
                                                  self.question_split)]
                              for inst in batch]
 
-            answer_seqs = [[self.candidate_lexicon[t] for t in
-                            self.string_to_seq(
-                                inst['questions'][0]['answers'][0]['text'],
-                                self.candidate_split)]
-                           for inst in batch]
+            if self.has_local_candidates:
+                answer_seqs = [[[self.candidate_lexicon[t]
+                                for t in self.string_to_seq(candidate['text'], self.candidate_split)  ]
+                               for candidate in inst['questions'][0]['candidates']]
+                              for inst in batch]
+            else:
+                answer_seqs = [[self.candidate_lexicon[t] for t in
+                                self.string_to_seq(
+                                    inst['questions'][0]['answers'][0]['text'],
+                                    self.candidate_split)]
+                               for inst in instances]
 
             support_seqs = [[[self.support_lexicon[t]
                               for t in self.string_to_seq(support['text'],
@@ -240,7 +267,12 @@ class GenericTensorizer(Tensorizer):
                             for inst in batch]
 
             max_question_length = max([len(q) for q in question_seqs])
-            max_answer_length = max([len(a) for a in answer_seqs])
+
+            if self.has_local_candidates:
+                max_answer_length = max([len(a) for answer in answer_seqs for a in answer])
+            else:
+                max_answer_length = max([len(a) for a in answer_seqs])
+
 
             # we ensure that the number of elements in support,
             # and the number of support documents is at least 1
@@ -257,16 +289,29 @@ class GenericTensorizer(Tensorizer):
                                     self.support_lexicon[self.pad])
 
             # fixme: there can be multiple answer_seqs per batch_item!
-            answer_seqs_padded = [[self.pad_seq(batch_item, max_answer_length)] for
-                                  batch_item in answer_seqs]
+            # fixed for has_local_candidates
+            if self.has_local_candidates:
+                #answer_seqs_padded = [self.pad_seq([self.pad_seq(s, max_support_length) for s in supports], max_num_support) for supports in support_seqs]
+                max_candidate_length = max([len(a) for cand in answer_seqs for a in cand])
+                max_num_cands = max([len(cands) for cands in answer_seqs])
+
+                empty_answers = pad_seq([], max_answer_length,
+                                        self.support_lexicon[self.pad])
+
+                # fixme: converting inner list to array with np.asarray(). This should make the dimensionalities match (see below), but doesn't
+                answer_seqs_padded = np.asarray([
+                    pad_seq([self.pad_seq(s, max_candidate_length) for s in batch_item], max_num_cands, empty_answers)
+                    for batch_item in support_seqs])
+
+            else:
+                answer_seqs_padded = [[self.pad_seq(batch_item, max_answer_length)] for batch_item in answer_seqs]
 
             question_seqs_padded = [self.pad_seq(batch_item, max_question_length)
                                     for batch_item in question_seqs]
 
             # [batch_size x max_num_support x max_support_length]
             support_seqs_padded = [
-                pad_seq([self.pad_seq(s, max_support_length) for s in batch_item],
-                        max_num_support, empty_support)
+                    pad_seq([self.pad_seq(s, max_support_length) for s in batch_item], max_num_support, empty_support)
                 for batch_item in support_seqs]
 
             question_length = [len(q) for q in question_seqs]
@@ -276,12 +321,26 @@ class GenericTensorizer(Tensorizer):
             if self.has_global_candidates:
                 candidate_length = [[len(c) for c in self.global_candidate_seqs]
                                     for inst in batch]
+            elif self.has_local_candidates:
+                candidate_length = [[len(c) for c in inst] for inst in answer_seqs]
             else:
                 candidate_length = [[1.0]] * batch_size
+
 
             support_indices = [[len(self.string_to_seq(support['text'], self.support_split))
                                 for support in inst['support']]
                                for inst in batch] # [[len(s) for s in inst] for inst in batch]
+
+
+            print(tf.shape(self.questions), tf.shape(question_seqs_padded))
+            print(tf.shape(self.question_lengths), tf.shape(question_length))
+
+            #fixme: answer_seqs_padded dimensionality not correct yet
+            print(tf.shape(self.candidates), tf.shape(answer_seqs_padded))
+            print(tf.shape(self.candidate_lengths), tf.shape(candidate_length))
+            print(tf.shape(self.target_values), tf.shape([[1.0] for _ in range(0, batch_size)]))
+            print(tf.shape(self.support), tf.shape(support_seqs_padded))
+            print(tf.shape(self.support_indices), tf.shape(support_indices))
 
             # todo: sample negative candidate
             feed_dict = {
