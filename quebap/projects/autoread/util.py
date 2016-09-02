@@ -38,8 +38,7 @@ def init_with_word_embeddings(sess, autoreader,
     vocab = autoreader.load_vocab()
 
     em = sess.run(autoreader.input_embeddings)
-    for j in range(autoreader.vocab_size):
-        w = vocab[j]
+    for w, j in vocab.items():
         v = embeddings.get(w)
         if v is not None:
             em[j, :v.shape[0]] = v
