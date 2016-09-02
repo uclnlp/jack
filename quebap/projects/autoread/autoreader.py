@@ -68,6 +68,7 @@ class AutoReader():
                 self._init_inputs()
                 self.keep_prob = tf.get_variable("keep_prob", [], initializer=tf.constant_initializer(1.0-dropout), trainable=False)
                 self.cloze_noise = tf.get_variable("train_noise", [], initializer=tf.constant_initializer(cloze_noise), trainable=False)
+                self.max_noise = tf.get_variable("max_noise", [], initializer=tf.constant_initializer(1.0), trainable=False)
 
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
@@ -137,7 +138,7 @@ class AutoReader():
             #    # (normal input, noisy input)
             #    embedded = tf.concat(2, [embedded, self._noiserizer(embedded_inputs, self.cloze_noise)])
 
-            noise = tf.random_uniform([], self.cloze_noise, 1.0)
+            noise = tf.random_uniform([], self.cloze_noise, self.max_noise)
 
             cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self._size])
 
