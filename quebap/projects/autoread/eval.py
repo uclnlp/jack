@@ -1,10 +1,15 @@
 import json
 from quebap.projects.autoread.autoreader import AutoReader
+from quebap.projects.autoread.util import init_with_word_embeddings
 from quebap.tensorizer import GenericTensorizer
 import tensorflow as tf
 import numpy as np
 
 PLACEHOLDER = "XXXXX"
+
+"""HACK
+
+"""
 
 
 def load_vocab(path, max_vocab_size=50000):
@@ -60,7 +65,8 @@ if __name__ == '__main__':
     batch_size = 1
     k = 5
 
-    reader = AutoReader.create_from_config(config, word_embeddings="word2vec")
+    reader = AutoReader.create_from_config(config)
+
     outputs = reader.outputs
     logits = reader.logits
 
@@ -68,8 +74,18 @@ if __name__ == '__main__':
 
     top_k = tf.nn.top_k(logits, k)
 
+    HACK = True
+
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
+        init_with_word_embeddings(sess, reader)
+        if HACK:
+            # sum of word vectors baseline
+            reader.outputs = \
+                tf.tile(tf.reduce_mean(
+                    reader.outputs, 1, keep_dims=True
+                ), tf.pack([1, tf.cast(tf.reduce_max(
+                    reader._seq_lengths), tf.int32), 1]))
 
         for quebap_batch in tensorizer.create_batches(data, batch_size=batch_size):
             seq = quebap_batch[tensorizer.questions]

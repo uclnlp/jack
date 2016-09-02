@@ -9,8 +9,6 @@ Learning to read, unsupervised
 
 from tensorflow.python.ops.rnn_cell import GRUCell, BasicLSTMCell, RNNCell
 import tensorflow as tf
-import numpy as np
-from gensim.models import Word2Vec
 
 from quebap.util import tfutil
 
@@ -49,20 +47,19 @@ class AutoReader():
                  composition="GRU", devices=None, name="AutoReader", unk_id=-1,
                  forward_only=False):
         self.unk_mask = None
-        self._vocab_size = vocab_size
-        self._size = size
-        self._is_train = is_train
+        self.vocab_size = vocab_size
+        self.size = size
         self._composition = composition
         self._device0 = devices[0] if devices is not None else "/cpu:0"
         self._device1 = devices[1 % len(devices)] if devices is not None else "/cpu:0"
         self._is_train = is_train
-        self._unk_id = unk_id
-        self._forward_only = forward_only
+        self.unk_id = unk_id
+        self.forward_only = forward_only
 
         if composition == "GRU":
-            self._cell = GRUCell(self._size)
+            self._cell = GRUCell(self.size)
         else:
-            self._cell = BasicLSTMCell(self._size)
+            self._cell = BasicLSTMCell(self.size)
 
         self._init = tf.random_normal_initializer(0.0, 0.1)
         with tf.device(self._device0):
@@ -75,7 +72,7 @@ class AutoReader():
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
                         self.input_embeddings = \
-                            tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
+                            tf.get_variable("embedding_matrix", shape=(self.vocab_size, self.size),
                                             initializer=self._init, trainable=True)
 
                         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
@@ -142,7 +139,7 @@ class AutoReader():
 
             noise = tf.random_uniform([], self.cloze_noise, self.max_noise)
 
-            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self._size])
+            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self.size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
@@ -152,17 +149,17 @@ class AutoReader():
 
                 outs_fw = tf.slice(tf.concat(1, [init_state_fw, outs_fw_tmp]),
                                    [0, 0, 0], tf.pack([-1, max_length, -1]))
-                out_fw = tf.reshape(outs_fw, [-1, self._size])
+                out_fw = tf.reshape(outs_fw, [-1, self.size])
 
-                if self._forward_only:
+                if self.forward_only:
                     encoded = tf.contrib.layers.fully_connected(
                         tf.concat(1, [out_fw, cloze_embedding]),
-                        self._size,
+                        self.size,
                         weights_initializer=None
                     )
 
-                    encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
-                    encoded.set_shape((None, None, self._size))
+                    encoded = tf.reshape(encoded, tf.pack([-1, max_length, self.size]))
+                    encoded.set_shape((None, None, self.size))
 
                     return encoded
 
@@ -178,18 +175,18 @@ class AutoReader():
                                    [0, 0, 0], tf.pack([-1, max_length, -1]))
 
                 outs_bw = tf.reverse_sequence(outs_bw, self._seq_lengths, 1, 0)
-                out_bw = tf.reshape(outs_bw, [-1, self._size])
+                out_bw = tf.reshape(outs_bw, [-1, self.size])
 
             encoded = tf.contrib.layers.fully_connected(
-                tf.concat(1, [out_fw, out_bw, cloze_embedding]), self._size,
+                tf.concat(1, [out_fw, out_bw, cloze_embedding]), self.size,
                 weights_initializer=None
             )
 
-            encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
+            encoded = tf.reshape(encoded, tf.pack([-1, max_length, self.size]))
             #encoded = tf.add_n([encoded, outs_fw, outs_bw])
 
         #[B, T, S]
-        encoded.set_shape((None, None, self._size))
+        encoded.set_shape((None, None, self.size))
         return encoded
 
     def symbolizer(self, outputs):
@@ -197,7 +194,7 @@ class AutoReader():
         :param outputs: [batch_size * max_seq_length x output_dim]
         :return:
         """
-        return tf.contrib.layers.fully_connected(outputs, self._vocab_size,
+        return tf.contrib.layers.fully_connected(outputs, self.vocab_size,
                                                  activation_fn=None)
 
     def unsupervised_loss(self, logits, targets):
@@ -207,9 +204,9 @@ class AutoReader():
         """
         mask = tfutil.mask_for_lengths(self._seq_lengths, mask_right=False, value=1.0)
         mask_reshaped = tf.reshape(mask, shape=(-1,))
-        logits_reshaped = tf.reshape(logits, shape=(-1, self._vocab_size))
+        logits_reshaped = tf.reshape(logits, shape=(-1, self.vocab_size))
         targets_reshaped = tf.reshape(targets, shape=(-1,))
-        mask_unk = tf.cast(tf.not_equal(tf.cast(self._unk_id, tf.int64), targets_reshaped), tf.float32)
+        mask_unk = tf.cast(tf.not_equal(tf.cast(self.unk_id, tf.int64), targets_reshaped), tf.float32)
         mask_final = mask_reshaped * mask_unk
 
         self.unk_mask = mask_unk
@@ -249,8 +246,7 @@ class AutoReader():
         return ixmap
 
     @staticmethod
-    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=1.0,
-                           word_embeddings=None, global_context=True):
+    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=1.0):
         """
         :param config: dictionary of parameters for creating an autoreader
         :return:
@@ -271,44 +267,5 @@ class AutoReader():
             config.get("unk_id", -1),
             config.get("forward_only", False),
         )
-
-        if word_embeddings is not None:
-            embeddings = autoreader.input_embeddings
-            tensor = np.zeros((config["vocab_size"], config["size"]))
-
-            if word_embeddings == "GloVe":
-                # todo: fill with GloVe embeddings
-                pass
-            elif word_embeddings == "word2vec":
-                print("Loading autoreader with word2vec embeddings...")
-                model = Word2Vec.load_word2vec_format(
-                    "./quebap/data/word2vec/GoogleNews-vectors-negative300.bin",
-                    binary=True
-                )
-                print("Done loading word2vec!")
-                vocab = autoreader.load_vocab()
-                ixmap = autoreader.vocab_to_ixmap(vocab)
-
-                for i in range(autoreader._vocab_size):
-                    word = ixmap[i]
-                    if word in model:
-                        tensor[i] = model[word]
-
-                autoreader.outputs = tf.nn.embedding_lookup(
-                    autoreader.input_embeddings, autoreader._inputs
-                )
-
-                if global_context:
-                    # sum of word vectors baseline
-                    autoreader.outputs = \
-                        tf.tile(tf.reduce_mean(
-                            autoreader.outputs, 1, keep_dims=True
-                        ), tf.pack([1, tf.cast(tf.reduce_max(
-                            autoreader._seq_lengths), tf.int32), 1]))
-            else:
-                print("WARNING! I don't know %s word vectors. " %
-                      word_embeddings + "Initializing with zeros...")
-
-            embeddings.assign(tensor)
 
         return autoreader
