@@ -17,13 +17,6 @@ def load_vocab(path, max_vocab_size=50000):
     return vocab
 
 
-def vocab_to_ixmap(vocab):
-    ixmap = {}
-    for word in vocab:
-        ixmap[vocab[word]] = word
-    return ixmap
-
-
 def reindex_seq(seq, source_vocab_ixmap, target_vocab):
     """
     :param seq: [batch_size x max_seq_length] int32 word ids
@@ -54,12 +47,12 @@ if __name__ == '__main__':
     tensorizer = GenericTensorizer(data)
 
     quebap_vocab = tensorizer.question_lexicon
-    quebap_vocab_ixmap = vocab_to_ixmap(quebap_vocab)
-    vocab = load_vocab("./quebap/projects/autoread/document.vocab")
-    vocab_ixmap = vocab_to_ixmap(vocab)
+    quebap_vocab_ixmap = AutoReader.vocab_to_ixmap(quebap_vocab)
+    vocab = AutoReader.load_vocab()
+    vocab_ixmap = AutoReader.vocab_to_ixmap(vocab)
 
     config = {
-        "size": 3,  # todo
+        "size": 300,
         "vocab_size": len(vocab),
         "is_train": False,
     }
@@ -67,7 +60,7 @@ if __name__ == '__main__':
     batch_size = 1
     k = 5
 
-    reader = AutoReader.create_from_config(config)
+    reader = AutoReader.create_from_config(config, word_embeddings="word2vec")
     outputs = reader.outputs
     logits = reader.logits
 
@@ -90,7 +83,6 @@ if __name__ == '__main__':
             top_k_words = seq_to_symbols(results[0][1][0], vocab_ixmap)
 
             print()
-            #print("INPUT\t"+"\t".join([str(i+1) for i in range(k)]))
             for current_batch in range(batch_size):
                 for ix in range(len(seq_words)):
                     seq_word = seq_words[ix][current_batch]

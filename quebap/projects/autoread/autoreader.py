@@ -9,6 +9,8 @@ Learning to read, unsupervised
 
 from tensorflow.python.ops.rnn_cell import GRUCell, BasicLSTMCell, RNNCell
 import tensorflow as tf
+import numpy as np
+from gensim.models import Word2Vec
 
 from quebap.util import tfutil
 
@@ -229,7 +231,26 @@ class AutoReader():
         return sess.run(goal, feed_dict=feed_dict)
 
     @staticmethod
-    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=0.0):
+    def load_vocab(path="./quebap/projects/autoread/document.vocab",
+                   max_vocab_size=50000):
+        vocab = {}
+        with open(path, "r") as f:
+            for line in f.readlines()[2:max_vocab_size]:
+                splits = line.split("\t")
+                vocab[splits[1]] = int(splits[0])
+        vocab["XXXXX"] = len(vocab)
+        return vocab
+
+    @staticmethod
+    def vocab_to_ixmap(vocab):
+        ixmap = {}
+        for word in vocab:
+            ixmap[vocab[word]] = word
+        return ixmap
+
+    @staticmethod
+    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=1.0,
+                           word_embeddings=None, global_context=True):
         """
         :param config: dictionary of parameters for creating an autoreader
         :return:
@@ -237,7 +258,7 @@ class AutoReader():
 
         # todo: load parameters of the model
         # todo: dump config dictionary as json
-        return AutoReader(
+        autoreader = AutoReader(
             config["size"],
             config["vocab_size"],
             config.get("is_train", True),
@@ -250,3 +271,44 @@ class AutoReader():
             config.get("unk_id", -1),
             config.get("forward_only", False),
         )
+
+        if word_embeddings is not None:
+            embeddings = autoreader.input_embeddings
+            tensor = np.zeros((config["vocab_size"], config["size"]))
+
+            if word_embeddings == "GloVe":
+                # todo: fill with GloVe embeddings
+                pass
+            elif word_embeddings == "word2vec":
+                print("Loading autoreader with word2vec embeddings...")
+                model = Word2Vec.load_word2vec_format(
+                    "./quebap/data/word2vec/GoogleNews-vectors-negative300.bin",
+                    binary=True
+                )
+                print("Done loading word2vec!")
+                vocab = autoreader.load_vocab()
+                ixmap = autoreader.vocab_to_ixmap(vocab)
+
+                for i in range(autoreader._vocab_size):
+                    word = ixmap[i]
+                    if word in model:
+                        tensor[i] = model[word]
+
+                autoreader.outputs = tf.nn.embedding_lookup(
+                    autoreader.input_embeddings, autoreader._inputs
+                )
+
+                if global_context:
+                    # sum of word vectors baseline
+                    autoreader.outputs = \
+                        tf.tile(tf.reduce_mean(
+                            autoreader.outputs, 1, keep_dims=True
+                        ), tf.pack([1, tf.cast(tf.reduce_max(
+                            autoreader._seq_lengths), tf.int32), 1]))
+            else:
+                print("WARNING! I don't know %s word vectors. " %
+                      word_embeddings + "Initializing with zeros...")
+
+            embeddings.assign(tensor)
+
+        return autoreader
