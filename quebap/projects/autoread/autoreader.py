@@ -86,6 +86,9 @@ class AutoReader():
 
                 self.model_params = [p for p in tf.trainable_variables() if name in p.name]
 
+                self.logits = self.symbolizer(self.outputs)
+                self.symbols = tf.arg_max(self.logits, 2)
+
                 if is_train:
                     self.learning_rate = tf.Variable(float(learning_rate), trainable=False, name="lr")
                     self.global_step = tf.Variable(0, trainable=False, name="step")
@@ -93,10 +96,7 @@ class AutoReader():
                     # loss: [B * T]
 
                     # remove first answer_word and flatten answers to align with logits
-                    self.logits = self.symbolizer(self.outputs)
-                    self.symbols = tf.arg_max(self.logits, 2)
                     self.loss = self.unsupervised_loss(self.logits, inputs)
-
                     self._grads = tf.gradients(self.loss, self.model_params, colocate_gradients_with_ops=True)
                     grads, _ = tf.clip_by_global_norm(self._grads, 5.0)
                     self.update = self._opt.apply_gradients(zip(grads, self.model_params),
