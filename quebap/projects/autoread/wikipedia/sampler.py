@@ -60,4 +60,6 @@ class BatchSampler:
                                                           for w in context]
             batch_lengths[i] = len(context)
 
+        self._todo = self._todo[self.__batch_size:]
+
         return batch_array, batch_lengths, batch_weights
