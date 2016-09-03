@@ -47,20 +47,19 @@ class AutoReader():
                  composition="GRU", devices=None, name="AutoReader", unk_id=-1,
                  forward_only=False):
         self.unk_mask = None
-        self._vocab_size = vocab_size
-        self._size = size
-        self._is_train = is_train
+        self.vocab_size = vocab_size
+        self.size = size
         self._composition = composition
         self._device0 = devices[0] if devices is not None else "/cpu:0"
         self._device1 = devices[1 % len(devices)] if devices is not None else "/cpu:0"
         self._is_train = is_train
-        self._unk_id = unk_id
-        self._forward_only = forward_only
+        self.unk_id = unk_id
+        self.forward_only = forward_only
 
         if composition == "GRU":
-            self._cell = GRUCell(self._size)
+            self._cell = GRUCell(self.size)
         else:
-            self._cell = BasicLSTMCell(self._size)
+            self._cell = BasicLSTMCell(self.size)
 
         self._init = tf.random_normal_initializer(0.0, 0.1)
         with tf.device(self._device0):
@@ -73,7 +72,7 @@ class AutoReader():
                 with tf.variable_scope("embeddings"):
                     with tf.device("/cpu:0"):
                         self.input_embeddings = \
-                            tf.get_variable("embedding_matrix", shape=(self._vocab_size, self._size),
+                            tf.get_variable("embedding_matrix", shape=(self.vocab_size, self.size),
                                             initializer=self._init, trainable=True)
 
                         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
@@ -111,8 +110,8 @@ class AutoReader():
     def _init_inputs(self):
         with tf.device("/cpu:0"):
             self._inputs = tf.placeholder(tf.int64, shape=[None, None], name="context")
-            self._weights = tf.placeholder(tf.float32, shape=[None, None], name="context_weigths")
             self._seq_lengths = tf.placeholder(tf.int64, shape=[None], name="context_length")
+            self._weights = tf.placeholder(tf.float32, shape=[None, None], name="context_weigths")
 
     def _noiserizer(self, inputs, noise):
         return tf.cond(tf.equal(noise, 1.0),
@@ -131,8 +130,8 @@ class AutoReader():
         max_length = tf.cast(tf.reduce_max(self._seq_lengths), tf.int32)
         with tf.variable_scope("embedder", initializer=tf.random_normal_initializer()):
             # [batch_size x max_seq_length x input_size]
-            embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
-            embedded = tf.nn.dropout(embedded_inputs, self.keep_prob)
+            self.embedded_inputs = tf.nn.embedding_lookup(self.input_embeddings, inputs)
+            embedded = tf.nn.dropout(self.embedded_inputs, self.keep_prob)
 
             #if self._is_train:
             #    # (normal input, noisy input)
@@ -140,7 +139,7 @@ class AutoReader():
 
             noise = tf.random_uniform([], self.cloze_noise, self.max_noise)
 
-            cloze_embedding = tf.reshape(self._noiserizer(embedded_inputs, noise), [-1, self._size])
+            cloze_embedding = tf.reshape(self._noiserizer(self.embedded_inputs, noise), [-1, self.size])
 
         with tf.device(self._device0):
             with tf.variable_scope("forward"):
@@ -150,17 +149,17 @@ class AutoReader():
 
                 outs_fw = tf.slice(tf.concat(1, [init_state_fw, outs_fw_tmp]),
                                    [0, 0, 0], tf.pack([-1, max_length, -1]))
-                out_fw = tf.reshape(outs_fw, [-1, self._size])
+                out_fw = tf.reshape(outs_fw, [-1, self.size])
 
-                if self._forward_only:
+                if self.forward_only:
                     encoded = tf.contrib.layers.fully_connected(
                         tf.concat(1, [out_fw, cloze_embedding]),
-                        self._size,
+                        self.size,
                         weights_initializer=None
                     )
 
-                    encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
-                    encoded.set_shape((None, None, self._size))
+                    encoded = tf.reshape(encoded, tf.pack([-1, max_length, self.size]))
+                    encoded.set_shape((None, None, self.size))
 
                     return encoded
 
@@ -176,18 +175,18 @@ class AutoReader():
                                    [0, 0, 0], tf.pack([-1, max_length, -1]))
 
                 outs_bw = tf.reverse_sequence(outs_bw, self._seq_lengths, 1, 0)
-                out_bw = tf.reshape(outs_bw, [-1, self._size])
+                out_bw = tf.reshape(outs_bw, [-1, self.size])
 
             encoded = tf.contrib.layers.fully_connected(
-                tf.concat(1, [out_fw, out_bw, cloze_embedding]), self._size,
+                tf.concat(1, [out_fw, out_bw, cloze_embedding]), self.size,
                 weights_initializer=None
             )
 
-            encoded = tf.reshape(encoded, tf.pack([-1, max_length, self._size]))
+            encoded = tf.reshape(encoded, tf.pack([-1, max_length, self.size]))
             #encoded = tf.add_n([encoded, outs_fw, outs_bw])
 
         #[B, T, S]
-        encoded.set_shape((None, None, self._size))
+        encoded.set_shape((None, None, self.size))
         return encoded
 
     def symbolizer(self, outputs):
@@ -195,7 +194,7 @@ class AutoReader():
         :param outputs: [batch_size * max_seq_length x output_dim]
         :return:
         """
-        return tf.contrib.layers.fully_connected(outputs, self._vocab_size,
+        return tf.contrib.layers.fully_connected(outputs, self.vocab_size,
                                                  activation_fn=None)
 
     def unsupervised_loss(self, logits, targets):
@@ -205,9 +204,9 @@ class AutoReader():
         """
         mask = tfutil.mask_for_lengths(self._seq_lengths, mask_right=False, value=1.0)
         mask_reshaped = tf.reshape(mask, shape=(-1,))
-        logits_reshaped = tf.reshape(logits, shape=(-1, self._vocab_size))
+        logits_reshaped = tf.reshape(logits, shape=(-1, self.vocab_size))
         targets_reshaped = tf.reshape(targets, shape=(-1,))
-        mask_unk = tf.cast(tf.not_equal(tf.cast(self._unk_id, tf.int64), targets_reshaped), tf.float32)
+        mask_unk = tf.cast(tf.not_equal(tf.cast(self.unk_id, tf.int64), targets_reshaped), tf.float32)
         mask_final = mask_reshaped * mask_unk
 
         self.unk_mask = mask_unk
@@ -229,7 +228,25 @@ class AutoReader():
         return sess.run(goal, feed_dict=feed_dict)
 
     @staticmethod
-    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=0.0):
+    def load_vocab(path="./quebap/projects/autoread/document.vocab",
+                   max_vocab_size=50000):
+        vocab = {}
+        with open(path, "r") as f:
+            for line in f.readlines()[2:max_vocab_size]:
+                splits = line.split("\t")
+                vocab[splits[1]] = int(splits[0])
+        vocab["XXXXX"] = len(vocab)
+        return vocab
+
+    @staticmethod
+    def vocab_to_ixmap(vocab):
+        ixmap = {}
+        for word in vocab:
+            ixmap[vocab[word]] = word
+        return ixmap
+
+    @staticmethod
+    def create_from_config(config, devices=None, dropout=0.0, cloze_noise=1.0):
         """
         :param config: dictionary of parameters for creating an autoreader
         :return:
@@ -237,7 +254,7 @@ class AutoReader():
 
         # todo: load parameters of the model
         # todo: dump config dictionary as json
-        return AutoReader(
+        autoreader = AutoReader(
             config["size"],
             config["vocab_size"],
             config.get("is_train", True),
@@ -250,3 +267,5 @@ class AutoReader():
             config.get("unk_id", -1),
             config.get("forward_only", False),
         )
+
+        return autoreader
