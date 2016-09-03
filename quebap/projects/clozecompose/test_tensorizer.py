@@ -4,10 +4,11 @@ import json
 from quebap.projects.clozecompose.tensorizer import SequenceTensorizer
 
 
-def test_qa_tensorizer():
+def test_cloze_tensorizer(fpath):
     #with open('../quebap/data/snippet/LS/snippet_quebapformat.json') as data_file:
     #with open('../quebap/quebap/data/snippet/SNLI_v1/snippet_quebapformat.json') as data_file:
-    with open('../../../quebap/data/snippet/scienceQA/scienceQA.json') as data_file:
+    #with open('../../../quebap/data/snippet/scienceQA/scienceQA.json') as data_file:
+    with open(fpath) as data_file:
         data = json.load(data_file)
 
     tensorizer = SequenceTensorizer(data)
@@ -21,5 +22,4 @@ def test_qa_tensorizer():
             print(sess.run(print_tensor_shape_op, feed_dict=feed_dict))
             print()
 
-#test_sequence_tensorizer()
-test_qa_tensorizer()
+#test_cloze_tensorizer()
