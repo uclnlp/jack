@@ -33,7 +33,7 @@ def convert_scienceQA_to_quebap(scienceQAFile):
                             'text': cand
                         } for cand in candidates
                         ],
-                    'answers': answers_last_split
+                    'answers': [{'text': ans} for ans in answers_last_split]
                 }
                 qset_dict = {
                     'support': support,
