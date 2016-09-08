@@ -1,205 +1,182 @@
 """
-Loader for the fb15k dataset.
+quebap converter for the fb15k dataset.
 
-METADATA:   Training data: 483142 triples (s,r,o)
+METADATA:   Training data: 483142 triples (subject, relation, object)
             14951 different entities
             1345 different relation types
-download_string = "https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz"
+
+data source: https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz
+
 webpage: https://everest.hds.utc.fr/doku.php?id=en:transe
+
 paper reference:
-@incollection{NIPS2013_5071,
-    title = {Translating Embeddings for Modeling Multi-relational Data},
-    author = {Bordes, Antoine and Usunier, Nicolas and Garcia-Duran, Alberto and Weston, Jason and Yakhnenko, Oksana},
-    booktitle = {Advances in Neural Information Processing Systems 26},
-    editor = {C. J. C. Burges and L. Bottou and M. Welling and Z. Ghahramani and K. Q. Weinberger},
-    pages = {2787--2795},
-    year = {2013},
-    publisher = {Curran Associates, Inc.},
-    url = {http://papers.nips.cc/paper/5071-translating-embeddings-for-modeling-multi-relational-data.pdf}
-}
+Bordes et al. 2013: Translating Embeddings for Modeling Multi-relational Data
 """
 
 import json
+from sys import argv
+from collections import defaultdict
+import gc
+import json
 
-# TODO memory efficiency: Don't store support explicitly!
-size = 5000
 
-def load_fb15k_triples(part='train'):
-    """ loads the raw data from files provided. input parameter 'part' can be
-    either 'train', 'valid' or 'test'.
+def load_fb15k_triples(path):
+    """ loads the raw data from file provided.
     """
-    path = '/Users/Johannes/PhD/kebab/pre/FB15k/'
-    filename = path + 'freebase_mtr100_mte100-' + part + '.txt'
-    with open(filename, 'r') as f:
-        raw_lines = f.readlines()
-    triples = [line.strip('\n').split('\t') for line in raw_lines]
+    with open(path, 'r') as f:
+        triples = [line.strip('\n').split('\t') for line in f.readlines()]
     return triples
 
 
-def extract_unique_entities_and_relations(triples, save_entities=False):
-    """ Identify the sets of unique entities and relations in a set of triples.
-    Return as ordered lists.
+def extract_unique_entities_and_relations(triples):
+    """ Identifies unique entities and relation types in collection of triples.
+    :param triples: List of string triples.
+    :return unique_entities: List of strings
+    :return unique_relations: List of strings
     """
     s_entities = set([triple[0] for triple in triples])
     o_entities = set([triple[2] for triple in triples])
-    relations = sorted(list(set([triple[1] for triple in triples])))
-    all_entities = sorted(list(s_entities | o_entities))
-    if save_entities:
-        D = {"data": all_entities}
-        with open("entities_list.json", 'w') as f:
-            json.dump(D, f)
-    return all_entities, relations
+    r_types = set([triple[1] for triple in triples])
+
+    unique_relations = sorted(list(r_types))
+    unique_entities = sorted(list( s_entities | o_entities ))  # union of sets
+
+    return unique_entities, unique_relations
 
 
-def get_neighbourhood(triple, other_triples):
-    """ obtain the neighbourhood for a single fact. This is, return a list of
-    all facts that share either an entity or the relation with the fact.
-    Inputs:
-    - triple: the fact under consideration
-    - other_triples: set of other triples from which to look for neighbours
-    Note: Inefficient to use if applied on entire database """
-    anchor_triple = set(triple)
-    neighbourhood = [other_triple for other_triple in other_triples \
-                    if len( anchor_triple & set(other_triple) ) > 0]
-    return neighbourhood
-
-
-def get_facts_per_entity(entities, triples, save=False):
-    """ obtain a dictionary with all facts that contain an entity.
-    Inputs:
-        - entities: List of unique entities in triples
-        - tiples: list of string triples
+def get_facts_per_entity(triples):
+    """ obtain dictionary with all train fact ids that contain an entity.
+    :param triples: List of fact triples
+    :return Dictionary entity --> fact IDs it participates in
     """
-    # might take (a few) minutes, looping over 15K entities.
-    if not save:
-        #print("loading entities...")
-        with open("entities_neighbourhood.json", 'r') as f:
-            D = json.load(f)
-        return D
-    else:
-        D = {}
-        for i,e in enumerate(entities):
-            if not i%50: # monitoring progress
-                #print(i)
-                pass
-            entity_support = [index for index,fact in enumerate(triples) if e in fact]
-            D[e] = entity_support
-        with open("entities_neighbourhood.json", 'w') as f:
-            json.dump(D, f)
-            #print("saving entities succesfully.")
+    D = defaultdict(set)
+    for i_triple, triple in enumerate(triples):
+        D[triple[0]].add(i_triple)
+        D[triple[2]].add(i_triple)
     return D
 
 
-def get_facts_per_relation(relations, triples, save=False):
-    """ Same as get_facts_per_entity, but for relations
+def get_facts_per_relation(triples):
+    """ obtain dictionary with all train fact ids that contain a relation type.
+    :param triples: List of fact triples
+    :return Dictionary relation type --> fact IDs it participates in
     """
-    if not save:
-        with open("relations_neighbourhood.json", 'r') as f:
-            D = json.load(f)
-            #print("loading relations succesfully.")
-        return D
-    else:
-        D = {}
-        for i,r in enumerate(relations):
-            if not i%50: #monitoring progress
-                #print(i)
-                pass
-            relation_support = [index for index,fact in enumerate(triples) if r in fact]
-            D[r] = relation_support
-        with open("relations_neighbourhood.json", 'w') as f:
-            json.dump(D, f)
-            #print("saving relations succesfully.")
+    D = defaultdict(set)
+    for i_triple, triple in enumerate(triples):
+        D[triple[1]].add(i_triple)
     return D
 
 
-def get_all_1_neighbourhoods(triples, entity_dict, relation_dict,
-                            include_relations=False, save=True):
-    """ extract neighbours for all facts in the KB.
+def get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation,
+                            include_relations=False):
+    """ Extracts neighbouring facts for a collection of triples. neighbouring
+    facts of fact f are such facts that share at least an entity with f.
+    If relations are included, facts which share a relation are also considered
+    neighbours.
+    :param triples: list of facts triples
+    :param facts_per_entity: dictionary; The facts an entity appears in
+    :param facts_per_relation: dictionary; The facts a relation appears in
+    :param include_relations: boolean. whether facts sharing the relation should
+        be considered neighbours as well.
+    :return fact_neighbourhoods: dictionary mapping fact ID to set of fact IDs.
     """
-    if not save:
-        with open("neighbourhood.json", 'r') as ff:
-            #print(ff.name)
-            neighbourhoods = json.load(ff)
-            #print("loaded neighbourhoods succesfully.")
-        return neighbourhoods
-    else:
-        neighbourhoods = []
-        for i, triple in enumerate(triples[:size]):
-            if not i%100: #monitoring progress
-                #print(i)
-                pass
-            neighbours = entity_dict[triple[0]] + entity_dict[triple[2]]
-            if include_relations:
-                neighbours += relation_dict[triple[1]]
-            # use unique neighbours, remove current triple, sort.
-            if len(neighbours) == 0:
-                neighbours = []
-            else:
-                neighbours = sorted(list(set(neighbours).difference(set([i]))))
-            neighbourhoods.append(neighbours)
-        with open("neighbourhood.json", 'w') as f:
-            #print("saving neighbourhoods to file...")
-            D = {"data": neighbourhoods}
-            json.dump(D, f)
-            #print("saving neighbourhoods succesfully.")
-        return neighbourhoods
+    fact_neighbourhoods = defaultdict(set)
+    for i_triple, triple in enumerate(triples):
+        # get triple ids which share subject, object or rel. with current triple
+        subject_neighbours = facts_per_entity[triple[0]]
+        object_neighbours = facts_per_entity[triple[2]]
+        relation_neighbours = set()
+        if include_relations:
+            relation_neighbours = facts_per_relation[triple[1]]
+
+        fact_neighbourhoods[i_triple].update(subject_neighbours)
+        fact_neighbourhoods[i_triple].update(object_neighbours)
+        fact_neighbourhoods[i_triple].update(relation_neighbours)
+
+    return fact_neighbourhoods
 
 
-def convert_triple_to_text(triple):
-    s,r,o = triple
-    return s + " " + r + " " + o + "."
-
-
-def parse_fb15k_question(triple):
-    # TODO make 1:n queries possible here.
-    subject, relation, obj = triple
-    questions = []
-    for i in range(0,1): #single question
-        qdict = {}
-        candidates = [{'text' : "filename: datasets/fb15k/entities_list.json"} ]
-        answer = {'text': obj}
-        qdict  = {
-            "question" : relation + " " + subject + "?",
-            "candidates" : candidates,
-            "answers": [answer]
-        }
-        questions.append(qdict)
-    return questions
-
-
-def convert_instance(triple, triples, neighbours):
-    support_text = [convert_triple_to_text(triples[fact]) for fact in \
-            neighbours if len(neighbours)>0]
-    qset_dict = {}
-    qset_dict['support'] = [ {'text': " ".join(support_text)} ]
-    qset_dict['questions'] = parse_fb15k_question(triple)
-    return qset_dict
-
-
-def convert_fb15k(triples, neighbourhoods):
-    """ target format:
-    "question": "born_in(BarackObama, ? )",
-    "support": [
-      "BarackObama was born in Hawaii",
-      "president_of(BarackObama, USA)"
-    ]
-    "candidates": { "filename": "filename for file with list of candidates" }
+def convert(triples, neighbourhoods, unique_entities):
+    """ Converts into quebap format.
+    :param triples: fact triples that should be converted.
+    :param neighbourhoods: dictionary of supporting facts per triple
+    :unique_entities: List of strings
+    :return quebap formatted fb15k data.
     """
-    corpus = []
-    for i_triple, (trip, nhbrs) in enumerate(zip(triples[:size], neighbourhoods[:size])):
-        if not i_triple%100:
-            #print(i_triple)
-            pass
-        corpus.append(convert_instance(trip, triples, nhbrs) )
-    return corpus
+
+    # figure out cases with multiple possible true answers
+    multiple_answers_dict = defaultdict(set)
+    for triple in triples:
+        multiple_answers_dict[triple[:2]].add(triple[2])
+
+    instances = []
+    for i, triple in enumerate(triples):
+        if not i%1000:
+            #print(i)
+            gc.collect()
+        # correct answers for this (s,r,.) case
+        correct_answers = multiple_answers_dict[triple[:2]]
+
+        # obtain supporting facts for this triple
+        neighbour_ids = neighbourhoods[i]
+        neighbour_triples = [triples[ID] for ID in neighbour_ids]
+
+        # create a single quebap instance
+        qset_dict = {}
+        support_texts = [" ".join([str(s), str(r), str(o)]) for (s,r,o) in neighbour_triples]
+
+        qset_dict['support'] = [ {'text': t} for t in support_texts]
+        qset_dict['questions'] = [{
+            "question" : " ".join([str(triple[0]), str(triple[1])]),  #subject and relation
+            "candidates" : [],  #use global candidates instead.
+            "answers": [ {'text': str(a)} for a in correct_answers]  #object
+        }]
+        instances.append(qset_dict)
+
+    return {
+        'meta': 'FB15K with entity neighbours as supporting facts.',
+        'globals': {'candidates': [{'text': str(i)} for (i, u) in enumerate(unique_entities)]},
+        'instances': instances
+    }
+
+
+def compress_triples(string_triples, unique_entities, unique_relations):
+    id_triples = []
+    for (s,r,o) in string_triples:
+        s_id = unique_entities.index(s)
+        r_id = unique_relations.index(r)
+        o_id = unique_entities.index(o)
+        id_triples.append( (s_id, r_id, o_id) )
+    return id_triples
 
 
 if __name__ == "__main__":
-    triples = load_fb15k_triples(part='train')
-    entities, relations = extract_unique_entities_and_relations(triples)
-    _ = get_neighbourhood(triples[0], triples)
-    entity_dict = get_facts_per_entity(entities, triples)
-    relation_dict = get_facts_per_relation(relations, triples)
-    neighbourhoods = get_all_1_neighbourhoods(triples, entity_dict, relation_dict)
-    corpus = convert_fb15k(triples, neighbourhoods)
-    print(json.dumps(corpus, indent=2))
+    data_file = argv[1]      # dataset path you're interested in, train/dev/test.
+    reference_file = argv[2] # use training set path here.
+
+    # load data from files into fact triples
+    triples = load_fb15k_triples(data_file)
+    reference_triples = load_fb15k_triples(reference_file)
+
+    # unique entity and relation types in reference triples
+    unique_entities, unique_relations = \
+                        extract_unique_entities_and_relations(reference_triples)
+
+
+    # represent string triples with numeric IDs for entities and relations
+    triples = compress_triples(triples, unique_entities, unique_relations)
+    reference_triples = compress_triples(reference_triples, unique_entities, unique_relations)
+
+    # get neighbouring facts for each fact in triples
+    facts_per_entity = get_facts_per_entity(reference_triples)
+    facts_per_relation = get_facts_per_relation(reference_triples)
+    neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
+
+    # dump the entity and relation ids for understanding the quebap contents.
+    with open('fb15k_entities_relations.json', 'w') as f:
+        D = {"unique_entities" : unique_entities,
+        "unique_relations" : unique_relations}
+        json.dump(D, f)
+
+    corpus = convert(triples, neighbourhoods, unique_entities)
+    print( json.dumps(corpus, indent=2) )
