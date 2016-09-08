@@ -44,8 +44,8 @@ def test_sequence_tensorizer():
 
 
 def test_qa_tensorizer():
-    with open('./quebap/data/snippet/LS/snippet_quebapformat.json') as data_file:
-    #with open('../quebap/quebap/data/snippet/SNLI_v1/snippet_quebapformat.json') as data_file:
+    with open('./quebap/data/LS/snippet_quebapformat.json') as data_file:
+    #with open('../quebap/quebap/data/SNLI/snippet_quebapformat.json') as data_file:
         data = json.load(data_file)
 
     tensorizer = GenericTensorizer(data)

@@ -44,7 +44,7 @@ def main():
     # instances = split_cbt(raw_data)
     # = parse_cbt_example(instances[0])
     corpus = convert_simpleQuestions_to_quebap("/Users/Isabelle/Documents/UCLMR/SimpleQuestions/SimpleQuestions_v2/annotated_fb_data_train.txt")
-    with open("../../quebap/data/snippet/simpleQuestions/snippet_simpleQuestions_train.json", 'w') as outfile:
+    with open("../../quebap/data/simpleQuestions/snippet_quebapformat.json", 'w') as outfile:
         json.dump(corpus, outfile, indent=2)
 
     outfile.close()

@@ -93,4 +93,4 @@ if __name__ == "__main__":
 
 
             save_debug("./quebap/data/LS/debug", "lexsub_debug_cleaned.jsonl")
-            save_debug("./quebap/data/snippet/LS", "snippet_quebapformat.json")
+            save_debug("./quebap/data/LS", "snippet_quebapformat.json")
