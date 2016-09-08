@@ -48,8 +48,15 @@ class CompactifyCell(tf.nn.rnn_cell.RNNCell):
 
     @property
     def state_size(self):
-        return (self._input_dim * self._max_compact_length, self._max_compact_length)
+        return self._input_dim * self._max_compact_length, self._max_compact_length
 
     @property
     def output_size(self):
         return self._input_dim * self._max_compact_length
+
+
+def to_inputs(inputs, masks):
+    # inputs [batch_size, length, input_dim]
+    # mask [batch_size, length]
+    expanded_mask = tf.expand_dims(masks, 2)  # [batch,size, max_length]
+    return tf.concat(2, [expanded_mask, inputs])
