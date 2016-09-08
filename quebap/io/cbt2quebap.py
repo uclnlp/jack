@@ -44,7 +44,7 @@ def split_cbt(raw_data):
             instance = []
             continue
         instance.append(l)
-    return story_instances
+    return story_instances[:2]
 
 
 def parse_cbt_example(instance):
@@ -92,14 +92,21 @@ def convert_cbtest(path):
     corpus = []
     for inst in instances:
         corpus.append(parse_cbt_example(inst))
-    return corpus
+
+    return {'meta': 'Children Book Test',
+           'globals': {'candidates': []},
+           'instances': corpus
+           }
 
 
 def main():
-    # some tests:
     # raw_data = load_cbt_file(path=None, part='valid', mode='NE')
     # instances = split_cbt(raw_data)
-    # = parse_cbt_example(instances[0])
+    #_ = parse_cbt_example(instances[0])
+    """
+    Usage: provide path to CBT data file as single argument, e.g. '.../data/cbtest_CN_train.txt'
+    """
+
     import sys
     if len(sys.argv) == 2:
         corpus = convert_cbtest(path=sys.argv[1])
