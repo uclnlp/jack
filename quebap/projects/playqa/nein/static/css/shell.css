@@ -1,0 +1,188 @@
+#aceEditor {
+    font-size: 16px;
+}
+
+.editorFrame {
+    width: auto;
+    margin-left: 20px;
+}
+
+.oldCommand {
+    line-height: normal;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+    font-size: 16px;
+    /*color: grey;*/
+}
+
+.command_and_result {
+    width: auto;
+    margin-left: 20px;
+    padding-left: 4px;
+}
+
+.result {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: blue;
+    font-size: 16px;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+}
+
+.emoji {
+    font-family: 'Apple Color Emoji', Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+}
+
+.bindings th {
+    color: gray !important;
+}
+
+/*.bindings {*/
+/*!*border-spacing: 10px 0;*!*/
+/*}*/
+
+#sentences {
+    padding: 0;
+    list-style-type: none;
+}
+
+#sentences > li {
+    margin-bottom: 5px;
+}
+
+#template_sentence {
+    display: none;
+}
+
+.bindings td {
+    padding: 0 15px 0 0;
+}
+
+.bindings td:last-child {
+    border-right: 0;
+}
+
+table.bindings {
+    border-spacing: 0 0 !important;
+}
+
+.error {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: red;
+    font-size: 16px;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+}
+
+.oldPrompt {
+    float: left;
+    width: 10px;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+
+    /*color : grey;*/
+}
+
+.prompt {
+    float: left;
+    width: 10px;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+
+}
+
+.wrapper {
+    margin-right: 600px;
+}
+
+.left {
+    /*width: 50%;*/
+    width: 100%;
+    float: left;
+    height: 95vh;
+    border-right: thin solid #F1F1F1
+}
+
+.right {
+    width: 600px;
+    float: right;
+    margin-right: -601px;
+}
+
+.inner {
+    padding: 20px;
+    overflow: auto;
+    height: 100%;
+}
+
+.commands {
+    padding: 0px;
+    list-style-type: none;
+}
+
+.channels {
+    padding: 0;
+    list-style-type: none;
+}
+
+.channels > li {
+    margin-bottom: 15px;
+}
+
+.channel-name {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.msg-box textarea {
+    resize: none;
+    width: 100%;
+    height: 200px;
+    border-color: lightgray;
+}
+
+/* ACE */
+.ace_action {
+    color: blueviolet;
+    /*background: url('https://www.lehigh.edu/google/google_search.png');*/
+    /*background-size: 20px 20px;*/
+    /*background-repeat: no-repeat;*/
+    /*padding-left: 20px;  /!* width of the image plus a little extra padding *!/!*/
+}
+
+/*.ace_action:before {*/
+/*position: absolute;*/
+/*content: '';*/
+/*background-image: url('https://www.lehigh.edu/google/google_search.png');*/
+/*background: rgba(0,0,0, 0.5); /!*partially transparent image*!/*/
+/*width: 200px;*/
+/*height: 200px;*/
+/*pointer-events: none;*/
+/*}*/
+
+.ace_pred1 {
+    color: green;
+}
+
+.ace_pred2 {
+    color: darkorange;
+}
+
+.ace_freetext {
+    color: blue;
+}
+
+.ace_slot {
+    background: #F1F1F1;
+    border-radius: 5px;
+}
+
+.ace_keyword {
+    color: darkred;
+    font-weight: bold;
+
+}
+
+.ace_editor.ace_autocomplete {
+    /*border: none !important;*/
+    box-shadow: none !important;
+    border-radius: 5px !important;
+    font-size: 16px;
+}
