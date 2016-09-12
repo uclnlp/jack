@@ -1,6 +1,7 @@
 import tensorflow as tf
 from quebap.projects.clozecompose.tensorizer import *
-from quebap.model.models import *
+from quebap.projects.clozecompose.models import *
+#from quebap.model.models import *
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
                  optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):
@@ -23,10 +24,11 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
         avg_loss = 0
         count = 0
         for batch in reader.tensorizer.create_batches(train_data, batch_size=batch_size):
+            #print(batch)
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
             avg_loss += loss
             count += 1
-            if count % 1000 == 0:
+            if count % 2 == 0:
                 print("Avg Loss: {}".format(avg_loss / count))
 
                 # todo: also run dev during training
@@ -58,6 +60,8 @@ def main():
     args = parser.parse_args()
 
     reading_dataset = json.load(args.train)
+
+    #reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
 
     reader = readers[args.model](reading_dataset, **vars(args))
 
