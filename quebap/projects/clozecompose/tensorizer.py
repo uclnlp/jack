@@ -359,7 +359,7 @@ def accuracy(gold, guess):
 
 
 def tensoriserTest():
-    with open('../../../quebap/data/snippet/scienceQA/scienceQA.json') as data_file:
+    with open('../../../quebap/data/scienceQA/snippet.json') as data_file:
         data = json.load(data_file)
 
     tensorizer = SequenceTensorizer(data)

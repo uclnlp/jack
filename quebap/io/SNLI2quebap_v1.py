@@ -69,7 +69,7 @@ def main():
         corpus['instances'] = corpus['instances'][:10]
         with open("./quebap/data/SNLI/snli_1.0/snli_1.0_debug_quebap_v1.jsonl", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-        with open("./quebap/data/snippet/SNLI_v1/snippet_quebapformat_v1.json", 'w') as outfile:
+        with open("./quebap/data/SNLI/snippet_quebapformat_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
 if __name__ == "__main__":

@@ -79,19 +79,19 @@ def main():
     import sys
     if len(sys.argv) == 2:
         corpus = convert_snli(sys.argv[1])
-        print(json.dumps(corpus, indent=2))
+        print(json.dump(corpus, indent=2))
     else:
         for corpus_name in ["dev","train","test"]:
             corpus = convert_snli("./quebap/data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % corpus_name, support=False)
-            with open("./quebap/data/SNLI/snli_1.0/snli_1.0_%s_quebap.jsonl" % corpus_name, 'w') as outfile:
+            with open("./quebap/data/SNLI/snli_1.0/snli_1.0_%s_quebap_v2.json" % corpus_name, 'w') as outfile:
                 json.dump(corpus, outfile, indent=2)
 
         # create snippet
         corpus = convert_snli("./quebap/data/SNLI/snli_1.0/snli_1.0_train.jsonl", support=False)
         corpus['instances'] = corpus['instances'][:10]
-        with open("./quebap/data/SNLI/snli_1.0/snli_1.0_debug_quebap_v2.jsonl", 'w') as outfile:
+        with open("./quebap/data/SNLI/snli_1.0/snli_1.0_debug_quebap_v2.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-        with open("./quebap/data/snippet/SNLI_v1/snippet_quebapformat_v2.json", 'w') as outfile:
+        with open("./quebap/data/SNLI/snippet_quebapformat_v2.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
 if __name__ == "__main__":
