@@ -22,9 +22,9 @@ tf.flags.DEFINE_integer("num_epochs", 50, "Number of epochs to train for.")
 tf.flags.DEFINE_integer("embedding_size", 200, "Embedding size for embedding matrices.")
 tf.flags.DEFINE_integer("vocab_size", 100000, "Vocabulary size")
 tf.flags.DEFINE_integer("random_state", None, "Random state.")
-tf.flags.DEFINE_string("train_file", "../../data/snippet/squad/snippet_quebapformat.json", "Training file containing QA dataset. Required annotation: questions with answer spans and supporting text.")
-tf.flags.DEFINE_string("test_file", "../../data/snippet/squad/snippet_quebapformat.json", "Test file containing QA dataset. Required annotation: questions with answer spans and supporting text.")
-tf.flags.DEFINE_string("dev_file", "../../data/snippet/squad/snippet_quebapformat.json", "Dev file containing QA dataset. Required annotation: questions with answer spans and supporting text.")
+tf.flags.DEFINE_string("train_file", "../../data/SQuAD/snippet_quebapformat.json", "Training file containing QA dataset. Required annotation: questions with answer spans and supporting text.")
+tf.flags.DEFINE_string("test_file", "../../data/SQuAD/snippet_quebapformat.json", "Test file containing QA dataset. Required annotation: questions with answer spans and supporting text.")
+tf.flags.DEFINE_string("dev_file", "../../data/SQuAD/snippet_quebapformat.json", "Dev file containing QA dataset. Required annotation: questions with answer spans and supporting text.")
 FLAGS = tf.flags.FLAGS
 savepath = "./out/"
 

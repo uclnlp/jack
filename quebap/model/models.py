@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import quebap.util.tfutil as tfutil
 from quebap.tensorizer import Feature_Tensorizer, MultipleChoiceReader, \
-    AtomicTensorizer, SequenceTensorizer
+    AtomicTensorizer, SequenceTensorizer, count_features
 from quebap.util import tfutil as tfutil
 
 

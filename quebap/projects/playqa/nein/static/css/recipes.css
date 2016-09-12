@@ -1,0 +1,20 @@
+.recipes {
+    padding: 0px;
+    list-style-type: none;
+}
+
+.recipes li {
+    margin-bottom: 35px;
+}
+
+.recipes input {
+    border-radius: 5px;
+}
+
+.if {
+
+}
+
+.then {
+    margin-top: 20px;
+}

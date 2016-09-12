@@ -89,6 +89,18 @@ def pad_seq(seq, target_length, pad):
     return seq + [pad for _ in range(0, target_length - len(seq))]
 
 
+def shorten_reading_dataset(reading_dataset, begin, end):
+    """
+    Shortens the instances list of the dataset, keeping all meta information intact.
+    :param reading_dataset: quebap dataset
+    :param begin: first element to keep
+    :param end: index of last element to keep + 1
+    :return: dataset with shortened instances.
+    """
+    result = copy.copy(reading_dataset)
+    result['instances'] = reading_dataset['instances'][begin:end]
+    return result
+
 
 class SequenceTensorizer(Tensorizer):
     """
@@ -110,8 +122,8 @@ class SequenceTensorizer(Tensorizer):
         :param support_split: the regular expression used for tokenizing support documents.
         """
         self.reference_data = reference_data
-        self.pad = "<PAD>"
-        self.none = "NONE"  # for NONE answer / neg instances
+        self.pad = "<pad>"
+        self.none = "<NONE>"  # for NONE answer / neg instances
 
         self.question_lengths = tf.placeholder(tf.int32, (None, None), name="question_lengths")  # [pos/neg, batch_size]
         self.candidate_lengths = tf.placeholder(tf.int32, (None, None), name="candidate_lengths")  # [batch_size, num_candidates]
@@ -121,7 +133,7 @@ class SequenceTensorizer(Tensorizer):
         candidates = tf.placeholder(tf.int32, (None, None, None),
                                     name="candidates")  # [batch_size, num_candidates, num_tokens]
         target_values = tf.placeholder(tf.float32, (None, None, None), name="target") # [pos/neg, batch_size, num_candidates]
-        support = tf.placeholder(tf.float32, (None, None, None), name="support")
+        support = tf.placeholder(tf.int32, (None, None, None), name="support")
 
         super().__init__(candidates, questions, target_values, support)
 
@@ -140,10 +152,10 @@ class SequenceTensorizer(Tensorizer):
                                                        for token in
                                                        word_tokenize(support['text'])})
 
-        self.all_candidate_tokens = [self.pad] + [self.none] + sorted({token
+        self.all_candidate_tokens = [self.pad] + sorted({token
                                                          for inst in instances
                                                          for question in inst['questions']
-                                                         for candidate in question['candidates']
+                                                         for candidate in question['candidates'] + question['answers']
                                                          for token in
                                                          word_tokenize(candidate['text'])})
 
@@ -162,7 +174,7 @@ class SequenceTensorizer(Tensorizer):
 
         self.all_max_question_length = max([len(q) for q in all_question_seqs])
 
-        self.all_question_seqs_padded = [self.pad_seq(q, self.all_max_question_length) for q in all_question_seqs]
+        self.all_question_seqs_padded = [pad_seq(q, self.all_max_question_length, self.question_lexicon[self.pad]) for q in all_question_seqs]
 
         self.random = random.Random(0)
 
@@ -211,7 +223,7 @@ class SequenceTensorizer(Tensorizer):
             max_num_answs = max([len(answs) for answs in answer_seqs])
 
             # [batch_size, max_question_length]
-            question_seqs_padded = [self.pad_seq(q, max_question_length) for q in question_seqs]
+            question_seqs_padded = [pad_seq(q, max_question_length, self.question_lexicon[self.pad]) for q in question_seqs]
 
             # [batch_size, max_num_support, max_support_length]
             empty_support = pad_seq([], max_support_length, self.support_lexicon[self.pad])
@@ -293,8 +305,8 @@ class SequenceTensorizer(Tensorizer):
                     self.support_lengths: support_length
                 }
 
-    def pad_seq(self, seq, target_length):
-        return pad_seq(seq, target_length, self.pad)
+    #def pad_seq(self, seq, target_length):
+    #    return pad_seq(seq, target_length, self.pad)
 
 
     def convert_to_predictions(self, candidates, scores):
@@ -311,7 +323,7 @@ class SequenceTensorizer(Tensorizer):
             for score, candidate_seq in zip(scores_per_question, candidates_per_question):
                 candidate_tokens = [self.candidate_lexicon.key_by_id(sym) for sym in candidate_seq if
                                     sym != self.candidate_lexicon[self.pad]]
-                candidate_text = self.candidate_split.join(
+                candidate_text = " ".join(
                     candidate_tokens)  # won't work, no candidate_split, tokenisation with nltk
                 candidate = {
                     'text': candidate_text,
@@ -359,7 +371,7 @@ def accuracy(gold, guess):
 
 
 def tensoriserTest():
-    with open('../../../quebap/data/snippet/scienceQA/scienceQA.json') as data_file:
+    with open('../../../quebap/data/scienceQA/snippet.json') as data_file:
         data = json.load(data_file)
 
     tensorizer = SequenceTensorizer(data)
@@ -374,8 +386,8 @@ def tensoriserTest():
             print()
 
 def main():
-    pass
-    #tensoriserTest()
+    #pass
+    tensoriserTest()
 
 if __name__ == "__main__":
     main()

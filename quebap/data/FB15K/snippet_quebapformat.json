@@ -1,0 +1,57 @@
+{
+  "meta": "FB15K with entity neighbours as supporting facts.",
+  "instances": [
+    {
+      "support": [
+        {
+          "text": "1 0 2"
+        }
+      ],
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "2"
+            }
+          ],
+          "candidates": [],
+          "question": "1 0"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "0 1 3"
+        }
+      ],
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "3"
+            }
+          ],
+          "candidates": [],
+          "question": "0 1"
+        }
+      ]
+    }
+  ],
+  "globals": {
+    "candidates": [
+      {
+        "text": "0"
+      },
+      {
+        "text": "1"
+      },
+      {
+        "text": "2"
+      },
+      {
+        "text": "3"
+      }
+    ]
+  }
+}
