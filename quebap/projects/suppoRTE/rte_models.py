@@ -6,8 +6,9 @@ from quebap.util import tfutil
 
 
 
-def basic_rnn(lengths, ids, cell, E=None, additional_inputs=None, rev=False, init_state=None):
+def basic_rnn(max_length, lengths, ids, cell, E=None, additional_inputs=None, rev=False, init_state=None):
     """
+    :param max_length: max. sequence length
     :param lengths: sequence lengths (tensor of length batch_size)
     :param ids: symbol ID's in tensor with shape (length x batch_size). 
            Note: this shape assumes time_major == True; inputs for rnn will have shape: `[max_time, batch_size, input_size]`
@@ -37,24 +38,22 @@ def basic_rnn(lengths, ids, cell, E=None, additional_inputs=None, rev=False, ini
     if rev: 
         outputs = tf.reverse_sequence(outputs, lengths, 0, 1)
 
-    max_length = tf.gather(tf.shape(outputs), [0])
-    
+    max_length = tf.gather(tf.shape(outputs), [0])   
     batch_size = tf.gather(tf.shape(lengths), [0])
-    flat_index = tf.range(0, max_length) * batch_size + (lengths - 1)
-    final_output = tf.gather(tf.reshape(outputs, [-1, cell.output_size]), flat_index) #
+
+#    flat_index = tf.range(0, max_length) * batch_size + (lengths - 1)
+#    flat_index = tf.add(tf.mul(batch_size, tf.range(0, max_length)), tf.sub(lengths, 1))   
+#    final_output = tf.gather(tf.reshape(outputs, [-1, cell.output_size]), flat_index) #shape: max_length x batch_size
     """Note:
     final_output = tfutil.get_by_index(outputs, lengths)  
     does not work, as it needs a numerical value for the 3rd dimension 
     (else: None in that direction, and fully_connected does not work)
     """
 
-    #alternative:
-    #mask = tf.one_hot(lengths,max_length,axis=0,dtype=tf.int32) #seqlength x batch_size
-    #mask = tf.expand_dims(mask,2)
-    #mask = tf.tile(mask,tf.pack([1,1,num_units]))
-    #mask = tf.cast(mask,tf.float32)
-    #final_output = tf.reduce_sum(tf.mul(outputs,mask),0)
-
+    mask = tf.expand_dims(tf.one_hot(lengths,max_length,axis=0,dtype=tf.int32),2) #seqlength x batch_size x 1
+    mask = tf.cast(tf.tile(mask,tf.pack([1,1,cell.output_size])),tf.float32) #seqlength x batch_size x cell.output_size
+    final_output = tf.reduce_sum(tf.mul(outputs,mask),0)
+    
     return final_output, final_state, outputs
     
 
@@ -75,10 +74,10 @@ def create_embeddings(tunable_embeddings,fixed_embeddings):
 
 
 
-def rte_model(length, l2_lambda, learning_rate, h_size, cellA, cellB, tunable_embeddings, fixed_embeddings, keep_prob,
+def rte_model(max_length, l2_lambda, learning_rate, h_size, cellA, cellB, tunable_embeddings, fixed_embeddings, keep_prob,
                  initializer=tf.random_uniform_initializer(-0.05, 0.05)):
     """baseline rte model (based on Dirk Weissenborn's train_snli)
-    :param length: max. sequence length
+    :param max_length: max. sequence length
     :param l2_lambda
     :param learning_rate
     :param h_size
@@ -91,8 +90,8 @@ def rte_model(length, l2_lambda, learning_rate, h_size, cellA, cellB, tunable_em
     """
     
     with tf.variable_scope("model", initializer=initializer):#below: this initializer is used by default, except where overruled by explicit initializer 
-        idsA = tf.placeholder(tf.int32, [length, None]) #return placeholder (max sequence length x batch size)
-        idsB = tf.placeholder(tf.int32, [length, None]) #return placeholder (max sequence length x batch size)
+        idsA = tf.placeholder(tf.int32, [max_length, None]) #return placeholder (max sequence length x batch size)
+        idsB = tf.placeholder(tf.int32, [max_length, None]) #return placeholder (max sequence length x batch size)
         lengthsA = tf.placeholder(tf.int32, [None]) #return placeholder
         lengthsB = tf.placeholder(tf.int32, [None]) #return placeholder
         learning_rate = tf.get_variable("lr", (), tf.float32, tf.constant_initializer(learning_rate), trainable=False)
@@ -111,14 +110,14 @@ def rte_model(length, l2_lambda, learning_rate, h_size, cellA, cellB, tunable_em
         E = create_embeddings(tunable_embeddings,fixed_embeddings)
         
         with tf.variable_scope("rnn", initializer=initializer):
-            premise_out, premise_state, premise_outs = basic_rnn(lengthsA, idsA, cellA, E)
+            premise_out, premise_state, premise_outs = basic_rnn(max_length, lengthsA, idsA, cellA, E)
             tf.get_variable_scope().reuse_variables()
 #            if cellB.state_size > cellA.state_size:
 #                rest_state = tf.zeros([cellB.state_size - cellA.state_size], tf.float32)
 #                rest_state = tf.reshape(tf.tile(rest_state, batch_size), [-1, cellB.state_size - cellA.state_size])
 #                s = tf.concat(1, [rest_state, s])
             #initial state: conditioned on premise state
-            hypothesis_out, _, hypothesis_outs = basic_rnn(lengthsB, idsB, cellB, E, init_state=premise_state)
+            hypothesis_out, _, hypothesis_outs = basic_rnn(max_length, lengthsB, idsB, cellB, E, init_state=premise_state)
 
         h = tf.concat(1, [premise_out, hypothesis_out])
         h = tf.contrib.layers.fully_connected(h, h_size, activation_fn=tf.nn.relu)                
