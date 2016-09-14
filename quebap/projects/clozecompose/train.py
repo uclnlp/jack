@@ -21,6 +21,7 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
     sess.run(tf.initialize_all_variables())
 
     for epoch in range(0, num_epochs):
+        print("Epoch:", epoch)
         avg_loss = 0
         count = 0
         for batch in reader.tensorizer.create_batches(train_data, batch_size=batch_size):
@@ -28,12 +29,13 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
             avg_loss += loss
             count += 1
-            if count % 2 == 0:
-                print("Avg Loss: {}".format(avg_loss / count))
+            #if count % 2 == 0:
+            #    print("Avg Loss: {}".format(avg_loss / count))
+        print("Loss: ", np.sum(avg_loss) / count)
 
                 # todo: also run dev during training
     predictions = []
-    for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test):
+    for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=batch_size):
         scores = sess.run(reader.scores, feed_dict=batch)
         candidates_ids = batch[reader.tensorizer.candidates]
         predictions += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
@@ -48,13 +50,13 @@ def main():
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--train', default='../../data/scienceQA/scienceQA.json', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--test', default='../../data/scienceQA/scienceQA.json', type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--batch_size', default=2, type=int, metavar="B", help="Batch size (suggestion)")
+    parser.add_argument('--train', default='../../data/scienceQA/scienceQA_all.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--test', default='../../data/scienceQA/scienceQA_all.json', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--batch_size', default=6, type=int, metavar="B", help="Batch size (suggestion)")
     parser.add_argument('--repr_dim', default=5, type=int, help="Size of the hidden representation")
     parser.add_argument('--support_dim', default=5, type=int, help="Size of the hidden representation for support")
     parser.add_argument('--model', default='se', choices=sorted(readers.keys()), help="Reading model to use")
-    parser.add_argument('--epochs', default=1, type=int, help="Number of epochs to train for")
+    parser.add_argument('--epochs', default=10, type=int, help="Number of epochs to train for")
 
 
     args = parser.parse_args()
