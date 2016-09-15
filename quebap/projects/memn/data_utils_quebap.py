@@ -29,7 +29,7 @@ def parse_stories(jsonfile):
     Parse stories provided in the quebap format
     '''
     data = []
-    for inst in jsonfile:
+    for inst in jsonfile['instances']:
         #print(inst)
         story = []
         for t in inst["support"]:

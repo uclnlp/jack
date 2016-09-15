@@ -3,7 +3,7 @@ Download tasks from facebook.ai/babi """
 from __future__ import absolute_import
 from __future__ import print_function
 
-from data_utils import load_task, vectorize_data
+from data_utils_quebap import load_task, vectorize_data
 from sklearn import cross_validation, metrics
 from memn2n.memn2n import MemN2N
 from itertools import chain
@@ -22,13 +22,15 @@ tf.flags.DEFINE_integer("embedding_size", 20, "Embedding size for embedding matr
 tf.flags.DEFINE_integer("memory_size", 50, "Maximum size of memory.")
 tf.flags.DEFINE_integer("task_id", 1, "bAbI task id, 1 <= id <= 20")
 tf.flags.DEFINE_integer("random_state", None, "Random state.")
-tf.flags.DEFINE_string("data_dir", "data/tasks_1-20_v1-2/en/", "Directory containing bAbI tasks")
+tf.flags.DEFINE_string("train_dir", "data/tasks_1-20_v1-2/en/", "Directory containing bAbI tasks")
+tf.flags.DEFINE_string("valid_dir", "data/tasks_1-20_v1-2/en/", "Directory containing bAbI tasks")
+tf.flags.DEFINE_string("test_dir", "data/tasks_1-20_v1-2/en/", "Directory containing bAbI tasks")
 FLAGS = tf.flags.FLAGS
 
 print("Started Task:", FLAGS.task_id)
 
 # task data
-train, test = load_task(FLAGS.data_dir, FLAGS.task_id)
+train, valid, test = load_task(FLAGS.train_dir, FLAGS.train_dir, FLAGS.train_dir)
 
 vocab = sorted(reduce(lambda x, y: x | y, (set(list(chain.from_iterable(s)) + q + a) for s, q, a in train + test)))  # vocab list (words)
 word_idx = dict((c, i + 1) for i, c in enumerate(vocab))  # vocab dict (word : id)

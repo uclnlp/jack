@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="static/css/typeahead.css">
+
+</head>
+<body>
+<!--Put here because ace otherwise inserts style before it -->
+<link rel="stylesheet" href="static/css/shell.css">
+
+
+<div class="wrapper">
+    <div class="left">
+        <div id="inner-left" class="inner">
+            <ul class="commands">
+                <li id="editorItem">
+                    <div class="prompt"> ></div>
+                    <div class="editorFrame">
+                        <div id="aceEditor"></div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="right">
+        <div class="inner">
+            <ul class="channels">
+                <li class="msg-box">
+                    <div class="channel-name">Provenance</div>
+                    <div id="provenance">
+                        <ul id="sentences">
+                        </ul>
+                        <ul>
+                            <li id="template_sentence">
+                                <div class="attention" style="width:40px; float:left; font-weight: bold"></div>
+                                <div class="text">This is a template sentence</div>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<!--<script type="text/javascript" charset="utf-8">-->
+<!--var socket = io.connect('http://' + document.domain + ':' + location.port);-->
+<!--socket.on('connect', function() {-->
+<!--console.log("Emitting");-->
+<!--socket.emit('my event', {data: 'I\'m connected!'});-->
+<!--});-->
+<!--</script>-->
+
+
+<script src="static/js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="static/js/ace/ext-language_tools.js"></script>
+
+<script src="static/js/shell-highlight.js"></script>
+
+<script src="static/js/jquery-1.9.0.js"></script>
+
+<script src="static/js/shell.js"></script>
+<script src="static/js/bootstrap.min.js"></script>
+<script src="static/js/jquery.atmosphere.js"></script>
+<script src="static/js/awesomplete.js"></script>
+<script src="static/js/typeahead.bundle.js"></script>
+
+
+<div>
+
+</div>
+</body>
+</html>

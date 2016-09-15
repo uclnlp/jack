@@ -1,0 +1,284 @@
+{
+  "meta": "SemEval-2007 Task 10: Lexical Substitution",
+  "instances": [
+    {
+      "support": [
+        {
+          "text": "During the siege , George Robertson had appointed Shuja-ul-Mulk , who was a bright boy only 12 years old and the youngest surviving son of Aman-ul-Mulk , as the ruler of Chitral ."
+        }
+      ],
+      "id": "1",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "intelligent"
+            },
+            {
+              "text": "clever"
+            },
+            {
+              "text": "smart"
+            }
+          ],
+          "question": "13"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The actual field is not much different than that of a 40mm , only it is smaller and quite a bit noticeably brighter , which is probably the main benefit ."
+        }
+      ],
+      "id": "2",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "luminous"
+            },
+            {
+              "text": "well-lit"
+            },
+            {
+              "text": "clear"
+            },
+            {
+              "text": "light"
+            }
+          ],
+          "question": "22"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The roses have grown out of control , wild and carefree , their bright blooming faces turned to bathe in the early autumn sun ."
+        }
+      ],
+      "id": "3",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "colourful"
+            },
+            {
+              "text": "brilliant"
+            },
+            {
+              "text": "gleam"
+            },
+            {
+              "text": "luminous"
+            }
+          ],
+          "question": "13"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "He was bright and independent and proud ."
+        }
+      ],
+      "id": "4",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "intelligent"
+            },
+            {
+              "text": "clever"
+            }
+          ],
+          "question": "2"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In fact , during at least six distinct periods in Army history since World War I , lack of trust and confidence in senior leaders caused the so-called best and brightest to leave the Army in droves ."
+        }
+      ],
+      "id": "5",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "intelligent"
+            },
+            {
+              "text": "clever"
+            },
+            {
+              "text": "most able"
+            },
+            {
+              "text": "capable"
+            },
+            {
+              "text": "promising"
+            },
+            {
+              "text": "sharp"
+            },
+            {
+              "text": "motivated"
+            }
+          ],
+          "question": "30"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "An evening of classical symphonic music , played by the next generation stars in the American orchestral scene , can be savored at the New World Symphony , a special Miami institution that nurtures the best and brightest young symphonic musicians ."
+        }
+      ],
+      "id": "6",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "talented"
+            },
+            {
+              "text": "up-and-coming"
+            },
+            {
+              "text": "gifted"
+            },
+            {
+              "text": "promising"
+            },
+            {
+              "text": "most talented"
+            },
+            {
+              "text": "skilled"
+            }
+          ],
+          "question": "37"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "There are sound reasons for concluding that the long-run picture remains bright , and even recent signals about the current course of the economy have turned from unremittingly negative through the late fall of last year to a far more mixed set of signals recently ."
+        }
+      ],
+      "id": "7",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "positive"
+            },
+            {
+              "text": "promising"
+            },
+            {
+              "text": "good"
+            },
+            {
+              "text": "optimisitc"
+            },
+            {
+              "text": "hopeful"
+            }
+          ],
+          "question": "11"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Snow covered areas appear bright blue in the image which was taken in early spring and shows deep snow cover ."
+        }
+      ],
+      "id": "8",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "shining"
+            },
+            {
+              "text": "deep"
+            },
+            {
+              "text": "vivid"
+            },
+            {
+              "text": "luminous"
+            },
+            {
+              "text": "vibrant"
+            }
+          ],
+          "question": "4"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "She turns eyes bright with excitement towards Fiona , still tugging on the string of the minitiature airship-cum-dance card she has just received at the door ."
+        }
+      ],
+      "id": "9",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "shining"
+            },
+            {
+              "text": "alight"
+            }
+          ],
+          "question": "3"
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "A short excerpt : I was praying in private until someone got the bright idea of starting a Presidential Prayer Team ."
+        }
+      ],
+      "id": "10",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "smart"
+            },
+            {
+              "text": "intelligent"
+            },
+            {
+              "text": "brilliant"
+            },
+            {
+              "text": "great"
+            },
+            {
+              "text": "clever"
+            }
+          ],
+          "question": "13"
+        }
+      ]
+    }
+  ]
+}

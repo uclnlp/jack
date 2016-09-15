@@ -13,8 +13,8 @@ from quebap.projects.autoread.autoreader import AutoReader
 from quebap.projects.autoread.wikireading import load_vocab
 
 tf.app.flags.DEFINE_string('data', None, 'Path to extracted TFRecord data. Assuming contains document.vocab')
-tf.app.flags.DEFINE_string("trainset_prefix", "test-00000-of-00015", "Comma separated datasets to train on.")
-tf.app.flags.DEFINE_string("devset_prefix", "test-00001-of-00015", "Development set")
+tf.app.flags.DEFINE_string("trainset_prefix", "train", "Comma separated datasets to train on.")
+tf.app.flags.DEFINE_string("validset_prefix", "valid", "Development set")
 #tf.app.flags.DEFINE_string("testset_prefix", "test", "Test set.")
 
 # model
@@ -23,11 +23,12 @@ tf.app.flags.DEFINE_integer("max_vocab", -1, "maximum vocabulary size")
 tf.app.flags.DEFINE_string("composition", 'GRU', "'LSTM', 'GRU'")
 
 #training
-tf.app.flags.DEFINE_float("dropout", 0.2, "Dropout.")
-tf.app.flags.DEFINE_float("cloze_dropout", 0.8, "Dropout for token to predict.")
+tf.app.flags.DEFINE_float("dropout", 0.0, "Dropout.")
+tf.app.flags.DEFINE_float("cloze_dropout", 1.0, "Dropout for token to predict.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-2, "Learning rate.")
 tf.app.flags.DEFINE_float("learning_rate_decay", 0.5, "Learning rate decay when loss on validation set does not improve.")
-tf.app.flags.DEFINE_integer("batch_size", 11, "Number of examples in each batch for training.")
+tf.app.flags.DEFINE_float("beta", 0.5, "Word freq smoothing factor for weighted training.")
+tf.app.flags.DEFINE_integer("batch_size", 64, "Number of examples in each batch for training.")
 tf.app.flags.DEFINE_string("devices", "/cpu:0", "Use this device.")
 tf.app.flags.DEFINE_integer("max_iterations", -1, "Maximum number of batches during training. -1 means until convergence")
 tf.app.flags.DEFINE_integer("ckpt_its", 1000, "Number of iterations until running checkpoint. Negative means after every epoch.")
@@ -46,7 +47,7 @@ FLAGS = tf.app.flags.FLAGS
 random.seed(FLAGS.random_seed)
 tf.set_random_seed(FLAGS.random_seed)
 
-word_ids, vocab = load_vocab(os.path.join(FLAGS.data, "document.vocab"))
+word_ids, vocab, word_freq = load_vocab(os.path.join(FLAGS.data, "document.vocab"))
 if FLAGS.max_vocab < 0:
     FLAGS.max_vocab = len(vocab)
 
@@ -58,15 +59,13 @@ with tf.Session(config=config) as sess:
     random.shuffle(train_fns)
     print("Training sets: ", train_fns)
     sampler = sampler_for(FLAGS.dataset)(sess, FLAGS.data, train_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
-                           max_answer_vocab=FLAGS.max_vocab,
-                           max_length=FLAGS.max_context_length, vocab=word_ids)
+                           max_length=FLAGS.max_context_length, vocab=word_ids, word_freq=word_freq, beta=FLAGS.beta)
 
     train_dir = os.path.join(FLAGS.save_dir)
-    dev_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.devset_prefix)]
+    dev_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.validset_prefix)]
     print("Valid sets: ", dev_fns)
     valid_sampler = sampler_for(FLAGS.dataset)(sess, FLAGS.data, dev_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
-                                 max_answer_vocab=FLAGS.max_vocab,
-                                 max_length=FLAGS.max_context_length, vocab=word_ids)
+                                 max_length=FLAGS.max_context_length, vocab=word_ids, batches_per_epoch=100)
     #test_fns = [fn for fn in os.listdir(FLAGS.data) if fn.startswith(FLAGS.testset_prefix)]
     #print("Test sets: ", test_fns)
     #test_sampler = BatchSampler(sess, FLAGS.data, test_fns, FLAGS.batch_size, max_vocab=FLAGS.max_vocab,
@@ -74,9 +73,9 @@ with tf.Session(config=config) as sess:
     #                            max_length=FLAGS.max_context_length, vocab=word_ids)
 
     devices = FLAGS.devices.split(",")
-    m = AutoReader(FLAGS.size, FLAGS.max_vocab, FLAGS.max_context_length,
+    m = AutoReader(FLAGS.size, FLAGS.max_vocab,
                    learning_rate=FLAGS.learning_rate, devices=devices,
-                   keep_prob=1.0-FLAGS.dropout, cloze_keep_prob=1.0 - FLAGS.cloze_dropout,
+                   dropout=FLAGS.dropout, cloze_noise=FLAGS.cloze_dropout,
                    composition=FLAGS.composition, unk_id=sampler.unk_id)
 
     print("Created model!")
@@ -86,6 +85,9 @@ with tf.Session(config=config) as sess:
 
     previous_loss = list()
     epoch = 0
+
+    print("Initializing variables ...")
+    sess.run(tf.initialize_all_variables())
 
     if FLAGS.init_model_path:
         print("Loading from path " + FLAGS.init_model_path)
@@ -99,8 +101,6 @@ with tf.Session(config=config) as sess:
     else:
         if not os.path.exists(train_dir):
             os.makedirs(train_dir)
-        print("Initializing variables ...")
-        sess.run(tf.initialize_all_variables())
         if FLAGS.embeddings is not None:
             print("Init embeddings with %s..." % FLAGS.embeddings)
             e = embeddings.load_embedding(FLAGS.embeddings)
@@ -123,24 +123,26 @@ with tf.Session(config=config) as sess:
         e = valid_sampler.epoch
         l = 0.0
         ctr = 0
-        sess.run(m.cloze_keep_prob.set(0.0))
-        sess.run(m.keep_prob.set(1.0))
+        sess.run(m.cloze_noise.assign(1.0))
+        sess.run(m.keep_prob.assign(1.0))
         while valid_sampler.epoch == e:
             l += m.run(sess, m.loss, valid_sampler.get_batch())
             ctr += 1
-            sys.stdout.write("\r%d - %.3f" % (ctr, l /ctr))
+            sys.stdout.write("\r%d - %.3f" % (ctr, l / ctr))
             sys.stdout.flush()
-        sess.run(m.cloze_keep_prob.initializer())
-        sess.run(m.keep_prob.initializer())
+        sess.run(m.cloze_noise.initializer)
+        sess.run(m.keep_prob.initializer)
         l /= ctr
         print("loss: %.3f" % l)
         print("####################################")
 
         if not best_path or l < min(previous_loss):
             if best_path:
-                best_path[0] = m.all_saver.save(sess, checkpoint_path, global_step=m.global_step, write_meta_graph=False)
+                best_path[0] = m.all_saver.save(sess, checkpoint_path, global_step=m.global_step,
+                                                write_meta_graph=False)
             else:
-                best_path.append(m.all_saver.save(sess, checkpoint_path, global_step=m.global_step, write_meta_graph=False))
+                best_path.append(
+                    m.all_saver.save(sess, checkpoint_path, global_step=m.global_step, write_meta_graph=False))
 
         if previous_loss and l > previous_loss[-1]:
             # if no significant improvement decay learningrate
@@ -177,19 +179,4 @@ with tf.Session(config=config) as sess:
                                                                                     m.learning_rate.eval(),
                                                                                     step_time, loss))
             step_time, loss = 0.0, 0.0
-            result = validate()
-            if result > ckpt_result + 1e-4:
-                print("Stop learning!")
-                break
-            else:
-                ckpt_result = result
-
-    best_valid_loss = max(previous_loss) if previous_loss else 0.0
-   # print("Restore model to best on validation, with Accuracy: %.3f" % best_valid_acc)
-    m.all_saver.restore(sess, best_path[0])
-    model_name = best_path[0].split("/")[-1]
-    m.model_saver.save(sess, os.path.join(train_dir, "final_model.tf"), write_meta_graph=False)
-   # print("########## Test ##############")
-   # MAP = eval.eval_dataset(sess, m, test_sampler, True)
-   # print("MAP: %.3f" % MAP)
-   # print("##############################")
+            ckpt_result = validate()
