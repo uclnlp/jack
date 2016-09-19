@@ -19,8 +19,8 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
                 _, current_loss = sess.run([min_op, loss], feed_dict=feed_dict)
 
                 for hook in hooks:
-                    hook(sess, i+1, j+1, predict, current_loss)
+                    hook(sess, i+1, predict, current_loss)
 
             # calling post-epoch hooks
             for hook in hooks:
-                hook(sess, i+1, 0, predict, 0)
+                hook(sess, i+1, predict, 0)

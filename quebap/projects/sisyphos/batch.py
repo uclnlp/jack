@@ -10,13 +10,16 @@ def augment_with_pad(data, pad=0, squeeze=True):
     """
     new_data = []
     for array in data:
-        max_len = max([x.__len__() for x in array])
-        new_array = np.full([array.__len__(), max_len], pad, np.int64)
-        for i, x in enumerate(array):
-            new_array[i, 0:x.__len__()] = x
-        if squeeze:
-            new_array = np.squeeze(new_array)
-        new_data.append(new_array)
+        if isinstance(array[0], list):
+            max_len = max([x.__len__() for x in array])
+            new_array = np.full([array.__len__(), max_len], pad, np.int64)
+            for i, x in enumerate(array):
+                new_array[i, 0:x.__len__()] = x
+            if squeeze:
+                new_array = np.squeeze(new_array)
+            new_data.append(new_array)
+        else:
+            new_data.append(array)
     return new_data
 
 
@@ -63,6 +66,8 @@ def get_batches(data, batch_size=32, pad=0):
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0):
     def generator():
         batches = get_batches(data, batch_size, pad)
+        # fixme: this is potentially inefficient as it might be called every
+        # time we retrieve a batch
         mapped = map(lambda xs: dict(zip(placeholders, xs)), batches)
         for x in mapped:
             yield x
