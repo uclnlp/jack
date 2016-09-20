@@ -6,6 +6,7 @@ import tensorflow as tf
 from quebap.projects.modelF.structs import FrozenIdentifier
 from abc import *
 from nltk import word_tokenize, pos_tag, sent_tokenize
+from gensim.models import Phrases, word2vec
 
 
 class Tensorizer(metaclass=ABCMeta):
@@ -96,6 +97,54 @@ def shorten_reading_dataset(reading_dataset, begin, end):
     result = copy.copy(reading_dataset)
     result['instances'] = reading_dataset['instances'][begin:end]
     return result
+
+
+def shorten_candidate_list(reading_dataset, word2vec_model_path="_skip_multi_big_300features_5minwords_5context"):
+    """
+    Shortens the list of candidates - remove the ones which are unlikely to be of the right answer type
+    :param reading_dataset: quebap dataset
+    :param begin: first element to keep
+    :param end: index of last element to keep + 1
+    :return: dataset with instances with shortened candidate sets.
+    """
+
+    model = word2vec.Word2Vec.load(word2vec_model_path)
+    keytypes = ['dataset', 'author', 'method', 'algorithm', 'task', 'tool', 'description', 'format', 'preprocessing', 'model', 'classifier', 'analysis']
+
+    #for k in keytypes:
+    #    print(k, model.similarity(k, "support_vector_machine")) # linear regression, time series
+
+    #words = ['support_vector_machine']
+    #for w in words:
+    #    for res in model.most_similar(w, topn=3000):
+    #        print(w, res)
+
+    result = copy.copy(reading_dataset)
+    result['instances'] = reading_dataset['instances']
+    #reading_dataset['instances'][begin:end]
+    print("Number reading instances:", len(reading_dataset['instances']))
+    for ii, inst in enumerate(reading_dataset['instances']):
+        for iq, q in enumerate(inst['questions']):
+            #print("before:", len(reading_dataset['instances'][ii]['questions'][iq]['candidates']))
+            for ic, c in enumerate(q['candidates']):
+                ct = c['text']
+                cr = ct.replace(" ", "_")
+                if cr in model.vocab:
+                    max_sim = 0.0
+                    for kt in keytypes:
+                        sim = model.similarity(kt, cr)
+                        if sim > max_sim:
+                            max_sim = sim
+                    if max_sim <= 0.49:
+                        #if c in reading_dataset['instances'][ii]['questions'][iq]['answers']:
+                            #print("Not removed:", c, max_sim)
+                        if not c in reading_dataset['instances'][ii]['questions'][iq]['answers']:
+                            #print("Useless cand removed:", c['text'], max_sim)
+                            reading_dataset['instances'][ii]['questions'][iq]['candidates'].remove(c)
+            #print("after:", len(reading_dataset['instances'][ii]['questions'][iq]['candidates']))
+
+
+    return reading_dataset
 
 
 class SequenceTensorizer(Tensorizer):
@@ -349,7 +398,7 @@ def create_softmax_loss(scores, target_values):
 
 def accuracy_multi(gold, guess):
     """
-    Calculates how often the top predicted answer matches the first gold answer.
+    Calculates how often the top predicted answer matches the any gold answer.
     :param gold: quebap dataset with gold answers.
     :param guess: quebap dataset with predicted answers
     :return: accuracy (matches / total number of questions)
@@ -367,19 +416,18 @@ def accuracy_multi(gold, guess):
             if target in tops:
                 corr = 1
                 correct += 1
-            print(str(corr), target, tops)
+            #print(str(corr), target, tops)
             total += 1
     return correct / total
 
 
-def mrr_at_k(gold, guess, k):
+def mrr_at_k(gold, guess, k, print_details=False):
     """
-    Calculates how often the top predicted answer matches the first gold answer.
+    Calculates the mean reciprical rank up to a rank of k
     :param gold: quebap dataset with gold answers.
     :param guess: quebap dataset with predicted answers
-    :return: accuracy (matches / total number of questions)
+    :return: mrr at k
     """
-    # test whether the top answer is the gold answer
     correct = 0.0
     total = 0.0
     for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
@@ -399,7 +447,8 @@ def mrr_at_k(gold, guess, k):
                     break  # only the highest one counts, otherwise we can end up with a score > 1.0 as there can be multiple answers
 
             correct += corr
-            print(str(corr), targets, tops)
+            if print_details == True:
+                print(str(corr), targets, tops)
 
     return correct / total
 

@@ -409,8 +409,8 @@ def create_sequence_embeddings_reader(reference_data, **options):
 
 def create_bowv_embeddings_reader(reference_data, **options):
     """
-    A reader that creates sequence representations of the input reading instance, and then
-    models each question as a sequence encoded with an RNN and candidate as the sum of the embeddings of their tokens.
+    A reader that creates bowv representations of the input reading instance, and
+    models each question, context and candidate as the sum of the embeddings of their tokens.
     :param reference_data: the reference training set that determines the vocabulary.
     :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
     :return: a MultipleChoiceReader.
@@ -454,6 +454,61 @@ def create_bowv_embeddings_reader(reference_data, **options):
 
 
 
+def create_bowv_nosupport_embeddings_reader(reference_data, **options):
+    """
+    A reader that creates bowv representations of the input reading instance, and
+    models each question and candidate as the sum of the embeddings of their tokens. Support is ignored.
+    :param reference_data: the reference training set that determines the vocabulary.
+    :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
+    :return: a MultipleChoiceReader.
+    """
+    tensorizer = SequenceTensorizer(reference_data)
+
+    dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
+    question_lengths_true = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [1])
+
+    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
+
+    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
+
+    question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
+    questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
+    targets_false = tf.squeeze(tf.slice(tensorizer.target_values, [0, 1, 0], [dim1t, 1, dim3t]), [1])
+
+    # 5) bag of word vector encoding with all supports averaged
+    #question_encoding_true = get_bowv_multisupport_question_encoding(tensorizer, questions_true, options)
+    #question_encoding_false = get_bowv_multisupport_question_encoding(tensorizer, questions_false, options)
+
+    cand_dim = options['repr_dim']
+    #question_encoding_true = create_dense_embedding(questions_false, cand_dim, tensorizer.num_symbols)
+    #question_encoding_true = tf.reduce_sum(question_encoding_true, 2)
+
+    #question_encoding_false = create_dense_embedding(questions_true, cand_dim, tensorizer.num_symbols)
+    #question_encoding_false = tf.reduce_sum(question_encoding_false, 2)
+    question_encoding_true = get_bowv_question_encoding(tensorizer, questions_true, options)
+    question_encoding_false = get_bowv_question_encoding(tensorizer, questions_false, options)
+
+    # [batch_size, num_candidates, max_question_length, repr_dim
+    candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim,
+                                                  tensorizer.num_symbols)
+    candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
+
+    scores_true = create_dot_product_scorer(question_encoding_true, candidate_encoding)  # a [batch_size, num_candidate] tensor of scores for each candidate
+    scores_false = create_dot_product_scorer(question_encoding_false, candidate_encoding)
+
+    loss_true = create_softmax_loss(scores_true, targets_true)
+    loss_false = create_softmax_loss(scores_false, targets_false)
+
+    # add scores and losses for pos and neg examples
+    scores_all = scores_true + scores_false
+    loss_all = loss_true + loss_false
+
+    return MultipleChoiceReader(tensorizer, scores_all, loss_all)
+
+
+
 def create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False):
     dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
 
@@ -470,33 +525,37 @@ def create_bicond_question_encoding(tensorizer, questions_true, question_lengths
     return question_encoding
 
 
-
-def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
-    # bidirectional conditional encoding with all supports averaged
+def get_bowv_question_encoding(tensorizer, questions, options):
+    # question only encoder
 
     cand_dim = options['repr_dim']
 
-    # 1) reshape the support tensors to remove batch_size dimension
+    # 4) run question encoder
+    outputs_que = create_bowv_embedding(questions, cand_dim, tensorizer.num_symbols, "embedding_matrix_que")
 
+    # 5) combine and return
+    #repr = tf.reshape((outputs_que), [-1, cand_dim])
+
+    return outputs_que
+
+
+def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
+    # bowv encoder
+    cand_dim = options['repr_dim']
+
+    # 1) reshape the support tensors to remove batch_size dimension
     dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
     sup = tf.reshape(tensorizer.support, [-1, dim3s])  # [batch_size * num_supports, num_tokens]
 
-
     # 2) run first rnn to encode the supports
-
     outputs_sup = create_bowv_embedding(sup, cand_dim, tensorizer.num_symbols, "embedding_matrix_sup")
 
-
     # 3) reshape the outputs of the support encoder to average outputs by batch_size
-
     outputs_sup = tf.reshape(outputs_sup, [dim1s, dim2s, cand_dim])  # [batch_size, num_supports, cell.state_size]
     outputs_sup = tf.reduce_mean(outputs_sup, 1)  # [batch_size, cell.state_size]  <-- support encodings are mean averaged
 
-
     # 4) run question encoder
-
     outputs_que = create_bowv_embedding(questions, cand_dim, tensorizer.num_symbols, "embedding_matrix_que")
-
 
     # 5) combine and return
     repr = tf.reshape((outputs_que * outputs_sup), [dim1s, cand_dim])
