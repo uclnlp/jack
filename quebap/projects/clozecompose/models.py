@@ -465,7 +465,7 @@ def create_bowv_nosupport_embeddings_reader(reference_data, **options):
     tensorizer = SequenceTensorizer(reference_data)
 
     dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
-    question_lengths_true = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [1])
+    #question_lengths_true = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [1])
 
     dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
     questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
@@ -473,7 +473,7 @@ def create_bowv_nosupport_embeddings_reader(reference_data, **options):
     dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
     targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
 
-    question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
+    #question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
     questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
     targets_false = tf.squeeze(tf.slice(tensorizer.target_values, [0, 1, 0], [dim1t, 1, dim3t]), [1])
 

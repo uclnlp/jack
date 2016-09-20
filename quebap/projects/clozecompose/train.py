@@ -40,8 +40,9 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
 
         print("Loss: ", np.sum(avg_loss) / count)
         #print("AccMulti: ", accuracy_multi(test_data, {'instances': predictions_tr}))
-        print("MRR@5: ", mrr_at_k(test_data, {'instances': predictions_tr}, 5))
+        print("MRR@5: ", mrr_at_k(train_data, {'instances': predictions_tr}, 5))
 
+    print("Finished training, predictions on test:")
     predictions = []
     for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=batch_size):
         scores = sess.run(reader.scores, feed_dict=batch)
@@ -59,26 +60,35 @@ def main():
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--train', default='../../data/scienceQA/scienceQA_all.json', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--test', default='../../data/scienceQA/scienceQA_all.json', type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--batch_size', default=6, type=int, metavar="B", help="Batch size (suggestion)")
-    parser.add_argument('--repr_dim', default=100, type=int, help="Size of the hidden representation")
-    parser.add_argument('--support_dim', default=100, type=int, help="Size of the hidden representation for support")
+    parser.add_argument('--train', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--test', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--batch_size', default=3, type=int, metavar="B", help="Batch size (suggestion)")
+    parser.add_argument('--repr_dim', default=2, type=int, help="Size of the hidden representation")
+    parser.add_argument('--support_dim', default=2, type=int, help="Size of the hidden representation for support")
     parser.add_argument('--model', default='bowv_nosupport', choices=sorted(readers.keys()), help="Reading model to use")
-    parser.add_argument('--epochs', default=100, type=int, help="Number of epochs to train for")
+    parser.add_argument('--epochs', default=2, type=int, help="Number of epochs to train for")
 
 
     args = parser.parse_args()
 
     reading_dataset = json.load(args.train)
+    print("Reading file done!")
 
     #reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
 
-    reading_dataset = shorten_candidate_list(reading_dataset)
+    #reading_dataset = shorten_candidate_list(reading_dataset)
 
-    reader = readers[args.model](reading_dataset, **vars(args))
+    training_dataset = shorten_reading_dataset(reading_dataset, 0, 6)
+    testing_dataset = shorten_reading_dataset(reading_dataset, 7, 12)#len(reading_dataset['instances'])-1)
+    #training_dataset = shorten_reading_dataset(reading_dataset, 101, len(reading_dataset['instances'])-1)
+    #testing_dataset = shorten_reading_dataset(reading_dataset, 0, 100)
 
-    train_reader(reader, reading_dataset, reading_dataset, args.epochs, args.batch_size,
+    print("Shortening dataset done!")
+
+    reader = readers[args.model](training_dataset, **vars(args))  # should this be reading_dataset ?
+
+    print("Starting to train!")
+    train_reader(reader, training_dataset, testing_dataset, args.epochs, args.batch_size,
                  use_train_generator_for_test=True)
 
 

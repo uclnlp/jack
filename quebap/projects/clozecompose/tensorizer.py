@@ -205,7 +205,7 @@ class SequenceTensorizer(Tensorizer):
                                                          word_tokenize(candidate['text'])})
 
         self.all_tokens = sorted(set(self.all_question_tokens + self.all_candidate_tokens + self.all_support_tokens))
-        self.lexicon = FrozenIdentifier(self.all_tokens)
+        self.lexicon = FrozenIdentifier(self.all_tokens, default_key=self.none)
         self.num_symbols = len(self.lexicon)
 
         """self.question_lexicon = FrozenIdentifier(self.all_question_tokens)

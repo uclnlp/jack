@@ -1,5 +1,6 @@
 import json
 import io
+import random
 
 def convert_scienceQA_to_quebap(scienceQAFile):
 
@@ -69,7 +70,7 @@ def convert_scienceQA_to_quebap(scienceQAFile):
     }
 
     instances.append(qset_dict)
-
+    random.shuffle(instances)
 
     corpus_dict = {
         'meta': "scienceQA.json",
@@ -175,8 +176,8 @@ def main(mode):
     # instances = split_cbt(raw_data)
     # = parse_cbt_example(instances[0])
     if mode == "KBP":
-        corpus = convert_scienceQA_to_quebap("../../quebap/data/scienceQA/scienceQA_KBP_all.txt")#scienceQA.txt")
-        with open("../../quebap/data/scienceQA/scienceQA_all.json", 'w') as outfile:
+        corpus = convert_scienceQA_to_quebap("../../quebap/data/scienceQA/scienceIE_kbp_all.txt")#scienceQA_KBP_all.txt")#scienceQA.txt")
+        with open("../../quebap/data/scienceQA/scienceQA_kbp_all.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         outfile.close()
