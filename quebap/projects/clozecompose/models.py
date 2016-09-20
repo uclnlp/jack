@@ -19,7 +19,7 @@ def create_dense_embedding(ids, repr_dim, num_symbols):
     return encodings
 
 
-def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope, returntype="last"):
+def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope, reuse_scope=False):
     """
     :param inputs: tensor [d1, ... ,dn] of int32 symbols
     :param seq_lengths: [s1, ..., sn] lengths of instances in the batch
@@ -36,7 +36,9 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
     # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
     # embedding_aggregated = tf.reduce_sum(embedded_inputs, [1])
 
-    with tf.variable_scope(rnn_scope):
+    with tf.variable_scope(rnn_scope) as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell = tf.nn.rnn_cell.LSTMCell(num_units=repr_dim, state_is_tuple=True)
         # returning [batch_size, max_time, cell.output_size]
         outputs, last_states = tf.nn.dynamic_rnn(
@@ -49,7 +51,7 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
 
 
 
-def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope):
+def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope, reuse_scope=False):
     """
     Bidirectional encoding
     :param inputs: tensor [d1, ... ,dn] of int32 symbols
@@ -71,7 +73,9 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
 
 
     ### first FW LSTM ###
-    with tf.variable_scope(rnn_scope + "_FW"):
+    with tf.variable_scope(rnn_scope + "_FW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # outputs shape: [batch_size, max_time, cell.output_size]
         # last_states shape: [batch_size, cell.state_size]
@@ -85,7 +89,9 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
     embedded_inputs_rev = tf.reverse(embedded_inputs, [False, True, False])  # reverse the sequence
 
     ### first BW LSTM ###
-    with tf.variable_scope(rnn_scope + "_BW"):
+    with tf.variable_scope(rnn_scope + "_BW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # outputs shape: [batch_size, max_time, cell.output_size]
         # last_states shape: [batch_size, cell.state_size]
@@ -101,7 +107,7 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
 
 
 
-def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_dim, rnn_scope_cond, last_state_fw, last_state_bw, embedding_matrix):
+def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_dim, rnn_scope_cond, last_state_fw, last_state_bw, embedding_matrix, reuse_scope=False):
     """
     Bidirectional conditional encoding
     :param inputs: tensor [d1, ... ,dn] of int32 symbols
@@ -111,15 +117,14 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
     :return: return [batch_size, repr_dim] tensor representation of symbols.
     """
 
-
-
-
     ### second FW LSTM ###
 
     embedded_inputs_cond = tf.nn.embedding_lookup(embedding_matrix, inputs_cond) # [batch_size, max_seq_length, input_size]
 
     # initialise with state of context
-    with tf.variable_scope(rnn_scope_cond + "_FW"):
+    with tf.variable_scope(rnn_scope_cond + "_FW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw_cond = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # returning [batch_size, max_time, cell.output_size]
         outputs_fw_cond, last_state_fw_cond = tf.nn.dynamic_rnn(
@@ -135,7 +140,9 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
 
     ### second BW LSTM ###
 
-    with tf.variable_scope(rnn_scope_cond + "_BW"):
+    with tf.variable_scope(rnn_scope_cond + "_BW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # outputs shape: [batch_size, max_time, cell.output_size]
         # last_states shape: [batch_size, cell.state_size]
@@ -160,7 +167,7 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
 
 
 
-def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengths_cond, repr_dim, vocab_size, emb_name, rnn_scope, rnn_scope_cond):
+def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengths_cond, repr_dim, vocab_size, emb_name, rnn_scope, rnn_scope_cond, reuse_scope=False):
     """
     Bidirectional conditional encoding
     :param inputs: tensor [d1, ... ,dn] of int32 symbols
@@ -182,7 +189,9 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
 
 
     ### first FW LSTM ###
-    with tf.variable_scope(rnn_scope + "_FW"):
+    with tf.variable_scope(rnn_scope + "_FW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # outputs shape: [batch_size, max_time, cell.output_size]
         # last_states shape: [batch_size, cell.state_size]
@@ -198,7 +207,9 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
     embedded_inputs_cond = tf.nn.embedding_lookup(embedding_matrix, inputs_cond) # [batch_size, max_seq_length, input_size]
 
     # initialise with state of context
-    with tf.variable_scope(rnn_scope_cond + "_FW"):
+    with tf.variable_scope(rnn_scope_cond + "_FW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw_cond = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # returning [batch_size, max_time, cell.output_size]
         outputs_fw_cond, last_state_fw_cond = tf.nn.dynamic_rnn(
@@ -212,7 +223,9 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
     embedded_inputs_rev = tf.reverse(embedded_inputs, [False, True, False])  # reverse the sequence
 
     ### first BW LSTM ###
-    with tf.variable_scope(rnn_scope + "_BW"):
+    with tf.variable_scope(rnn_scope + "_BW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # outputs shape: [batch_size, max_time, cell.output_size]
         # last_states shape: [batch_size, cell.state_size]
@@ -226,7 +239,9 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
     embedded_inputs_cond_rev = tf.reverse(embedded_inputs_cond, [False, True, False])  # reverse the sequence
 
     ### second BW LSTM ###
-    with tf.variable_scope(rnn_scope_cond + "_BW"):
+    with tf.variable_scope(rnn_scope_cond + "_BW") as scope:
+        if reuse_scope == True:
+            scope.reuse_variables()
         cell_fw = tf.nn.rnn_cell.LSTMCell(repr_dim, state_is_tuple=True)
         # outputs shape: [batch_size, max_time, cell.output_size]
         # last_states shape: [batch_size, cell.state_size]
@@ -303,7 +318,7 @@ def create_sequence_embeddings_reader(reference_data, **options):
     :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
     :return: a MultipleChoiceReader.
     """
-    #TODO: neg encoding as well, BPR loss, clean up code / create separate methods for model variants
+    #TODO: create separate methods for model variants
     tensorizer = SequenceTensorizer(reference_data)
 
     dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
@@ -315,30 +330,39 @@ def create_sequence_embeddings_reader(reference_data, **options):
     dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
     targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
 
+    question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
+    questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
+    targets_false = tf.squeeze(tf.slice(tensorizer.target_values, [0, 1, 0], [dim1t, 1, dim3t]), [1])
+
 
     # 1) bidirectional conditional encoding with one support
-    #question_encoding = create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options) # get_bicond_multisupport_question_encoding
-    #cand_dim = options['repr_dim']*2
+    question_encoding_true = create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
+    question_encoding_false = create_bicond_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
+    cand_dim = options['repr_dim']*2
 
     # 2) question only lstm encoding
-    #question_encoding = create_sequence_embedding(questions_true, question_lengths_true, options['repr_dim'],
-    #                                              tensorizer.num_symbols, "embedding_matrix_q", "RNN_q")
+    # true and false use same parameters
+    #question_encoding_true = create_sequence_embedding(questions_true, question_lengths_true, options['repr_dim'],
+    #                                              tensorizer.num_symbols, "embedding_matrix_q", "RNN_q", reuse_scope=False)
+    #question_encoding_false = create_sequence_embedding(questions_false, question_lengths_false, options['repr_dim'],
+    #                                                   tensorizer.num_symbols, "embedding_matrix_q", "RNN_q", reuse_scope=True)
     #cand_dim = options['repr_dim']
 
-    # 3) all candidate lstm encoding
+    # 3) all candidate unidirectional lstm encoding
     #dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
     #sup = tf.reshape(tensorizer.support, [-1, dim3s])  # [batch_size * num_supports, num_tokens]
     #sup_l = tf.reshape(tensorizer.support_lengths, [-1])   # [support_lengths * num_supports]
 
-    #sup_encoding = create_sequence_embedding(sup, sup_l, options['repr_dim'], tensorizer.num_symbols, "embedding_matrix_q", "RNN_q")
+    #sup_encoding = create_sequence_embedding(sup, sup_l, options['repr_dim'], tensorizer.num_symbols, "embedding_matrix_q", "RNN_q", reuse_scope=False)
     #cand_dim = options['repr_dim']
 
     #sup_encoding_reshaped = tf.reshape(sup_encoding, [dim1s, dim2s, cand_dim])  # [batch_size, num_supports, output_dim]
     #question_encoding = tf.reduce_mean(sup_encoding_reshaped, 1) # [batch_size, output_dim]  <-- support sequence encodings are mean averaged
 
     # 4) bidirectional conditional encoding with all supports averaged
-    question_encoding = get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options)
-    cand_dim = options['repr_dim'] * 2
+    #question_encoding_true = get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
+    #question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
+    #cand_dim = options['repr_dim'] * 2
 
 
     # [batch_size, num_candidates, max_question_length, repr_dim
@@ -346,13 +370,25 @@ def create_sequence_embeddings_reader(reference_data, **options):
                                                   tensorizer.num_symbols)
     candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
 
-    scores = create_dot_product_scorer(question_encoding, candidate_encoding)
-    loss = create_softmax_loss(scores, targets_true)
-    return MultipleChoiceReader(tensorizer, scores, loss)
+    scores_true = create_dot_product_scorer(question_encoding_true, candidate_encoding)  # a [batch_size, num_candidate] tensor of scores for each candidate
+    scores_false = create_dot_product_scorer(question_encoding_false, candidate_encoding)
+
+    loss_true = create_softmax_loss(scores_true, targets_true)
+    loss_false = create_softmax_loss(scores_false, targets_false)
+
+    # add scores and losses for pos and neg examples
+    scores_all = scores_true + scores_false
+    loss_all = loss_true + loss_false
+
+    #diff_scores = scores_true - scores_false
+    #diff_loss = loss_true - loss_false
+    #loss_R = tf.nn.softplus(- diff_loss)  # reconstruction loss
+
+    return MultipleChoiceReader(tensorizer, scores_all, loss_all)
 
 
 
-def create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options):
+def create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False):
     dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
 
     sup = tf.squeeze(tf.slice(tensorizer.support, [0, 0, 0], [dim1s, 1, dim3s]), [1])  # take the first support, this is the middle dimension
@@ -363,13 +399,13 @@ def create_bicond_question_encoding(tensorizer, questions_true, question_lengths
     question_encoding = create_bicond_sequence_embedding(questions_true, question_lengths_true, sup,
                                                          sup_l, options['repr_dim'],
                                                          tensorizer.num_symbols,
-                                                         "embedding_matrix_q_c", "RNN_q", "RNN_c")
+                                                         "embedding_matrix_q_c", "RNN_q", "RNN_c", reuse_scope)
 
     return question_encoding
 
 
 
-def get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options):
+def get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False):
     # bidirectional conditional encoding with all supports averaged
 
     cand_dim = options['repr_dim']
@@ -384,7 +420,7 @@ def get_bicond_multisupport_question_encoding(tensorizer, questions_true, questi
     # 2) run first rnn to encode the supports
     outputs_fw, last_state_fw, outputs_bw, last_state_bw, embedding_matrix = create_bi_sequence_embedding(sup, sup_l, cand_dim,
                                                          tensorizer.num_symbols,
-                                                         "embedding_matrix_q_c", "RNN_c")
+                                                         "embedding_matrix_q_c", "RNN_c", reuse_scope)
 
 
     # 3) reshape the outputs of the bi-lstm support encoder to average outputs by batch_size
@@ -408,7 +444,7 @@ def get_bicond_multisupport_question_encoding(tensorizer, questions_true, questi
 
     # 4) feed into bi-lstm question encoder
 
-    support_question_encoding = create_bi_sequence_embedding_initialise(questions_true, question_lengths_true, cand_dim, "RNN_q", sup_states_fw, sup_states_bw, embedding_matrix)
+    support_question_encoding = create_bi_sequence_embedding_initialise(questions_true, question_lengths_true, cand_dim, "RNN_q", sup_states_fw, sup_states_bw, embedding_matrix, reuse_scope)
 
 
     # 5) profit!
