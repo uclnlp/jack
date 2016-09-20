@@ -51,6 +51,27 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
 
 
 
+def create_bowv_embedding(inputs, repr_dim, vocab_size, emb_name):
+    """
+    Bag of word vector encoding (dense embedding)
+    :param inputs: tensor [d1, ... ,dn] of int32 symbols
+    :param seq_lengths: [s1, ..., sn] lengths of instances in the batch
+    :param repr_dim: dimension of embeddings
+    :param vocab_size: number of symbols
+    :return: [batch_size, repr_dim]
+    """
+
+    # use a shared embedding matrix for now, test if this outperforms separate matrices later
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
+                                   name=emb_name, trainable=True)
+    embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
+
+    # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
+    embedding_aggregated = tf.reduce_mean(embedded_inputs, [1])
+
+    return embedding_aggregated
+
+
 def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope, reuse_scope=False):
     """
     Bidirectional encoding
@@ -336,9 +357,9 @@ def create_sequence_embeddings_reader(reference_data, **options):
 
 
     # 1) bidirectional conditional encoding with one support
-    question_encoding_true = create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
-    question_encoding_false = create_bicond_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
-    cand_dim = options['repr_dim']*2
+    #question_encoding_true = create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
+    #question_encoding_false = create_bicond_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
+    #cand_dim = options['repr_dim']*2
 
     # 2) question only lstm encoding
     # true and false use same parameters
@@ -364,6 +385,10 @@ def create_sequence_embeddings_reader(reference_data, **options):
     #question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
     #cand_dim = options['repr_dim'] * 2
 
+    # 5) bag of word vector encoding with all supports averaged
+    question_encoding_true = get_bowv_multisupport_question_encoding(tensorizer, questions_true, options)
+    question_encoding_false = get_bowv_multisupport_question_encoding(tensorizer, questions_false, options)
+    cand_dim = options['repr_dim']
 
     # [batch_size, num_candidates, max_question_length, repr_dim
     candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim,
@@ -402,6 +427,40 @@ def create_bicond_question_encoding(tensorizer, questions_true, question_lengths
                                                          "embedding_matrix_q_c", "RNN_q", "RNN_c", reuse_scope)
 
     return question_encoding
+
+
+
+def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
+    # bidirectional conditional encoding with all supports averaged
+
+    cand_dim = options['repr_dim']
+
+    # 1) reshape the support tensors to remove batch_size dimension
+
+    dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    sup = tf.reshape(tensorizer.support, [-1, dim3s])  # [batch_size * num_supports, num_tokens]
+
+
+    # 2) run first rnn to encode the supports
+
+    outputs_sup = create_bowv_embedding(sup, cand_dim, tensorizer.num_symbols, "embedding_matrix_sup")
+
+
+    # 3) reshape the outputs of the support encoder to average outputs by batch_size
+
+    outputs_sup = tf.reshape(outputs_sup, [dim1s, dim2s, cand_dim])  # [batch_size, num_supports, cell.state_size]
+    outputs_sup = tf.reduce_mean(outputs_sup, 1)  # [batch_size, cell.state_size]  <-- support encodings are mean averaged
+
+
+    # 4) run question encoder
+
+    outputs_que = create_bowv_embedding(questions, cand_dim, tensorizer.num_symbols, "embedding_matrix_que")
+
+
+    # 5) combine and return
+    repr = tf.reshape((outputs_que * outputs_sup), [dim1s, cand_dim])
+
+    return repr
 
 
 
