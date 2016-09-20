@@ -781,6 +781,61 @@ def accuracy(gold, guess):
     return correct / total
 
 
+def accuracy_multi(gold, guess):
+    """
+    Calculates how often the top predicted answer matches the any gold answer.
+    :param gold: quebap dataset with gold answers.
+    :param guess: quebap dataset with predicted answers
+    :return: accuracy (matches / total number of questions)
+    """
+    correct = 0
+    total = 0
+    for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
+        for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
+            tops = []
+            for g in gold_question['answers']:
+                tops.append(" ".join(g['text']))
+            target = guess_question['answers'][0]['text']
+            corr = 0
+            if target in tops:
+                corr = 1
+                correct += 1
+            print(str(corr), target, tops)
+            total += 1
+    return correct / total
+
+
+def mrr_at_k(gold, guess, k):
+    """
+    Calculates the mean reciprical rank up to a rank of k
+    :param gold: quebap dataset with gold answers.
+    :param guess: quebap dataset with predicted answers
+    :return: mrr at k
+    """
+    correct = 0.0
+    total = 0.0
+    for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
+        for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
+            tops = []
+            for g in gold_question['answers']:
+                tops.append(" ".join(g['text']))
+            targets = []
+            corr = 0.0
+            for i, t in enumerate(guess_question['answers']): # this is already sorted by descending rank
+                if i == k:
+                    break
+                total += 1
+                targets.append(t['text'])
+                if t['text'] in tops:
+                    corr += (1.0 / (i+1))
+                    break  # only the highest one counts, otherwise we can end up with a score > 1.0 as there can be multiple answers
+
+            correct += corr
+            print(str(corr), targets, tops)
+
+    return correct / total
+
+
 def shorten_reading_dataset(reading_dataset, begin, end):
     """
     Shortens the instances list of the dataset, keeping all meta information intact.
