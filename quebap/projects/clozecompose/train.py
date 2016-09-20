@@ -1,10 +1,11 @@
+import argparse
 import tensorflow as tf
 from quebap.projects.clozecompose.tensorizer import *
 from quebap.projects.clozecompose.models import *
 #from quebap.model.models import *
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
-                 optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):
+                 optimiser=tf.train.AdamOptimizer(learning_rate=0.0001), use_train_generator_for_test=False):
     """
     Train a reader, and test on test set.
     :param reader: The reader to train
@@ -40,23 +41,22 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
         candidates_ids = batch[reader.tensorizer.candidates]
         predictions += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
 
-    print(accuracy(test_data, {'instances': predictions}))
+    print(mrr_at_k(test_data, {'instances': predictions}, 5))  # was: accuracy, accuracy_multi
 
 def main():
-    # todo: make sure basic sequence reader works
-    # todo: write bicond seq encoder with dynamic rnn
     readers = {
-        'se': create_sequence_embeddings_reader
+        'se': create_sequence_embeddings_reader,
+        'bowv': create_bowv_embeddings_reader
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--train', default='../../data/scienceQA/scienceQA_all.json', type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--test', default='../../data/scienceQA/scienceQA_all.json', type=argparse.FileType('r'), help="Quebap test file")
     parser.add_argument('--batch_size', default=6, type=int, metavar="B", help="Batch size (suggestion)")
-    parser.add_argument('--repr_dim', default=5, type=int, help="Size of the hidden representation")
-    parser.add_argument('--support_dim', default=5, type=int, help="Size of the hidden representation for support")
-    parser.add_argument('--model', default='se', choices=sorted(readers.keys()), help="Reading model to use")
-    parser.add_argument('--epochs', default=10, type=int, help="Number of epochs to train for")
+    parser.add_argument('--repr_dim', default=30, type=int, help="Size of the hidden representation")
+    parser.add_argument('--support_dim', default=20, type=int, help="Size of the hidden representation for support")
+    parser.add_argument('--model', default='bowv', choices=sorted(readers.keys()), help="Reading model to use")
+    parser.add_argument('--epochs', default=1, type=int, help="Number of epochs to train for")
 
 
     args = parser.parse_args()

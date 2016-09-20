@@ -381,9 +381,54 @@ def create_sequence_embeddings_reader(reference_data, **options):
     #question_encoding = tf.reduce_mean(sup_encoding_reshaped, 1) # [batch_size, output_dim]  <-- support sequence encodings are mean averaged
 
     # 4) bidirectional conditional encoding with all supports averaged
-    #question_encoding_true = get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
-    #question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
-    #cand_dim = options['repr_dim'] * 2
+    question_encoding_true = get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
+    question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
+    cand_dim = options['repr_dim'] * 2
+
+    # [batch_size, num_candidates, max_question_length, repr_dim
+    candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim,
+                                                  tensorizer.num_symbols)
+    candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
+
+    scores_true = create_dot_product_scorer(question_encoding_true, candidate_encoding)  # a [batch_size, num_candidate] tensor of scores for each candidate
+    scores_false = create_dot_product_scorer(question_encoding_false, candidate_encoding)
+
+    loss_true = create_softmax_loss(scores_true, targets_true)
+    loss_false = create_softmax_loss(scores_false, targets_false)
+
+    # add scores and losses for pos and neg examples
+    scores_all = scores_true + scores_false
+    loss_all = loss_true + loss_false
+
+    #diff_scores = scores_true - scores_false
+    #diff_loss = loss_true - loss_false
+    #loss_R = tf.nn.softplus(- diff_loss)  # reconstruction loss
+
+    return MultipleChoiceReader(tensorizer, scores_all, loss_all)
+
+
+def create_bowv_embeddings_reader(reference_data, **options):
+    """
+    A reader that creates sequence representations of the input reading instance, and then
+    models each question as a sequence encoded with an RNN and candidate as the sum of the embeddings of their tokens.
+    :param reference_data: the reference training set that determines the vocabulary.
+    :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
+    :return: a MultipleChoiceReader.
+    """
+    tensorizer = SequenceTensorizer(reference_data)
+
+    dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
+    question_lengths_true = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [1])
+
+    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
+
+    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
+
+    question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
+    questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
+    targets_false = tf.squeeze(tf.slice(tensorizer.target_values, [0, 1, 0], [dim1t, 1, dim3t]), [1])
 
     # 5) bag of word vector encoding with all supports averaged
     question_encoding_true = get_bowv_multisupport_question_encoding(tensorizer, questions_true, options)
@@ -404,10 +449,6 @@ def create_sequence_embeddings_reader(reference_data, **options):
     # add scores and losses for pos and neg examples
     scores_all = scores_true + scores_false
     loss_all = loss_true + loss_false
-
-    #diff_scores = scores_true - scores_false
-    #diff_loss = loss_true - loss_false
-    #loss_R = tf.nn.softplus(- diff_loss)  # reconstruction loss
 
     return MultipleChoiceReader(tensorizer, scores_all, loss_all)
 

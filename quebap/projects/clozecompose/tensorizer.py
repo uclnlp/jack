@@ -1,12 +1,8 @@
-import argparse
 import copy
 import json
 import random
 
 import tensorflow as tf
-import numpy as np
-import quebap.util.tfutil as tfutil
-
 from quebap.projects.modelF.structs import FrozenIdentifier
 from abc import *
 from nltk import word_tokenize, pos_tag, sent_tokenize
@@ -326,8 +322,7 @@ class SequenceTensorizer(Tensorizer):
             for score, candidate_seq in zip(scores_per_question, candidates_per_question):
                 candidate_tokens = [self.lexicon.key_by_id(sym) for sym in candidate_seq if
                                     sym != self.lexicon[self.pad]]
-                candidate_text = " ".join(
-                    candidate_tokens)  # won't work, no candidate_split, tokenisation with nltk
+                candidate_text = " ".join(candidate_tokens)
                 candidate = {
                     'text': candidate_text,
                     'score': score
@@ -351,6 +346,62 @@ def create_softmax_loss(scores, target_values):
     """
     return tf.nn.softmax_cross_entropy_with_logits(scores, target_values)
 
+
+def accuracy_multi(gold, guess):
+    """
+    Calculates how often the top predicted answer matches the first gold answer.
+    :param gold: quebap dataset with gold answers.
+    :param guess: quebap dataset with predicted answers
+    :return: accuracy (matches / total number of questions)
+    """
+    # test whether the top answer is the gold answer
+    correct = 0
+    total = 0
+    for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
+        for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
+            tops = []
+            for g in gold_question['answers']:
+                tops.append(" ".join(word_tokenize(g['text'])))  # workaround to make sure the strings are exactly the same
+            target = guess_question['answers'][0]['text']
+            corr = 0
+            if target in tops:
+                corr = 1
+                correct += 1
+            print(str(corr), target, tops)
+            total += 1
+    return correct / total
+
+
+def mrr_at_k(gold, guess, k):
+    """
+    Calculates how often the top predicted answer matches the first gold answer.
+    :param gold: quebap dataset with gold answers.
+    :param guess: quebap dataset with predicted answers
+    :return: accuracy (matches / total number of questions)
+    """
+    # test whether the top answer is the gold answer
+    correct = 0.0
+    total = 0.0
+    for gold_instance, guess_instance in zip(gold['instances'], guess['instances']):
+        for gold_question, guess_question in zip(gold_instance['questions'], guess_instance['questions']):
+            tops = []
+            for g in gold_question['answers']:
+                tops.append(" ".join(word_tokenize(g['text'])))  # workaround to make sure the strings are exactly the same
+            targets = []
+            corr = 0.0
+            for i, t in enumerate(guess_question['answers']): # this is already ordered
+                if i == k:
+                    break
+                total += 1
+                targets.append(t['text'])
+                if t['text'] in tops:
+                    corr += (1.0 / (i+1))
+                    break  # only the highest one counts, otherwise we can end up with a score > 1.0 as there can be multiple answers
+
+            correct += corr
+            print(str(corr), targets, tops)
+
+    return correct / total
 
 
 def accuracy(gold, guess):
