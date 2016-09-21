@@ -157,6 +157,43 @@ $(function () {
             $("#inner-left").scrollTop($("#inner-left").prop("scrollHeight"));
         }
 
+        console.log("Test12");
+        socket.on('explain', function (result) {
+
+            function create_table(sorted_rows, header) {
+                var table = $('<table class="bindings"/>');
+                var tbody = $("<tbody/>").appendTo(table);
+                for (var i = 0; i < sorted_rows.length; i++) {
+                    var row = $("<tr/>").appendTo(tbody);
+                    row.append('<td>' + sorted_rows[i][0] + '</td>');
+                    row.append('<td>' + sorted_rows[i][1].toFixed(3) + '</td>');
+                    row.append('<td>' + sorted_rows[i][2] + '</td>');
+                    console.log(row);
+                }
+                return "<h4>" + header + "</h4>" + table[0].outerHTML;
+            }
+
+            var full_response = "";
+
+            for (var step = 0; step < result.length; step++) {
+
+                var sorted_rows = result[step].extractions.sort(function (a, b) {
+                    return b[1] - a[1]
+                });
+                var sorted_questions = result[step].questions.sort(function (a, b) {
+                    return b[1] - a[1]
+                });
+
+                var response =
+                    "<h3> Step " + step + "</h3>" +
+                    "Answer: " + result[step].extraction + "<br>" +
+                    "Question: " + result[step].question + "<br>" +
+                    "Termination Prob: " + result[step].term_prob.toFixed(3);
+                full_response += response + create_table(sorted_rows, "Answers") + create_table(sorted_questions, "Questions")
+            }
+            console.log("Yo!");
+            show_response_and_move_on(full_response);
+        });
 
         socket.on('result', function (result) {
             var code = editor.getValue();
