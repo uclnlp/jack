@@ -11,7 +11,9 @@ Vocab = namedtuple("Vocab", ["word2id", "id2word"])
 #   e.g. hypotheses (sequence of sequences)
 #        premises (sequence of sequences)
 #        labels (sequence of symbols)
-# corpus = [hypotheses, premises, labels]
+#        supports (sequence of sequences of sequences)
+# corpus = [hypotheses, premises, labels
+
 
 
 def map_seqs(seqs, fun):
