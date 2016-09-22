@@ -2,7 +2,7 @@ import json
 import io
 import random
 
-def convert_scienceQA_to_quebap(scienceQAFile):
+def convert_scienceQA_to_quebap(scienceQAFile, addSupport=True):
 
     instances = []
 
@@ -24,7 +24,8 @@ def convert_scienceQA_to_quebap(scienceQAFile):
 
         # append
         if quest == question_last and answs == answers_last:
-            support.append({"id": contextID, "text": context})
+            if addSupport == True:
+                support.append({"id": contextID, "text": context})
             candidates.extend(cands[2:-2].split('\', \''))
 
         else:
@@ -50,7 +51,8 @@ def convert_scienceQA_to_quebap(scienceQAFile):
             question_last = quest
             answers_last = answs
             answers_last_split = answs[2:-2].split('\', \'')
-            support = [{"id": contextID, "text": context}]
+            if addSupport == True:
+                support = [{"id": contextID, "text": context}]
             candidates = cands[2:-2].split('\', \'')
 
 
@@ -176,8 +178,8 @@ def main(mode):
     # instances = split_cbt(raw_data)
     # = parse_cbt_example(instances[0])
     if mode == "KBP":
-        corpus = convert_scienceQA_to_quebap("../../quebap/data/scienceQA/scienceIE_kbp_all.txt")#scienceQA_KBP_all.txt")#scienceQA.txt")
-        with open("../../quebap/data/scienceQA/scienceQA_kbp_all.json", 'w') as outfile:
+        corpus = convert_scienceQA_to_quebap("../../quebap/data/scienceQA/scienceIE_kbp_all.txt", addSupport=False)#scienceQA_KBP_all.txt")#scienceQA.txt")
+        with open("../../quebap/data/scienceQA/scienceQA_kbp_all_nosupport.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         outfile.close()
