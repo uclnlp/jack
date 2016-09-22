@@ -38,18 +38,31 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             candidates_ids = batch[reader.tensorizer.candidates]
             predictions_tr += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
 
-        print("Loss: ", np.sum(avg_loss) / count)
+        print("Train Loss: ", np.sum(avg_loss) / count)
         #print("AccMulti: ", accuracy_multi(test_data, {'instances': predictions_tr}))
-        print("MRR@5: ", mrr_at_k(train_data, {'instances': predictions_tr}, 5))
+        print("Train MRR@5: ", mrr_at_k(train_data, {'instances': predictions_tr}, 5))
+
+        predictions_test = []
+        #i = 0
+        for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=1):
+            #print(i)
+            #print(batch)
+            scores = sess.run(reader.scores, feed_dict=batch)
+            candidates_ids = batch[reader.tensorizer.candidates]
+            predictions_test += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
+            #i += 1
+
+        print("Test MRR@5: ",
+              mrr_at_k(test_data, {'instances': predictions_test}, 5, print_details=False))  # was: accuracy, accuracy_multi
 
     print("Finished training, predictions on test:")
     predictions = []
-    for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=batch_size):
+    for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=1):
         scores = sess.run(reader.scores, feed_dict=batch)
         candidates_ids = batch[reader.tensorizer.candidates]
         predictions += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
 
-    print("MRR@5: ", mrr_at_k(test_data, {'instances': predictions}, 5, print_details=True))  # was: accuracy, accuracy_multi
+    print("Test MRR@5: ", mrr_at_k(test_data, {'instances': predictions}, 5, print_details=True))  # was: accuracy, accuracy_multi
 
 
 def main():
@@ -60,11 +73,11 @@ def main():
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--train', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--test', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--batch_size', default=3, type=int, metavar="B", help="Batch size (suggestion)")
-    parser.add_argument('--repr_dim', default=2, type=int, help="Size of the hidden representation")
-    parser.add_argument('--support_dim', default=2, type=int, help="Size of the hidden representation for support")
+    parser.add_argument('--train', default='../../data/scienceQA/scienceQA_kbp_all_nosupport.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--test', default='../../data/scienceQA/scienceQA_kbp_all_nosupport.json', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
+    parser.add_argument('--repr_dim', default=100, type=int, help="Size of the hidden representation")
+    parser.add_argument('--support_dim', default=100, type=int, help="Size of the hidden representation for support")
     parser.add_argument('--model', default='bowv_nosupport', choices=sorted(readers.keys()), help="Reading model to use")
     parser.add_argument('--epochs', default=2, type=int, help="Number of epochs to train for")
 
@@ -76,12 +89,12 @@ def main():
 
     #reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
 
-    #reading_dataset = shorten_candidate_list(reading_dataset)
+    reading_dataset = shorten_candidate_list(reading_dataset)
 
-    training_dataset = shorten_reading_dataset(reading_dataset, 0, 6)
-    testing_dataset = shorten_reading_dataset(reading_dataset, 7, 12)#len(reading_dataset['instances'])-1)
-    #training_dataset = shorten_reading_dataset(reading_dataset, 101, len(reading_dataset['instances'])-1)
-    #testing_dataset = shorten_reading_dataset(reading_dataset, 0, 100)
+    #training_dataset = shorten_reading_dataset(reading_dataset, 0, 12)
+    #testing_dataset = shorten_reading_dataset(reading_dataset, 13, 16)#len(reading_dataset['instances'])-1)
+    training_dataset = shorten_reading_dataset(reading_dataset, 101, len(reading_dataset['instances'])-1)
+    testing_dataset = shorten_reading_dataset(reading_dataset, 0, 100)
 
     print("Shortening dataset done!")
 

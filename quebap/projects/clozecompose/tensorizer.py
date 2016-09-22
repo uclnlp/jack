@@ -1,6 +1,7 @@
 import copy
 import json
 import random
+import collections
 
 import tensorflow as tf
 from quebap.projects.modelF.structs import FrozenIdentifier
@@ -166,55 +167,60 @@ class SequenceTensorizer(Tensorizer):
         :param question_split: the regular expression used for tokenizing questions.
         :param support_split: the regular expression used for tokenizing support documents.
         """
+        self.useSupport = False
         self.reference_data = reference_data
         self.pad = "<pad>"
         self.none = "<none>"  # for NONE answer / neg instances
 
         self.question_lengths = tf.placeholder(tf.int32, (None, None), name="question_lengths")  # [batch_size, pos/neg]
         self.candidate_lengths = tf.placeholder(tf.int32, (None, None), name="candidate_lengths")  # [batch_size, num_candidates]
-        self.support_lengths = tf.placeholder(tf.int32, (None, None), name="support_lengths")  # [batch_size, num_support]
+        if self.useSupport == True:
+            self.support_lengths = tf.placeholder(tf.int32, (None, None), name="support_lengths")  # [batch_size, num_support]
+            support = tf.placeholder(tf.int32, (None, None, None), name="support")  # [batch_size, num_supports, num_tokens]
+        else:
+            support = []
 
         questions = tf.placeholder(tf.int32, (None, None, None), name="question")  # [batch_size, pos/neg, num_tokens]
         candidates = tf.placeholder(tf.int32, (None, None, None),
                                     name="candidates")  # [batch_size, num_candidates, num_tokens]
         target_values = tf.placeholder(tf.float32, (None, None, None), name="target") # [batch_size, pos/neg, num_candidates]
-        support = tf.placeholder(tf.int32, (None, None, None), name="support") # [batch_size, num_supports, num_tokens]
+
 
         super().__init__(candidates, questions, target_values, support)
 
 
         instances = reference_data['instances']
 
-        self.all_question_tokens = [self.pad, self.none] + sorted({token
+        all_question_tokens = [self.pad, self.none] + [token
                                                         for inst in instances
                                                         for question in inst['questions']
                                                         for token in
-                                                        word_tokenize(question['question'])})
+                                                        word_tokenize(question['question'])]
 
-        self.all_support_tokens = [self.pad, self.none] + sorted({token
+        all_support_tokens = [self.pad, self.none] + [token
                                                        for inst in instances
                                                        for support in inst['support']
                                                        for token in
-                                                       word_tokenize(support['text'])})
+                                                       word_tokenize(support['text'])]
 
-        self.all_candidate_tokens = [self.pad, self.none] + sorted({token
+        all_candidate_tokens = [self.pad, self.none] + [token
                                                          for inst in instances
                                                          for question in inst['questions']
                                                          for candidate in question['candidates'] + question['answers']
                                                          for token in
-                                                         word_tokenize(candidate['text'])})
+                                                         word_tokenize(candidate['text'])]
 
-        self.all_tokens = sorted(set(self.all_question_tokens + self.all_candidate_tokens + self.all_support_tokens))
+
+        count = [[self.pad, -1], [self.none, -1]]
+        count.extend(collections.Counter(all_question_tokens + all_candidate_tokens + all_support_tokens).most_common(50000-2))  # 50000
+
+        self.all_tokens = [t[0] for t in count]
+
+
+
         self.lexicon = FrozenIdentifier(self.all_tokens, default_key=self.none)
         self.num_symbols = len(self.lexicon)
 
-        """self.question_lexicon = FrozenIdentifier(self.all_question_tokens)
-        self.candidate_lexicon = FrozenIdentifier(self.all_candidate_tokens)
-        self.support_lexicon = FrozenIdentifier(self.all_support_tokens)
-
-        self.num_candidate_symbols = len(self.candidate_lexicon)
-        self.num_questions_symbols = len(self.question_lexicon)
-        self.num_support_symbols = len(self.support_lexicon)"""
 
         all_question_seqs = [[self.lexicon[t]
                               for t in word_tokenize(inst['questions'][0]['question'])]
@@ -242,10 +248,23 @@ class SequenceTensorizer(Tensorizer):
         for b in range(0, len(instances) // batch_size):
             batch = instances[b * batch_size: (b + 1) * batch_size]
 
-            support_seqs = [[[self.lexicon[t]
+            if self.useSupport == True:
+                support_seqs = [[[self.lexicon[t]
                               for t in word_tokenize(support['text'])]
                              for support in inst['support']]
                             for inst in batch]
+                max_support_length = max([len(a) for support in support_seqs for a in support])
+                max_num_support = max([len(supports) for supports in support_seqs])
+                # [batch_size, max_num_support, max_support_length]
+                empty_support = pad_seq([], max_support_length, self.lexicon[self.pad])
+                # support_seqs_padded = [self.pad_seq([self.pad_seq(s, max_support_length) for s in supports], max_num_support) for supports in support_seqs]
+                support_seqs_padded = [
+                    pad_seq([pad_seq(s, max_support_length, self.lexicon[self.pad]) for s in batch_item],
+                            max_num_support, empty_support)
+                    for batch_item in support_seqs]
+
+                support_length = [[len(c) for c in pad_seq(inst, max_num_support, [])] for inst in support_seqs]
+
 
             candidate_seqs = [[[self.lexicon[t]
                              for t in word_tokenize(candidate['text'])]
@@ -263,21 +282,15 @@ class SequenceTensorizer(Tensorizer):
 
             #max_question_length = max([len(q) for q in question_seqs])
             max_question_length = self.all_max_question_length
-            max_answer_length = max([len(a) for answer in answer_seqs for a in answer])
-            max_support_length = max([len(a) for support in support_seqs for a in support])
+            #max_answer_length = max([len(a) for answer in answer_seqs for a in answer])
+
+
             max_candidate_length = max([len(a) for cand in candidate_seqs for a in cand])
-            max_num_support = max([len(supports) for supports in support_seqs])
             max_num_cands = max([len(cands) for cands in candidate_seqs])
-            max_num_answs = max([len(answs) for answs in answer_seqs])
+            #max_num_answs = max([len(answs) for answs in answer_seqs])
 
             # [batch_size, max_question_length]
             question_seqs_padded = [pad_seq(q, max_question_length, self.lexicon[self.pad]) for q in question_seqs]
-
-            # [batch_size, max_num_support, max_support_length]
-            empty_support = pad_seq([], max_support_length, self.lexicon[self.pad])
-            #support_seqs_padded = [self.pad_seq([self.pad_seq(s, max_support_length) for s in supports], max_num_support) for supports in support_seqs]
-            support_seqs_padded = [pad_seq([pad_seq(s, max_support_length, self.lexicon[self.pad]) for s in batch_item], max_num_support, empty_support)
-                for batch_item in support_seqs]
 
             # [batch_size, max_num_cands, max_candidate_length]
             empty_candidates = pad_seq([], max_candidate_length, self.lexicon[self.pad])
@@ -319,7 +332,6 @@ class SequenceTensorizer(Tensorizer):
             # number of local candidates per instance differs, has to be padded
             candidate_length = [[len(c) for c in pad_seq(inst, max_num_cands, [])] for inst in answer_seqs]
 
-            support_length = [[len(c) for c in pad_seq(inst, max_num_support, [])] for inst in support_seqs]
 
             # to test dimensionalities
             """print(tf.shape(self.questions), tf.shape(question_seqs_padded))
@@ -333,17 +345,34 @@ class SequenceTensorizer(Tensorizer):
             # target values for test are not supplied, performance at test time is estimated by printing to converting back to quebaps again
 
             # sample negative candidate
-            if test:
-                yield {
+            if self.useSupport == False:
+                if test:
+                    yield {
+                    self.questions: question_seqs_padded,
+                    self.question_lengths: question_length,
+                    self.candidates: candidate_seqs_padded,  # !!! also fix in main code
+                    self.candidate_lengths: candidate_length
+                    }
+                else:
+                    yield {
+                    self.questions: [(pos, neg) for pos, neg in zip(question_seqs_padded, neg_question_seqs_padded)],
+                    self.question_lengths: [(pos, neg) for pos, neg in zip(question_length, question_length_neg)],
+                    self.candidates: candidate_seqs_padded,
+                    self.candidate_lengths: candidate_length,
+                    self.target_values: [(pos, neg) for pos, neg in zip(target_values_padded, neg_target_values_padded)]  #[(1.0, 0.0) for _ in range(0, batch_size)],
+                    }
+            else:
+                if test:
+                    yield {
                     self.questions: question_seqs_padded,
                     self.question_lengths: question_length,
                     self.candidates: candidate_seqs_padded,  # !!! also fix in main code
                     self.candidate_lengths: candidate_length,
                     self.support: support_seqs_padded,
                     self.support_lengths: support_length
-                }
-            else:
-                yield {
+                    }
+                else:
+                    yield {
                     self.questions: [(pos, neg) for pos, neg in zip(question_seqs_padded, neg_question_seqs_padded)],
                     self.question_lengths: [(pos, neg) for pos, neg in zip(question_length, question_length_neg)],
                     self.candidates: candidate_seqs_padded,
@@ -351,7 +380,7 @@ class SequenceTensorizer(Tensorizer):
                     self.target_values: [(pos, neg) for pos, neg in zip(target_values_padded, neg_target_values_padded)],  #[(1.0, 0.0) for _ in range(0, batch_size)],
                     self.support: support_seqs_padded,
                     self.support_lengths: support_length
-                }
+                    }
 
     #def pad_seq(self, seq, target_length):
     #    return pad_seq(seq, target_length, self.pad)
@@ -471,6 +500,25 @@ def accuracy(gold, guess):
                 correct += 1
             total += 1
     return correct / total
+
+
+def build_dataset(words, vocabulary_size=50000, min_count=5):
+    """
+    Build vocabulary, code based on tensorflow/examples/tutorials/word2vec/word2vec_basic.py
+    :param words: list of words in corpus
+    :param vocabulary_size: max vocabulary size
+    :param min_count: min count for words to be considered
+    :return: counts, dictionary mapping words to indeces, reverse dictionary
+    """
+    count = [['UNK', -1]]
+    count.extend(collections.Counter(words).most_common(vocabulary_size - 1))
+    dictionary = dict()
+    for word, _ in count:
+        if _ >= min_count:# or _ == -1:  # that's UNK only
+            dictionary[word] = len(dictionary)
+    reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
+    print("Final vocab size:", len(dictionary))
+    return count, dictionary, reverse_dictionary
 
 
 def tensoriserTest():
