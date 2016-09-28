@@ -85,11 +85,11 @@ def convert_scienceQA_to_quebap(scienceQAFile, addSupport=True):
 
 
 
-def convert_scienceQACloze_to_quebap(scienceQAFile):
+def convert_scienceQACloze_to_quebap(scienceQAFile, addSupport=False, shortsupport=True):
 
     instances = []
 
-    f = io.open(scienceQAFile, "r")
+    f = io.open(scienceQAFile, "r", encoding="utf-8")
 
     question_last = ""
     answers_last = ""
@@ -97,13 +97,31 @@ def convert_scienceQACloze_to_quebap(scienceQAFile):
     support = []
     candidates = []
 
+    #i = 0
+
     for l in f:
+        #i += 1
+        #if i > 200:
+        #    break
         l = l.strip().lower().split("\t")  # do the lower case preprocessing here
-        quest, answs, cands, context, contextID = l
+        try:
+            quest, answs, cands, context, contextID = l
+            if shortsupport == True:
+                add_s = False
+                for c in cands[2:-2].split('\', \''):
+                    if c in answs[2:-2].split('\', \''):
+                        add_s = True
+                        break
+                if add_s == False:
+                    continue
+        except ValueError:
+            print(l)
+            continue
 
         # append
         if quest == question_last and answs == answers_last:
-            support.append({"id": contextID, "text": context})
+            if shortsupport == True:
+                support.append({"id": contextID, "text": context})
             candidates.extend(cands[2:-2].split('\', \''))
 
         else:
@@ -131,11 +149,17 @@ def convert_scienceQACloze_to_quebap(scienceQAFile):
 
                     instances.append(qset_dict)
 
+            candidates = []
+            support = []
+            answers_last_split = []
+
             question_last = quest
             answers_last = answs
             answers_last_split = answs[2:-2].split('\', \'')
-            support = [{"id": contextID, "text": context}]
-            candidates = cands[2:-2].split('\', \'')
+
+            if addSupport == True:
+                support.append({"id": contextID, "text": context})
+            candidates.extend(cands[2:-2].split('\', \''))
 
 
     candidates = list(set(candidates))  # remove duplicates
@@ -184,11 +208,11 @@ def main(mode):
 
         outfile.close()
     elif mode == "Cloze":
-        corpus = convert_scienceQACloze_to_quebap("../../quebap/data/scienceQA/scienceQA_cloze_small.txt")
-        with open("../../quebap/data/scienceQA/scienceQA_cloze.json", 'w') as outfile:
+        corpus = convert_scienceQACloze_to_quebap("../../quebap/data/scienceQA/_cloze_sept6_2016.txt", addSupport=True, shortsupport=True)
+        with open("../../quebap/data/scienceQA/scienceQA_cloze_shortcontext.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         outfile.close()
 
 if __name__ == "__main__":
-    main("KBP")
+    main("Cloze")
