@@ -5,7 +5,7 @@ from quebap.projects.clozecompose.models import *
 #from quebap.model.models import *
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
-                 optimiser=tf.train.AdamOptimizer(learning_rate=0.0001), use_train_generator_for_test=False):
+                 optimiser=tf.train.AdamOptimizer(learning_rate=0.001), use_train_generator_for_test=False):
     """
     Train a reader, and test on test set.
     :param reader: The reader to train
@@ -73,28 +73,58 @@ def main():
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--train', default='../../data/scienceQA/scienceQA_kbp_all_nosupport.json', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--test', default='../../data/scienceQA/scienceQA_kbp_all_nosupport.json', type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
+    parser.add_argument('--trainKBP', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--trainCloze', default='../../data/scienceQA/scienceQA_cloze_shortcontext.json',
+                    type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--testSetup', default='clozeOnly', help="clozeOnly, kbpOnly, kbpForTest, clozeForTest, both")
+    #parser.add_argument('--test', default='../../data/scienceQA/scienceQA_kbp_all_nosupport.json', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--batch_size', default=50, type=int, metavar="B", help="Batch size (suggestion)")
     parser.add_argument('--repr_dim', default=100, type=int, help="Size of the hidden representation")
     parser.add_argument('--support_dim', default=100, type=int, help="Size of the hidden representation for support")
-    parser.add_argument('--model', default='bowv_nosupport', choices=sorted(readers.keys()), help="Reading model to use")
-    parser.add_argument('--epochs', default=2, type=int, help="Number of epochs to train for")
+    parser.add_argument('--model', default='se', choices=sorted(readers.keys()), help="Reading model to use")
+    parser.add_argument('--epochs', default=8, type=int, help="Number of epochs to train for")
 
 
     args = parser.parse_args()
 
-    reading_dataset = json.load(args.train)
-    print("Reading file done!")
-
     #reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
 
-    reading_dataset = shorten_candidate_list(reading_dataset)
+    if "both" in args.testSetup or "kbp" in args.testSetup:
+        reading_dataset = json.load(args.trainKBP)
+        print("Reading kbp file done!")
+        print("Number reading instances:", len(reading_dataset['instances']))
+
+        for ii, inst in enumerate(reading_dataset['instances']):
+            print(inst['questions'][0]['question'], inst['questions'][0]['answers'], len(inst['support']))
+
+        # reading_dataset = shorten_candidate_list(reading_dataset)
+
+    if "both" in args.testSetup or "cloze" in args.testSetup:
+        reading_dataset_cloze = json.load(args.trainCloze)
+        print("Reading cloze file done!")
+        print("Number reading instances:", len(reading_dataset_cloze['instances']))
+
+        for ii, inst in enumerate(reading_dataset_cloze['instances']):
+            print(inst['questions'][0]['question'], inst['questions'][0]['answers'], len(inst['support']))
+
+        # reading_dataset = shorten_candidate_list(reading_dataset)
+
+    if args.testSetup == "both":
+        training_dataset = shorten_reading_dataset(reading_dataset, 101, len(reading_dataset['instances']) - 1)
+        testing_dataset = shorten_reading_dataset(reading_dataset, 0, 100)
+
+        result = copy.copy(training_dataset)
+        result['instances'] = training_dataset['instances'] + reading_dataset_cloze['instances']
+        training_dataset = result
+
+    elif args.testSetup == "clozeOnly":
+        training_dataset = shorten_reading_dataset(reading_dataset_cloze, 101, len(reading_dataset_cloze['instances']) - 1)
+        testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 100)
+
 
     #training_dataset = shorten_reading_dataset(reading_dataset, 0, 12)
     #testing_dataset = shorten_reading_dataset(reading_dataset, 13, 16)#len(reading_dataset['instances'])-1)
-    training_dataset = shorten_reading_dataset(reading_dataset, 101, len(reading_dataset['instances'])-1)
-    testing_dataset = shorten_reading_dataset(reading_dataset, 0, 100)
+
 
     print("Shortening dataset done!")
 

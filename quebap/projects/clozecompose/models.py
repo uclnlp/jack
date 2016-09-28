@@ -292,7 +292,7 @@ def create_dot_product_scorer(question_encodings, candidate_encodings):
     :param candidate_encodings: [batch_size, num_candidates, enc_dim] tensor of candidate encodings
     :return: a [batch_size, num_candidate] tensor of scores for each candidate
     """
-    return tf.reduce_sum(tf.expand_dims(question_encodings, 1) * candidate_encodings, 2)
+    return tf.reduce_sum(tf.mul(tf.expand_dims(question_encodings, 1), candidate_encodings), 2)  # tf.mul same as * except it does backprop correctly
 
 
 def create_softmax_loss(scores, target_values):
@@ -357,9 +357,9 @@ def create_sequence_embeddings_reader(reference_data, **options):
 
 
     # 1) bidirectional conditional encoding with one support
-    #question_encoding_true = create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
-    #question_encoding_false = create_bicond_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
-    #cand_dim = options['repr_dim']*2
+    question_encoding_true = create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
+    question_encoding_false = create_bicond_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
+    cand_dim = options['repr_dim']*2
 
     # 2) question only lstm encoding
     # true and false use same parameters
@@ -381,9 +381,9 @@ def create_sequence_embeddings_reader(reference_data, **options):
     #question_encoding = tf.reduce_mean(sup_encoding_reshaped, 1) # [batch_size, output_dim]  <-- support sequence encodings are mean averaged
 
     # 4) bidirectional conditional encoding with all supports averaged
-    question_encoding_true = get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
-    question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
-    cand_dim = options['repr_dim'] * 2
+    #question_encoding_true = get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False)
+    #question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
+    #cand_dim = options['repr_dim'] * 2
 
     # [batch_size, num_candidates, max_question_length, repr_dim
     candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim,
@@ -395,16 +395,11 @@ def create_sequence_embeddings_reader(reference_data, **options):
 
     loss_true = create_softmax_loss(scores_true, targets_true)
     loss_false = create_softmax_loss(scores_false, targets_false)
+    loss = loss_true + loss_false
 
-    # add scores and losses for pos and neg examples
-    scores_all = scores_true + scores_false
-    loss_all = loss_true + loss_false
+    return MultipleChoiceReader(tensorizer, scores_true, loss)
 
-    #diff_scores = scores_true - scores_false
-    #diff_loss = loss_true - loss_false
-    #loss_R = tf.nn.softplus(- diff_loss)  # reconstruction loss
 
-    return MultipleChoiceReader(tensorizer, scores_all, loss_all)
 
 
 def create_bowv_embeddings_reader(reference_data, **options):
@@ -450,7 +445,7 @@ def create_bowv_embeddings_reader(reference_data, **options):
     scores_all = scores_true + scores_false
     loss_all = loss_true + loss_false
 
-    return MultipleChoiceReader(tensorizer, scores_all, loss_all)
+    return MultipleChoiceReader(tensorizer, scores_true, loss_all)
 
 
 
@@ -502,10 +497,9 @@ def create_bowv_nosupport_embeddings_reader(reference_data, **options):
     loss_false = create_softmax_loss(scores_false, targets_false)
 
     # add scores and losses for pos and neg examples
-    scores_all = scores_true + scores_false
-    loss_all = loss_true + loss_false
+    loss = loss_true + loss_false
 
-    return MultipleChoiceReader(tensorizer, scores_all, loss_all)
+    return MultipleChoiceReader(tensorizer, scores_true, loss)
 
 
 
@@ -558,7 +552,7 @@ def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
     outputs_que = create_bowv_embedding(questions, cand_dim, tensorizer.num_symbols, "embedding_matrix_que")
 
     # 5) combine and return
-    repr = tf.reshape((outputs_que * outputs_sup), [dim1s, cand_dim])
+    repr = tf.reshape(outputs_que * outputs_sup, [dim1s, cand_dim])
 
     return repr
 

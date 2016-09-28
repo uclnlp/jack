@@ -123,7 +123,7 @@ def shorten_candidate_list(reading_dataset, word2vec_model_path="_skip_multi_big
     result = copy.copy(reading_dataset)
     result['instances'] = reading_dataset['instances']
     #reading_dataset['instances'][begin:end]
-    print("Number reading instances:", len(reading_dataset['instances']))
+    #print("Number reading instances:", len(reading_dataset['instances']))
     for ii, inst in enumerate(reading_dataset['instances']):
         for iq, q in enumerate(inst['questions']):
             #print("before:", len(reading_dataset['instances'][ii]['questions'][iq]['candidates']))
@@ -167,7 +167,7 @@ class SequenceTensorizer(Tensorizer):
         :param question_split: the regular expression used for tokenizing questions.
         :param support_split: the regular expression used for tokenizing support documents.
         """
-        self.useSupport = False
+        self.useSupport = True
         self.reference_data = reference_data
         self.pad = "<pad>"
         self.none = "<none>"  # for NONE answer / neg instances
