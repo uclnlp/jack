@@ -1,8 +1,6 @@
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 import re
 from pprint import pprint
-
-Vocab = namedtuple("Vocab", ["word2id", "id2word"])
 
 # sym (e.g. token, token id or class label)
 # seq (e.g. sequence of tokens)
@@ -10,22 +8,10 @@ Vocab = namedtuple("Vocab", ["word2id", "id2word"])
 # corpus (sequence of sequence of sequences)
 #   e.g. hypotheses (sequence of sequences)
 #        premises (sequence of sequences)
+#        support (sequence of sequence of sequences)
 #        labels (sequence of symbols)
-# corpus = [hypotheses, premises, labels]
-
-
-def map_seqs(seqs, fun):
-    return [fun(seq) for seq in seqs]
-
-
-def map_corpus(corpus, fun, indices=None):
-    corpus_mapped = []
-    for i, seqs in enumerate(corpus):
-        if indices is None or i in indices:
-            corpus_mapped.append(map_seqs(seqs, fun))
-        else:
-            corpus_mapped.append(seqs)
-    return corpus_mapped
+# corpus = [hypotheses, premises, support, labels]
+from sisyphos.vocab import Vocab
 
 
 def tokenize(seq, pattern="([\s'\-\.\!])"):
@@ -37,51 +23,49 @@ def lower(seq):
     return [x.lower() for x in seq]
 
 
-def seq_to_ids(seq, vocab=None, freeze=False):
-    if vocab is None:
-        id2word = ["<PAD>", "<UNK>", "<SOS>", "<EOS>", "<GO>"]
-        word2id = defaultdict(lambda: 1)  # defaults to <UNK>
-        for i, word in enumerate(id2word):
-            word2id[word] = i
-        vocab = Vocab(word2id, id2word)
-
-    seq_ids = []
-    for word in seq:
-        if word in vocab.word2id:
-            seq_ids.append(vocab.word2id[word])
-        else:
-            if not freeze:
-                vocab.word2id[word] = len(vocab.id2word)
-                vocab.id2word.append(word)
-                seq_ids.append(vocab.word2id[word])
-            else:
-                seq_ids.append(vocab.word2id["<UNK>"])
-    return seq_ids, vocab
-
-
-def seqs_to_ids(seqs, vocab=None, freeze=False):
-    seqs_ids = []
-    for seq in seqs:
-        seq_ids, vocab = seq_to_ids(seq, vocab)
-        seqs_ids.append(seq_ids)
-    return seqs_ids, vocab
-
-
-def corpus_to_ids(corpus, indices=None, vocab=None, freeze=False):
-    corpus_ids = []
-    for i, seqs in enumerate(corpus):
+def deep_map(xs, fun, indices=None, expand=False):
+    """
+    :param xs: a sequence of stuff
+    :param fun: a function from x to something
+    :return:
+    """
+    xs_mapped = []
+    for i, x in enumerate(xs):
         if indices is None or i in indices:
-            seqs_ids, vocab = seqs_to_ids(seqs, vocab, freeze)
-            corpus_ids.append(seqs_ids)
+            if expand:
+                xs_mapped.append(x)
+            if isinstance(x, list):
+                x_mapped = deep_map(x, fun)
+            else:
+                x_mapped = fun(x)
+            xs_mapped.append(x_mapped)
         else:
-            corpus_ids.append(seqs)
-    return corpus_ids, vocab
+            xs_mapped.append(x)
+    return xs_mapped
 
 
-def seqs_to_words(seqs, vocab):
-    def inner(seq):
-        return [vocab.id2word[x] for x in seq]
-    return map_seqs(seqs, inner)
+def deep_seq_map(xss, fun, indices=None, expand=False):
+    """
+    :param xss: a sequence of stuff
+    :param fun: a function from xs to something
+    :return:
+    """
+    if isinstance(xss, list) and all([not isinstance(xs, list) for xs in xss]):
+        return fun(xss)
+    else:
+        xss_mapped = []
+        for i, xs in enumerate(xss):
+            if indices is None or i in indices:
+                if expand:
+                    xss_mapped.append(xs)
+                if isinstance(xss, list) and all(
+                        [not isinstance(xs, list) for xs in xss]):
+                    xss_mapped.append(fun(xss))
+                else:
+                    xss_mapped.append(deep_seq_map(xs, fun))
+            else:
+                xss_mapped.append(xs)
+        return xss_mapped
 
 
 if __name__ == '__main__':
@@ -98,16 +82,20 @@ if __name__ == '__main__':
         ]
     ]
 
-    data_tokenized = map_corpus(data, tokenize)
-    data_lower = map_corpus(data_tokenized, lower)
-    data_ids, vocab = corpus_to_ids(data_lower)
+    vocab = Vocab()
 
     print(data)
+    data_tokenized = deep_map(data, tokenize)
+    data_lower = deep_seq_map(data_tokenized, lower)
+    data_ids = deep_map(data_lower, vocab)
+    data_ids_with_lengths = deep_seq_map(data_ids, lambda xs: len(xs), expand=True)
     print(data_tokenized)
     print(data_lower)
     print(data_ids)
-    print(vocab)
-    print([seqs_to_words(seqs, vocab) for seqs in data_ids])
+    print(data_ids_with_lengths)
+    print(vocab.get_id("afraid"))
+    print(vocab.get_id("hal-9000"))  # <UNK>
+    data_words = deep_map(data_ids_with_lengths, vocab.get_sym, indices=[0, 2])
+    print(data_words)
 
-    print(vocab.word2id["afraid"])
-    print(vocab.word2id["hal-9000"])  # <UNK>
+

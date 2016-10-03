@@ -1,7 +1,11 @@
 class Vocab(object):
     def __init__(self, unk="<UNK>"):
-        self.sym2id = {unk: 0}
-        self.id2sym = [unk]
+        if unk is not None:
+            self.sym2id = {unk: 0}
+            self.id2sym = [unk]
+        else:
+            self.sym2id = {}
+            self.id2sym = []
         self.sym2freqs = {}
         self.unk = unk
         self.frozen = False
@@ -40,6 +44,9 @@ class Vocab(object):
 
     def __len__(self):
         return len(self.id2sym)
+
+    def __contains__(self, sym):
+        return sym in self.sym2id
 
 
 if __name__ == '__main__':

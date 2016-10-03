@@ -2,16 +2,12 @@ import json
 from pprint import pprint
 
 from sisyphos.batch import get_feed_dicts, augment_with_length
-from sisyphos.io import map_corpus, tokenize, lower, corpus_to_ids, \
-    seqs_to_words, seqs_to_ids, Vocab, seq_to_ids
+from sisyphos.io import tokenize, lower, Vocab, deep_map, deep_seq_map
 from sisyphos.models import conditional_reader_model
 from sisyphos.train import train
 import tensorflow as tf
 import numpy as np
 from sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
-
-target_vocab = Vocab({"contradiction": 0, "neutral": 1, "entailment": 2},
-                     ["contradiction", "neutral", "entailment"])
 
 
 def load(path, max_count=None):
@@ -35,18 +31,24 @@ def load(path, max_count=None):
     return [seq1s, seq2s, targets]
 
 
-def pipeline(corpus, vocab=None, freeze=False):
-    # not tokenizing labels
-    corpus_tokenized = map_corpus(corpus, tokenize, [0, 1])
-    corpus_lower = map_corpus(corpus_tokenized, lower, [0, 1])
-    corpus_sos = map_corpus(corpus_lower, lambda xs: ["<SOS>"] + xs, [0, 1])
-    corpus_eos = map_corpus(corpus_sos, lambda xs: xs + ["<EOS>"], [0, 1])
-    corpus_ids, vocab = corpus_to_ids(corpus_eos, [0, 1], vocab, freeze)
+def pipeline(corpus, vocab=None, target_vocab=None, freeze=False):
+    vocab = vocab or Vocab()
+    target_vocab = target_vocab or Vocab(unk=None)
+    if freeze:
+        vocab.freeze()
+        target_vocab.freeze()
 
-    target_ids, _ = seq_to_ids(corpus_ids[2], target_vocab, freeze)
-    corpus_ids[2] = np.asarray(target_ids)
+    # not tokenizing labels
+    corpus_tokenized = deep_map(corpus, tokenize, [0, 1])
+    corpus_lower = deep_seq_map(corpus_tokenized, lower, [0, 1])
+    corpus_sos = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs, [0, 1])
+    corpus_eos = deep_seq_map(corpus_sos, lambda xs: xs + ["<EOS>"], [0, 1])
+    corpus_ids = deep_map(corpus_eos, vocab, [0, 1])
+
+    corpus_ids = deep_map(corpus_ids, target_vocab, [2])
+    corpus_ids[2] = np.asarray(corpus_ids[2])
     corpus_ids = augment_with_length(corpus_ids, [0, 1])
-    return corpus_ids, vocab
+    return corpus_ids, vocab, target_vocab
 
 
 if __name__ == '__main__':
@@ -61,14 +63,16 @@ if __name__ == '__main__':
             load("./data/snli/snli_1.0/snli_1.0_%s.jsonl" % name)
             for name in ["train", "dev", "test"]]
 
-    train_data, train_vocab = pipeline(train_data)
-    dev_data, _ = pipeline(dev_data, train_vocab, freeze=True)
-    test_data, _ = pipeline(test_data, train_vocab, freeze=True)
+    train_data, train_vocab, train_target_vocab = pipeline(train_data)
+    dev_data, _, _ = pipeline(dev_data, train_vocab, train_target_vocab,
+                              freeze=True)
+    test_data, _, _ = pipeline(test_data, train_vocab, train_target_vocab,
+                               freeze=True)
 
     input_size = 100
     output_size = 100
-    vocab_size = len(train_vocab[0])
-    target_size = len(target_vocab[0])
+    vocab_size = len(train_vocab)
+    target_size = len(train_target_vocab)
     batch_size = 2
 
     print("vocab size: %d" % vocab_size)
