@@ -1,8 +1,8 @@
 import json
 from pprint import pprint
 
-from sisyphos.batch import get_feed_dicts, augment_with_length
-from sisyphos.io import tokenize, lower, Vocab, deep_map, deep_seq_map
+from sisyphos.batch import get_feed_dicts
+from sisyphos.map import tokenize, lower, Vocab, deep_map, deep_seq_map
 from sisyphos.models import conditional_reader_model
 from sisyphos.train import train
 import tensorflow as tf
@@ -38,16 +38,13 @@ def pipeline(corpus, vocab=None, target_vocab=None, freeze=False):
         vocab.freeze()
         target_vocab.freeze()
 
-    # not tokenizing labels
     corpus_tokenized = deep_map(corpus, tokenize, [0, 1])
     corpus_lower = deep_seq_map(corpus_tokenized, lower, [0, 1])
     corpus_sos = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs, [0, 1])
     corpus_eos = deep_seq_map(corpus_sos, lambda xs: xs + ["<EOS>"], [0, 1])
     corpus_ids = deep_map(corpus_eos, vocab, [0, 1])
-
     corpus_ids = deep_map(corpus_ids, target_vocab, [2])
-    corpus_ids[2] = np.asarray(corpus_ids[2])
-    corpus_ids = augment_with_length(corpus_ids, [0, 1])
+    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), [0, 1], expand=True)
     return corpus_ids, vocab, target_vocab
 
 
@@ -75,7 +72,8 @@ if __name__ == '__main__':
     target_size = len(train_target_vocab)
     batch_size = 2
 
-    print("vocab size: %d" % vocab_size)
+    print("vocab size:  %d" % vocab_size)
+    print("target size: %d" % target_size)
 
     (logits, loss, predict), placeholders = \
         conditional_reader_model(input_size, output_size, vocab_size,

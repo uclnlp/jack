@@ -2,6 +2,7 @@ import numpy as np
 from random import shuffle
 
 
+# todo: need to make this deep map
 def augment_with_pad(data, pad=0, squeeze=True):
     """
     :param data: list of lists of examples of different lengths
@@ -19,21 +20,7 @@ def augment_with_pad(data, pad=0, squeeze=True):
                 new_array = np.squeeze(new_array)
             new_data.append(new_array)
         else:
-            new_data.append(array)
-    return new_data
-
-
-def augment_with_length(data, indices=None):
-    """
-    :param data: list of lists of examples of different lengths
-    :param indices: indices of lists that should be augmented with lengths
-    :return: a list of lists of examples of different lengths and their length
-    """
-    new_data = []
-    for i, array in enumerate(data):
-        new_data.append(array)
-        if indices is None or i in indices:
-            new_data.append([[x.__len__()] for x in array])
+            new_data.append(np.asarray(array))
     return new_data
 
 
