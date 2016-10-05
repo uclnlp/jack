@@ -1,5 +1,6 @@
 from collections import defaultdict
 import re
+import numpy as np
 from pprint import pprint
 
 # sym (e.g. token, token id or class label)
@@ -69,23 +70,48 @@ def deep_seq_map(xss, fun, indices=None, expand=False):
 
 
 def get_list_shape(xs):
-    shape = []
-    if isinstance(xs, list):
-        dim1 = len(xs)
-        shape.append(dim1)
-        if isinstance(xs[0], list):
-            dims = [get_list_shape(x) for x in xs]
-            for dim in max(dims):
-                shape.append(dim)
+    shape = [len(xs)]
+    for i, x in enumerate(xs):
+        if isinstance(x, list):
+            if len(shape) == 1:
+                shape.append(0)
+            shape[1] = max(len(x), shape[1])
+            for j, y in enumerate(x):
+                if isinstance(y, list):
+                    if len(shape) == 2:
+                        shape.append(0)
+                    shape[2] = max(len(y), shape[2])
     return shape
 
 
-def map_to_numpy(xs, pad=0, indices=None):
+def map_to_numpy(xs, pad=0, indices=None, dtypes=None):
     xs_np = []
     for i, x in enumerate(xs):
         if indices is None or i in indices:
             shape = get_list_shape(x)
             print(shape)
+            if dtypes is None:
+                dtype = np.int64
+            else:
+                dtype = dtypes[i]
+            x_np = np.full(shape, pad, dtype)
+            dims = len(shape)
+            if dims == 1:
+                x_np[0:shape[0]] = x
+            elif dims == 2:
+                for j, y in enumerate(x):
+                    x_np[j, 0:len(y)] = y
+            elif dims == 3:
+                for j, ys in enumerate(x):
+                    for k, y in enumerate(ys):
+                        x_np[j, k, 0:len(y)] = y
+            else:
+                # todo: raise error
+                pass
+            xs_np.append(x_np)
+        else:
+            xs_np.append(x)
+    return xs_np
 
 
 if __name__ == '__main__':
@@ -99,6 +125,11 @@ if __name__ == '__main__':
             "I'm sorry Dave, I'm afraid I can't do that!",
             "I'm sorry Dave, I'm afraid I can't do that",
             "I'm sorry Dave, I'm afraid I can't do that"
+        ],
+        [  # support
+            ["Play makes really dull", "really dull"],
+            ["Dave is human"],
+            ["All work", "all dull", "dull"]
         ]
     ]
 
@@ -108,7 +139,7 @@ if __name__ == '__main__':
     data_tokenized = deep_map(data, tokenize)
     data_lower = deep_seq_map(data_tokenized, lower)
     data_ids = deep_map(data_lower, vocab)
-    data_ids_with_lengths = deep_seq_map(data_ids, lambda xs: len(xs), expand=True)
+    data_ids_with_lengths = deep_seq_map(data_ids, lambda xs: len(xs), indices=[0, 1, 2], expand=True)
     print(data_tokenized)
     print(data_lower)
     print(data_ids)
