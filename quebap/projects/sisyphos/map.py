@@ -68,6 +68,26 @@ def deep_seq_map(xss, fun, indices=None, expand=False):
         return xss_mapped
 
 
+def get_list_shape(xs):
+    shape = []
+    if isinstance(xs, list):
+        dim1 = len(xs)
+        shape.append(dim1)
+        if isinstance(xs[0], list):
+            dims = [get_list_shape(x) for x in xs]
+            for dim in max(dims):
+                shape.append(dim)
+    return shape
+
+
+def map_to_numpy(xs, pad=0, indices=None):
+    xs_np = []
+    for i, x in enumerate(xs):
+        if indices is None or i in indices:
+            shape = get_list_shape(x)
+            print(shape)
+
+
 if __name__ == '__main__':
     data = [
         [
@@ -98,4 +118,6 @@ if __name__ == '__main__':
     data_words = deep_map(data_ids_with_lengths, vocab.get_sym, indices=[0, 2])
     print(data_words)
 
+    print()
+    print(map_to_numpy(data_ids_with_lengths))
 
