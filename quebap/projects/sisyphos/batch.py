@@ -1,27 +1,7 @@
 import numpy as np
 from random import shuffle
 
-
-# todo: need to make this deep map
-def augment_with_pad(data, pad=0, squeeze=True):
-    """
-    :param data: list of lists of examples of different lengths
-    :param pad: the padding symbol
-    :return: list of numpy arrays of examples with padded ending
-    """
-    new_data = []
-    for array in data:
-        if isinstance(array[0], list):
-            max_len = max([x.__len__() for x in array])
-            new_array = np.full([array.__len__(), max_len], pad, np.int64)
-            for i, x in enumerate(array):
-                new_array[i, 0:x.__len__()] = x
-            if squeeze:
-                new_array = np.squeeze(new_array)
-            new_data.append(new_array)
-        else:
-            new_data.append(np.asarray(array))
-    return new_data
+from sisyphos.map import numpify
 
 
 # todo: flag for filling up last batch
@@ -35,7 +15,7 @@ def get_batches(data, batch_size=32, pad=0):
     :return: returns a generator of list of [batch_size x _] 2D numpy tensors
     """
     if not isinstance(data[0], np.ndarray):
-        data = augment_with_pad(data, pad)
+        data = numpify(data, pad)
 
     def generator():
         indices = list(range(0, data[0].__len__()))

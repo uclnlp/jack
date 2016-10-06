@@ -15,13 +15,13 @@ from pprint import pprint
 from sisyphos.vocab import Vocab
 
 
-def tokenize(seq, pattern="([\s'\-\.\!])"):
-    return [x for x in re.split(pattern, seq)
+def tokenize(xs, pattern="([\s'\-\.\!])"):
+    return [x for x in re.split(pattern, xs)
             if not re.match("\s", x) and x != ""]
 
 
-def lower(seq):
-    return [x.lower() for x in seq]
+def lower(xs):
+    return [x.lower() for x in xs]
 
 
 def deep_map(xs, fun, indices=None, expand=False):
@@ -84,7 +84,11 @@ def get_list_shape(xs):
     return shape
 
 
-def map_to_numpy(xs, pad=0, indices=None, dtypes=None):
+def get_seq_depth(xs):
+    return [n-1 for n in get_list_shape(xs)]
+
+
+def numpify(xs, pad=0, indices=None, dtypes=None):
     xs_np = []
     for i, x in enumerate(xs):
         if indices is None or i in indices:
@@ -139,7 +143,8 @@ if __name__ == '__main__':
     data_tokenized = deep_map(data, tokenize)
     data_lower = deep_seq_map(data_tokenized, lower)
     data_ids = deep_map(data_lower, vocab)
-    data_ids_with_lengths = deep_seq_map(data_ids, lambda xs: len(xs), indices=[0, 1, 2], expand=True)
+    data_ids_with_lengths = deep_seq_map(data_ids, lambda xs: len(xs),
+                                         indices=[0, 1, 2], expand=True)
     print(data_tokenized)
     print(data_lower)
     print(data_ids)
@@ -150,5 +155,5 @@ if __name__ == '__main__':
     print(data_words)
 
     print()
-    print(map_to_numpy(data_ids_with_lengths))
+    print(numpify(data_ids_with_lengths))
 
