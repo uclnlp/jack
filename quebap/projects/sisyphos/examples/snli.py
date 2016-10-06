@@ -1,5 +1,6 @@
 import json
 from pprint import pprint
+from time import time
 
 from sisyphos.batch import get_feed_dicts
 from sisyphos.map import tokenize, lower, Vocab, deep_map, deep_seq_map
@@ -50,9 +51,18 @@ def pipeline(corpus, vocab=None, target_vocab=None, freeze=False):
 
 if __name__ == '__main__':
     DEBUG = True
+    DEBUG_EXAMPLES = 200
+
+    input_size = 100
+    output_size = 100
+    batch_size = 64
+    dev_batch_size = 300 #faster than 1
+    #TODO: modify batcher to always go over all instances
+
+
 
     if DEBUG:
-        train_data = load("./data/snli/snli_1.0/snli_1.0_train.jsonl", 8)
+        train_data = load("./data/snli/snli_1.0/snli_1.0_train.jsonl", DEBUG_EXAMPLES)
         dev_data = train_data
         test_data = train_data
     else:
@@ -66,11 +76,8 @@ if __name__ == '__main__':
     test_data, _, _ = pipeline(test_data, train_vocab, train_target_vocab,
                                freeze=True)
 
-    input_size = 100
-    output_size = 100
     vocab_size = len(train_vocab)
     target_size = len(train_target_vocab)
-    batch_size = 2
 
     print("vocab size:  %d" % vocab_size)
     print("target size: %d" % target_size)
@@ -82,7 +89,7 @@ if __name__ == '__main__':
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, batch_size)
     dev_feed_dicts = \
-        get_feed_dicts(dev_data, placeholders, 1)
+        get_feed_dicts(dev_data, placeholders, dev_batch_size)
 
     optim = tf.train.AdamOptimizer()
 
@@ -94,9 +101,14 @@ if __name__ == '__main__':
 
     hooks = [
         #report_loss,
-        LossHook(10, batch_size),
+        LossHook(100, batch_size),
         SpeedHook(100, batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders[-1], 10)
+        AccuracyHook(dev_feed_dicts, predict, placeholders[-1], 2)
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=1000, hooks=hooks)
+
+    #TODO: evaluate on test data
+
+
+    print('finished in %.3fh'%((time()-t0)/3600.))

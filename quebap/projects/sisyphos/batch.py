@@ -27,6 +27,9 @@ def get_batches(data, batch_size=32, pad=0):
             indices = indices[batch_size:]
             yield [x[batch_indices] for x in data]
 
+        if indices.__len__() > 0:
+            yield [x[indices] for x in data]
+
     return GeneratorWithRestart(generator)
 
 
