@@ -1,8 +1,16 @@
 import numpy as np
-from random import shuffle
+import random
 from itertools import islice
 
 from sisyphos.map import numpify
+
+
+#make deterministic
+SEED = 1337
+np.random.seed(SEED)
+random.seed(SEED)
+
+
 
 
 def get_buckets(data, order, structure):
@@ -46,7 +54,7 @@ def get_buckets(data, order, structure):
     #todo: make faster if necessary
     def _partition(buckets2ids, _order, _structure):
         buckets2ids_new = {}
-        for bid,ids in buckets2ids.items():
+        for bid, ids in sorted(buckets2ids.items(),key=lambda x:x[0]):
             lengths = [len(data[_order[0]][id]) for id in ids]
             sorted_ids_lengths = sorted(zip(ids, lengths), key=lambda x: x[1])
             if isinstance(_structure[0], int):#automatic bucketing
@@ -102,8 +110,8 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
         N = float(np.sum([len(ids) for ids in _buckets2instances.values()]))
         return {bid: len(ids)/N if N>0. else 0. for bid,ids in _buckets2instances.items()}
     def shuffle_buckets(_buckets2instances):
-        for bid in _buckets2instances:
-            shuffle(_buckets2instances[bid])
+        for bid in sorted(_buckets2instances.keys()):#sorted: to keep deterministic
+            random.shuffle(_buckets2instances[bid])
 
     buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)
 
@@ -114,7 +122,8 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
         shuffle_buckets(buckets2instances)
         all_seen = False
         while not all_seen:
-            bids,probs = zip(*get_bucket_probs(buckets2instances).items())
+            bids,probs = zip(*sorted(get_bucket_probs(buckets2instances).items(),key=lambda x:x[0]))
+            #sorted keys: to keep deterministic
             if np.sum(probs) == 0.:
                 all_seen = True
             else:
@@ -157,15 +166,14 @@ if __name__ == '__main__':
 
 
     print('test bucketing')
-    print('(more general, but more difficult to track manually, when shuffling the data)')
+    # print('(more general, but more difficult to track manually, when shuffling the data)')
     data0 = [i*[i] for i in range(1,10)]
-    #shuffle(data0)
+    # #random.shuffle(data0)
     data1 = [i*[i] for i in range(3,12)]
-    #shuffle(data1)
+    # #random.shuffle(data1)
     data = deep_seq_map([data0,data1], lambda xs: len(xs), [0, 1], expand=True)
     print('data:')
     pp.pprint(data)
-
     order = (0,2)
     structure = (2,2)
     print('(1) create buckets with order=%s, structure=%s'%(str(order),str(structure)))
@@ -173,8 +181,6 @@ if __name__ == '__main__':
     pp.pprint(buckets2ids)
     for id,bid in ids2buckets.items():
         print('id: %d, bucket-id: %s, data: %s'%(id,str(bid),str([d[id] for d in data])))
-
-
     print('(2) test no bucketing, with order=None or structure=None; all in 1 bucket')
     buckets2ids, ids2buckets = get_buckets(data,None,None)
     pp.pprint(buckets2ids)
@@ -187,7 +193,7 @@ if __name__ == '__main__':
     print('(3) create buckets with order=%s, structure=%s' % (str(order), str(structure)))
     buckets2ids, ids2buckets = get_buckets(data, order, structure)
     pp.pprint(buckets2ids)
-    for id, bid in ids2buckets.items():
+    for id, bid in sorted(ids2buckets.items(),key=lambda x:x[0]):
         print('id: %d, bucket-id: %s, data: %s' % (id, str(bid), str([d[id] for d in data])))
 
     print('test batcher:')
@@ -197,4 +203,5 @@ if __name__ == '__main__':
         print('new epoch:')
         for batch in batcher:
             pp.pprint(batch)
+            pass
         shown+=1

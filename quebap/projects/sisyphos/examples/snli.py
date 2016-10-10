@@ -1,6 +1,6 @@
 import json
 from pprint import pprint
-from time import time
+from time import time, sleep
 
 from sisyphos.batch import get_feed_dicts
 from sisyphos.map import tokenize, lower, Vocab, deep_map, deep_seq_map
@@ -8,7 +8,12 @@ from sisyphos.models import conditional_reader_model
 from sisyphos.train import train
 import tensorflow as tf
 import numpy as np
+import random
 from sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
+
+
+tf.set_random_seed(1337)
+
 
 
 def load(path, max_count=None):
@@ -56,9 +61,9 @@ if __name__ == '__main__':
     input_size = 100
     output_size = 100
     batch_size = 64
-    dev_batch_size = 300 #faster than 1
+    dev_batch_size = 64 #faster than 1
 
-    bucket_order = (0,2) #composite buckets; first over premises, then over hypothesis
+    bucket_order = (0,2) #composite buckets; first over premises, then over hypotheses
     bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
 
 
@@ -77,6 +82,7 @@ if __name__ == '__main__':
     test_data, _, _ = pipeline(test_data, train_vocab, train_target_vocab,
                                freeze=True)
 
+
     vocab_size = len(train_vocab)
     target_size = len(train_target_vocab)
 
@@ -88,9 +94,11 @@ if __name__ == '__main__':
                                  target_size)
 
     train_feed_dicts = \
-        get_feed_dicts(train_data, placeholders, batch_size, bucket_order=bucket_order, bucket_structure=bucket_structure)
+        get_feed_dicts(train_data, placeholders, batch_size,
+                       bucket_order=bucket_order, bucket_structure=bucket_structure)
     dev_feed_dicts = \
-        get_feed_dicts(dev_data, placeholders, dev_batch_size)
+        get_feed_dicts(dev_data, placeholders, dev_batch_size,
+                       bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     optim = tf.train.AdamOptimizer()
 
