@@ -57,8 +57,9 @@ if __name__ == '__main__':
     output_size = 100
     batch_size = 64
     dev_batch_size = 300 #faster than 1
-    #TODO: modify batcher to always go over all instances
 
+    bucket_order = (0,2) #composite buckets; first over premises, then over hypothesis
+    bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
 
 
     if DEBUG:
@@ -87,7 +88,7 @@ if __name__ == '__main__':
                                  target_size)
 
     train_feed_dicts = \
-        get_feed_dicts(train_data, placeholders, batch_size)
+        get_feed_dicts(train_data, placeholders, batch_size, bucket_order=bucket_order, bucket_structure=bucket_structure)
     dev_feed_dicts = \
         get_feed_dicts(dev_data, placeholders, dev_batch_size)
 
