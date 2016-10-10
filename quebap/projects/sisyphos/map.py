@@ -93,7 +93,6 @@ def numpify(xs, pad=0, indices=None, dtypes=None):
     for i, x in enumerate(xs):
         if indices is None or i in indices:
             shape = get_list_shape(x)
-            print(shape)
             if dtypes is None:
                 dtype = np.int64
             else:
