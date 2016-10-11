@@ -11,9 +11,7 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 
-
-
-def get_buckets(data, order, structure):
+def get_buckets(data, order, structure, seed=SEED):
     """
     :param data: sequence of sequences in which entries of the inner sequence have the __len__ attribute
     :param order: tuple with highest-level indices in data, which need bucketing.
@@ -33,10 +31,14 @@ def get_buckets(data, order, structure):
               e.g.: `order` = (0, 2) and `structure` = (3, [10]) generates 6 buckets:
               within each of 3 partition based on array1 lengths,
               there is a bucket with array2 instances of length 10 or less, and one for length > 10.
+    :param seed: random seed
     :return: dict that maps instance-id (index along 2nd dimension of data) to bucket-id
              bucket-id's are tuples with same length as `order`.
     """
     #todo: asserts to check input arguments
+
+    np.random.seed(int(10000*random.random())) #remains deterministic, but seems to be more random
+
 
     n_tot = len(data[0])
     if order is None or structure is None:
@@ -90,7 +92,7 @@ def get_buckets(data, order, structure):
 
 
 # todo: set seed
-def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, batch_size_fixed=False):
+def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, batch_size_fixed=False, seed=SEED):
     """
     :param data: either a list of numpy arrays or a list of lists of examples
     :param batch_size: the desired batch size
@@ -101,6 +103,7 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
     :param batch_size_fixed: if set to True, final batch (per bucket) will be ignored if < batch_size
     :return: returns a generator of list of [batch_size x _] 2D numpy tensors
     """
+
     if not isinstance(data[0], np.ndarray):
         data_np = numpify(data,pad)#still need original data for length-based bucketing
     else:
@@ -113,7 +116,7 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
         for bid in sorted(_buckets2instances.keys()):#sorted: to keep deterministic
             random.shuffle(_buckets2instances[bid])
 
-    buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)
+    buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure, seed=int(10000*random.random()))
 
     probs = get_bucket_probs(buckets2instances)
 
