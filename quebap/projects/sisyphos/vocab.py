@@ -1,4 +1,5 @@
 class VocabEmb(object):
+    #todo: documentation
     def __init__(self, unk="<UNK>", emb=None):
         if unk is not None:
             self.sym2id = {unk: 0}
@@ -43,6 +44,22 @@ class VocabEmb(object):
 
     def get_sym(self, id):
         return None if not id in self.id2sym else self.id2sym[id]
+
+    def get_ids_pretrained(self):
+        return list(range(-1,self.next_neg,-1))
+
+    def get_syms_pretrained(self):
+        return [self.id2sym[id] for id in self.get_ids_pretrained()]
+
+    def get_normalized_ids_pretrained(self):
+        return list(map(self.normalize,self.get_ids_pretrained()))
+
+    def get_shape(self):
+        if self.next_neg < -1:
+            return (self.__len__(),len(self.emb(self.id2sym[-1])))
+        else:
+            return (self.__len__(),None)
+
 
     def __call__(self, *args, **kwargs):
         symbols = args
