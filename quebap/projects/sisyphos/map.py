@@ -12,7 +12,7 @@ from pprint import pprint
 #        support (sequence of sequence of sequences)
 #        labels (sequence of symbols)
 # corpus = [hypotheses, premises, support, labels]
-from sisyphos.vocab import Vocab
+from sisyphos.vocab import Vocab, VocabEmb
 
 
 def tokenize(xs, pattern="([\s'\-\.\!])"):
@@ -59,14 +59,15 @@ def deep_seq_map(xss, fun, indices=None, expand=False):
             if indices is None or i in indices:
                 if expand:
                     xss_mapped.append(xs)
-                if isinstance(xss, list) and all(
-                        [not isinstance(xs, list) for xs in xss]):
-                    xss_mapped.append(fun(xss))
+                if isinstance(xs, list) and all([not isinstance(x, list) for x in xs]):
+                    xss_mapped.append(fun(xs))
                 else:
                     xss_mapped.append(deep_seq_map(xs, fun))
             else:
                 xss_mapped.append(xs)
         return xss_mapped
+
+
 
 
 def get_list_shape(xs):
