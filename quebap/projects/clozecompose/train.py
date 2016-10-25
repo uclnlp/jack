@@ -1,3 +1,6 @@
+#import sys
+#sys.path.append("/home/isabelle/quebap")
+
 import argparse
 import tensorflow as tf
 from quebap.projects.clozecompose.tensorizer import *
@@ -35,38 +38,49 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             #    print("Avg Loss: {}".format(avg_loss / count))
 
             scores = sess.run(reader.scores, feed_dict=batch)
-            candidates_ids = batch[reader.tensorizer.candidates]
-            predictions_tr += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
+            #candidates_ids = batch[reader.tensorizer.candidates]
+            predictions_tr += reader.tensorizer.convert_to_predictions(batch, scores)
 
         print("Train Loss: ", np.sum(avg_loss) / count)
-        #print("AccMulti: ", accuracy_multi(test_data, {'instances': predictions_tr}))
+        print("Acc: ", accuracy(train_data, {'instances': predictions_tr}))
         print("Train MRR@5: ", mrr_at_k(train_data, {'instances': predictions_tr}, 5))
 
         predictions_test = []
         #i = 0
-        for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=1):
+        for batch_test in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=1):
             #print(i)
-            #print(batch)
-            scores = sess.run(reader.scores, feed_dict=batch)
-            candidates_ids = batch[reader.tensorizer.candidates]
-            predictions_test += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
+            #print(batch_test)
+            try:
+                scores = sess.run(reader.scores, feed_dict=batch_test)
+                #candidates_ids = batch_test[reader.tensorizer.candidates]
+                predictions_test += reader.tensorizer.convert_to_predictions(batch_test, scores)
+            except ValueError:
+                print("ValueError for", batch_test[reader.tensorizer.questions])
+                continue
             #i += 1
 
         print("Test MRR@5: ",
               mrr_at_k(test_data, {'instances': predictions_test}, 5, print_details=False))  # was: accuracy, accuracy_multi
+        print("Test Acc: ", accuracy(test_data, {'instances': predictions_test}))
 
     print("Finished training, predictions on test:")
     predictions = []
-    for batch in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=1):
-        scores = sess.run(reader.scores, feed_dict=batch)
-        candidates_ids = batch[reader.tensorizer.candidates]
-        predictions += reader.tensorizer.convert_to_predictions(candidates_ids, scores)
+    for batch_test in reader.tensorizer.create_batches(test_data, test=not use_train_generator_for_test, batch_size=1):
+        try:
+            scores = sess.run(reader.scores, feed_dict=batch_test)
+            #candidates_ids = batch[reader.tensorizer.candidates]
+            #print(candidates_ids)
+            predictions_test += reader.tensorizer.convert_to_predictions(batch_test, scores)
+        except ValueError:
+            print("ValueError for", batch_test[reader.tensorizer.questions])
+            continue
 
-    print("Test MRR@5: ", mrr_at_k(test_data, {'instances': predictions}, 5, print_details=True))  # was: accuracy, accuracy_multi
+    print("Test MRR@5: ", mrr_at_k(test_data, {'instances': predictions_test}, 5, print_details=True))  # was: accuracy, accuracy_multi
 
 
 def main():
     readers = {
+        'se_toks': create_sequence_embeddings_reader_tokens,
         'se': create_sequence_embeddings_reader,
         'bowv': create_bowv_embeddings_reader,
         'bowv_nosupport': create_bowv_nosupport_embeddings_reader
@@ -74,15 +88,15 @@ def main():
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--trainKBP', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--trainCloze', default='../../data/scienceQA/scienceQA_cloze_shortcontext.json',
+    parser.add_argument('--trainCloze', default='../../data/scienceQA/scienceQA_cloze_withcont_2016-10-25_small.json',#scienceQA_cloze_withcont_2016-10-9.json',
                     type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--testSetup', default='clozeOnly', help="clozeOnly, kbpOnly, kbpForTest, clozeForTest, both")
     #parser.add_argument('--test', default='../../data/scienceQA/scienceQA_kbp_all_nosupport.json', type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--batch_size', default=50, type=int, metavar="B", help="Batch size (suggestion)")
-    parser.add_argument('--repr_dim', default=100, type=int, help="Size of the hidden representation")
-    parser.add_argument('--support_dim', default=100, type=int, help="Size of the hidden representation for support")
+    parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
+    parser.add_argument('--repr_dim', default=10, type=int, help="Size of the hidden representation")
+    parser.add_argument('--support_dim', default=10, type=int, help="Size of the hidden representation for support")
     parser.add_argument('--model', default='se', choices=sorted(readers.keys()), help="Reading model to use")
-    parser.add_argument('--epochs', default=8, type=int, help="Number of epochs to train for")
+    parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for")
 
 
     args = parser.parse_args()
@@ -104,8 +118,8 @@ def main():
         print("Reading cloze file done!")
         print("Number reading instances:", len(reading_dataset_cloze['instances']))
 
-        for ii, inst in enumerate(reading_dataset_cloze['instances']):
-            print(inst['questions'][0]['question'], inst['questions'][0]['answers'], len(inst['support']))
+        #for ii, inst in enumerate(reading_dataset_cloze['instances']):
+        #    print(inst['questions'][0]['question'], inst['questions'][0]['answers'], len(inst['support']))
 
         # reading_dataset = shorten_candidate_list(reading_dataset)
 
@@ -118,8 +132,10 @@ def main():
         training_dataset = result
 
     elif args.testSetup == "clozeOnly":
-        training_dataset = shorten_reading_dataset(reading_dataset_cloze, 101, len(reading_dataset_cloze['instances']) - 1)
-        testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 100)
+        #training_dataset = shorten_reading_dataset(reading_dataset_cloze, 400, 500)  #(reading_dataset_cloze, 1117, len(reading_dataset_cloze['instances']) - 1)
+        #testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 100)
+        training_dataset = reading_dataset_cloze
+        testing_dataset = reading_dataset_cloze
 
 
     #training_dataset = shorten_reading_dataset(reading_dataset, 0, 12)
