@@ -25,12 +25,12 @@ def lower(xs):
     return [x.lower() for x in xs]
 
 
-def deep_map(xs, fun, fun_name=None, keys=None, expand=False):
+def deep_map(xs, fun, keys=None, fun_name=None, expand=False):
     """
     :param xs: a sequence or dict of stuff,
     :param fun: a function from x to something
-    :param fun_name: string with function tag (e.g. 'lengths'), used if expand==True and isinstance(xs,dict)
     :param keys:  seq with keys if xs is dict; seq with integer indices if xs is seq
+    :param fun_name: string with function tag (e.g. 'lengths'), used if expand==True and isinstance(xs,dict)
     :return:
     """
 
@@ -47,6 +47,8 @@ def deep_map(xs, fun, fun_name=None, keys=None, expand=False):
                 else:
                     x_mapped = fun(x)
                 xs_mapped[k] = x_mapped
+            else:
+                xs_mapped[k] = x
     else:
         xs_mapped = []
         for k, x in enumerate(xs):
@@ -65,7 +67,7 @@ def deep_map(xs, fun, fun_name=None, keys=None, expand=False):
 
 
 
-def deep_seq_map(xss, fun, fun_name=None, keys=None, expand=False):
+def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
     """
     :param xss: a sequence or dict of stuff
     :param fun: a function from xs to something
@@ -192,8 +194,8 @@ if __name__ == '__main__':
     data2_tokenized = deep_map(data2, tokenize)
     data2_lower = deep_seq_map(data2_tokenized, lower)
     data2_ids = deep_map(data2_lower, vocab2)
-    data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), fun_name='lengths',
-                                          keys=['dave','jack','support'], expand=True)
+    data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=['dave','jack','support'],
+                                          fun_name='lengths', expand=True)
 
     print('original dict:')
     pp.pprint(data2)
