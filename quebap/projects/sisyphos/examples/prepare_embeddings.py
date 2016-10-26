@@ -1,5 +1,5 @@
-#import pickle
-from zodbpickle import pickle
+import pickle
+#from zodbpickle import pickle
 import web.embeddings as we
 from os import path
 
