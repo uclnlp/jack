@@ -109,7 +109,7 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None):
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
-        _, (states_fw, states_bw) = tf.nn.bidirectional_dynamic_rnn(
+        outputs, states = tf.nn.bidirectional_dynamic_rnn(
             cell,
             cell,
             inputs,
@@ -119,16 +119,17 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None):
             dtype=tf.float32
         )
 
+        # ( (outputs_fw,outputs_bw) , (output_state_fw,output_state_bw) )
+        # in case LSTMCell: output_state_fw = (c_fw,h_fw), and output_state_bw = (c_bw,h_bw)
         # each [batch_size x max_seq_length x output_size]
-        return states_fw, states_bw
+        return outputs, states
 
 
 def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None):
     with tf.variable_scope(scope or "conditional_reader_seq1") as varscope1:
-        # (c_fw, h_fw), (c_bw, h_bw)
-        seq1_states = \
-            reader(seq1, seq1_lengths, output_size, scope=varscope1)
-    #with tf.variable_scope(scope or "conditional_reader_seq2") as varscope2:
+        #seq1_states: (c_fw, h_fw), (c_bw, h_bw)
+        _, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1)
+    with tf.variable_scope(scope or "conditional_reader_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]
         return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope1)
@@ -145,32 +146,32 @@ def predictor(output, targets, target_size):
 def conditional_reader_model(input_size, output_size, vocab_size, target_size, embeddings=None):
     # Model
     # [batch_size, max_seq1_length]
-    seq1 = tf.placeholder(tf.int64, [None, None], "seq1")
+    sentence1 = tf.placeholder(tf.int64, [None, None], "sentence1")
     # [batch_size]
-    seq1_lengths = tf.placeholder(tf.int64, [None], "seq1_lengths")
+    sentence1_lengths = tf.placeholder(tf.int64, [None], "sentence1_lengths")
 
     # [batch_size, max_seq2_length]
-    seq2 = tf.placeholder(tf.int64, [None, None], "seq2")
+    sentence2 = tf.placeholder(tf.int64, [None, None], "sentence2")
     # [batch_size]
-    seq2_lengths = tf.placeholder(tf.int64, [None], "seq2_lengths")
+    sentence2_lengths = tf.placeholder(tf.int64, [None], "sentence2_lengths")
 
     # [batch_size]
     targets = tf.placeholder(tf.int64, [None], "targets")
 
     with tf.variable_scope("embedders") as varscope:
-        seq1_embedded = embedder(seq1, input_size, vocab_size, embeddings=embeddings)
+        seq1_embedded = embedder(sentence1, input_size, vocab_size, embeddings=embeddings)
         varscope.reuse_variables()
-        seq2_embedded = embedder(seq2, input_size, vocab_size, embeddings=embeddings)
+        seq2_embedded = embedder(sentence2, input_size, vocab_size, embeddings=embeddings)
 
 
     print('TRAINABLE VARIABLES (only embeddings): %d'%get_total_trainable_variables())
 
 
-    output = conditional_reader(seq1_embedded, seq1_lengths,
-                                seq2_embedded, seq2_lengths,
+    outputs,states = conditional_reader(seq1_embedded, sentence1_lengths,
+                                seq2_embedded, sentence2_lengths,
                                 output_size)
-
-    output = tf.concat(1, [output[0][1], output[1][1]])
+    #states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
+    output = tf.concat(1, [states[0][1], states[1][1]])
 
     logits, loss, predict = predictor(output, targets, target_size)
 
@@ -179,4 +180,6 @@ def conditional_reader_model(input_size, output_size, vocab_size, target_size, e
 
 
     return (logits, loss, predict), \
-           (seq1, seq1_lengths, seq2, seq2_lengths, targets)  # placeholders
+           {'sentence1': sentence1, 'sentence1_lengths': sentence1_lengths,
+            'sentence2': sentence2, 'sentence2_lengths': sentence2_lengths,
+            'targets': targets} #placeholders
