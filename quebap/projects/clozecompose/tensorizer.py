@@ -245,6 +245,10 @@ class SequenceTensorizer(Tensorizer):
         print("Max num support tokens", max(lens_supports))
         print("Average number support tokens", float(sum(lens_supports)) / float(len(lens_supports)))
 
+        num_cands = [len(question['candidates']) for inst in instances for question in inst['questions']]
+        print("Max num cands", max(num_cands))
+        print("Average num cands", float(sum(num_cands)) / float(len(num_cands)))
+
         self.all_question_seqs_padded = [pad_seq(q, self.all_max_question_length, self.lexicon[self.pad]) for q in all_question_seqs]
 
         self.random = random.Random(0)
@@ -560,7 +564,7 @@ def tensoriserTest():
     with open('../../data/scienceQA/scienceQA_cloze_withcont_2016-10-9_small.json') as data_file:  # scienceQA.json
         data = json.load(data_file)
 
-    tensorizer = SequenceTensorizerTokens2(data) #SequenceTensorizerTokens(data)
+    tensorizer = SequenceTensorizer(data)
     feed_dict = next(tensorizer.create_batches(data, batch_size=2, test=False))
 
     with tf.Session() as sess:

@@ -80,7 +80,6 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
 
 def main():
     readers = {
-        'se_toks': create_sequence_embeddings_reader_tokens,
         'se': create_sequence_embeddings_reader,
         'bowv': create_bowv_embeddings_reader,
         'bowv_nosupport': create_bowv_nosupport_embeddings_reader
