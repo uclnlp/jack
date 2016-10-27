@@ -10,7 +10,8 @@ Making useful stuff happen since 2016
 
 import numpy as np
 import contextlib
-
+from time import gmtime, strftime
+import os
 
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
@@ -47,3 +48,11 @@ def nprint(x, prefix="", precision=3, surpress=True, max_list_len=5, show_shape=
         # todo: do the same for tensors
         else:
             print(x)
+
+
+def get_timestamped_dir(path):
+    current_time = strftime("%y-%m-%d/%H-%M-%S", gmtime())
+    dir = path + "/" + current_time + "/"
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    return dir
