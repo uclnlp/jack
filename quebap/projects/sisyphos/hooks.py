@@ -1,12 +1,9 @@
 import tensorflow as tf
 import numpy as np
 import time
+from time import gmtime, strftime, localtime
 from sklearn.metrics import classification_report
 
-
-LOSS_TRACE_TAG = "Loss"
-SPEED_TRACE_TAG = "Speed"
-ACCURACY_TRACE_TAG = "Accuracy"
 
 # todo: hooks should also have prefixes so that one can use the same hook with different parameters
 class Hook(object):
@@ -20,6 +17,9 @@ class Hook(object):
 class TraceHook(object):
     def __init__(self, summary_writer=None):
         self.summary_writer = summary_writer
+
+    def __tag__(self):
+        raise NotImplementedError
 
     def __call__(self, sess, epoch, model, loss):
         raise NotImplementedError
@@ -41,6 +41,9 @@ class LossHook(TraceHook):
         self.batch_size = batch_size
         self.iter = 0
 
+    def __tag__(self):
+        return "Loss"
+
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         self.acc_loss += loss / self.batch_size
@@ -49,7 +52,7 @@ class LossHook(TraceHook):
             print("Epoch " + str(epoch) +
                   "\tIter " + str(self.iter) +
                   "\tLoss " + str(loss))
-            self.update_summary(sess, self.iter, LOSS_TRACE_TAG, loss)
+            self.update_summary(sess, self.iter, self.__tag__(), loss)
             self.acc_loss = 0
 
 
@@ -62,6 +65,9 @@ class SpeedHook(TraceHook):
         self.num_examples = iter_interval * batch_size
         self.iter = 0
 
+    def __tag__(self):
+        return "Speed"
+
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
@@ -70,8 +76,60 @@ class SpeedHook(TraceHook):
             print("Epoch " + str(epoch) +
                   "\tIter " + str(self.iter) +
                   "\tExamples/s " + str(speed))
-            self.update_summary(sess, self.iter, SPEED_TRACE_TAG, float(speed))
+            self.update_summary(sess, self.iter, self.__tag__(), float(speed))
             self.t0 = time.time()
+
+
+class ETAHook(TraceHook):
+    def __init__(self, iter_interval, max_epochs, iter_per_epoch,
+                 summary_writer=None):
+        super(ETAHook, self).__init__(summary_writer)
+        self.iter_interval = iter_interval
+        self.max_iters = max_epochs * iter_per_epoch
+        self.iter = 0
+        self.epoch = 1
+        self.max_epochs = max_epochs
+        self.start = time.time()
+        self.reestimate = True
+
+    def __tag__(self):
+        return "ETA"
+
+    def __call__(self, sess, epoch, model, loss):
+        self.iter += 1
+
+        if self.reestimate and self.iter >= self.max_iters:
+            self.max_iters *= 2
+
+        if self.reestimate and self.epoch != epoch:
+            self.max_iters = self.iter * self.max_epochs
+            self.reestimate = False
+
+        if not self.iter == 0 and self.iter % self.iter_interval == 0:
+            progress = float(self.iter) / self.max_iters
+            current_time = time.time()
+            elapsed = current_time - self.start
+            eta = (1-progress) * elapsed
+            eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
+
+            def format_eta(seconds):
+                if seconds == float("inf"):
+                    return "never"
+                else:
+                    minutes, seconds = divmod(seconds, 60)
+                    hours, minutes = divmod(minutes, 60)
+                    if hours < 10:
+                        hours = "0"+str(int(hours))
+                    if minutes < 10:
+                        minutes = "0"+str(int(minutes))
+                    if seconds < 10:
+                        seconds = "0"+str(int(seconds))
+                    return "%s:%s:%s" % (hours, minutes, seconds)
+
+            print("Epoch %d\tIter %d\tETA in %s [%2.2f"
+                  % (epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
+
+            self.update_summary(sess, self.iter, self.__tag__(), float(eta))
 
 
 class AccuracyHook(TraceHook):
@@ -85,6 +143,9 @@ class AccuracyHook(TraceHook):
         self.placeholders = placeholders
         self.done_for_epoch = False
         self.iter = 0
+
+    def __tag__(self):
+        return "Acc"
 
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
@@ -104,7 +165,7 @@ class AccuracyHook(TraceHook):
                     total += len(predicted)
 
                 acc = float(correct) / total
-                self.update_summary(sess, self.iter, ACCURACY_TRACE_TAG, acc)
+                self.update_summary(sess, self.iter, self.__tag__(), acc)
                 print("Epoch " + str(epoch) +
                       "\tAcc " + str(acc) +
                       "\tCorrect " + str(correct) + "\tTotal " + str(total))
