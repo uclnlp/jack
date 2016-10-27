@@ -66,7 +66,7 @@ class SpeedHook(TraceHook):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             diff = time.time() - self.t0
-            speed = int(self.num_examples / diff)
+            speed = "%.1f" % (self.num_examples / diff)
             print("Epoch " + str(epoch) +
                   "\tIter " + str(self.iter) +
                   "\tExamples/s " + str(speed))
