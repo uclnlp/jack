@@ -3,15 +3,16 @@ from pprint import pprint
 from time import time, sleep
 from os import path
 
-from sisyphos.batch import get_feed_dicts
-from sisyphos.map import tokenize, lower, Vocab, deep_map, deep_seq_map, VocabEmb
-from sisyphos.models import conditional_reader_model, create_embeddings
-from sisyphos.train import train
-from sisyphos.prepare_embeddings import load as loads_embeddings
+from quebap.sisyphos.batch import get_feed_dicts
+from quebap.sisyphos.vocab import Vocab, VocabEmb
+from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
+from quebap.sisyphos.models import conditional_reader_model, create_embeddings
+from quebap.sisyphos.train import train
+from quebap.sisyphos.prepare_embeddings import load as loads_embeddings
 import tensorflow as tf
 import numpy as np
 import random
-from sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
 
 
 tf.set_random_seed(1337)
