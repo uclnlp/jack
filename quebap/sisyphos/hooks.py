@@ -98,8 +98,8 @@ class ETAHook(TraceHook):
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
 
-        if self.reestimate and self.iter >= self.max_iters:
-            self.max_iters *= 2
+        if self.reestimate and self.iter >= self.max_iters / self.max_epochs:
+            self.max_iters *= self.max_epochs
 
         if self.reestimate and self.epoch != epoch:
             self.max_iters = self.iter * self.max_epochs
@@ -116,6 +116,7 @@ class ETAHook(TraceHook):
                 if seconds == float("inf"):
                     return "never"
                 else:
+                    seconds, _ = divmod(seconds, 1)
                     minutes, seconds = divmod(seconds, 60)
                     hours, minutes = divmod(minutes, 60)
                     if hours < 10:
