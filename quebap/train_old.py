@@ -8,9 +8,9 @@ from quebap.tensorizer import *
 
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
-                 optimiser=tf.train.AdamOptimizer(), use_train_generator_for_test=False):
+                 optimiser=tf.train.AdamOptimizer(learning_rate=0.0001), use_train_generator_for_test=False):
     """
-    Train a reader, and test on test set.
+    Train a reader, and test on test set. Deprecated as of 27 October 2016, will no longer be updated.
     :param reader: The reader to train
     :param train_data: the quebap training file
     :param test_data: the quebap test file
@@ -45,6 +45,10 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
 
 
 def main():
+    """
+    Old quebap training script which uses the tensorizer. Deprecated as of 27 October 2016, will no longer be updated.
+    :return:
+    """
     reader_models = {
         'log_linear': create_log_linear_reader,
         'model_f': create_model_f_reader,
@@ -54,8 +58,8 @@ def main():
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--train', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--test', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--train', default='data/NYT/naacl2013_train.quebap.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--test', default='data/NYT/naacl2013_train.quebap.json', type=argparse.FileType('r'), help="Quebap test file")
     parser.add_argument('--batch_size', default=5, type=int, metavar="B", help="Batch size (suggestion)")
     parser.add_argument('--repr_dim', default=5, type=int, help="Size of the hidden representation")
     parser.add_argument('--support_dim', default=5, type=int, help="Size of the hidden representation for support")

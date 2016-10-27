@@ -10,6 +10,7 @@ from quebap.projects.modelF.structs import FrozenIdentifier
 
 class Tensorizer(metaclass=ABCMeta):
     """
+    Deprecated as of 27 October 2016, will no longer be updated.
     A tensorizer is in charge of converting a reading dataset into batches of tensor flow feed_dicts, and batches
     of tensor values back to reading datasets. A tensorizer for a MultipleChoiceReader maintains four placeholders:
     * candidates, to represent answer candidates. The number of candidates is determined by the tensorizer. It can

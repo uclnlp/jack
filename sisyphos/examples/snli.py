@@ -7,7 +7,7 @@ from sisyphos.batch import get_feed_dicts
 from sisyphos.map import tokenize, lower, Vocab, deep_map, deep_seq_map, VocabEmb
 from sisyphos.models import conditional_reader_model, create_embeddings
 from sisyphos.train import train
-from sisyphos.examples.prepare_embeddings import load as loads_embeddings
+from sisyphos.prepare_embeddings import load as loads_embeddings
 import tensorflow as tf
 import numpy as np
 import random

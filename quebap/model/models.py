@@ -112,7 +112,7 @@ def create_softmax_loss(scores, target_values):
     """
     return tf.nn.softmax_cross_entropy_with_logits(scores, target_values)
 
-
+#@model(supports_support=True, name="asdasd", datasets=["blah","blah"])  #decorator
 def create_log_linear_reader(reference_data, **options):
     """
     Create a log-linear reader, i.e. with a log-linear combination of text features.
