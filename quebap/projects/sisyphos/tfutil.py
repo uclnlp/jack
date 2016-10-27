@@ -11,6 +11,12 @@ def tfprintshape(tensor, prefix=""):
     return tfprint(tensor, lambda x: tf.shape(x), prefix)
 
 
+def tfrun(variables, feed_dict=None):
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        return sess.run(variables, feed_dict=feed_dict)
+
+
 def get_last(tensor):
     """
     :param tensor: [dim1 x dim2 x dim3] tensor
@@ -20,3 +26,10 @@ def get_last(tensor):
     slice_size = shape * [1, 0, 1] + [0, 1, 0]  # [dim1, 1 , dim3]
     slice_begin = shape * [0, 1, 0] + [0, -1, 0]  # [1, dim2-1, 1]
     return tf.squeeze(tf.slice(tensor, slice_begin, slice_size), [1])
+
+
+def unit_length_transform(x, dim=1):
+    l2norm_sq = tf.reduce_sum(x * x, dim, keep_dims=True)
+    l2norm = tf.rsqrt(l2norm_sq)
+    #return x * tf.nn.l2_normalize(x, 0) #l2norm
+    return x * l2norm

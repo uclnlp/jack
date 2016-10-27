@@ -1,5 +1,8 @@
+import tensorflow as tf
+from sisyphos.tfutil import unit_length_transform, tfrun
+
+
 class VocabEmb(object):
-    #todo: documentation
     def __init__(self, unk="<UNK>", emb=None):
         if unk is not None:
             self.sym2id = {unk: 0}
@@ -44,22 +47,6 @@ class VocabEmb(object):
 
     def get_sym(self, id):
         return None if not id in self.id2sym else self.id2sym[id]
-
-    def get_ids_pretrained(self):
-        return list(range(-1,self.next_neg,-1))
-
-    def get_syms_pretrained(self):
-        return [self.id2sym[id] for id in self.get_ids_pretrained()]
-
-    def get_normalized_ids_pretrained(self):
-        return list(map(self.normalize,self.get_ids_pretrained()))
-
-    def get_shape(self):
-        if self.next_neg < -1:
-            return (self.__len__(),len(self.emb(self.id2sym[-1])))
-        else:
-            return (self.__len__(),None)
-
 
     def __call__(self, *args, **kwargs):
         symbols = args
@@ -141,7 +128,44 @@ class Vocab(object):
         return sym in self.sym2id
 
 
+class NeuralVocab(Vocab):
+    """
+    Wrapper around Vocab to go from indices to tensors.
+    """
+    def __init__(self, base_vocab, embedding_matrix=None,
+                 input_size=None, unit_normalize=False):
+        super(NeuralVocab, self).__init__()
+        self.sym2id = base_vocab.sym2id
+        self.id2sym = base_vocab.id2sym
+        self.sym2freqs = base_vocab.sym2freqs
+        self.unk = base_vocab.unk
 
+        self.unit_normalize = unit_normalize
+
+        if embedding_matrix is None:
+            self.embedding_matrix = \
+                tf.get_variable("embeddings", [len(self), input_size],
+                        initializer=tf.random_normal_initializer(0.0, 0.1))
+        else:
+            self.embedding_matrix = embedding_matrix
+
+        self.id2vec = [self.embed_symbol(id) for id in range(len(self))]
+
+    def embed_symbol(self, id):
+        id_embedded = tf.nn.embedding_lookup(self.embedding_matrix, id)
+        if self.unit_normalize:
+            id_embedded = unit_length_transform(id_embedded, 0)
+        return id_embedded
+
+    def __call__(self, *args, **kwargs):
+        ids = args
+        if len(args) == 1:
+            if isinstance(args[0], list):
+                ids = args[0]
+            else:
+                return self.id2vec[args[0]]
+
+        return [self.id2vec[id] for id in ids]
 
 
 if __name__ == '__main__':
@@ -183,3 +207,7 @@ if __name__ == '__main__':
     print('test normalizing %s'%str(vocab(['bluh','world','wake','up'])))
     print(list(map(vocab.normalize,vocab(['bluh','world','wake','up']))))
     print(vocab.sym2id)
+
+    nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
+    vec = tfrun(nvocab(vocab("world")))
+    print(vec)
