@@ -119,12 +119,17 @@ class ETAHook(TraceHook):
                     seconds, _ = divmod(seconds, 1)
                     minutes, seconds = divmod(seconds, 60)
                     hours, minutes = divmod(minutes, 60)
-                    if hours < 10:
-                        hours = "0"+str(int(hours))
-                    if minutes < 10:
-                        minutes = "0"+str(int(minutes))
-                    if seconds < 10:
-                        seconds = "0"+str(int(seconds))
+                    seconds = str(int(seconds))
+                    minutes = str(int(minutes))
+                    hours = str(int(hours))
+
+                    if len(hours) < 2:
+                        hours = "0"+hours
+                    if len(minutes) < 2:
+                        minutes = "0"+minutes
+                    if len(seconds) < 2:
+                        seconds = "0"+seconds
+
                     return "%s:%s:%s" % (hours, minutes, seconds)
 
             print("Epoch %d\tIter %d\tETA in %s [%2.2f"
