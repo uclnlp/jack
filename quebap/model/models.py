@@ -84,7 +84,7 @@ class ReaderModel():
         support_lengths = tf.placeholder(tf.int64, [None], "support_lengths")
 
         # [batch_size]
-        targets = tf.placeholder(tf.int64, [None], "targets")
+        targets = tf.placeholder(tf.int64, [None], "answers")
 
         with tf.variable_scope("embedders") as varscope:
             question_embedded = embedder(question, options["repr_dim_output"], options["vocab_size"], embeddings=embeddings)
@@ -101,7 +101,7 @@ class ReaderModel():
         #states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
         output = tf.concat(1, [states[0][1], states[1][1]])
 
-        logits, loss, predict = predictor(output, targets, options["target_size"])
+        logits, loss, predict = predictor(output, targets, options["answer_size"])
 
         print('TRAINABLE VARIABLES (embeddings + model): %d'%get_total_trainable_variables())
         print('ALL VARIABLES (embeddings + model): %d'%get_total_variables())
@@ -110,5 +110,5 @@ class ReaderModel():
         return (logits, loss, predict), \
                {'question': question, 'question_lengths': question_lengths,
                 'support': support, 'support_lengths': support_lengths,
-                'targets': targets} #placeholders
+                'answers': targets} #placeholders
 

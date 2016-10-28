@@ -31,46 +31,98 @@ from quebap.sisyphos.prepare_embeddings import load as loads_embeddings
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
 from quebap.model.models import ReaderModel
 
-def sentihood_load(path, max_count=None):
+def quebap_load(path, max_count=None, **options):
     """
-    Works for sentihood dataset. This will be transformed into a general-purpose loader later.
+    General-purpose loader for quebap files
+    Makes use of user-defined options for supports, questions, candidates, answers and only read in those
+    things needed for model, e.g. if the dataset contains support, but the user defines support_alts == 'none'
+    because they want to train a model that does not make use of support, support information in dataset is not read in
+
+    User options for quebap model/dataset attributes are:
+    support_alts = {'none', 'single', 'multiple'}
+    question_alts = answer_alts = {'single', 'multiple'}
+    candidate_alts = {'open', 'per-instance', 'fixed'}
     """
 
     reading_dataset = json.load(path)
 
+    def textOrDict(c):
+        if type(c) == dict:
+            c = c["text"]
+        return c
+
+    # The script reads into those lists. If IDs for questions, supports or targets are defined, those are ignored.
     questions = []
     supports = []
-    targets = []
+    answers = []
+    candidates = []
+    global_candidates = []
     count = 0
+    if "globals" in reading_dataset:
+        global_candidates = [textOrDict(c) for c in reading_dataset['globals']['candidates']]
+
     for instance in reading_dataset['instances']:
+        question, support, answer, candidate = "", "", "", ""  # initialisation
         if max_count is None or count < max_count:
-            question = instance['questions'][0]
-            support = instance['support'][0]['text']
-            target = instance['answers'][0]['text']
-            if target != "-":
-                questions.append(question)
+            if options["supports"] == "single":
+                support = textOrDict(instance['support'][0])
+            elif options["supports"] == "multiple":
+                support = [textOrDict(c) for c in instance['support'][0]]
+            if options["questions"] == "single":
+                question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
+                if options["answers"] == "single":
+                    answer = textOrDict(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
+                elif options["answers"] == "multiple":
+                    answer = [textOrDict(c) for c in instance['questions'][0]['answers']]
+                if options["candidates"] == "per-instance":
+                    candidate = [textOrDict(c) for c in instance['candidates']]
+
+            elif options["questions"] == "multiple":
+                answer = []
+                candidate = []
+                question = [textOrDict(c["question"]) for c in instance['questions']]
+                if options["answers"] == "single":
+                    answer = [textOrDict(c["answers"][0]) for c in instance['questions']]
+                elif options["answers"] == "multiple":
+                    answer = [textOrDict(c) for q in instance['questions'] for c in q["answers"]]
+                if options["candidates"] == "per-instance":
+                    candidate = [textOrDict(c) for quest in instance["questions"] for c in quest["candidates"]]
+
+            if options["candidates"] == "fixed":
+                candidates.append(global_candidates)
+
+            questions.append(question)
+            answers.append(answer)
+            if options["supports"] != "none":
                 supports.append(support)
-                targets.append(target)
-                count += 1
-    print("Loaded %d examples from %s" % (len(targets), path))
-    return {'question': questions, 'support': supports, 'targets': targets}
+            if options["candidates"] != "fixed":
+                candidates.append(candidate)
+            count += 1
 
 
-def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
+    print("Loaded %d examples from %s" % (len(questions), path))
+    return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
+
+
+#@todo: rewrite such that it works for different types of quebap files
+def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False):
     vocab = vocab or VocabEmb(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
+    candidate_vocab = candidate_vocab or Vocab(unk=None)
     if freeze:
         vocab.freeze()
         target_vocab.freeze()
+        candidate_vocab.freeze()
 
     corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
     corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
-    corpus_ids = deep_map(corpus_ids, target_vocab, ['targets'])
+    corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
+    corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     corpus_ids = deep_map(corpus_ids, vocab.normalize, ['question', 'support']) #needs freezing next time to be comparable with other pipelines
-    return corpus_ids, vocab, target_vocab
+    return corpus_ids, vocab, target_vocab, candidate_vocab
 
 
 def main():
@@ -82,8 +134,10 @@ def main():
         #'boe': create_bag_of_embeddings_reader
     }
 
-    #@todo: test with different quebap files (ids, no ids, single/multi support/question per instance, candidates/no candidates, local/global candidates)
-    #@todo: add decorators
+    support_alts = {'none', 'single', 'multiple'}
+    question_alts = answer_alts = {'single', 'multiple'}
+    candidate_alts = {'open', 'per-instance', 'fixed'}
+
     #@todo: dict with choice of different types of embeddings for pretraining
     #@todo: dict for different optimisers
     #@todo: parameters for different bucket structures
@@ -92,8 +146,13 @@ def main():
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default=True, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
     parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used")
-    parser.add_argument('--train', default='data/sentihood/single_quebap.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--train', default='data/SQuAD/snippet_quebapformat.json', type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--dev', default='data/sentihood/single_quebap.json', type=argparse.FileType('r'), help="Quebap dev file")
     parser.add_argument('--test', default='data/sentihood/single_quebap.json', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single or multiple supporting statements per instance")
+    parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single or multiple questions per instance")
+    parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance or fixed candidates")
+    parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance or fixed candidates")
     parser.add_argument('--batch_size', default=5, type=int, help="Batch size for training data")
     parser.add_argument('--dev_batch_size', default=5, type=int, help="Batch size for development data")
     parser.add_argument('--repr_dim_input', default=5, type=int, help="Size of the input representation (embeddings)")
@@ -106,7 +165,7 @@ def main():
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
     #                    help="Use if training and test are the same file and the training set needs to be split. Index of last training instance plus 1.")
     #parser.add_argument('--candidate_split', default="$", type=str, metavar="S",
-    #                    help="Regular Expression for tokenizing candidates")
+    #                    help="Regular Expression for tokenizing candidates. By default candidates are not split")
     #parser.add_argument('--question_split', default="-", type=str, metavar="S",
     #                    help="Regular Expression for tokenizing questions")
     #parser.add_argument('--support_split', default="-", type=str, metavar="S",
@@ -130,7 +189,7 @@ def main():
     bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
 
     if args.debug:
-        train_data = sentihood_load(args.train, args.debug_examples)
+        train_data = quebap_load(args.train, args.debug_examples, **vars(args))
         dev_data = train_data
         test_data = train_data
         if args.pretrain:
@@ -138,8 +197,7 @@ def main():
             embeddings = loads_embeddings(path.join('quebap', 'data', 'GloVe', emb_file))
             # embeddings = loads_embeddings(path.join('quebap','data','GloVe',emb_file), 'glove', {'vocab_size':400000,'dim':50})
     else:
-        train_data, dev_data, test_data = [sentihood_load("./data/snli/snli_1.0/snli_1.0_%s.jsonl" % name) \
-                                           for name in ["train", "dev", "test"]]
+        train_data, dev_data, test_data = [quebap_load(name) for name in [args["train"], args["dev"], args["test"]]]
         print('loaded train/dev/test data')
         if args.pretrain:
             emb_file = 'GoogleNews-vectors-negative300.bin'
@@ -149,32 +207,32 @@ def main():
 
     checkpoint()
     print('encode train data')
-    train_data, train_vocab, train_target_vocab = pipeline(train_data)  # , emb=emb)
+    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data)  # , emb=emb)
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
     print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.' % (N_pre, N_oov))
 
     vocab_size = len(train_vocab)
-    target_size = len(train_target_vocab)
+    answer_size = len(train_answer_vocab)
+    candidate_size = len(train_candidate_vocab)
 
     # @todo: we should allow to set vocab_size for smaller vocab
 
     # this is a bit of a hack since args are supposed to be user-defined, but it's cleaner that way with passing on args to reader models
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
-    parser.add_argument('--target_size', default=target_size, type=int)
+    parser.add_argument('--answer_size', default=answer_size, type=int)
     args = parser.parse_args()
 
     print("\tvocab size:  %d" % vocab_size)
-    print("\ttarget size: %d" % target_size)
+    print("\tanswer size: %d" % answer_size)
+    print("\tcandidate size: %d" % candidate_size)
 
     checkpoint()
     print('encode dev data')
-    dev_data, _, _ = pipeline(dev_data, train_vocab, train_target_vocab,
-                              freeze=True)
+    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True)
     checkpoint()
     print('encode test data')
-    test_data, _, _ = pipeline(test_data, train_vocab, train_target_vocab,
-                               freeze=True)
+    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True)
     checkpoint()
 
     print('create embeddings matrix')
@@ -199,7 +257,7 @@ def main():
         # report_loss,
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['targets'], 2)
+        AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2)
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, hooks=hooks)
