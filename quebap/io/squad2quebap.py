@@ -22,7 +22,7 @@ def convert_squad(file_path):
         'meta': {
             'source': filename
         },
-        'data': question_sets
+        'instances': question_sets
     }
     return corpus_dict
 
