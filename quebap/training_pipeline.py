@@ -38,22 +38,22 @@ def sentihood_load(path, max_count=None):
 
     reading_dataset = json.load(path)
 
-    seq1s = []
-    seq2s = []
+    questions = []
+    supports = []
     targets = []
     count = 0
     for instance in reading_dataset['instances']:
         if max_count is None or count < max_count:
-            sentence1 = instance['questions'][0]
-            sentence2 = instance['support'][0]['text']
+            question = instance['questions'][0]
+            support = instance['support'][0]['text']
             target = instance['answers'][0]['text']
             if target != "-":
-                seq1s.append(sentence1)
-                seq2s.append(sentence2)
+                questions.append(question)
+                supports.append(support)
                 targets.append(target)
                 count += 1
     print("Loaded %d examples from %s" % (len(targets), path))
-    return {'sentence1': seq1s, 'sentence2': seq2s, 'targets': targets}
+    return {'question': questions, 'support': supports, 'targets': targets}
 
 
 def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
@@ -63,19 +63,20 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
         vocab.freeze()
         target_vocab.freeze()
 
-    corpus_tokenized = deep_map(corpus, tokenize, ['sentence1', 'sentence2'])
-    corpus_lower = deep_seq_map(corpus_tokenized, lower, ['sentence1', 'sentence2'])
-    corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['sentence1', 'sentence2'])
-    corpus_ids = deep_map(corpus_os, vocab, ['sentence1', 'sentence2'])
+    corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
+    corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
+    corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
+    corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['targets'])
-    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['sentence1', 'sentence2'], fun_name='lengths', expand=True)
-    corpus_ids = deep_map(corpus_ids, vocab.normalize, ['sentence1', 'sentence2']) #needs freezing next time to be comparable with other pipelines
+    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
+    corpus_ids = deep_map(corpus_ids, vocab.normalize, ['question', 'support']) #needs freezing next time to be comparable with other pipelines
     return corpus_ids, vocab, target_vocab
 
 
 def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
+        'bicond_singlesupport_reader': conditional_reader_model
         #'log_linear': create_log_linear_reader,
         #'model_f': create_model_f_reader,
         #'boe': create_bag_of_embeddings_reader
@@ -98,7 +99,7 @@ def main():
     parser.add_argument('--repr_dim_input', default=5, type=int, help="Size of the input representation (embeddings)")
     parser.add_argument('--repr_dim_output', default=5, type=int, help="Size of the output representation")
     parser.add_argument('--pretrain', default=False, type=bool, help="Use pretrained embeddings, by default the initialisation is random")
-    parser.add_argument('--model', default='model_f', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=int, help="Learning rate")
     parser.add_argument('--epochs', default=3, type=int, help="Number of epochs to train for")
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
@@ -125,7 +126,7 @@ def main():
     #             use_train_generator_for_test=True)
 
 
-    bucket_order = ('sentence1','sentence2') #composite buckets; first over premises, then over hypotheses
+    bucket_order = ('question','support') #composite buckets; first over premises, then over hypotheses
     bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
 
     if args.debug:
@@ -157,13 +158,11 @@ def main():
     target_size = len(train_target_vocab)
 
     # @todo: we should allow to set vocab_size for smaller vocab
+
+    # this is a bit of a hack since args are supposed to be user-defined, but it's cleaner that way with passing on args to reader models
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
     parser.add_argument('--target_size', default=target_size, type=int)
-
     args = parser.parse_args()
-
-    #args["vocab_size"] = vocab_size
-    #args["target_size"] = target_size
 
     print("\tvocab size:  %d" % vocab_size)
     print("\ttarget size: %d" % target_size)
@@ -183,7 +182,10 @@ def main():
 
     checkpoint()
     print('build model')
-    (logits, loss, predict), placeholders = conditional_reader_model(embeddings_matrix, **vars(args))
+    #(logits, loss, predict), placeholders = conditional_reader_model(embeddings_matrix, **vars(args))
+
+    (logits, loss, predict), placeholders = reader_models[args.model](embeddings_matrix, **vars(args))
+
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,

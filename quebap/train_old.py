@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from quebap.model.models import create_log_linear_reader, \
+from quebap.model.models_old import create_log_linear_reader, \
     create_model_f_reader, create_bag_of_embeddings_reader, \
     create_sequence_embeddings_reader, create_support_bag_of_embeddings_reader
 from quebap.tensorizer import *
