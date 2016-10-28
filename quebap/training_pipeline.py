@@ -29,7 +29,7 @@ from quebap.sisyphos.models import create_embeddings  # conditional_reader_model
 from quebap.sisyphos.train import train
 from quebap.sisyphos.prepare_embeddings import load as loads_embeddings
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
-from quebap.model.models import conditional_reader_model
+from quebap.model.models import ReaderModel
 
 def sentihood_load(path, max_count=None):
     """
@@ -76,7 +76,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
 def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
-        'bicond_singlesupport_reader': conditional_reader_model
+        'bicond_singlesupport_reader': ReaderModel.conditional_reader_model
         #'log_linear': create_log_linear_reader,
         #'model_f': create_model_f_reader,
         #'boe': create_bag_of_embeddings_reader
@@ -182,9 +182,8 @@ def main():
 
     checkpoint()
     print('build model')
-    #(logits, loss, predict), placeholders = conditional_reader_model(embeddings_matrix, **vars(args))
-
-    (logits, loss, predict), placeholders = reader_models[args.model](embeddings_matrix, **vars(args))
+    reader = ReaderModel()
+    (logits, loss, predict), placeholders = reader_models[args.model](reader, embeddings_matrix, **vars(args))
 
 
     train_feed_dicts = \
