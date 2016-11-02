@@ -1,5 +1,5 @@
 import tensorflow as tf
-from sisyphos.tfutil import unit_length_transform, tfrun
+from quebap.sisyphos.tfutil import unit_length_transform, tfrun
 
 
 class VocabEmb(object):
