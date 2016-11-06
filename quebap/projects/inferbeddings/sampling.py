@@ -6,7 +6,7 @@ def random_truncated_exponential(w, num_samples):
     Sample from truncated independent exponential distributions using weights w (or inverse exponential distribution for
     positive weight components).
     Args:
-        w: a [num_rows, dim] matrix of weight vectors.
+        w: a [num_rows, dim] matrix of `num_rows` weight vectors.
         num_samples: the number of samples to produce.
 
     Returns:
