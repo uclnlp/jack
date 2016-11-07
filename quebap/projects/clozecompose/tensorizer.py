@@ -8,6 +8,7 @@ from quebap.projects.modelF.structs import FrozenIdentifier
 from abc import *
 from nltk import word_tokenize, pos_tag, sent_tokenize
 from gensim.models import Phrases, word2vec
+import gc
 
 
 class Tensorizer(metaclass=ABCMeta):
@@ -183,7 +184,7 @@ class SequenceTensorizer(Tensorizer):
         questions = tf.placeholder(tf.int32, (None, None, None), name="question")  # [batch_size, pos/neg, num_tokens]
         candidates = tf.placeholder(tf.int32, (None, None, None),
                                     name="candidates")  # [batch_size, num_candidates, num_tokens]
-        target_values = tf.placeholder(tf.float32, (None, None, None), name="target") # [batch_size, pos/neg, num_candidates]
+        target_values = tf.placeholder(tf.float64, (None, None, None), name="target") # [batch_size, pos/neg, num_candidates]
 
 
         super().__init__(candidates, questions, target_values, support)
@@ -210,20 +211,20 @@ class SequenceTensorizer(Tensorizer):
                                                          for token in
                                                          word_tokenize(candidate['text'])]
 
-
         count = [[self.pad, -1], [self.none, -1]]
         for c in all_candidate_tokens:
             count.append([c, -1])
         min_l_vocab = len(count)
         count.extend(collections.Counter(all_question_tokens + all_support_tokens).most_common(50000-min_l_vocab))  # 50000
 
+        del all_question_tokens, all_support_tokens, all_candidate_tokens
+
         self.all_tokens = [t[0] for t in count]
-
-
 
         self.lexicon = FrozenIdentifier(self.all_tokens, default_key=self.none)
         self.num_symbols = len(self.lexicon)
 
+        del self.all_tokens
 
         all_question_seqs = [[self.lexicon[t]
                               for t in word_tokenize(inst['questions'][0]['question'])]
@@ -233,6 +234,10 @@ class SequenceTensorizer(Tensorizer):
         self.all_max_question_length = max(quest_len)
         print("Max question length", self.all_max_question_length)
         print("Average question length", float(sum(quest_len)) / float(len(quest_len)))
+
+        self.all_question_seqs_padded = [pad_seq(q, self.all_max_question_length, self.lexicon[self.pad]) for q in all_question_seqs]
+
+        del all_question_seqs
 
         support_lens = [len(inst['support'])
                         for inst in instances]
@@ -245,13 +250,17 @@ class SequenceTensorizer(Tensorizer):
         print("Max num support tokens", max(lens_supports))
         print("Average number support tokens", float(sum(lens_supports)) / float(len(lens_supports)))
 
+        del support_lens, lens_supports
+
         num_cands = [len(question['candidates']) for inst in instances for question in inst['questions']]
         print("Max num cands", max(num_cands))
         print("Average num cands", float(sum(num_cands)) / float(len(num_cands)))
 
-        self.all_question_seqs_padded = [pad_seq(q, self.all_max_question_length, self.lexicon[self.pad]) for q in all_question_seqs]
+        del num_cands
 
         self.random = random.Random(0)
+
+        gc.collect()
 
 
     def create_batches(self, data=None, batch_size=1, test=False):

@@ -43,7 +43,7 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
         # returning [batch_size, max_time, cell.output_size]
         outputs, last_states = tf.nn.dynamic_rnn(
             cell=cell,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
@@ -104,7 +104,7 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
         # last_states shape: [batch_size, cell.state_size]
         outputs_fw, last_state_fw = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
@@ -122,7 +122,7 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw, last_state_bw = tf.nn.dynamic_rnn(
             cell=cell_bw,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths,
             inputs=embedded_inputs_rev)
 
@@ -156,7 +156,7 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
         # returning [batch_size, max_time, cell.output_size]
         outputs_fw_cond, last_state_fw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw_cond,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond,
             initial_state=last_state_fw
@@ -177,7 +177,7 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw_cond, last_state_bw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond_rev,
             initial_state=last_state_bw
@@ -226,7 +226,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # last_states shape: [batch_size, cell.state_size]
         outputs_fw, last_state_fw = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
@@ -243,7 +243,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # returning [batch_size, max_time, cell.output_size]
         outputs_fw_cond, last_state_fw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw_cond,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond,
             initial_state=last_state_fw
@@ -260,7 +260,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw, last_state_bw = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths,
             inputs=embedded_inputs_rev)
 
@@ -276,7 +276,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw_cond, last_state_bw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float32,
+            dtype=tf.float64,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond_rev,
             initial_state=last_state_bw
@@ -553,7 +553,7 @@ def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
 
     # 1) reshape the support tensors to remove batch_size dimension
     dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
-    sup = tf.reshape(tensorizer.support, [-1, dim3s])  # [batch_size * num_supports, num_tokens]
+    sup = tf.reshape(tensorizer.support, [dim1s * dim2s, dim3s])  # [batch_size * num_supports, num_tokens]
 
     # 2) run first rnn to encode the supports
     outputs_sup = create_bowv_embedding(sup, cand_dim, tensorizer.num_symbols, "embedding_matrix_sup")
@@ -704,9 +704,9 @@ class SequenceTensorizerTokens2(Tensorizer):
 
         self.questions = tf.placeholder(tf.int32, (None, None, None), name="question")  # [batch_size, pos/neg, num_tokens]
         #self.candidates = tf.placeholder(tf.int32, (None, None), name="candidates")  # [batch_size, num_candidates]
-        self.target_values = tf.placeholder(tf.float32, (None, None, None), name="target") # [batch_size, num_tokens, num_types]
+        self.target_values = tf.placeholder(tf.float64, (None, None, None), name="target") # [batch_size, num_tokens, num_types]
 
-        self.target_lengths = tf.placeholder(tf.int32, (None), name="target_lengths")  # [batch_size]
+        self.target_lengths = tf.placeholder(tf.int64, (None), name="target_lengths")  # [batch_size]
 
         instances = reference_data['instances']
 
@@ -956,7 +956,7 @@ class SequenceTensorizerTokens(Tensorizer):
         self.support = tf.placeholder(tf.int32, (None, None, None), name="support")  # [batch_size, num_supports, num_tokens]
 
         self.questions = tf.placeholder(tf.int32, (None, None, None), name="question")  # [batch_size, pos/neg, num_tokens]
-        self.target_values = tf.placeholder(tf.float32, (None, None, None), name="target") # [batch_size, num_support, num_tokens]
+        self.target_values = tf.placeholder(tf.float64, (None, None, None), name="target") # [batch_size, num_support, num_tokens]
 
 
         #super().__init__(candidates, questions, target_values, support)
