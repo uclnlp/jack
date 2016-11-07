@@ -104,7 +104,7 @@ def quebap_load(path, max_count=None, **options):
     return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
 
 
-#@todo: rewrite such that it works for different types of quebap files
+#@todo: rewrite such that it works for different types of quebap files / models
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False):
     vocab = vocab or VocabEmb(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
@@ -128,8 +128,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
 def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
-        'bicond_singlesupport_reader': ReaderModel.conditional_reader_model
-        #'log_linear': create_log_linear_reader,
+        'bicond_singlesupport_reader': ReaderModel.conditional_reader_model,
+        'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': create_model_f_reader,
         #'boe': create_bag_of_embeddings_reader
     }

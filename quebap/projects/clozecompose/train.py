@@ -8,7 +8,7 @@ from quebap.projects.clozecompose.models import *
 #from quebap.model.models import *
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
-                 optimiser=tf.train.GradientDescentOptimizer(learning_rate=0.000001), use_train_generator_for_test=False): #optimiser=tf.train.AdamOptimizer(learning_rate=0.001)
+                 optimiserType="GradientDescent", gradDebug=False, use_train_generator_for_test=False): #optimiser=tf.train.AdamOptimizer(learning_rate=0.001)
     """
     Train a reader, and test on test set.
     :param reader: The reader to train
@@ -19,18 +19,29 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
     :param optimiser: the optimiser to use
     :return: Nothing
     """
+
+
+
+    global_step = tf.Variable(0, trainable=False)
+    starter_learning_rate = 0.001
+    learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
+                                               1000, 0.96, staircase=True)
+
+    if optimiserType == "GradientDescent":
+        optimiser = tf.train.GradientDescentOptimizer(learning_rate)
+    else:
+        optimiser = tf.train.RMSPropOptimizer(learning_rate)
+
     grads = optimiser.compute_gradients(reader.loss)
 
-
     capped_grads = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in grads]
-    opt_op = optimiser.apply_gradients(capped_grads)
+    opt_op = optimiser.apply_gradients(capped_grads, global_step=global_step)
+
 
     #opt_op = optimiser.minimize(reader.loss)
 
     sess = tf.Session()
     sess.run(tf.initialize_all_variables())
-
-
 
     for epoch in range(0, num_epochs):
         print("Epoch:", epoch)
@@ -42,9 +53,9 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             #print(batch)
 
             # compute gradients
-            #if i == 0:
-            #    grad_vals = sess.run((grads), feed_dict=batch)
-            #    print('some grad_vals: ', grad_vals[0])
+            if gradDebug == True and i == 0:
+                grad_vals = sess.run((grads), feed_dict=batch)
+                print('some grad_vals: ', grad_vals[0])
 
             # applies the gradients
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
@@ -58,6 +69,9 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             predictions_tr += reader.tensorizer.convert_to_predictions(batch, scores)
 
             i += 1
+
+        print("Global step: ", global_step.eval(session=sess))
+        print("Learning rate: ", learning_rate.eval(session=sess))
 
         print("Train Loss: ", np.sum(avg_loss) / count)
         print("Acc: ", accuracy(train_data, {'instances': predictions_tr}))
@@ -73,7 +87,7 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
                 #candidates_ids = batch_test[reader.tensorizer.candidates]
                 predictions_test += reader.tensorizer.convert_to_predictions(batch_test, scores)
             except ValueError:
-                print("ValueError for", batch_test[reader.tensorizer.questions])
+                #print("ValueError for", batch_test[reader.tensorizer.questions])
                 continue
             #i += 1
 

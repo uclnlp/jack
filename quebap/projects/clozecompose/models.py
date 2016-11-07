@@ -6,6 +6,7 @@ import quebap.util.tfutil as tfutil
 from quebap.projects.clozecompose.tensorizer import *
 from quebap.util import tfutil as tfutil
 
+_FLOAT_TYPE = tf.float64
 
 def create_dense_embedding(ids, repr_dim, num_symbols):
     """
@@ -14,7 +15,7 @@ def create_dense_embedding(ids, repr_dim, num_symbols):
     :param num_symbols: number of symbols
     :return: [d1, ... ,dn,repr_dim] tensor representation of symbols.
     """
-    embeddings = tf.Variable(tf.random_normal((num_symbols, repr_dim), dtype=tf.float64), dtype=tf.float64)
+    embeddings = tf.Variable(tf.random_normal((num_symbols, repr_dim), dtype=_FLOAT_TYPE), dtype=_FLOAT_TYPE)
     encodings = tf.gather(embeddings, ids)  # [batch_size, repr_dim]
     return encodings
 
@@ -27,8 +28,8 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
     :param vocab_size: number of symbols
     :return: return [batch_size, repr_dim] tensor representation of symbols.
     """
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
-                                   name=emb_name, trainable=True, dtype=tf.float64)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=_FLOAT_TYPE),
+                                   name=emb_name, trainable=True, dtype=_FLOAT_TYPE)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -43,7 +44,7 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
         # returning [batch_size, max_time, cell.output_size]
         outputs, last_states = tf.nn.dynamic_rnn(
             cell=cell,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
@@ -62,8 +63,8 @@ def create_bowv_embedding(inputs, repr_dim, vocab_size, emb_name):
     """
 
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
-                                   name=emb_name, trainable=True, dtype=tf.float64)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=_FLOAT_TYPE),
+                                   name=emb_name, trainable=True, dtype=_FLOAT_TYPE)
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
     # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
@@ -83,8 +84,8 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
     """
 
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
-                                   name=emb_name, trainable=True, dtype=tf.float64)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=_FLOAT_TYPE),
+                                   name=emb_name, trainable=True, dtype=_FLOAT_TYPE)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -104,7 +105,7 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
         # last_states shape: [batch_size, cell.state_size]
         outputs_fw, last_state_fw = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
@@ -122,7 +123,7 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw, last_state_bw = tf.nn.dynamic_rnn(
             cell=cell_bw,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths,
             inputs=embedded_inputs_rev)
 
@@ -156,7 +157,7 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
         # returning [batch_size, max_time, cell.output_size]
         outputs_fw_cond, last_state_fw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw_cond,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond,
             initial_state=last_state_fw
@@ -177,7 +178,7 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw_cond, last_state_bw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond_rev,
             initial_state=last_state_bw
@@ -207,8 +208,8 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
     """
 
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
-                                   name=emb_name, trainable=True, dtype=tf.float64)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=_FLOAT_TYPE),
+                                   name=emb_name, trainable=True, dtype=_FLOAT_TYPE)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -226,7 +227,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # last_states shape: [batch_size, cell.state_size]
         outputs_fw, last_state_fw = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths,
             inputs=embedded_inputs)
 
@@ -243,7 +244,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # returning [batch_size, max_time, cell.output_size]
         outputs_fw_cond, last_state_fw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw_cond,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond,
             initial_state=last_state_fw
@@ -260,7 +261,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw, last_state_bw = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths,
             inputs=embedded_inputs_rev)
 
@@ -276,7 +277,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
         # last_states shape: [batch_size, cell.state_size]
         outputs_bw_cond, last_state_bw_cond = tf.nn.dynamic_rnn(
             cell=cell_fw,
-            dtype=tf.float64,
+            dtype=_FLOAT_TYPE,
             sequence_length=seq_lengths_cond,
             inputs=embedded_inputs_cond_rev,
             initial_state=last_state_bw
@@ -454,6 +455,8 @@ def create_bowv_embeddings_reader(reference_data, **options):
 
     loss_all = loss_all + tf.scalar_mul(0.1, tf.nn.l2_loss(loss_all))
 
+    loss_all = tf.reduce_mean(loss_all)
+
     return MultipleChoiceReader(tensorizer, scores_true, loss_all)
 
 
@@ -558,7 +561,7 @@ def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
     # 2) run first rnn to encode the supports
     outputs_sup = create_bowv_embedding(sup, cand_dim, tensorizer.num_symbols, "embedding_matrix_sup")
 
-    # 3) reshape the outputs of the support encoder to average outputs by batch_size
+    # 3) reshape the outputs of the support encoder to average support encoding outputs for each batch_size
     outputs_sup = tf.reshape(outputs_sup, [dim1s, dim2s, cand_dim])  # [batch_size, num_supports, cell.state_size]
     outputs_sup = tf.reduce_mean(outputs_sup, 1)  # [batch_size, cell.state_size]  <-- support encodings are mean averaged
 
@@ -635,7 +638,7 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     support_dim = options['support_dim']
 
     # question embeddings: for each symbol a [support_dim, candidate_dim] matrix
-    question_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim, candidate_dim), dtype=tf.float64), dtype=tf.float64)
+    question_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim, candidate_dim), dtype=_FLOAT_TYPE), dtype=_FLOAT_TYPE)
 
     # [batch_size, max_question_length, support_dim, candidate_dim]
     question_encoding_raw = tf.gather(question_embeddings, tensorizer.questions)
@@ -644,7 +647,7 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     question_encoding = tf.reduce_sum(question_encoding_raw, 1, keep_dims=True)
 
     # candidate embeddings: for each symbol a [candidate_dim] vector
-    candidate_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, candidate_dim), dtype=tf.float64), dtype=tf.float64)
+    candidate_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, candidate_dim), dtype=_FLOAT_TYPE), dtype=_FLOAT_TYPE)
     # [batch_size, num_candidates, max_candidate_length, candidate_dim]
     candidate_encoding_raw = tf.gather(candidate_embeddings, tensorizer.candidates)
 
@@ -652,7 +655,7 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     candidate_encoding = tf.reduce_sum(candidate_encoding_raw, 2, keep_dims=True)
 
     # each symbol has [support_dim] vector
-    support_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim), dtype=tf.float64), dtype=tf.float64)
+    support_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim), dtype=_FLOAT_TYPE), dtype=_FLOAT_TYPE)
 
     # [batch_size, max_support_num, max_support_length, support_dim]
     support_encoding_raw = tf.gather(support_embeddings, tensorizer.support)
@@ -667,486 +670,5 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
 
     loss = create_softmax_loss(scores, tensorizer.target_values)
     return MultipleChoiceReader(tensorizer, scores, loss)
-
-
-
-
-
-class SequenceTensorizerTokens2(Tensorizer):
-    """
-    Converts reading instances into tensors of integer sequences representing tokens. A question batch
-    is tranformed into a [batch_size, max_length] integer matrix (question placeholder),
-    a list of candidates into a [batch_size, num_candidates, max_length] integer tensor (candidates placeholder)
-    the answers are a 0/1 float [batch_size, num_candidates] matrix indicating a true (1) or false (0) label
-    for each candidate. (target_values placeholder)
-    The difference with respect to the SequenceTensorizer is that question lengths are included, for use with the
-    Tensorflow dynamic_rnn
-    """
-
-    def __init__(self, reference_data):
-        """
-        Create a new SequenceTensorizer.
-        :param reference_data: the training data that determines the lexicon.
-        :param candidate_split: the regular expression used for tokenizing candidates.
-        :param question_split: the regular expression used for tokenizing questions.
-        :param support_split: the regular expression used for tokenizing support documents.
-        """
-        self.useSupport = True
-        self.reference_data = reference_data
-        self.pad = "<pad>"
-        self.none = "<none>"  # for NONE answer / neg instances
-
-        self.question_lengths = tf.placeholder(tf.int32, (None, None), name="question_lengths")  # [batch_size, pos/neg]
-        #self.candidate_lengths = tf.placeholder(tf.int32, (None, None), name="candidate_lengths")  # [batch_size, num_candidates]
-        self.support_lengths = tf.placeholder(tf.int32, (None, None), name="support_lengths")  # [batch_size, num_support]
-        self.support = tf.placeholder(tf.int32, (None, None, None), name="support")  # [batch_size, num_supports, num_tokens]
-
-
-        self.questions = tf.placeholder(tf.int32, (None, None, None), name="question")  # [batch_size, pos/neg, num_tokens]
-        #self.candidates = tf.placeholder(tf.int32, (None, None), name="candidates")  # [batch_size, num_candidates]
-        self.target_values = tf.placeholder(tf.float64, (None, None, None), name="target") # [batch_size, num_tokens, num_types]
-
-        self.target_lengths = tf.placeholder(tf.int64, (None), name="target_lengths")  # [batch_size]
-
-        instances = reference_data['instances']
-
-        all_question_tokens = [self.pad, self.none] + [token
-                                                        for inst in instances
-                                                        for question in inst['questions']
-                                                        for token in
-                                                        word_tokenize(question['question'])]
-
-        all_support_tokens = [self.pad, self.none] + [token
-                                                       for inst in instances
-                                                       for support in inst['support']
-                                                       for token in
-                                                       word_tokenize(support['text'])]
-
-        """all_candidate_tokens = [self.pad, self.none] + [token
-                                                         for inst in instances
-                                                         for question in inst['questions']
-                                                         for candidate in question['candidates'] + question['answers']
-                                                         for token in
-                                                         word_tokenize(candidate['text'])]"""
-
-
-        count = [[self.pad, -1], [self.none, -1]]
-        count.extend(collections.Counter(all_question_tokens + all_support_tokens).most_common(50000-2))  # 50000
-
-        self.all_tokens = [t[0] for t in count]
-
-        self.lexicon = FrozenIdentifier(self.all_tokens, default_key=self.none)
-        self.num_symbols = len(self.lexicon)
-
-
-        all_question_seqs = [[self.lexicon[t]
-                              for t in word_tokenize(inst['questions'][0]['question'])]
-                             for inst in instances]
-
-        self.all_max_question_length = max([len(q) for q in all_question_seqs])
-
-        self.all_question_seqs_padded = [pad_seq(q, self.all_max_question_length, self.lexicon[self.pad]) for q in all_question_seqs]
-
-        self.random = random.Random(0)
-
-
-    def create_batches(self, data=None, batch_size=1, test=False):
-        """
-        Take a dataset and create a generator of (batched) feed_dict objects. At training time this
-        tensorizer sub-samples the candidates (currently one positive and one negative candidate).
-        :param data: the input dataset.
-        :param batch_size: size of each batch.
-        :param test: should this be generated for test time? If so, the candidates are all possible candidates.
-        :return: a generator of batches.
-        """
-
-        instances = self.reference_data['instances'] if data is None else data['instances']
-
-        for b in range(0, len(instances) // batch_size):
-            batch = instances[b * batch_size: (b + 1) * batch_size]
-
-
-            support_seqs = [[[self.lexicon[t]
-                          for t in word_tokenize(support['text'])]
-                         for support in inst['support']]
-                        for inst in batch]
-            max_support_length = max([len(a) for support in support_seqs for a in support])
-            max_num_support = max([len(supports) for supports in support_seqs])
-            # [batch_size, max_num_support, max_support_length]
-            empty_support = pad_seq([], max_support_length, self.lexicon[self.pad])
-            # support_seqs_padded = [self.pad_seq([self.pad_seq(s, max_support_length) for s in supports], max_num_support) for supports in support_seqs]
-            support_seqs_padded = [
-                pad_seq([pad_seq(s, max_support_length, self.lexicon[self.pad]) for s in batch_item],
-                        max_num_support, empty_support)
-                for batch_item in support_seqs]
-
-            support_length = [[len(c) for c in pad_seq(inst, max_num_support, [])] for inst in support_seqs]
-
-            answer_seqs = [[[self.lexicon[t]
-                              for t in word_tokenize(answ['text'])]
-                             for answ in inst['questions'][0]['answers']]
-                            for inst in batch]
-
-            question_seqs = [[self.lexicon[t]
-                           for t in word_tokenize(inst['questions'][0]['question'])]
-                         for inst in batch]
-
-            #candidate_seqs = [[[self.lexicon[t]
-            #                    for t in word_tokenize(candidate['text'])]
-            #                   for candidate in inst['questions'][0]['candidates']]
-            #                  for inst in batch]
-
-            #max_question_length = max([len(q) for q in question_seqs])
-            max_question_length = self.all_max_question_length
-            #max_answer_length = max([len(a) for answer in answer_seqs for a in answer])
-
-
-
-            #max_candidate_length = max([len(a) for cand in candidate_seqs for a in cand])
-            #max_num_cands = max([len(cands) for cands in candidate_seqs])
-            #max_num_answs = max([len(answs) for answs in answer_seqs])
-
-            # [batch_size, max_question_length]
-            question_seqs_padded = [pad_seq(q, max_question_length, self.lexicon[self.pad]) for q in question_seqs]
-
-            neg_question_seqs_padded = []
-            for qi in question_seqs_padded:
-                rq = []
-                while rq == [] or rq == qi:
-                    rq = self.random.choice(self.all_question_seqs_padded)
-                neg_question_seqs_padded.append(rq)
-
-            # target is a candidate-length vector of 0/1s
-            # target_values_padded = [[c for c in pad_seq(inst, max_num_cands, 0.0)] for inst in target_values]
-
-            question_length = [len(q) for q in question_seqs]
-            # todo: change to actual lengths
-            question_length_neg = [len(q) for q in neg_question_seqs_padded]
-
-            # [batch_size, max_num_cands, max_candidate_length]
-            #empty_candidates = pad_seq([], max_candidate_length, self.lexicon[self.pad])
-            #candidate_seqs_padded = [
-            #    pad_seq([pad_seq(s, max_candidate_length, self.lexicon[self.pad]) for s in batch_item], max_num_cands, empty_candidates)
-            #    for batch_item in candidate_seqs]
-
-
-            # A [batch_size, targ_len] float matrix representing the I/O state of each token using 1 / 0 values
-            # rewrite to work with list comprehension
-
-            #should we expand this maybe?
-            target_values = [[transSentToIO(word_tokenize(support['text']), inst['questions'][0]['answers'])
-                              for support in inst['support']]
-                             for inst in batch]
-
-            empty_targets = pad_seq([], max_support_length, [0.0, 0.0])
-            target_values_padded = [
-                pad_seq([pad_seq(s, max_support_length, [0.0, 0.0]) for s in batch_item],
-                        max_num_support, empty_targets)
-                for batch_item in target_values]
-
-            target_values = [list(chain.from_iterable(subl)) for subl in target_values_padded]
-            target_len = [len(t) for t in target_values]
-
-
-
-            target_values_padded = [pad_seq(t, max(target_len), 0.0) for t in target_values]
-
-            """
-            target_values = [[transSentToIO(word_tokenize(support['text']), inst['questions'][0]['answers'])
-                              for support in inst['support']]
-                             for inst in batch]
-
-            target_values_padded = [pad_seq([pad_seq(s, max_support_length, 0.0) for s in batch_item],
-                                        max_num_support, 0.0)
-                                for batch_item in target_values]"""
-
-
-            # to test dimensionalities
-            """print(tf.shape(self.questions), tf.shape(question_seqs_padded))
-            print(tf.shape(self.question_lengths), tf.shape(question_length))
-            print(tf.shape(self.candidates), tf.shape(candidate_seqs_padded))
-            print(tf.shape(self.candidate_lengths), tf.shape(candidate_length))
-            print(tf.shape(self.support), tf.shape(support_seqs_padded))
-            print(tf.shape(self.target_values), tf.shape(target_values_padded))"""
-
-
-            # target values for test are not supplied, performance at test time is estimated by printing to converting back to quebaps again
-
-            if test:
-                yield {
-                self.questions: question_seqs_padded,
-                self.question_lengths: question_length,
-                #self.candidates: candidate_seqs_padded,  # !!! also fix in main code
-                #self.candidate_lengths: candidate_length,
-                self.support: support_seqs_padded,
-                self.support_lengths: support_length,
-                self.target_lengths: target_len
-                }
-            else:
-                yield {
-                self.questions: [(pos, neg) for pos, neg in zip(question_seqs_padded, neg_question_seqs_padded)],
-                self.question_lengths: [(pos, neg) for pos, neg in zip(question_length, question_length_neg)],
-                #self.candidates: candidate_seqs_padded,
-                #self.candidate_lengths: candidate_length,
-                self.target_values: target_values_padded,  #[(1.0, 0.0) for _ in range(0, batch_size)],
-                self.support: support_seqs_padded,
-                self.support_lengths: support_length,
-                self.target_lengths: target_len
-                }
-
-    #def pad_seq(self, seq, target_length):
-    #    return pad_seq(seq, target_length, self.pad)
-
-
-    def convert_to_predictions(self, batch, scores):
-        """
-        Convert a batched candidate tensor and batched scores back into a python dictionary in quebap format.
-        :param candidates: candidate representation as generated by this tensorizer.
-        :param scores: scores tensor of the shape of the target_value placeholder.
-        :return: sequence of reading instances corresponding to the input.
-        """
-        candidates = batch[self.candidates]
-        all_results = []
-        for scores_per_question, candidates_per_question in zip(scores, candidates):
-            result_for_question = []
-            for score, candidate_seq in zip(scores_per_question, candidates_per_question):
-                candidate_tokens = [self.lexicon.key_by_id(sym) for sym in candidate_seq if
-                                    sym != self.lexicon[self.pad]]
-                candidate_text = " ".join(candidate_tokens)
-                candidate = {
-                    'text': candidate_text,
-                    'score': score
-                }
-                result_for_question.append(candidate)
-            question = {'answers': sorted(result_for_question, key=lambda x: -x['score'])}
-            quebap = {'questions': [question]}
-            all_results.append(quebap)
-        return all_results
-
-
-
-
-
-
-class SequenceTensorizerTokens(Tensorizer):
-    """
-    Converts reading instances into tensors of integer sequences representing tokens. A question batch
-    is tranformed into a [batch_size, num_questions, max_length] integer matrix (question placeholder),
-    there is no candidate placeholder (!),
-    the answers are a [batch_size, num_questions, max_len] matrix indicating a true (1) or false (0) label
-    for each token. (target_values placeholder).
-    The latter is automatically constructured from candidates in the json files
-    """
-
-    def __init__(self, reference_data):
-        """
-        Create a new SequenceTensorizer.
-        :param reference_data: the training data that determines the lexicon.
-        :param candidate_split: the regular expression used for tokenizing candidates.
-        :param question_split: the regular expression used for tokenizing questions.
-        :param support_split: the regular expression used for tokenizing support documents.
-        """
-        self.useSupport = True
-        self.reference_data = reference_data
-        self.pad = "<pad>"
-        self.none = "<none>"  # for NONE answer / neg instances
-
-        self.question_lengths = tf.placeholder(tf.int32, (None, None), name="question_lengths")  # [batch_size, pos/neg]
-        self.support_lengths = tf.placeholder(tf.int32, (None, None), name="support_lengths")  # [batch_size, num_support]
-        self.support = tf.placeholder(tf.int32, (None, None, None), name="support")  # [batch_size, num_supports, num_tokens]
-
-        self.questions = tf.placeholder(tf.int32, (None, None, None), name="question")  # [batch_size, pos/neg, num_tokens]
-        self.target_values = tf.placeholder(tf.float64, (None, None, None), name="target") # [batch_size, num_support, num_tokens]
-
-
-        #super().__init__(candidates, questions, target_values, support)
-
-
-        instances = reference_data['instances']
-
-        all_question_tokens = [self.pad, self.none] + [token
-                                                        for inst in instances
-                                                        for question in inst['questions']
-                                                        for token in
-                                                        word_tokenize(question['question'])]
-
-        all_support_tokens = [self.pad, self.none] + [token
-                                                       for inst in instances
-                                                       for support in inst['support']
-                                                       for token in
-                                                       word_tokenize(support['text'])]
-
-        count = [[self.pad, -1], [self.none, -1]]
-        count.extend(collections.Counter(all_question_tokens + all_support_tokens).most_common(50000-2))  # 50000
-
-        self.all_tokens = [t[0] for t in count]
-
-
-
-        self.lexicon = FrozenIdentifier(self.all_tokens, default_key=self.none)
-        self.num_symbols = len(self.lexicon)
-
-
-        all_question_seqs = [[self.lexicon[t]
-                              for t in word_tokenize(inst['questions'][0]['question'])]
-                             for inst in instances]
-
-        self.all_max_question_length = max([len(q) for q in all_question_seqs])
-
-        self.all_question_seqs_padded = [pad_seq(q, self.all_max_question_length, self.lexicon[self.pad]) for q in all_question_seqs]
-
-        self.random = random.Random(0)
-
-
-    def create_batches(self, data=None, batch_size=1, test=False):
-        """
-        Take a dataset and create a generator of (batched) feed_dict objects. At training time this
-        tensorizer sub-samples the candidates (currently one positive and one negative candidate).
-        :param data: the input dataset.
-        :param batch_size: size of each batch.
-        :param test: should this be generated for test time? If so, the candidates are all possible candidates.
-        :return: a generator of batches.
-        """
-
-        instances = self.reference_data['instances'] if data is None else data['instances']
-
-        for b in range(0, len(instances) // batch_size):
-            batch = instances[b * batch_size: (b + 1) * batch_size]
-
-            support_seqs = [[[self.lexicon[t]
-                          for t in word_tokenize(support['text'])]
-                         for support in inst['support']]
-                        for inst in batch]
-            max_support_length = max([len(a) for support in support_seqs for a in support])
-            max_num_support = max([len(supports) for supports in support_seqs])
-            # [batch_size, max_num_support, max_support_length]
-            empty_support = pad_seq([], max_support_length, self.lexicon[self.pad])
-            # support_seqs_padded = [self.pad_seq([self.pad_seq(s, max_support_length) for s in supports], max_num_support) for supports in support_seqs]
-            support_seqs_padded = [
-                pad_seq([pad_seq(s, max_support_length, self.lexicon[self.pad]) for s in batch_item],
-                        max_num_support, empty_support)
-                for batch_item in support_seqs]
-
-            support_length = [[len(c) for c in pad_seq(inst, max_num_support, [])] for inst in support_seqs]
-
-
-            question_seqs = [[self.lexicon[t]
-                           for t in word_tokenize(inst['questions'][0]['question'])]
-                         for inst in batch]
-
-            max_question_length = self.all_max_question_length
-
-            # [batch_size, max_question_length]
-            question_seqs_padded = [pad_seq(q, max_question_length, self.lexicon[self.pad]) for q in question_seqs]
-
-            neg_question_seqs_padded = []
-            for qi in question_seqs_padded:
-                rq = []
-                while rq == [] or rq == qi:
-                    rq = self.random.choice(self.all_question_seqs_padded)
-                neg_question_seqs_padded.append(rq)
-
-
-            target_values = [[transSentToIO(word_tokenize(support['text']), inst['questions'][0]['answers'])
-                              for support in inst['support']]
-                            for inst in batch]
-
-            target_values_padded = [pad_seq([pad_seq(s, max_support_length, 0.0) for s in batch_item],
-                        max_num_support, 0.0)
-                for batch_item in target_values]
-
-
-            #target_values_padded = [pad_seq(q, max_question_length, 0.0) for q in target_values] #[[c for c in pad_seq(inst, max_num_cands, 0.0)] for inst in target_values]
-            #neg_target_values_padded = [[0.0 for c in q] for q in target_values_padded] #[pad_seq(q, max_question_length, 0.0) for q in target_values]
-
-            question_length = [len(q) for q in question_seqs]
-            #todo: change to actual lengths
-            question_length_neg = [len(q) for q in neg_question_seqs_padded]
-
-            # target values for test are not supplied, performance at test time is estimated by printing to converting back to quebaps again
-
-            # sample negative candidate
-
-            if test:
-                yield {
-                self.questions: question_seqs_padded,
-                self.question_lengths: question_length,
-                #self.candidates: candidate_seqs_padded,
-                #self.candidate_lengths: candidate_length,
-                self.support: support_seqs_padded,
-                self.support_lengths: support_length
-                }
-            else:
-                yield {
-                self.questions: [(pos, neg) for pos, neg in zip(question_seqs_padded, neg_question_seqs_padded)],
-                self.question_lengths: [(pos, neg) for pos, neg in zip(question_length, question_length_neg)],
-                #self.candidates: candidate_seqs_padded,
-                #self.candidate_lengths: candidate_length,
-                self.target_values: target_values_padded,
-                self.support: support_seqs_padded,
-                self.support_lengths: support_length
-                }
-
-
-
-    def convert_to_predictions(self, batch, scores):
-        """
-        Convert a batched candidate tensor and batched scores back into a python dictionary in quebap format.
-        :param candidates: candidate representation as generated by this tensorizer.
-        :param scores: scores tensor of the shape of the target_value placeholder.
-        :return: sequence of reading instances corresponding to the input.
-        """
-        # todo: update to work with current batcher
-        theta = 0.5
-        all_results = []
-        for scores_per_question, supports_per_question in zip(scores, batch.suport):  # for inst in batch
-
-            result_for_question = []
-            all_preds = []
-            all_scores = []
-
-            for scores, support_seqs in zip(scores_per_question, supports_per_question):  # for each support seq
-
-                curr_pred = []
-                curr_sco = []
-                len_sco = 0
-                for sco, sup in zip(scores, support_seqs):
-                    if (sco > theta and sup != self.lexicon[self.pad]):
-                        curr_pred.append(sup)
-                        len_sco += 1
-                        curr_sco.append(sco)
-                    elif (sco > theta and sup == self.lexicon[self.pad]):
-                        curr_pred.append(self.pad)
-                        len_sco += 1
-                        curr_sco.append(sco)
-                    else:
-                        if len(curr_pred) > 0:
-                            pred = " ".join(curr_pred)
-                            all_preds.append(pred)
-                            score = np.sum(curr_sco) / len_sco
-                            all_scores.append(score)
-                        curr_pred = []
-                        len_sco = 0
-                        curr_sco = []
-
-                #answer_tokens = [self.lexicon.key_by_id(sup) for sco, sup in zip(scores, support_seqs) if
-                #                 (sco > theta and sup != self.lexicon[self.pad])]
-
-            for au in set(all_preds):
-                indices = [i for i, x in enumerate(all_preds) if x == au]
-                scores = [all_scores[i] for i in indices]
-
-                total_score = np.sum(scores) / len(scores)
-
-                candidate = {
-                    'text': au,
-                    'score': total_score
-                }
-                result_for_question.append(candidate)
-            question = {'answers': sorted(result_for_question, key=lambda x: -x['score'])}
-            quebap = {'questions': [question]}
-            all_results.append(quebap)
-        return all_results
-
 
 
