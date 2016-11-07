@@ -20,8 +20,6 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
     :return: Nothing
     """
 
-
-
     global_step = tf.Variable(0, trainable=False)
     starter_learning_rate = 0.001
     learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step,
