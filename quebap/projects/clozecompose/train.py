@@ -42,9 +42,9 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             #print(batch)
 
             # compute gradients
-            if i == 0:
-                grad_vals = sess.run((grads), feed_dict=batch)
-                print('some grad_vals: ', grad_vals[0])
+            #if i == 0:
+            #    grad_vals = sess.run((grads), feed_dict=batch)
+            #    print('some grad_vals: ', grad_vals[0])
 
             # applies the gradients
             _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
@@ -149,8 +149,8 @@ def main():
         training_dataset = result
 
     elif args.testSetup == "clozeOnly":
-        #training_dataset = shorten_reading_dataset(reading_dataset_cloze, 200001, len(reading_dataset_cloze['instances']) - 1)
-        #testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 200000)
+        #training_dataset = shorten_reading_dataset(reading_dataset_cloze, 100001, len(reading_dataset_cloze['instances']) - 1)
+        #testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 100000)
         testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 362001, len(reading_dataset_cloze['instances']) - 1)
         training_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 2000)
         #training_dataset = reading_dataset_cloze

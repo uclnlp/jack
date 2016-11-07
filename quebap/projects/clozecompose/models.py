@@ -14,7 +14,7 @@ def create_dense_embedding(ids, repr_dim, num_symbols):
     :param num_symbols: number of symbols
     :return: [d1, ... ,dn,repr_dim] tensor representation of symbols.
     """
-    embeddings = tf.Variable(tf.random_normal((num_symbols, repr_dim)))
+    embeddings = tf.Variable(tf.random_normal((num_symbols, repr_dim), dtype=tf.float64), dtype=tf.float64)
     encodings = tf.gather(embeddings, ids)  # [batch_size, repr_dim]
     return encodings
 
@@ -27,8 +27,8 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
     :param vocab_size: number of symbols
     :return: return [batch_size, repr_dim] tensor representation of symbols.
     """
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
-                                   name=emb_name, trainable=True)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
+                                   name=emb_name, trainable=True, dtype=tf.float64)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -62,8 +62,8 @@ def create_bowv_embedding(inputs, repr_dim, vocab_size, emb_name):
     """
 
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
-                                   name=emb_name, trainable=True)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
+                                   name=emb_name, trainable=True, dtype=tf.float64)
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
     # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
@@ -83,8 +83,8 @@ def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_
     """
 
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
-                                   name=emb_name, trainable=True)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
+                                   name=emb_name, trainable=True, dtype=tf.float64)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -207,8 +207,8 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
     """
 
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
-    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1),
-                                   name=emb_name, trainable=True)
+    embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=tf.float64),
+                                   name=emb_name, trainable=True, dtype=tf.float64)
     # [batch_size, max_seq_length, input_size]
     embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
 
@@ -449,7 +449,7 @@ def create_bowv_embeddings_reader(reference_data, **options):
     loss_false = create_softmax_loss(scores_false, targets_false)
 
     # add scores and losses for pos and neg examples
-    scores_all = scores_true + scores_false
+    #scores_all = scores_true + scores_false
     loss_all = loss_true + loss_false
 
     loss_all = loss_all + tf.scalar_mul(0.1, tf.nn.l2_loss(loss_all))
@@ -635,7 +635,7 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     support_dim = options['support_dim']
 
     # question embeddings: for each symbol a [support_dim, candidate_dim] matrix
-    question_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim, candidate_dim)))
+    question_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim, candidate_dim), dtype=tf.float64), dtype=tf.float64)
 
     # [batch_size, max_question_length, support_dim, candidate_dim]
     question_encoding_raw = tf.gather(question_embeddings, tensorizer.questions)
@@ -644,7 +644,7 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     question_encoding = tf.reduce_sum(question_encoding_raw, 1, keep_dims=True)
 
     # candidate embeddings: for each symbol a [candidate_dim] vector
-    candidate_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, candidate_dim)))
+    candidate_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, candidate_dim), dtype=tf.float64), dtype=tf.float64)
     # [batch_size, num_candidates, max_candidate_length, candidate_dim]
     candidate_encoding_raw = tf.gather(candidate_embeddings, tensorizer.candidates)
 
@@ -652,7 +652,7 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     candidate_encoding = tf.reduce_sum(candidate_encoding_raw, 2, keep_dims=True)
 
     # each symbol has [support_dim] vector
-    support_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim)))
+    support_embeddings = tf.Variable(tf.random_normal((tensorizer.num_symbols, support_dim), dtype=tf.float64), dtype=tf.float64)
 
     # [batch_size, max_support_num, max_support_length, support_dim]
     support_encoding_raw = tf.gather(support_embeddings, tensorizer.support)
