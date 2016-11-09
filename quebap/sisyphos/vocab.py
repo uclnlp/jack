@@ -230,6 +230,9 @@ class NeuralVocab(Vocab):
             self.input_size = embedding_matrix.get_shape()[1] #ignore input argument input_size
             self.embedding_matrix = embedding_matrix
 
+        if self.unit_normalize:
+            self.embedding_matrix = unit_length_transform(self.embedding_matrix, dim=1)
+
         #pre-assign embedding vectors to all ids
         self.id2vec = [self.embed_symbol(id) for id in range(len(self))] #always OK if frozen
 
@@ -237,19 +240,23 @@ class NeuralVocab(Vocab):
 
     def embed_symbol(self, id):
         id_embedded = tf.nn.embedding_lookup(self.embedding_matrix, id)
-        if self.unit_normalize:
-            id_embedded = unit_length_transform(id_embedded, 0)
         return id_embedded
 
+
     def __call__(self, *args, **kwargs):
-        ids = args
-        if len(args) == 1:
+        if len(args) == 1:  #tuple with length 1: then either list with ids, tensor with ids, or single id
             if isinstance(args[0], list):
                 ids = args[0]
+            elif tf.contrib.framework.is_tensor(args[0]):
+                #return embedded tensor
+                return tf.nn.embedding_lookup(self.embedding_matrix, args[0])
             else:
                 return self.id2vec[args[0]]
-
+        else: #tuple with ids
+            ids = args
         return [self.id2vec[id] for id in ids]
+
+
 
 
 if __name__ == '__main__':
