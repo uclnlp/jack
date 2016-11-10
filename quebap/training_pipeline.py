@@ -129,9 +129,9 @@ def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': ReaderModel.conditional_reader_model,
-        'log_linear': ReaderModel.create_log_linear_reader,
-        #'model_f': create_model_f_reader,
-        #'boe': create_bag_of_embeddings_reader
+        #'log_linear': ReaderModel.create_log_linear_reader,
+        #'model_f': ReaderModel.create_model_f_reader,
+        #'boe': ReaderModel.create_bag_of_embeddings_reader
     }
 
     support_alts = {'none', 'single', 'multiple'}
@@ -140,6 +140,8 @@ def main():
 
     #@todo: dict with choice of different types of embeddings for pretraining
     #@todo: dict for different optimisers
+    #@todo: option for sampling negative training data
+    #@todo: option for different ways of tokenising training data
     #@todo: parameters for different bucket structures
     #@todo: uncomment other options again once they work
 
@@ -176,13 +178,6 @@ def main():
     #                    help="When using features: type of features.")
 
     args = parser.parse_args()
-
-    # reading_dataset = shorten_reading_dataset(json.load(args.train), args.train_begin, args.train_end)
-
-    # reader_model = reader_models[args.model](reading_dataset, **vars(args))
-
-    # train_reader(reader_model, reading_dataset, reading_dataset, args.epochs, args.batch_size,
-    #             use_train_generator_for_test=True)
 
 
     bucket_order = ('question','support') #composite buckets; first over premises, then over hypotheses
@@ -236,12 +231,12 @@ def main():
     checkpoint()
 
     print('create embeddings matrix')
-    embeddings_matrix = create_embeddings(train_vocab, retrain=True) if args.pretrain else None
+    embeddings = create_embeddings(train_vocab, retrain=True) if args.pretrain else None
 
     checkpoint()
     print('build model')
     reader = ReaderModel()
-    (logits, loss, predict), placeholders = reader_models[args.model](reader, embeddings_matrix, **vars(args))
+    (logits, loss, predict), placeholders = reader_models[args.model](reader, embeddings, **vars(args))
 
 
     train_feed_dicts = \
@@ -262,7 +257,7 @@ def main():
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, hooks=hooks)
 
-    # TODO: evaluate on test data
+    # TODO: evaluate on test data in quebap format
 
 
 if __name__ == "__main__":
