@@ -1,9 +1,7 @@
-import sys
-sys.path.append("/home/isabelle/quebap")
+#import sys
+#sys.path.append("/home/isabelle/quebap")
 
 import argparse
-import tensorflow as tf
-from quebap.projects.clozecompose.tensorizer import *
 from quebap.projects.clozecompose.models import *
 #from quebap.model.models import *
 
@@ -39,6 +37,7 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
     #opt_op = optimiser.minimize(reader.loss)
 
     sess = tf.Session()
+    writer = tf.train.SummaryWriter("log", sess.graph)
     sess.run(tf.initialize_all_variables())
 
     for epoch in range(0, num_epochs):
@@ -55,8 +54,14 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
                 grad_vals = sess.run((grads), feed_dict=batch)
                 print('some grad_vals: ', grad_vals[0])
 
+            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+            run_metadata = tf.RunMetadata()
+
             # applies the gradients
-            _, loss = sess.run((opt_op, reader.loss), feed_dict=batch)
+            summary, loss = sess.run((opt_op, reader.loss), feed_dict=batch, options=run_options, run_metadata=run_metadata)
+
+            writer.add_run_metadata(run_metadata, 'step%d' % epoch*i)
+            writer.add_summary(summary, epoch*i)
             avg_loss += loss
             count += 1
             #if count % 2 == 0:
@@ -67,6 +72,8 @@ def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs
             predictions_tr += reader.tensorizer.convert_to_predictions(batch, scores)
 
             i += 1
+
+
 
         print("Global step: ", global_step.eval(session=sess))
         print("Learning rate: ", learning_rate.eval(session=sess))
@@ -116,7 +123,7 @@ def main():
     }
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--trainKBP', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap training file")
+    #parser.add_argument('--trainKBP', default='../../data/scienceQA/scienceQA_kbp_all.json', type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--trainCloze', default='../../data/scienceQA/scienceQA_cloze_with_support_2016-11-03.json',#scienceQA_cloze_withcont_2016-10-25_small.json',#scienceQA_cloze_with_support_2016-11-03.json',#scienceQA_cloze_withcont_2016-10-9.json',
                     type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--testSetup', default='clozeOnly', help="clozeOnly, kbpOnly, kbpForTest, clozeForTest, both")
@@ -163,8 +170,10 @@ def main():
     elif args.testSetup == "clozeOnly":
         #training_dataset = shorten_reading_dataset(reading_dataset_cloze, 100001, len(reading_dataset_cloze['instances']) - 1)
         #testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 100000)
-        testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 362001, len(reading_dataset_cloze['instances']) - 1)
-        training_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 2000)
+        #testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 362001, len(reading_dataset_cloze['instances']) - 1)
+        #training_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 2000)
+        testing_dataset = shorten_reading_dataset(reading_dataset_cloze, 1001, 2000)
+        training_dataset = shorten_reading_dataset(reading_dataset_cloze, 0, 1000)
         #training_dataset = reading_dataset_cloze
         #testing_dataset = reading_dataset_cloze
 

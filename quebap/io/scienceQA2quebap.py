@@ -557,7 +557,7 @@ def main(mode):
         outfile.close()
     elif mode == "Cloze":
         #corpus = convert_scienceQACloze_to_quebap("../../quebap/data/scienceQA/_cloze_sept6_2016.txt", addSupport=True, shortsupport=True)
-        corpus = convert_scienceQACloze_withsupport_to_quebap("../../quebap/data/scienceQA/cloze_with_support_2016-10-20_2_tiny.txt")#cloze_withcontext_sorted.txt")
+        corpus = convert_scienceQACloze_withsupport_to_quebap("../../quebap/data/scienceQA/cloze_with_support_2016-10-26_subselect.txt")#cloze_withcontext_sorted.txt")
         with open("../../quebap/data/scienceQA/scienceQA_cloze_withcont_2016-10-25_small.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 

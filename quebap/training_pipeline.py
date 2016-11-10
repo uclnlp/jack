@@ -47,7 +47,7 @@ def quebap_load(path, max_count=None, **options):
     reading_dataset = json.load(path)
 
     def textOrDict(c):
-        if type(c) == dict:
+        if isinstance(c, dict):
             c = c["text"]
         return c
 
@@ -138,12 +138,19 @@ def main():
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
+    #@todo: factory method for models (Tim?)
+    #@todo: run methods on full datasets
     #@todo: dict with choice of different types of embeddings for pretraining
     #@todo: dict for different optimisers
-    #@todo: option for sampling negative training data
+    #@todo: option for sampling negative training data -- generator for training loop at run-time (Pasquale). Or by using computation graphs? Maybe keep that for later.
     #@todo: option for different ways of tokenising training data
     #@todo: parameters for different bucket structures
     #@todo: uncomment other options again once they work
+    #@todo: logging statements instead of print statements
+    #@todo: options for different loss functions (Pasquale wrote them)
+    #@todo: config files in addition for those who want them, and a method to then set the parser arguments
+    #@todo: evaluate on test data with hooks and/or in quebap format
+
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default=True, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
@@ -161,7 +168,7 @@ def main():
     parser.add_argument('--repr_dim_output', default=5, type=int, help="Size of the output representation")
     parser.add_argument('--pretrain', default=False, type=bool, help="Use pretrained embeddings, by default the initialisation is random")
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
-    parser.add_argument('--learning_rate', default=0.001, type=int, help="Learning rate")
+    parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate")
     parser.add_argument('--epochs', default=3, type=int, help="Number of epochs to train for")
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
@@ -257,7 +264,6 @@ def main():
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, hooks=hooks)
 
-    # TODO: evaluate on test data in quebap format
 
 
 if __name__ == "__main__":
