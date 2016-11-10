@@ -138,20 +138,6 @@ def main():
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
-    #@todo: factory method for models (Tim?)
-    #@todo: run methods on full datasets
-    #@todo: dict with choice of different types of embeddings for pretraining
-    #@todo: dict for different optimisers
-    #@todo: option for sampling negative training data -- generator for training loop at run-time (Pasquale). Or by using computation graphs? Maybe keep that for later.
-    #@todo: option for different ways of tokenising training data
-    #@todo: parameters for different bucket structures
-    #@todo: uncomment other options again once they work
-    #@todo: logging statements instead of print statements
-    #@todo: options for different loss functions (Pasquale wrote them)
-    #@todo: config files in addition for those who want them, and a method to then set the parser arguments
-    #@todo: evaluate on test data with hooks and/or in quebap format
-
-
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default=True, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
     parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used")
