@@ -55,7 +55,7 @@ def create_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_nam
 def create_bowv_embedding(inputs, repr_dim, vocab_size, emb_name):
     """
     Bag of word vector encoding (dense embedding)
-    :param inputs: tensor [d1, ... ,dn] of int32 symbols
+    :param inputs: # batch_size x max_seq_length
     :param seq_lengths: [s1, ..., sn] lengths of instances in the batch
     :param repr_dim: dimension of embeddings
     :param vocab_size: number of symbols
@@ -65,12 +65,12 @@ def create_bowv_embedding(inputs, repr_dim, vocab_size, emb_name):
     # use a shared embedding matrix for now, test if this outperforms separate matrices later
     embedding_matrix = tf.Variable(tf.random_uniform([vocab_size, repr_dim], -0.1, 0.1, dtype=_FLOAT_TYPE),
                                    name=emb_name, trainable=True, dtype=_FLOAT_TYPE)
-    embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)
+    embedded_inputs = tf.nn.embedding_lookup(embedding_matrix, inputs)  # batch_size x max_seq_length x input_size
 
-    # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example
-    embedding_aggregated = tf.reduce_mean(embedded_inputs, [1])
+    # Reduce along dimension 1 (`n_input`) to get a single vector (row) per input example, i.e. one vector per quest, cand etc
+    embedding_averaged = tf.reduce_mean(embedded_inputs, [1]) # batch_size, repr_dim
 
-    return embedding_aggregated
+    return embedding_averaged
 
 
 def create_bi_sequence_embedding(inputs, seq_lengths, repr_dim, vocab_size, emb_name, rnn_scope, reuse_scope=False):
@@ -185,10 +185,26 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
         )
 
 
-    last_output_fw = tfutil.get_by_index(outputs_fw_cond, seq_lengths_cond)
-    last_output_bw = tfutil.get_by_index(outputs_bw_cond, seq_lengths_cond)
+    #last_output_fw = tfutil.get_by_index(outputs_fw_cond, seq_lengths_cond)
+    #last_output_bw = tfutil.get_by_index(outputs_bw_cond, seq_lengths_cond)
+
+    # without slicing, see http://www.wildml.com/2016/08/rnns-in-tensorflow-a-practical-guide-and-undocumented-features/
+    # input, seq_lengths, seq_dim, batch_dim=None, name=None
+    # might be more efficient or not, but at least memory warning disappears
+    outputs_fw = tf.reverse_sequence(outputs_fw_cond, seq_lengths_cond, seq_dim=1, batch_dim=0)  # slices of input are reversed on seq_dim, but only up to seq_lengths
+    dim1fw, dim2fw, dim3fw = tf.unpack(tf.shape(outputs_fw)) #[batch_size, max_time, cell.output_size]
+    last_output_fw = tf.reshape(tf.slice(outputs_fw, [0, 0, 0], [dim1fw, 1, dim3fw]), [dim1fw, dim3fw])
+
+    outputs_bw = tf.reverse_sequence(outputs_bw_cond, seq_lengths_cond, seq_dim=1, batch_dim=0)  # slices of input are reversed on seq_dim, but only up to seq_lengths
+    dim1bw, dim2bw, dim3bw = tf.unpack(tf.shape(outputs_bw)) #[batch_size, max_time, cell.output_size]
+    last_output_bw = tf.reshape(tf.slice(outputs_bw, [0, 0, 0], [dim1bw, 1, dim3bw]), [dim1bw, dim3bw])
+
+
 
     outputs_fin = tf.concat(1, [last_output_fw, last_output_bw])
+
+    #print(tf.shape(last_output_bw))
+    #print(tf.shape(outputs_fin))
 
 
     return outputs_fin
@@ -393,10 +409,20 @@ def create_sequence_embeddings_reader(reference_data, **options):
     question_encoding_false = get_bicond_multisupport_question_encoding(tensorizer, questions_false, question_lengths_false, options, reuse_scope=True)
     cand_dim = options['repr_dim'] * 2
 
-    # [batch_size, num_candidates, max_question_length, repr_dim
-    candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim,
-                                                  tensorizer.num_symbols)
-    candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
+
+    dim1c, dim2c, dim3c = tf.unpack(tf.shape(tensorizer.candidates))  # [batch_size, num_candidates, num_tokens]
+    candidates = tf.reshape(tensorizer.candidates, [-1])  # take the first support, this is the middle dimension
+
+    #candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim, tensorizer.num_symbols)
+    #candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
+
+    # alternative, see if I still get the IndexSlices warning
+    cand_embedding_matrix = tf.Variable(tf.random_uniform([tensorizer.num_symbols, cand_dim], -0.1, 0.1, dtype=_FLOAT_TYPE),
+                                   name="emb_matrix_cands", trainable=True, dtype=_FLOAT_TYPE)
+    # [batch_size, max_seq_length, input_size]
+    candidate_encoding = tf.nn.embedding_lookup(cand_embedding_matrix, candidates)
+
+    candidate_encoding = tf.reduce_sum(tf.reshape(candidate_encoding, [dim1c, dim2c, dim3c, cand_dim]), 2)
 
     scores_true = create_dot_product_scorer(question_encoding_true, candidate_encoding)  # a [batch_size, num_candidate] tensor of scores for each candidate
     scores_false = create_dot_product_scorer(question_encoding_false, candidate_encoding)
@@ -420,16 +446,12 @@ def create_bowv_embeddings_reader(reference_data, **options):
     """
     tensorizer = SequenceTensorizer(reference_data)
 
-    dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
-    #question_lengths_true = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [1])
-
     dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
     questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
 
     dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
     targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
 
-    #question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
     questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
     targets_false = tf.squeeze(tf.slice(tensorizer.target_values, [0, 1, 0], [dim1t, 1, dim3t]), [1])
 
@@ -575,6 +597,32 @@ def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
 
 
 
+def get_bowv_multisupport_concat_question_encoding(tensorizer, questions, options):
+    # bowv encoder
+    cand_dim = options['repr_dim']
+
+    # 1) reshape the support tensors to remove batch_size dimension
+    dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    sup = tf.reshape(tensorizer.support, [dim1s * dim2s, dim3s])  # [batch_size * num_supports, num_tokens]  dim1s * dim2s
+
+    # 2) run first rnn to encode the supports
+    outputs_sup = create_bowv_embedding(sup, cand_dim, tensorizer.num_symbols, "embedding_matrix_sup")
+
+    # 3) reshape the outputs of the support encoder to average support encoding outputs for each batch_size ; outputs: [batch_size, repr_dim]
+    outputs_sup = tf.reshape(outputs_sup, [dim1s, dim2s, cand_dim])  # [batch_size, num_supports, cell.state_size]
+    outputs_sup = tf.reduce_mean(outputs_sup, 1)  # [batch_size, cell.state_size]  <-- support encodings are mean averaged
+
+    # 4) run question encoder
+    outputs_que = create_bowv_embedding(questions, cand_dim, tensorizer.num_symbols, "embedding_matrix_que")
+
+    # 5) combine and return
+    #repr = outputs_que * outputs_sup
+    repr = tf.concat(1, [outputs_que, outputs_sup])  # concat. Note that for dot product later the this either needs to be squeezed or cand dim needs to be increased
+
+    return repr
+
+
+
 def get_bicond_multisupport_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False):
     # bidirectional conditional encoding with all supports averaged
 
@@ -672,3 +720,48 @@ def create_support_bag_of_embeddings_reader(reference_data, **options):
     return MultipleChoiceReader(tensorizer, scores, loss)
 
 
+
+def create_bowv_concat_embeddings_reader(reference_data, **options):
+    """
+    A reader that creates bowv representations of the input reading instance, and
+    models each question, context and candidate as the sum of the embeddings of their tokens.
+    :param reference_data: the reference training set that determines the vocabulary.
+    :param options: repr_dim, candidate_split (used for tokenizing candidates), question_split
+    :return: a MultipleChoiceReader.
+    """
+    tensorizer = SequenceTensorizer(reference_data)
+
+    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
+
+    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
+
+    questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
+    targets_false = tf.squeeze(tf.slice(tensorizer.target_values, [0, 1, 0], [dim1t, 1, dim3t]), [1])
+
+    # 5) bag of word vector encoding with all supports averaged
+    question_encoding_true = get_bowv_multisupport_concat_question_encoding(tensorizer, questions_true, options)
+    question_encoding_false = get_bowv_multisupport_concat_question_encoding(tensorizer, questions_false, options)
+    cand_dim = options['repr_dim']*2
+
+    # [batch_size, num_candidates, max_question_length, repr_dim
+    candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim,
+                                                  tensorizer.num_symbols)
+    candidate_encoding = tf.reduce_sum(candidate_embeddings, 2)  # [batch_size, num_candidates, repr_dim]
+
+    scores_true = create_dot_product_scorer(question_encoding_true, candidate_encoding)  # a [batch_size, num_candidate] tensor of scores for each candidate
+    scores_false = create_dot_product_scorer(question_encoding_false, candidate_encoding)
+
+    loss_true = create_softmax_loss(scores_true, targets_true)
+    loss_false = create_softmax_loss(scores_false, targets_false)
+
+    # add scores and losses for pos and neg examples
+    #scores_all = scores_true + scores_false
+    loss_all = loss_true + loss_false
+
+    loss_all = loss_all + tf.scalar_mul(0.1, tf.nn.l2_loss(loss_all))
+
+    loss_all = tf.reduce_mean(loss_all)
+
+    return MultipleChoiceReader(tensorizer, scores_true, loss_all)
