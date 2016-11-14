@@ -429,9 +429,13 @@ def create_sequence_embeddings_reader(reference_data, **options):
 
     loss_true = create_softmax_loss(scores_true, targets_true)
     loss_false = create_softmax_loss(scores_false, targets_false)
-    loss = loss_true + loss_false
+    loss_all = loss_true + loss_false
 
-    return MultipleChoiceReader(tensorizer, scores_true, loss)
+    # add l2 loss
+    loss_all = loss_all + tf.scalar_mul(0.1, tf.nn.l2_loss(loss_all))
+    loss_all = tf.reduce_mean(loss_all)
+
+    return MultipleChoiceReader(tensorizer, scores_true, loss_all)
 
 
 
