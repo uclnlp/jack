@@ -88,6 +88,9 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# Idea
+.idea/
+
 # Datasets
 quebap/data/SNLI/snli_1.0.zip
 quebap/data/SNLI/snli_1.0/
