@@ -854,4 +854,5 @@ def main():
     pass
 
 if __name__ == "__main__":
+    print("Old code! Deprecated as of 27 October 2016")
     main()
