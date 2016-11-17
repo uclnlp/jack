@@ -73,20 +73,19 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
 
 if __name__ == '__main__':
     DEBUG = True
-    DEBUG_EXAMPLES = 2000#20000
-
+    DEBUG_EXAMPLES = 20#20000
 
     input_size = 100
     output_size = 100
-    batch_size = 2048
-    dev_batch_size = 2048
+    batch_size = 10
+    dev_batch_size = 10
     pretrain = False #use pretrained embeddings
     retrain = True #False: fix pre-trained embeddings
 
-    learning_rate = 0.0003
+    learning_rate = 0.01
 
-    bucket_order = ('sentence1','sentence2') #composite buckets; first over premises, then over hypotheses
-    bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
+    bucket_order = ('sentence1', 'sentence2') #composite buckets; first over premises, then over hypotheses
+    bucket_structure = (4, 4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
 
 
     if DEBUG:

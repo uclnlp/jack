@@ -103,6 +103,7 @@ class Vocab(object):
 
     def count_pretrained(self):
         return -self.next_neg - 1
+
     def count_oov(self):
         return self.next_pos
 
