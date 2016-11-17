@@ -12,7 +12,7 @@ from pprint import pprint
 #        support (sequence of sequence of sequences)
 #        labels (sequence of symbols)
 # corpus = [hypotheses, premises, support, labels]
-from sisyphos.vocab import Vocab, VocabEmb
+from quebap.sisyphos.vocab import Vocab, NeuralVocab
 
 
 

@@ -23,7 +23,7 @@ checkpoint = Duration()
 #from quebap.tensorizer import *
 
 from quebap.sisyphos.batch import get_feed_dicts
-from quebap.sisyphos.vocab import Vocab, VocabEmb
+from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.models import create_embeddings  # conditional_reader_model,
 from quebap.sisyphos.train import train
@@ -106,7 +106,8 @@ def quebap_load(path, max_count=None, **options):
 
 #@todo: rewrite such that it works for different types of quebap files / models
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False):
-    vocab = vocab or VocabEmb(emb=emb)
+    #vocab = vocab or VocabEmb(emb=emb)
+    vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     candidate_vocab = candidate_vocab or Vocab(unk=None)
     if freeze:
@@ -121,7 +122,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
-    corpus_ids = deep_map(corpus_ids, vocab.normalize, ['question', 'support']) #needs freezing next time to be comparable with other pipelines
+    corpus_ids = deep_map(corpus_ids, vocab._normalize, ['question', 'support']) #needs freezing next time to be comparable with other pipelines
     return corpus_ids, vocab, target_vocab, candidate_vocab
 
 

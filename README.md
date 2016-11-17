@@ -2,6 +2,9 @@
 [![wercker status](https://app.wercker.com/status/ebcd272ebfdc8c08c262a000f039bfb8/s/master "wercker status")](https://app.wercker.com/project/byKey/ebcd272ebfdc8c08c262a000f039bfb8)
 UCLMR KB and QA system/tools.
 
+# Preliminaries
+Install [word embeddings code](https://github.com/kudkudak/word-embeddings-benchmarks)
+
 [Link](https://docs.google.com/document/d/1AaynDviR26bqofoImEcPxQgBcpvRBIcgLjScn-Hr6xk/edit) to Google Doc for overview/ inventory, etc.
 
 #Rules
