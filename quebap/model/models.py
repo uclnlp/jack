@@ -112,3 +112,4 @@ class ReaderModel():
                 'support': support, 'support_lengths': support_lengths,
                 'answers': targets} #placeholders
 
+
