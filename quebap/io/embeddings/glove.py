@@ -1,5 +1,6 @@
-from quebap.util.vocabulary import Vocabulary
 import numpy as np
+
+from quebap.io.embeddings.vocabulary import Vocabulary
 
 
 def load_glove(stream, vocab=None):
