@@ -67,26 +67,25 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
     corpus_ids = deep_map(corpus_os, vocab, ['sentence1', 'sentence2'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['targets'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['sentence1', 'sentence2'], fun_name='lengths', expand=True)
-    corpus_ids = deep_map(corpus_ids, vocab._normalize, ['sentence1', 'sentence2']) #needs freezing next time to be comparable with other pipelines
+    #corpus_ids = deep_map(corpus_ids, vocab._normalize, ['sentence1', 'sentence2']) #needs freezing next time to be comparable with other pipelines
     return corpus_ids, vocab, target_vocab
 
 
 if __name__ == '__main__':
     DEBUG = True
-    DEBUG_EXAMPLES = 20#20000
+    DEBUG_EXAMPLES = 20000#20000
 
     input_size = 100
     output_size = 100
-    batch_size = 10
-    dev_batch_size = 10
+    batch_size = 256
+    dev_batch_size = 256
     pretrain = False #use pretrained embeddings
     retrain = True #False: fix pre-trained embeddings
 
-    learning_rate = 0.01
+    learning_rate = 0.001
 
     bucket_order = ('sentence1', 'sentence2') #composite buckets; first over premises, then over hypotheses
     bucket_structure = (4, 4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
-
 
     if DEBUG:
         train_data = load("./quebap/data/snli/snli_1.0/snli_1.0_train.jsonl", DEBUG_EXAMPLES)
@@ -112,10 +111,13 @@ if __name__ == '__main__':
     checkpoint()
     print('encode train data')
     train_data, train_vocab, train_target_vocab = pipeline(train_data, emb=emb)
+
+
+    #print(train_vocab.sym2id)
+
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
     print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.'%(N_pre,N_oov))
-
 
     vocab_size = len(train_vocab)
     target_size = len(train_target_vocab)
@@ -137,6 +139,8 @@ if __name__ == '__main__':
     print('create embeddings matrix')
     embeddings_matrix = create_embeddings(train_vocab, retrain=retrain) if pretrain else None
 
+    print(embeddings_matrix)
+
     # todo: transform longer embeddings to input_size if they are fixed.
     # todo: Would be faster than automatically doing it in embedder (needed in case trainable)
 
@@ -155,6 +159,13 @@ if __name__ == '__main__':
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     optim = tf.train.AdamOptimizer(learning_rate)
+
+
+    #for i, dict in enumerate(train_feed_dicts):
+    #    if i == 0:
+    #        print(dict)
+    #    else:
+    #        pass
 
 
     def report_loss(sess, epoch, iter, predict, loss):
