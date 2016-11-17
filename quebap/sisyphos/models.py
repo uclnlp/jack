@@ -176,10 +176,14 @@ def conditional_reader_model(input_size, output_size, vocab_size, target_size,
                                             seq2_embedded, sentence2_lengths,
                                             output_size)
 
-    print(states)
-
-    #states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-    output = tf.concat(1, [states[0][1], states[1][1]])
+    # fixme: also use bidirectional encoding for attention model?
+    if isinstance(states, tf.nn.rnn_cell.LSTMStateTuple):
+        output = states.h
+    elif isinstance(states, tuple):
+        # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
+        output = tf.concat(1, [states[0][1], states[1][1]])
+    else:
+        raise AttributeError
 
     logits, loss, predict = predictor(output, targets, target_size)
 
