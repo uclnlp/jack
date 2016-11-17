@@ -4,7 +4,7 @@ from time import time, sleep
 from os import path
 
 from quebap.sisyphos.batch import get_feed_dicts
-from quebap.sisyphos.vocab import Vocab, VocabEmb
+from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.models import conditional_reader_model, create_embeddings
 from quebap.sisyphos.train import train
@@ -54,7 +54,8 @@ def load(path, max_count=None):
 
 
 def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
-    vocab = vocab or VocabEmb(emb=emb)
+    #vocab = vocab or NeuralVocab(base_vocab=vocab, embedding_matrix=emb)
+    vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     if freeze:
         vocab.freeze()
@@ -66,7 +67,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
     corpus_ids = deep_map(corpus_os, vocab, ['sentence1', 'sentence2'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['targets'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['sentence1', 'sentence2'], fun_name='lengths', expand=True)
-    corpus_ids = deep_map(corpus_ids, vocab.normalize, ['sentence1', 'sentence2']) #needs freezing next time to be comparable with other pipelines
+    corpus_ids = deep_map(corpus_ids, vocab._normalize, ['sentence1', 'sentence2']) #needs freezing next time to be comparable with other pipelines
     return corpus_ids, vocab, target_vocab
 
 
@@ -89,7 +90,7 @@ if __name__ == '__main__':
 
 
     if DEBUG:
-        train_data = load("./data/snli/snli_1.0/snli_1.0_train.jsonl", DEBUG_EXAMPLES)
+        train_data = load("./quebap/data/snli/snli_1.0/snli_1.0_train.jsonl", DEBUG_EXAMPLES)
         dev_data = train_data
         test_data = train_data
         if pretrain:
@@ -97,7 +98,7 @@ if __name__ == '__main__':
             embeddings = loads_embeddings(path.join('quebap', 'data', 'GloVe', emb_file))
         # embeddings = loads_embeddings(path.join('quebap','data','GloVe',emb_file), 'glove', {'vocab_size':400000,'dim':50})
     else:
-        train_data, dev_data, test_data = [load("./data/snli/snli_1.0/snli_1.0_%s.jsonl" % name)\
+        train_data, dev_data, test_data = [load("./quebap/data/snli/snli_1.0/snli_1.0_%s.jsonl" % name)\
                                            for name in ["train", "dev", "test"]]
         print('loaded train/dev/test data')
         if pretrain:

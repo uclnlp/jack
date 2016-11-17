@@ -176,11 +176,12 @@ class NeuralVocab(Vocab):
     :param train_pretrained: boolean; False (default): fix pretrained embeddings; True: continue training.
     Ignored if embedding_matrix is given.
     :param unit_normalize: normalize embedding vectors (including pretrained ones)
-
     """
     def __init__(self, base_vocab, embedding_matrix=None,
                  input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=False):
-        super(NeuralVocab, self).__init__(unk=base_vocab.unk,emb=base_vocab.emb)
+        print(base_vocab)
+        print(base_vocab.unk)
+        super(NeuralVocab, self).__init__(unk=base_vocab.unk, emb=base_vocab.emb)
 
         assert (embedding_matrix, input_size) is not (None, None), "if no embedding_matrix is provided, define input_size"
 
