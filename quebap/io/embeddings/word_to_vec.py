@@ -1,6 +1,6 @@
 import gzip
 import numpy as np
-from quebap.util.vocabulary import Vocabulary
+from quebap.io.embeddings.vocabulary import Vocabulary
 
 
 def load_word2vec(filename, vocab=None, normalise=True):

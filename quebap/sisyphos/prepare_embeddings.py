@@ -2,6 +2,14 @@ import pickle
 #from zodbpickle import pickle
 # import web.embeddings as we
 from quebap.io.embeddings.word_to_vec import load_word2vec
+from quebap.io.embeddings.embeddings import Embeddings
+
+class Embedding:
+    pass
+
+
+
+
 
 def _prepare_embeddings(fname, format, save=True, kwargs={}):
     """
@@ -11,7 +19,10 @@ def _prepare_embeddings(fname, format, save=True, kwargs={}):
     :param kwargs: needed in case format=='glove'; dict with keys 'dim' and 'vocab_size'
     """
     fname_out = '.'.join(fname.split('.')[:-1]) + '.pkl'
+
+
     return_vocab, lookup = load_word2vec(fname, normalise=False)
+    return Embeddings(return_vocab, lookup)
 
     # emb = we.load_embedding(fname, format, normalize=False, lower=True, clean_words=False, load_kwargs=kwargs)
     # if save:
@@ -31,8 +42,8 @@ def load(fname, format='pkl', save=True, kwargs={}):
         # print('load pickle file %s'%fname)
         return pickle.load(open(fname, 'rb'))
     elif format == 'word2vec_bin':
-            # return _prepare_embeddings(fname, format, save=save, kwargs=kwargs)
-        return load_word2vec(fname, normalise=False)
+        return _prepare_embeddings(fname, format, save=save, kwargs=kwargs)
+        # return load_word2vec(fname, normalise=False)
     elif format == 'glove':
         pass
         # return _prepare_embeddings(fname, format, save=save, kwargs=kwargs)
