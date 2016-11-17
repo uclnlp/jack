@@ -3,7 +3,7 @@ import numpy as np
 from quebap.util.vocabulary import Vocabulary
 
 
-def load_word2vec(filename, vocab=None):
+def load_word2vec(filename, vocab=None, normalise=True):
     print("[Loading word2vec]")
     with gzip.open(filename, 'rb') as f:
         vec_n, vec_size = map(int, f.readline().split())
@@ -29,7 +29,10 @@ def load_word2vec(filename, vocab=None):
             vector = np.fromstring(f.read(byte_size), dtype=np.float32)
             if vocab is None or vocab.contains_word(word):
                 word2idx[word] = idx
-                lookup[idx] = normalize(vector)
+                if normalise:
+                    lookup[idx] = normalize(vector)
+                else:
+                    lookup[idx] = vector
                 idx += 1
 
     lookup.resize([idx, vec_size])

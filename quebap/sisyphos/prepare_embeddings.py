@@ -1,8 +1,7 @@
 import pickle
 #from zodbpickle import pickle
-import web.embeddings as we
-from os import path
-
+# import web.embeddings as we
+from quebap.io.embeddings.word_to_vec import load_word2vec
 
 def _prepare_embeddings(fname, format, save=True, kwargs={}):
     """
@@ -12,10 +11,12 @@ def _prepare_embeddings(fname, format, save=True, kwargs={}):
     :param kwargs: needed in case format=='glove'; dict with keys 'dim' and 'vocab_size'
     """
     fname_out = '.'.join(fname.split('.')[:-1]) + '.pkl'
-    emb = we.load_embedding(fname, format, normalize=False, lower=True, clean_words=False, load_kwargs=kwargs)
-    if save:
-        pickle.dump(emb, open(fname_out, 'wb'))
-        print('wrote embeddings to ', fname_out)
+    return_vocab, lookup = load_word2vec(fname, normalise=False)
+
+    # emb = we.load_embedding(fname, format, normalize=False, lower=True, clean_words=False, load_kwargs=kwargs)
+    # if save:
+    #     pickle.dump(emb, open(fname_out, 'wb'))
+    #     print('wrote embeddings to ', fname_out)
     return emb
 
 
@@ -23,14 +24,20 @@ def load(fname, format='pkl', save=True, kwargs={}):
     """
     load embeddings from prepared pickle file, or from original file
     :param fname: filename
-    :param format: pkl | word2vec_binary | glove
+    :param format: pkl | word2vec_bin | glove
     :param kwargs: needed in case format=='glove'; dict with keys 'dim' and 'vocab_size'
     """
     if format == 'pkl':
         # print('load pickle file %s'%fname)
         return pickle.load(open(fname, 'rb'))
+    elif format == 'word2vec_bin':
+            # return _prepare_embeddings(fname, format, save=save, kwargs=kwargs)
+        return load_word2vec(fname, normalise=False)
+    elif format == 'glove':
+        pass
+        # return _prepare_embeddings(fname, format, save=save, kwargs=kwargs)
     else:
-        return _prepare_embeddings(fname, format, save=save, kwargs=kwargs)
+        print('UNKNOWN FORMAT')
 
 
 if __name__ == '__main__':
@@ -41,8 +48,9 @@ if __name__ == '__main__':
     #emb = load(path.join('quebap','data','GloVe',emb_file), 'glove', {'vocab_size':400000,'dim':50})
     #emb = load(path.join('quebap', 'data', 'GloVe', 'glove.6B.50d.pkl'))
 
-    emb_file = 'GoogleNews-vectors-negative300.bin'
-    emb = load(path.join('quebap','data','SG_GoogleNews',emb_file),format='word2vec_bin',save=False)
+    emb_file = 'quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz'
+    # path.join('quebap','data','SG_GoogleNews',emb_file)
+    emb = load(emb_file,format='word2vec_bin',save=False)
 #    emb = load(path.join('quebap','data','SG_GoogleNews',emb_file))
 
     print('embeddings shape:')
