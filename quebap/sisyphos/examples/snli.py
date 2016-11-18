@@ -75,6 +75,8 @@ if __name__ == '__main__':
     DEBUG = True
     DEBUG_EXAMPLES = 20000#20000
 
+    ATTENTIVE = True #True
+
     input_size = 100
     output_size = 100
     batch_size = 256
@@ -149,7 +151,8 @@ if __name__ == '__main__':
     print('build model')
     (logits, loss, predict), placeholders = \
         conditional_reader_model(input_size, output_size, vocab_size,
-                                 target_size, embeddings=embeddings_matrix)
+                                 target_size, embeddings=embeddings_matrix,
+                                 attentive=ATTENTIVE)
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, batch_size,
@@ -183,7 +186,5 @@ if __name__ == '__main__':
     train(loss, optim, train_feed_dicts, max_epochs=1000, hooks=hooks)
 
     #TODO: evaluate on test data
-
-
     print('finished in %.3fh'%((time()-t0)/3600.))
 
