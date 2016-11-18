@@ -135,6 +135,18 @@ def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scop
         return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope1)
 
 
+def bag_reader(inputs, lengths):
+        output=tf.reduce_sum(inputs,1,keep_dims=False)
+        return output
+        
+
+def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
+        output1 = bag_reader(seq1, seq1_lengths)
+        output2 = bag_reader(seq2, seq2_lengths)
+        # each [batch_size x max_seq_length x output_size]
+        return tf.concat(1,[output1,output2])
+
+
 def predictor(output, targets, target_size):
     logits = tf.contrib.layers.fully_connected(output, target_size)
     loss = tf.reduce_sum(

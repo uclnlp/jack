@@ -130,6 +130,7 @@ def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': ReaderModel.conditional_reader_model,
+        'boe': ReaderModel.boe_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
         #'boe': ReaderModel.create_bag_of_embeddings_reader
