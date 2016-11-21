@@ -124,3 +124,6 @@ if __name__ == '__main__':
     ]
 
     train(loss, optim, feed_dicts, max_epochs=1000, hooks=hooks)
+
+
+

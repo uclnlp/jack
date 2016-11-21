@@ -54,12 +54,14 @@ def load(fname, format='pkl', save=True, kwargs={}):
 if __name__ == '__main__':
 
     from time import time
+    import numpy as np
     t0 = time()
     #emb_file = 'glove.6B.50d.txt'
     #emb = load(path.join('quebap','data','GloVe',emb_file), 'glove', {'vocab_size':400000,'dim':50})
     #emb = load(path.join('quebap', 'data', 'GloVe', 'glove.6B.50d.pkl'))
 
-    emb_file = 'quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz'
+#    emb_file = 'quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz'
+    emb_file = './quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz'
     # path.join('quebap','data','SG_GoogleNews',emb_file)
     emb = load(emb_file,format='word2vec_bin',save=False)
 #    emb = load(path.join('quebap','data','SG_GoogleNews',emb_file))
@@ -68,5 +70,8 @@ if __name__ == '__main__':
     print(emb.shape)
     print('embedding("hello"):')
     print(emb.get('hello'))
+    print('embedding("asvl;kgjbfndgjdk"):')
+    print(emb.get('asvl;kgjbfndgjdk'))
     print('embedding length: %d'%len(emb.get('people')))
+    print('test type: ', type(emb.get('people')))
     print('total time: %.2fmin'%((time()-t0)/60.))
