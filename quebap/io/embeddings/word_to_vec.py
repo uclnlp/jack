@@ -62,7 +62,7 @@ def get_word2vec_vocabulary(fname):
 
 if __name__ == "__main__":
     pickle_tokens = False
-    vocab, _ = load_word2vec('../data/word2vec/GoogleNews-vectors-negative300.bin.gz')
+    vocab, _ = load_word2vec('../../data/word2vec/GoogleNews-vectors-negative300.bin.gz')
 
     # pickle token set
     if pickle_tokens:
