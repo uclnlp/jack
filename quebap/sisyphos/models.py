@@ -217,16 +217,19 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
     with tf.variable_scope(scope or "conditional_attentitve_reader_seq2") as varscope2:
         varscope1.reuse_variables()
 
-        max_time = tf.cast(tf.reduce_max(seq2_lengths), tf.int32)
+        batch_size = tf.shape(seq2)[0]
+        max_time = tf.shape(seq2)[1]
+        input_depth = int(seq2.get_shape()[2])
+
+        #batch_size = tf.Print(batch_size, [batch_size])
+        #max_time = tf.Print(max_time, [max_time])
+
+        # transforming seq2 to time major
+        seq2 = tf.transpose(seq2, [1, 0, 2])
         num_units = output_size
 
         # fixme: very hacky and costly way
-        batch_size = tf.cast(tf.reduce_sum(seq2_lengths / seq2_lengths), tf.int32)
-
         seq2_lengths = tf.cast(seq2_lengths, tf.int32)
-
-        input_depth = int(seq2.get_shape()[2])
-
         inputs_ta = tf.TensorArray(dtype=tf.float32, size=max_time)
         inputs_ta = inputs_ta.unpack(seq2)
 
