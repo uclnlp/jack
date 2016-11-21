@@ -205,9 +205,14 @@ class NeuralVocab(Vocab):
             if use_pretrained and base_vocab.emb_length is not None:
                 #load embeddings into numpy tensor with shape (count_pretrained, min(input_size,emb_length))
                 np_E_pre = np.zeros([n_pre, min(input_size, base_vocab.emb_length)]).astype("float32")
+                print(np_E_pre.shape)
                 for id in base_vocab.get_ids_pretrained():
                     sym = base_vocab.id2sym[id]
                     i = id - n_oov  #shifted to start from 0
+#                    print('test shape of vector')
+#                    print(base_vocab.emb(sym).shape)
+#                    print('test shape of np_E_pre')
+#                    print(np_E_pre[i,:].shape)
                     np_E_pre[i,:] = base_vocab.emb(sym)[:min(input_size,base_vocab.emb_length)]
                 E_pre = tf.get_variable("embeddings_pretrained", initializer=tf.identity(np_E_pre),
                                         trainable=train_pretrained, dtype="float32")
@@ -232,8 +237,11 @@ class NeuralVocab(Vocab):
             self.input_size = embedding_matrix.get_shape()[1] #ignore input argument input_size
             self.embedding_matrix = embedding_matrix
 
+        #todo: proper unit normalization!
+        #todo: Not implemented yet (prop. grad. through unit normalization) leads to problems; only for fixed embeddings?
         if self.unit_normalize:
-            self.embedding_matrix = unit_length_transform(self.embedding_matrix, dim=1)
+            raise NotImplementedError
+        #    self.embedding_matrix = unit_length_transform(self.embedding_matrix, dim=1)
 
         #pre-assign embedding vectors to all ids
         self.id2vec = [self.embed_symbol(id) for id in range(len(self))] #always OK if frozen
@@ -308,7 +316,7 @@ if __name__ == '__main__':
 
     print(40*'-'+'\n(3) TEST NeuralVocab without pretrained embeddings\n'+40*'-')
     with tf.variable_scope('neural_test1'):
-        nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
+        nvocab = NeuralVocab(vocab, None, 3, unit_normalize=False)
         vec = tfrun(nvocab(vocab("world")))
         print(vec)
 
@@ -318,7 +326,7 @@ if __name__ == '__main__':
         for w in ['blah','bluh','bleh']:
             print('\t%s : %s'%(w,str(emb(w))))
         print('construct NeuralVocab with input_size 4, with length-3 pre-trained embeddings')
-        nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
+        nvocab = NeuralVocab(vocab, None, 4, unit_normalize=False, use_pretrained=True, train_pretrained=False)
         print('embedding matrix:')
         mat = tfrun(nvocab.embedding_matrix)
         print(mat)
