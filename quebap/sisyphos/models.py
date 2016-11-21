@@ -155,8 +155,8 @@ def predictor(output, targets, target_size):
     return logits, loss, predict
 
 
-def conditional_reader_model(input_size, output_size, vocab_size, target_size,
-                             embeddings=None, attentive=False):
+def conditional_reader_model(output_size, target_size, nvocab, attentive = False):
+
     # Model
     # [batch_size, max_seq1_length]
     sentence1 = tf.placeholder(tf.int64, [None, None], "sentence1")
@@ -172,9 +172,11 @@ def conditional_reader_model(input_size, output_size, vocab_size, target_size,
     targets = tf.placeholder(tf.int64, [None], "targets")
 
     with tf.variable_scope("embedders") as varscope:
-        seq1_embedded = embedder(sentence1, input_size, vocab_size, embeddings=embeddings)
+        seq1_embedded = nvocab(sentence1)
         varscope.reuse_variables()
-        seq2_embedded = embedder(sentence2, input_size, vocab_size, embeddings=embeddings)
+        seq2_embedded = nvocab(sentence2)
+#        seq1_embedded = embedder(sentence1, input_size, vocab_size, embeddings=embeddings)
+#        seq2_embedded = embedder(sentence2, input_size, vocab_size, embeddings=embeddings)
 
 
     print('TRAINABLE VARIABLES (only embeddings): %d'%get_total_trainable_variables())
