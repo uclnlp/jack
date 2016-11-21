@@ -73,7 +73,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
 
 if __name__ == '__main__':
     DEBUG = True
-    DEBUG_EXAMPLES = 1024#20000
+    DEBUG_EXAMPLES = 20000 #100#20000
 
     ATTENTIVE = True #True
 
