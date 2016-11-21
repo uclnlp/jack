@@ -235,6 +235,16 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
 
         cell = tf.nn.rnn_cell.LSTMCell(num_units)
 
+        attention_states_fw, attention_states_bw = tf.split(0, 2, attention_states)
+        attention_states = tf.concat(3, [attention_states_fw, attention_states_bw])
+        attention_states = tf.squeeze(attention_states, [0])
+        # transforming attention states time major
+        attention_states = tf.transpose(attention_states, [1, 0, 2])
+
+        attention_states = tf.contrib.layers.linear(attention_states, num_units)
+
+        att_len = tf.shape(attention_states)[0]
+
         def loop_fn(time, cell_output, cell_state, loop_state):
             emit_output = cell_output  # == None for time == 0
             if cell_output is None:  # time == 0
@@ -245,31 +255,32 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
 
             c, query = next_cell_state
 
-            # [max_time x batch_size x num_units]
-            query_expanded = tf.tile(tf.expand_dims(query, 0), [max_time, 1, 1])
+            # [att_len x batch_size x num_units]
+            query_expanded = tf.tile(tf.expand_dims(query, 0), [att_len, 1, 1])
 
             attention_states_projected = \
                 tf.contrib.layers.linear(attention_states, num_units)
+
             query_projected = \
                 tf.contrib.layers.linear(query_expanded, num_units)
 
-            # [max_time x batch_size x num_units]
+            # [att_len x batch_size x num_units]
             M = tf.tanh(attention_states_projected + query_projected)
 
-            # [batch_size x max_time]
+            # [batch_size x att_len]
             logits = tf.transpose(tf.squeeze(tf.contrib.layers.linear(M, 1)))
 
-            # [max_time x batch_size]
+            # [att_len x batch_size]
             alpha = tf.transpose(tf.nn.softmax(logits))
 
-            attention_states_flat = tf.reshape(attention_states,
-                                               [-1, num_units])
+            attention_states_flat = tf.reshape(attention_states, [-1, num_units])
+
             alpha_flat = tf.reshape(alpha, [-1, 1])
 
             # [batch_size x num_units]
             r = attention_states_flat * alpha_flat
             r_reshaped = tf.reduce_sum(
-                tf.reshape(r, [max_time, batch_size, num_units]), [0])
+                tf.reshape(r, [att_len, batch_size, num_units]), [0])
 
             # [batch_size x num_units]
             h = tf.tanh(tf.contrib.layers.linear(
@@ -293,90 +304,3 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
 
         # each [batch_size x max_seq_length x output_size]
         return outputs_batch_major, final_state
-
-if __name__ == '__main__':
-    max_time = 3
-    batch_size = 2
-    input_depth = 5
-    num_units = 7
-
-    # todo: later this will be the output of another reader
-    attention_states = tf.placeholder(shape=(max_time, batch_size, num_units),
-                                      dtype=tf.float32)
-
-    inputs = tf.placeholder(shape=(max_time, batch_size, input_depth),
-                            dtype=tf.float32)
-    sequence_length = tf.placeholder(shape=(batch_size,), dtype=tf.int32)
-
-    inputs_ta = tf.TensorArray(dtype=tf.float32, size=max_time)
-    inputs_ta = inputs_ta.unpack(inputs)
-
-    cell = tf.nn.rnn_cell.LSTMCell(num_units)
-
-    def loop_fn(time, cell_output, cell_state, loop_state):
-        emit_output = cell_output  # == None for time == 0
-        if cell_output is None:  # time == 0
-            next_cell_state = cell.zero_state(batch_size, tf.float32)
-        else:
-            next_cell_state = cell_state
-        elements_finished = (time >= sequence_length)
-
-        c, query = next_cell_state
-
-        # [max_time x batch_size x num_units]
-        query_expanded = tf.tile(tf.expand_dims(query, 0), [max_time, 1, 1])
-
-        attention_states_projected = \
-            tf.contrib.layers.linear(attention_states, num_units)
-        query_projected = \
-            tf.contrib.layers.linear(query_expanded, num_units)
-
-        # [max_time x batch_size x num_units]
-        M = tf.tanh(attention_states_projected + query_projected)
-
-        # [batch_size x max_time]
-        logits = tf.transpose(tf.squeeze(tf.contrib.layers.linear(M, 1)))
-
-        # [max_time x batch_size]
-        alpha = tf.transpose(tf.nn.softmax(logits))
-
-        attention_states_flat = tf.reshape(attention_states, [-1, num_units])
-        alpha_flat = tf.reshape(alpha, [-1, 1])
-
-        # [batch_size x num_units]
-        r = attention_states_flat * alpha_flat
-        r_reshaped = tf.reduce_sum(
-            tf.reshape(r, [max_time, batch_size, num_units]), [0])
-
-        # [batch_size x num_units]
-        h = tf.tanh(tf.contrib.layers.linear(
-            tf.concat(1, [query, r_reshaped]), num_units))
-
-        next_cell_state = tf.nn.rnn_cell.LSTMStateTuple(c, h)
-
-        finished = tf.reduce_all(elements_finished)
-        next_input = tf.cond(
-            finished,
-            lambda: tf.zeros([batch_size, input_depth], dtype=tf.float32),
-            lambda: inputs_ta.read(time))
-        next_loop_state = None
-        return (elements_finished, next_input, next_cell_state,
-                emit_output, next_loop_state)
-
-
-    outputs_ta, final_state, _ = tf.nn.raw_rnn(cell, loop_fn)
-    outputs = outputs_ta.pack()
-
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-
-        feed_dict = {
-            attention_states: np.random.randn(max_time, batch_size, num_units),
-            inputs: np.random.randn(max_time, batch_size, input_depth),
-            sequence_length: np.random.randint(1, max_time, batch_size)
-        }
-
-        print(feed_dict[sequence_length])
-        results = sess.run(outputs, feed_dict)
-        print(results)
-
