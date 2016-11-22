@@ -60,9 +60,7 @@ if __name__ == '__main__':
     #emb = load(path.join('quebap','data','GloVe',emb_file), 'glove', {'vocab_size':400000,'dim':50})
     #emb = load(path.join('quebap', 'data', 'GloVe', 'glove.6B.50d.pkl'))
 
-#    emb_file = 'quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz'
     emb_file = './quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz'
-    # path.join('quebap','data','SG_GoogleNews',emb_file)
     emb = load(emb_file,format='word2vec_bin',save=False)
 #    emb = load(path.join('quebap','data','SG_GoogleNews',emb_file))
 
