@@ -176,12 +176,11 @@ class NeuralVocab(Vocab):
     Ignored if embedding_matrix is given.
     :param train_pretrained: boolean; False (default): fix pretrained embeddings; True: continue training.
     Ignored if embedding_matrix is given.
-    :param unit_normalize: normalize embedding vectors (including pretrained ones)
+    :param unit_normalize: initialize pre-trained vectors with unit norm
+    (note: randomly initialized embeddings initialized with expected unit norm).
     """
     def __init__(self, base_vocab, embedding_matrix=None,
-                 input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=False):
-        print(base_vocab)
-        print(base_vocab.unk)
+                 input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True):
         super(NeuralVocab, self).__init__(unk=base_vocab.unk, emb=base_vocab.emb)
 
         assert (embedding_matrix, input_size) is not (None, None), "if no embedding_matrix is provided, define input_size"
@@ -193,13 +192,16 @@ class NeuralVocab(Vocab):
         self.sym2freqs = base_vocab.sym2freqs
         self.unit_normalize = unit_normalize
 
+        np_normalize = lambda v: v/np.sqrt(np.sum(np.square(v)))
+
         if embedding_matrix is None:
             #construct part oov
             n_oov = base_vocab.count_oov()
             n_pre = base_vocab.count_pretrained()
             E_oov = tf.get_variable("embeddings_oov", [n_oov, input_size],
-                                     initializer=tf.random_normal_initializer(0, 0.1),
+                                     initializer=tf.random_normal_initializer(0, 1./np.sqrt(input_size)),
                                      trainable=True, dtype="float32")
+            #stdev = 1/sqrt(length): then expected initial L2 norm is 1
 
             #construct part pretrained
             if use_pretrained and base_vocab.emb_length is not None:
@@ -209,26 +211,22 @@ class NeuralVocab(Vocab):
                 for id in base_vocab.get_ids_pretrained():
                     sym = base_vocab.id2sym[id]
                     i = id - n_oov  #shifted to start from 0
-#                    print('test shape of vector')
-#                    print(base_vocab.emb(sym).shape)
-#                    print('test shape of np_E_pre')
-#                    print(np_E_pre[i,:].shape)
                     np_E_pre[i,:] = base_vocab.emb(sym)[:min(input_size,base_vocab.emb_length)]
+                    if unit_normalize:
+                        np_E_pre[i,:] = np_normalize(np_E_pre[i,:])
                 E_pre = tf.get_variable("embeddings_pretrained", initializer=tf.identity(np_E_pre),
                                         trainable=train_pretrained, dtype="float32")
-                print('test base_vocab.emb_length ',base_vocab.emb_length)
-                print('test input_size ',input_size)
-                print('test E_pre: ',E_pre.get_shape())
                 if input_size > base_vocab.emb_length:
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
-                        initializer=tf.random_normal_initializer(0.0, 0.1), dtype="float32", trainable=True)
-                    print('test E_pre_ext: ', E_pre_ext.get_shape())
+                        initializer=tf.random_normal_initializer(0.0, 1./np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
+                    #note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
                     E_pre = tf.concat(1, [E_pre, E_pre_ext], name="embeddings_pretrained_extended")
 
-            else:
+            else: #initialize all randomly anyway
                 E_pre = tf.get_variable("embeddings_not_pretrained", [n_pre, input_size],
-                                        initializer=tf.random_normal_initializer(-0.05, 0.05),
+                                        initializer=tf.random_normal_initializer(0., 1./np.sqrt(input_size)),
                                         trainable=True, dtype="float32")
+                #again: initialize with expected unit norm
 
             self.input_size = input_size   #must be provided is embedding_matrix is None
             self.embedding_matrix = tf.concat(0, [E_oov, E_pre], name="embeddings")
@@ -237,10 +235,7 @@ class NeuralVocab(Vocab):
             self.input_size = embedding_matrix.get_shape()[1] #ignore input argument input_size
             self.embedding_matrix = embedding_matrix
 
-        #todo: proper unit normalization!
-        #todo: Not implemented yet (prop. grad. through unit normalization) leads to problems; only for fixed embeddings?
-        if self.unit_normalize:
-            raise NotImplementedError
+        #does not work:
         #    self.embedding_matrix = unit_length_transform(self.embedding_matrix, dim=1)
 
         #pre-assign embedding vectors to all ids
@@ -316,7 +311,7 @@ if __name__ == '__main__':
 
     print(40*'-'+'\n(3) TEST NeuralVocab without pretrained embeddings\n'+40*'-')
     with tf.variable_scope('neural_test1'):
-        nvocab = NeuralVocab(vocab, None, 3, unit_normalize=False)
+        nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
         vec = tfrun(nvocab(vocab("world")))
         print(vec)
 
@@ -326,7 +321,7 @@ if __name__ == '__main__':
         for w in ['blah','bluh','bleh']:
             print('\t%s : %s'%(w,str(emb(w))))
         print('construct NeuralVocab with input_size 4, with length-3 pre-trained embeddings')
-        nvocab = NeuralVocab(vocab, None, 4, unit_normalize=False, use_pretrained=True, train_pretrained=False)
+        nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
         print('embedding matrix:')
         mat = tfrun(nvocab.embedding_matrix)
         print(mat)
