@@ -1,7 +1,9 @@
 from collections import defaultdict
 import re
 import numpy as np
-from pprint import pprint
+import pprint
+from quebap.sisyphos.vocab import Vocab
+
 
 # sym (e.g. token, token id or class label)
 # seq (e.g. sequence of tokens)
@@ -12,7 +14,6 @@ from pprint import pprint
 #        support (sequence of sequence of sequences)
 #        labels (sequence of symbols)
 # corpus = [hypotheses, premises, support, labels]
-from quebap.sisyphos.vocab import Vocab, NeuralVocab
 
 
 
@@ -22,26 +23,107 @@ def tokenize(xs, pattern="([\s'\-\.\!])"):
 
 
 def lower(xs):
+    """returns lowercase for sequence of strings"""
+    #"""performs lowercasing on string or sequence of strings"""
+    #if isinstance(xs, str):
+    #    return xs.lower()
     return [x.lower() for x in xs]
 
 
-def deep_map(xs, fun, keys=None, fun_name=None, expand=False):
-    """
-    :param xs: a sequence or dict of stuff,
-    :param fun: a function from x to something
-    :param keys:  seq with keys if xs is dict; seq with integer indices if xs is seq
-    :param fun_name: string with function tag (e.g. 'lengths'), used if expand==True and isinstance(xs,dict)
-    :return:
+def deep_map(xs, fun, keys=None, fun_name='trf', expand=False):
+    """Performs deep mapping of the input `xs` using function `fun`.
+    In case `expand==False` each top-level entry of `xs` to be transformed
+    replaces the original entry.
+    `deep_map` supports `xs` to be a dictionary or a list/tuple:
+      - In case `xs` is a dictionary, its transformed value is also a dictionary, and `keys` contains the keys of the
+      values to be transformed.
+      - In case `xs` is a list/tuple, `keys` contains the indices of the entries to be transformed
+    The function `deep_map` is recursively applied to the values of `xs`,
+    only at the deepest level, where the entries are no longer sequences/dicts, after which `fun` is applied.
+
+    Args:
+      `xs`: a sequence (list/tuple) of objects or sequences of objects.
+      `fun`: a function to transform objects
+      `keys`: seq with keys if `xs` is dict; seq with integer indices if `xs` is seq.
+        For entries not in `keys`, the original `xs` value is retained.
+      `fun_name`: default value 'trf'; string with function tag (e.g. 'lengths'),
+        used if '''expand==True''' and '''isinstance(xs,dict)'''
+        Say for example fun_name='lengths', and `keys` contains 'sentence', then the transformed dict would look like
+        '''{'sentence':[sentences], 'sentence_lengths':[fun(sentences)] ...}'''
+
+    Returns:
+      Transformed sequence or dictionary.
+
+    Example:
+
+    (1) Test with sequence of stuff
+    >>> dave = [
+    ...         "All work and no play makes Jack a dull boy",
+    ...         "All work and no play makes Jack a dull boy.",
+    ...         "All work and no play makes Jack a very dull boy!"]
+    >>> jack = [
+    ...         "I'm sorry Dave, I'm afraid I can't do that!",
+    ...         "I'm sorry Dave, I'm afraid I can't do that",
+    ...         "I'm sorry Dave, I'm afraid I cannot do that"]
+    >>> support = [
+    ...         ["Play makes really dull", "really dull"],
+    ...         ["Dave is human"],
+    ...         ["All work", "all dull", "dull"]]
+    >>> data1 = [dave, jack, support]
+    >>> vocab1 = Vocab()
+    >>> data1_lower = deep_map(data1, lambda s:s.lower())
+    >>> data1_tokenized = deep_map(data1_lower, tokenize)
+    >>> data1_ids = deep_map(data1_tokenized, vocab1)
+    >>> pprint.pprint(data1_ids)
+    [[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
+     [[14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 20, 15, 21, 22, 23, 13],
+      [14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 20, 15, 21, 22, 23],
+      [14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 24, 22, 23]],
+     [[[5, 6, 25, 9], [25, 9]], [[26, 27, 28]], [[1, 2], [1, 9], [9]]]]
+    >>> data1_ids_with_lengths = deep_seq_map(data1_ids, lambda xs: len(xs),
+    ...                                       fun_name='lengths', expand=True)
+    >>> pprint.pprint(data1_ids_with_lengths)
+    [[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
+     [10, 11, 12],
+     [[14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 20, 15, 21, 22, 23, 13],
+      [14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 20, 15, 21, 22, 23],
+      [14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 24, 22, 23]],
+     [16, 15, 13],
+     [[[5, 6, 25, 9], [25, 9]], [[26, 27, 28]], [[1, 2], [1, 9], [9]]],
+     [[4, 2], [3], [2, 2, 1]]]
+
+
+    (2) Test with data dictionary
+    >>> data2 = {'dave': dave, 'jack': jack, 'support': support}
+    >>> pprint.pprint(data2)
+    {'dave': ['All work and no play makes Jack a dull boy',
+              'All work and no play makes Jack a dull boy.',
+              'All work and no play makes Jack a very dull boy!'],
+     'jack': ["I'm sorry Dave, I'm afraid I can't do that!",
+              "I'm sorry Dave, I'm afraid I can't do that",
+              "I'm sorry Dave, I'm afraid I cannot do that"],
+     'support': [['Play makes really dull', 'really dull'],
+                 ['Dave is human'],
+                 ['All work', 'all dull', 'dull']]}
+    >>> data2_tokenized = deep_map(data2, tokenize)
+    >>> pprint.pprint(data2_tokenized['support'])
+    [[['Play', 'makes', 'really', 'dull'], ['really', 'dull']],
+     [['Dave', 'is', 'human']],
+     [['All', 'work'], ['all', 'dull'], ['dull']]]
     """
 
-    if isinstance(xs,dict):
+    if isinstance(xs, dict):
         xs_mapped = {}
-        for k, x in xs.items():
+        for k, x in sorted(xs.items(), key=lambda it:it[0]): #to make deterministic (e.g. for consistent symbol id's)
             if keys is None or k in keys:
                 if expand:
                     xs_mapped[k] = x
                     #if expand: create new key for transformed element, else use same key
-                    k = '%s_%s'%(str(k),str(fun_name) if fun_name is not None else 'trf')
+                    k = '%s_%s'%(str(k),str(fun_name))
                 if isinstance(x, list) or isinstance(x, dict):
                     x_mapped = deep_map(x, fun)
                 else:
@@ -68,12 +150,63 @@ def deep_map(xs, fun, keys=None, fun_name=None, expand=False):
 
 
 def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
+    """Performs deep mapping of the input `xs` using function `fun`.
+    In case `expand==False` each top-level entry of `xs` to be transformed
+    replaces the original entry.
+    `deep_map` supports `xs` to be a dictionary or a list/tuple:
+      - In case `xs` is a dictionary, its transformed value is also a dictionary, and `keys` contains the keys of the
+      values to be transformed.
+      - In case `xs` is a list/tuple, `keys` contains the indices of the entries to be transformed
+    The function `deep_map` is recursively applied to the values of `xs`;
+    the function `fun` takes a sequence as input, and is applied at the one but deepest level,
+    where the entries are sequences of objects (no longer sequences of sequences).
+    This is the only difference with `deeo_map`
+
+    Args:
+      `xs`: a sequence (list/tuple) of objects or sequences of objects.
+      `fun`: a function to transform sequences
+      `keys`: seq with keys if `xs` is dict; seq with integer indices if `xs` is seq.
+        For entries not in `keys`, the original `xs` value is retained.
+      `fun_name`: default value 'trf'; string with function tag (e.g. 'lengths'),
+        used if '''expand==True''' and '''isinstance(xs,dict)'''
+        Say for example fun_name='count', and `keys` contains 'sentence', then the transformed dict would look like
+        '''{'sentence':[sentences], 'sentence_lengths':[fun(sentences)] ...}'''
+
+    Returns:
+      Transformed sequence or dictionary.
+
+    Example:
+    >>> dave = [
+    ...         "All work and no play makes Jack a dull boy",
+    ...         "All work and no play makes Jack a dull boy.",
+    ...         "All work and no play makes Jack a very dull boy!"]
+    >>> jack = [
+    ...         "I'm sorry Dave, I'm afraid I can't do that!",
+    ...         "I'm sorry Dave, I'm afraid I can't do that",
+    ...         "I'm sorry Dave, I'm afraid I cannot do that"]
+    >>> support = [
+    ...         ["Play makes really dull", "really dull"],
+    ...         ["Dave is human"],
+    ...         ["All work", "all dull", "dull"]]
+    >>> data2 = {'dave': dave, 'jack': jack, 'support': support}
+    >>> vocab2 = Vocab()
+    >>> data2_processed = deep_map(data2, lambda x: tokenize(x.lower()))
+    >>> data2_ids = deep_map(data2_processed, vocab2)
+    >>> data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=['dave','jack','support'],
+    ...                                       fun_name='lengths', expand=True)
+    >>> pprint.pprint(data2_ids_with_lengths)
+    {'dave': [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+              [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+              [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
+     'dave_lengths': [10, 11, 12],
+     'jack': [[14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 20, 15, 21, 22, 23, 13],
+              [14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 20, 15, 21, 22, 23],
+              [14, 15, 16, 17, 18, 14, 15, 16, 19, 14, 24, 22, 23]],
+     'jack_lengths': [16, 15, 13],
+     'support': [[[5, 6, 25, 9], [25, 9]], [[26, 27, 28]], [[1, 2], [1, 9], [9]]],
+     'support_lengths': [[4, 2], [3], [2, 2, 1]]}
     """
-    :param xss: a sequence or dict of stuff
-    :param fun: a function from xs to something
-    :param fun_name: string with function tag (e.g. 'lengths'), used if expand==True and isinstance(xs,dict)
-    :return:
-    """
+
     if isinstance(xss, list) and all([not isinstance(xs, list) for xs in xss]):
         return fun(xss)
     else:
@@ -160,56 +293,8 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
 
 
 if __name__ == '__main__':
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
 
-    dave = [
-            "All work and no play makes Jack a dull boy",
-            "All work and no play makes Jack a dull boy.",
-            "All work and no play makes Jack a very dull boy!"]
-    jack = [
-            "I'm sorry Dave, I'm afraid I can't do that!",
-            "I'm sorry Dave, I'm afraid I can't do that",
-            "I'm sorry Dave, I'm afraid I cannot do that"]
-    support = [
-            ["Play makes really dull", "really dull"],
-            ["Dave is human"],
-            ["All work", "all dull", "dull"]]
 
-    """test with seq"""
-    data1 = [dave, jack, support]
-    vocab1 = Vocab()
-    data1_tokenized = deep_map(data1, tokenize)
-    data1_lower = deep_seq_map(data1_tokenized, lower)
-    data1_ids = deep_map(data1_lower, vocab1)
-    data1_ids_with_lengths = deep_seq_map(data1_ids, lambda xs: len(xs),
-                                         keys=[0, 1, 2], expand=True)
-    print('\n(1) test encoded seq of seqs\n')
-    pp.pprint(data1_ids_with_lengths)
-
-    """test with dict"""
-    print('\n(2) test encoded dict of seqs\n')
-    data2 = {'dave': dave, 'jack': jack, 'support': support}
-    vocab2 = Vocab()
-    data2_tokenized = deep_map(data2, tokenize)
-    data2_lower = deep_seq_map(data2_tokenized, lower)
-    data2_ids = deep_map(data2_lower, vocab2)
-    data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=['dave','jack','support'],
-                                          fun_name='lengths', expand=True)
-
-    print('original dict:')
-    pp.pprint(data2)
-    print('lowercase tokenized encoded dict extended with lengths:')
-    pp.pprint(data2_ids_with_lengths)
-
-    print('test vocab:')
-    print(vocab2.get_id("afraid"))
-    print(vocab2.get_id("hal-9000"))  # <UNK>
-
-    print('test words:')
-    data2_words = deep_map(data2_ids_with_lengths, vocab2.get_sym, keys=['dave','jack'])
-    print(data2_words)
-
-    print('result from numpify:')
-    print(numpify(data2_ids_with_lengths))
+    import doctest
+    doctest.testmod()
 
