@@ -70,15 +70,15 @@ if __name__ == '__main__':
     DEBUG = False
     USE_PERMUTATION_INDEX = False
 
-    INPUT_SIZE = 100
-    OUTPUT_SIZE = 100
-    LAYERS = 3
+    INPUT_SIZE = 300
+    OUTPUT_SIZE = 300
+    LAYERS = 1
 
-    DROPOUT = 0.2
+    DROPOUT = 0.1
     L2 = 0.001
     CLIP_NORM = 5.0
 
-    LEARNING_RATE = 0.01
+    LEARNING_RATE = 0.001
     MAX_EPOCHS = 100
     BATCH_SIZE = 8 if DEBUG else 256
 
