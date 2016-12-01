@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import quebap.util.tfutil as tfutil
 from quebap.util import tfutil as tfutil
-from quebap.sisyphos.models import embedder, get_total_trainable_variables, get_total_variables, conditional_reader, boe_reader, predictor
+from quebap.sisyphos.models import get_total_trainable_variables, get_total_variables, conditional_reader, boe_reader, predictor
 
 
 
@@ -10,11 +10,28 @@ class ReaderModel():
 
     def model(self, supports, questions, candidates, answers):
         """
-        Validator for each model. This allows to define properties that a model supports. For each attribute, either pass a list (model supports multiple options) or a string (only one option supported)
-        @:param supports "none" (the model does not use supporting sentences) , "single" (one supporting sentence per instance), "multiple" (multiple supporting sentences per instance)
-        @:param questions "single", "multiple" (same as for supports)
-        @:param candidates "open" (the model does not use candidates, it either generates them itself or uses some other mechanism, e.g. predicting labels on token-level), "per-instance" (different candidates for each instance, this is typical for question-answering problems), "fixed" (same candidates for all instances, this is typical for RTE, sentiment analysis, universal schema knowledge base population setup)
-        @:param answers "single" (only one possible answer taken into consideration), "multiple" (multiple answers possible)
+        Validator for each model. This allows to define properties that a model supports. For each attribute,
+        either pass a list (model supports multiple options) or a string (only one option supported)
+
+        Args:
+            `supports`:
+                "none" (the model does not use supporting sentences) ,
+                "single" (one supporting sentence per instance),
+                "multiple" (multiple supporting sentences per instance)
+            `questions`:
+                "single",
+                "multiple" (same as for supports)
+            `candidates`:
+                "open" (the model does not use candidates, it either generates them itself or uses some other mechanism,
+                   e.g. predicting labels on token-level),
+                "per-instance" (different candidates for each instance, this is typical for question-answering problems),
+                "fixed" (same candidates for all instances, this is typical for RTE, sentiment analysis, universal schema knowledge base population setup)
+            `answers`
+                "single" (only one possible answer taken into consideration),
+                "multiple" (multiple answers possible)
+
+        Returns:
+            ReaderModel instance
         """
         # Allow passing of single strings.
         if isinstance(supports, str):
@@ -64,7 +81,7 @@ class ReaderModel():
 
 
     #@model(supports="single", questions="single", candidates="fixed", answers="single") #decorator
-    def conditional_reader_model(self, embeddings=None, **options):
+    def conditional_reader_model(self, nvocab, **options):
         """
         Bidirectional conditional reader with pairs of (question, support)
         """
@@ -87,19 +104,25 @@ class ReaderModel():
         targets = tf.placeholder(tf.int64, [None], "answers")
 
         with tf.variable_scope("embedders") as varscope:
-            question_embedded = embedder(question, options["repr_dim_output"], options["vocab_size"], embeddings=embeddings)
+            question_embedded = nvocab(question)
             varscope.reuse_variables()
-            support_embedded = embedder(support, options["repr_dim_output"], options["vocab_size"], embeddings=embeddings)
+            support_embedded = nvocab(support)
 
+        #todo: add option for attentive reader
 
         print('TRAINABLE VARIABLES (only embeddings): %d'%get_total_trainable_variables())
 
 
-        outputs,states = conditional_reader(question_embedded, question_lengths,
-                                    support_embedded, support_lengths,
-                                    options["repr_dim_output"])
+        #outputs,states = conditional_reader(question_embedded, question_lengths,
+        #                            support_embedded, support_lengths,
+        #                            options["repr_dim_output"])
+        #todo: verify validity of exchanging question and support. Below: encode question, conditioned on support encoding.
+        outputs,states = conditional_reader(support_embedded, support_lengths,
+                                            question_embedded, question_lengths,
+                                            options["repr_dim_output"])
         #states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
         output = tf.concat(1, [states[0][1], states[1][1]])
+        #todo: extend
 
         logits, loss, predict = predictor(output, targets, options["answer_size"])
 
@@ -115,7 +138,7 @@ class ReaderModel():
 
 
     #@model(supports="single", questions="single", candidates="fixed", answers="single") #decorator
-    def boe_reader_model(self, embeddings=None, **options):
+    def boe_reader_model(self, nvocab, **options):
         """
         Bag of embeddings reader with pairs of (question, support)
         """
@@ -138,10 +161,9 @@ class ReaderModel():
         targets = tf.placeholder(tf.int64, [None], "answers")
 
         with tf.variable_scope("embedders") as varscope:
-            question_embedded = embedder(question, options["repr_dim_output"], options["vocab_size"], embeddings=embeddings)
+            question_embedded = nvocab(question)
             varscope.reuse_variables()
-            support_embedded = embedder(support, options["repr_dim_output"], options["vocab_size"], embeddings=embeddings)
-
+            support_embedded = nvocab(support)
 
         print('TRAINABLE VARIABLES (only embeddings): %d'%get_total_trainable_variables())
 
