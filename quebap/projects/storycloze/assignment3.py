@@ -40,15 +40,8 @@ def permutation_index(p):
     return result
 
 
-train_corpus = load_corpus("train")
-dev_corpus = load_corpus("dev")
-test_corpus = load_corpus("test")
-
-for i in range(3):
-    print(train_corpus["story"][i], train_corpus["order"][i])
-
-
-def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
+def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
+             concat_seq=True):
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     if freeze:
@@ -61,19 +54,103 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
                              lambda xs: ["<SOS>"] + xs + ["<EOS>"], ["story"])
     corpus_ids = deep_map(corpus_os, vocab, ["story"])
     corpus_ids = deep_map(corpus_ids, target_vocab, ["order"])
+    if concat_seq:
+        for i in range(len(corpus_ids["story"])):
+            corpus_ids["story"][i] = [x for xs in corpus_ids["story"][i] for x in xs]
     corpus_ids = deep_seq_map(corpus_ids,
                               lambda xs: len(xs), keys=["story"],
-                              fun_name='lengths', expand=True)
+                              fun_name='length', expand=True)
     return corpus_ids, vocab, target_vocab
 
-train_mapped, train_vocab, train_target_vocab = pipeline(train_corpus)
-dev_mapped, _, _ = pipeline(dev_corpus, train_vocab, train_target_vocab)
-test_mapped, _, _ = pipeline(test_corpus, train_vocab, train_target_vocab)
+
+def get_model(vocab_size, input_size, output_size):
+    # Model
+
+    # Placeholders
+    # [batch_size x max_length]
+    story = tf.placeholder(tf.int64, [None, None], "story")
+    # [batch_size]
+    story_length = tf.placeholder(tf.int64, [None], "story_length")
+    # [batch_size]
+    order = tf.placeholder(tf.int64, [None], "order")
+
+    placeholders = {"story": story, "story_length": story_length, "order": order}
+
+    # Word embeddings
+    initializer = tf.random_uniform_initializer(-0.05, 0.05)
+    embeddings = tf.get_variable("W", [vocab_size, input_size],
+                                 initializer=initializer)
+    # [batch_size x max_seq_length x input_size]
+    story_embedded = tf.nn.embedding_lookup(embeddings, story)
+
+    with tf.variable_scope("reader") as varscope:
+        cell = tf.nn.rnn_cell.LSTMCell(
+            output_size,
+            state_is_tuple=True,
+            initializer=tf.contrib.layers.xavier_initializer()
+        )
+
+        outputs, states = tf.nn.bidirectional_dynamic_rnn(
+            cell,
+            cell,
+            story_embedded,
+            sequence_length=story_length,
+            dtype=tf.float32
+        )
+
+        final_state = states[-1]
+
+        return final_state, placeholders
 
 
-for i in range(1):
-    print(train_mapped["story"][i],
-          train_mapped["story_lengths"][i],
-          train_mapped["order"][i])
+if __name__ == '__main__':
+    # Config
+    DEBUG = True
+    INPUT_SIZE = 100
+    OUTPUT_SIZE = 100
+    BATCH_SIZE = 8
 
-#print(deep_map(train_corpus, tokenize, ["story"])["story"][0])
+    LEARNING_RATE = 0.01
+
+    if DEBUG:
+        train_corpus = load_corpus("debug")
+        dev_corpus = load_corpus("debug")
+        test_corpus = load_corpus("debug")
+    else:
+        train_corpus = load_corpus("train")
+        dev_corpus = load_corpus("dev")
+        test_corpus = load_corpus("test")
+
+    train_mapped, train_vocab, train_target_vocab = pipeline(train_corpus)
+    dev_mapped, _, _ = pipeline(dev_corpus, train_vocab, train_target_vocab)
+    test_mapped, _, _ = pipeline(test_corpus, train_vocab, train_target_vocab)
+
+    final_state, placeholders = get_model(len(train_vocab), INPUT_SIZE,
+                                             OUTPUT_SIZE)
+
+    # Training
+    train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
+    dev_feed_dicts = get_feed_dicts(dev_mapped, placeholders, BATCH_SIZE)
+    test_feed_dicts = get_feed_dicts(test_mapped, placeholders, BATCH_SIZE)
+
+    optim = tf.train.AdamOptimizer(LEARNING_RATE)
+
+    hooks = [
+        LossHook(100, BATCH_SIZE),
+        SpeedHook(100, BATCH_SIZE),
+        #AccuracyHook(dev_feed_dicts, predict, placeholders['targets'], 2)
+    ]
+
+    #train(loss, optim, train_feed_dicts, max_epochs=1000, hooks=hooks)
+
+    for batch in train_feed_dicts:
+        print(batch)
+
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+
+        for batch in train_feed_dicts:
+
+            result = sess.run(final_state, batch)
+            print(result)
+
