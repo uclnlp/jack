@@ -5,9 +5,11 @@ from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.train import train
 import tensorflow as tf
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, ETAHook
+from quebap.projects.storycloze.assignment3_models import get_permute_model, \
+    get_basic_model
 
 
-def load_corpus(name):
+def load_corpus(name, use_permutation_index=True):
     story = []
     order = []
 
@@ -18,7 +20,11 @@ def load_corpus(name):
             current_order = splits[5:]
 
             story.append(current_story)
-            order.append(permutation_index(current_order))
+
+            if use_permutation_index:
+                order.append(permutation_index(current_order))
+            else:
+                order.append(current_order)
 
     return {"story": story, "order": order}
 
@@ -32,7 +38,7 @@ def permutation_index(p):
 
 
 def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
-             concat_seq=True):
+             concat_seq=True, use_permutation_index=True):
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     if freeze:
@@ -48,69 +54,21 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
     if concat_seq:
         for i in range(len(corpus_ids["story"])):
             corpus_ids["story"][i] = [x for xs in corpus_ids["story"][i] for x in xs]
+
+    seq_keys = ["story"]
+    if not use_permutation_index:
+        seq_keys += ["order"]
+
     corpus_ids = deep_seq_map(corpus_ids,
-                              lambda xs: len(xs), keys=["story"],
+                              lambda xs: len(xs), keys=seq_keys,
                               fun_name='length', expand=True)
     return corpus_ids, vocab, target_vocab
-
-
-def get_model(vocab_size, input_size, output_size, target_size, layers=1,
-              dropout=0.0):
-    # Placeholders
-    # [batch_size x max_length]
-    story = tf.placeholder(tf.int64, [None, None], "story")
-    # [batch_size]
-    story_length = tf.placeholder(tf.int64, [None], "story_length")
-    # [batch_size]
-    order = tf.placeholder(tf.int64, [None], "order")
-    placeholders = {"story": story, "story_length": story_length, "order": order}
-
-    # Word embeddings
-    initializer = tf.random_uniform_initializer(-0.05, 0.05)
-    embeddings = tf.get_variable("W", [vocab_size, input_size],
-                                 initializer=initializer)
-    # [batch_size x max_seq_length x input_size]
-    story_embedded = tf.nn.embedding_lookup(embeddings, story)
-
-    with tf.variable_scope("reader") as varscope:
-        cell = tf.nn.rnn_cell.LSTMCell(
-            output_size,
-            state_is_tuple=True,
-            initializer=tf.contrib.layers.xavier_initializer()
-        )
-
-        if layers > 1:
-            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * layers)
-
-        if dropout != 0.0:
-            cell_dropout = \
-                tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
-        else:
-            cell_dropout = cell
-
-        outputs, states = tf.nn.bidirectional_dynamic_rnn(
-            cell_dropout,
-            cell_dropout,
-            story_embedded,
-            sequence_length=story_length,
-            dtype=tf.float32
-        )
-
-        c, h = states[-1]  # LSTM state is a tuple
-
-        logits = tf.contrib.layers.linear(h, target_size)
-
-        predict = tf.arg_max(tf.nn.softmax(logits), 1)
-
-        loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
-
-        return loss, placeholders, predict
 
 
 if __name__ == '__main__':
     # Config
     DEBUG = False
+    USE_PERMUTATION_INDEX = False
 
     INPUT_SIZE = 100
     OUTPUT_SIZE = 100
@@ -120,27 +78,49 @@ if __name__ == '__main__':
     L2 = 0.001
     CLIP_NORM = 5.0
 
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.01
     MAX_EPOCHS = 100
-    BATCH_SIZE = 256
-    # BATCH_SIZE = 8
+    BATCH_SIZE = 8 if DEBUG else 256
+
+    # get_model = get_permute_model
+    get_model = get_basic_model
 
     if DEBUG:
-        train_corpus = load_corpus("debug")
-        dev_corpus = load_corpus("debug")
-        test_corpus = load_corpus("debug")
+        train_corpus = load_corpus("debug", USE_PERMUTATION_INDEX)
+        dev_corpus = load_corpus("debug", USE_PERMUTATION_INDEX)
+        test_corpus = load_corpus("debug", USE_PERMUTATION_INDEX)
     else:
-        train_corpus = load_corpus("train")
-        dev_corpus = load_corpus("dev")
-        test_corpus = load_corpus("test")
+        train_corpus = load_corpus("train", USE_PERMUTATION_INDEX)
+        dev_corpus = load_corpus("dev", USE_PERMUTATION_INDEX)
+        test_corpus = load_corpus("test", USE_PERMUTATION_INDEX)
 
-    train_mapped, train_vocab, train_target_vocab = pipeline(train_corpus)
-    dev_mapped, _, _ = pipeline(dev_corpus, train_vocab, train_target_vocab)
-    test_mapped, _, _ = pipeline(test_corpus, train_vocab, train_target_vocab)
+    train_mapped, train_vocab, train_target_vocab = \
+        pipeline(train_corpus, use_permutation_index=USE_PERMUTATION_INDEX)
+    dev_mapped, _, _ = \
+        pipeline(dev_corpus, train_vocab, train_target_vocab,
+                 use_permutation_index=USE_PERMUTATION_INDEX)
+    test_mapped, _, _ = \
+        pipeline(test_corpus, train_vocab, train_target_vocab,
+                 use_permutation_index=USE_PERMUTATION_INDEX)
 
     loss, placeholders, predict = \
         get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE,
                   len(train_target_vocab), DROPOUT)
+
+    print("Dev Example:")
+    for key in dev_mapped:
+        print(key, dev_mapped[key][1])
+
+    print("""
+input vocab:  %d
+target vocab: %d
+
+train:        %d
+dev:          %d
+test:         %d
+    """ % (len(train_vocab), len(train_target_vocab),
+           len(train_mapped["story"]), len(dev_mapped["story"]),
+           len(test_mapped["story"])))
 
     # Training
     train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
@@ -153,8 +133,8 @@ if __name__ == '__main__':
         LossHook(100, BATCH_SIZE),
         SpeedHook(100, BATCH_SIZE),
         ETAHook(100, MAX_EPOCHS, 500),
-        AccuracyHook(train_feed_dicts, predict, placeholders['order'], 10),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
+        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2),
+        AccuracyHook(train_feed_dicts, predict, placeholders['order'], 10)
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks,

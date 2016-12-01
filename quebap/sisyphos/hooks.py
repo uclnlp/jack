@@ -167,14 +167,16 @@ class AccuracyHook(TraceHook):
                         feed_dict = batch
 
                     predicted = sess.run(self.predict, feed_dict=feed_dict)
-                    correct += sum(feed_dict[self.target] == predicted)
-                    total += len(predicted)
+                    overlap = feed_dict[self.target] == predicted
+                    correct += np.sum(overlap)
+                    total += predicted.size
 
-                acc = float(correct) / total
+                acc = float(correct) / total * 100
+
                 self.update_summary(sess, self.iter, self.__tag__(), acc)
                 print("Epoch " + str(epoch) +
-                      "\tAcc " + str(acc) +
-                      "\tCorrect " + str(correct) + "\tTotal " + str(total))
+                      "\tAcc %4.2f" % acc +
+                      "%\tCorrect " + str(correct) + "\tTotal " + str(total))
                 self.done_for_epoch = True
         else:
             self.done_for_epoch = False
