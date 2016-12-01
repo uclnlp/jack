@@ -16,11 +16,9 @@ from quebap.sisyphos.vocab import Vocab
 # corpus = [hypotheses, premises, support, labels]
 
 
-
-def tokenize(xs, pattern="([\s'\-\.\!])"):
+def tokenize(xs, pattern="([\s'\-\.\,\!])"):
     return [x for x in re.split(pattern, xs)
             if not re.match("\s", x) and x != ""]
-
 
 def lower(xs):
     """returns lowercase for sequence of strings"""

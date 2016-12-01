@@ -7,7 +7,7 @@ import tensorflow as tf
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, ETAHook
 from quebap.projects.storycloze.assignment3_models import get_permute_model, \
     get_basic_model
-
+import os
 
 def load_corpus(name, use_permutation_index=True):
     story = []
@@ -98,10 +98,10 @@ if __name__ == '__main__':
         pipeline(train_corpus, use_permutation_index=USE_PERMUTATION_INDEX)
     dev_mapped, _, _ = \
         pipeline(dev_corpus, train_vocab, train_target_vocab,
-                 use_permutation_index=USE_PERMUTATION_INDEX)
+                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
     test_mapped, _, _ = \
         pipeline(test_corpus, train_vocab, train_target_vocab,
-                 use_permutation_index=USE_PERMUTATION_INDEX)
+                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
 
     loss, placeholders, predict = \
         get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE,
@@ -122,6 +122,15 @@ test:         %d
            len(train_mapped["story"]), len(dev_mapped["story"]),
            len(test_mapped["story"])))
 
+    # from operator import itemgetter
+    # sym2freqs = [(v, k) for k, v in train_vocab.sym2freqs.items()]
+    # sym2freqs.sort(key=itemgetter(0))
+    # sym2freqs = sym2freqs[::-1]
+    # for sym, freq in sym2freqs[10000:10100]:
+    #     print(sym, freq)
+    #
+    # os._exit(-1)
+
     # Training
     train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
     dev_feed_dicts = get_feed_dicts(dev_mapped, placeholders, BATCH_SIZE)
@@ -134,7 +143,8 @@ test:         %d
         SpeedHook(100, BATCH_SIZE),
         ETAHook(100, MAX_EPOCHS, 500),
         AccuracyHook(train_feed_dicts, predict, placeholders['order'], 2),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
+        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2),
+        AccuracyHook(test_feed_dicts, predict, placeholders['order'], 2)
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks,
