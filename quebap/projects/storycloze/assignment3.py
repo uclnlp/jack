@@ -133,8 +133,8 @@ test:         %d
         LossHook(100, BATCH_SIZE),
         SpeedHook(100, BATCH_SIZE),
         ETAHook(100, MAX_EPOCHS, 500),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2),
-        AccuracyHook(train_feed_dicts, predict, placeholders['order'], 10)
+        AccuracyHook(train_feed_dicts, predict, placeholders['order'], 2),
+        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks,
