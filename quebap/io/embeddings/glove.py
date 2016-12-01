@@ -16,7 +16,7 @@ def load_glove(stream, vocab=None):
     for line in stream:
         word, vec = line.rstrip().split(maxsplit=1)
         if vocab is None or word in vocab:
-            # word = word.decode('utf-8')
+            word = word.decode('utf-8')
             word2idx[word] = idx
             if idx > np.size(lookup, axis=0) - 1:
                 lookup.resize([lookup.shape[0] + 500000, lookup.shape[1]])

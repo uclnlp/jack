@@ -38,7 +38,7 @@ def load_embeddings(file, typ, **options):
 
     elif typ.lower() == "glove":
         if file.endswith('.txt'):
-            with open(file) as f:
+            with open(file, 'rb') as f:
                 return Embeddings(*load_glove(f))
         elif file.endswith('.zip'):
             #for files glove.840B.300d.zip (not glove.6B.zip)
