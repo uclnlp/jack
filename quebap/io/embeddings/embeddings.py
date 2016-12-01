@@ -37,11 +37,14 @@ def load_embeddings(file, typ, **options):
         return Embeddings(*load_word2vec(file, **options))
 
     elif typ.lower() == "glove":
-        if file.endswith('.zip'):
+        if file.endswith('.txt'):
+            with open(file) as f:
+                return Embeddings(*load_glove(f))
+        elif file.endswith('.zip'):
+            #for files glove.840B.300d.zip (not glove.6B.zip)
             with zipfile.ZipFile(file) as zf:
                 txtfile = file.split('/')[-1][:-4]+'.txt'
                 with zf.open(txtfile,'r') as f:
                     return Embeddings(*load_glove(f))
-
         else:
             raise NotImplementedError
