@@ -25,11 +25,11 @@ checkpoint = Duration()
 from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
-from quebap.sisyphos.models import create_embeddings  # conditional_reader_model,
 from quebap.sisyphos.train import train
-from quebap.sisyphos.prepare_embeddings import load as loads_embeddings
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
 from quebap.model.models import ReaderModel
+from quebap.io.embeddings.embeddings import load_embeddings
+
 
 def quebap_load(path, max_count=None, **options):
     """
@@ -106,7 +106,6 @@ def quebap_load(path, max_count=None, **options):
 
 #@todo: rewrite such that it works for different types of quebap files / models
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False):
-    #vocab = vocab or VocabEmb(emb=emb)
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     candidate_vocab = candidate_vocab or Vocab(unk=None)
@@ -122,7 +121,6 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
-    corpus_ids = deep_map(corpus_ids, vocab._normalize, ['question', 'support']) #needs freezing next time to be comparable with other pipelines
     return corpus_ids, vocab, target_vocab, candidate_vocab
 
 
@@ -140,12 +138,25 @@ def main():
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
+    #todo clean up
+    #common default input files - for rapid testing
+    """
+    train_default = 'data/SQuAD/snippet_quebapformat.json'
+    dev_default = 'data/sentihood/single_quebap.json'
+    test_default = 'data/sentihood/single_quebap.json'
+    """
+    train_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_train_quebap_v1.json"
+    dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
+    test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"
+
+
+    #args
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default=True, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
     parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used")
-    parser.add_argument('--train', default='data/SQuAD/snippet_quebapformat.json', type=argparse.FileType('r'), help="Quebap training file")
-    parser.add_argument('--dev', default='data/sentihood/single_quebap.json', type=argparse.FileType('r'), help="Quebap dev file")
-    parser.add_argument('--test', default='data/sentihood/single_quebap.json', type=argparse.FileType('r'), help="Quebap test file")
+    parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="Quebap training file")
+    parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="Quebap dev file")
+    parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="Quebap test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single or multiple supporting statements per instance")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance or fixed candidates")
@@ -155,6 +166,10 @@ def main():
     parser.add_argument('--repr_dim_input', default=5, type=int, help="Size of the input representation (embeddings)")
     parser.add_argument('--repr_dim_output', default=5, type=int, help="Size of the output representation")
     parser.add_argument('--pretrain', default=False, type=bool, help="Use pretrained embeddings, by default the initialisation is random")
+    parser.add_argument('--train_pretrain', default=False, type=bool,
+                        help="Continue training pretrained embeddings together with model parameters")
+    parser.add_argument('--normalize_pretrain', default=True, type=bool,
+                        help="Normalize pretrained embeddings")
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate")
     parser.add_argument('--epochs', default=3, type=int, help="Number of epochs to train for")
@@ -175,29 +190,33 @@ def main():
     args = parser.parse_args()
 
 
-    bucket_order = ('question','support') #composite buckets; first over premises, then over hypotheses
-    bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
+    bucket_order = ('question','support') #composite buckets; first over question, then over support
+    bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
 
     if args.debug:
         train_data = quebap_load(args.train, args.debug_examples, **vars(args))
+        print('loaded %d samples as debug train/dev/test dataset '%args.debug_examples)
         dev_data = train_data
         test_data = train_data
         if args.pretrain:
-            emb_file = 'glove.6B.50d.pkl'
-            embeddings = loads_embeddings(path.join('quebap', 'data', 'GloVe', emb_file))
-            # embeddings = loads_embeddings(path.join('quebap','data','GloVe',emb_file), 'glove', {'vocab_size':400000,'dim':50})
+            emb_file = 'glove.6B.50d.txt'
+            embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file), 'glove')
+            print('loaded pre-trained embeddings (%s)'%emb_file)
     else:
         train_data, dev_data, test_data = [quebap_load(name) for name in [args["train"], args["dev"], args["test"]]]
         print('loaded train/dev/test data')
         if args.pretrain:
-            emb_file = 'GoogleNews-vectors-negative300.bin'
-            embeddings = loads_embeddings(path.join('quebap', 'data', 'SG_GoogleNews', emb_file), format='word2vec_bin',
-                                          save=False)
-            print('loaded pre-trained embeddings')
+            # emb_file = 'GoogleNews-vectors-negative300.bin.gz'
+            # embeddings = load_embeddings(path.join('quebap', 'data', 'word2vec', emb_file),'word2vec')
+            emb_file = 'glove.840B.300d.zip'
+            embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file), 'glove')
+            print('loaded pre-trained embeddings (%s)'%emb_file)
+
+    emb = embeddings.get if args.pretrain else None
 
     checkpoint()
     print('encode train data')
-    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data)  # , emb=emb)
+    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb)
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
     print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.' % (N_pre, N_oov))
@@ -225,14 +244,15 @@ def main():
     test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True)
     checkpoint()
 
-    print('create embeddings matrix')
-    embeddings = create_embeddings(train_vocab, retrain=True) if args.pretrain else None
+    print('build NeuralVocab')
+    #todo: foresee input args to set these parameters
+    nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
+                         train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
 
     checkpoint()
-    print('build model')
+    print('build model %s'%args.model)
     reader = ReaderModel()
-    (logits, loss, predict), placeholders = reader_models[args.model](reader, embeddings, **vars(args))
-
+    (logits, loss, predict), placeholders = reader_models[args.model](reader, nvocab, **vars(args))
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,
