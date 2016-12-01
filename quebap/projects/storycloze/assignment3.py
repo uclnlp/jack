@@ -55,8 +55,6 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
 
 
 def get_model(vocab_size, input_size, output_size, target_size, dropout=0.0):
-    # Model
-
     # Placeholders
     # [batch_size x max_length]
     story = tf.placeholder(tf.int64, [None, None], "story")
@@ -108,9 +106,11 @@ if __name__ == '__main__':
     DEBUG = False
     INPUT_SIZE = 300
     OUTPUT_SIZE = 300
-    BATCH_SIZE = 256  # 8
+    BATCH_SIZE = 512  # 8
 
     DROPOUT = 0.1
+    L2 = 0.001
+    CLIP_NORM = 5.0
     LEARNING_RATE = 0.01
     MAX_EPOCHS = 100
 
@@ -142,8 +142,9 @@ if __name__ == '__main__':
         LossHook(100, BATCH_SIZE),
         SpeedHook(100, BATCH_SIZE),
         ETAHook(100, MAX_EPOCHS, 500),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 10),
+        AccuracyHook(train_feed_dicts, predict, placeholders['order'], 10),
         AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
     ]
 
-    train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks)
+    train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks,
+          l2=L2, clip=CLIP_NORM, clip_op=tf.clip_by_norm)
