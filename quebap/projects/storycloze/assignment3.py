@@ -94,11 +94,14 @@ if __name__ == '__main__':
         dev_corpus = load_corpus("dev", USE_PERMUTATION_INDEX)
         test_corpus = load_corpus("test", USE_PERMUTATION_INDEX)
 
-    train_mapped, train_vocab, train_target_vocab = \
+    _, train_vocab, train_target_vocab = \
         pipeline(train_corpus, use_permutation_index=USE_PERMUTATION_INDEX)
 
     train_vocab = train_vocab.prune(5)
 
+    train_mapped, _, _ = \
+        pipeline(train_corpus, train_vocab, train_target_vocab,
+                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
     dev_mapped, _, _ = \
         pipeline(dev_corpus, train_vocab, train_target_vocab,
                  use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
