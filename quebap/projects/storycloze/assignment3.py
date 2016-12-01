@@ -54,7 +54,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
     return corpus_ids, vocab, target_vocab
 
 
-def get_model(vocab_size, input_size, output_size, target_size):
+def get_model(vocab_size, input_size, output_size, target_size, dropout=0.0):
     # Model
 
     # Placeholders
@@ -64,7 +64,6 @@ def get_model(vocab_size, input_size, output_size, target_size):
     story_length = tf.placeholder(tf.int64, [None], "story_length")
     # [batch_size]
     order = tf.placeholder(tf.int64, [None], "order")
-
     placeholders = {"story": story, "story_length": story_length, "order": order}
 
     # Word embeddings
@@ -81,9 +80,12 @@ def get_model(vocab_size, input_size, output_size, target_size):
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
+        cell_dropout = \
+            tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
+
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
-            cell,
-            cell,
+            cell_dropout,
+            cell_dropout,
             story_embedded,
             sequence_length=story_length,
             dtype=tf.float32
@@ -104,10 +106,11 @@ def get_model(vocab_size, input_size, output_size, target_size):
 if __name__ == '__main__':
     # Config
     DEBUG = False
-    INPUT_SIZE = 100
-    OUTPUT_SIZE = 100
-    BATCH_SIZE = 128  # 8
+    INPUT_SIZE = 300
+    OUTPUT_SIZE = 300
+    BATCH_SIZE = 256  # 8
 
+    DROPOUT = 0.1
     LEARNING_RATE = 0.01
     MAX_EPOCHS = 100
 
@@ -125,7 +128,8 @@ if __name__ == '__main__':
     test_mapped, _, _ = pipeline(test_corpus, train_vocab, train_target_vocab)
 
     loss, placeholders, predict = \
-        get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE, len(train_target_vocab))
+        get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE,
+                  len(train_target_vocab), DROPOUT)
 
     # Training
     train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
@@ -137,7 +141,8 @@ if __name__ == '__main__':
     hooks = [
         LossHook(100, BATCH_SIZE),
         SpeedHook(100, BATCH_SIZE),
-        ETAHook(100, MAX_EPOCHS, 400),
+        ETAHook(100, MAX_EPOCHS, 500),
+        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 10),
         AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
     ]
 
