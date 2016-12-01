@@ -57,7 +57,7 @@ def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1
 
 
 def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
-                    dropout=0.0):
+                    dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x max_length]
     story = tf.placeholder(tf.int64, [None, None], "story")
@@ -69,9 +69,15 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
                     "order": order}
 
     # Word embeddings
-    initializer = tf.random_uniform_initializer(-0.05, 0.05)
-    embeddings = tf.get_variable("W", [vocab_size, input_size],
-                                 initializer=initializer)
+
+    if nvocab is None:
+        initializer = tf.random_uniform_initializer(-0.05, 0.05)
+        embeddings = tf.get_variable("W", [vocab_size, input_size],
+                                     initializer=initializer)
+    else:
+        print('..using pretrained embeddings')
+        embeddings = nvocab.embedding_matrix
+
     # [batch_size x max_seq_length x input_size]
     story_embedded = tf.nn.embedding_lookup(embeddings, story)
 

@@ -74,6 +74,8 @@ if __name__ == '__main__':
     # Config
     DEBUG = False
     USE_PERMUTATION_INDEX = False
+    USE_PRETRAINED_EMBEDDINGS = True
+
 
     INPUT_SIZE = 100
     OUTPUT_SIZE = 100
@@ -92,6 +94,17 @@ if __name__ == '__main__':
     # get_model = get_permute_model
     get_model = get_basic_model
 
+
+    from quebap.sisyphos.vocab import NeuralVocab
+    from quebap.io.embeddings.embeddings import load_embeddings
+
+    embeddings = load_embeddings('./quebap/data/GloVe/glove.6B.100d.txt', 'glove')
+    #embeddings = load_embeddings('./quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz', 'glove')
+    emb = embeddings.get
+    vocab = Vocab(emb=embeddings.get)
+
+
+    print('loading corpus..')
     if DEBUG:
         train_corpus = load_corpus("debug", USE_PERMUTATION_INDEX)
         dev_corpus = load_corpus("debug", USE_PERMUTATION_INDEX)
@@ -100,7 +113,9 @@ if __name__ == '__main__':
         train_corpus = load_corpus("train", USE_PERMUTATION_INDEX)
         dev_corpus = load_corpus("dev", USE_PERMUTATION_INDEX)
         test_corpus = load_corpus("test", USE_PERMUTATION_INDEX)
+    print('  ..complete')
 
+    print('model building..')
     _, train_vocab, train_target_vocab = \
         pipeline(train_corpus, use_permutation_index=USE_PERMUTATION_INDEX)
 
@@ -116,9 +131,15 @@ if __name__ == '__main__':
         pipeline(test_corpus, train_vocab, train_target_vocab,
                  use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
 
+
+    nvocab = None
+    if USE_PRETRAINED_EMBEDDINGS:
+        nvocab = NeuralVocab(train_vocab, input_size=INPUT_SIZE, use_pretrained=True, train_pretrained=False, unit_normalize=False)
+
     loss, placeholders, predict = \
         get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE,
-                  len(train_target_vocab), DROPOUT)
+                  len(train_target_vocab), DROPOUT, nvocab=nvocab)
+    print('  ..complete')
 
     print("Dev Example:")
     for key in dev_mapped:
@@ -157,6 +178,7 @@ test:         %d
         AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2),
         AccuracyHook(test_feed_dicts, predict, placeholders['order'], 2)
     ]
-
+    summary_writer = tf.train.SummaryWriter("./tmp/summaries", tf.get_default_graph())
+    print('training..')
     train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks,
           l2=L2, clip=CLIP_NORM, clip_op=tf.clip_by_norm)
