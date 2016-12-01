@@ -283,9 +283,15 @@ class Vocab(object):
         """equivalent to `len(get_ids_oov())`"""
         return self.next_pos
 
+    def prune(self, min_freq=5):
+        pruned_vocab = Vocab(unk=self.unk)
+        for sym in self.sym2freqs:
+            freq = self.sym2freqs[sym]
+            if freq >= min_freq:
+                pruned_vocab(sym)
+                pruned_vocab.sym2freqs[sym] = self.sym2freqs[sym]
 
-
-
+        return pruned_vocab
 
 
 class NeuralVocab(Vocab):

@@ -96,6 +96,9 @@ if __name__ == '__main__':
 
     train_mapped, train_vocab, train_target_vocab = \
         pipeline(train_corpus, use_permutation_index=USE_PERMUTATION_INDEX)
+
+    train_vocab = train_vocab.prune(5)
+
     dev_mapped, _, _ = \
         pipeline(dev_corpus, train_vocab, train_target_vocab,
                  use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
@@ -128,8 +131,6 @@ test:         %d
     # sym2freqs = sym2freqs[::-1]
     # for sym, freq in sym2freqs[10000:10100]:
     #     print(sym, freq)
-    #
-    # os._exit(-1)
 
     # Training
     train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
