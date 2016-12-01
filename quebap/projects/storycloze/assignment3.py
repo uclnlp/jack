@@ -54,7 +54,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
     return corpus_ids, vocab, target_vocab
 
 
-def get_model(vocab_size, input_size, output_size, target_size, dropout=0.0):
+def get_model(vocab_size, input_size, output_size, target_size, layers=1,
+              dropout=0.0):
     # Placeholders
     # [batch_size x max_length]
     story = tf.placeholder(tf.int64, [None, None], "story")
@@ -78,8 +79,14 @@ def get_model(vocab_size, input_size, output_size, target_size, dropout=0.0):
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
-        cell_dropout = \
-            tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
+        if layers > 1:
+            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * layers)
+
+        if dropout != 0.0:
+            cell_dropout = \
+                tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
+        else:
+            cell_dropout = cell
 
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
             cell_dropout,
@@ -104,15 +111,19 @@ def get_model(vocab_size, input_size, output_size, target_size, dropout=0.0):
 if __name__ == '__main__':
     # Config
     DEBUG = False
-    INPUT_SIZE = 300
-    OUTPUT_SIZE = 300
-    BATCH_SIZE = 512  # 8
 
-    DROPOUT = 0.1
+    INPUT_SIZE = 100
+    OUTPUT_SIZE = 100
+    LAYERS = 3
+
+    DROPOUT = 0.2
     L2 = 0.001
     CLIP_NORM = 5.0
-    LEARNING_RATE = 0.01
+
+    LEARNING_RATE = 0.001
     MAX_EPOCHS = 100
+    BATCH_SIZE = 256
+    # BATCH_SIZE = 8
 
     if DEBUG:
         train_corpus = load_corpus("debug")
