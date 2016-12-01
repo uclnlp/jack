@@ -1,18 +1,9 @@
-import json
-from pprint import pprint
-from time import time, sleep
-from os import path
-
 from math import factorial
 from quebap.sisyphos.batch import get_feed_dicts
-from quebap.sisyphos.vocab import Vocab, NeuralVocab
+from quebap.sisyphos.vocab import Vocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
-from quebap.sisyphos.models import conditional_reader_model
 from quebap.sisyphos.train import train
-from quebap.sisyphos.prepare_embeddings import load as loads_embeddings
 import tensorflow as tf
-import numpy as np
-import random
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
 
 
@@ -63,7 +54,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
     return corpus_ids, vocab, target_vocab
 
 
-def get_model(vocab_size, input_size, output_size):
+def get_model(vocab_size, input_size, output_size, target_size):
     # Model
 
     # Placeholders
@@ -98,9 +89,16 @@ def get_model(vocab_size, input_size, output_size):
             dtype=tf.float32
         )
 
-        final_state = states[-1]
+        c, h = states[-1]  # LSTM state is a tuple
 
-        return final_state, placeholders
+        logits = tf.contrib.layers.linear(h, target_size)
+
+        predict = tf.arg_max(tf.nn.softmax(logits), 1)
+
+        loss = tf.reduce_sum(
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
+
+        return loss, placeholders, predict
 
 
 if __name__ == '__main__':
@@ -125,8 +123,8 @@ if __name__ == '__main__':
     dev_mapped, _, _ = pipeline(dev_corpus, train_vocab, train_target_vocab)
     test_mapped, _, _ = pipeline(test_corpus, train_vocab, train_target_vocab)
 
-    final_state, placeholders = get_model(len(train_vocab), INPUT_SIZE,
-                                             OUTPUT_SIZE)
+    loss, placeholders, predict = \
+        get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE, len(train_target_vocab))
 
     # Training
     train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
@@ -136,21 +134,9 @@ if __name__ == '__main__':
     optim = tf.train.AdamOptimizer(LEARNING_RATE)
 
     hooks = [
-        LossHook(100, BATCH_SIZE),
-        SpeedHook(100, BATCH_SIZE),
-        #AccuracyHook(dev_feed_dicts, predict, placeholders['targets'], 2)
+        LossHook(10, BATCH_SIZE),
+        SpeedHook(10, BATCH_SIZE),
+        AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
     ]
 
-    #train(loss, optim, train_feed_dicts, max_epochs=1000, hooks=hooks)
-
-    for batch in train_feed_dicts:
-        print(batch)
-
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-
-        for batch in train_feed_dicts:
-
-            result = sess.run(final_state, batch)
-            print(result)
-
+    train(loss, optim, train_feed_dicts, max_epochs=100, hooks=hooks)
