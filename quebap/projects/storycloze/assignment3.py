@@ -4,7 +4,7 @@ from quebap.sisyphos.vocab import Vocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.train import train
 import tensorflow as tf
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, ETAHook
 
 
 def load_corpus(name):
@@ -103,12 +103,13 @@ def get_model(vocab_size, input_size, output_size, target_size):
 
 if __name__ == '__main__':
     # Config
-    DEBUG = True
+    DEBUG = False
     INPUT_SIZE = 100
     OUTPUT_SIZE = 100
-    BATCH_SIZE = 8
+    BATCH_SIZE = 128  # 8
 
     LEARNING_RATE = 0.01
+    MAX_EPOCHS = 100
 
     if DEBUG:
         train_corpus = load_corpus("debug")
@@ -134,9 +135,10 @@ if __name__ == '__main__':
     optim = tf.train.AdamOptimizer(LEARNING_RATE)
 
     hooks = [
-        LossHook(10, BATCH_SIZE),
-        SpeedHook(10, BATCH_SIZE),
+        LossHook(100, BATCH_SIZE),
+        SpeedHook(100, BATCH_SIZE),
+        ETAHook(100, MAX_EPOCHS, 400),
         AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2)
     ]
 
-    train(loss, optim, train_feed_dicts, max_epochs=100, hooks=hooks)
+    train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks)
