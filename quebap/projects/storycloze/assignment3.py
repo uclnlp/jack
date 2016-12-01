@@ -46,8 +46,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
         target_vocab.freeze()
 
     corpus_tokenized = deep_map(corpus, tokenize, ["story"])
-    corpus_lower = deep_seq_map(corpus_tokenized, lower, ["story"])
-    corpus_os = deep_seq_map(corpus_lower,
+    # corpus_lower = deep_seq_map(corpus_tokenized, lower, ["story"])
+    corpus_os = deep_seq_map(corpus_tokenized,
                              lambda xs: ["<SOS>"] + xs + ["<EOS>"], ["story"])
     corpus_ids = deep_map(corpus_os, vocab, ["story"])
     corpus_ids = deep_map(corpus_ids, target_vocab, ["order"])
@@ -70,17 +70,19 @@ if __name__ == '__main__':
     DEBUG = False
     USE_PERMUTATION_INDEX = False
 
-    INPUT_SIZE = 300
-    OUTPUT_SIZE = 300
+    INPUT_SIZE = 100
+    OUTPUT_SIZE = 100
     LAYERS = 1
 
-    DROPOUT = 0.1
+    DROPOUT = 0.2
     L2 = 0.001
     CLIP_NORM = 5.0
 
     LEARNING_RATE = 0.001
     MAX_EPOCHS = 100
     BATCH_SIZE = 8 if DEBUG else 256
+
+    MIN_VOCAB_FREQ = 10
 
     # get_model = get_permute_model
     get_model = get_basic_model
@@ -97,7 +99,7 @@ if __name__ == '__main__':
     _, train_vocab, train_target_vocab = \
         pipeline(train_corpus, use_permutation_index=USE_PERMUTATION_INDEX)
 
-    train_vocab = train_vocab.prune(5)
+    train_vocab = train_vocab.prune(MIN_VOCAB_FREQ)
 
     train_mapped, _, _ = \
         pipeline(train_corpus, train_vocab, train_target_vocab,
