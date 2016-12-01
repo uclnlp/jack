@@ -55,10 +55,10 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
     if concat_seq:
         for i in range(len(corpus_ids["story"])):
             corpus_ids["story"][i] = [x for xs in corpus_ids["story"][i]
-                                      for x in xs[1:-1]]
-            corpus_ids = \
-                deep_seq_map(corpus_tokenized,
-                             lambda xs: ["<SOS>"] + xs + ["<EOS>"], ["story"])
+                                      for x in xs]
+            #corpus_ids = \
+            #    deep_seq_map(corpus_tokenized,
+            #                 lambda xs: ["<SOS>"] + xs + ["<EOS>"], ["story"])
 
     seq_keys = ["story"]
     if not use_permutation_index:
