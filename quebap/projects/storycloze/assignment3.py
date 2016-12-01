@@ -74,8 +74,7 @@ if __name__ == '__main__':
     # Config
     DEBUG = False
     USE_PERMUTATION_INDEX = False
-    USE_PRETRAINED_EMBEDDINGS = True
-
+    USE_PRETRAINED_EMBEDDINGS = False
 
     INPUT_SIZE = 100
     OUTPUT_SIZE = 100
@@ -88,21 +87,23 @@ if __name__ == '__main__':
     LEARNING_RATE = 0.001
     MAX_EPOCHS = 100
     BATCH_SIZE = 8 if DEBUG else 256
+    BUCKETS = 8
 
     MIN_VOCAB_FREQ = 10
 
     # get_model = get_permute_model
     get_model = get_basic_model
 
-
     from quebap.sisyphos.vocab import NeuralVocab
     from quebap.io.embeddings.embeddings import load_embeddings
 
-    embeddings = load_embeddings('./quebap/data/GloVe/glove.6B.100d.txt', 'glove')
-    #embeddings = load_embeddings('./quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz', 'glove')
-    emb = embeddings.get
-    vocab = Vocab(emb=embeddings.get)
-
+    if USE_PRETRAINED_EMBEDDINGS:
+        embeddings = load_embeddings('./quebap/data/GloVe/glove.6B.100d.txt', 'glove')
+        #embeddings = load_embeddings('./quebap/data/word2vec/GoogleNews-vectors-negative300.bin.gz', 'glove')
+        emb = embeddings.get
+    else:
+        emb = None
+    vocab = Vocab(emb=emb)
 
     print('loading corpus..')
     if DEBUG:
@@ -131,10 +132,11 @@ if __name__ == '__main__':
         pipeline(test_corpus, train_vocab, train_target_vocab,
                  use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
 
-
     nvocab = None
     if USE_PRETRAINED_EMBEDDINGS:
-        nvocab = NeuralVocab(train_vocab, input_size=INPUT_SIZE, use_pretrained=True, train_pretrained=False, unit_normalize=False)
+        nvocab = NeuralVocab(train_vocab, input_size=INPUT_SIZE,
+                             use_pretrained=True, train_pretrained=False,
+                             unit_normalize=False)
 
     loss, placeholders, predict = \
         get_model(len(train_vocab), INPUT_SIZE, OUTPUT_SIZE,
@@ -164,7 +166,8 @@ test:         %d
     #     print(sym, freq)
 
     # Training
-    train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE)
+    train_feed_dicts = get_feed_dicts(train_mapped, placeholders, BATCH_SIZE,
+                                      bucket_order=BUCKETS)
     dev_feed_dicts = get_feed_dicts(dev_mapped, placeholders, BATCH_SIZE)
     test_feed_dicts = get_feed_dicts(test_mapped, placeholders, BATCH_SIZE)
 
