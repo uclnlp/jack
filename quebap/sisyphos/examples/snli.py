@@ -8,7 +8,7 @@ from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.models import conditional_reader_model
 from quebap.sisyphos.train import train
-from quebap.sisyphos.prepare_embeddings import load as loads_embeddings
+from quebap.io.embeddings.embeddings import load_embeddings
 import tensorflow as tf
 import numpy as np
 import random
@@ -70,37 +70,39 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
 
 
 if __name__ == '__main__':
+
+    t0 = time()
     DEBUG = True
-    DEBUG_EXAMPLES = 1000
+    DEBUG_EXAMPLES = 20000
 
-    ATTENTIVE = False #True
+    ATTENTIVE = False
 
-    input_size = 100
+    input_size = 300
     output_size = 100
     batch_size = 256
     dev_batch_size = 256
     pretrain = True #use pretrained embeddings
     retrain = False #False: fix pre-trained embeddings
 
-    learning_rate = 0.001
+    learning_rate = 0.002
 
     bucket_order = ('sentence1', 'sentence2') #composite buckets; first over premises, then over hypotheses
     bucket_structure = (4, 4) #will result in 16 composite buckets, evenly spaced over premises and hypothesis
 
     if DEBUG:
-        train_data = load("./quebap/data/snli/snli_1.0/snli_1.0_train.jsonl", DEBUG_EXAMPLES)
+        train_data = load("./quebap/data/SNLI/snli_1.0/snli_1.0_train.jsonl", DEBUG_EXAMPLES)
         dev_data = train_data
         test_data = train_data
     else:
-        train_data, dev_data, test_data = [load("./quebap/data/snli/snli_1.0/snli_1.0_%s.jsonl" % name)\
+        train_data, dev_data, test_data = [load("./quebap/data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % name)\
                                            for name in ["train", "dev", "test"]]
     print('loaded train/dev/test data')
     if pretrain:
-        emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-        embeddings = loads_embeddings(path.join('quebap', 'data', 'word2vec', emb_file), format='word2vec_bin', save=False)
+        #emb_file = 'GoogleNews-vectors-negative300.bin.gz'
+        #embeddings = load_embeddings(path.join('quebap', 'data', 'word2vec', emb_file),'word2vec')
+        emb_file = 'glove.840B.300d.zip'
+        embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file),'glove')
         print('loaded pre-trained embeddings')
-
-    #load pre-trained embeddings
 
     emb = embeddings.get if pretrain else None
 
@@ -108,8 +110,6 @@ if __name__ == '__main__':
     print('encode train data')
     train_data, train_vocab, train_target_vocab = pipeline(train_data, emb=emb)
 
-
-    #print(train_vocab.sym2id)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
 
     print('build NeuralVocab')
-    nvocab = NeuralVocab(train_vocab, input_size=input_size, use_pretrained=True, train_pretrained=False, unit_normalize=False)
+    nvocab = NeuralVocab(train_vocab, input_size=input_size, use_pretrained=True, train_pretrained=False, unit_normalize=True)
 
 
     checkpoint()
