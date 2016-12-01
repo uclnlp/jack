@@ -131,15 +131,22 @@ class Vocab(object):
         Creates Vocab object.
 
         Args:
-            `unk`: symbol for unknown term (default: <UNK>).
+            `unk`: symbol for unknown term (default: "<UNK>").
+              If set to `None`, and `None` is not included as symbol while unfrozen,
+              it will return `None` upon calling `get_id(None)` when frozen.
             `emb`: function handle; returns pre-trained embedding (fixed-size numerical list or ndarray)
               for a given symbol, and None for unknown symbols.
         """
-        self.sym2id = {unk: 0}
-        self.id2sym = {0:unk} #with pos and neg indices
-        self.next_pos = 1
-        self.sym2freqs = {unk: 0}
-        #removed situation where unk=None (not consistent with rest of Vocab)
+        if unk is None:
+            self.sym2id = {}
+            self.id2sym = {} #with pos and neg indices
+            self.next_pos = 0
+            self.sym2freqs = {}
+        else:
+            self.sym2id = {unk: 0}
+            self.id2sym = {0: unk} #with pos and neg indices
+            self.next_pos = 1
+            self.sym2freqs = {unk: 0}
 
         self.next_neg = -1
         self.unk = unk
@@ -187,7 +194,8 @@ class Vocab(object):
           If `sym` is a new symbol, it is added to the Vocab.
         - In case self.frozen==True (after explicit call to 'freeze()', or after building a `NeuralVocab' with it):
           returns normalized id (positive integer, also for symbols with pre-trained embedding)
-          If `sym` is a new symbol, the id for unknown terms is returned.
+          If `sym` is a new symbol, the id for unknown terms is returned, if available,
+          and otherwise `None` (only possible when input argument `unk` for `Vocab.__init__()` was set to `None`.)
 
         Args:
             `sym`: symbol (e.g., token)
@@ -210,7 +218,11 @@ class Vocab(object):
         if sym in self.sym2id:
             return self.sym2id[sym]
         else:
-            return self.sym2id[self.unk]
+            if self.unk in self.sym2id:
+                return self.sym2id[self.unk]
+            else: #can happen for `Vocab` initialized with `unk` argument set to `None`
+                return None
+
 
     def get_sym(self, id):
         """returns symbol for a given id (consistent with the `self.frozen` state), and None if not found."""
@@ -454,7 +466,8 @@ class NeuralVocab(Vocab):
 
 if __name__ == '__main__':
 
+    print('perform doctest verification of functionality.')
 
     import doctest
-    doctest.testmod()
+    print(doctest.testmod())
 

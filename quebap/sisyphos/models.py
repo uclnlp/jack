@@ -1,83 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
-def embedder(inputs, input_size, vocab_size, embeddings=None, scope=None):
-    """
-    embeds the given input indices into a [batch_size, max_seq_length, input_size] tensor, based on the
-    tensor embeddings [vocab_size, embedding_size]. Creates the embeddings tensor if needed.
-    In case input_size differs from embedding_size, a linear transformation is performed.
-    :param inputs: tensor with instance indices for the current batch (typically a placeholder)
-    :param input_size: embedding length
-    :param vocab_size: number of symbols in the vocabulary
-    :param embeddings: tensor with shape [vocab_size, embedding_size], or None.
-    :param scope: scope for the embedding matrix and embedded inputs
-    :return: [batch_size, max_seq_length, input_size] tensor with embedded inputs
-    """
-
-    # todo: clean up - input arguments input_size, vocab_size not needed if embeddings is not None
-    with tf.variable_scope(scope or "embedder") as varscope:
-
-        # initializer = tf.random_normal_initializer(0.0, 0.1)
-        initializer = tf.random_uniform_initializer(-0.05, 0.05)
-        if embeddings is None:
-            embeddings = \
-                tf.get_variable("W", [vocab_size, input_size],
-                                initializer=initializer)
-            # [batch_size, max_seq_length, input_size]
-            return tf.nn.embedding_lookup(embeddings, inputs)
-
-        else:
-            static_shape = tf.Tensor.get_shape(embeddings)
-            if static_shape[1] == input_size:
-                # [batch_size, max_seq_length, input_size]
-                return tf.nn.embedding_lookup(embeddings, inputs)
-            else:
-                lin = tf.get_variable("W_trf", [1,static_shape[1], input_size],
-                                    initializer=initializer)
-                embedded = tf.nn.embedding_lookup(embeddings, inputs)
-                lins = tf.tile(lin,[tf.shape(embedded)[0],1,1])
-                rescaled_embedded = tf.batch_matmul(embedded,lins)
-                #restore some shape information
-                rescaled_embedded.set_shape([None, None, input_size])
-                return rescaled_embedded
 
 
-
-
-
-
-def create_embeddings(vocab, retrain=False, scope=None):
-    """
-    create embedding tensor with pre-trained embeddings
-    :param vocab: instance of class VocabEmb
-    :param retrain: False if pretrained embeddings are fixed, True otherwise
-    :return: embeddings tensor with shape [vocab_size, embedding_length]
-    """
-    # todo: additional functionality to extend pretrained embeddings with non/trainable extra dimensions
-
-    assert vocab.__class__.__name__=="VocabEmb", 'create_embeddings() needs VocabEmb instance'
-    # todo: reduce VocabEmb to single Vocab class
-
-    #embeddings = np.random.normal(loc=0.0, scale=0.1, size=[len(vocab), input_size]).astype("float32")
-
-    v_shape = vocab.get_shape()
-    embeddings = np.random.uniform(low=-0.05, high=0.05, size=[v_shape[0], v_shape[1]]).astype("float32")
-    index_pretrained = vocab.get_normalized_ids_pretrained()
-    syms_pretrained = vocab.get_syms_pretrained()
-    for i,sym in zip(index_pretrained,syms_pretrained):
-        vec = vocab.emb(sym)
-        if vec is not None: #should not happen if same emb was used to create vocab
-            embeddings[i] = vec
-
-    with tf.variable_scope(scope or "embedder") as varscope:
-        if retrain: #all are trainable
-            E = tf.get_variable("W", initializer=tf.identity(embeddings), trainable=True)
-        else:
-            E_tune = tf.get_variable("W_tune", initializer=tf.identity(embeddings[:vocab.count_oov()]), trainable=True)
-            E_fixed = tf.get_variable("W_fixed", initializer=tf.identity(embeddings[vocab.count_oov():]), trainable=False)
-            E = tf.concat(0, [E_tune, E_fixed], name="W")
-            #first out-of-vocab (tunable), then pre-trained, corresponding to normalized VocabEmb indices
-    return E
 
 
 def get_total_trainable_variables():
@@ -155,7 +80,7 @@ def predictor(output, targets, target_size):
     return logits, loss, predict
 
 
-def conditional_reader_model(output_size, target_size, nvocab, attentive = False):
+def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
 
     # Model
     # [batch_size, max_seq1_length]
