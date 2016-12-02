@@ -250,7 +250,8 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
         embeddings = nvocab.embedding_matrix
 
     # [batch_size x max_seq_length x input_size]
-    sentences_embedded = [tf.nn.embedding_lookup(embeddings, sentence)
+    sentences_embedded = [tf.nn.dropout(
+        tf.nn.embedding_lookup(embeddings, sentence), 1-dropout)
                           for sentence in sentences]
 
     # 5 times [batch_size x input_size]
