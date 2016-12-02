@@ -92,8 +92,8 @@ if __name__ == '__main__':
     BUCKETS = 4
 
     # get_model = get_permute_model
-    # get_model = get_basic_model
-    get_model = get_selective_model
+    get_model = get_basic_model
+    # get_model = get_selective_model
 
     CONCAT_SENTENCES = True
     if get_model == get_selective_model:
