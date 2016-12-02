@@ -154,27 +154,27 @@ def main():
 
     #args
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--debug', default=False, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
-    parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used")
+    parser.add_argument('--debug', default='False', choices={'True','False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
+    parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="Quebap dev file")
     parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single or multiple supporting statements per instance")
-    parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single or multiple questions per instance")
-    parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance or fixed candidates")
-    parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance or fixed candidates")
-    parser.add_argument('--batch_size', default=5, type=int, help="Batch size for training data")
-    parser.add_argument('--dev_batch_size', default=5, type=int, help="Batch size for development data")
-    parser.add_argument('--repr_dim_input', default=5, type=int, help="Size of the input representation (embeddings)")
-    parser.add_argument('--repr_dim_output', default=5, type=int, help="Size of the output representation")
-    parser.add_argument('--pretrain', default=False, type=bool, help="Use pretrained embeddings, by default the initialisation is random")
-    parser.add_argument('--train_pretrain', default=False, type=bool,
-                        help="Continue training pretrained embeddings together with model parameters")
-    parser.add_argument('--normalize_pretrain', default=True, type=bool,
-                        help="Normalize pretrained embeddings")
+    parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single (default), or multiple supporting statements per instance")
+    parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
+    parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
+    parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
+    parser.add_argument('--batch_size', default=32, type=int, help="Batch size for training data, default 32")
+    parser.add_argument('--dev_batch_size', default=32, type=int, help="Batch size for development data, default 32")
+    parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
+    parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
+    parser.add_argument('--pretrain', default='False', choices={'True','False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
+    parser.add_argument('--train_pretrain', default='False', choices={'True','False'},
+                        help="Continue training pretrained embeddings together with model parameters, default False")
+    parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
+                        help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
-    parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate")
-    parser.add_argument('--epochs', default=3, type=int, help="Number of epochs to train for")
+    parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
+    parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
     #                    help="Use if training and test are the same file and the training set needs to be split. Index of last training instance plus 1.")
@@ -190,6 +190,15 @@ def main():
     #                    help="When using features: type of features.")
 
     args = parser.parse_args()
+
+    #hack to circumvent lack of 'bool' type in parser
+    def _bool_args():
+        read_bool = lambda l: {'True': True, 'False': False}[l]
+        args.debug = read_bool(args.debug)
+        args.pretrain = read_bool(args.pretrain)
+        args.train_pretrain = read_bool(args.train_pretrain)
+        args.normalize_pretrain = read_bool(args.normalize_pretrain)
+    _bool_args()
 
 
     bucket_order = ('question','support') #composite buckets; first over question, then over support
@@ -233,6 +242,7 @@ def main():
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
     parser.add_argument('--answer_size', default=answer_size, type=int)
     args = parser.parse_args()
+    _bool_args()
 
     print("\tvocab size:  %d" % vocab_size)
     print("\tanswer size: %d" % answer_size)
@@ -247,7 +257,6 @@ def main():
     checkpoint()
 
     print('build NeuralVocab')
-    #todo: foresee input args to set these parameters
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
 

@@ -368,7 +368,6 @@ class NeuralVocab(Vocab):
             `unit_normalize`: initialize pre-trained vectors with unit norm
               (note: randomly initialized embeddings are always initialized with expected unit norm)
         """
-
         super(NeuralVocab, self).__init__(unk=base_vocab.unk, emb=base_vocab.emb)
         np.random.seed(seed)
         tf.set_random_seed(seed)
@@ -405,7 +404,8 @@ class NeuralVocab(Vocab):
                     if unit_normalize:
                         np_E_pre[i,:] = np_normalize(np_E_pre[i,:])
                 E_pre = tf.get_variable("embeddings_pretrained", initializer=tf.identity(np_E_pre),
-                                        trainable=train_pretrained, dtype="float32")
+                                        trainable=False, dtype="float32")
+
                 if input_size > base_vocab.emb_length:
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
                         initializer=tf.random_normal_initializer(0.0, 1./np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
