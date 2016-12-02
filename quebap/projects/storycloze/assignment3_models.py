@@ -1,8 +1,9 @@
 import tensorflow as tf
 import pprint
 
-def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1,
-                      dropout=0.0):
+
+def get_permute_model(vocab_size, input_size, output_size, target_size,
+                      layers=1, dropout=0.0):
     # Placeholders
     # [batch_size x max_length]
     story = tf.placeholder(tf.int64, [None, None], "story")
@@ -44,8 +45,12 @@ def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1
             dtype=tf.float32
         )
 
-        # fixme: this is only using the BW state!
-        c, h = states[-1]  # LSTM state is a tuple
+        fw = states[0][1]
+
+        # todo: also use backward pass
+        # bw = states[1][1]
+
+        h = fw
 
         logits = tf.contrib.layers.linear(h, target_size)
 
@@ -107,11 +112,9 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
         )
 
         fw = states[0][1]
+        bw = states[1][1]
 
-        # todo: also use backward pass
-        # bw = states[1][1]
-
-        h = fw
+        h = tf.concat(1, [fw, bw])
 
         # [batch_size x 5*target_size]
         logits_flat = tf.contrib.layers.linear(h, 5*target_size)
@@ -126,11 +129,10 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
         return loss, placeholders, predict
 
 
-def get_selective_model(vocab_size, input_size, output_size, target_size, layers=1,
-                        dropout=0.0, nvocab=None):
+def get_selective_model(vocab_size, input_size, output_size, target_size,
+                        layers=1, dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x 5 x max_length]
-    # fixme: or [5 x batch_size x max_length]?
     story = tf.placeholder(tf.int64, [None, None, None], "story")
     # [batch_size x 5]
     story_length = tf.placeholder(tf.int64, [None, None], "story_length")
@@ -196,14 +198,12 @@ def get_selective_model(vocab_size, input_size, output_size, target_size, layers
                 )
 
         fws = [states[1][0][1] for states in rnn_result]
+        bws = [states[1][1][1] for states in rnn_result]
 
-        # todo: also use backward pass
-        # bws = [states[1][1][1] for states in rnn_result]
+        # 5 times [batch_size x 2*output_size]
+        hs = [tf.concat(1, [fw, bw]) for fw, bw in zip(fws, bws)]
 
-        # 5 times [batch_size x target_size]
-        hs = fws
-
-        # [batch_size x 5*output_size]
+        # [batch_size x 5*2*output_size]
         h = tf.concat(1, hs)
 
         # [batch_size x 5*target_size]
