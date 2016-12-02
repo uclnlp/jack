@@ -73,7 +73,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
 
 if __name__ == '__main__':
     # Config
-    DEBUG = True
+    DEBUG = False
     USE_PERMUTATION_INDEX = False
     USE_PRETRAINED_EMBEDDINGS = False
     MIN_VOCAB_FREQ = 0 if DEBUG else 10
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     BUCKETS = 4
 
     # get_model = get_permute_model
-    get_model = get_basic_model
-    # get_model = get_selective_model
+    # get_model = get_basic_model
+    get_model = get_selective_model
 
     CONCAT_SENTENCES = True
     if get_model == get_selective_model:
