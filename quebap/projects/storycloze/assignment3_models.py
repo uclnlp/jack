@@ -217,3 +217,58 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
         predict = tf.arg_max(tf.nn.softmax(logits), 2)
 
         return loss, placeholders, predict
+
+
+def get_bowv_model(vocab_size, input_size, output_size, target_size,
+                   layers=1, dropout=0.0, nvocab=None):
+    # Placeholders
+    # [batch_size x 5 x max_length]
+    story = tf.placeholder(tf.int64, [None, None, None], "story")
+    # [batch_size x 5]
+    story_length = tf.placeholder(tf.int64, [None, None], "story_length")
+    # [batch_size x 5]
+    order = tf.placeholder(tf.int64, [None, None], "order")
+    placeholders = {"story": story, "story_length": story_length,
+                    "order": order}
+
+    batch_size = tf.shape(story)[0]
+
+    # 5 times [batch_size x max_length]
+    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(1, 5, story)]
+
+    # 5 times [batch_size]
+    lengths = [tf.reshape(x, [batch_size])
+               for x in tf.split(1, 5, story_length)]
+
+    # Word embeddings
+    if nvocab is None:
+        initializer = tf.random_uniform_initializer(-0.05, 0.05)
+        embeddings = tf.get_variable("W", [vocab_size, input_size],
+                                     initializer=initializer)
+    else:
+        print('..using pretrained embeddings')
+        embeddings = nvocab.embedding_matrix
+
+    # [batch_size x max_seq_length x input_size]
+    sentences_embedded = [tf.nn.embedding_lookup(embeddings, sentence)
+                          for sentence in sentences]
+
+    # 5 times [batch_size x input_size]
+    hs = [tf.reduce_sum(sentence, 1) for sentence in sentences_embedded]
+
+    # [batch_size x 5*input_size]
+    h = tf.concat(1, hs)
+
+    h = tf.reshape(h, [batch_size, 5*input_size])
+
+    # [batch_size x 5*target_size]
+    logits_flat = tf.contrib.layers.linear(h, 5 * target_size)
+    # [batch_size x 5 x target_size]
+    logits = tf.reshape(logits_flat, [-1, 5, target_size])
+
+    loss = tf.reduce_sum(
+        tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
+
+    predict = tf.arg_max(tf.nn.softmax(logits), 2)
+
+    return loss, placeholders, predict

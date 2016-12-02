@@ -6,7 +6,7 @@ from quebap.sisyphos.train import train
 import tensorflow as tf
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, ETAHook
 from quebap.projects.storycloze.assignment3_models import get_permute_model, \
-    get_basic_model, get_selective_model
+    get_basic_model, get_selective_model, get_bowv_model
 import os
 
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     OUTPUT_SIZE = 23 if DEBUG else 100
     LAYERS = 1
 
-    DROPOUT = 0.2
+    DROPOUT = 0.5
     L2 = 0.001
     CLIP_NORM = 5.0
 
@@ -93,10 +93,11 @@ if __name__ == '__main__':
 
     # get_model = get_permute_model
     # get_model = get_basic_model
-    get_model = get_selective_model
+    # get_model = get_selective_model
+    get_model = get_bowv_model
 
     CONCAT_SENTENCES = True
-    if get_model == get_selective_model:
+    if get_model == get_selective_model or get_model == get_bowv_model:
         CONCAT_SENTENCES = False
 
     from quebap.sisyphos.vocab import NeuralVocab
