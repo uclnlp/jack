@@ -105,7 +105,7 @@ def quebap_load(path, max_count=None, **options):
 
 
 #@todo: rewrite such that it works for different types of quebap files / models
-def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False):
+def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False):
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     candidate_vocab = candidate_vocab or Vocab(unk=None)
@@ -121,6 +121,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
+    if normalize:
+        corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
 
 
@@ -152,7 +154,7 @@ def main():
 
     #args
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--debug', default=True, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
+    parser.add_argument('--debug', default=False, type=bool, help="Run in debug mode, in which case the training file is also used for testing")
     parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="Quebap dev file")
@@ -203,7 +205,7 @@ def main():
             embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file), 'glove')
             print('loaded pre-trained embeddings (%s)'%emb_file)
     else:
-        train_data, dev_data, test_data = [quebap_load(name) for name in [args["train"], args["dev"], args["test"]]]
+        train_data, dev_data, test_data = [quebap_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
         print('loaded train/dev/test data')
         if args.pretrain:
             # emb_file = 'GoogleNews-vectors-negative300.bin.gz'
@@ -216,7 +218,7 @@ def main():
 
     checkpoint()
     print('encode train data')
-    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb)
+    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True)
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
     print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.' % (N_pre, N_oov))

@@ -53,7 +53,7 @@ def load(path, max_count=None):
     return {'sentence1': seq1s, 'sentence2': seq2s, 'targets': targets}
 
 
-def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
+def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False, normalize=False):
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     if freeze:
@@ -66,6 +66,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False):
     corpus_ids = deep_map(corpus_os, vocab, ['sentence1', 'sentence2'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['targets'])
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['sentence1', 'sentence2'], fun_name='lengths', expand=True)
+    if normalize:
+        corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['sentence1', 'sentence2'])
     return corpus_ids, vocab, target_vocab
 
 
@@ -73,16 +75,16 @@ if __name__ == '__main__':
 
     t0 = time()
     DEBUG = True
-    DEBUG_EXAMPLES = 20000
+    DEBUG_EXAMPLES = 2000
 
     ATTENTIVE = False
 
-    input_size = 300
+    input_size = 100
     output_size = 100
     batch_size = 256
     dev_batch_size = 256
     pretrain = True #use pretrained embeddings
-    retrain = False #False: fix pre-trained embeddings
+    retrain = True #False: fix pre-trained embeddings
 
     learning_rate = 0.002
 
@@ -98,17 +100,21 @@ if __name__ == '__main__':
                                            for name in ["train", "dev", "test"]]
     print('loaded train/dev/test data')
     if pretrain:
-        #emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-        #embeddings = load_embeddings(path.join('quebap', 'data', 'word2vec', emb_file),'word2vec')
-        emb_file = 'glove.840B.300d.zip'
-        embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file),'glove')
+        if DEBUG:
+            emb_file = 'glove.6B.50d.txt'
+            embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file),'glove')
+        else:
+            #emb_file = 'GoogleNews-vectors-negative300.bin.gz'
+            #embeddings = load_embeddings(path.join('quebap', 'data', 'word2vec', emb_file),'word2vec')
+            emb_file = 'glove.840B.300d.zip'
+            embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file),'glove')
         print('loaded pre-trained embeddings')
 
     emb = embeddings.get if pretrain else None
 
     checkpoint()
     print('encode train data')
-    train_data, train_vocab, train_target_vocab = pipeline(train_data, emb=emb)
+    train_data, train_vocab, train_target_vocab = pipeline(train_data, emb=emb, normalize=True)
 
 
     N_oov = train_vocab.count_oov()
