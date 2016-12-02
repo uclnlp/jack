@@ -106,8 +106,12 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
             dtype=tf.float32
         )
 
-        # fixme: this is only using the BW state!
-        c, h = states[-1]  # LSTM state is a tuple
+        fw = states[0][1]
+
+        # todo: also use backward pass
+        # bw = states[1][1]
+
+        h = fw
 
         # [batch_size x 5*target_size]
         logits_flat = tf.contrib.layers.linear(h, 5*target_size)

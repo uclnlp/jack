@@ -76,25 +76,28 @@ if __name__ == '__main__':
     DEBUG = True
     USE_PERMUTATION_INDEX = False
     USE_PRETRAINED_EMBEDDINGS = False
-    CONCAT_SENTENCES = False
     MIN_VOCAB_FREQ = 0 if DEBUG else 10
 
-    INPUT_SIZE = 3 if DEBUG else 100
-    OUTPUT_SIZE = 2 if DEBUG else 100
+    INPUT_SIZE = 19 if DEBUG else 100
+    OUTPUT_SIZE = 23 if DEBUG else 100
     LAYERS = 1
 
     DROPOUT = 0.2
     L2 = 0.001
     CLIP_NORM = 5.0
 
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.01
     MAX_EPOCHS = 100
     BATCH_SIZE = 8 if DEBUG else 256
     BUCKETS = 4
 
     # get_model = get_permute_model
-    # get_model = get_basic_model
-    get_model = get_selective_model
+    get_model = get_basic_model
+    # get_model = get_selective_model
+
+    CONCAT_SENTENCES = True
+    if get_model == get_selective_model:
+        CONCAT_SENTENCES = False
 
     from quebap.sisyphos.vocab import NeuralVocab
     from quebap.io.embeddings.embeddings import load_embeddings
