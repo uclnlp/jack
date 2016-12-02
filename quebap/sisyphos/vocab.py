@@ -284,12 +284,15 @@ class Vocab(object):
         return self.next_pos
 
     def prune(self, min_freq=5):
-        pruned_vocab = Vocab(unk=self.unk)
+        """returns new Vocab object, pruned based on minimum symbol frequency"""
+        pruned_vocab = Vocab(unk=self.unk, emb=self.emb)
         for sym in self.sym2freqs:
             freq = self.sym2freqs[sym]
             if freq >= min_freq:
                 pruned_vocab(sym)
                 pruned_vocab.sym2freqs[sym] = self.sym2freqs[sym]
+        if self.frozen:#if original Vocab was frozen, freeze new one
+            pruned_vocab.freeze()
 
         return pruned_vocab
 
@@ -372,6 +375,7 @@ class NeuralVocab(Vocab):
 
         assert (embedding_matrix, input_size) is not (None, None), "if no embedding_matrix is provided, define input_size"
 
+        self.freeze() #has no actual functionality here
         base_vocab.freeze() #freeze if not frozen (to ensure fixed non-negative indices)
 
         self.sym2id = base_vocab.sym2id
@@ -431,7 +435,8 @@ class NeuralVocab(Vocab):
         """returns embedded id's
 
         Args:
-            `id`: integer, ndarray with np.int32 integers, or tensor with tf.int32 integers.
+            `id`: integer, ndarray with np.int32 integers,
+                  or tensor with tf.int32 integers.
             These integers correspond to (normalized) id's for symbols in `self.base_vocab`.
 
         Returns:
