@@ -6,8 +6,9 @@ from quebap.sisyphos.train import train
 import tensorflow as tf
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, ETAHook
 from quebap.projects.storycloze.assignment3_models import get_permute_model, \
-    get_basic_model
+    get_basic_model, get_selective_model
 import os
+
 
 def load_corpus(name, use_permutation_index=True):
     story = []
@@ -72,12 +73,14 @@ def pipeline(corpus, vocab=None, target_vocab=None, emb=None, freeze=False,
 
 if __name__ == '__main__':
     # Config
-    DEBUG = False
+    DEBUG = True
     USE_PERMUTATION_INDEX = False
     USE_PRETRAINED_EMBEDDINGS = False
+    CONCAT_SENTENCES = False
+    MIN_VOCAB_FREQ = 0 if DEBUG else 10
 
-    INPUT_SIZE = 100
-    OUTPUT_SIZE = 100
+    INPUT_SIZE = 3 if DEBUG else 100
+    OUTPUT_SIZE = 2 if DEBUG else 100
     LAYERS = 1
 
     DROPOUT = 0.2
@@ -87,12 +90,11 @@ if __name__ == '__main__':
     LEARNING_RATE = 0.001
     MAX_EPOCHS = 100
     BATCH_SIZE = 8 if DEBUG else 256
-    BUCKETS = 8
-
-    MIN_VOCAB_FREQ = 10
+    BUCKETS = 4
 
     # get_model = get_permute_model
-    get_model = get_basic_model
+    # get_model = get_basic_model
+    get_model = get_selective_model
 
     from quebap.sisyphos.vocab import NeuralVocab
     from quebap.io.embeddings.embeddings import load_embeddings
@@ -124,13 +126,16 @@ if __name__ == '__main__':
 
     train_mapped, _, _ = \
         pipeline(train_corpus, train_vocab, train_target_vocab,
-                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
+                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True,
+                 concat_seq=CONCAT_SENTENCES)
     dev_mapped, _, _ = \
         pipeline(dev_corpus, train_vocab, train_target_vocab,
-                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
+                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True,
+                 concat_seq=CONCAT_SENTENCES)
     test_mapped, _, _ = \
         pipeline(test_corpus, train_vocab, train_target_vocab,
-                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True)
+                 use_permutation_index=USE_PERMUTATION_INDEX, freeze=True,
+                 concat_seq=CONCAT_SENTENCES)
 
     nvocab = None
     if USE_PRETRAINED_EMBEDDINGS:
