@@ -174,6 +174,8 @@ def main():
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
+    parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
+    parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
@@ -191,15 +193,21 @@ def main():
 
     args = parser.parse_args()
 
-    #hack to circumvent lack of 'bool' type in parser
-    def _bool_args():
+    #pre-process arguments
+    #(hack to circumvent lack of 'bool' type in parser)
+    def _prep_args():
         read_bool = lambda l: {'True': True, 'False': False}[l]
         args.debug = read_bool(args.debug)
         args.pretrain = read_bool(args.pretrain)
         args.train_pretrain = read_bool(args.train_pretrain)
         args.normalize_pretrain = read_bool(args.normalize_pretrain)
-    _bool_args()
+        args.clip_value = None if args.clip_value == 0.0 else (-abs(args.clip_value),abs(args.clip_value))
+    _prep_args()
 
+    #print out args
+    print('configuration:')
+    for arg in vars(args):
+        print('\t%s : %s'%(str(arg),str(getattr(args, arg))))
 
     bucket_order = ('question','support') #composite buckets; first over question, then over support
     bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
@@ -217,10 +225,10 @@ def main():
         train_data, dev_data, test_data = [quebap_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
         print('loaded train/dev/test data')
         if args.pretrain:
-            # emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-            # embeddings = load_embeddings(path.join('quebap', 'data', 'word2vec', emb_file),'word2vec')
-            emb_file = 'glove.840B.300d.zip'
-            embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file), 'glove')
+            emb_file = 'GoogleNews-vectors-negative300.bin.gz'
+            embeddings = load_embeddings(path.join('quebap', 'data', 'word2vec', emb_file),'word2vec')
+            #emb_file = 'glove.840B.300d.zip'
+            #embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file), 'glove')
             print('loaded pre-trained embeddings (%s)'%emb_file)
 
     emb = embeddings.get if args.pretrain else None
@@ -242,7 +250,7 @@ def main():
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
     parser.add_argument('--answer_size', default=answer_size, type=int)
     args = parser.parse_args()
-    _bool_args()
+    _prep_args()
 
     print("\tvocab size:  %d" % vocab_size)
     print("\tanswer size: %d" % answer_size)
@@ -281,7 +289,8 @@ def main():
         AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2)
     ]
 
-    train(loss, optim, train_feed_dicts, max_epochs=args.epochs, hooks=hooks)
+    train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
+
 
 
 
