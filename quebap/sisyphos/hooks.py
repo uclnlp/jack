@@ -56,6 +56,38 @@ class LossHook(TraceHook):
             self.acc_loss = 0
 
 
+class TensorHook(TraceHook):
+    def __init__(self, iter_interval, tensorlist, feed_dict={}, modes=['mean_abs','min','max'], summary_writer=None):
+        super(TensorHook, self).__init__(summary_writer)
+        self.iter_interval = iter_interval
+        self.tensorlist = tensorlist
+        self.feed_dict = feed_dict
+        self.tags = [t.name for t in tensorlist]
+        self.modes = modes
+        self.iter = 0
+
+    def __tag__(self):
+        return "Tensor"
+
+    def __call__(self, sess, epoch, model, loss):
+        self.iter += 1
+        if not self.iter == 0 and self.iter % self.iter_interval == 0:
+            for tensor,tag in zip(self.tensorlist, self.tags):
+                t = sess.run(tensor, feed_dict=self.feed_dict)
+                if 'mean_abs' in self.modes:
+                    value_mean = float(np.mean(t))
+                    self.update_summary(sess, self.iter, tag+'_mean_abs', value_mean)
+                if 'min' in self.modes:
+                    value_min = float(np.min(t))
+                    self.update_summary(sess, self.iter, tag+'_min', value_min)
+                if 'max' in self.modes:
+                    value_max = float(np.max(t))
+                    self.update_summary(sess, self.iter, tag + '_max', value_max)
+                if 'print' in self.modes: #for debug purposes
+                    print('\n%s\n%s\n'%(tag, str(t)))
+
+
+
 class SpeedHook(TraceHook):
     def __init__(self, iter_interval, batch_size, summary_writer=None):
         super(SpeedHook, self).__init__(summary_writer)
