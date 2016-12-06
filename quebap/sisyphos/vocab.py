@@ -472,6 +472,9 @@ class NeuralVocab(Vocab):
             ids = args
         return [self.id2vec[id] for id in ids]
 
+    def get_embedding_matrix(self):
+        return self.embedding_matrix
+
 
 
 
