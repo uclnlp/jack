@@ -70,10 +70,12 @@ class LowRankLog:
         self.template_queries[template] = (scores, get_feed_dict)
 
     def entity_embedding(self, entity_name):
-        return self.sess.run(tf.gather(self.ent_embeddings, self.ent_vocab.get_id(entity_name)))
+        return self.sess.run(tf.gather(self.ent_embeddings,
+                                       self.ent_vocab.get_id(lang.Constant(entity_name))))
 
     def predicate_embedding(self, predicate_name):
-        return self.sess.run(tf.gather(self.pred_embeddings, self.pred_vocab.get_id(predicate_name)))
+        return self.sess.run(tf.gather(self.pred_embeddings,
+                                       self.pred_vocab.get_id(lang.Predicate(predicate_name))))
 
     def query(self, atom):
         if isinstance(atom, str):
@@ -139,6 +141,7 @@ class LowRankLog:
 
         # def dot3(arg1, rel, arg2):
         #     return tf.matmul(arg1 * arg2, rel, transpose_b=True)  # [num_samples, num_preds]
+        tf.batch_matmul
         def dot3(arg1, rel, arg2):
             return tf.reduce_sum(arg1 * rel * arg2, 2)
 
