@@ -30,7 +30,120 @@ def lower(xs):
     return [x.lower() for x in xs]
 
 
-def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
+def deep_map(xs, fun, keys=None, fun_name='trf', expand=False):
+    """Performs deep mapping of the input `xs` using function `fun`.
+    In case `expand==False` each top-level entry of `xs` to be transformed
+    replaces the original entry.
+    `deep_map` supports `xs` to be a dictionary or a list/tuple:
+      - In case `xs` is a dictionary, its transformed value is also a dictionary, and `keys` contains the keys of the
+      values to be transformed.
+      - In case `xs` is a list/tuple, `keys` contains the indices of the entries to be transformed
+    The function `deep_map` is recursively applied to the values of `xs`,
+    only at the deepest level, where the entries are no longer sequences/dicts, after which `fun` is applied.
+    Args:
+      `xs`: a sequence (list/tuple) of objects or sequences of objects.
+      `fun`: a function to transform objects
+      `keys`: seq with keys if `xs` is dict; seq with integer indices if `xs` is seq.
+        For entries not in `keys`, the original `xs` value is retained.
+      `fun_name`: default value 'trf'; string with function tag (e.g. 'lengths'),
+        used if '''expand==True''' and '''isinstance(xs,dict)'''
+        Say for example fun_name='lengths', and `keys` contains 'sentence', then the transformed dict would look like
+        '''{'sentence':[sentences], 'sentence_lengths':[fun(sentences)] ...}'''
+    Returns:
+      Transformed sequence or dictionary.
+    Example:
+    (1) Test with sequence of stuff
+    >>> dave = [
+    ...         "All work and no play makes Jack a dull boy",
+    ...         "All work and no play makes Jack a dull boy.",
+    ...         "All work and no play makes Jack a very dull boy!"]
+    >>> jack = [
+    ...         "I'm sorry Dave, I'm afraid I can't do that!",
+    ...         "I'm sorry Dave, I'm afraid I can't do that",
+    ...         "I'm sorry Dave, I'm afraid I cannot do that"]
+    >>> support = [
+    ...         ["Play makes really dull", "really dull"],
+    ...         ["Dave is human"],
+    ...         ["All work", "all dull", "dull"]]
+    >>> data1 = [dave, jack, support]
+    >>> vocab1 = Vocab()
+    >>> data1_lower = deep_map(data1, lambda s:s.lower())
+    >>> data1_tokenized = deep_map(data1_lower, tokenize)
+    >>> data1_ids = deep_map(data1_tokenized, vocab1)
+    >>> pprint.pprint(data1_ids)
+    [[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
+     [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],
+      [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
+      [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],
+     [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]]]
+    >>> data1_ids_with_lengths = deep_seq_map(data1_ids, lambda xs: len(xs),
+    ...                                       fun_name='lengths', expand=True)
+    >>> pprint.pprint(data1_ids_with_lengths)
+    [[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
+     [10, 11, 12],
+     [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],
+      [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
+      [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],
+     [17, 16, 14],
+     [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],
+     [[4, 2], [3], [2, 2, 1]]]
+    (2) Test with data dictionary
+    >>> data2 = {'dave': dave, 'jack': jack, 'support': support}
+    >>> pprint.pprint(data2)
+    {'dave': ['All work and no play makes Jack a dull boy',
+              'All work and no play makes Jack a dull boy.',
+              'All work and no play makes Jack a very dull boy!'],
+     'jack': ["I'm sorry Dave, I'm afraid I can't do that!",
+              "I'm sorry Dave, I'm afraid I can't do that",
+              "I'm sorry Dave, I'm afraid I cannot do that"],
+     'support': [['Play makes really dull', 'really dull'],
+                 ['Dave is human'],
+                 ['All work', 'all dull', 'dull']]}
+    >>> data2_tokenized = deep_map(data2, tokenize)
+    >>> pprint.pprint(data2_tokenized['support'])
+    [[['Play', 'makes', 'really', 'dull'], ['really', 'dull']],
+     [['Dave', 'is', 'human']],
+     [['All', 'work'], ['all', 'dull'], ['dull']]]
+    """
+
+    if isinstance(xs, dict):
+        xs_mapped = {}
+        for k, x in sorted(xs.items(), key=lambda it:it[0]): #to make deterministic (e.g. for consistent symbol id's)
+            if keys is None or k in keys:
+                if expand:
+                    xs_mapped[k] = x
+                    #if expand: create new key for transformed element, else use same key
+                    k = '%s_%s'%(str(k),str(fun_name))
+                if isinstance(x, list) or isinstance(x, dict):
+                    x_mapped = deep_map(x, fun)
+                else:
+                    x_mapped = fun(x)
+                xs_mapped[k] = x_mapped
+            else:
+                xs_mapped[k] = x
+    else:
+        xs_mapped = []
+        for k, x in enumerate(xs):
+            if keys is None or k in keys:
+                if expand:
+                    xs_mapped.append(x)
+                if isinstance(x, list) or isinstance(x, dict):
+                    x_mapped = deep_map(x, fun, fun_name=fun_name)
+                else:
+                    x_mapped = fun(x)
+                xs_mapped.append(x_mapped)
+            else:
+                xs_mapped.append(x)
+    return xs_mapped
+
+
+
+def deep_map_sebastian(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
+    #@TODO: Sebastian's version, introduced for sampling negative training data - this currently doesn't work
     """Performs deep mapping of the input `xs` using function `fun`.
     In case `expand==False` each top-level entry of `xs` to be transformed
     replaces the original entry.
