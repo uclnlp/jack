@@ -27,7 +27,7 @@ from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.train import train
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
-from quebap.model.models import ReaderModel
+import quebap.model.models as models
 from quebap.io.embeddings.embeddings import load_embeddings
 
 
@@ -129,8 +129,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
 def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
-        'bicond_singlesupport_reader': ReaderModel.conditional_reader_model,
-        'boe': ReaderModel.boe_reader_model,
+        'bicond_singlesupport_reader': models.conditional_reader_model,
+        'boe': models.boe_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
         #'boe': ReaderModel.create_bag_of_embeddings_reader
@@ -270,8 +270,7 @@ def main():
 
     checkpoint()
     print('build model %s'%args.model)
-    reader = ReaderModel()
-    (logits, loss, predict), placeholders = reader_models[args.model](reader, nvocab, **vars(args))
+    (logits, loss, predict), placeholders = reader_models[args.model](nvocab, **vars(args))
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,
