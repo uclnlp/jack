@@ -137,6 +137,9 @@ def quebap_load(path, max_count=None, **options):
 
 
     print("Loaded %d examples from %s" % (len(questions), path))
-    return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
+    if options["supports"] != "none": 
+        return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
+    else:
+       return {'question': questions, 'answers': answers, 'candidates': candidates} 
 
 
