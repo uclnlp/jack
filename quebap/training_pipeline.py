@@ -1,3 +1,13 @@
+"""
+
+DEPRECATED -- WILL SOON BE REMOVED:
+
+- generic pipeline function will move to sisyphos
+- quebap_load will go to io
+- main routine will be case-specific, and go to the projects subfolders.
+
+"""
+
 import argparse
 import json
 import os.path as path
@@ -292,7 +302,7 @@ def main():
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
         AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2),
-        TensorHook(20, [loss, logits, predict, nvocab.get_embedding_matrix()],
+        TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
                    feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw)
     ]
 
