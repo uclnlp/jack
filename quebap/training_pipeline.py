@@ -34,7 +34,7 @@ checkpoint = Duration()
 
 from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
-from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
+from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from quebap.sisyphos.train import train
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, TestAllHook
 import quebap.model.models as models
@@ -45,6 +45,7 @@ from quebap.io.read_quebap import quebap_load as _quebap_load
 
 def quebap_load(path, max_count=None, **options):
     return _quebap_load(path, max_count, **options)
+
 
 
 
@@ -67,7 +68,7 @@ def map_to_targets(xs, cands_name, ans_name):
 
 
 #@todo: rewrite such that it works for different types of quebap files / models
-def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False):
+def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False, tokenization=True, negsamples=0):
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     candidate_vocab = candidate_vocab or Vocab(unk=None)
@@ -76,6 +77,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
         target_vocab.freeze()
         candidate_vocab.freeze()
 
+ 
     corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
     corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
@@ -84,6 +86,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
     corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
+    if negsamples > 0:#we want this to be the last thing we do to candidates
+        corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
@@ -99,6 +103,7 @@ def main():
         'boe_support_cands': models.boe_support_cands_reader_model,
         'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
         'boe': models.boe_reader_model,
+        'boenosupport': models.boenosupport_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
     }
@@ -147,6 +152,8 @@ def main():
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
     parser.add_argument('--drop_keep_prob', default=0.9, type=float, help="keep probability for dropout on output (set to 1.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
+    parser.add_argument('--tokenize', default='True', choices={'True','False'},help="Tokenize question and support, default True")
+    parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
@@ -172,6 +179,7 @@ def main():
         args.pretrain = read_bool(args.pretrain)
         args.train_pretrain = read_bool(args.train_pretrain)
         args.normalize_pretrain = read_bool(args.normalize_pretrain)
+        args.tokenize = read_bool(args.tokenize)
         args.clip_value = None if args.clip_value == 0.0 else (-abs(args.clip_value),abs(args.clip_value))
     _prep_args()
 
@@ -179,9 +187,6 @@ def main():
     print('configuration:')
     for arg in vars(args):
         print('\t%s : %s'%(str(arg),str(getattr(args, arg))))
-
-    bucket_order = ('question','support') #composite buckets; first over question, then over support
-    bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
 
     if args.debug:
         train_data = quebap_load(args.train, args.debug_examples, **vars(args))
@@ -203,10 +208,11 @@ def main():
             print('loaded pre-trained embeddings (%s)'%emb_file)
 
     emb = embeddings.get if args.pretrain else None
+    
 
     checkpoint()
     print('encode train data')
-    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True)
+    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
     print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.' % (N_pre, N_oov))
@@ -229,10 +235,10 @@ def main():
 
     checkpoint()
     print('encode dev data')
-    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True)
+    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
     checkpoint()
     print('encode test data')
-    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True)
+    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
     checkpoint()
 
     print('build NeuralVocab')
@@ -242,6 +248,13 @@ def main():
     checkpoint()
     print('build model %s'%args.model)
     (logits, loss, predict), placeholders = reader_models[args.model](nvocab, **vars(args))
+    
+    if args.supports != "none":
+        bucket_order = ('question','support') #composite buckets; first over question, then over support
+        bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
+    else:
+        bucket_order = ('question',) #question buckets
+        bucket_structure = (4,) #4 buckets, evenly spaced over questions
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,

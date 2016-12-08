@@ -280,7 +280,7 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, seed=None):
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         candidates = candidate_dataset[i]
-        answers = answer_dataset[i]
+        answers = [answer_dataset[i]]#DynamicSubsampledList is multiple answer ready, current data structure is not
         new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, rand))
     result = {}
     result.update(xs)
@@ -311,19 +311,22 @@ class DynamicSubsampledList:
         result = []
         result += self.always_in
         for _ in range(0, self.how_many):
-            result.append(self.random.choice(self.to_sample_from))
+            result.append(self.random.choice(self.to_sample_from))#todo check we are adding negative examples?
         return result.__iter__()
+    
+    def __len__(self):
+        return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
 
 
 def get_list_shape(xs):
     shape = [len(xs)]
     for i, x in enumerate(xs):
-        if isinstance(x, list):
+        if isinstance(x, list) or isinstance(x, DynamicSubsampledList):
             if len(shape) == 1:
                 shape.append(0)
             shape[1] = max(len(x), shape[1])
             for j, y in enumerate(x):
-                if isinstance(y, list):
+                if isinstance(y, list) or isinstance(y, DynamicSubsampledList):
                     if len(shape) == 2:
                         shape.append(0)
                     shape[2] = max(len(y), shape[2])
@@ -352,7 +355,7 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
                 x_np[0:shape[0]] = x
             elif dims == 2:
                 for j, y in enumerate(x):
-                    x_np[j, 0:len(y)] = y
+                    x_np[j, 0:len(y)] = [ys for ys in y]#this comprehension turns DynamicSubsampledList into a list
             elif dims == 3:
                 for j, ys in enumerate(x):
                     for k, y in enumerate(ys):
