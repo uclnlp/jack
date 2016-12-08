@@ -202,7 +202,7 @@ class AccuracyHook(TraceHook):
                         feed_dict = batch
 
                     predicted = sess.run(self.predict, feed_dict=feed_dict)
-                    overlap = feed_dict[self.target] == predicted
+                    overlap = np.argmax(feed_dict[self.target]) == predicted
                     correct += np.sum(overlap)
                     total += predicted.size
 
