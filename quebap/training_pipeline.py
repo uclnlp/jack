@@ -49,7 +49,21 @@ def quebap_load(path, max_count=None, **options):
 
 
 
-
+def map_to_targets(xs, cands_name, ans_name):
+    """
+    Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
+    """
+    targs = []
+    for i in range(len(xs[ans_name])):
+        targ = []
+        for cand in xs[cands_name][i]:
+            if xs[ans_name][i] == cand:
+                targ.append(1.0)
+            else:
+                targ.append(0.0)
+        targs.append(targ)
+    xs["targets"] = targs
+    return xs
 
 
 #@todo: rewrite such that it works for different types of quebap files / models
@@ -68,6 +82,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
+    corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
@@ -80,6 +95,7 @@ def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
+        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
         'boe': models.boe_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
