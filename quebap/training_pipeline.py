@@ -145,7 +145,7 @@ def main():
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
-    parser.add_argument('--drop_keep_prob', default=0.9, type=float, help="keep probability for dropout on output")
+    parser.add_argument('--drop_keep_prob', default=0.9, type=float, help="keep probability for dropout on output (set to 1.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")

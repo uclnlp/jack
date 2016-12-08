@@ -260,7 +260,7 @@ def conditional_reader_model(nvocab, **options):
     # todo: verify validity of exchanging question and support. Below: encode question, conditioned on support encoding.
     outputs, states = conditional_reader(support_embedded, support_lengths,
                                          question_embedded, question_lengths,
-                                         options["repr_dim_output"])
+                                         options["repr_dim_output"], drop_keep_prob=options["drop_keep_prob"])
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
     output = tf.concat(1, [states[0][1], states[1][1]])
     # todo: extend
