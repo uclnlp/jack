@@ -70,6 +70,115 @@ def model(self, supports, questions, candidates, answers):
     return self
 
 
+def boe_nosupport_cands_reader_model(nvocab, **options):
+    """
+    Bag of embedding reader with pairs of (question, support) and candidates
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = tf.placeholder(tf.int64, [None, None], "question")
+    # [batch_size]
+    question_lengths = tf.placeholder(tf.int64, [None], "question_lengths")
+
+    # [batch_size]
+    #targets = tf.placeholder(tf.int64, [None], "answers")
+
+    # [batch_size, candidate_size]
+    targets = tf.placeholder(tf.int64, [None, None], "targets")
+
+    # [batch_size, max_num_cands]
+    candidates = tf.placeholder(tf.int64, [None, None], "candidates")
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    # todo: add option for attentive reader
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    question_encoding = tf.reduce_sum(question_embedded, 1)
+
+    scores = logits = tf.reduce_sum(tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
+    loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
+    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict), \
+           {'question': question, 'question_lengths': question_lengths,
+            "candidates": candidates, "targets": targets}  # placeholders
+
+
+
+
+def conditional_reader_model_with_cands(nvocab, **options):
+    """
+    Bidirectional conditional reader with pairs of (question, support) and candidates
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = tf.placeholder(tf.int64, [None, None], "question")
+    # [batch_size]
+    question_lengths = tf.placeholder(tf.int64, [None], "question_lengths")
+
+    # [batch_size, max_seq2_length]
+    support = tf.placeholder(tf.int64, [None, None], "support")
+    # [batch_size]
+    support_lengths = tf.placeholder(tf.int64, [None], "support_lengths")
+
+    # [batch_size]
+    #targets = tf.placeholder(tf.int64, [None], "answers")
+
+    # [batch_size, candidate_size]
+    targets = tf.placeholder(tf.int64, [None, None], "targets")
+
+    # [batch_size, max_num_cands]
+    candidates = tf.placeholder(tf.int64, [None, None], "candidates")
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        support_embedded = nvocab(support)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    # todo: add option for attentive reader
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    # outputs,states = conditional_reader(question_embedded, question_lengths,
+    #                            support_embedded, support_lengths,
+    #                            options["repr_dim_output"])
+    # todo: verify validity of exchanging question and support. Below: encode question, conditioned on support encoding.
+    outputs, states = conditional_reader(support_embedded, support_lengths,
+                                         question_embedded, question_lengths,
+                                         options["repr_dim_output"]/2)   #making output half as big so that it matches with candidates
+    # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
+    output = tf.concat(1, [states[0][1], states[1][1]])
+    # todo: extend
+
+
+    scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
+    loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
+    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict), \
+           {'question': question, 'question_lengths': question_lengths,
+            'support': support, 'support_lengths': support_lengths,
+            "candidates": candidates, "targets": targets}  # placeholders
+
+
+
 # @model(supports="single", questions="single", candidates="fixed", answers="single") #decorator
 def conditional_reader_model(nvocab, **options):
     """

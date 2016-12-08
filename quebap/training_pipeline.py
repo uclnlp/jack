@@ -1,3 +1,13 @@
+"""
+
+DEPRECATED -- WILL SOON BE REMOVED:
+
+- generic pipeline function will move to sisyphos
+- quebap_load will go to io
+- main routine will be case-specific, and go to the projects subfolders.
+
+"""
+
 import argparse
 import json
 import os.path as path
@@ -30,20 +40,16 @@ from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook
 import quebap.model.models as models
 from quebap.io.embeddings.embeddings import load_embeddings
 
+from quebap.io.read_quebap import quebap_load as _quebap_load
+
 
 def quebap_load(path, max_count=None, **options):
-    """
-    General-purpose loader for quebap files
-    Makes use of user-defined options for supports, questions, candidates, answers and only read in those
-    things needed for model, e.g. if the dataset contains support, but the user defines support_alts == 'none'
-    because they want to train a model that does not make use of support, support information in dataset is not read in
+    return _quebap_load(path, max_count, **options)
 
-    User options for quebap model/dataset attributes are:
-    support_alts = {'none', 'single', 'multiple'}
-    question_alts = answer_alts = {'single', 'multiple'}
-    candidate_alts = {'open', 'per-instance', 'fixed'}
-    """
 
+
+
+<<<<<<< HEAD
     reading_dataset = json.load(path)
 
     def textOrDict(c):
@@ -106,6 +112,23 @@ def quebap_load(path, max_count=None, **options):
     else:
         return {'question': questions, 'answers': answers, 'candidates': candidates}
     
+=======
+def map_to_targets(xs, cands_name, ans_name):
+    """
+    Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
+    """
+    targs = []
+    for i in range(len(xs[ans_name])):
+        targ = []
+        for cand in xs[cands_name][i]:
+            if xs[ans_name][i] == cand:
+                targ.append(1.0)
+            else:
+                targ.append(0.0)
+        targs.append(targ)
+    xs["targets"] = targs
+    return xs
+>>>>>>> 59c2eef6a6ca4404b26fdf05077833f695aa2ae4
 
 
 #@todo: rewrite such that it works for different types of quebap files / models
@@ -124,8 +147,12 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
+<<<<<<< HEAD
     if negsamples > 0:#we want this to be the last thing we do to candidates
         corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+=======
+    corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
+>>>>>>> 59c2eef6a6ca4404b26fdf05077833f695aa2ae4
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
@@ -138,6 +165,7 @@ def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
+        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
         'boe': models.boe_reader_model,
         'boenosupport': models.boenosupport_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
@@ -302,12 +330,17 @@ def main():
     dev_feed_dict = next(dev_feed_dicts.__iter__()) #little bit hacky..; for visualization of dev data during training
     sw = tf.train.SummaryWriter(args.tensorboard_folder)
 
+    if "cands" in args.model:
+        answname = "targets"
+    else:
+        answname = "answers"
+
     hooks = [
         # report_loss,
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2),
-        TensorHook(20, [loss, logits, predict, nvocab.get_embedding_matrix()],
+        AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
+        TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
                    feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw)
     ]
 
