@@ -26,13 +26,16 @@ def get_total_variables():
     return total_parameters
 
 
-def reader(inputs, lengths, output_size, contexts=(None, None), scope=None):
+def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop_keep_prob=1.0):
     with tf.variable_scope(scope or "reader") as varscope:
         cell = tf.nn.rnn_cell.LSTMCell(
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
+
+        if drop_keep_prob != 1.0:
+            cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob)
 
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
             cell,
@@ -50,14 +53,14 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None):
         return outputs, states
 
 
-def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None):
+def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0):
     with tf.variable_scope(scope or "conditional_reader_seq1") as varscope1:
         #seq1_states: (c_fw, h_fw), (c_bw, h_bw)
-        _, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1)
+        _, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1, drop_keep_prob=drop_keep_prob)
     with tf.variable_scope(scope or "conditional_reader_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]
-        return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope1)
+        return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope1, drop_keep_prob=drop_keep_prob)
 
 
 def bag_reader(inputs, lengths):
