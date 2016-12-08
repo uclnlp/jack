@@ -77,6 +77,9 @@ class TensorHook(TraceHook):
                 if 'mean_abs' in self.modes:
                     value_mean = float(np.mean(t))
                     self.update_summary(sess, self.iter, tag+'_mean_abs', value_mean)
+                if 'std' in self.modes:
+                    value_std = float(np.std(t))
+                    self.update_summary(sess, self.iter, tag+'_std', value_std)
                 if 'min' in self.modes:
                     value_min = float(np.min(t))
                     self.update_summary(sess, self.iter, tag+'_min', value_min)

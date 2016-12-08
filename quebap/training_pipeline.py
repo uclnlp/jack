@@ -26,7 +26,7 @@ from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.train import train
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook
 import quebap.model.models as models
 from quebap.io.embeddings.embeddings import load_embeddings
 
@@ -127,6 +127,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
 
 
 def main():
+
+    t0 = time()
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
@@ -177,6 +179,7 @@ def main():
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
+    parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
     #                    help="Use if training and test are the same file and the training set needs to be split. Index of last training instance plus 1.")
@@ -281,16 +284,22 @@ def main():
 
     optim = tf.train.AdamOptimizer(args.learning_rate)
 
+    dev_feed_dict = next(dev_feed_dicts.__iter__()) #little bit hacky..; for visualization of dev data during training
+    sw = tf.train.SummaryWriter(args.tensorboard_folder)
+
     hooks = [
         # report_loss,
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2)
+        AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2),
+        TensorHook(20, [loss, logits, predict, nvocab.get_embedding_matrix()],
+                   feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw)
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
 
 
+    print('finished in %.3fh' % ((time() - t0) / 3600.))
 
 
 if __name__ == "__main__":
