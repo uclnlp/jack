@@ -284,7 +284,7 @@ def main():
         AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
                    feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw),
-        TestAllHook(test_feed_dicts, logits, predict, placeholders["targets"], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
+        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
