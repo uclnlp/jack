@@ -79,9 +79,6 @@ def boe_nosupport_cands_reader_model(nvocab, **options):
     # [batch_size, max_seq1_length]
     question = tf.placeholder(tf.int64, [None, None], "question")
     # [batch_size]
-    question_lengths = tf.placeholder(tf.int64, [None], "question_lengths")
-
-    # [batch_size]
     #targets = tf.placeholder(tf.int64, [None], "answers")
 
     # [batch_size, candidate_size]
@@ -110,10 +107,59 @@ def boe_nosupport_cands_reader_model(nvocab, **options):
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
     return (logits, loss, predict), \
-           {'question': question, 'question_lengths': question_lengths,
+           {'question': question,
             "candidates": candidates, "targets": targets}  # placeholders
 
 
+
+def boe_support_cands_reader_model(nvocab, **options):
+    """
+    Bag of embedding reader with pairs of (question, support) and candidates
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = tf.placeholder(tf.int64, [None, None], "question")
+    # [batch_size, max_seq2_length]
+    support = tf.placeholder(tf.int64, [None, None], "support")
+
+    # [batch_size, candidate_size]
+    targets = tf.placeholder(tf.int64, [None, None], "targets")
+
+    # [batch_size, max_num_cands]
+    candidates = tf.placeholder(tf.int64, [None, None], "candidates")
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        support_embedded = nvocab(support)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    # todo: add option for attentive reader
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    question_encoding = tf.reduce_sum(question_embedded, 1, keep_dims=True)
+    candidate_encoding = tf.expand_dims(candidates_embedded, 2)
+    support_encoding = tf.expand_dims(tf.reduce_sum(support_embedded, 1, keep_dims=True), 3)
+
+    combined = question_encoding * support_encoding * candidate_encoding
+    # [batch_size, dim]
+    scores = logits = tf.reduce_sum(combined, (2, 3))
+
+    #scores = logits = tf.reduce_sum(tf.expand_dims(q_s_embedded, 1) * candidates_embedded, 2)
+    loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
+    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict), \
+           {'question': question,
+            'support': support,
+            "candidates": candidates, "targets": targets}  # placeholders
 
 
 def conditional_reader_model_with_cands(nvocab, **options):
