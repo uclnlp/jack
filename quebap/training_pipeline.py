@@ -251,11 +251,16 @@ def main():
     dev_feed_dict = next(dev_feed_dicts.__iter__()) #little bit hacky..; for visualization of dev data during training
     sw = tf.train.SummaryWriter(args.tensorboard_folder)
 
+    if "cands" in args.model:
+        answname = "targets"
+    else:
+        answname = "answers"
+
     hooks = [
         # report_loss,
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders['answers'], 2),
+        AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
                    feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw)
     ]
