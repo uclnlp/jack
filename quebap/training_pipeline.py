@@ -49,70 +49,7 @@ def quebap_load(path, max_count=None, **options):
 
 
 
-<<<<<<< HEAD
-    reading_dataset = json.load(path)
 
-    def textOrDict(c):
-        if isinstance(c, dict):
-            c = c["text"]
-        return c
-
-    # The script reads into those lists. If IDs for questions, supports or targets are defined, those are ignored.
-    questions = []
-    supports = []
-    answers = []
-    candidates = []
-    global_candidates = []
-    count = 0
-    if "globals" in reading_dataset:
-        global_candidates = [textOrDict(c) for c in reading_dataset['globals']['candidates']]
-
-    for instance in reading_dataset['instances']:
-        question, support, answer, candidate = "", "", "", ""  # initialisation
-        if max_count is None or count < max_count:
-            if options["supports"] == "single":
-                support = textOrDict(instance['support'][0])
-            elif options["supports"] == "multiple":
-                support = [textOrDict(c) for c in instance['support'][0]]
-            if options["questions"] == "single":
-                question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
-                if options["answers"] == "single":
-                    answer = textOrDict(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
-                elif options["answers"] == "multiple":
-                    answer = [textOrDict(c) for c in instance['questions'][0]['answers']]
-                if options["candidates"] == "per-instance":
-                    candidate = [textOrDict(c) for c in instance['candidates']]
-
-            elif options["questions"] == "multiple":
-                answer = []
-                candidate = []
-                question = [textOrDict(c["question"]) for c in instance['questions']]
-                if options["answers"] == "single":
-                    answer = [textOrDict(c["answers"][0]) for c in instance['questions']]
-                elif options["answers"] == "multiple":
-                    answer = [textOrDict(c) for q in instance['questions'] for c in q["answers"]]
-                if options["candidates"] == "per-instance":
-                    candidate = [textOrDict(c) for quest in instance["questions"] for c in quest["candidates"]]
-
-            if options["candidates"] == "fixed":
-                candidates.append(global_candidates)
-
-            questions.append(question)
-            answers.append(answer)
-            if options["supports"] != "none":
-                supports.append(support)
-            if options["candidates"] != "fixed":
-                candidates.append(candidate)
-            count += 1
-
-
-    print("Loaded %d examples from %s" % (len(questions), path))
-    if options["supports"] != "none":
-        return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
-    else:
-        return {'question': questions, 'answers': answers, 'candidates': candidates}
-    
-=======
 def map_to_targets(xs, cands_name, ans_name):
     """
     Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
@@ -128,7 +65,6 @@ def map_to_targets(xs, cands_name, ans_name):
         targs.append(targ)
     xs["targets"] = targs
     return xs
->>>>>>> 59c2eef6a6ca4404b26fdf05077833f695aa2ae4
 
 
 #@todo: rewrite such that it works for different types of quebap files / models
@@ -147,13 +83,10 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
-<<<<<<< HEAD
+    corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
+    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if negsamples > 0:#we want this to be the last thing we do to candidates
         corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
-=======
-    corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
->>>>>>> 59c2eef6a6ca4404b26fdf05077833f695aa2ae4
-    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab

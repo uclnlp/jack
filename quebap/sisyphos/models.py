@@ -79,9 +79,6 @@ def predictor(output, targets, target_size):
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
     return logits, loss, predict
 
-def modelf(output,targets)
-
-
 def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
 
     # Model
