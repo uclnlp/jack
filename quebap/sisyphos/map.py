@@ -345,7 +345,6 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
     for key, x in xs_iter:
         if keys is None or key in keys:
             shape = get_list_shape(x)
-            print("numpify:",key,shape)
             if dtypes is None:
                 dtype = np.int64
             else:
