@@ -195,3 +195,40 @@ def boenosupport_reader_model(nvocab, **options):
     return (logits, loss, predict), \
            {'question': question, 'question_lengths': question_lengths,
             'answers': targets}  # placeholders
+
+# @model(supports="none", questions="single", candidates="fixed", answers="single") #decorator
+def modelf_reader_model(nvocab, **options):
+    """
+    modelf reader with questions
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = tf.placeholder(tf.int64, [None, None], "question")
+    candidates = tf.placeholder(tf.int64, [None, None], "candidates")
+    # [batch_size]
+    question_lengths = tf.placeholder(tf.int64, [None], "question_lengths")
+    candidate_lengths = tf.placeholder(tf.int64, [None], "candidate_lengths")
+
+    # [batch_size]
+    targets = tf.placeholder(tf.int64, [None], "answers")
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        candidates_embedded = nvocab(candidates)
+        targets_embedded=nvocab(targets)
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    relation = bag_reader(question_embedded, question_lengths)
+    print("INPUT SHAPE " + str(question_embedded.get_shape()))
+    print("OUTPUT SHAPE " + str(output.get_shape()))
+
+    logits, loss, predict = predictor(output, targets, options["answer_size"])
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict), \
+           {'question': question, 'question_lengths': question_lengths,
+            'answers': targets}  # placeholders

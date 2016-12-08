@@ -109,7 +109,7 @@ def quebap_load(path, max_count=None, **options):
 
 
 #@todo: rewrite such that it works for different types of quebap files / models
-def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False, tokenization=False, negsamples=0):
+def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False, tokenization=True, negsamples=0):
     vocab = vocab or Vocab(emb=emb)
     target_vocab = target_vocab or Vocab(unk=None)
     candidate_vocab = candidate_vocab or Vocab(unk=None)
