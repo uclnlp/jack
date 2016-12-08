@@ -2,6 +2,8 @@ import json
 import re
 token_pattern = re.compile('[^ ]+')
 
+
+
 def read_data(data_filename):
     with open(data_filename) as data_file:
         data = json.load(data_file)
@@ -61,3 +63,80 @@ class Support(object):
             if char_offset <= t[1]:
                 return i
         return -1
+
+
+
+
+def quebap_load(path, max_count=None, **options):
+    """
+    General-purpose loader for quebap files
+    Makes use of user-defined options for supports, questions, candidates, answers and only read in those
+    things needed for model, e.g. if the dataset contains support, but the user defines support_alts == 'none'
+    because they want to train a model that does not make use of support, support information in dataset is not read in
+
+    User options for quebap model/dataset attributes are:
+    support_alts = {'none', 'single', 'multiple'}
+    question_alts = answer_alts = {'single', 'multiple'}
+    candidate_alts = {'open', 'per-instance', 'fixed'}
+    """
+
+    reading_dataset = json.load(path)
+
+    def textOrDict(c):
+        if isinstance(c, dict):
+            c = c["text"]
+        return c
+
+    # The script reads into those lists. If IDs for questions, supports or targets are defined, those are ignored.
+    questions = []
+    supports = []
+    answers = []
+    candidates = []
+    global_candidates = []
+    count = 0
+    if "globals" in reading_dataset:
+        global_candidates = [textOrDict(c) for c in reading_dataset['globals']['candidates']]
+
+    for instance in reading_dataset['instances']:
+        question, support, answer, candidate = "", "", "", ""  # initialisation
+        if max_count is None or count < max_count:
+            if options["supports"] == "single":
+                support = textOrDict(instance['support'][0])
+            elif options["supports"] == "multiple":
+                support = [textOrDict(c) for c in instance['support'][0]]
+            if options["questions"] == "single":
+                question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
+                if options["answers"] == "single":
+                    answer = textOrDict(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
+                elif options["answers"] == "multiple":
+                    answer = [textOrDict(c) for c in instance['questions'][0]['answers']]
+                if options["candidates"] == "per-instance":
+                    candidate = [textOrDict(c) for c in instance['candidates']]
+
+            elif options["questions"] == "multiple":
+                answer = []
+                candidate = []
+                question = [textOrDict(c["question"]) for c in instance['questions']]
+                if options["answers"] == "single":
+                    answer = [textOrDict(c["answers"][0]) for c in instance['questions']]
+                elif options["answers"] == "multiple":
+                    answer = [textOrDict(c) for q in instance['questions'] for c in q["answers"]]
+                if options["candidates"] == "per-instance":
+                    candidate = [textOrDict(c) for quest in instance["questions"] for c in quest["candidates"]]
+
+            if options["candidates"] == "fixed":
+                candidates.append(global_candidates)
+
+            questions.append(question)
+            answers.append(answer)
+            if options["supports"] != "none":
+                supports.append(support)
+            if options["candidates"] != "fixed":
+                candidates.append(candidate)
+            count += 1
+
+
+    print("Loaded %d examples from %s" % (len(questions), path))
+    return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
+
+
