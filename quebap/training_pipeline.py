@@ -96,10 +96,11 @@ def main():
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
         'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
+        'boe_support_cands': models.boe_support_cands_reader_model,
+        'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
         'boe': models.boe_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
-        #'boe': ReaderModel.create_bag_of_embeddings_reader
     }
 
     support_alts = {'none', 'single', 'multiple'}
@@ -113,9 +114,11 @@ def main():
     dev_default = 'data/sentihood/single_quebap.json'
     test_default = 'data/sentihood/single_quebap.json'
     """
-    train_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_train_quebap_v1.json"
+    """train_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_train_quebap_v1.json"
     dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
-    test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"
+    test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"""
+
+    train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
 
 
     #args
@@ -129,7 +132,7 @@ def main():
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
-    parser.add_argument('--batch_size', default=32, type=int, help="Batch size for training data, default 32")
+    parser.add_argument('--batch_size', default=2, type=int, help="Batch size for training data, default 32")
     parser.add_argument('--dev_batch_size', default=32, type=int, help="Batch size for development data, default 32")
     parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
@@ -138,7 +141,7 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
-    parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='bicond_singlesupport_reader_with_cands', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
