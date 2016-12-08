@@ -73,7 +73,7 @@ def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
 
 
 def predictor(output, targets, target_size):
-    logits = tf.contrib.layers.fully_connected(output, target_size, name='predictor_logits')
+    logits = tf.contrib.layers.fully_connected(output, target_size)
     loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
