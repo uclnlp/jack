@@ -217,6 +217,71 @@ class AccuracyHook(TraceHook):
             self.done_for_epoch = False
 
 
+class TestAllHook(TraceHook):
+    """
+    Hook which test all kinds of metrics, intended for running on test data
+    """
+    def __init__(self, batches, logits, predict, target, at_epoch=1,
+                 placeholders=None, summary_writer=None, print_details=False):
+        super(TestAllHook, self).__init__(summary_writer)
+        self.batches = batches
+        self.logits = logits
+        self.predict = predict
+        self.target = target
+        self.at_epoch = at_epoch
+        self.placeholders = placeholders
+        self.done_for_epoch = False
+        self.iter = 0
+        self.print_details = print_details
+
+
+    def __call__(self, sess, epoch, model, loss):
+        self.iter += 1
+        if epoch != self.at_epoch:
+            return
+
+        if self.done_for_epoch == True:
+            return
+
+        total = 0
+        correct = 0
+
+        print("\nApplying model to test data:")
+        predictions, corrects = [], []
+        for i, batch in enumerate(self.batches):
+            if self.placeholders is not None:
+                feed_dict = dict(zip(self.placeholders, batch))
+            else:
+                feed_dict = batch
+
+            predicted = sess.run(self.predict, feed_dict=feed_dict)
+            overlap = np.argmax(feed_dict[self.target]) == predicted
+            correct += np.sum(overlap)
+            total += predicted.size
+
+            #predicted = sess.run(self.predict, feed_dict=feed_dict)
+            if self.print_details == True:
+                print(feed_dict[self.target], predicted)
+                # alternative:
+                # logits = sess.run(self.logits, feed_dict=feed_dict)
+                # print(np.argmax(feed_dict[self.target]), np.argmax(logits))
+
+            predictions.append(predicted)
+            corrects.append(feed_dict[self.target])
+
+        acc = float(correct) / total * 100
+
+        self.update_summary(sess, self.iter, "TestAcc", acc)
+        print("Epoch " + str(epoch) +
+              "\tTestAcc %4.2f" % acc +
+              "%\tCorrect " + str(correct) + "\tTotal " + str(total))
+
+        self.done_for_epoch = True
+        return corrects, predictions  # return those so more they can be printed to file, etc
+
+
+
+
 class PRF1Hook(Hook):
     """
     Evaluate per-class and average precision, recall, F1

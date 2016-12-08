@@ -36,7 +36,7 @@ from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.train import train
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, TestAllHook
 import quebap.model.models as models
 from quebap.io.embeddings.embeddings import load_embeddings
 
@@ -250,6 +250,10 @@ def main():
         get_feed_dicts(dev_data, placeholders, args.dev_batch_size,
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
 
+    test_feed_dicts = \
+        get_feed_dicts(test_data, placeholders, 1,
+                       bucket_order=bucket_order, bucket_structure=bucket_structure)
+
     optim = tf.train.AdamOptimizer(args.learning_rate)
 
     dev_feed_dict = next(dev_feed_dicts.__iter__()) #little bit hacky..; for visualization of dev data during training
@@ -266,7 +270,8 @@ def main():
         SpeedHook(100, args.batch_size),
         AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
-                   feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw)
+                   feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw),
+        TestAllHook(test_feed_dicts, logits, predict, placeholders["targets"], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
