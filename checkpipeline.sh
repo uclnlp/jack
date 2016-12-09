@@ -1,15 +1,22 @@
 set -e
-trap 'echo ""; echo "ERROR!"; echo ""; echo $BASH_COMMAND' EXIT
+trap 'echo ""; echo "ERROR!"; echo ""; echo $BASH_COMMAND; echo ""; echo "DATA=$DATA"' EXIT
 
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/NYT/naacl2013_test.quebap.json --dev ./quebap/data/NYT/naacl2013_test.quebap.json --test ./quebap/data/NYT/naacl2013_test.quebap.json --model boenosupport --supports none --negsamples 1
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/NYT/naacl2013_test.quebap.json --dev ./quebap/data/NYT/naacl2013_test.quebap.json --test ./quebap/data/NYT/naacl2013_test.quebap.json --model boenosupport --supports none
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/NYT/naacl2013_test.quebap.json --dev ./quebap/data/NYT/naacl2013_test.quebap.json --test ./quebap/data/NYT/naacl2013_test.quebap.json --model boe_nosupport_cands --supports none
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/SNLI/snippet_quebapformat_v1.json --dev ./quebap/data/SNLI/snippet_quebapformat_v1.json --test ./quebap/data/SNLI/snippet_quebapformat_v1.json --model bicond_singlesupport_reader
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/SNLI/snippet_quebapformat_v1.json --dev ./quebap/data/SNLI/snippet_quebapformat_v1.json --test ./quebap/data/SNLI/snippet_quebapformat_v1.json --model bicond_singlesupport_reader_with_cands
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/SNLI/snippet_quebapformat_v1.json --dev ./quebap/data/SNLI/snippet_quebapformat_v1.json --test ./quebap/data/SNLI/snippet_quebapformat_v1.json --model boe_support_cands
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/SNLI/snippet_quebapformat_v1.json --dev ./quebap/data/SNLI/snippet_quebapformat_v1.json --test ./quebap/data/SNLI/snippet_quebapformat_v1.json --model boe_nosupport_cands
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/SNLI/snippet_quebapformat_v1.json --dev ./quebap/data/SNLI/snippet_quebapformat_v1.json --test ./quebap/data/SNLI/snippet_quebapformat_v1.json --model boe
-PYTHONPATH=. python3 ./quebap/training_pipeline.py --train ./quebap/data/SNLI/snippet_quebapformat_v1.json --dev ./quebap/data/SNLI/snippet_quebapformat_v1.json --test ./quebap/data/SNLI/snippet_quebapformat_v1.json --model boenosupport
+export PYTHONPATH=$PYTHONPATH:.
+
+DATA=quebap/data/TACKBP/tackbp_snippet.json
+
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boenosupport --supports none --negsamples 1
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boenosupport --supports none
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boe_nosupport_cands --supports none
+
+DATA=quebap/data/SNLI/snippet_quebapformat_v1.json
+
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model bicond_singlesupport_reader
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model bicond_singlesupport_reader_with_cands
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boe_support_cands
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boe_nosupport_cands
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boe
+python3 ./quebap/training_pipeline.py --train $DATA --dev $DATA --test $DATA --model boenosupport
 
 echo ""
 echo "SUCCESS!"
