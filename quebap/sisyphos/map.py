@@ -337,6 +337,30 @@ def get_seq_depth(xs):
     return [n - 1 for n in get_list_shape(xs)]
 
 
+
+def get_entry_dims(corpus):
+    """
+    get number of dimensions for each entry; needed for placeholder generation
+    """
+    #todo: implement recursive form; now only OK for 'regular' (=most common type of) data structures
+    if isinstance(corpus, dict):
+        keys = list(corpus.keys())
+        dims = {key: 0 for key in keys}
+    else:
+        keys = range(len(corpus))
+        dims = [0 for i in range(len(corpus))]  #scalars have dim 0 (but tensor version will have shape length 1)
+    for key in keys:
+        entry = corpus[key]
+        try:
+            while hasattr(entry, '__len__'):
+                dims[key] += 1
+                entry = entry[0]  #will fail if entry is dict
+        except:
+            dims[key] = None
+    return dims
+
+
+
 def numpify(xs, pad=0, keys=None, dtypes=None):
     is_dict = isinstance(xs, dict)
     xs_np = {} if is_dict else [0] * len(xs)
