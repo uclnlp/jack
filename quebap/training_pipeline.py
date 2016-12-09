@@ -85,6 +85,10 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
     corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
+    #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
+    #todo: there is no guarantee that these are the same)
+    #todo: alternative: use functions in pipeline.py
+
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if negsamples > 0:#we want this to be the last thing we do to candidates
         corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
@@ -284,7 +288,7 @@ def main():
         AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
                    feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw),
-        TestAllHook(test_feed_dicts, logits, predict, placeholders["targets"], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
+        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
