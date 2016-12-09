@@ -125,8 +125,9 @@ class Vocab(object):
     world  :  2
     """
 
+    DEFAULT_UNK = "<UNK>"
 
-    def __init__(self, unk="<UNK>", emb=None):
+    def __init__(self, unk=DEFAULT_UNK, emb=None):
         """
         Creates Vocab object.
 
