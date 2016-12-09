@@ -328,7 +328,7 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
 
     authorkmap = buildAuthrKDictNew()
 
-    phrmodel = Phrases.load("/Users/Isabelle/Documents/UCLMR/publication-extract/models_out/phrase_all_five_big.model")#phrase_all_five_small.model")
+    phrmodel = Phrases.load("/home/isabelle/publication-extract/models_out/phrase_all_five_big.model")#phrase_all_five_small.model")
     phrmodelvocab = phrmodel.vocab
     vocab = authorkmap.copy()
     vocab.update(phrmodelvocab)
@@ -349,11 +349,15 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
 
     for l in f:
         #i += 1
-        #if i > 20:
+        #if i > 100:
         #    break
         l = l.strip().lower().split("\t")  # do the lower case preprocessing here
         try:
             quest, answs, cands, cont, contextID = l
+            #print(quest, cont)
+
+            if not quest.endswith(" ."):
+                quest = quest + " ."
         except ValueError:
             print(l)
             continue
@@ -363,9 +367,26 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
             cont_tmp = cont[2:-2].split('\', \'')
             context = list(set(cont_tmp))
 
+            addCands = True
+
             for ii, c in enumerate(context):
-                support.append({"id": contextID + "_" + str(ii), "text": c})
                 toks_lower = word_tokenize(c)
+                c = " ".join(toks_lower)
+                if not c.endswith(" ."):
+                    c = c + " ."
+
+                # added this
+                for a in answers_last_split:
+                    if a in c:
+                        c_anon = transSentRepl(" ".join(word_tokenize(c)), a, "xxxxx")
+
+                if quest == c_anon:
+                    print("Support same as question!")
+                    addCands = False
+                    question_last, answers_last = "", ""
+                    continue
+
+                support.append({"id": contextID + "_" + str(ii), "text": c})
                 pos = pos_tag(toks_lower)
                 authcands_ks = checkCandsSing(authorkmap, toks_lower, pos)
                 add_c = False
@@ -376,7 +397,8 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
                 if add_c == True:
                     alternative_questions.append(c)
 
-            candidates.extend(cands[2:-2].split('\', \''))
+            if addCands == True:
+                candidates.extend(cands[2:-2].split('\', \''))
 
         else:
             # then this is the first iteration
@@ -386,6 +408,9 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
                 #question_last_all = [question_last.replace("clozent0", answers_last_split[0]), question_last.replace("clozent1", answers_last_split[1])]
                 #question_last_all = [question_last + "(clozent0: " + answers_last_split[0] + ", clozent1: ?)",
                 #                     question_last + "(clozent1: " + answers_last_split[1] + ", clozent0: ?)"]
+
+                if len(support) == 0:
+                    continue
 
                 qdict = {
                     'question': question_last,
@@ -411,13 +436,13 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
                 for q in alternative_questions:
                     for a in answers_last_split:
                         if a in q:
-                            cloze_s0 = transSentRepl(" ".join(word_tokenize(q)), a, "XXXXX")
+                            cloze_s0 = transSentRepl(" ".join(word_tokenize(q)), a, "xxxxx")
                     support_copy = copy.deepcopy(support)
                     for s in support:
                         if s["text"] == q:
                             support_copy.remove(s)
 
-                    a_trans = question_last.replace("XXXXX", answers_last_split[0])
+                    a_trans = question_last.replace("xxxxx", answers_last_split[0])
                     support_copy.append({"id": "highlight", "text": a_trans})
 
                     qdict = {
@@ -455,13 +480,31 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
             else:
                 answers_last_split = answs.split('\', \'')
 
+            addCands = True
+
             if addSupport == True:
                 cont_tmp = cont[2:-2].split('\', \'')
                 context = list(set(cont_tmp))
 
                 for ii, c in enumerate(context):
-                    support.append({"id": contextID + "_" + str(ii), "text": c})
+
                     toks_lower = word_tokenize(c)
+                    c = " ".join(toks_lower)   # added this!!!
+                    if not c.endswith(" ."):
+                        c = c + " ."
+
+                    # added this
+                    for a in answers_last_split:
+                        if a in c:
+                            c_anon = transSentRepl(" ".join(word_tokenize(c)), a, "xxxxx")
+
+                    if quest == c_anon:
+                        print("Support same as question!")
+                        addCands = False
+                        question_last, answers_last = "", ""
+                        continue
+
+                    support.append({"id": contextID + "_" + str(ii), "text": c})
                     pos = pos_tag(toks_lower)
                     authcands_ks = checkCandsSing(authorkmap, toks_lower, pos)
                     add_c = False
@@ -474,7 +517,9 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
 
             if len(support) != len(alternative_questions):
                 print("more support than alt questions")
-            candidates.extend(cands[2:-2].split('\', \''))
+
+            if addCands == True:
+                candidates.extend(cands[2:-2].split('\', \''))
 
 
     candidates = list(set(candidates))  # remove duplicates
@@ -497,18 +542,23 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
         'questions': [qdict]
     }
 
-    instances.append(qset_dict)
+    if len(support) != 0:
+        instances.append(qset_dict)
 
     for q in alternative_questions:
+
+        if len(support) == 0:
+            continue
+
         for a in answers_last_split:
             if a in q:
-                cloze_s0 = transSentRepl(" ".join(word_tokenize(q)), a, "XXXXX")
+                cloze_s0 = transSentRepl(" ".join(word_tokenize(q)), a, "xxxxx")
         support_copy = copy.deepcopy(support)
         for s in support:
             if s["text"] == q:
-                support_copy.remove(q)
+                support_copy.remove(s)
 
-        a_trans = question_last.replace("XXXXX", answers_last_split[0])
+        a_trans = question_last.replace("xxxxx", answers_last_split[0])
         support_copy.append({"id": "highlight", "text": a_trans})
 
         qdict = {
@@ -544,6 +594,292 @@ def convert_scienceQACloze_withsupport_to_quebap(scienceQAFile, addSupport=True)
 
 
 
+def convert_scienceQAComb_withsupport_to_quebap(scienceQAFile, addSupport=True):
+
+    # get rid of duplicate cands and sents, aggregate over multiple lines (possibly), permute for each cloze Q or support if they're used as
+    # support or as Q if they contain the answer
+
+
+    authorkmap = buildAuthrKDictNew()
+
+    """phrmodel = Phrases.load("/home/isabelle/publication-extract/models_out/phrase_all_five_big.model")#phrase_all_five_big.model")#phrase_all_five_small.model")
+    phrmodelvocab = phrmodel.vocab
+    vocab = authorkmap.copy()
+    vocab.update(phrmodelvocab)
+    authorkmap = vocab"""
+
+    instances = []
+
+    f = io.open(scienceQAFile, "r", encoding="utf-8")
+
+    question_last = ""
+    rel_last = ""
+    alternative_questions = []
+    answers_last = ""
+    answers_last_split = [] # here, the answers are not synonyms, but stand for clozent1 and clozent2, respectively
+    support = []
+    candidates = []
+
+    i = 0
+
+    for l in f:
+        i += 1
+        if i > 20:
+            break
+        l = l.strip().lower().split("\t")  # do the lower case preprocessing here
+        try:
+            quest, kbrel, answs, cands, cont, contextID = l
+
+            if not quest.endswith(" ."):
+                quest = quest + " ."
+
+            if answs.startswith("["):
+                answers_spl = answs[2:-2].split('\', \'')
+            else:
+                answers_spl = answs.split('\', \'')
+            if cands.startswith("["):
+                cands_spl = cands[2:-2].split('\', \'')
+            else:
+                cands_spl = cands.split('\', \'')
+
+            if kbrel != "none" and kbrel != "unrelated":
+                for cand in cands_spl:
+                    if not cand in answers_spl:
+                        kbrel = cand + " | " + kbrel
+                    break
+
+        except ValueError:
+            print(l)
+            continue
+
+        # append
+        if quest == question_last and answs == answers_last:
+            cont_tmp = cont[2:-2].split('\', \'')
+            context = list(set(cont_tmp))
+
+            addCands = True
+
+            for ii, c in enumerate(context):
+                toks_lower = word_tokenize(c)
+
+                c = " ".join(toks_lower)
+                if not c.endswith(" ."):
+                    c = c + " ."
+
+                for a in answers_last_split:
+                    if a in c:
+                        c_anon = transSentRepl(" ".join(word_tokenize(c)), a, "xxxxx")
+
+                if quest == c_anon:
+                    print("Support same as question!")
+                    addCands = False
+                    question_last, answers_last = "", ""
+                    continue
+
+                support.append({"id": contextID + "_" + str(ii), "text": c})
+
+                pos = pos_tag(toks_lower)
+                authcands_ks = checkCandsSing(authorkmap, toks_lower, pos)
+                add_c = False
+                for k in authcands_ks:
+                    candidates.append(k)
+                    if k in answers_last_split:
+                        add_c = True
+                if add_c == True:
+                    alternative_questions.append(c)
+
+            if addCands == True:
+                candidates.extend(cands[2:-2].split('\', \''))
+
+        else:
+            # then this is the first iteration
+            if question_last != "":
+                if len(support) == 0:
+                    continue
+
+                candidates = list(set(candidates)) # remove duplicates
+
+                qdict = {
+                    'question':  question_last, #rel_last, # question_last,  # ALTERNATIVE here
+                    'candidates': [
+                        {
+                            'text': cand
+                        } for cand in candidates
+                        ],
+                    'answers': [
+                        {
+                            'text': a
+                        } for a in answers_last_split
+                        ],
+                }
+                qset_dict = {
+                    'support': support,
+                    'questions': [qdict]
+                }
+
+                instances.append(qset_dict)
+
+
+                for q in alternative_questions:
+                    for a in answers_last_split:
+                        if a in q:
+                            cloze_s0 = transSentRepl(" ".join(word_tokenize(q)), a, "xxxxx")
+                    support_copy = copy.deepcopy(support)
+                    for s in support:
+                        if s["text"] == q:
+                            support_copy.remove(s)
+
+                    a_trans = question_last.replace("xxxxx", answers_last_split[0])
+                    support_copy.append({"id": contextID + "_" + str(ii) + "highlight", "text": a_trans})
+
+                    qdict = {
+                        'question': cloze_s0,#rel_last, #cloze_s0,
+                        'candidates': [
+                            {
+                                'text': cand
+                            } for cand in candidates
+                            ],
+                        'answers': [
+                            {
+                                'text': a
+                            } for a in answers_last_split
+                            ],
+                    }
+                    qset_dict = {
+                        'support': support_copy,
+                        'questions': [qdict]
+                    }
+
+                    instances.append(qset_dict)
+
+
+            candidates = []
+            support = []
+            answers_last_split = []
+            alternative_questions = []
+
+            question_last = quest
+            answers_last = answs
+            rel_last = kbrel
+            #answers_last_split = answs[2:-2].split('\', \'')
+
+            if answs.startswith("["):
+                answers_last_split = answs[2:-2].split('\', \'')
+            else:
+                answers_last_split = answs.split('\', \'')
+
+            addCands = True
+            if addSupport == True:
+                cont_tmp = cont[2:-2].split('\', \'')
+                context = list(set(cont_tmp))
+
+                for ii, c in enumerate(context):
+
+                    toks_lower = word_tokenize(c)
+                    c = " ".join(toks_lower)  # added this!!!
+                    if not c.endswith(" ."):
+                        c = c + " ."
+
+                    # added this
+                    for a in answers_last_split:
+                        if a in c:
+                            c_anon = transSentRepl(" ".join(word_tokenize(c)), a, "xxxxx")
+
+                    if quest == c_anon:
+                        print("Support same as question!")
+                        addCands = False
+                        question_last, answers_last = "", ""
+                        continue
+
+                    support.append({"id": contextID + "_" + str(ii), "text": c})
+                    pos = pos_tag(toks_lower)
+                    authcands_ks = checkCandsSing(authorkmap, toks_lower, pos)
+                    add_c = False
+                    for k in authcands_ks:
+                        candidates.append(k)
+                        if k in answers_last_split:
+                            add_c = True
+                    if add_c == True:
+                        alternative_questions.append(c)
+
+            if len(support) != len(alternative_questions):
+                print("more support than alt questions")
+
+            if addCands == True:
+                candidates.extend(cands[2:-2].split('\', \''))
+
+
+    candidates = list(set(candidates))  # remove duplicates
+
+    qdict = {
+        'question': question_last, #rel_last, #question_last,
+        'candidates': [
+            {
+                'text': cand
+            } for cand in candidates
+            ],
+        'answers': [
+            {
+                'text': a
+            } for a in answers_last_split
+            ],
+    }
+    qset_dict = {
+        'support': support,
+        'questions': [qdict]
+    }
+
+    if len(support) != 0:
+        instances.append(qset_dict)
+
+    for q in alternative_questions:
+
+        if len(support) == 0:
+            continue
+
+        for a in answers_last_split:
+            if a in q:
+                cloze_s0 = transSentRepl(" ".join(word_tokenize(q)), a, "xxxxx")
+        support_copy = copy.deepcopy(support)
+        for s in support:
+            if s["text"] == q:
+                support_copy.remove(s)
+
+        a_trans = question_last.replace("xxxxx", answers_last_split[0])
+        support_copy.append({"id": contextID + "_" + str(ii) + "highlight", "text": a_trans})
+
+        qdict = {
+            'question': cloze_s0, #rel_last, #cloze_s0,
+            'candidates': [
+                {
+                    'text': cand
+                } for cand in candidates
+                ],
+            'answers': [
+                {
+                    'text': a
+                } for a in answers_last_split
+                ],
+        }
+        qset_dict = {
+            'support': support_copy,
+            'questions': [qdict]
+        }
+
+        instances.append(qset_dict)
+
+
+    corpus_dict = {
+        'meta': "scienceQA.json",
+        'instances': instances
+    }
+
+    f.close()
+
+    return corpus_dict
+
+
+
 def main(mode):
     # some tests:
     # raw_data = load_cbt_file(path=None, part='valid', mode='NE')
@@ -557,11 +893,21 @@ def main(mode):
         outfile.close()
     elif mode == "Cloze":
         #corpus = convert_scienceQACloze_to_quebap("../../quebap/data/scienceQA/_cloze_sept6_2016.txt", addSupport=True, shortsupport=True)
-        corpus = convert_scienceQACloze_withsupport_to_quebap("../../quebap/data/scienceQA/cloze_with_support_2016-10-26_subselect.txt")#cloze_withcontext_sorted.txt")
-        with open("../../quebap/data/scienceQA/scienceQA_cloze_withcont_2016-10-25_small.json", 'w') as outfile:
+        corpus = convert_scienceQACloze_withsupport_to_quebap("../../quebap/data/scienceQA/cloze_with_support_2016-12-6_sorted.txt")#cloze_withcontext_sorted.txt")
+        with open("../../quebap/data/scienceQA/scienceQA_cloze_withcont_2016-12-6_small.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         outfile.close()
 
+    elif mode == "Comb":
+        # corpus = convert_scienceQACloze_to_quebap("../../quebap/data/scienceQA/_cloze_sept6_2016.txt", addSupport=True, shortsupport=True)
+        corpus = convert_scienceQAComb_withsupport_to_quebap(
+            "../../quebap/data/scienceQA/kbp_with_support_2016-11-28.txt")  # cloze_withcontext_sorted.txt")
+        with open("../../quebap/data/scienceQA/scienceQA_comb_cloze_withcont_2016-11.json", 'w') as outfile:
+            json.dump(corpus, outfile, indent=2)
+
+        outfile.close()
+
+
 if __name__ == "__main__":
-    main("Cloze")
+    main("Comb")
