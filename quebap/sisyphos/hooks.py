@@ -248,6 +248,7 @@ class TestAllHook(TraceHook):
 
         print("\nApplying model to test data:")
         predictions, corrects = [], []
+        mrrs = []
         for i, batch in enumerate(self.batches):
             if self.placeholders is not None:
                 feed_dict = dict(zip(self.placeholders, batch))
@@ -255,26 +256,42 @@ class TestAllHook(TraceHook):
                 feed_dict = batch
 
             predicted = sess.run(self.predict, feed_dict=feed_dict)
-            overlap = np.argmax(feed_dict[self.target]) == predicted
+            gold = np.argmax(feed_dict[self.target])
+            overlap = gold == predicted
             correct += np.sum(overlap)
+            predictions += predicted
             total += predicted.size
 
-            #predicted = sess.run(self.predict, feed_dict=feed_dict)
+            logits = sess.run(self.logits, feed_dict=feed_dict)
+            for inst in logits:
+                order = inst.argsort()
+                ranks = order.argsort()
+                rank = 0
+                for i in range(len(inst)):
+                    if np.where(ranks == i)[0] == gold:
+                        break
+                    rank += 1
+                mrr = float(rank) / float(len(inst)-1)
+                if self.print_details == True:
+                    print(gold, logits, mrr)
+                mrrs.append(mrr)
+
             if self.print_details == True:
                 print(feed_dict[self.target], predicted)
                 # alternative:
                 # logits = sess.run(self.logits, feed_dict=feed_dict)
                 # print(np.argmax(feed_dict[self.target]), np.argmax(logits))
 
-            predictions.append(predicted)
-            corrects.append(feed_dict[self.target])
-
         acc = float(correct) / total * 100
+        #print(mrrs, total)
+        mrr = sum(mrrs) / float(total)
 
         self.update_summary(sess, self.iter, "TestAcc", acc)
+        self.update_summary(sess, self.iter, "TestMRR", mrr)
         print("Epoch " + str(epoch) +
-              "\tTestAcc %4.2f" % acc +
-              "%\tCorrect " + str(correct) + "\tTotal " + str(total))
+              "\tTestAcc %4.2f" % acc + "%" +
+              "\tTestMRR %4.2f" % mrr +
+              "\tCorrect " + str(correct) + "\tTotal " + str(total))
 
         self.done_for_epoch = True
         return corrects, predictions  # return those so more they can be printed to file, etc
@@ -307,7 +324,7 @@ class PRF1Hook(Hook):
                 correct += sum(truth == predicted)
                 truth_all.extend(truth)
                 pred_all.extend(predicted)
-            print(classification_report(truth_all, pred_all, digits=4))  # target_names=["NEUTRAL", "AGAINST", "FAVOR"],
+            print(classification_report(truth_all, pred_all, digits=4))
 
 
 class SaveModelHook(Hook):
