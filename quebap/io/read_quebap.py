@@ -103,7 +103,7 @@ def quebap_load(path, max_count=None, **options):
             if options["supports"] == "single":
                 support = textOrDict(instance['support'][0])
             elif options["supports"] == "multiple":
-                support = [textOrDict(c) for c in instance['support'][0]]
+                support = [textOrDict(c) for c in instance['support']]
             if options["questions"] == "single":
                 question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
                 if options["answers"] == "single":
@@ -141,5 +141,3 @@ def quebap_load(path, max_count=None, **options):
         return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
     else:
        return {'question': questions, 'answers': answers, 'candidates': candidates} 
-
-
