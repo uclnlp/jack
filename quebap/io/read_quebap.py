@@ -111,7 +111,7 @@ def quebap_load(path, max_count=None, **options):
                 elif options["answers"] == "multiple":
                     answer = [textOrDict(c) for c in instance['questions'][0]['answers']]
                 if options["candidates"] == "per-instance":
-                    candidate = [textOrDict(c) for c in instance['candidates']]
+                    candidate = [textOrDict(c) for c in instance['questions'][0]['candidates']]
 
             elif options["questions"] == "multiple":
                 answer = []

@@ -127,7 +127,7 @@ def main():
     dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
     test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"""
 
-    train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
+    train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json' #'data/scienceQA/scienceQA_cloze_snippet.json'
 
 
     #args
