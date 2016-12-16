@@ -202,7 +202,12 @@ class AccuracyHook(TraceHook):
                         feed_dict = batch
 
                     predicted = sess.run(self.predict, feed_dict=feed_dict)
-                    overlap = np.argmax(feed_dict[self.target]) == predicted
+
+                    target = feed_dict[self.target]
+                    gold = target if np.shape(target) == np.shape(predicted) else np.argmax(target)
+                    overlap = gold == predicted
+                    # todo: extend further, because does not cover all likely cases yet
+                    #overlap = np.argmax(feed_dict[self.target]) == predicted
                     correct += np.sum(overlap)
                     total += predicted.size
 
@@ -257,9 +262,9 @@ class TestAllHook(TraceHook):
 
             predicted = sess.run(self.predict, feed_dict=feed_dict)
             target = feed_dict[self.target]
-            gold = target if np.shape(target) == np.shape(predicted) else np.argmax(feed_dict[self.target])
+            gold = target if np.shape(target) == np.shape(predicted) else np.argmax(target)
             #todo: extend further, because does not cover all likely cases yet
-            
+
             overlap = gold == predicted
             correct += np.sum(overlap)
             predictions += predicted
@@ -275,15 +280,19 @@ class TestAllHook(TraceHook):
                         break
                     rank += 1
                 mrr = float(rank) / float(len(inst)-1)
-                if self.print_details == True:
-                    print(gold, logits, mrr)
+                #if self.print_details == True:
+                #    print(gold, logits, mrr)
                 mrrs.append(mrr)
 
             if self.print_details == True:
-                print(feed_dict[self.target], predicted)
+                #print(feed_dict[self.target], predicted)
                 # alternative:
                 # logits = sess.run(self.logits, feed_dict=feed_dict)
                 # print(np.argmax(feed_dict[self.target]), np.argmax(logits))
+                # alternative:
+                probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
+                print('target/predicted: %s/%s, probs: %s'%(str(target),str(predicted),str(probs)))
+
 
         acc = float(correct) / total * 100
         #print(mrrs, total)
