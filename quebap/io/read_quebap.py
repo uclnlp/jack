@@ -102,7 +102,7 @@ def quebap_load(path, max_count=None, **options):
         if max_count is None or count < max_count:
             if options["supports"] == "single":
                 support = textOrDict(instance['support'][0])
-            elif options["supports"] == "multiple":
+            elif options["supports"].startswith("multiple"):
                 support = [textOrDict(c) for c in instance['support']]
             if options["questions"] == "single":
                 question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
@@ -124,15 +124,29 @@ def quebap_load(path, max_count=None, **options):
                 if options["candidates"] == "per-instance":
                     candidate = [textOrDict(c) for quest in instance["questions"] for c in quest["candidates"]]
 
-            if options["candidates"] == "fixed":
-                candidates.append(global_candidates)
+            if options["supports"] == "multiple_flat":
+                for s in support:
+                    supports.append(s)
 
-            questions.append(question)
-            answers.append(answer)
-            if options["supports"] != "none":
-                supports.append(support)
-            if options["candidates"] != "fixed":
-                candidates.append(candidate)
+                    if options["candidates"] == "fixed":
+                        candidates.append(global_candidates)
+                    if options["candidates"] != "fixed":
+                        candidates.append(candidate)
+
+                    questions.append(question)
+                    answers.append(answer)
+
+            else:
+                if options["candidates"] == "fixed":
+                    candidates.append(global_candidates)
+
+                questions.append(question)
+                answers.append(answer)
+                if options["supports"] != "none":
+                    supports.append(support)
+                if options["candidates"] != "fixed":
+                    candidates.append(candidate)
+
             count += 1
 
 
