@@ -256,7 +256,10 @@ class TestAllHook(TraceHook):
                 feed_dict = batch
 
             predicted = sess.run(self.predict, feed_dict=feed_dict)
-            gold = np.argmax(feed_dict[self.target])
+            target = feed_dict[self.target]
+            gold = target if np.shape(target) == np.shape(predicted) else np.argmax(feed_dict[self.target])
+            #todo: extend further, because does not cover all likely cases yet
+            
             overlap = gold == predicted
             correct += np.sum(overlap)
             predictions += predicted
