@@ -137,7 +137,7 @@ def main():
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="Quebap dev file")
     parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="Quebap test file")
-    parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single (default), or multiple supporting statements per instance")
+    parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
