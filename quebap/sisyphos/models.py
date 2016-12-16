@@ -60,7 +60,7 @@ def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scop
     with tf.variable_scope(scope or "conditional_reader_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]
-        return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope1, drop_keep_prob=drop_keep_prob)
+        return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope2, drop_keep_prob=drop_keep_prob)
 
 
 def bag_reader(inputs, lengths):
@@ -76,7 +76,9 @@ def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
 
 
 def predictor(output, targets, target_size):
-    logits = tf.contrib.layers.fully_connected(output, target_size)
+    init = tf.contrib.layers.xavier_initializer(uniform=True) #uniform=False for truncated normal
+    logits = tf.contrib.layers.fully_connected(output, target_size, weights_initializer=init, activation_fn=None)
+    #note: standard relu applied; switch off at last layer with activation_fn=None!
     loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
