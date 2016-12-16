@@ -227,7 +227,7 @@ class TestAllHook(TraceHook):
     Hook which test all kinds of metrics, intended for running on test data
     """
     def __init__(self, batches, logits, predict, target, at_epoch=1,
-                 placeholders=None, summary_writer=None, print_details=False):
+                 placeholders=None, summary_writer=None, print_details=False, print_to=""):
         super(TestAllHook, self).__init__(summary_writer)
         self.batches = batches
         self.logits = logits
@@ -238,6 +238,7 @@ class TestAllHook(TraceHook):
         self.done_for_epoch = False
         self.iter = 0
         self.print_details = print_details
+        self.print_to = print_to
 
 
     def __call__(self, sess, epoch, model, loss):
@@ -292,6 +293,10 @@ class TestAllHook(TraceHook):
                 # alternative:
                 probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
                 print('target/predicted: %s/%s, probs: %s'%(str(target),str(predicted),str(probs)))
+                if self.print_to != "":
+                    with open(self.print_to, "a") as myfile:
+                        myfile.write('target/predicted: %s/%s, probs: %s\n'%(str(target),str(predicted),str(probs)))
+
 
 
         acc = float(correct) / total * 100
