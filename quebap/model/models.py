@@ -152,7 +152,6 @@ def boe_support_cands_reader_model(nvocab, **options):
     loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
     predict = tf.arg_max(tf.nn.softmax(logits), 1)
 
-
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
@@ -207,12 +206,12 @@ def conditional_reader_model_with_cands(nvocab, **options):
                                          options["repr_dim_output"]/2, drop_keep_prob=options["drop_keep_prob"])   #making output half as big so that it matches with candidates
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
     output = tf.concat(1, [states[0][1], states[1][1]])
-    # todo: extend
 
 
     scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
-    loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
-    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
 
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
