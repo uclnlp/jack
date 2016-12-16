@@ -99,9 +99,11 @@ def boe_nosupport_cands_reader_model(nvocab, **options):
     question_encoding = tf.reduce_sum(question_embedded, 1)
 
     scores = logits = tf.reduce_sum(tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
-    loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
-    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+    #loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
+    #predict = tf.arg_max(tf.nn.softmax(logits), 1)
 
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
@@ -140,17 +142,20 @@ def boe_support_cands_reader_model(nvocab, **options):
 
     print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
 
-    question_encoding = tf.reduce_sum(question_embedded, 1, keep_dims=True)
+    question_encoding = tf.expand_dims(tf.reduce_sum(question_embedded, 1, keep_dims=True), 3)
+
     candidate_encoding = tf.expand_dims(candidates_embedded, 2)
     support_encoding = tf.expand_dims(tf.reduce_sum(support_embedded, 1, keep_dims=True), 3)
 
-    combined = question_encoding * support_encoding * candidate_encoding
+    q_c = question_encoding * candidate_encoding
+    combined = q_c * support_encoding
+    #combined = question_encoding * candidate_encoding * support_encoding
+
     # [batch_size, dim]
     scores = logits = tf.reduce_sum(combined, (2, 3))
 
-    #scores = logits = tf.reduce_sum(tf.expand_dims(q_s_embedded, 1) * candidates_embedded, 2)
-    loss = tf.nn.softmax_cross_entropy_with_logits(scores, targets)
-    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
