@@ -57,12 +57,23 @@ class LossHook(TraceHook):
 
 
 class TensorHook(TraceHook):
-    def __init__(self, iter_interval, tensorlist, feed_dict={}, modes=['mean_abs','min','max'], summary_writer=None):
+    def __init__(self, tensorlist, iter_interval=1, feed_dicts=None,
+                 summary_writer=None, modes=['mean_abs']):
+        """
+        Evaluate the tf.Tensor objects in `tensorlist` during training (every `iter_interval` iterations),
+        and calculate statistics on them (in `modes`):  'mean_abs', 'std', 'min', and/or 'max'.
+        Additionally, the `print` mode prints the entire tensor to stdout.
+
+        If feed_dicts is a generator or iterator over feed_dicts (e.g. to iterate over the entire dev-set),
+        each tensor in `tensorlist` is evaluated and concatenated for each feed_dict,
+        before calculating the scores for the different `modes`.
+        If it's a single feed_dict or `None`, only one evaluation is done.
+        """
+
         super(TensorHook, self).__init__(summary_writer)
         self.iter_interval = iter_interval
         self.tensorlist = tensorlist
-        self.feed_dict = feed_dict
-        self.tags = [t.name for t in tensorlist]
+        self.feed_dicts = {} if feed_dicts is None else feed_dicts
         self.modes = modes
         self.iter = 0
 
@@ -72,8 +83,15 @@ class TensorHook(TraceHook):
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
-            for tensor,tag in zip(self.tensorlist, self.tags):
-                t = sess.run(tensor, feed_dict=self.feed_dict)
+
+            for tensor in self.tensorlist:
+                tag = tensor.name
+                if isinstance(self.feed_dicts, dict):
+                    t = sess.run(tensor, feed_dict=self.feed_dicts)
+                else:
+                    for i, feed_dict in enumerate(self.feed_dicts):
+                        t_i = sess.run(tensor, feed_dict=feed_dict)
+                        t = t_i if i == 0 else np.concatenate([t, t_i], axis=0)
                 if 'mean_abs' in self.modes:
                     value_mean = float(np.mean(t))
                     self.update_summary(sess, self.iter, tag+'_mean_abs', value_mean)
