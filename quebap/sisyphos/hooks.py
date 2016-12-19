@@ -57,7 +57,7 @@ class LossHook(TraceHook):
 
 
 class TensorHook(TraceHook):
-    def __init__(self, tensorlist, iter_interval=1, feed_dicts=None,
+    def __init__(self, iter_interval, tensorlist, feed_dicts=None,
                  summary_writer=None, modes=['mean_abs']):
         """
         Evaluate the tf.Tensor objects in `tensorlist` during training (every `iter_interval` iterations),
@@ -91,6 +91,8 @@ class TensorHook(TraceHook):
                 else:
                     for i, feed_dict in enumerate(self.feed_dicts):
                         t_i = sess.run(tensor, feed_dict=feed_dict)
+                        if not hasattr(t_i,'__len__'):
+                            t_i = [t_i]
                         t = t_i if i == 0 else np.concatenate([t, t_i], axis=0)
                 if 'mean_abs' in self.modes:
                     value_mean = float(np.mean(t))
@@ -242,10 +244,10 @@ class AccuracyHook(TraceHook):
 
 class TestAllHook(TraceHook):
     """
-    Hook which test all kinds of metrics, intended for running on test data
+    Hook which tests all kinds of metrics, intended for running on test data
     """
-    def __init__(self, batches, logits, predict, target, at_epoch=1,
-                 placeholders=None, summary_writer=None, print_details=False, print_to=""):
+    def __init__(self, batches, logits, predict, target, at_epoch=1, placeholders=None,
+                 metrics=['Acc'], summary_writer=None, print_details=False, print_to=""):
         super(TestAllHook, self).__init__(summary_writer)
         self.batches = batches
         self.logits = logits
@@ -258,6 +260,26 @@ class TestAllHook(TraceHook):
         self.print_details = print_details
         self.print_to = print_to
 
+        supported_metrics = ['Acc', 'MRR']
+        metrics = [metrics] if isinstance(metrics, str) else metrics
+        self.metrics = [m for m in metrics if m in supported_metrics]
+
+    def _calc_mrr(self, scores, gold):
+        mrrs = []
+        for inst in scores:
+            order = inst.argsort()
+            ranks = order.argsort()
+            rank = 0
+            for i in range(len(inst)):
+                if np.where(ranks == i)[0] == gold:
+                    break
+                rank += 1
+            mrr = float(rank) / float(len(inst) - 1)
+            # if self.print_details == True:
+            #    print(gold, scores, mrr)
+            mrrs.append(mrr)
+        return mrrs
+
 
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
@@ -267,12 +289,14 @@ class TestAllHook(TraceHook):
         if self.done_for_epoch == True:
             return
 
+        print("\nApplying model to test data (metrics: %s):"%', '.join(self.metrics))
+        predictions, corrects = [], []
+
+        #initiate metrics
+        rrs = []
         total = 0
         correct = 0
 
-        print("\nApplying model to test data:")
-        predictions, corrects = [], []
-        mrrs = []
         for i, batch in enumerate(self.batches):
             if self.placeholders is not None:
                 feed_dict = dict(zip(self.placeholders, batch))
@@ -283,25 +307,16 @@ class TestAllHook(TraceHook):
             target = feed_dict[self.target]
             gold = target if np.shape(target) == np.shape(predicted) else np.argmax(target)
             #todo: extend further, because does not cover all likely cases yet
+            corrects.append(gold)
+            predictions.append(predictions)
 
             overlap = gold == predicted
             correct += np.sum(overlap)
-            predictions += predicted
             total += predicted.size
 
-            logits = sess.run(self.logits, feed_dict=feed_dict)
-            for inst in logits:
-                order = inst.argsort()
-                ranks = order.argsort()
-                rank = 0
-                for i in range(len(inst)):
-                    if np.where(ranks == i)[0] == gold:
-                        break
-                    rank += 1
-                mrr = float(rank) / float(len(inst)-1)
-                #if self.print_details == True:
-                #    print(gold, logits, mrr)
-                mrrs.append(mrr)
+            if 'MRR' in self.metrics:
+                rrs.extend(self._calc_mrr(sess.run(self.logits, feed_dict=feed_dict), gold))
+
 
             if self.print_details == True:
                 #print(feed_dict[self.target], predicted)
@@ -315,18 +330,22 @@ class TestAllHook(TraceHook):
                     with open(self.print_to, "a") as myfile:
                         myfile.write('target/predicted: %s/%s, probs: %s\n'%(str(target),str(predicted),str(probs)))
 
+        report = ""
+        for metric in self.metrics:
+            if metric == 'Acc':
+                acc = float(correct) / total * 100
+                self.update_summary(sess, self.iter, "TestAcc", acc)
+                report += 'Acc %4.2f\t'%acc
+            elif metric == 'MRR':
+                mrr = sum(rrs) / float(total)
+                self.update_summary(sess, self.iter, "TestMRR", mrr)
+                report += 'MRR %4.2f\t' % mrr
 
-
-        acc = float(correct) / total * 100
-        #print(mrrs, total)
-        mrr = sum(mrrs) / float(total)
-
-        self.update_summary(sess, self.iter, "TestAcc", acc)
-        self.update_summary(sess, self.iter, "TestMRR", mrr)
-        print("Epoch " + str(epoch) +
-              "\tTestAcc %4.2f" % acc + "%" +
-              "\tTestMRR %4.2f" % mrr +
-              "\tCorrect " + str(correct) + "\tTotal " + str(total))
+        print("Epoch %d (correct %s/%s)\t%s"%(epoch, correct, total, report))
+        #print("Epoch " + str(epoch) +
+        #      "\tTestAcc %4.2f" % acc + "%" +
+        #      "\tTestMRR %4.2f" % mrr +
+        #      "\tCorrect " + str(correct) + "\tTotal " + str(total))
 
         self.done_for_epoch = True
         return corrects, predictions  # return those so more they can be printed to file, etc
