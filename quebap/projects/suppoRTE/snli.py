@@ -91,9 +91,9 @@ def main():
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
-    parser.add_argument('--batch_size', default=2, type=int, help="Batch size for training data, default 32")
-    parser.add_argument('--dev_batch_size', default=32, type=int, help="Batch size for development data, default 32")
-    parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
+    parser.add_argument('--batch_size', default=256, type=int, help="Batch size for training data, default 32")
+    parser.add_argument('--dev_batch_size', default=256, type=int, help="Batch size for development data, default 32")
+    parser.add_argument('--repr_dim_input', default=300, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
     parser.add_argument('--pretrain', default='False', choices={'True','False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
     parser.add_argument('--train_pretrain', default='False', choices={'True','False'},
@@ -101,11 +101,11 @@ def main():
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
     parser.add_argument('--model', default='bicond_singlesupport_reader_with_cands', choices=sorted(reader_models.keys()), help="Reading model to use")
-    parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
+    parser.add_argument('--learning_rate', default=0.003, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
-    parser.add_argument('--drop_keep_prob', default=0.9, type=float, help="keep probability for dropout on output (set to 1.0 for no dropout)")
-    parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
+    parser.add_argument('--drop_keep_prob', default=1.0, type=float, help="keep probability for dropout on output (set to 1.0 for no dropout)")
+    parser.add_argument('--epochs', default=50, type=int, help="Number of epochs to train for, default 5")
     parser.add_argument('--tokenize', default='True', choices={'True','False'},help="Tokenize question and support, default True")
     #parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
@@ -226,18 +226,21 @@ def main():
 #        answname = "answers"
     answname = 'answers'
 
+
     hooks = [
         # report_loss,
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
         AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, nvocab.get_embedding_matrix()],
-                   feed_dict=dev_feed_dict, modes=['min', 'max', 'mean_abs'], summary_writer=sw),
+                   feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         #TensorHook(20, [targets, predict, loss],
         #           feed_dict=dev_feed_dict, modes=['print'], summary_writer=sw),
-        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname], args.epochs, print_details=True)
+        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname],
+                    at_epoch=args.epochs, metrics=['Acc', 'MRR'], print_details=False)
         # set print_details to True to see gold + pred for all test instances
     ]
+
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
 
