@@ -10,6 +10,41 @@ from quebap.sisyphos.models import get_total_trainable_variables, get_total_vari
 
 
 
+def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
+    """
+    Bag of embedding reader with pairs of (question, support) and candidates
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = placeholders['question'] #tf.placeholder(tf.int64, [None, None], "question")
+
+    # [batch_size, candidate_size]
+    targets = placeholders['targets'] #tf.placeholder(tf.int64, [None, None], "targets")
+
+    # [batch_size, max_num_cands]
+    candidates = placeholders['candidates'] #tf.placeholder(tf.int64, [None, None], "candidates")
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    question_encoding = tf.reduce_sum(question_embedded, 1)
+
+    scores = logits = tf.reduce_sum(tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict), \
+           {'question': question,
+            "candidates": candidates, "targets": targets}  # placeholders
+
+
 def boe_reader_model(placeholders, nvocab, **options):
     """
     Bag of embeddings reader with pairs of (question, support)
@@ -43,7 +78,7 @@ def boe_reader_model(placeholders, nvocab, **options):
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
-    return logits, loss, predict
+    return (logits, loss, predict)
 
 
 

@@ -78,8 +78,6 @@ def boe_nosupport_cands_reader_model(nvocab, **options):
     # Model
     # [batch_size, max_seq1_length]
     question = tf.placeholder(tf.int64, [None, None], "question")
-    # [batch_size]
-    #targets = tf.placeholder(tf.int64, [None], "answers")
 
     # [batch_size, candidate_size]
     targets = tf.placeholder(tf.int64, [None, None], "targets")
@@ -91,8 +89,6 @@ def boe_nosupport_cands_reader_model(nvocab, **options):
         question_embedded = nvocab(question)
         varscope.reuse_variables()
         candidates_embedded = nvocab(candidates)
-
-    # todo: add option for attentive reader
 
     print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
 

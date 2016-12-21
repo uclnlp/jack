@@ -2,6 +2,7 @@ import tensorflow as tf
 
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, deep_map, deep_seq_map, get_entry_dims, dynamic_subsample
+from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 
 
 
@@ -107,6 +108,56 @@ def _create_vocab(corpus, keys, vocab=None, emb=None, unk=Vocab.DEFAULT_UNK, low
 
     return corpus, vocab
 
+
+
+#@todo: rewrite such that it works for different types of quebap files / models
+# this is the general quebap pipeline
+def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False, tokenization=True, negsamples=0):
+    vocab = vocab or Vocab(emb=emb)
+    target_vocab = target_vocab or Vocab(unk=None)
+    candidate_vocab = candidate_vocab or Vocab(unk=None)
+    if freeze:
+        vocab.freeze()
+        target_vocab.freeze()
+        candidate_vocab.freeze()
+
+
+    corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
+    corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
+    corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
+    corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
+    corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
+    corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
+    corpus_ids = quebap_map_to_targets(corpus_ids, 'candidates', 'answers')
+    #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
+    #todo: there is no guarantee that these are the same)
+    #todo: alternative: use functions in pipeline.py
+
+    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
+    if negsamples > 0:#we want this to be the last thing we do to candidates
+        corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+    if normalize:
+        corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
+    return corpus_ids, vocab, target_vocab, candidate_vocab
+
+
+
+def quebap_map_to_targets(xs, cands_name, ans_name):
+    """
+    Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
+    #@todo: integrate this function with the one below - the pipeline() method only works with this function
+    """
+    targs = []
+    for i in range(len(xs[ans_name])):
+        targ = []
+        for cand in xs[cands_name][i]:
+            if xs[ans_name][i] == cand:
+                targ.append(1.0)
+            else:
+                targ.append(0.0)
+        targs.append(targ)
+    xs["targets"] = targs
+    return xs
 
 
 def _map_to_targets(xs, answers_key, candidates_key, expand=False, fun_name='binary_vector'):
