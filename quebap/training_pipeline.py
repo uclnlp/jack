@@ -36,7 +36,7 @@ from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from quebap.sisyphos.train import train
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, TestAllHook
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
 import quebap.model.models as models
 from quebap.io.embeddings.embeddings import load_embeddings
 
@@ -286,9 +286,11 @@ def main():
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
         AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
-        TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
-                   feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw),
-        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
+        TensorHook(20, [loss, nvocab.get_embedding_matrix()],
+                   feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
+        EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
+                 at_every_epoch=5, metrics=['Acc', 'MRR', 'micro', 'macro', 'precision', 'recall', 'f1'],
+                 print_details=True, info="test data", print_to="test_out.txt")
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
