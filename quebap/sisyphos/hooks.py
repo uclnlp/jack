@@ -467,7 +467,6 @@ class EvalHook(TraceHook):
             if self.print_details:
                 print(report)
             if self.print_to != "":
-                print("\nPRINT TO FILE", self.print_to)
                 with open(self.print_to, "a") as myfile:
                     myfile.write(report)
 
