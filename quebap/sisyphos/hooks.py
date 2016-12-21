@@ -194,6 +194,8 @@ class ETAHook(TraceHook):
 
 
 class AccuracyHook(TraceHook):
+    #todo: will be deprecated; less general (e.g. for binary vectors in multi-label problems etc).
+    #todo: accuracy already covered by EvalHook
     def __init__(self, batches, predict, target, at_every_epoch=1,
                  placeholders=None, summary_writer=None):
         super(AccuracyHook, self).__init__(summary_writer)
@@ -210,7 +212,7 @@ class AccuracyHook(TraceHook):
 
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
-        if epoch % self.at_every_epoch == 0:
+        if epoch % self.at_every_epoch == 0 and loss==0:  #hacky: force to be post-epoch
             if not self.done_for_epoch:
                 total = 0
                 correct = 0
@@ -228,7 +230,7 @@ class AccuracyHook(TraceHook):
                     overlap = gold == predicted
                     # todo: extend further, because does not cover all likely cases yet
                     #overlap = np.argmax(feed_dict[self.target]) == predicted
-                    correct += np.sum(overlap)
+                    correct += np.sum(overlap, axis=0)
                     total += predicted.size
 
                 acc = float(correct) / total * 100
@@ -242,60 +244,145 @@ class AccuracyHook(TraceHook):
             self.done_for_epoch = False
 
 
-class TestAllHook(TraceHook):
+class EvalHook(TraceHook):
     """
-    Hook which tests all kinds of metrics, intended for running on test data
+    Hook which tests all kinds of metrics
     """
-    def __init__(self, batches, logits, predict, target, at_epoch=1, placeholders=None,
-                 metrics=['Acc'], summary_writer=None, print_details=False, print_to=""):
-        super(TestAllHook, self).__init__(summary_writer)
+    def __init__(self, batches, logits, predict, target, at_every_epoch=1, placeholders=None,
+                 metrics=[], summary_writer=None, print_details=False, print_to="", info=""):
+        """
+        note: metrics only when they make sense, e.g., for binary problem with single score given (for the positive class),
+        then micro/macro metrics not the correct one over both classes, but reduce to PRF1 for positive class.
+        or, macro metrics have no meaning of the candidates are not consistent over instances
+
+        Args:
+            batches:
+            logits:
+            predict: binary!!
+            target:
+            at_every_epoch:   => at end of epoch! (loss 0)
+            placeholders:
+            metrics: list with metrics; options are
+                'Acc', 'MRR', 'micro', 'macro', 'precision', 'recall', 'f1'
+            summary_writer:
+            print_details:
+            print_to:
+            msg:
+        """
+        super(EvalHook, self).__init__(summary_writer)
         self.batches = batches
         self.logits = logits
         self.predict = predict
         self.target = target
-        self.at_epoch = at_epoch
+        self.at_every_epoch = at_every_epoch
         self.placeholders = placeholders
         self.done_for_epoch = False
         self.iter = 0
         self.print_details = print_details
         self.print_to = print_to
+        self.info = info
+        self.metrics = metrics
 
-        supported_metrics = ['Acc', 'MRR']
-        metrics = [metrics] if isinstance(metrics, str) else metrics
-        self.metrics = [m for m in metrics if m in supported_metrics]
+    # def _calc_mrr(self, scores, target_index):
+    #     if target_index:
+    #
+    #     mrrs = []
+    #     for inst in scores:
+    #         order = inst.argsort() #ranked list of answer ID's (increasing)
+    #         ranks = order.argsort() #for each answer ID, rank in sorted scores
+    #         rank = 0
+    #         for i in range(len(inst)):
+    #             if np.where(ranks == i)[0] == target_index:
+    #                 break
+    #             rank += 1
+    #         mrr = float(rank) / float(len(inst) - 1)
+    #         # if self.print_details == True:
+    #         #    print(gold, scores, mrr)
+    #         mrrs.append(mrr)
+    #     return mrrs
 
-    def _calc_mrr(self, scores, gold):
-        mrrs = []
-        for inst in scores:
-            order = inst.argsort()
-            ranks = order.argsort()
-            rank = 0
-            for i in range(len(inst)):
-                if np.where(ranks == i)[0] == gold:
+
+    def _calc_mrr(self, scores, targets):
+        #todo: verify!
+        assert scores.shape == targets.shape #targets must be array with binary vector per instance (row)
+        rrs = []
+        for score, target in zip(scores, targets):
+            order = score.argsort()[::-1] #sorted id's for highest to lost score
+            #refIDs = np.where(target==1)
+            refIDs = [i for i,t in enumerate(target) if t == 1]
+            for i in range(len(order)):
+                rank = i+1
+                if order[i] in refIDs: #rank of first relevant answer
                     break
-                rank += 1
-            mrr = float(rank) / float(len(inst) - 1)
-            # if self.print_details == True:
-            #    print(gold, scores, mrr)
-            mrrs.append(mrr)
-        return mrrs
+            rrs.append(1./rank)
+        return rrs
+
+
+
+    def _calc_micro_PRF(self, binary_predictions, binary_targets):
+        #todo: verify!
+        predict_complement = np.add(1.0, -binary_predictions)
+        target_complement = np.add(1.0, -binary_targets)
+        tp = np.sum(np.multiply(binary_predictions, binary_targets))  # p = 1, t = 1
+        fp = np.sum(np.multiply(binary_predictions, target_complement))  # p = 1, t = 0
+        fn = np.sum(np.multiply(predict_complement, binary_targets))  # p = 0, t = 1
+        microp = tp / (tp + fp) if tp > 0 else 0.0
+        micror = tp / (tp + fn) if tp > 0 else 0.0
+        microf1 = 2. * microp * micror / (microp + micror) if (microp * micror > 0) else 0.0
+        return microp, micror, microf1
+
+
+    def _calc_macro_PRF(self, binary_predictions, binary_targets):
+        """
+        first dimension of input arguments: instances; 2nd dimension: different labels
+        (returns None when only 1 label dimension is given)
+        """
+        #todo: verify!
+        predict_complement = np.add(1.0, -binary_predictions)
+        target_complement = np.add(1.0, -binary_targets)
+        tp = np.sum(np.multiply(binary_predictions, binary_targets), axis=0)  # p = 1, t = 1
+        fp = np.sum(np.multiply(binary_predictions, target_complement), axis=0)  # p = 1, t = 0
+        fn = np.sum(np.multiply(predict_complement, binary_targets), axis=0)  # p = 0, t = 1
+        inds_tp0 = np.where(tp!=0)
+        r = np.zeros(np.shape(tp))
+        r[inds_tp0] = np.divide(tp[inds_tp0], tp[inds_tp0] + fn[inds_tp0])
+        p = np.zeros(np.shape(tp))
+        p[inds_tp0] = np.divide(tp[inds_tp0], tp[inds_tp0] + fp[inds_tp0])
+        inds_pr0 = np.where(np.multiply(p,r)!=0)
+        f1 = np.zeros(np.shape(tp))
+        f1[inds_pr0] = 2.*np.divide(np.multiply(p[inds_pr0], r[inds_pr0]), np.add(p[inds_pr0], r[inds_pr0]))
+        macrop = np.mean(p)
+        macror = np.mean(r)
+        macrof1 = np.mean(f1)
+        return macrop, macror, macrof1
+
+
 
 
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
-        if epoch != self.at_epoch:
+        if epoch%self.at_every_epoch != 0 or loss != 0:  #bit hacky: post-epoch hook has loss 0
             return
+        #todo: more elegant way to enforce this hook always post-epoch
 
-        if self.done_for_epoch == True:
-            return
+        #if self.done_for_epoch == True:
+        #    return
 
-        print("\nApplying model to test data (metrics: %s):"%', '.join(self.metrics))
-        predictions, corrects = [], []
+
+
+        print("Evaluation: ", self.info)
+        predictions, targets = None, None
+        predictions_bin, targets_bin = None, None
+
+        convert2binary = lambda indices, n: np.asarray([[1 if j == i else 0 for j in range(n)] for i in indices])
 
         #initiate metrics
         rrs = []
         total = 0
         correct = 0
+        n = 0
+
+        consistent = True
 
         for i, batch in enumerate(self.batches):
             if self.placeholders is not None:
@@ -303,52 +390,83 @@ class TestAllHook(TraceHook):
             else:
                 feed_dict = batch
 
-            predicted = sess.run(self.predict, feed_dict=feed_dict)
+            prediction = sess.run(self.predict, feed_dict=feed_dict)
             target = feed_dict[self.target]
-            gold = target if np.shape(target) == np.shape(predicted) else np.argmax(target)
-            #todo: extend further, because does not cover all likely cases yet
-            corrects.append(gold)
-            predictions.append(predictions)
+            logits = sess.run(self.logits, feed_dict=feed_dict)
+            n = logits.shape[-1]  #may be variable per batch; may be 1 for binary problem
 
-            overlap = gold == predicted
+            #store evaluated forms (whether indices or binary vectors)
+            predictions = prediction if predictions is None else np.concatenate([predictions, prediction], axis=0)
+            targets = target if targets is None else np.concatenate([targets, target], axis=0)
+
+            #create binary vectors
+            target_bin = target if target.shape == logits.shape else convert2binary(target, n)
+            prediction_bin = prediction if prediction.shape == logits.shape else convert2binary(prediction, n)
+
+            overlap = [np.asarray([p==t]).all() for p,t in zip(prediction_bin, target_bin)]
             correct += np.sum(overlap)
-            total += predicted.size
+            total += prediction_bin.shape[0]
 
-            if 'MRR' in self.metrics:
-                rrs.extend(self._calc_mrr(sess.run(self.logits, feed_dict=feed_dict), gold))
+            if consistent:
+                try:
+                    predictions_bin = prediction_bin if predictions_bin is None else np.concatenate([predictions_bin, prediction_bin], axis=0)
+                    targets_bin = target_bin if targets_bin is None else np.concatenate([targets_bin, target_bin], axis=0)
+                #in case not compatible over different batches:
+                except:
+                    consistent = False
+
+            if n > 1:
+                rrs.extend(self._calc_mrr(logits, target_bin))
+            #else: makes no sense to calculate MRR
 
 
-            if self.print_details == True:
-                #print(feed_dict[self.target], predicted)
-                # alternative:
-                # logits = sess.run(self.logits, feed_dict=feed_dict)
-                # print(np.argmax(feed_dict[self.target]), np.argmax(logits))
-                # alternative:
-                probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
-                print('target/predicted: %s/%s, probs: %s'%(str(target),str(predicted),str(probs)))
+            if self.print_details:
+                report = []
+                for i in range(prediction_bin.shape[0]):
+                    is_correct = all(target_bin[i] == prediction_bin[i])
+                    report.append('target:%s\tpredicted:%s\tlogits:%s\tcorrect:%s'\
+                                  %(str(target[i]), str(prediction[i]), str(logits[i]), is_correct))
+                    # alternative:
+                    # probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
+                print('\n'.join(report))
                 if self.print_to != "":
                     with open(self.print_to, "a") as myfile:
-                        myfile.write('target/predicted: %s/%s, probs: %s\n'%(str(target),str(predicted),str(probs)))
+                        myfile.writelines(report)
 
-        report = ""
-        for metric in self.metrics:
-            if metric == 'Acc':
-                acc = float(correct) / total * 100
-                self.update_summary(sess, self.iter, "TestAcc", acc)
-                report += 'Acc %4.2f\t'%acc
-            elif metric == 'MRR':
-                mrr = sum(rrs) / float(total)
-                self.update_summary(sess, self.iter, "TestMRR", mrr)
-                report += 'MRR %4.2f\t' % mrr
+        #calculate metrics:
+        metrics = {}
+        metrics['Acc'] = correct/float(total) if correct > 0 else 0.0
+        if len(rrs) > 0:
+            metrics['MRR'] = np.mean(rrs)
+        if consistent:
+            mp, mr, mf = self._calc_micro_PRF(predictions_bin, targets_bin)
+            Mp, Mr, Mf = self._calc_macro_PRF(predictions_bin, targets_bin)
+            if n > 1:
+                metrics['microP'] = mp
+                metrics['microR'] = mr
+                metrics['microF1'] = mf
+                metrics['macroP'] = Mp
+                metrics['macroR'] = Mr
+                metrics['macroF1'] = Mf
+            elif n == 1:
+                metrics['Prec'] = mp
+                metrics['Rec'] = mr
+                metrics['F1'] = mf
 
-        print("Epoch %d (correct %s/%s)\t%s"%(epoch, correct, total, report))
-        #print("Epoch " + str(epoch) +
-        #      "\tTestAcc %4.2f" % acc + "%" +
-        #      "\tTestMRR %4.2f" % mrr +
-        #      "\tCorrect " + str(correct) + "\tTotal " + str(total))
+        #output
+        if len(self.metrics) == 0:
+            printmetrics = sorted(metrics.keys())
+        else:
+            printmetrics = [m for m in self.metrics if m in metrics.keys()]
+        res = "Epoch %d  (correct %d/%d)"%(epoch, correct, total)
+        for m in printmetrics:
+            if len(printmetrics) > 2:
+                res += '\n'
+            res += '\t%s\t%.3f'%(m, metrics[m])
+        print(res)
 
         self.done_for_epoch = True
-        return corrects, predictions  # return those so more they can be printed to file, etc
+        return targets, predictions, metrics  # return those so more they can be printed to file, etc
 
 
 
