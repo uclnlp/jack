@@ -457,18 +457,19 @@ class EvalHook(TraceHook):
             #else: makes no sense to calculate MRR
 
 
-            report = []
+            report = ""
             for i in range(prediction_bin.shape[0]):
                 is_correct = all(target_bin[i] == prediction_bin[i])
-                report.append('target:%s\tprediction:%s\tlogits:%s\tcorrect:%s'\
-                              %(str(target[i]), str(prediction[i]), str(logits[i]), is_correct))
+                report += 'target:%s\tprediction:%s\tlogits:%s\tcorrect:%s\n'\
+                              %(str(target[i]), str(prediction[i]), str(logits[i]), is_correct)
                 # alternative:
                 # probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
-                if self.print_details:
-                    print('\n'.join(report))
-                if self.print_to != "":
-                    with open(self.print_to, "a") as myfile:
-                        myfile.writelines(report)
+            if self.print_details:
+                print(report)
+            if self.print_to != "":
+                print("\nPRINT TO FILE", self.print_to)
+                with open(self.print_to, "a") as myfile:
+                    myfile.write(report)
 
         #calculate metrics:
         metrics = {}
