@@ -196,7 +196,9 @@ class Vocab(object):
         - In case self.frozen==True (after explicit call to 'freeze()', or after building a `NeuralVocab' with it):
           returns normalized id (positive integer, also for symbols with pre-trained embedding)
           If `sym` is a new symbol, the id for unknown terms is returned, if available,
-          and otherwise `None` (only possible when input argument `unk` for `Vocab.__init__()` was set to `None`.)
+          and otherwise `None` (only possible when input argument `unk` for `Vocab.__init__()` was set to `None`, e.g. ;
+          for classification labels; it is assumed action is taken in the pipeline
+          creating or calling the `Vocab` object, when `None` is encountered).
 
         Args:
             `sym`: symbol (e.g., token)
@@ -243,7 +245,6 @@ class Vocab(object):
                 symbols = args[0]
             else:
                 return self.get_id(args[0])
-
         return [self.get_id(sym) for sym in symbols]
 
     def __len__(self):
