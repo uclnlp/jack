@@ -27,7 +27,7 @@ from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from quebap.sisyphos.train import train
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, TestAllHook
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
 from quebap.sisyphos.pipelines import simple_pipeline, create_placeholders
 import quebap.model.models_np as models
 
@@ -212,7 +212,7 @@ def main():
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     test_feed_dicts = \
-        get_feed_dicts(test_data, placeholders, 1,
+        get_feed_dicts(test_data, placeholders, 16,
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     optim = tf.train.AdamOptimizer(args.learning_rate)
@@ -236,8 +236,10 @@ def main():
                    feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         #TensorHook(20, [targets, predict, loss],
         #           feed_dict=dev_feed_dict, modes=['print'], summary_writer=sw),
-        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname],
-                    at_epoch=args.epochs, metrics=['Acc', 'MRR'], print_details=False)
+        EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
+                    at_every_epoch=1, metrics=[], print_details=False, info="development"),
+        EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
+                    at_every_epoch=args.epochs, metrics=[], print_details=False, info="test data")
         # set print_details to True to see gold + pred for all test instances
     ]
 
