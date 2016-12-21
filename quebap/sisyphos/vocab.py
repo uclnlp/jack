@@ -350,7 +350,7 @@ class NeuralVocab(Vocab):
 
 
     def __init__(self, base_vocab, embedding_matrix=None,
-                 input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True, seed=SEED):
+                 input_size=None, reduced_input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True, seed=SEED):
         """
         Creates NeuralVocab object from a given Vocab object `base_vocab`.
         Pre-calculates embedding vector (as `Tensor` object) for each symbol in Vocab
@@ -363,6 +363,8 @@ class NeuralVocab(Vocab):
             `input_size`: integer; embedding length in case embedding matrix not provided, else ignored.
               If shorter than pre-trained embeddings, only their first `input_size` dimensions are used.
               If longer, extra (Trainable) dimensions are added.
+            `reduced_input_size`: integer; optional; ignored in case `None`. If set to positive integer, an additional
+              linear layer is introduced to reduce (or extend) the embeddings to the indicated size.
             `use_pretrained`:  boolean; True (default): use pre-trained if available through `base_vocab`.
               False: ignore pre-trained embeddings accessible through `base_vocab`
             `train_pretrained`: boolean; False (default): fix pretrained embeddings. True: continue training.
@@ -427,6 +429,10 @@ class NeuralVocab(Vocab):
             self.input_size = embedding_matrix.get_shape()[1] #ignore input argument input_size
             self.embedding_matrix = embedding_matrix
 
+        if isinstance(reduced_input_size, int) and reduced_input_size > 0:
+            init = tf.contrib.layers.xavier_initializer(uniform=True)  # uniform=False for truncated normal
+            self.embedding_matrix = tf.contrib.layers.fully_connected(self.embedding_matrix, reduced_input_size,
+                                                       weights_initializer=init,activation_fn=None)
 
         #pre-assign embedding vectors to all ids
         self.id2vec = [tf.nn.embedding_lookup(self.embedding_matrix, id) for id in range(len(self))] #always OK if frozen
