@@ -27,18 +27,14 @@ class Duration(object):
 checkpoint = Duration()
 
 
-#from quebap.model.models import create_log_linear_reader, \
-#    create_model_f_reader, create_bag_of_embeddings_reader, \
-#    create_sequence_embeddings_reader, create_support_bag_of_embeddings_reader
-#from quebap.tensorizer import *
-
 from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from quebap.sisyphos.train import train
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, TestAllHook
-import quebap.model.models as models
+from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
+import quebap.model.models_np as models
 from quebap.io.embeddings.embeddings import load_embeddings
+from quebap.sisyphos.pipelines import create_placeholders, pipeline
 
 from quebap.io.read_quebap import quebap_load as _quebap_load
 
@@ -47,54 +43,6 @@ def quebap_load(path, max_count=None, **options):
     return _quebap_load(path, max_count, **options)
 
 
-
-
-
-def map_to_targets(xs, cands_name, ans_name):
-    """
-    Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
-    """
-    targs = []
-    for i in range(len(xs[ans_name])):
-        targ = []
-        for cand in xs[cands_name][i]:
-            if xs[ans_name][i] == cand:
-                targ.append(1.0)
-            else:
-                targ.append(0.0)
-        targs.append(targ)
-    xs["targets"] = targs
-    return xs
-
-
-#@todo: rewrite such that it works for different types of quebap files / models
-def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False, tokenization=True, negsamples=0):
-    vocab = vocab or Vocab(emb=emb)
-    target_vocab = target_vocab or Vocab(unk=None)
-    candidate_vocab = candidate_vocab or Vocab(unk=None)
-    if freeze:
-        vocab.freeze()
-        target_vocab.freeze()
-        candidate_vocab.freeze()
-
- 
-    corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
-    corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
-    corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
-    corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
-    corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
-    corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
-    corpus_ids = map_to_targets(corpus_ids, 'candidates', 'answers')
-    #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
-    #todo: there is no guarantee that these are the same)
-    #todo: alternative: use functions in pipeline.py
-
-    corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
-    if negsamples > 0:#we want this to be the last thing we do to candidates
-        corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
-    if normalize:
-        corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
-    return corpus_ids, vocab, target_vocab, candidate_vocab
 
 
 def main():
@@ -127,13 +75,13 @@ def main():
     dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
     test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"""
 
-    train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json' #'data/scienceQA/scienceQA_cloze_snippet.json'
-
+    train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
+    #train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
 
     #args
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default='False', choices={'True','False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
-    parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used (default 2000)")
+    parser.add_argument('--debug_examples', default=10, type=int, help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="Quebap dev file")
     parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="Quebap test file")
@@ -141,7 +89,7 @@ def main():
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
-    parser.add_argument('--batch_size', default=2, type=int, help="Batch size for training data, default 32")
+    parser.add_argument('--batch_size', default=32, type=int, help="Batch size for training data, default 32")
     parser.add_argument('--dev_batch_size', default=32, type=int, help="Batch size for development data, default 32")
     parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
@@ -150,7 +98,7 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
-    parser.add_argument('--model', default='bicond_singlesupport_reader_with_cands', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='boenosupport', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
@@ -250,9 +198,11 @@ def main():
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
 
     checkpoint()
+    print('create placeholders')
+    placeholders = create_placeholders(train_data)
     print('build model %s'%args.model)
-    (logits, loss, predict), placeholders = reader_models[args.model](nvocab, **vars(args))
-    
+    (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
+
     if args.supports != "none":
         bucket_order = ('question','support') #composite buckets; first over question, then over support
         bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
@@ -286,9 +236,11 @@ def main():
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
         AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
-        TensorHook(20, [loss, logits, nvocab.get_embedding_matrix()],
-                   feed_dict=dev_feed_dict, modes=['min', 'max', 'std', 'mean_abs'], summary_writer=sw),
-        TestAllHook(test_feed_dicts, logits, predict, placeholders[answname], args.epochs, print_details=False)  # set print_details to True to see gold + pred for all test instances
+        TensorHook(20, [loss, nvocab.get_embedding_matrix()],
+                   feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
+        EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
+                 at_every_epoch=5, metrics=['Acc', 'MRR', 'micro', 'macro', 'precision', 'recall', 'f1'],
+                 print_details=True, info="test data", print_to="test_out.txt")
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
