@@ -246,28 +246,51 @@ class AccuracyHook(TraceHook):
 
 class EvalHook(TraceHook):
     """
-    Hook which tests all kinds of metrics
+    Hook which applies various metrics.
+    To be used during training on dev-data, and after training on test-data.
     """
     def __init__(self, batches, logits, predict, target, at_every_epoch=1, placeholders=None,
                  metrics=[], summary_writer=None, print_details=False, print_to="", info=""):
         """
-        note: metrics only when they make sense, e.g., for binary problem with single score given (for the positive class),
-        then micro/macro metrics not the correct one over both classes, but reduce to PRF1 for positive class.
-        or, macro metrics have no meaning of the candidates are not consistent over instances
+        Initialize EvalHook object.
+        Calling the hook prints calculated metrics to stdout, and returns targets, predictions, and a metrics dict.
 
         Args:
             batches:
+                iterator / generator of batches; assumed each batch is a proper feed_dict in case placeholders=None
+                otherwise paired with the placeholders to form feed_dicts.
             logits:
-            predict: binary!!
+                tf op with logits
+            predict:
+                tf op that returns binary predictions, either for each instance as the index of the predicted answer (if unique)
+                otherwise as a tensor of shape (batch_size, num_candidates), in which each prediction is a
+                num_candidates-long binary vector (with 0 or more 1's and the rest 0).
+                (num_candidates may vary over batches; in that case the metrics macro- microP/R/F1 are not available,
+                but Acc and MRR are)
             target:
-            at_every_epoch:   => at end of epoch! (loss 0)
+                binary targets; either for each instance as index of correct answer (if unique),
+                or as binary vectors (with 0 or more 1's for correct answers), similar to predict.
+            at_every_epoch:
+                evaluated each at_every_epoch epochs. Note that calling EvalHook requires loss-argument to be 0,
+                as automatically done post-epoch in quebap.sisyphos.train, hence always called after finishing the epoch.
             placeholders:
-            metrics: list with metrics; options are
-                'Acc', 'MRR', 'micro', 'macro', 'precision', 'recall', 'f1'
+                placeholders, in case batches does not generate feed_dicts.
+            metrics: list with metrics;
+                default: [], which will return all available metrics (dep. on type of problem)
+                Options are currently:
+                'Acc', 'MRR', 'microP', 'microR', 'microF1', 'macroP', 'macroR', 'macroF1', 'precision', 'recall', 'F1'.
+                Note: mostly not all the metrics are available, but deciding on sensible metrics is left to the user;
+                    E.g.: if the number of candidates remains constant, micro- and macro-metrics will be returned,
+                    even if the 'labels' for the actual candidates vary over instances.
             summary_writer:
+                optional summary_writer
             print_details:
+                if True, prints for each instance:
+                target, prediction, logits, and whether the prediction is entirely correct
             print_to:
+                if a filename is specified, appends the details per instance (as for print_details) to that file.
             msg:
+                print this message before the evaluation metrics; useful to distinguish between calls of en EvalHook on train/dev/test data.
         """
         super(EvalHook, self).__init__(summary_writer)
         self.batches = batches
@@ -420,15 +443,15 @@ class EvalHook(TraceHook):
             #else: makes no sense to calculate MRR
 
 
-            if self.print_details:
-                report = []
-                for i in range(prediction_bin.shape[0]):
-                    is_correct = all(target_bin[i] == prediction_bin[i])
-                    report.append('target:%s\tpredicted:%s\tlogits:%s\tcorrect:%s'\
-                                  %(str(target[i]), str(prediction[i]), str(logits[i]), is_correct))
-                    # alternative:
-                    # probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
-                print('\n'.join(report))
+            report = []
+            for i in range(prediction_bin.shape[0]):
+                is_correct = all(target_bin[i] == prediction_bin[i])
+                report.append('target:%s\tprediction:%s\tlogits:%s\tcorrect:%s'\
+                              %(str(target[i]), str(prediction[i]), str(logits[i]), is_correct))
+                # alternative:
+                # probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
+                if self.print_details:
+                    print('\n'.join(report))
                 if self.print_to != "":
                     with open(self.print_to, "a") as myfile:
                         myfile.writelines(report)
