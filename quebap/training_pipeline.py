@@ -27,11 +27,6 @@ class Duration(object):
 checkpoint = Duration()
 
 
-#from quebap.model.models import create_log_linear_reader, \
-#    create_model_f_reader, create_bag_of_embeddings_reader, \
-#    create_sequence_embeddings_reader, create_support_bag_of_embeddings_reader
-#from quebap.tensorizer import *
-
 from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
@@ -56,11 +51,11 @@ def main():
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
-        #'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
-        #'boe_support_cands': models.boe_support_cands_reader_model,
+        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
+        'boe_support_cands': models.boe_support_cands_reader_model,
         'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
         'boe': models.boe_reader_model,
-        #'boenosupport': models.boenosupport_reader_model,
+        'boenosupport': models.boenosupport_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
     }
@@ -80,13 +75,13 @@ def main():
     dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
     test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"""
 
-    #train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
-    train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
+    train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
+    #train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
 
     #args
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default='False', choices={'True','False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
-    parser.add_argument('--debug_examples', default=2000, type=int, help="If in debug mode, how many examples should be used (default 2000)")
+    parser.add_argument('--debug_examples', default=10, type=int, help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="Quebap training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="Quebap dev file")
     parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="Quebap test file")
@@ -94,7 +89,7 @@ def main():
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
-    parser.add_argument('--batch_size', default=2, type=int, help="Batch size for training data, default 32")
+    parser.add_argument('--batch_size', default=32, type=int, help="Batch size for training data, default 32")
     parser.add_argument('--dev_batch_size', default=32, type=int, help="Batch size for development data, default 32")
     parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
@@ -103,7 +98,7 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
-    parser.add_argument('--model', default='boe_nosupport_cands', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='boenosupport', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
@@ -203,9 +198,11 @@ def main():
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
 
     checkpoint()
+    print('create placeholders')
+    placeholders = create_placeholders(train_data)
     print('build model %s'%args.model)
-    (logits, loss, predict), placeholders = reader_models[args.model](nvocab, **vars(args))
-    
+    (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
+
     if args.supports != "none":
         bucket_order = ('question','support') #composite buckets; first over question, then over support
         bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
