@@ -10,7 +10,7 @@ class Hook(object):
     def __init__(self):
         raise NotImplementedError
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         raise NotImplementedError
 
 
@@ -21,8 +21,14 @@ class TraceHook(object):
     def __tag__(self):
         raise NotImplementedError
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         raise NotImplementedError
+
+    def at_epoch_end(self, *args, **kwargs):
+        self.__call__(*args, **kwargs)
+
+    def at_iteration_end(self, *args, **kwargs):
+        self.__call__(*args, **kwargs)
 
     def update_summary(self, sess, current_step, title, value):
         if self.summary_writer is not None:
@@ -44,7 +50,7 @@ class LossHook(TraceHook):
     def __tag__(self):
         return "Loss"
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         self.acc_loss += loss / self.batch_size
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
@@ -80,7 +86,7 @@ class TensorHook(TraceHook):
     def __tag__(self):
         return "Tensor"
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
 
@@ -123,7 +129,7 @@ class SpeedHook(TraceHook):
     def __tag__(self):
         return "Speed"
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             diff = time.time() - self.t0
@@ -150,7 +156,7 @@ class ETAHook(TraceHook):
     def __tag__(self):
         return "ETA"
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         self.iter += 1
 
         if self.reestimate and self.iter >= self.max_iters / self.max_epochs:
@@ -210,7 +216,7 @@ class AccuracyHook(TraceHook):
     def __tag__(self):
         return "Acc"
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         self.iter += 1
         if epoch % self.at_every_epoch == 0 and loss==0:  #hacky: force to be post-epoch
             if not self.done_for_epoch:
@@ -300,7 +306,7 @@ class EvalHook(TraceHook):
         self.target = target
         self.at_every_epoch = at_every_epoch
         self.placeholders = placeholders
-        self.done_for_epoch = False
+        #self.done_for_epoch = False
         self.iter = 0
         self.print_details = print_details
         self.print_to = print_to
@@ -383,7 +389,7 @@ class EvalHook(TraceHook):
 
 
 
-    def __call__(self, sess, epoch, model, loss, **kwargs):
+    def __call__(self, sess, epoch, model, loss):
         """
         Call the EvalHook.
 
@@ -398,16 +404,14 @@ class EvalHook(TraceHook):
                 (and provided epoch % self.at_every_epoch == 0).
         """
         self.iter += 1
-        post_epoch = False if not 'post_epoch' in kwargs else kwargs['post_epoch']
-        if epoch % self.at_every_epoch != 0 or not post_epoch:
-            return
+        #post_epoch = False if not 'post_epoch' in kwargs else kwargs['post_epoch']
+        #if epoch % self.at_every_epoch != 0 or not post_epoch:
+        #    return
 
         #if self.done_for_epoch == True:
         #    return
 
-
-
-        print("Evaluation: ", self.info)
+        #print("Evaluation: ", self.info)
         predictions, targets = None, None
         predictions_bin, targets_bin = None, None
 
@@ -495,15 +499,26 @@ class EvalHook(TraceHook):
             printmetrics = sorted(metrics.keys())
         else:
             printmetrics = [m for m in self.metrics if m in metrics.keys()]
-        res = "Epoch %d  (correct %d/%d)"%(epoch, correct, total)
+        res = "Epoch %d\tcorrect: %d/%d"%(epoch, correct, total)
         for m in printmetrics:
-            if len(printmetrics) > 2:
-                res += '\n'
-            res += '\t%s\t%.3f'%(m, metrics[m])
+            #if len(printmetrics) > 2:
+            #    res += '\n'
+            res += '\t%s: %.3f'%(m, metrics[m])
+        res += '\t(%s)'%self.info
         print(res)
 
-        self.done_for_epoch = True
+        #self.done_for_epoch = True
         return targets, predictions, metrics  # return those so more they can be printed to file, etc
+
+
+    def at_epoch_end(self, sess, epoch, model, loss):
+        if epoch % self.at_every_epoch == 0:
+            self.__call__(sess, epoch, model, loss)
+        else:
+            return
+
+    def at_iteration_end(self, *args, **kwargs):
+        return
 
 
 
@@ -517,7 +532,7 @@ class PRF1Hook(Hook):
         self.placeholders = placeholders
         self.at_every_epoch = at_every_epoch
 
-    def __call__(self, sess, epoch, iter, model, loss, **kwargs):
+    def __call__(self, sess, epoch, iter, model, loss):
         if iter == 0 and epoch % self.at_every_epoch == 0:
             total = 0
             correct = 0
@@ -546,7 +561,7 @@ class SaveModelHook(Hook):
         # self.saver = tf.train.Saver(tf.all_variables())
         self.saver = tf.train.Saver(tf.trainable_variables())
 
-    def __call__(self, sess, epoch, iter, model, loss, **kwargs):
+    def __call__(self, sess, epoch, iter, model, loss):
         if epoch == self.at_epoch:
             print("Saving model...")
             # todo
@@ -561,7 +576,7 @@ class LoadModelHook(Hook):
         self.at_every_epoch = at_every_epoch
         self.saver = tf.train.Saver(tf.all_variables())
 
-    def __call__(self, sess, epoch, iter, model, loss, **kwargs):
+    def __call__(self, sess, epoch, iter, model, loss):
         if epoch == self.at_epoch:
             print("Loading model...")
             # todo
