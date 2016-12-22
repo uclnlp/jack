@@ -32,12 +32,9 @@ from quebap.sisyphos.pipelines import simple_pipeline, create_placeholders
 import quebap.model.models_np as models
 
 from quebap.io.embeddings.embeddings import load_embeddings
-from quebap.io.read_quebap import quebap_load as _quebap_load
+from quebap.io.read_quebap import quebap_load
 
 
-def quebap_load(path, max_count=None, **options):
-    print('\nWARNING: will be moved; please load from quebap.io.read_quebap\n')
-    return _quebap_load(path, max_count, **options)
 
 
 
@@ -133,10 +130,9 @@ def main():
         print('\t%s : %s'%(str(arg), str(getattr(args, arg))))
 
     if args.debug:
-        train_data = quebap_load(args.train, args.debug_examples, **vars(args))
-        print('loaded %d samples as debug train/dev/test dataset '%args.debug_examples)
-        dev_data = train_data
-        test_data = train_data
+        train_data, dev_data, test_data = [quebap_load(name, args.debug_examples, **vars(args))
+                                           for name in [args.train, args.dev, args.test]]
+        print('loaded at most %d samples each from debug train/dev/test data'%args.debug_examples)
         if args.pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('quebap', 'data', 'GloVe', emb_file), 'glove')
@@ -232,17 +228,18 @@ def main():
 
     hooks = [
         # report_loss,
-        LossHook(100, args.batch_size),
-        SpeedHook(100, args.batch_size),
-        #AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
-        TensorHook(20, [loss, nvocab.get_embedding_matrix()],
-                   feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
-        #TensorHook(20, [targets, predict, loss],
-        #           feed_dict=dev_feed_dict, modes=['print'], summary_writer=sw),
+        LossHook(100, args.batch_size, summary_writer=sw),
+        SpeedHook(100, args.batch_size, summary_writer=sw),
+        #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
+        #           feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
+        EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
+                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="training",
+                 summary_writer=sw),
         EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=1, metrics=['Acc','microF1'], print_details=False, info="development"),
+                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="development",
+                 summary_writer=sw),
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=args.epochs, metrics=[], print_details=False, info="test data", print_to="")
+                    at_every_epoch=args.epochs, metrics=['Acc','macroP','macroR','macroF1'], print_details=False, info="test data", print_to="")
         # set print_details to True to see gold + pred for all test instances
     ]
 

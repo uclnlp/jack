@@ -290,7 +290,8 @@ class EvalHook(TraceHook):
                     E.g.: if the number of candidates remains constant, micro- and macro-metrics will be returned,
                     even if the 'labels' for the actual candidates vary over instances.
             summary_writer:
-                optional summary_writer
+                optional summary_writer; if set, each (epoch,metric) will be written by the summary_writer, with
+                label `msg+"_"+metric` (e.g. "development_microF1")
             print_details:
                 if True, prints for each instance:
                 target, prediction, logits, and whether the prediction is entirely correct
@@ -504,8 +505,11 @@ class EvalHook(TraceHook):
             #if len(printmetrics) > 2:
             #    res += '\n'
             res += '\t%s: %.3f'%(m, metrics[m])
+            self.update_summary(sess, epoch, self.info+'_'+m, metrics[m])
         res += '\t(%s)'%self.info
         print(res)
+
+
 
         #self.done_for_epoch = True
         return targets, predictions, metrics  # return those so more they can be printed to file, etc
