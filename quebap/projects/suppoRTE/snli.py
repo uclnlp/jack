@@ -94,6 +94,8 @@ def main():
     parser.add_argument('--batch_size', default=256, type=int, help="Batch size for training data, default 32")
     parser.add_argument('--dev_batch_size', default=256, type=int, help="Batch size for development data, default 32")
     parser.add_argument('--repr_dim_input', default=300, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
+    parser.add_argument('--repr_dim_input_reduced', default=100, type=int,
+                        help="Size of the input embeddings after reducing with fully_connected layer (default 100)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
     parser.add_argument('--pretrain', default='False', choices={'True','False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
     parser.add_argument('--train_pretrain', default='False', choices={'True','False'},
@@ -189,6 +191,7 @@ def main():
 
     print('build NeuralVocab')
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
+                         reduced_input_size=args.repr_dim_input_reduced,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
 
     checkpoint()
@@ -231,15 +234,15 @@ def main():
         # report_loss,
         LossHook(100, args.batch_size),
         SpeedHook(100, args.batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
+        #AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, nvocab.get_embedding_matrix()],
                    feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         #TensorHook(20, [targets, predict, loss],
         #           feed_dict=dev_feed_dict, modes=['print'], summary_writer=sw),
         EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=1, metrics=[], print_details=False, info="development"),
+                    at_every_epoch=1, metrics=['Acc','microF1'], print_details=False, info="development"),
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=args.epochs, metrics=[], print_details=False, info="test data")
+                    at_every_epoch=args.epochs, metrics=[], print_details=False, info="test data", print_to="")
         # set print_details to True to see gold + pred for all test instances
     ]
 
