@@ -6,7 +6,7 @@ todo: include other models; goal: should replace models.py
 
 import tensorflow as tf
 from quebap.sisyphos.models import get_total_trainable_variables, get_total_variables, conditional_reader, \
-    predictor, boe_reader, bag_reader
+    predictor, boe_reader, bag_reader, bilstm_readers, reader
 
 
 
@@ -41,6 +41,115 @@ def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
     return (logits, loss, predict)
+
+
+
+def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
+    """
+    LSTM reader with pairs of (question, support) and candidates
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = placeholders['question']
+    # [batch_size]
+    question_lengths = placeholders['question_lengths']
+
+    # [batch_size, max_seq2_length]
+    support = placeholders['support']
+    # [batch_size]
+    support_lengths = placeholders['support_lengths']
+
+    # [batch_size, candidate_size]
+    targets = placeholders['targets']
+
+    # [batch_size, max_num_cands]
+    candidates = placeholders['candidates']
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        support_embedded = nvocab(support)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    #seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0
+    with tf.variable_scope("bilstm_reader") as varscope1:
+        # seq1_states: (c_fw, h_fw), (c_bw, h_bw)
+        seq1_output, seq1_states = reader(question_embedded, question_lengths, options["repr_dim_output"]/2, scope=varscope1, drop_keep_prob=options["drop_keep_prob"])
+
+    #outputs, states
+    # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
+    output = tf.concat(1, [seq1_states[0][1], seq1_states[1][1]])
+
+    scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
+
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict)
+
+
+
+def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
+    """
+    LSTM reader with pairs of (question, support) and candidates
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = placeholders['question']
+    # [batch_size]
+    question_lengths = placeholders['question_lengths']
+
+    # [batch_size, max_seq2_length]
+    support = placeholders['support']
+    # [batch_size]
+    support_lengths = placeholders['support_lengths']
+
+    # [batch_size, candidate_size]
+    targets = placeholders['targets']
+
+    # [batch_size, max_num_cands]
+    candidates = placeholders['candidates']
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        support_embedded = nvocab(support)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    # todo: add option for attentive reader
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    seq1_output, seq1_states, seq2_output, seq2_states = bilstm_readers(support_embedded, support_lengths,
+                                         question_embedded, question_lengths,
+                                         options["repr_dim_output"]/4, drop_keep_prob=options["drop_keep_prob"])   #making output 1/4 big so that it matches with candidates
+
+    #outputs, states
+    # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
+    output = tf.concat(1, [seq1_states[0][1], seq1_states[1][1], seq2_states[0][1], seq2_states[1][1]])
+
+
+    scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
+
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (logits, loss, predict)
+
 
 
 def conditional_reader_model_with_cands(placeholders, nvocab, **options):

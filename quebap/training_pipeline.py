@@ -52,10 +52,12 @@ def main():
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
         'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
+        'bilstm_singlesupport_reader_with_cands': models.bilstm_reader_model_with_cands,
+        'bilstm_nosupport_reader_with_cands': models.bilstm_nosupport_reader_model_with_cands,
         'boe_support_cands': models.boe_support_cands_reader_model,
         'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
-        'boe': models.boe_reader_model,
-        'boenosupport': models.boenosupport_reader_model,
+        'boe_support': models.boe_reader_model,
+        'boe_nosupport': models.boenosupport_reader_model,
         #'log_linear': ReaderModel.create_log_linear_reader,
         #'model_f': ReaderModel.create_model_f_reader,
     }
@@ -98,7 +100,7 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
-    parser.add_argument('--model', default='boenosupport', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='bilstm_nosupport_reader_with_cands', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")

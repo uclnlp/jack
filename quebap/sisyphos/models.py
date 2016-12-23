@@ -63,6 +63,18 @@ def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scop
         return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope2, drop_keep_prob=drop_keep_prob)
 
 
+def bilstm_readers(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0):
+    # same as conditional_reader, apart from that second lstm is initialised randomly
+    with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope1:
+        # seq1_states: (c_fw, h_fw), (c_bw, h_bw)
+        seq1_output, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1, drop_keep_prob=drop_keep_prob)
+    with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope2:
+        varscope1.reuse_variables()
+        # each [batch_size x max_seq_length x output_size]
+        seq2_output, seq2_states = reader(seq2, seq2_lengths, output_size, scope=varscope2, drop_keep_prob=drop_keep_prob)
+    return seq1_output, seq1_states, seq2_output, seq2_states
+
+
 def bag_reader(inputs, lengths):
         output=tf.reduce_sum(inputs,1,keep_dims=False)
         return output
