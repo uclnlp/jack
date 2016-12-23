@@ -232,15 +232,22 @@ def main():
         answname = "answers"
 
     hooks = [
-        # report_loss,
-        LossHook(100, args.batch_size),
-        SpeedHook(100, args.batch_size),
-        AccuracyHook(dev_feed_dicts, predict, placeholders[answname], 2),
         TensorHook(20, [loss, nvocab.get_embedding_matrix()],
                    feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
+        # report_loss
+        LossHook(100, args.batch_size, summary_writer=sw),
+        SpeedHook(100, args.batch_size, summary_writer=sw),
+        #evaluate on train data after each epoch
+        EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
+                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="training",
+                 summary_writer=sw),
+        #evaluate on dev data after each epoch
+        EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
+                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="development",
+                 summary_writer=sw),
+        #evaluate on test data after training
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=5, metrics=['Acc', 'MRR', 'micro', 'macro', 'precision', 'recall', 'f1'],
-                 print_details=True, info="test data", print_to="test_out.txt")
+                    at_every_epoch=args.epochs, metrics=['Acc','macroP','macroR','macroF1'], print_details=False, info="test data", print_to="")
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
