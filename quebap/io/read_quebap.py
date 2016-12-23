@@ -55,7 +55,7 @@ class Support(object):
         if 'tokens' in sdict:
             self.token_offsets = sdict['tokens']
         else:
-            self.token_offsets = [m.span() for m in token_pattern.finditer(s)]
+            self.token_offsets = [m.span() for m in token_pattern.finditer(m)]
         self.tokens = [self.text[span[0]:span[1]] for span in self.token_offsets]
 
     def token_from_char(self, char_offset):
