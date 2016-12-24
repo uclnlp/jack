@@ -61,9 +61,16 @@ def eval_quebap_data(test_data_file='../data/scienceQA/scienceQA_cloze_snippet.j
 
     probs_all = []
     f = open(preds_outfile, "r")
+    last_l = ""
     for l in f:
-        l = l.strip("\n").split(", probs: [[")
-        probs_all.append(l[1].strip("]]"))
+        if not (l.endswith("correct:False\n") or l.endswith("correct:True\n")):
+            last_l = l
+            continue
+        elif not l.startswith("target:"): # not every testing instance is printed on a new line, some are printed over several lines
+            l = last_l.strip("\n") + l
+            last_l = ""
+        l = l.strip("\n").split("\tlogits:[")
+        probs_all.append(l[1].split("]\t")[0])
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--supports', default='multiple')
