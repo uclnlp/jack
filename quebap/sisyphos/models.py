@@ -26,13 +26,16 @@ def get_total_variables():
     return total_parameters
 
 
-def reader(inputs, lengths, output_size, contexts=(None, None), scope=None):
+def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop_keep_prob=1.0):
     with tf.variable_scope(scope or "reader") as varscope:
         cell = tf.nn.rnn_cell.LSTMCell(
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
+
+        if drop_keep_prob != 1.0:
+            cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob)
 
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
             cell,
@@ -50,14 +53,26 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None):
         return outputs, states
 
 
-def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None):
+def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0):
     with tf.variable_scope(scope or "conditional_reader_seq1") as varscope1:
         #seq1_states: (c_fw, h_fw), (c_bw, h_bw)
-        _, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1)
+        _, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1, drop_keep_prob=drop_keep_prob)
     with tf.variable_scope(scope or "conditional_reader_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]
-        return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope1)
+        return reader(seq2, seq2_lengths, output_size, seq1_states, scope=varscope2, drop_keep_prob=drop_keep_prob)
+
+
+def bilstm_readers(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0):
+    # same as conditional_reader, apart from that second lstm is initialised randomly
+    with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope1:
+        # seq1_states: (c_fw, h_fw), (c_bw, h_bw)
+        seq1_output, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1, drop_keep_prob=drop_keep_prob)
+    with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope2:
+        varscope1.reuse_variables()
+        # each [batch_size x max_seq_length x output_size]
+        seq2_output, seq2_states = reader(seq2, seq2_lengths, output_size, scope=varscope2, drop_keep_prob=drop_keep_prob)
+    return seq1_output, seq1_states, seq2_output, seq2_states
 
 
 def bag_reader(inputs, lengths):
@@ -73,12 +88,13 @@ def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
 
 
 def predictor(output, targets, target_size):
-    logits = tf.contrib.layers.fully_connected(output, target_size)
-    loss = tf.reduce_sum(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets))
-    predict = tf.arg_max(tf.nn.softmax(logits), 1)
+    init = tf.contrib.layers.xavier_initializer(uniform=True) #uniform=False for truncated normal
+    logits = tf.contrib.layers.fully_connected(output, target_size, weights_initializer=init, activation_fn=None)
+    #note: standard relu applied; switch off at last layer with activation_fn=None!
+    loss = tf.reduce_mean(
+        tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
     return logits, loss, predict
-
 
 def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
 

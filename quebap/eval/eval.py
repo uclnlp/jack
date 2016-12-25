@@ -1,5 +1,8 @@
 import sys
 import json
+from quebap.io.read_quebap import quebap_load as quebap_load
+import numpy as np
+import argparse
 
 def hits_at_k(predictions, golds, k=1):
     gold_answers = get_gold_answers(golds)
@@ -51,6 +54,78 @@ def read_data(data_filename):
         data = json.load(data_file)
         return data
 
+def eval_quebap_data(test_data_file='../data/scienceQA/scienceQA_cloze_snippet.json', preds_outfile='../test_out.txt'):
+    # Read quebap data in and evaluate. Averages predictions for "multiple_flat" support setting.
+    # Currently only shows accuracy, but can easily be extended with mrr etc.
+    #test_data, to be loaded with quebap_load(), preds_outfile, produced with TestAllHook
+
+    probs_all = []
+    f = open(preds_outfile, "r")
+    last_l = ""
+    for l in f:
+        if not (l.endswith("correct:False\n") or l.endswith("correct:True\n")):
+            last_l = l
+            continue
+        elif not l.startswith("target:"): # not every testing instance is printed on a new line, some are printed over several lines
+            l = last_l.strip("\n") + l
+            last_l = ""
+        l = l.strip("\n").split("\tlogits:[")
+        probs_all.append(l[1].split("]\t")[0])
+
+    parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
+    parser.add_argument('--supports', default='multiple')
+    parser.add_argument('--questions', default='single')
+    parser.add_argument('--candidates', default='per-instance')
+    parser.add_argument('--answers', default='single')
+    args = parser.parse_args()
+
+    test_data = quebap_load(open(test_data_file), **vars(args))
+    # 'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates
+
+    globi = 0
+    corr = 0
+    for i, q in enumerate(test_data['question']):
+        sups = test_data['support'][i]
+        probs = []
+        for s in sups: # more than one support
+            if globi < len(probs_all):  # in case not all of test data was used
+                probs.append(probs_all[globi])
+            else:
+                break
+            globi += 1
+
+        probs, pred = averagePredictions(probs)
+        cands = test_data['candidates'][i]
+        ans = test_data['answers'][i]
+        goldind = cands.index(ans)
+        if pred == goldind:
+            corr += 1
+
+    acc = float(corr) / float(len(test_data['question']))
+    print("Accuracy averaged", acc)
+
+
+def averagePredictions(probs):
+    # sum probabilities, weight by number of predictions
+    probdict = {}
+    for p in probs:
+        probs_s = p.strip(" ").split()
+        for i, pp in enumerate(probs_s):
+            if i in probdict:
+                probdict[i].append(float(pp))
+            else:
+                probdict[i] = [float(pp)]
+
+    predicted, maxp = 0, 0.0
+    for k, v in probdict.items():
+        probdict[k] = np.sum(v) / float(len(v))
+        if probdict[k] > maxp:
+            predicted = k
+            maxp = probdict[k]
+
+    return probdict, predicted
+
+
 def main():
     if len(sys.argv) == 3:
         predictions = read_data(sys.argv[1])
@@ -60,4 +135,4 @@ def main():
         mrr = mean_reciprocal_rank(predictions, gold)
         print('Mean Reciprocal Rank: {0:3.3f}'.format(mrr))
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": eval_quebap_data() #main()

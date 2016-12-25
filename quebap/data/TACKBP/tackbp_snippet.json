@@ -1,0 +1,600 @@
+{
+  "instances": [
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$org:top_members_employees",
+          "answers": [
+            {
+              "text": "(renault|||carlos ghosn)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:top_member_employee_of",
+          "answers": [
+            {
+              "text": "(carlos ghosn|||renault)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$org:subsidiaries",
+          "answers": [
+            {
+              "text": "(renault|||dacia)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:employee_or_member_of",
+          "answers": [
+            {
+              "text": "(al sharpton|||democratic party)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$org:employees_or_members",
+          "answers": [
+            {
+              "text": "(democratic party|||al sharpton)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:statesorprovinces_of_residence",
+          "answers": [
+            {
+              "text": "(al sharpton|||new york)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:statesorprovinces_of_residence",
+          "answers": [
+            {
+              "text": "(al sharpton|||new york)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:statesorprovinces_of_residence",
+          "answers": [
+            {
+              "text": "(russ feingold|||wisconsin)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:cities_of_residence",
+          "answers": [
+            {
+              "text": "(russ feingold|||madison)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$gpe:residents_of_city",
+          "answers": [
+            {
+              "text": "(madison|||russ feingold)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:statesorprovinces_of_residence",
+          "answers": [
+            {
+              "text": "(russ feingold|||wisconsin)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:title",
+          "answers": [
+            {
+              "text": "(russ feingold|||senator)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:stateorprovince_of_birth",
+          "answers": [
+            {
+              "text": "(russ feingold|||wisconsin)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:stateorprovince_of_birth",
+          "answers": [
+            {
+              "text": "(paul sarbanes|||maryland)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:statesorprovinces_of_residence",
+          "answers": [
+            {
+              "text": "(paul sarbanes|||maryland)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:cities_of_residence",
+          "answers": [
+            {
+              "text": "(sean parnell|||alaska)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$gpe:residents_of_city",
+          "answers": [
+            {
+              "text": "(alaska|||sean parnell)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:statesorprovinces_of_residence",
+          "answers": [
+            {
+              "text": "(sean parnell|||alaska)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:origin",
+          "answers": [
+            {
+              "text": "(koichi wakata|||japan)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "REL$per:countries_of_residence",
+          "answers": [
+            {
+              "text": "(koichi wakata|||japan)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#SBJ|<-SBJ<-give<-ROOT<-ROOT->ROOT->give->OBJ->|OBJ",
+          "answers": [
+            {
+              "text": "(fide|||turkish chess federation)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#OBJ|<-OBJ<-give<-ROOT<-ROOT->ROOT->give->SBJ->|SBJ",
+          "answers": [
+            {
+              "text": "(turkish chess federation|||fide)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#ROOT|<-ROOT<-ROOT->ROOT->Gentel->COORD->|COORD",
+          "answers": [
+            {
+              "text": "(robert gentel|||jeff nolan)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#COORD|<-COORD<-Gentel<-ROOT<-ROOT->ROOT->|ROOT",
+          "answers": [
+            {
+              "text": "(jeff nolan|||robert gentel)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#SBJ|<-SBJ<-tell<-ROOT<-ROOT->ROOT->tell->OBJ->|OBJ",
+          "answers": [
+            {
+              "text": "(jeff duncan|||sean muserallo)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#OBJ|<-OBJ<-tell<-ROOT<-ROOT->ROOT->tell->SBJ->|SBJ",
+          "answers": [
+            {
+              "text": "(sean muserallo|||jeff duncan)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->with->PMOD->15's->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(irs|||ar)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-15's<-PMOD<-with<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(ar|||irs)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->with->PMOD->15's->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(irs|||ar)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-15's<-PMOD<-with<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(ar|||irs)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#SBJ|<-SBJ<-tell<-ROOT<-ROOT->ROOT->tell->OBJ->|OBJ",
+          "answers": [
+            {
+              "text": "(jeff duncan|||sean muserallo)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#OBJ|<-OBJ<-tell<-ROOT<-ROOT->ROOT->tell->SBJ->|SBJ",
+          "answers": [
+            {
+              "text": "(sean muserallo|||jeff duncan)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->with->PMOD->15's->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(irs|||ar)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-15's<-PMOD<-with<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(ar|||irs)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->with->PMOD->15's->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(irs|||ar)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-15's<-PMOD<-with<-NMOD<-training<-ROOT<-ROOT->ROOT->training->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(ar|||irs)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#OBJ|<-OBJ<-leave<-IM<-to<-EXTR<-take<-VC<-would<-ROOT<-ROOT->ROOT->would->VC->take->EXTR->to->IM->leave->OBJ->church->COORD->or->CONJ->communion->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(episcopal church|||anglican)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-communion<-CONJ<-or<-COORD<-church<-OBJ<-leave<-IM<-to<-EXTR<-take<-VC<-would<-ROOT<-ROOT->ROOT->would->VC->take->EXTR->to->IM->leave->OBJ->|OBJ",
+          "answers": [
+            {
+              "text": "(anglican|||episcopal church)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#OBJ|<-OBJ<-leave<-IM<-to<-EXTR<-take<-VC<-would<-ROOT<-ROOT->ROOT->would->VC->take->EXTR->to->IM->leave->OBJ->church->COORD->or->CONJ->communion->NMOD->|NMOD",
+          "answers": [
+            {
+              "text": "(episcopal church|||anglican)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [],
+      "questions": [
+        {
+          "question": "path#NMOD|<-NMOD<-communion<-CONJ<-or<-COORD<-church<-OBJ<-leave<-IM<-to<-EXTR<-take<-VC<-would<-ROOT<-ROOT->ROOT->would->VC->take->EXTR->to->IM->leave->OBJ->|OBJ",
+          "answers": [
+            {
+              "text": "(anglican|||episcopal church)"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "globals": {
+    "candidates": [
+      {
+        "text": "(jeff nolan|||robert gentel)"
+      },
+      {
+        "text": "(democratic party|||al sharpton)"
+      },
+      {
+        "text": "(russ feingold|||senator)"
+      },
+      {
+        "text": "(ar|||irs)"
+      },
+      {
+        "text": "(renault|||carlos ghosn)"
+      },
+      {
+        "text": "(renault|||dacia)"
+      },
+      {
+        "text": "(russ feingold|||wisconsin)"
+      },
+      {
+        "text": "(al sharpton|||new york)"
+      },
+      {
+        "text": "(fide|||turkish chess federation)"
+      },
+      {
+        "text": "(sean parnell|||alaska)"
+      },
+      {
+        "text": "(russ feingold|||madison)"
+      },
+      {
+        "text": "(alaska|||sean parnell)"
+      },
+      {
+        "text": "(episcopal church|||anglican)"
+      },
+      {
+        "text": "(paul sarbanes|||maryland)"
+      },
+      {
+        "text": "(robert gentel|||jeff nolan)"
+      },
+      {
+        "text": "(sean muserallo|||jeff duncan)"
+      },
+      {
+        "text": "(turkish chess federation|||fide)"
+      },
+      {
+        "text": "(carlos ghosn|||renault)"
+      },
+      {
+        "text": "(koichi wakata|||japan)"
+      },
+      {
+        "text": "(al sharpton|||democratic party)"
+      },
+      {
+        "text": "(jeff duncan|||sean muserallo)"
+      },
+      {
+        "text": "(madison|||russ feingold)"
+      },
+      {
+        "text": "(irs|||ar)"
+      },
+      {
+        "text": "(anglican|||episcopal church)"
+      }
+    ]
+  }
+}
