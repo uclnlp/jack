@@ -34,11 +34,7 @@ import quebap.model.models_np as models
 from quebap.io.embeddings.embeddings import load_embeddings
 from quebap.io.read_quebap import quebap_load
 
-
-
-
-
-
+from kvrte import key_value_rte
 
 def map_to_targets(xs, cands_name, ans_name):
     """
@@ -108,6 +104,7 @@ def main():
     parser.add_argument('--tokenize', default='True', choices={'True','False'},help="Tokenize question and support, default True")
     #parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
+    parser.add_argument('--experimental', default='False', choices={'True','False'}, help="Use experimental SNLI models (default False)")
 
     args = parser.parse_args()
     #todo: see if tf.app.flags is more convenient
@@ -122,6 +119,7 @@ def main():
         args.normalize_pretrain = read_bool(args.normalize_pretrain)
         args.tokenize = read_bool(args.tokenize)
         args.clip_value = None if args.clip_value == 0.0 else (-abs(args.clip_value),abs(args.clip_value))
+        args.experimental = read_bool(args.experimental)
     _prep_args()
 
     #print out args
@@ -192,7 +190,10 @@ def main():
 
     checkpoint()
     print('build model %s'%args.model)
-    logits, loss, predict = models.conditional_reader_model(placeholders, nvocab, **vars(args))
+
+    reader_model = key_value_rte if args.experimental else models.conditional_reader_model
+
+    logits, loss, predict = reader_model(placeholders, nvocab, **vars(args))
     #logits, loss, predict = models.boe_reader_model(placeholders, nvocab, **vars(args))
     #todo: get rid of targets
 

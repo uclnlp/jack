@@ -91,10 +91,12 @@ def predictor(output, targets, target_size):
     init = tf.contrib.layers.xavier_initializer(uniform=True) #uniform=False for truncated normal
     logits = tf.contrib.layers.fully_connected(output, target_size, weights_initializer=init, activation_fn=None)
     #note: standard relu applied; switch off at last layer with activation_fn=None!
+
     loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
     return logits, loss, predict
+
 
 def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
 
