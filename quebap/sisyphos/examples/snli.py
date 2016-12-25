@@ -98,6 +98,9 @@ if __name__ == '__main__':
     else:
         train_data, dev_data, test_data = [load("./quebap/data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % name)\
                                            for name in ["train", "dev", "test"]]
+
+    print(train_data)
+
     print('loaded train/dev/test data')
     if pretrain:
         if DEBUG:
