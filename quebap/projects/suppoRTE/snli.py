@@ -105,6 +105,8 @@ def main():
     #parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
     parser.add_argument('--experimental', default='False', choices={'True','False'}, help="Use experimental SNLI models (default False)")
+    parser.add_argument('--buckets', default=5, type=int, help="Number of buckets per field, default 5")
+
 
     args = parser.parse_args()
     #todo: see if tf.app.flags is more convenient
@@ -199,10 +201,10 @@ def main():
 
     if args.supports != "none":
         bucket_order = ('question','support') #composite buckets; first over question, then over support
-        bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
+        bucket_structure = (args.buckets, args.buckets) #args.buckets^2 composite buckets, evenly spaced over questions and supports
     else:
         bucket_order = ('question',) #question buckets
-        bucket_structure = (4,) #4 buckets, evenly spaced over questions
+        bucket_structure = (args.buckets,) #args.buckets buckets, evenly spaced over questions
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,
@@ -212,7 +214,7 @@ def main():
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     test_feed_dicts = \
-        get_feed_dicts(test_data, placeholders, 16,
+        get_feed_dicts(test_data, placeholders, args.dev_batch_size,
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     optim = tf.train.AdamOptimizer(args.learning_rate)
