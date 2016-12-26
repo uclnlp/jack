@@ -131,7 +131,9 @@ class SpeedHook(TraceHook):
 
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
-        if not self.iter == 0 and self.iter % self.iter_interval == 0:
+        if self.iter == 1:
+            self.t0 = time.time()
+        elif self.iter % self.iter_interval == 0:
             diff = time.time() - self.t0
             speed = "%.2f" % (self.num_examples / diff)
             print("Epoch " + str(epoch) +
@@ -139,6 +141,16 @@ class SpeedHook(TraceHook):
                   "\tExamples/s " + str(speed))
             self.update_summary(sess, self.iter, self.__tag__(), float(speed))
             self.t0 = time.time()
+
+    def at_epoch_end(self, *args, **kwargs):
+        #to eliminate drop in measured speed due to post-epoch hooks:
+        #do not execute; reset for use during epochs only
+        self.iter = 0
+        return
+
+    def at_iteration_end(self, sess, epoch, model, loss):
+        return self.__call__(sess, epoch, model, loss)
+
 
 
 class ETAHook(TraceHook):
