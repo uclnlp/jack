@@ -29,7 +29,7 @@ from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic
 from quebap.sisyphos.train import train
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
 from quebap.sisyphos.pipelines import simple_pipeline, create_placeholders
-import quebap.model.models_np as models
+import quebap.model.models as models
 
 from quebap.io.embeddings.embeddings import load_embeddings
 from quebap.io.read_quebap import quebap_load

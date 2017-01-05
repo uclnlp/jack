@@ -1,13 +1,3 @@
-"""
-
-DEPRECATED -- WILL SOON BE REMOVED:
-
-- generic pipeline function will move to sisyphos
-- quebap_load will go to io
-- main routine will be case-specific, and go to the projects subfolders.
-
-"""
-
 import argparse
 import json
 import os.path as path
@@ -32,7 +22,7 @@ from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from quebap.sisyphos.train import train
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
-import quebap.model.models_np as models
+import quebap.model.models as models
 from quebap.load.embeddings.embeddings import load_embeddings
 from quebap.sisyphos.pipelines import create_placeholders, pipeline
 
