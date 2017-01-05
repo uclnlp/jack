@@ -155,8 +155,17 @@ def main():
     
 
     checkpoint()
-    print('encode train data')
+    print('build vocab based on train data')
     train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
+
+    """
+    # not working as prune() function does not seem compatible with deep_map()
+    MIN_VOCAB_FREQ = 2
+    train_vocab = train_vocab.prune(MIN_VOCAB_FREQ)
+
+    print('encode train data')
+    train_data, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, emb=emb, normalize=True, freeze=True, tokenization=args.tokenize, negsamples=args.negsamples)"""
+
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
     print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.' % (N_pre, N_oov))
