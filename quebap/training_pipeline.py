@@ -33,10 +33,10 @@ from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic
 from quebap.sisyphos.train import train
 from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
 import quebap.model.models_np as models
-from quebap.io.embeddings.embeddings import load_embeddings
+from quebap.load.embeddings.embeddings import load_embeddings
 from quebap.sisyphos.pipelines import create_placeholders, pipeline
 
-from quebap.io.read_quebap import quebap_load as _quebap_load
+from quebap.load.read_quebap import quebap_load as _quebap_load
 
 
 def quebap_load(path, max_count=None, **options):
@@ -100,7 +100,7 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
-    parser.add_argument('--model', default='bilstm_nosupport_reader_with_cands', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
@@ -249,7 +249,7 @@ def main():
                  summary_writer=sw),
         #evaluate on test data after training
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=args.epochs, metrics=['Acc','macroP','macroR','macroF1'], print_details=False, info="test data", print_to="")
+                    at_every_epoch=args.epochs, metrics=['Acc','macroP','macroR','macroF1'], print_details=False, info="test data", print_to="test_out.txt")
     ]
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)

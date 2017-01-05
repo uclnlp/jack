@@ -1,5 +1,5 @@
-from quebap.io.embeddings.word_to_vec import load_word2vec
-from quebap.io.embeddings.glove import load_glove
+from quebap.load.embeddings.word_to_vec import load_word2vec
+from quebap.load.embeddings.glove import load_glove
 import zipfile
 
 

@@ -55,6 +55,6 @@ def convert_scienceCloze_to_quebap(scienceQAFile):
 
 
 if __name__ == "__main__":
-    corpus = convert_scienceCloze_to_quebap("../../quebap/data/scienceQA/scienceQA_cloze_snippet.txt")
-    with open("../../quebap/data/scienceQA/scienceQA_cloze_snippet.json", 'w') as outfile:
+    corpus = convert_scienceCloze_to_quebap("../data/scienceQA/clozeSummaryLocal_test.txt")
+    with open("../data/scienceQA/scienceQA_clozeSummaryLocal_test.json", 'w') as outfile:
         json.dump(corpus, outfile, indent=2, ensure_ascii=False)
