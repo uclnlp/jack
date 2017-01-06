@@ -169,7 +169,7 @@ def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
     The function `deep_map` is recursively applied to the values of `xs`;
     the function `fun` takes a sequence as input, and is applied at the one but deepest level,
     where the entries are sequences of objects (no longer sequences of sequences).
-    This is the only difference with `deeo_map`
+    This is the only difference with `deep_map`
 
     Args:
       `xs`: a sequence (list/tuple) of objects or sequences of objects.
