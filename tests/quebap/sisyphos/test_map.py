@@ -46,3 +46,27 @@ def test_dynamic_subsample():
     assert data_ss['answers'] == [[1, 2], [3, 4]]
     assert list(data_ss['candidates'][0]) == [[1, 2], 49, 97]
     assert list(data_ss['candidates'][1]) == [[3, 4], 53, 5]
+
+
+def test_get_list_shape():
+    data = [[1, 2, 3], [4, 5]]
+    assert map.get_list_shape(data) == [2, 3]
+
+    data = [[[1, 2, 3]], [[4, 5], [6, 7]]]
+    assert map.get_list_shape(data) == [2, 2, 3]
+
+
+def test_get_seq_depth():
+    data = [[1, 2, 3], [4, 5]]
+    assert map.get_seq_depth(data) == [n - 1 for n in [2, 3]]
+
+    data = [[[1, 2, 3]], [[4, 5], [6, 7]]]
+    assert map.get_seq_depth(data) == [n - 1 for n in [2, 2, 3]]
+
+
+def test_get_entry_dims():
+    data = [[1, 2, 3], [4, 5], [6, 7, 8]]
+    assert map.get_entry_dims(data) == [1, 1, 1]
+
+    data = {2: 0, 3: 1, 4: 2}
+    assert map.get_entry_dims(data) == {2: 0, 3: 0, 4: 0}
