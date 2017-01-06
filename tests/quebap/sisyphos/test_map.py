@@ -36,3 +36,13 @@ def test_deep_map():
     a_dict_map = map.deep_map(a_dict, lambda x: '_{}'.format(x))
     assert a_dict_map == [{1: '_0', 2: '_1', 3: '_0'}, {4: '_1', 5: '_0', 6: '_1'}]
 
+
+def test_dynamic_subsample():
+    data = {
+        'answers': [[1, 2], [3, 4]],
+        'candidates': [range(0, 100), range(0, 100)]
+    }
+    data_ss = map.dynamic_subsample(xs=data, candidate_key='candidates', answer_key='answers', how_many=2, seed=0)
+    assert data_ss['answers'] == [[1, 2], [3, 4]]
+    assert list(data_ss['candidates'][0]) == [[1, 2], 49, 97]
+    assert list(data_ss['candidates'][1]) == [[3, 4], 53, 5]
