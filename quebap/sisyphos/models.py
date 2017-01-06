@@ -6,6 +6,7 @@ import numpy as np
 
 
 def get_total_trainable_variables():
+    """Calculates and returns the number of trainable parameters in the model."""
     total_parameters = 0
     for variable in tf.trainable_variables():
         shape = variable.get_shape()
@@ -16,6 +17,7 @@ def get_total_trainable_variables():
     return total_parameters
 
 def get_total_variables():
+    """Calculates and returns the number of parameters in the model (these can be fixed)."""
     total_parameters = 0
     for variable in tf.all_variables():
         shape = variable.get_shape()
@@ -27,6 +29,21 @@ def get_total_variables():
 
 
 def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop_keep_prob=1.0):
+    """Dynamic bi-LSTM reader; can be conditioned with initial state of other rnn.
+
+    Args:
+        inputs (tensor): The inputs into the bi-LSTM
+        lengths (tensor): The lengths of the sequences
+        output_size (int): Size of the LSTM state of the reader.
+        context (tensor=None, tensor=None): Tuple of initial (forward, backward) states
+                                  for the LSTM
+        scope (string): The TensorFlow scope for the reader.
+        drop_keep_drop (float=1.0): The keep propability for dropout.
+
+    Returns:
+        Outputs (tensor): The outputs from the bi-LSTM.
+        States (tensor): The cell states from the bi-LSTM.
+    """
     with tf.variable_scope(scope or "reader") as varscope:
         cell = tf.nn.rnn_cell.LSTMCell(
             output_size,
@@ -54,6 +71,23 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop
 
 
 def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0):
+    """Duo of bi-LSTMs over seq1 and seq2 where seq2 is conditioned on by the final state of seq1.
+
+    See also: conditional_reader_model: Instantiates either condition or
+    attentive reader with placeholders.
+    Args:
+        seq1 (tensor): The inputs into the first bi-LSTM.
+        seq1_lengths (tensor): The lengths of the sequences.
+        seq2 (tensor): The inputs into the second bi-LSTM.
+        seq1_lengths (tensor): The lengths of the sequences.
+        output_size (int): Size of the LSTMs state.
+        scope (string): The TensorFlow scope for the reader.
+        drop_keep_drop (float=1.0): The keep propability for dropout.
+
+    Returns:
+        Outputs (tensor): The outputs from the second bi-LSTM.
+        States (tensor): The cell states from the second bi-LSTM.
+    """
     with tf.variable_scope(scope or "conditional_reader_seq1") as varscope1:
         #seq1_states: (c_fw, h_fw), (c_bw, h_bw)
         _, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1, drop_keep_prob=drop_keep_prob)
@@ -64,6 +98,21 @@ def conditional_reader(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scop
 
 
 def bilstm_readers(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0):
+    """Duo of independent bi-LSTMs over seq1 and seq2.
+
+    Args:
+        seq1 (tensor): The inputs into the first bi-LSTM.
+        seq1_lengths (tensor): The lengths of the sequences.
+        seq2 (tensor): The inputs into the second bi-LSTM.
+        seq1_lengths (tensor): The lengths of the sequences.
+        output_size (int): Size of the LSTMs state.
+        scope (string): The TensorFlow scope for the reader.
+        drop_keep_drop (float=1.0): The keep propability for dropout.
+
+    Returns:
+        Outputs (tensor): The outputs from the second bi-LSTM.
+        States (tensor): The cell states from the second bi-LSTM.
+    """
     # same as conditional_reader, apart from that second lstm is initialised randomly
     with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope1:
         # seq1_states: (c_fw, h_fw), (c_bw, h_bw)
@@ -76,20 +125,46 @@ def bilstm_readers(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=No
 
 
 def bag_reader(inputs, lengths):
+    """Sums along the feature dimension of inputs. Returns sum per sample.
+
+    Args:
+        inputs (tensor): Input sequence.
+        lengths (tensor):  Variable lengths of the input sequence.
+    Returns:
+        output (tensor: Sum per sample.
+    """
         output=tf.reduce_sum(inputs,1,keep_dims=False)
         return output
-        
 
 def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
+    """Sums the feature dimension of two sequences and return its concatenation
+
+    Args:
+        seq1 (tensor): First input sequence.
+        seq1_lengths (tensor):  Variable lengths of the first input sequence.
+        seq2 (tensor): Second input sequence.
+        seq2_lengths (tensor):  Variable lengths of the second input sequence.
+    Returns:
+        output (tensor: Concatenation of the sums per sample for the sequences.
+    """
         output1 = bag_reader(seq1, seq1_lengths)
         output2 = bag_reader(seq2, seq2_lengths)
         # each [batch_size x max_seq_length x output_size]
         return tf.concat(1,[output1,output2])
 
 
-def predictor(output, targets, target_size):
+def predictor(inputs, targets, target_size):
+    """Projects inputs onto targets. Returns logits, loss, argmax.
+
+    Creates fully connected projection layer(logits). Then applys cross entropy
+    softmax to get the loss. Calculate predictions via argmax.
+    Args:
+        inputs (tensor): Input into the projection layer.
+        targets (tensor): Targets for the loss function.
+        target_size (int): Size of the targets (used in projection layer).
+    """
     init = tf.contrib.layers.xavier_initializer(uniform=True) #uniform=False for truncated normal
-    logits = tf.contrib.layers.fully_connected(output, target_size, weights_initializer=init, activation_fn=None)
+    logits = tf.contrib.layers.fully_connected(inputs, target_size, weights_initializer=init, activation_fn=None)
     #note: standard relu applied; switch off at last layer with activation_fn=None!
 
     loss = tf.reduce_mean(
@@ -99,7 +174,32 @@ def predictor(output, targets, target_size):
 
 
 def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
+    """Creates reader that is attentive (each step) or conditional (last step)
 
+    Reference: Teaching Machines to Read and Comprehend
+    Link: https://arxiv.org/pdf/1506.03340.pdf
+
+    Creates either a conditional reader (condition on last timestep only) or
+    attentive reader (condition on all timesteps).
+    The model consists of two bi-directional LSTM where the second LSTM
+    is conditioned by the last cell state (conditional) or by an attention
+    value from all past cell states.
+
+    Args:
+        output_size (int): Size of the two bi-LSTMs.
+        target_size (int): Size of the targets (number of labels).
+        nvocab (NeuralVocab): NeuralVocab class; maps word-ids to embeddings.
+        attentive (bool=False): To create the attentive reader or not.
+    Returns:
+        (logits (tensor), loss (tensor), predict (tensor): Triple of logits,
+        loss and predict (argmax) tensors,
+       {'sentence1': sentence1 (TensorFlow placeholder),
+        'sentence1_lengths': sentence1_lengths (tensor),
+        'sentence2': sentence2 (TensorFlow placeholder),
+        'sentence2_lengths': sentence2_lengths (tensor),
+        'targets': targets (tensor)}: Dictionary of placeholders to feed data
+        into.
+    """
     # Model
     # [batch_size, max_seq1_length]
     sentence1 = tf.placeholder(tf.int64, [None, None], "sentence1")
@@ -154,8 +254,36 @@ def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
             'targets': targets} #placeholders
 
 
+    See also: conditional_reader_model: Instantiates either condition or
+    attentive reader with placeholders.
 def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
                                  output_size, scope=None):
+    """Creates attentive reader where two bi-LSTMs attend to each others state.
+
+    Reference: Teaching Machines to Read and Comprehend
+    Link: https://arxiv.org/pdf/1506.03340.pdf
+
+    Creates an attentive reader which consists of two bi-directional LSTM
+    where the second LSTM is conditioned by an attention value from all
+    past cell states.
+
+    Args:
+        seq1 (tensor): Size of first input sequence.
+        seq1_lengths (tensor): Lengths of first input sequences.
+        seq2 (tensor): Size of second input sequence.
+        seq2_lengths (tensor): Lengths of second input sequences.
+        output_size (int): Hidden unit size of the two bi-LSTMs. 
+        scope (string): The TensorFlow scope for the reader.
+    Returns:
+        (logits (tensor), loss (tensor), predict (tensor): Triple of logits,
+        loss and predict (argmax) tensors,
+       {'sentence1': sentence1 (TensorFlow placeholder),
+        'sentence1_lengths': sentence1_lengths (tensor),
+        'sentence2': sentence2 (TensorFlow placeholder),
+        'sentence2_lengths': sentence2_lengths (tensor),
+        'targets': targets (tensor)}: Dictionary of placeholders to feed data
+        into.
+    """
     with tf.variable_scope(scope or "conditional_attentive_reader_seq1") as varscope1:
         #seq1_states: (c_fw, h_fw), (c_bw, h_bw)
         attention_states, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1)
