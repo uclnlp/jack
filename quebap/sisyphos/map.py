@@ -366,7 +366,7 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
     xs_np = {} if is_dict else [0] * len(xs)
     xs_iter = xs.items() if is_dict else enumerate(xs)
 
-    for key, x in xs_iter:
+    for i, (key, x) in enumerate(xs_iter):
         if keys is None or key in keys:
             shape = get_list_shape(x)
             if dtypes is None:
