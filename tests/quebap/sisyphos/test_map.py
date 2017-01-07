@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
 from quebap.sisyphos import map
 
 text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et ' \
@@ -72,5 +73,24 @@ def test_get_entry_dims():
     assert map.get_entry_dims(data) == {2: 0, 3: 1, 4: 0}
 
 
-def test_numpiify():
-    pass
+def test_numpify():
+    def _fillna(xs):
+        data = np.array(xs)
+        lens = np.array([len(i) for i in data])
+        mask = np.arange(lens.max()) < lens[:, None]
+        out = np.zeros(mask.shape, dtype=data.dtype)
+        out[mask] = np.concatenate(data)
+        return out
+
+    data = [[1, 2, 3], [4, 5], [6, 7, 8]]
+    data_np = map.numpify(data)
+
+    for a, b in zip([np.array(x) for x in data], data_np):
+        assert (a == b).all()
+
+    data = {0: [[1, 2, 3]], 1: [[4, 5], [6, 7, 8]], 2: [[6, 7, 8]]}
+    data_np = map.numpify(data)
+
+    for ak, bk in zip(data.keys(), data_np.keys()):
+        a, b = data[ak], data_np[bk]
+        assert (_fillna(a) == b).all()
