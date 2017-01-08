@@ -18,7 +18,7 @@ def get_buckets(data, order, structure, seed=SEED):
                   which need bucketing.
 TODO: update documentation with dicts...
             e.g. data = [array1, array2, array3, array4]
-                 and we want bucketting according to lengths of examples in array1 and array3
+                 and we want bucketing according to lengths of examples in array1 and array3
                  order = (0, 2) :  performs bucketing on array1, and within each bucket,
                                    again creates buckets according to array3
                                    (automatic bucketing will result in different array3 bucket boundaries
