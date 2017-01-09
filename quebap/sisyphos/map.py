@@ -18,6 +18,7 @@ import random
 
 
 def tokenize(xs, pattern="([\s'\-\.\,\!])"):
+    """Splits sentences into tokens by regex over punctuation: ( -.,!])["""
     return [x for x in re.split(pattern, xs)
             if not re.match("\s", x) and x != ""]
 
@@ -31,7 +32,21 @@ def lower(xs):
 
 
 def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
-    """Performs deep mapping of the input `xs` using function `fun`.
+    """Applies fun to a dict or list; adds the results in-place.
+
+    Usage: Transform a corpus iteratively by applying functions like
+    `tokenize`, `lower`, or vocabulary functions (word -> embedding id) to it.
+    ::
+      from quebap.sisyphos.vocab import Vocab
+      vocab = Vocab()
+      keys = ['question', 'support']
+      corpus = deep_map(corpus, lambda x: x.lower(), keys)
+      corpus = deep_map(corpus, tokenize, keys)
+      corpus = deep_map(corpus, vocab, keys)
+      corpus = deep_map(corpus, vocab._normalize, keys=keys)
+
+    From here we can create batches from the corpus and feed it into a model.
+
     In case `expand==False` each top-level entry of `xs` to be transformed
     replaces the original entry.
     `deep_map` supports `xs` to be a dictionary or a list/tuple:
@@ -159,7 +174,28 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
 
 
 def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
-    """Performs deep mapping of the input `xs` using function `fun`.
+    """Applies fun to list of or dict of lists; adds the results in-place.
+
+    Usage: Transform a corpus iteratively by applying functions like
+    `tokenize`, `lower`, or vocabulary functions (word -> embedding id) to it.
+
+    from quebap.sisyphos.vocab import Vocab
+    vocab = Vocab()
+    keys = ['question', 'support']
+
+    corpus = deep_map(corpus, lambda x: x.lower(), keys)
+    corpus = deep_map(corpus, tokenize, keys)
+    corpus = deep_map(corpus, vocab, keys)
+    corpus = deep_map(corpus, vocab._normalize, keys=keys)
+    -> through tokenize we go from a dict of sentences to
+       a dict of words (list of lists), thus we now apply deep_seq_map for
+       processing to add start of and end of sentence tags:
+    corpus = deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs +
+                                             ["<EOS>"],
+                                             ['question', 'support'])
+
+    -> From here we can create batches from the corpus and feed it into a model.
+
     In case `expand==False` each top-level entry of `xs` to be transformed
     replaces the original entry.
     `deep_map` supports `xs` to be a dictionary or a list/tuple:
@@ -248,8 +284,13 @@ def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
 
 
 def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, seed=None):
-    """
-    replace a list of lists with a list of dynamically subsampled lists. The dynamic list will
+    """Replaces candidates by a mix of answers and random candidates.
+
+    Creates negative samples by combining the true answers and some random
+    deletion of entries in the candidates. Then replaces the candidates
+    dictionary and returns it.
+
+    Replace a list of lists with a list of dynamically subsampled lists. The dynamic list will
     always contain the elements from the `answer_key` list, and a subsample of size `how_many` from
     the corresponding `candidate_key` list
     Args:
@@ -313,7 +354,7 @@ class DynamicSubsampledList:
         for _ in range(0, self.how_many):
             result.append(self.random.choice(self.to_sample_from))#todo check we are adding negative examples?
         return result.__iter__()
-    
+
     def __len__(self):
         return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
 
@@ -362,6 +403,7 @@ def get_entry_dims(corpus):
 
 
 def numpify(xs, pad=0, keys=None, dtypes=None):
+    """Converts a dict or list of Python data into a dict of numpy arrays."""
     is_dict = isinstance(xs, dict)
     xs_np = {} if is_dict else [0] * len(xs)
     xs_iter = xs.items() if is_dict else enumerate(xs)

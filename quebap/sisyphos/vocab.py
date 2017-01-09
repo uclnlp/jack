@@ -163,7 +163,7 @@ class Vocab(object):
         - additional calls to the __call__ method will return the id for the unknown symbold
         - out-of-vocab id's are positive integers and do not change
         - id's of symbols with pre-trained embeddings are converted to positive integer id's,
-        counting up from the all out-of-vocab id's.
+          counting up from the all out-of-vocab id's.
         """
         if not self.frozen and self.next_neg < -1: #if any pretrained have been encountered
             sym2id = {sym: self._normalize(id) for sym,id in self.sym2id.items()}
@@ -190,11 +190,13 @@ class Vocab(object):
     def get_id(self, sym):
         """
         Returns the id of `sym`; different behavior depending on the state of the Vocab:
-        - In case self.frozen==False (default):
-          returns internal id (positive for out-of-vocab symbol, negative for symbol found in `self.emb`).
-          If `sym` is a new symbol, it is added to the Vocab.
-        - In case self.frozen==True (after explicit call to 'freeze()', or after building a `NeuralVocab' with it):
-          returns normalized id (positive integer, also for symbols with pre-trained embedding)
+
+        - In case self.frozen==False (default): returns internal id,
+          that is, positive for out-of-vocab symbol, negative for symbol
+          found in `self.emb`. If `sym` is a new symbol, it is added to the Vocab.
+
+        - In case self.frozen==True (after explicit call to 'freeze()', or after building a `NeuralVocab` with it):
+          Returns normalized id (positive integer, also for symbols with pre-trained embedding)
           If `sym` is a new symbol, the id for unknown terms is returned, if available,
           and otherwise `None` (only possible when input argument `unk` for `Vocab.__init__()` was set to `None`, e.g. ;
           for classification labels; it is assumed action is taken in the pipeline

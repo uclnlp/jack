@@ -1,0 +1,1385 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>quebap.sisyphos package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="quebap.sisyphos.examples package" href="quebap.sisyphos.examples.html" />
+    <link rel="prev" title="quebap.projects.storycloze package" href="quebap.projects.storycloze.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quebap-sisyphos-package">
+<h1>quebap.sisyphos package<a class="headerlink" href="#quebap-sisyphos-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quebap.sisyphos.examples.html">quebap.sisyphos.examples package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quebap.sisyphos.examples.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.sisyphos.examples.html#module-quebap.sisyphos.examples.scratch">quebap.sisyphos.examples.scratch module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.sisyphos.examples.html#module-quebap.sisyphos.examples">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.sisyphos.batch">
+<span id="quebap-sisyphos-batch-module"></span><h2>quebap.sisyphos.batch module<a class="headerlink" href="#module-quebap.sisyphos.batch" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.sisyphos.batch.GeneratorWithRestart">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.batch.</code><code class="descname">GeneratorWithRestart</code><span class="sig-paren">(</span><em>iterator</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.batch.GeneratorWithRestart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.batch.get_batches">
+<code class="descclassname">quebap.sisyphos.batch.</code><code class="descname">get_batches</code><span class="sig-paren">(</span><em>data</em>, <em>batch_size=32</em>, <em>pad=0</em>, <em>bucket_order=None</em>, <em>bucket_structure=None</em>, <em>batch_size_fixed=False</em>, <em>seed=1337</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.batch.get_batches" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; either a list of numpy arrays (or list of lists), or a dict with numpy arrays or lists</li>
+<li><strong>batch_size</strong> &#8211; the desired batch size</li>
+<li><strong>seed</strong> &#8211; random seed for shuffling</li>
+<li><strong>pad</strong> &#8211; padding symbol in case data is list of lists of different sizes</li>
+<li><strong>bucket_order</strong> &#8211; argument <cite>order</cite> in get_buckets (list with indices or keys); <cite>None</cite> if no bucketing</li>
+<li><strong>bucket_structure</strong> &#8211; argument <cite>structure</cite> in get_buckets; <cite>None</cite> if no bucketing</li>
+<li><strong>batch_size_fixed</strong> &#8211; if set to True, final batch (per bucket) will be ignored if &lt; batch_size</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">returns a generator that generates: list or dict of [batch_size x _] 2D numpy tensors</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.batch.get_buckets">
+<code class="descclassname">quebap.sisyphos.batch.</code><code class="descname">get_buckets</code><span class="sig-paren">(</span><em>data</em>, <em>order</em>, <em>structure</em>, <em>seed=1337</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.batch.get_buckets" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param data:</th><td class="field-body">sequence or dict of sequences in which entries of the inner sequence have the __len__ attribute</td>
+</tr>
+<tr class="field-even field"><th class="field-name">param order:</th><td class="field-body">tuple with highest-level indices (in case data is list) or keys (if data is dict) in data,
+which need bucketing.</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<dl class="docutils">
+<dt>TODO: update documentation with dicts...</dt>
+<dd><blockquote class="first">
+<div><dl class="docutils">
+<dt>e.g. data = [array1, array2, array3, array4]</dt>
+<dd><p class="first">and we want bucketting according to lengths of examples in array1 and array3
+order = (0, 2) :  performs bucketing on array1, and within each bucket,</p>
+<blockquote class="last">
+<div><blockquote>
+<div>again creates buckets according to array3
+(automatic bucketing will result in different array3 bucket boundaries
+within each bucket according to array1).
+Other indices (1 and 3) are ignored for bucketing.</div></blockquote>
+<p>(2, 0) :  vice versa, starting with array3 for the highest-level buckets</p>
+</div></blockquote>
+</dd>
+</dl>
+</div></blockquote>
+<table class="last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">param structure:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><p class="first">tuple with same length as <cite>order</cite>, each element is an integer or a list of integers
+For each position:</p>
+<blockquote>
+<div><ul class="simple">
+<li>integer: denotes number of buckets, to be determined automatically</li>
+<li>list: determines bucket boundaries. E.g.: [10, 20, 30] will result in 4 buckets
+(1) lengths 0-10, (2) lengths 11-20, (3) lengths 21-30, (4) lengths &gt; 30
+e.g.: <cite>order</cite> = (0, 2) and <cite>structure</cite> = (3, [10]) generates 6 buckets:
+within each of 3 partition based on array1 lengths,
+there is a bucket with array2 instances of length 10 or less, and one for length &gt; 10.</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">param seed:</th><td class="field-body"><p class="first">random seed</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">return:</th><td class="field-body"><p class="first last">dict that maps instance-id (index along 1st dimension of elements in data) to bucket-id
+bucket-id&#8217;s are tuples with same length as <cite>order</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.batch.get_feed_dicts">
+<code class="descclassname">quebap.sisyphos.batch.</code><code class="descname">get_feed_dicts</code><span class="sig-paren">(</span><em>data</em>, <em>placeholders</em>, <em>batch_size=32</em>, <em>pad=0</em>, <em>bucket_order=None</em>, <em>bucket_structure=None</em>, <em>batch_size_fixed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.batch.get_feed_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates feed dicts for all batches with a given batch size.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>list</em><em> or </em><em>dict</em>) &#8211; The input data for the feed dicts.</li>
+<li><strong>placeholders</strong> (<em>list</em><em> or </em><em>dict</em>) &#8211; The TensorFlow placeholders for the data.</li>
+<li><strong>batch_size</strong> (<em>int</em>) &#8211; The batch size for the data.</li>
+<li><strong>pad</strong> (<em>int</em>) &#8211; Padding symbol index to pad lists of different sizes.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Generator that yields a feed_dict for each
+iteration. A feed dict consists of { name : tensor } key-value pairs.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#quebap.sisyphos.batch.GeneratorWithRestart" title="quebap.sisyphos.batch.GeneratorWithRestart">GeneratorWithRestart</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.hooks">
+<span id="quebap-sisyphos-hooks-module"></span><h2>quebap.sisyphos.hooks module<a class="headerlink" href="#module-quebap.sisyphos.hooks" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.AccuracyHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">AccuracyHook</code><span class="sig-paren">(</span><em>batches</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.AccuracyHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.ETAHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">ETAHook</code><span class="sig-paren">(</span><em>iter_interval</em>, <em>max_epochs</em>, <em>iter_per_epoch</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.ETAHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
+<p>Estimates ETA from max_iter vs current_iter.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.EvalHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">EvalHook</code><span class="sig-paren">(</span><em>batches</em>, <em>logits</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>metrics=[]</em>, <em>summary_writer=None</em>, <em>print_details=False</em>, <em>print_to=''</em>, <em>info=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.EvalHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
+<p>Hook which applies various metrics, such as recall, precision, F1.</p>
+<p>To be used during training on dev-data, and after training on test-data.</p>
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.EvalHook.at_epoch_end">
+<code class="descname">at_epoch_end</code><span class="sig-paren">(</span><em>sess</em>, <em>epoch</em>, <em>model</em>, <em>loss</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.EvalHook.at_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.EvalHook.at_iteration_end">
+<code class="descname">at_iteration_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.EvalHook.at_iteration_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.ExamplesPerSecHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">ExamplesPerSecHook</code><span class="sig-paren">(</span><em>iter_interval</em>, <em>batch_size</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.ExamplesPerSecHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
+<p>Prints the examples per sec and adds it to the summary writer.</p>
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.ExamplesPerSecHook.at_epoch_end">
+<code class="descname">at_epoch_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.ExamplesPerSecHook.at_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.ExamplesPerSecHook.at_iteration_end">
+<code class="descname">at_iteration_end</code><span class="sig-paren">(</span><em>sess</em>, <em>epoch</em>, <em>model</em>, <em>loss</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.ExamplesPerSecHook.at_iteration_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.Hook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">Hook</code><a class="headerlink" href="#quebap.sisyphos.hooks.Hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Serves as Hook interface.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.LoadModelHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">LoadModelHook</code><span class="sig-paren">(</span><em>path</em>, <em>at_epoch</em>, <em>at_every_epoch=0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.LoadModelHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.Hook" title="quebap.sisyphos.hooks.Hook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.Hook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.LossHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">LossHook</code><span class="sig-paren">(</span><em>iter_interval</em>, <em>batch_size</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.LossHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
+<p>A hook at prints the current loss and adds it to the summary.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.PRF1Hook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">PRF1Hook</code><span class="sig-paren">(</span><em>batcher</em>, <em>placeholders</em>, <em>at_every_epoch</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.PRF1Hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.Hook" title="quebap.sisyphos.hooks.Hook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.Hook</span></code></a></p>
+<p>Evaluate and print per-class and average precision, recall, F1.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.SaveModelHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">SaveModelHook</code><span class="sig-paren">(</span><em>path</em>, <em>at_epoch</em>, <em>at_every_epoch=0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.SaveModelHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.Hook" title="quebap.sisyphos.hooks.Hook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.Hook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.TensorHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">TensorHook</code><span class="sig-paren">(</span><em>iter_interval, tensorlist, feed_dicts=None, summary_writer=None, modes=['mean_abs']</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.TensorHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.hooks.TraceHook">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">TraceHook</code><span class="sig-paren">(</span><em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.TraceHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Abstract hook class, which implements an update function the summary.</p>
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.TraceHook.at_epoch_end">
+<code class="descname">at_epoch_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.TraceHook.at_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.TraceHook.at_iteration_end">
+<code class="descname">at_iteration_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.TraceHook.at_iteration_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.hooks.TraceHook.update_summary">
+<code class="descname">update_summary</code><span class="sig-paren">(</span><em>sess</em>, <em>current_step</em>, <em>title</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.TraceHook.update_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds summary (title, value) to summary writer object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sess</strong> (<em>TensorFlow session</em>) &#8211; The TensorFlow session object.</li>
+<li><strong>current_step</strong> (<em>int</em>) &#8211; Current step in the training procedure.</li>
+<li><strong>title</strong> (<em>string</em>) &#8211; The title of the summary.</li>
+<li><strong></strong><strong>(</strong><strong>float Scalar value for the message.</strong> (<em>value</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.map">
+<span id="quebap-sisyphos-map-module"></span><h2>quebap.sisyphos.map module<a class="headerlink" href="#module-quebap.sisyphos.map" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.sisyphos.map.DynamicSubsampledList">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.map.</code><code class="descname">DynamicSubsampledList</code><span class="sig-paren">(</span><em>always_in</em>, <em>to_sample_from</em>, <em>how_many</em>, <em>rand</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.DynamicSubsampledList" title="Permalink to this definition">¶</a></dt>
+<dd><p>A container that produces different list subsamples on every call to <cite>__iter__</cite>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dlist</span> <span class="o">=</span> <span class="n">DynamicSubsampledList</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">),</span><span class="mi">2</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">dlist</span><span class="p">]))</span>
+<span class="go">1 2 49 97</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">dlist</span><span class="p">]))</span>
+<span class="go">1 2 53 5</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.deep_map">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">deep_map</code><span class="sig-paren">(</span><em>xs</em>, <em>fun</em>, <em>keys=None</em>, <em>fun_name='trf'</em>, <em>expand=False</em>, <em>cache_fun=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.deep_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies fun to a dict or list; adds the results in-place.</p>
+<p>Usage: Transform a corpus iteratively by applying functions like
+<cite>tokenize</cite>, <cite>lower</cite>, or vocabulary functions (word -&gt; embedding id) to it.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">quebap.sisyphos.vocab</span> <span class="k">import</span> <span class="n">Vocab</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="n">Vocab</span><span class="p">()</span>
+<span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;question&#39;</span><span class="p">,</span> <span class="s1">&#39;support&#39;</span><span class="p">]</span>
+<span class="n">corpus</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">keys</span><span class="p">)</span>
+<span class="n">corpus</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">tokenize</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+<span class="n">corpus</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+<span class="n">corpus</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">vocab</span><span class="o">.</span><span class="n">_normalize</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From here we can create batches from the corpus and feed it into a model.</p>
+<p>In case <cite>expand==False</cite> each top-level entry of <cite>xs</cite> to be transformed
+replaces the original entry.
+<cite>deep_map</cite> supports <cite>xs</cite> to be a dictionary or a list/tuple:</p>
+<blockquote>
+<div><ul class="simple">
+<li>In case <cite>xs</cite> is a dictionary, its transformed value is also a dictionary, and <cite>keys</cite> contains the keys of the</li>
+</ul>
+<p>values to be transformed.
+- In case <cite>xs</cite> is a list/tuple, <cite>keys</cite> contains the indices of the entries to be transformed</p>
+</div></blockquote>
+<p>The function <cite>deep_map</cite> is recursively applied to the values of <cite>xs</cite>,
+only at the deepest level, where the entries are no longer sequences/dicts, after which <cite>fun</cite> is applied.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xs</strong> &#8211; a sequence (list/tuple) of objects or sequences of objects.</li>
+<li><strong>fun</strong> &#8211; a function to transform objects</li>
+<li><strong>keys</strong> &#8211; seq with keys if <cite>xs</cite> is dict; seq with integer indices if <cite>xs</cite> is seq.
+For entries not in <cite>keys</cite>, the original <cite>xs</cite> value is retained.</li>
+<li><strong>fun_name</strong> &#8211; default value &#8216;trf&#8217;; string with function tag (e.g. &#8216;lengths&#8217;),
+used if &#8216;&#8217;&#8216;expand==True&#8217;&#8216;&#8217; and &#8216;&#8217;&#8216;isinstance(xs,dict)&#8217;&#8216;&#8217;
+Say for example fun_name=&#8217;lengths&#8217;, and <cite>keys</cite> contains &#8216;sentence&#8217;, then the transformed dict would look like
+&#8216;&#8217;&#8216;{&#8216;sentence&#8217;:[sentences], &#8216;sentence_lengths&#8217;:[fun(sentences)] ...}&#8217;&#8216;&#8217;</li>
+<li><strong>cache_fun</strong> &#8211; should the function values for seen inputs be cached. Use with care, as it will affect functions with side effects.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Transformed sequence or dictionary.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<p>(1) Test with sequence of stuff
+&gt;&gt;&gt; dave = [
+...         &#8220;All work and no play makes Jack a dull boy&#8221;,
+...         &#8220;All work and no play makes Jack a dull boy.&#8221;,
+...         &#8220;All work and no play makes Jack a very dull boy!&#8221;]
+&gt;&gt;&gt; jack = [
+...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that!&#8221;,
+...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that&#8221;,
+...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I cannot do that&#8221;]
+&gt;&gt;&gt; support = [
+...         [&#8220;Play makes really dull&#8221;, &#8220;really dull&#8221;],
+...         [&#8220;Dave is human&#8221;],
+...         [&#8220;All work&#8221;, &#8220;all dull&#8221;, &#8220;dull&#8221;]]
+&gt;&gt;&gt; data1 = [dave, jack, support]
+&gt;&gt;&gt; vocab1 = Vocab()
+&gt;&gt;&gt; data1_lower = deep_map(data1, lambda s:s.lower())
+&gt;&gt;&gt; data1_tokenized = deep_map(data1_lower, tokenize)
+&gt;&gt;&gt; data1_ids = deep_map(data1_tokenized, vocab1)
+&gt;&gt;&gt; pprint.pprint(data1_ids)
+[[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</p>
+<blockquote>
+<div><blockquote>
+<div>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+[1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</div></blockquote>
+<dl class="docutils">
+<dt>[[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</dt>
+<dd>[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
+[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</dd>
+</dl>
+<p>[[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]]]</p>
+</div></blockquote>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data1_ids_with_lengths</span> <span class="o">=</span> <span class="n">deep_seq_map</span><span class="p">(</span><span class="n">data1_ids</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">xs</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span>
+<span class="gp">... </span>                                      <span class="n">fun_name</span><span class="o">=</span><span class="s1">&#39;lengths&#39;</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data1_ids_with_lengths</span><span class="p">)</span>
+<span class="go">[[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</span>
+<span class="go">  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],</span>
+<span class="go">  [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</span>
+<span class="go"> [10, 11, 12],</span>
+<span class="go"> [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</span>
+<span class="go">  [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],</span>
+<span class="go">  [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</span>
+<span class="go"> [17, 16, 14],</span>
+<span class="go"> [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],</span>
+<span class="go"> [[4, 2], [3], [2, 2, 1]]]</span>
+</pre></div>
+</div>
+<p>(2) Test with data dictionary
+&gt;&gt;&gt; data2 = {&#8216;dave&#8217;: dave, &#8216;jack&#8217;: jack, &#8216;support&#8217;: support}
+&gt;&gt;&gt; pprint.pprint(data2)
+{&#8216;dave&#8217;: [&#8216;All work and no play makes Jack a dull boy&#8217;,</p>
+<blockquote>
+<div><blockquote>
+<div>&#8216;All work and no play makes Jack a dull boy.&#8217;,
+&#8216;All work and no play makes Jack a very dull boy!&#8217;],</div></blockquote>
+<dl class="docutils">
+<dt>&#8216;jack&#8217;: [&#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that!&#8221;,</dt>
+<dd>&#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that&#8221;,
+&#8220;I&#8217;m sorry Dave, I&#8217;m afraid I cannot do that&#8221;],</dd>
+<dt>&#8216;support&#8217;: [[&#8216;Play makes really dull&#8217;, &#8216;really dull&#8217;],</dt>
+<dd>[&#8216;Dave is human&#8217;],
+[&#8216;All work&#8217;, &#8216;all dull&#8217;, &#8216;dull&#8217;]]}</dd>
+</dl>
+</div></blockquote>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data2_tokenized</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">tokenize</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data2_tokenized</span><span class="p">[</span><span class="s1">&#39;support&#39;</span><span class="p">])</span>
+<span class="go">[[[&#39;Play&#39;, &#39;makes&#39;, &#39;really&#39;, &#39;dull&#39;], [&#39;really&#39;, &#39;dull&#39;]],</span>
+<span class="go"> [[&#39;Dave&#39;, &#39;is&#39;, &#39;human&#39;]],</span>
+<span class="go"> [[&#39;All&#39;, &#39;work&#39;], [&#39;all&#39;, &#39;dull&#39;], [&#39;dull&#39;]]]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.deep_seq_map">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">deep_seq_map</code><span class="sig-paren">(</span><em>xss</em>, <em>fun</em>, <em>keys=None</em>, <em>fun_name=None</em>, <em>expand=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.deep_seq_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies fun to list of or dict of lists; adds the results in-place.</p>
+<p>Usage: Transform a corpus iteratively by applying functions like
+<cite>tokenize</cite>, <cite>lower</cite>, or vocabulary functions (word -&gt; embedding id) to it.</p>
+<p>from quebap.sisyphos.vocab import Vocab
+vocab = Vocab()
+keys = [&#8216;question&#8217;, &#8216;support&#8217;]</p>
+<p>corpus = deep_map(corpus, lambda x: x.lower(), keys)
+corpus = deep_map(corpus, tokenize, keys)
+corpus = deep_map(corpus, vocab, keys)
+corpus = deep_map(corpus, vocab._normalize, keys=keys)
+-&gt; through tokenize we go from a dict of sentences to</p>
+<blockquote>
+<div>a dict of words (list of lists), thus we now apply deep_seq_map for
+processing to add start of and end of sentence tags:</div></blockquote>
+<dl class="docutils">
+<dt>corpus = deep_seq_map(corpus, lambda xs: [&#8220;&lt;SOS&gt;&#8221;] + xs +</dt>
+<dd>[&#8220;&lt;EOS&gt;&#8221;],
+[&#8216;question&#8217;, &#8216;support&#8217;])</dd>
+</dl>
+<p>-&gt; From here we can create batches from the corpus and feed it into a model.</p>
+<p>In case <cite>expand==False</cite> each top-level entry of <cite>xs</cite> to be transformed
+replaces the original entry.
+<cite>deep_map</cite> supports <cite>xs</cite> to be a dictionary or a list/tuple:</p>
+<blockquote>
+<div><ul class="simple">
+<li>In case <cite>xs</cite> is a dictionary, its transformed value is also a dictionary, and <cite>keys</cite> contains the keys of the</li>
+</ul>
+<p>values to be transformed.
+- In case <cite>xs</cite> is a list/tuple, <cite>keys</cite> contains the indices of the entries to be transformed</p>
+</div></blockquote>
+<p>The function <cite>deep_map</cite> is recursively applied to the values of <cite>xs</cite>;
+the function <cite>fun</cite> takes a sequence as input, and is applied at the one but deepest level,
+where the entries are sequences of objects (no longer sequences of sequences).
+This is the only difference with <cite>deeo_map</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xs</strong> &#8211; a sequence (list/tuple) of objects or sequences of objects.</li>
+<li><strong>fun</strong> &#8211; a function to transform sequences</li>
+<li><strong>keys</strong> &#8211; seq with keys if <cite>xs</cite> is dict; seq with integer indices if <cite>xs</cite> is seq.
+For entries not in <cite>keys</cite>, the original <cite>xs</cite> value is retained.</li>
+<li><strong>fun_name</strong> &#8211; default value &#8216;trf&#8217;; string with function tag (e.g. &#8216;lengths&#8217;),
+used if &#8216;&#8217;&#8216;expand==True&#8217;&#8216;&#8217; and &#8216;&#8217;&#8216;isinstance(xs,dict)&#8217;&#8216;&#8217;
+Say for example fun_name=&#8217;count&#8217;, and <cite>keys</cite> contains &#8216;sentence&#8217;, then the transformed dict would look like
+&#8216;&#8217;&#8216;{&#8216;sentence&#8217;:[sentences], &#8216;sentence_lengths&#8217;:[fun(sentences)] ...}&#8217;&#8216;&#8217;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Transformed sequence or dictionary.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Example:
+&gt;&gt;&gt; dave = [
+...         &#8220;All work and no play makes Jack a dull boy&#8221;,
+...         &#8220;All work and no play makes Jack a dull boy.&#8221;,
+...         &#8220;All work and no play makes Jack a very dull boy!&#8221;]
+&gt;&gt;&gt; jack = [
+...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that!&#8221;,
+...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that&#8221;,
+...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I cannot do that&#8221;]
+&gt;&gt;&gt; support = [
+...         [&#8220;Play makes really dull&#8221;, &#8220;really dull&#8221;],
+...         [&#8220;Dave is human&#8221;],
+...         [&#8220;All work&#8221;, &#8220;all dull&#8221;, &#8220;dull&#8221;]]
+&gt;&gt;&gt; data2 = {&#8216;dave&#8217;: dave, &#8216;jack&#8217;: jack, &#8216;support&#8217;: support}
+&gt;&gt;&gt; vocab2 = Vocab()
+&gt;&gt;&gt; data2_processed = deep_map(data2, lambda x: tokenize(x.lower()))
+&gt;&gt;&gt; data2_ids = deep_map(data2_processed, vocab2)
+&gt;&gt;&gt; data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=[&#8216;dave&#8217;,&#8217;jack&#8217;,&#8217;support&#8217;],
+...                                       fun_name=&#8217;lengths&#8217;, expand=True)
+&gt;&gt;&gt; pprint.pprint(data2_ids_with_lengths)
+{&#8216;dave&#8217;: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</p>
+<blockquote>
+<div><blockquote>
+<div>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+[1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</div></blockquote>
+<p>&#8216;dave_lengths&#8217;: [10, 11, 12],
+&#8216;jack&#8217;: [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</p>
+<blockquote>
+<div>[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
+[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</div></blockquote>
+<p>&#8216;jack_lengths&#8217;: [17, 16, 14],
+&#8216;support&#8217;: [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],
+&#8216;support_lengths&#8217;: [[4, 2], [3], [2, 2, 1]]}</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.dynamic_subsample">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">dynamic_subsample</code><span class="sig-paren">(</span><em>xs</em>, <em>candidate_key</em>, <em>answer_key</em>, <em>how_many=1</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.dynamic_subsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replaces candidates by a mix of answers and random candidates.</p>
+<p>Creates negative samples by combining the true answers and some random
+deletion of entries in the candidates. Then replaces the candidates
+dictionary and returns it.</p>
+<p>Replace a list of lists with a list of dynamically subsampled lists. The dynamic list will
+always contain the elements from the <cite>answer_key</cite> list, and a subsample of size <cite>how_many</cite> from
+the corresponding <cite>candidate_key</cite> list
+:param xs: a dictionary of keys to lists
+:param candidate_key: the key of the candidate list
+:param answer_key: the key of the answer list
+:param how_many: how many samples from the candidate list should we take
+:param seed: a random seed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a new dictionary identical to <cite>xs</cite> for all but the <cite>candidate_key</cite>. For that key the value
+is a list of <cite>DynamicSubsampledList</cite> objects.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;answers&#39;</span><span class="p">:[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">]],</span> <span class="s1">&#39;candidates&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">dynamic_subsample</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;candidates&#39;</span><span class="p">,</span> <span class="s1">&#39;answers&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">elems</span><span class="p">])</span> <span class="k">for</span> <span class="n">elems</span> <span class="ow">in</span> <span class="n">processed</span><span class="p">[</span><span class="s1">&#39;candidates&#39;</span><span class="p">]])</span>
+<span class="go">&#39;1 2 49 97 | 3 4 53 5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">elems</span><span class="p">])</span> <span class="k">for</span> <span class="n">elems</span> <span class="ow">in</span> <span class="n">processed</span><span class="p">[</span><span class="s1">&#39;candidates&#39;</span><span class="p">]])</span>
+<span class="go">&#39;1 2 33 65 | 3 4 62 51&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">elems</span><span class="p">])</span> <span class="k">for</span> <span class="n">elems</span> <span class="ow">in</span> <span class="n">processed</span><span class="p">[</span><span class="s1">&#39;answers&#39;</span><span class="p">]])</span>
+<span class="go">&#39;1 2 | 3 4&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.get_entry_dims">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">get_entry_dims</code><span class="sig-paren">(</span><em>corpus</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.get_entry_dims" title="Permalink to this definition">¶</a></dt>
+<dd><p>get number of dimensions for each entry; needed for placeholder generation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.get_list_shape">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">get_list_shape</code><span class="sig-paren">(</span><em>xs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.get_list_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.get_seq_depth">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">get_seq_depth</code><span class="sig-paren">(</span><em>xs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.get_seq_depth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.lower">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">lower</code><span class="sig-paren">(</span><em>xs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns lowercase for sequence of strings</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.numpify">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">numpify</code><span class="sig-paren">(</span><em>xs</em>, <em>pad=0</em>, <em>keys=None</em>, <em>dtypes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.numpify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a dict or list of Python data into a dict of numpy arrays.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.map.tokenize">
+<code class="descclassname">quebap.sisyphos.map.</code><code class="descname">tokenize</code><span class="sig-paren">(</span><em>xs</em>, <em>pattern=&quot;([\\s'\\-\\.\\</em>, <em>\\!])&quot;</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.map.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits sentences into tokens by regex over punctuation: ( -.,!])[</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.models">
+<span id="quebap-sisyphos-models-module"></span><h2>quebap.sisyphos.models module<a class="headerlink" href="#module-quebap.sisyphos.models" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.sisyphos.models.bag_reader">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">bag_reader</code><span class="sig-paren">(</span><em>inputs</em>, <em>lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.bag_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sums along the feature dimension of inputs. Returns sum per sample.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tensor</em>) &#8211; Input sequence.</li>
+<li><strong>lengths</strong> (<em>tensor</em>) &#8211; Variable lengths of the input sequence.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Sum per sample.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">output (tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.bilstm_readers">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">bilstm_readers</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em>, <em>output_size</em>, <em>scope=None</em>, <em>drop_keep_prob=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.bilstm_readers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duo of independent bi-LSTMs over seq1 and seq2.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>seq1</strong> (<em>tensor</em>) &#8211; The inputs into the first bi-LSTM.</li>
+<li><strong>seq1_lengths</strong> (<em>tensor</em>) &#8211; The lengths of the sequences.</li>
+<li><strong>seq2</strong> (<em>tensor</em>) &#8211; The inputs into the second bi-LSTM.</li>
+<li><strong>seq1_lengths</strong> &#8211; The lengths of the sequences.</li>
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Size of the LSTMs state.</li>
+<li><strong>scope</strong> (<em>string</em>) &#8211; The TensorFlow scope for the reader.</li>
+<li><strong>drop_keep_drop</strong> (<em>float=1.0</em>) &#8211; The keep probability for dropout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The outputs from the second bi-LSTM.
+States (tensor): The cell states from the second bi-LSTM.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Outputs (tensor)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.boe_reader">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">boe_reader</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.boe_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sums the feature dimension of two sequences and return its concatenation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>seq1</strong> (<em>tensor</em>) &#8211; First input sequence.</li>
+<li><strong>seq1_lengths</strong> (<em>tensor</em>) &#8211; Variable lengths of the first input sequence.</li>
+<li><strong>seq2</strong> (<em>tensor</em>) &#8211; Second input sequence.</li>
+<li><strong>seq2_lengths</strong> (<em>tensor</em>) &#8211; Variable lengths of the second input sequence.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Concatenation of the sums per sample for the sequences.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">output (tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.conditional_attentive_reader">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">conditional_attentive_reader</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em>, <em>output_size</em>, <em>scope=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.conditional_attentive_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates attentive reader where two bi-LSTMs attend to each others state.</p>
+<p>Reference: Teaching Machines to Read and Comprehend
+Link: <a class="reference external" href="https://arxiv.org/pdf/1506.03340.pdf">https://arxiv.org/pdf/1506.03340.pdf</a></p>
+<p>Creates an attentive reader which consists of two bi-directional LSTM
+where the second LSTM is conditioned by an attention value from all
+past cell states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>`seq1</strong> &#8211; <p>Size of first input sequence.</p>
+</li>
+<li><strong>`seq1_lengths</strong> &#8211; <p>Lengths of first input sequences.</p>
+</li>
+<li><strong>seq2</strong> (<em>tensor</em>) &#8211; Size of second input sequence.</li>
+<li><strong>seq2_lengths</strong> (<em>tensor</em>) &#8211; Lengths of second input sequences.</li>
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Hidden unit size of the two bi-LSTMs.</li>
+<li><strong>scope</strong> (<em>string</em>) &#8211; The TensorFlow scope for the reader.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Triple of logits,
+loss and predict (argmax) tensors,</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><p>(logits (tensor), loss (tensor), predict (tensor)</p>
+<dl class="docutils">
+<dt>{&#8216;sentence1&#8217;: sentence1 (TensorFlow placeholder),</dt>
+<dd><p class="first last">&#8216;sentence1_lengths&#8217;: sentence1_lengths (tensor),
+&#8216;sentence2&#8217;: sentence2 (TensorFlow placeholder),
+&#8216;sentence2_lengths&#8217;: sentence2_lengths (tensor),
+&#8216;targets&#8217;: targets (tensor)}: Dictionary of placeholders to feed data
+into.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.conditional_reader">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">conditional_reader</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em>, <em>output_size</em>, <em>scope=None</em>, <em>drop_keep_prob=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.conditional_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duo of bi-LSTMs over seq1 and seq2 where seq2 is conditioned on by the final state of seq1.</p>
+<p>See also: conditional_reader_model: Instantiates either condition or
+attentive reader with placeholders.
+:param seq1: The inputs into the first bi-LSTM.
+:type seq1: tensor
+:param seq1_lengths: The lengths of the sequences.
+:type seq1_lengths: tensor
+:param seq2: The inputs into the second bi-LSTM.
+:type seq2: tensor
+:param seq1_lengths: The lengths of the sequences.
+:type seq1_lengths: tensor
+:param output_size: Size of the LSTMs state.
+:type output_size: int
+:param scope: The TensorFlow scope for the reader.
+:type scope: string
+:param drop_keep_drop: The keep propability for dropout.
+:type drop_keep_drop: float=1.0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The outputs from the second bi-LSTM.
+States (tensor): The cell states from the second bi-LSTM.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Outputs (tensor)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.conditional_reader_model">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">conditional_reader_model</code><span class="sig-paren">(</span><em>output_size</em>, <em>target_size</em>, <em>nvocab</em>, <em>attentive=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.conditional_reader_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates reader that is attentive (each step) or conditional (last step)</p>
+<p>Reference: Teaching Machines to Read and Comprehend
+Link: <a class="reference external" href="https://arxiv.org/pdf/1506.03340.pdf">https://arxiv.org/pdf/1506.03340.pdf</a></p>
+<p>Creates either a conditional reader (condition on last timestep only) or
+attentive reader (condition on all timesteps).
+The model consists of two bi-directional LSTM where the second LSTM
+is conditioned by the last cell state (conditional) or by an attention
+value from all past cell states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Size of the two bi-LSTMs.</li>
+<li><strong>target_size</strong> (<em>int</em>) &#8211; Size of the targets (number of labels).</li>
+<li><strong>nvocab</strong> (<a class="reference internal" href="#quebap.sisyphos.vocab.NeuralVocab" title="quebap.sisyphos.vocab.NeuralVocab"><em>NeuralVocab</em></a>) &#8211; NeuralVocab class; maps word-ids to embeddings.</li>
+<li><strong>attentive</strong> (<em>bool=False</em>) &#8211; To create the attentive reader or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Triple of logits,
+loss and predict (argmax) tensors,</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><p>(logits (tensor), loss (tensor), predict (tensor)</p>
+<dl class="docutils">
+<dt>{&#8216;sentence1&#8217;: sentence1 (TensorFlow placeholder),</dt>
+<dd><p class="first last">&#8216;sentence1_lengths&#8217;: sentence1_lengths (tensor),
+&#8216;sentence2&#8217;: sentence2 (TensorFlow placeholder),
+&#8216;sentence2_lengths&#8217;: sentence2_lengths (tensor),
+&#8216;targets&#8217;: targets (tensor)}: Dictionary of placeholders to feed data
+into.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.get_total_trainable_variables">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">get_total_trainable_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.get_total_trainable_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and returns the number of trainable parameters in the model.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.get_total_variables">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">get_total_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.get_total_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and returns the number of parameters in the model (these can be fixed).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.predictor">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">predictor</code><span class="sig-paren">(</span><em>inputs</em>, <em>targets</em>, <em>target_size</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.predictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Projects inputs onto targets. Returns logits, loss, argmax.</p>
+<p>Creates fully connected projection layer(logits). Then applies cross entropy
+softmax to get the loss. Calculate predictions via argmax.
+:param inputs: Input into the projection layer.
+:type inputs: tensor
+:param targets: Targets for the loss function.
+:type targets: tensor
+:param target_size: Size of the targets (used in projection layer).
+:type target_size: int</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.models.reader">
+<code class="descclassname">quebap.sisyphos.models.</code><code class="descname">reader</code><span class="sig-paren">(</span><em>inputs</em>, <em>lengths</em>, <em>output_size</em>, <em>contexts=(None</em>, <em>None)</em>, <em>scope=None</em>, <em>drop_keep_prob=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.models.reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dynamic bi-LSTM reader; can be conditioned with initial state of other rnn.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tensor</em>) &#8211; The inputs into the bi-LSTM</li>
+<li><strong>lengths</strong> (<em>tensor</em>) &#8211; The lengths of the sequences</li>
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Size of the LSTM state of the reader.</li>
+<li><strong>context</strong> (<em>tensor=None</em><em>, </em><em>tensor=None</em>) &#8211; Tuple of initial (forward, backward) states
+for the LSTM</li>
+<li><strong>scope</strong> (<em>string</em>) &#8211; The TensorFlow scope for the reader.</li>
+<li><strong>drop_keep_drop</strong> (<em>float=1.0</em>) &#8211; The keep probability for dropout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The outputs from the bi-LSTM.
+States (tensor): The cell states from the bi-LSTM.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Outputs (tensor)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.pipelines">
+<span id="quebap-sisyphos-pipelines-module"></span><h2>quebap.sisyphos.pipelines module<a class="headerlink" href="#module-quebap.sisyphos.pipelines" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.sisyphos.pipelines.create_placeholders">
+<code class="descclassname">quebap.sisyphos.pipelines.</code><code class="descname">create_placeholders</code><span class="sig-paren">(</span><em>corpus</em>, <em>types={}</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.pipelines.create_placeholders" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates placeholders for each entry in the corpus (dict or list).
+Default: int64; specify keys (or indices) for which other type is needed in types dictionary; e.g. types={&#8216;scores&#8217;:tf.float32}
+All dimensions are None
+Assumes corpus is dict.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.pipelines.pipeline">
+<code class="descclassname">quebap.sisyphos.pipelines.</code><code class="descname">pipeline</code><span class="sig-paren">(</span><em>corpus</em>, <em>vocab=None</em>, <em>target_vocab=None</em>, <em>candidate_vocab=None</em>, <em>emb=None</em>, <em>freeze=False</em>, <em>normalize=False</em>, <em>tokenization=True</em>, <em>negsamples=0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.pipelines.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.pipelines.quebap_map_to_targets">
+<code class="descclassname">quebap.sisyphos.pipelines.</code><code class="descname">quebap_map_to_targets</code><span class="sig-paren">(</span><em>xs</em>, <em>cands_name</em>, <em>ans_name</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.pipelines.quebap_map_to_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
+<a class="reference external" href="mailto:#&#37;&#52;&#48;todo">#<span>&#64;</span>todo</a>: integrate this function with the one below - the pipeline() method only works with this function</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.pipelines.simple_pipeline">
+<code class="descclassname">quebap.sisyphos.pipelines.</code><code class="descname">simple_pipeline</code><span class="sig-paren">(</span><em>corpus</em>, <em>vocab=None</em>, <em>candidate_vocab=None</em>, <em>emb=None</em>, <em>negsamples=0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.pipelines.simple_pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>TO DO: docstring
+(replaces original pipeline in training_pipeline; new functionality: returns placeholders as well)
+simple scenario: candidate vocab = target vocab</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.tfutil">
+<span id="quebap-sisyphos-tfutil-module"></span><h2>quebap.sisyphos.tfutil module<a class="headerlink" href="#module-quebap.sisyphos.tfutil" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.sisyphos.tfutil.get_last">
+<code class="descclassname">quebap.sisyphos.tfutil.</code><code class="descname">get_last</code><span class="sig-paren">(</span><em>tensor</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.tfutil.get_last" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tensor</strong> &#8211; [dim1 x dim2 x dim3] tensor</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">[dim1 x dim3] tensor</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.tfutil.tfprint">
+<code class="descclassname">quebap.sisyphos.tfutil.</code><code class="descname">tfprint</code><span class="sig-paren">(</span><em>tensor</em>, <em>fun=None</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.tfutil.tfprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints tensor; optionally applies function first.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.tfutil.tfprintshape">
+<code class="descclassname">quebap.sisyphos.tfutil.</code><code class="descname">tfprintshape</code><span class="sig-paren">(</span><em>tensor</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.tfutil.tfprintshape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the shape of a tensor.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.tfutil.tfrun">
+<code class="descclassname">quebap.sisyphos.tfutil.</code><code class="descname">tfrun</code><span class="sig-paren">(</span><em>variables</em>, <em>feed_dict=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.tfutil.tfrun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes variables in a new TensorFlow session, then returns results.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.tfutil.unit_length_transform">
+<code class="descclassname">quebap.sisyphos.tfutil.</code><code class="descname">unit_length_transform</code><span class="sig-paren">(</span><em>x</em>, <em>dim=1</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.tfutil.unit_length_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalizes x with L2 norm to unit length.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.train">
+<span id="quebap-sisyphos-train-module"></span><h2>quebap.sisyphos.train module<a class="headerlink" href="#module-quebap.sisyphos.train" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.sisyphos.train.train">
+<code class="descclassname">quebap.sisyphos.train.</code><code class="descname">train</code><span class="sig-paren">(</span><em>loss</em>, <em>optim</em>, <em>batches</em>, <em>placeholders=None</em>, <em>predict=None</em>, <em>max_epochs=10</em>, <em>hooks=[]</em>, <em>pre_run=None</em>, <em>post_run=None</em>, <em>sess=None</em>, <em>l2=0.0</em>, <em>clip=None</em>, <em>clip_op=&lt;function clip_by_value&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.train.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trains a model which can be decorated with various options.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>loss</strong> (<em>function</em>) &#8211; The TensorFlow function for the loss.</li>
+<li><strong>optim</strong> (<em>function</em>) &#8211; Optimizer for the loss function such as Adam.</li>
+<li><strong>batches</strong> (<em>list of feed dicts</em><em> or </em><em>list of numpy arrays</em>) &#8211; Input data.</li>
+<li><strong>placeholders</strong> (<em>TensorFlow placeholder=None</em>) &#8211; Needed if batches is a
+list of arrays.</li>
+<li><strong>predict</strong> (<em>function</em>) &#8211; Function that predicts values via the model.</li>
+<li><strong>max_epochs</strong> (<em>int</em>) &#8211; How often to iterate over the entire data.</li>
+<li><strong>hooks</strong> (<em>list of TraceHook interfaces</em>) &#8211; Hooks are executed at the end of
+an iteration or at the end of an epoch.</li>
+<li><strong>pre_run</strong> (<em>function</em>) &#8211; A function that is execute before each iteration
+on a batch.</li>
+<li><strong>post_run</strong> (<em>function</em>) &#8211; A function that is execute after each iteration
+on a batch.</li>
+<li><strong>sess</strong> (<em>TensorFlow session</em>) &#8211; The TensorFlow session object.</li>
+<li><strong>l2</strong> (<em>float</em>) &#8211; The L2 penalty for the parameters (0.0 == turned off).</li>
+<li><strong>clip</strong> (<em>float</em><em>,</em><em>float</em>) &#8211; Tuple for the lower and upper cut-off value for the
+gradient.</li>
+<li><strong>clip_op</strong> &#8211; Either clip_by_value, or
+clip_by_norm. Applies the respective TensowFlow function.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="quebap-sisyphos-util-module">
+<h2>quebap.sisyphos.util module<a class="headerlink" href="#quebap-sisyphos-util-module" title="Permalink to this headline">¶</a></h2>
+<p>/ /_/ / /_/ / /
+____/__/_/_/ v0.2</p>
+<p>Making useful stuff happen since 2016</p>
+<dl class="function">
+<dt id="quebap.sisyphos.util.get_timestamped_dir">
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">get_timestamped_dir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.get_timestamped_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a directory with the current timestamp.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.util.nprint">
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">nprint</code><span class="sig-paren">(</span><em>x</em>, <em>prefix=''</em>, <em>precision=3</em>, <em>surpress=True</em>, <em>max_list_len=5</em>, <em>show_shape=True</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.nprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints <cite>x</cite> with given numpy options (default=compact+shape).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.util.printoptions">
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">printoptions</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.printoptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switches printoptions temporarily via yield before switching back.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.util.shape2str">
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">shape2str</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.shape2str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a shape array to a string.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos.vocab">
+<span id="quebap-sisyphos-vocab-module"></span><h2>quebap.sisyphos.vocab module<a class="headerlink" href="#module-quebap.sisyphos.vocab" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.sisyphos.vocab.NeuralVocab">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.vocab.</code><code class="descname">NeuralVocab</code><span class="sig-paren">(</span><em>base_vocab</em>, <em>embedding_matrix=None</em>, <em>input_size=None</em>, <em>reduced_input_size=None</em>, <em>use_pretrained=True</em>, <em>train_pretrained=False</em>, <em>unit_normalize=True</em>, <em>seed=54321</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.NeuralVocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.vocab.Vocab" title="quebap.sisyphos.vocab.Vocab"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.vocab.Vocab</span></code></a></p>
+<p>Wrapper around Vocab to go from indices to tensors.</p>
+<p>Example:
+Start from same Vocab as the doctest example in Vocab
+&gt;&gt;&gt; def emb(w):
+...    v = {&#8216;blah&#8217;:[1.7,0,.3],&#8217;bluh&#8217;:[0,1.5,0.5],&#8217;bleh&#8217;:[0,0,2]}
+...    return None if not w in v else v[w]
+&gt;&gt;&gt; vocab = Vocab(emb=emb)
+&gt;&gt;&gt; vocab(&#8220;blah&#8221;, &#8220;bluh&#8221;, &#8220;bleh&#8221;, &#8220;hello&#8221;, &#8220;world&#8221;)  #symbols as multiple arguments
+[-1, -2, -3, 1, 2]
+&gt;&gt;&gt; vocab([&#8216;bluh&#8217;,&#8217;world&#8217;,&#8217;wake&#8217;,&#8217;up&#8217;]) #as list of symbols
+[-2, 2, 3, 4]</p>
+<p>Create NeuralVocab object
+&gt;&gt;&gt; with tf.variable_scope(&#8216;neural_test1&#8217;):
+...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
+...     tfrun(nvocab(vocab(&#8220;world&#8221;)))
+array([ 0.35790324, -0.15442504,  0.31915373], dtype=float32)
+&gt;&gt;&gt; tra1 = get_total_trainable_variables()</p>
+<p>Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)
+&gt;&gt;&gt; with tf.variable_scope(&#8216;neural_test2&#8217;):
+...     for w in [&#8216;blah&#8217;,&#8217;bluh&#8217;,&#8217;bleh&#8217;]:
+...         w, emb(w)
+...     nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
+...     tfrun(nvocab.embedding_matrix)
+(&#8216;blah&#8217;, [1.7, 0, 0.3])
+(&#8216;bluh&#8217;, [0, 1.5, 0.5])
+(&#8216;bleh&#8217;, [0, 0, 2])
+array([[ 0.95993018,  0.06397769,  0.63649762,  0.01743277],</p>
+<blockquote>
+<div>[ 0.33867511, -0.1801414 , -0.01724755,  0.22024423],
+[ 0.05380315, -0.44075871,  0.64322513,  0.69728172],
+[ 0.16105628,  0.11053304, -0.23188654, -0.51288235],
+[-0.15421754,  0.22732525, -0.54268581,  0.67570436],
+[ 0.98478359,  0.        ,  0.17378533,  1.2295723 ],
+[ 0.        ,  0.94868326,  0.31622776, -0.68760252],
+[ 0.        ,  0.        ,  1.        , -0.23400906]], dtype=float32)</div></blockquote>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_total_trainable_variables</span><span class="p">()</span><span class="o">-</span><span class="n">tra1</span>
+<span class="go">23</span>
+</pre></div>
+</div>
+<p>Interpretation of number of trainable variables from neural_test2:
+out-of-vocab: 8 - 3 = 5 symbols, with each 4 dimensions = 20;
+for fixed pre-trained embeddings with length 3, three times 1 extra trainable dimension for total embedding length 4.
+Total is 23.</p>
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.NeuralVocab.embed_symbol">
+<code class="descname">embed_symbol</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.NeuralVocab.embed_symbol" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns embedded id&#8217;s</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> &#8211; integer, ndarray with np.int32 integers,
+or tensor with tf.int32 integers.</li>
+<li><strong>integers correspond to</strong> (<em>These</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tensor with id&#8217;s embedded by numerical vectors (in last dimension)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.NeuralVocab.get_embedding_matrix">
+<code class="descname">get_embedding_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.NeuralVocab.get_embedding_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.sisyphos.vocab.Vocab">
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.vocab.</code><code class="descname">Vocab</code><span class="sig-paren">(</span><em>unk='&lt;UNK&gt;'</em>, <em>emb=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Vocab objects for use in sisyphos pipelines.</p>
+<p>Example:</p>
+<p>Test Vocab without pre-trained embeddings
+&gt;&gt;&gt; vocab = Vocab()
+&gt;&gt;&gt; print(vocab(&#8220;blah&#8221;))
+1
+&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
+2
+&gt;&gt;&gt; print(vocab(&#8220;bleh&#8221;))
+3
+&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
+2
+&gt;&gt;&gt; print(vocab(&#8220;hello&#8221;))
+4
+&gt;&gt;&gt; print(vocab(&#8220;world&#8221;))
+5</p>
+<p>Sym2id before freezing:
+&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
+...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
+&lt;UNK&gt;  :  0
+blah  :  1
+bleh  :  3
+bluh  :  2
+hello  :  4
+world  :  5</p>
+<p>Sym2id after freezing (no difference, because no pre-trained embeddings used):
+&gt;&gt;&gt; vocab.freeze()
+&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
+...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
+&lt;UNK&gt;  :  0
+blah  :  1
+bleh  :  3
+bluh  :  2
+hello  :  4
+world  :  5</p>
+<p>Test Vocab with pre-trained embeddings
+&gt;&gt;&gt; def emb(w):
+...    v = {&#8216;blah&#8217;:[1.7,0,.3],&#8217;bluh&#8217;:[0,1.5,0.5],&#8217;bleh&#8217;:[0,0,2]}
+...    return None if not w in v else v[w]
+&gt;&gt;&gt; vocab = Vocab(emb=emb)
+&gt;&gt;&gt; print(vocab(&#8220;blah&#8221;))
+-1
+&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
+-2
+&gt;&gt;&gt; print(vocab(&#8220;bleh&#8221;))
+-3
+&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
+-2
+&gt;&gt;&gt; print(vocab(&#8220;hello&#8221;))
+1
+&gt;&gt;&gt; print(vocab(&#8220;world&#8221;))
+2</p>
+<p>Sym2id before freezing:
+&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
+...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
+&lt;UNK&gt;  :  0
+blah  :  -1
+bleh  :  -3
+bluh  :  -2
+hello  :  1
+world  :  2</p>
+<p>Sym2id after freezing: normalized (positive) ids, also for pre-trained terms
+&gt;&gt;&gt; vocab.freeze()
+&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
+...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
+&lt;UNK&gt;  :  0
+blah  :  3
+bleh  :  5
+bluh  :  4
+hello  :  1
+world  :  2</p>
+<p>Test pretrained and out-of-vocab id&#8217;s before freezing
+&gt;&gt;&gt; vocab.unfreeze()
+&gt;&gt;&gt; vocab.get_ids_pretrained()
+[-1, -2, -3]
+&gt;&gt;&gt; vocab.get_ids_oov()
+[0, 1, 2]</p>
+<p>Test pretrained and out-of-vocab id&#8217;s after freezing
+&gt;&gt;&gt; vocab.freeze()
+&gt;&gt;&gt; vocab.get_ids_pretrained()
+[3, 4, 5]
+&gt;&gt;&gt; vocab.get_ids_oov()
+[0, 1, 2]</p>
+<p>Test calling frozen Vocab object
+&gt;&gt;&gt; vocab([&#8216;bluh&#8217;,&#8217;world&#8217;,&#8217;wake&#8217;,&#8217;up&#8217;]) #last 2 are new words, hence unknown
+[4, 2, 0, 0]</p>
+<p>Test calling unfrozen Vocab object
+&gt;&gt;&gt; vocab.unfreeze()
+&gt;&gt;&gt; vocab([&#8216;bluh&#8217;,&#8217;world&#8217;,&#8217;wake&#8217;,&#8217;up&#8217;]) #last 2 are new words, hence added to Vocab
+[-2, 2, 3, 4]</p>
+<p>Test sym2id after freezing again
+&gt;&gt;&gt; vocab.freeze()
+&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
+...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
+&lt;UNK&gt;  :  0
+blah  :  5
+bleh  :  7
+bluh  :  6
+hello  :  1
+up  :  4
+wake  :  3
+world  :  2</p>
+<dl class="attribute">
+<dt id="quebap.sisyphos.vocab.Vocab.DEFAULT_UNK">
+<code class="descname">DEFAULT_UNK</code><em class="property"> = '&lt;UNK&gt;'</em><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.DEFAULT_UNK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.count_oov">
+<code class="descname">count_oov</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.count_oov" title="Permalink to this definition">¶</a></dt>
+<dd><p>equivalent to <cite>len(get_ids_oov())</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.count_pretrained">
+<code class="descname">count_pretrained</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.count_pretrained" title="Permalink to this definition">¶</a></dt>
+<dd><p>equivalent to <cite>len(get_ids_pretrained())</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.freeze">
+<code class="descname">freeze</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.freeze" title="Permalink to this definition">¶</a></dt>
+<dd><p>Freeze current Vocab object (set <cite>self.frozen</cite> to True).
+To be used after loading symbols from a given corpus;
+transforms all internal symbol id&#8217;s to positive indices (for use in tensors).</p>
+<ul class="simple">
+<li>additional calls to the __call__ method will return the id for the unknown symbold</li>
+<li>out-of-vocab id&#8217;s are positive integers and do not change</li>
+<li>id&#8217;s of symbols with pre-trained embeddings are converted to positive integer id&#8217;s,
+counting up from the all out-of-vocab id&#8217;s.</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.get_id">
+<code class="descname">get_id</code><span class="sig-paren">(</span><em>sym</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.get_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of <cite>sym</cite>; different behavior depending on the state of the Vocab:</p>
+<ul class="simple">
+<li>In case self.frozen==False (default): returns internal id,
+that is, positive for out-of-vocab symbol, negative for symbol
+found in <cite>self.emb</cite>. If <cite>sym</cite> is a new symbol, it is added to the Vocab.</li>
+<li>In case self.frozen==True (after explicit call to &#8216;freeze()&#8217;, or after building a <cite>NeuralVocab</cite> with it):
+Returns normalized id (positive integer, also for symbols with pre-trained embedding)
+If <cite>sym</cite> is a new symbol, the id for unknown terms is returned, if available,
+and otherwise <cite>None</cite> (only possible when input argument <cite>unk</cite> for <cite>Vocab.__init__()</cite> was set to <cite>None</cite>, e.g. ;
+for classification labels; it is assumed action is taken in the pipeline
+creating or calling the <cite>Vocab</cite> object, when <cite>None</cite> is encountered).</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sym</strong> &#8211; symbol (e.g., token)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.get_ids_oov">
+<code class="descname">get_ids_oov</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.get_ids_oov" title="Permalink to this definition">¶</a></dt>
+<dd><p>return out-of-vocab id&#8217;s (indep. of frozen/unfrozen state)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.get_ids_pretrained">
+<code class="descname">get_ids_pretrained</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.get_ids_pretrained" title="Permalink to this definition">¶</a></dt>
+<dd><p>return internal or normalized id&#8217;s (depending on frozen/unfrozen state)
+for symbols that have an embedding in <cite>self.emb</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.get_sym">
+<code class="descname">get_sym</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.get_sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns symbol for a given id (consistent with the <cite>self.frozen</cite> state), and None if not found.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.prune">
+<code class="descname">prune</code><span class="sig-paren">(</span><em>min_freq=5</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.prune" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns new Vocab object, pruned based on minimum symbol frequency</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.sisyphos.vocab.Vocab.unfreeze">
+<code class="descname">unfreeze</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.unfreeze" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unfreeze current Vocab object (set <cite>self.frozen</cite> to False).
+Caution: use with care! Unfreezing a Vocab, adding new terms, and again Freezing it,
+will result in shifted id&#8217;s for pre-trained symbols.</p>
+<ul class="simple">
+<li>maps all normalized id&#8217;s to the original internal id&#8217;s.</li>
+<li>additional calls to __call__ will allow adding new symbols to the vocabulary.</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.sisyphos">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-quebap.sisyphos" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">quebap.sisyphos package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.batch">quebap.sisyphos.batch module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.hooks">quebap.sisyphos.hooks module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.map">quebap.sisyphos.map module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.models">quebap.sisyphos.models module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.pipelines">quebap.sisyphos.pipelines module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.tfutil">quebap.sisyphos.tfutil module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.train">quebap.sisyphos.train module</a></li>
+<li><a class="reference internal" href="#quebap-sisyphos-util-module">quebap.sisyphos.util module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.vocab">quebap.sisyphos.vocab module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="quebap.html">quebap package</a><ul>
+      <li>Previous: <a href="quebap.projects.storycloze.html" title="previous chapter">quebap.projects.storycloze package</a></li>
+      <li>Next: <a href="quebap.sisyphos.examples.html" title="next chapter">quebap.sisyphos.examples package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quebap.sisyphos.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/quebap.sisyphos.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

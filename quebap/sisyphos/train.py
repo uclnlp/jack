@@ -4,6 +4,32 @@ import tensorflow as tf
 def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
           hooks=[], pre_run=None, post_run=None, sess=None, l2=0.0, clip=None,
           clip_op=tf.clip_by_value):
+    """Trains a model which can be decorated with various options.
+
+       Args:
+         loss (function): The TensorFlow function for the loss.
+         optim (function): Optimizer for the loss function such as Adam.
+         batches (list of feed dicts or list of numpy arrays): Input data.
+         placeholders (TensorFlow placeholder=None): Needed if batches is a
+                      list of arrays.
+         predict (function): Function that predicts values via the model.
+         max_epochs (int): How often to iterate over the entire data.
+         hooks (list of TraceHook interfaces): Hooks are executed at the end of
+                an iteration or at the end of an epoch.
+         pre_run (function): A function that is execute before each iteration
+                 on a batch.
+         post_run (function): A function that is execute after each iteration
+                  on a batch.
+         sess (TensorFlow session): The TensorFlow session object.
+         l2 (float): The L2 penalty for the parameters (0.0 == turned off).
+         clip (float,float): Tuple for the lower and upper cut-off value for the
+              gradient.
+         clip_op (TensorFlow clip function): Either clip_by_value, or
+                 clip_by_norm. Applies the respective TensowFlow function.
+
+        Returns: None
+
+    """
 
     if l2 != 0.0:
         loss = loss + tf.add_n(

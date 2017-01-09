@@ -38,7 +38,7 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop
         context (tensor=None, tensor=None): Tuple of initial (forward, backward) states
                                   for the LSTM
         scope (string): The TensorFlow scope for the reader.
-        drop_keep_drop (float=1.0): The keep propability for dropout.
+        drop_keep_drop (float=1.0): The keep probability for dropout.
 
     Returns:
         Outputs (tensor): The outputs from the bi-LSTM.
@@ -107,7 +107,7 @@ def bilstm_readers(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=No
         seq1_lengths (tensor): The lengths of the sequences.
         output_size (int): Size of the LSTMs state.
         scope (string): The TensorFlow scope for the reader.
-        drop_keep_drop (float=1.0): The keep propability for dropout.
+        drop_keep_drop (float=1.0): The keep probability for dropout.
 
     Returns:
         Outputs (tensor): The outputs from the second bi-LSTM.
@@ -133,8 +133,8 @@ def bag_reader(inputs, lengths):
     Returns:
         output (tensor: Sum per sample.
     """
-        output=tf.reduce_sum(inputs,1,keep_dims=False)
-        return output
+    output=tf.reduce_sum(inputs,1,keep_dims=False)
+    return output
 
 def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
     """Sums the feature dimension of two sequences and return its concatenation
@@ -147,16 +147,16 @@ def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
     Returns:
         output (tensor: Concatenation of the sums per sample for the sequences.
     """
-        output1 = bag_reader(seq1, seq1_lengths)
-        output2 = bag_reader(seq2, seq2_lengths)
-        # each [batch_size x max_seq_length x output_size]
-        return tf.concat(1,[output1,output2])
+    output1 = bag_reader(seq1, seq1_lengths)
+    output2 = bag_reader(seq2, seq2_lengths)
+    # each [batch_size x max_seq_length x output_size]
+    return tf.concat(1,[output1,output2])
 
 
 def predictor(inputs, targets, target_size):
     """Projects inputs onto targets. Returns logits, loss, argmax.
 
-    Creates fully connected projection layer(logits). Then applys cross entropy
+    Creates fully connected projection layer(logits). Then applies cross entropy
     softmax to get the loss. Calculate predictions via argmax.
     Args:
         inputs (tensor): Input into the projection layer.
@@ -254,8 +254,6 @@ def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
             'targets': targets} #placeholders
 
 
-    See also: conditional_reader_model: Instantiates either condition or
-    attentive reader with placeholders.
 def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
                                  output_size, scope=None):
     """Creates attentive reader where two bi-LSTMs attend to each others state.
@@ -268,8 +266,8 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
     past cell states.
 
     Args:
-        seq1 (tensor): Size of first input sequence.
-        seq1_lengths (tensor): Lengths of first input sequences.
+        `seq1 (tensor)`: Size of first input sequence.
+        `seq1_lengths (tensor)`: Lengths of first input sequences.
         seq2 (tensor): Size of second input sequence.
         seq2_lengths (tensor): Lengths of second input sequences.
         output_size (int): Hidden unit size of the two bi-LSTMs. 

@@ -147,7 +147,17 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
 
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, batch_size_fixed=False):
+    """Creates feed dicts for all batches with a given batch size.
 
+    Args:
+        data (list or dict): The input data for the feed dicts.
+        placeholders (list or dict): The TensorFlow placeholders for the data.
+        batch_size (int): The batch size for the data.
+        pad (int): Padding symbol index to pad lists of different sizes.
+    Returns:
+        GeneratorWithRestart: Generator that yields a feed_dict for each
+        iteration. A feed dict consists of { name : tensor } key-value pairs.
+    """
     def generator():
         batches = get_batches(data, batch_size, pad, bucket_order, bucket_structure, batch_size_fixed)
         # fixme: this is potentially inefficient as it might be called every time we retrieve a batch

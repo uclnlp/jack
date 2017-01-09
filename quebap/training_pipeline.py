@@ -21,7 +21,7 @@ from quebap.sisyphos.batch import get_feed_dicts
 from quebap.sisyphos.vocab import Vocab, NeuralVocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from quebap.sisyphos.train import train
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, TensorHook, EvalHook
+from quebap.sisyphos.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, TensorHook, EvalHook
 import quebap.model.models as models
 from quebap.load.embeddings.embeddings import load_embeddings
 from quebap.sisyphos.pipelines import create_placeholders, pipeline
@@ -237,7 +237,7 @@ def main():
                    feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         # report_loss
         LossHook(100, args.batch_size, summary_writer=sw),
-        SpeedHook(100, args.batch_size, summary_writer=sw),
+        ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
         #evaluate on train data after each epoch
         EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="training",

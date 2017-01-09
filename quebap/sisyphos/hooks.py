@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report
 
 # todo: hooks should also have prefixes so that one can use the same hook with different parameters
 class Hook(object):
+    """Serves as Hook interface."""
     def __init__(self):
         raise NotImplementedError
 
@@ -15,6 +16,7 @@ class Hook(object):
 
 
 class TraceHook(object):
+    """Abstract hook class, which implements an update function the summary."""
     def __init__(self, summary_writer=None):
         self.summary_writer = summary_writer
 
@@ -31,6 +33,14 @@ class TraceHook(object):
         self.__call__(*args, **kwargs)
 
     def update_summary(self, sess, current_step, title, value):
+        """Adds summary (title, value) to summary writer object.
+
+        Args:
+            sess (TensorFlow session): The TensorFlow session object.
+            current_step (int): Current step in the training procedure.
+            title (string): The title of the summary.
+            value (float Scalar value for the message.
+        """
         if self.summary_writer is not None:
             cur_summary = tf.scalar_summary(title, value)
             # if you are using some summaries, merge them
@@ -40,6 +50,7 @@ class TraceHook(object):
 
 
 class LossHook(TraceHook):
+    """A hook at prints the current loss and adds it to the summary."""
     def __init__(self, iter_interval, batch_size, summary_writer=None):
         super(LossHook, self).__init__(summary_writer)
         self.iter_interval = iter_interval
@@ -51,6 +62,7 @@ class LossHook(TraceHook):
         return "Loss"
 
     def __call__(self, sess, epoch, model, loss):
+        """Prints the loss, epoch, and #calls; adds it to the summary."""
         self.iter += 1
         self.acc_loss += loss / self.batch_size
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
@@ -117,9 +129,10 @@ class TensorHook(TraceHook):
 
 
 
-class SpeedHook(TraceHook):
+class ExamplesPerSecHook(TraceHook):
+    """Prints the examples per sec and adds it to the summary writer."""
     def __init__(self, iter_interval, batch_size, summary_writer=None):
-        super(SpeedHook, self).__init__(summary_writer)
+        super(ExamplesPerSecHook, self).__init__(summary_writer)
         self.iter_interval = iter_interval
         self.batch_size = batch_size
         self.t0 = time.time()
@@ -131,6 +144,7 @@ class SpeedHook(TraceHook):
         return "Speed"
 
     def __call__(self, sess, epoch, model, loss):
+        """Prints the examples per sec and adds it to the summary writer."""
         self.iter += 1
         if self.reset:
             self.t0 = time.time()
@@ -156,6 +170,7 @@ class SpeedHook(TraceHook):
 
 
 class ETAHook(TraceHook):
+    """Estimates ETA from max_iter vs current_iter."""
     def __init__(self, iter_interval, max_epochs, iter_per_epoch,
                  summary_writer=None):
         super(ETAHook, self).__init__(summary_writer)
@@ -171,6 +186,7 @@ class ETAHook(TraceHook):
         return "ETA"
 
     def __call__(self, sess, epoch, model, loss):
+        """Estimates ETA from max_iter vs current_iter."""
         self.iter += 1
 
         if self.reestimate and self.iter >= self.max_iters / self.max_epochs:
@@ -265,8 +281,8 @@ class AccuracyHook(TraceHook):
 
 
 class EvalHook(TraceHook):
-    """
-    Hook which applies various metrics.
+    """Hook which applies various metrics, such as recall, precision, F1.
+
     To be used during training on dev-data, and after training on test-data.
     """
     def __init__(self, batches, logits, predict, target, at_every_epoch=1, placeholders=None,
@@ -328,25 +344,6 @@ class EvalHook(TraceHook):
         self.info = info
         self.metrics = metrics
 
-    # def _calc_mrr(self, scores, target_index):
-    #     if target_index:
-    #
-    #     mrrs = []
-    #     for inst in scores:
-    #         order = inst.argsort() #ranked list of answer ID's (increasing)
-    #         ranks = order.argsort() #for each answer ID, rank in sorted scores
-    #         rank = 0
-    #         for i in range(len(inst)):
-    #             if np.where(ranks == i)[0] == target_index:
-    #                 break
-    #             rank += 1
-    #         mrr = float(rank) / float(len(inst) - 1)
-    #         # if self.print_details == True:
-    #         #    print(gold, scores, mrr)
-    #         mrrs.append(mrr)
-    #     return mrrs
-
-
     def _calc_mrr(self, scores, targets):
         #todo: verify!
         assert scores.shape == targets.shape #targets must be array with binary vector per instance (row)
@@ -362,8 +359,6 @@ class EvalHook(TraceHook):
             rrs.append(1./rank)
         return rrs
 
-
-
     def _calc_micro_PRF(self, binary_predictions, binary_targets):
         #todo: verify!
         predict_complement = np.add(1.0, -binary_predictions)
@@ -375,7 +370,6 @@ class EvalHook(TraceHook):
         micror = tp / (tp + fn) if tp > 0 else 0.0
         microf1 = 2. * microp * micror / (microp + micror) if (microp * micror > 0) else 0.0
         return microp, micror, microf1
-
 
     def _calc_macro_PRF(self, binary_predictions, binary_targets):
         """
@@ -400,9 +394,6 @@ class EvalHook(TraceHook):
         macror = np.mean(r)
         macrof1 = np.mean(f1)
         return macrop, macror, macrof1
-
-
-
 
     def __call__(self, sess, epoch, model, loss):
         """
@@ -543,7 +534,7 @@ class EvalHook(TraceHook):
 
 class PRF1Hook(Hook):
     """
-    Evaluate per-class and average precision, recall, F1
+    Evaluate and print per-class and average precision, recall, F1.
     """
     def __init__(self, batcher, placeholders, at_every_epoch):
         self.batcher = batcher

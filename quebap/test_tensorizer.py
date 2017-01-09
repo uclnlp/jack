@@ -8,7 +8,7 @@ def create_global_answer_candidates(candidates):
     }
 
 
-def create_question_global_candidates(question: str, answer: str):
+def create_question_global_candidates(question : str, answer : str):
     return {
         'question': question,
         'candidates': "#/globals/candidates",

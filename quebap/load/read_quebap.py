@@ -2,23 +2,27 @@ import json
 import re
 token_pattern = re.compile('[^ ]+')
 
-
+"""Loads quebap JSON files and manages the transformation into components."""
 
 def read_data(data_filename):
+    """Reads quebap JSON and returns the dictionary."""
     with open(data_filename) as data_file:
         data = json.load(data_file)
         return data
 
 def read_rich_data(data_filename):
+    """Transforms a quebap JSON file into a list of RichInstances (S,Q(A))."""
     return [RichInstance(x) for x in read_data(data_filename)]
 
 class RichInstance(object):
+    """Holds lists of supports and questions and manages their iteration."""
     def __init__(self, instance):
         self.instance = instance
         self.supports = [Support(x) for x in self.instance['support']]
         self.questions = [Question(x) for x in self.instance['questions']]
 
     def vocab(self):
+        """Gets the set of tokens from all questions and support objects."""
         tokens = set()
         for question in self.questions:
             for token in question.tokens:
@@ -29,12 +33,13 @@ class RichInstance(object):
         return tokens
 
     def question_support_pairs(self):
+        """Yields nested pairs of question and support objects."""
         for q in self.questions:
             for s in self.supports:
                 yield q,s
 
 class Question(object):
-
+    """Class which holds answers and question as text."""
     def __init__(self, qdict):
         self.source = qdict
         self.text = qdict['question']
@@ -42,13 +47,14 @@ class Question(object):
         self.tokens = self.text.split(' ')
 
 class Answer(object):
+    """Class which holds the text or span of the answer."""
     def __init__(self, adict):
         self.adict = adict
         self.text = adict['text']
         self.span = adict['span']
 
 class Support(object):
-
+    """Holds a support which is a text or an interval between tokens (span)."""
     def __init__(self, sdict):
         self.sdict = sdict
         self.text = sdict['text']
@@ -59,6 +65,7 @@ class Support(object):
         self.tokens = [self.text[span[0]:span[1]] for span in self.token_offsets]
 
     def token_from_char(self, char_offset):
+        """Returns string between zero and the char_offset."""
         for i,t in enumerate(self.token_offsets):
             if char_offset <= t[1]:
                 return i

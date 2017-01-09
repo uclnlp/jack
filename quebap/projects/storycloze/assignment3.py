@@ -4,7 +4,7 @@ from quebap.sisyphos.vocab import Vocab
 from quebap.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
 from quebap.sisyphos.train import train
 import tensorflow as tf
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook, ETAHook
+from quebap.sisyphos.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, ETAHook
 from quebap.projects.storycloze.assignment3_models import get_permute_model, \
     get_basic_model, get_selective_model, get_bowv_model
 import os
@@ -184,7 +184,7 @@ test:         %d
 
     hooks = [
         LossHook(100, BATCH_SIZE),
-        SpeedHook(100, BATCH_SIZE),
+        ExamplesPerSecHook(100, BATCH_SIZE),
         ETAHook(100, MAX_EPOCHS, 500),
         AccuracyHook(train_feed_dicts, predict, placeholders['order'], 2),
         AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2),
