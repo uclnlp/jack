@@ -3,7 +3,7 @@
   __  __/ /_(_) /
  / / / / __/ / /
 / /_/ / /_/ / /
-\__,_/\__/_/_/ v0.2
+\____/\__/_/_/ v0.2
 
 Making useful stuff happen since 2016
 """
@@ -15,6 +15,7 @@ import os
 
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
+    """Switches printoptions temporarily via yield before switching back."""
     original = np.get_printoptions()
     np.set_printoptions(*args, **kwargs)
     yield
@@ -22,10 +23,12 @@ def printoptions(*args, **kwargs):
 
 
 def shape2str(x):
+    """Converts a shape array to a string."""
     return "[" + " x ".join([str(x) for x in x.shape]) + "]"
 
 
 def nprint(x, prefix="", precision=3, surpress=True, max_list_len=5, show_shape=True):
+    """Prints `x` with given numpy options (default=compact+shape)."""
     with printoptions(precision=precision, suppress=surpress):
         if isinstance(x, np.ndarray):
             print(prefix + "ndarray")
@@ -51,6 +54,7 @@ def nprint(x, prefix="", precision=3, surpress=True, max_list_len=5, show_shape=
 
 
 def get_timestamped_dir(path):
+    """Create a directory with the current timestamp."""
     current_time = strftime("%y-%m-%d/%H-%M-%S", gmtime())
     dir = path + "/" + current_time + "/"
     if not os.path.exists(dir):

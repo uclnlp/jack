@@ -12,7 +12,7 @@ from quebap.io.embeddings.embeddings import load_embeddings
 import tensorflow as tf
 import numpy as np
 import random
-from quebap.sisyphos.hooks import SpeedHook, AccuracyHook, LossHook
+from quebap.sisyphos.hooks import ExamplesPerSecHook, AccuracyHook, LossHook
 
 
 tf.set_random_seed(1337)
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     hooks = [
         #report_loss,
         LossHook(100, batch_size),
-        SpeedHook(100, batch_size),
+        ExamplesPerSecHook(100, batch_size),
         AccuracyHook(dev_feed_dicts, predict, placeholders['targets'], 2)
     ]
 

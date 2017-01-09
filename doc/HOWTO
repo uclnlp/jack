@@ -1,0 +1,21 @@
+1. Install Sphinx and its requirements. Then do this:
+
+http://stackoverflow.com/questions/20354768/python-sphinx-how-to-document-one-file-with-functions
+
+Here is a step-by-step list:
+
+Create lib.py
+Create documentation folder: mkdir doc
+├── doc/
+└── lib.py
+Enter doc/: cd doc
+Execute sphinx-quickstart (Be sure to select autodoc: y, Makefile: y)
+Edit conf.py to specify sys.path: sys.path.insert(0, os.path.abspath('..'))
+Edit index.rst and specify modules in the toctree:
+.. toctree::
+    :maxdepth: 2
+
+    modules
+Execute sphinx-apidoc -o . ..
+Generate the html output: make html
+View your documentation: firefox _build/html/index.html

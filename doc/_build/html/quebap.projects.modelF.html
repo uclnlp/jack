@@ -1,0 +1,541 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>quebap.projects.modelF package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="quebap.projects.playqa package" href="quebap.projects.playqa.html" />
+    <link rel="prev" title="quebap.projects.memn.memn2n package" href="quebap.projects.memn.memn2n.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quebap-projects-modelf-package">
+<h1>quebap.projects.modelF package<a class="headerlink" href="#quebap-projects-modelf-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.projects.modelF.NYT2quebap">
+<span id="quebap-projects-modelf-nyt2quebap-module"></span><h2>quebap.projects.modelF.NYT2quebap module<a class="headerlink" href="#module-quebap.projects.modelF.NYT2quebap" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a quebap train and test datafiles for the NYT corpus
+based on ../data/NYT/naacl2013.txt
+* train file: one quebap per train instance ; candidates = all entity pairs
+* test file: one quebap per test relation, with all correct answers in the valid answers list</p>
+<p>usage:
+python3 NYT2quebap path/to/naacl2013.txt mode &gt;  naacl2013_mode.quebap.json
+in which mode = train or test</p>
+<dl class="function">
+<dt id="quebap.projects.modelF.NYT2quebap.create_test_quebap">
+<code class="descclassname">quebap.projects.modelF.NYT2quebap.</code><code class="descname">create_test_quebap</code><span class="sig-paren">(</span><em>testfacts</em>, <em>tuples</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.NYT2quebap.create_test_quebap" title="Permalink to this definition">¶</a></dt>
+<dd><p>one quebap with all correct answers per relation in the test data</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.NYT2quebap.create_train_quebap">
+<code class="descclassname">quebap.projects.modelF.NYT2quebap.</code><code class="descname">create_train_quebap</code><span class="sig-paren">(</span><em>trainfacts</em>, <em>tuples</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.NYT2quebap.create_train_quebap" title="Permalink to this definition">¶</a></dt>
+<dd><p>one quebap per positive train fact</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.NYT2quebap.load_naacl2013">
+<code class="descclassname">quebap.projects.modelF.NYT2quebap.</code><code class="descname">load_naacl2013</code><span class="sig-paren">(</span><em>path</em>, <em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.NYT2quebap.load_naacl2013" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.NYT2quebap.main">
+<code class="descclassname">quebap.projects.modelF.NYT2quebap.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.NYT2quebap.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.modelF.evaluation">
+<span id="quebap-projects-modelf-evaluation-module"></span><h2>quebap.projects.modelF.evaluation module<a class="headerlink" href="#module-quebap.projects.modelF.evaluation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.projects.modelF.evaluation.RR">
+<code class="descclassname">quebap.projects.modelF.evaluation.</code><code class="descname">RR</code><span class="sig-paren">(</span><em>true_rank</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.evaluation.RR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reciprocal Rank</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.evaluation.average_precision">
+<code class="descclassname">quebap.projects.modelF.evaluation.</code><code class="descname">average_precision</code><span class="sig-paren">(</span><em>true_ranks</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.evaluation.average_precision" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.evaluation.precision_at_X">
+<code class="descclassname">quebap.projects.modelF.evaluation.</code><code class="descname">precision_at_X</code><span class="sig-paren">(</span><em>true_ranks</em>, <em>X</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.evaluation.precision_at_X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.evaluation.ranking">
+<code class="descclassname">quebap.projects.modelF.evaluation.</code><code class="descname">ranking</code><span class="sig-paren">(</span><em>true_scores</em>, <em>false_scores</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.evaluation.ranking" title="Permalink to this definition">¶</a></dt>
+<dd><p>For a list of score values of true facts (true scores) and a list of
+score values of false facts (false scores), compute the ranking.
+Output: returns the ranks of true facts among false ones.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.modelF.model">
+<span id="quebap-projects-modelf-model-module"></span><h2>quebap.projects.modelF.model module<a class="headerlink" href="#module-quebap.projects.modelF.model" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.projects.modelF.model.batcher">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">batcher</code><span class="sig-paren">(</span><em>batchsize</em>, <em>training_data</em>, <em>negative_domain_size</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.batcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create batch of training instances, half true facts, half false facts.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.model.define_model_F_score">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">define_model_F_score</code><span class="sig-paren">(</span><em>tuples</em>, <em>entity_pair_embeddings</em>, <em>relation_embeddings</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.define_model_F_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns dot products of relation embedding and entity pair embedding,
+batchwise. &#8216;tuples&#8217; is a matrix: [batchsize x 2].
+Each row contains an integer index for the relation, one for entity pair.
+entity_pair_embeddings: [N_entity_pairs x k]
+relation_embeddings: [N_relations x k]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.model.initialize_embeddings">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">initialize_embeddings</code><span class="sig-paren">(</span><em>n_entity_pairs</em>, <em>n_relations</em>, <em>k</em>, <em>sigma=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.initialize_embeddings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise Gaussian embeddings for entity pairs and relations with sigma
+the standard deviation and k the latent dimensionality.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.model.nll_loss">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">nll_loss</code><span class="sig-paren">(</span><em>dot_products</em>, <em>gold_labels</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.nll_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a set of dot product scores for positive facts [batchsize x 1]
+and a set of dot product scores for negative facts [batchsize x 1]
+compute negative log-likelihood loss and return single scalar value.
+Normalization divides loss by batchsize.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.model.randint">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">randint</code><span class="sig-paren">(</span><em>low</em>, <em>high=None</em>, <em>size=None</em>, <em>dtype='l'</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.randint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return random integers from <cite>low</cite> (inclusive) to <cite>high</cite> (exclusive).</p>
+<p>Return random integers from the &#8220;discrete uniform&#8221; distribution of
+the specified dtype in the &#8220;half-open&#8221; interval [<cite>low</cite>, <cite>high</cite>). If
+<cite>high</cite> is None (the default), then results are from [0, <cite>low</cite>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>low</strong> (<em>int</em>) &#8211; Lowest (signed) integer to be drawn from the distribution (unless
+<code class="docutils literal"><span class="pre">high=None</span></code>, in which case this parameter is the <em>highest</em> such
+integer).</li>
+<li><strong>high</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; If provided, one above the largest (signed) integer to be drawn
+from the distribution (see above for behavior if <code class="docutils literal"><span class="pre">high=None</span></code>).</li>
+<li><strong>size</strong> (<em>int</em><em> or </em><em>tuple of ints</em><em>, </em><em>optional</em>) &#8211; Output shape.  If the given shape is, e.g., <code class="docutils literal"><span class="pre">(m,</span> <span class="pre">n,</span> <span class="pre">k)</span></code>, then
+<code class="docutils literal"><span class="pre">m</span> <span class="pre">*</span> <span class="pre">n</span> <span class="pre">*</span> <span class="pre">k</span></code> samples are drawn.  Default is None, in which case a
+single value is returned.</li>
+<li><strong>dtype</strong> (<em>dtype</em><em>, </em><em>optional</em>) &#8211; <p>Desired dtype of the result. All dtypes are determined by their
+name, i.e., &#8216;int64&#8217;, &#8216;int&#8217;, etc, so byteorder is not available
+and a specific precision may have different C types depending
+on the platform. The default value is &#8216;np.int&#8217;.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.11.0.</span></p>
+</div>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> &#8211; <cite>size</cite>-shaped array of random integers from the appropriate
+distribution, or a single such random int if <cite>size</cite> not provided.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">int or ndarray of ints</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><code class="xref py py-func docutils literal"><span class="pre">random.random_integers()</span></code></dt>
+<dd>similar to <cite>randint</cite>, only for the closed interval [<cite>low</cite>, <cite>high</cite>], and 1 is the lowest value if <cite>high</cite> is omitted. In particular, this other one is the one to use to generate uniformly distributed discrete non-integers.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="go">array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="go">array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])</span>
+</pre></div>
+</div>
+<p>Generate a 2 x 4 array of ints between 0 and 4, inclusive:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="go">array([[4, 0, 2, 1],</span>
+<span class="go">       [3, 2, 2, 0]])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.model.test">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.model.training">
+<code class="descclassname">quebap.projects.modelF.model.</code><code class="descname">training</code><span class="sig-paren">(</span><em>loss</em>, <em>batch_function</em>, <em>placeholders</em>, <em>data</em>, <em>batchsize=32</em>, <em>learning_rate=0.1</em>, <em>optimization='Adam'</em>, <em>n_iterations=20</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.model.training" title="Permalink to this definition">¶</a></dt>
+<dd><p>Training procedure for optimising a predefined loss over data using a
+batch_function to create training instances that are fed into the input
+placeholders.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.modelF.modelF_NYT">
+<span id="quebap-projects-modelf-modelf-nyt-module"></span><h2>quebap.projects.modelF.modelF_NYT module<a class="headerlink" href="#module-quebap.projects.modelF.modelF_NYT" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.projects.modelF.modelF_NYT.load_test_data_from_from_quebap">
+<code class="descclassname">quebap.projects.modelF.modelF_NYT.</code><code class="descname">load_test_data_from_from_quebap</code><span class="sig-paren">(</span><em>filepath</em>, <em>entity_pair_lexicon</em>, <em>relation_lexicon</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.modelF_NYT.load_test_data_from_from_quebap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in NYT test data from quebap file, using filepath as location.
+entity_pair_lexicon and relation_lexicon are lexica for giving indices to
+the relation type/ entity pair strings and having this consistent with the
+training set. Outputs:</p>
+<blockquote>
+<div><ul class="simple">
+<li>list of test entity pairs</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.modelF_NYT.load_train_data_from_quebap">
+<code class="descclassname">quebap.projects.modelF.modelF_NYT.</code><code class="descname">load_train_data_from_quebap</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.modelF_NYT.load_train_data_from_quebap" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns matrix of training facts [n_instances x 2] where first column
+is for entity pair index and second is for relation type index.
+Indices are obtained using lexica for entity pairs and relations, which are
+also returned.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.modelF_NYT.main">
+<code class="descclassname">quebap.projects.modelF.modelF_NYT.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.modelF_NYT.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.modelF_NYT.test_procedure">
+<code class="descclassname">quebap.projects.modelF.modelF_NYT.</code><code class="descname">test_procedure</code><span class="sig-paren">(</span><em>relation_indices</em>, <em>e2_indices</em>, <em>test_entity_pairs</em>, <em>placeholders</em>, <em>score</em>, <em>sess=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.modelF_NYT.test_procedure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes MAP for every relation type in test set.
+Go through all relation types r and compute scores for all test_entity_pairs
+together with r.
+The test relation types are listed in relation_indices.
+Correct answers are listed in e2_indices, same length as relation_indices
+&#8216;placeholders&#8217; and &#8216;score&#8217; are tensorflow nodes.
+Session &#8216;sess&#8217; is the tensorflow session from training.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.modelF.structs">
+<span id="quebap-projects-modelf-structs-module"></span><h2>quebap.projects.modelF.structs module<a class="headerlink" href="#module-quebap.projects.modelF.structs" title="Permalink to this headline">¶</a></h2>
+<p>XXX: TODO:
+Author:     Pontus Stenetorp    &lt;pontus stenetorp se&gt;
+Version:    2016-01-15</p>
+<dl class="class">
+<dt id="quebap.projects.modelF.structs.FrozenIdentifier">
+<em class="property">class </em><code class="descclassname">quebap.projects.modelF.structs.</code><code class="descname">FrozenIdentifier</code><span class="sig-paren">(</span><em>keys</em>, <em>default_key=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.structs.FrozenIdentifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#quebap.projects.modelF.structs.Identifier" title="quebap.projects.modelF.structs.Identifier"><code class="xref py py-class docutils literal"><span class="pre">quebap.projects.modelF.structs.Identifier</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.projects.modelF.structs.Identifier">
+<em class="property">class </em><code class="descclassname">quebap.projects.modelF.structs.</code><code class="descname">Identifier</code><span class="sig-paren">(</span><em>keys=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.structs.Identifier" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="quebap.projects.modelF.structs.Identifier.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.structs.Identifier.items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.modelF.structs.Identifier.key_by_id">
+<code class="descname">key_by_id</code><span class="sig-paren">(</span><em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.structs.Identifier.key_by_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.modelF.test_evaluation">
+<span id="quebap-projects-modelf-test-evaluation-module"></span><h2>quebap.projects.modelF.test_evaluation module<a class="headerlink" href="#module-quebap.projects.modelF.test_evaluation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.projects.modelF.test_evaluation.test_reciprocal_rank">
+<code class="descclassname">quebap.projects.modelF.test_evaluation.</code><code class="descname">test_reciprocal_rank</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.test_evaluation.test_reciprocal_rank" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="quebap-projects-modelf-util-module">
+<h2>quebap.projects.modelF.util module<a class="headerlink" href="#quebap-projects-modelf-util-module" title="Permalink to this headline">¶</a></h2>
+<p>/ /_/ / /_/ / /
+__,_/__/_/_/ v0.1</p>
+<p>Making useful stuff happen since 2016</p>
+<dl class="function">
+<dt id="quebap.projects.modelF.util.atom2str">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">atom2str</code><span class="sig-paren">(</span><em>atom</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.atom2str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.atom2struct">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">atom2struct</code><span class="sig-paren">(</span><em>atom</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.atom2struct" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atom</strong> &#8211; an atom such as [parentOf, X, Y]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">structure of the atom, e.g., (#₁, X, Y)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.body">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">body</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.body" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.gather_in_dim">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">gather_in_dim</code><span class="sig-paren">(</span><em>params</em>, <em>indices</em>, <em>dim</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.gather_in_dim" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Gathers slices in a defined dimension. If dim == 0 this is doing the same</dt>
+<dd>thing as tf.gather.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.get_param_id">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">get_param_id</code><span class="sig-paren">(</span><em>sym</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.get_param_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.head">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">head</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.head" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.isconst">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">isconst</code><span class="sig-paren">(</span><em>sym</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.isconst" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a symbol is a constant or predicate</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.isfact">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">isfact</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.isfact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether rule represents a fact, i.e.,
+body is empty and atom is grounded</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.isparam">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">isparam</code><span class="sig-paren">(</span><em>sym</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.isparam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a symbol represents a rule parameter</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.isplaceholder">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">isplaceholder</code><span class="sig-paren">(</span><em>sym</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.isplaceholder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a symbol in a structure is a placeholder for a representation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.isvar">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">isvar</code><span class="sig-paren">(</span><em>sym</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.isvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a symbol in a structure is a variable, e.g., X,Y,Z etc.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.normalize_rule">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">normalize_rule</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.normalize_rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renames variables in rule to maximize structural similarity to other rules.
+:param rule: a rule, such as</p>
+<blockquote>
+<div>[[grandparentOf, X, Z], [parentOf, X, Y], [parentOf, Y, Z]]</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">standardized rule, e.g.,
+[[grandparentOf, X₀, X₁], [parentOf, X₀, X₂], [parentOf, X₂, X₁]]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.placeholder2ix">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">placeholder2ix</code><span class="sig-paren">(</span><em>placeholder</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.placeholder2ix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts index from placeholder, e.g., #₂ =&gt; 2</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.rule2str">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">rule2str</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.rule2str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.rule2struct">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">rule2struct</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.rule2struct" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.rule2tuple">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">rule2tuple</code><span class="sig-paren">(</span><em>rule</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.rule2tuple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.sub_struct2str">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">sub_struct2str</code><span class="sig-paren">(</span><em>sub_struct</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.sub_struct2str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfprint">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfprint</code><span class="sig-paren">(</span><em>tensor</em>, <em>fun=None</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfprint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfprints">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfprints</code><span class="sig-paren">(</span><em>tensors</em>, <em>fun=None</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfprints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfprintshape">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfprintshape</code><span class="sig-paren">(</span><em>tensor</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfprintshape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfprintshapes">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfprintshapes</code><span class="sig-paren">(</span><em>tensors</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfprintshapes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfrun">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfrun</code><span class="sig-paren">(</span><em>tensor</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfrun" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfrunprint">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfrunprint</code><span class="sig-paren">(</span><em>tensor</em>, <em>suffix=''</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfrunprint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.tfrunprintshape">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">tfrunprintshape</code><span class="sig-paren">(</span><em>tensor</em>, <em>suffix=''</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.tfrunprintshape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.modelF.util.unit_length">
+<code class="descclassname">quebap.projects.modelF.util.</code><code class="descname">unit_length</code><span class="sig-paren">(</span><em>tensor</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.modelF.util.unit_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.modelF">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-quebap.projects.modelF" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">quebap.projects.modelF package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF.NYT2quebap">quebap.projects.modelF.NYT2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF.evaluation">quebap.projects.modelF.evaluation module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF.model">quebap.projects.modelF.model module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF.modelF_NYT">quebap.projects.modelF.modelF_NYT module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF.structs">quebap.projects.modelF.structs module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF.test_evaluation">quebap.projects.modelF.test_evaluation module</a></li>
+<li><a class="reference internal" href="#quebap-projects-modelf-util-module">quebap.projects.modelF.util module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.modelF">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="quebap.html">quebap package</a><ul>
+  <li><a href="quebap.projects.html">quebap.projects package</a><ul>
+      <li>Previous: <a href="quebap.projects.memn.memn2n.html" title="previous chapter">quebap.projects.memn.memn2n package</a></li>
+      <li>Next: <a href="quebap.projects.playqa.html" title="next chapter">quebap.projects.playqa package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quebap.projects.modelF.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/quebap.projects.modelF.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

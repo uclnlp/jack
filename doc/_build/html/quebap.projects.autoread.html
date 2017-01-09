@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>quebap.projects.autoread package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="quebap.projects.autoread.wikipedia package" href="quebap.projects.autoread.wikipedia.html" />
+    <link rel="prev" title="quebap.projects package" href="quebap.projects.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quebap-projects-autoread-package">
+<h1>quebap.projects.autoread package<a class="headerlink" href="#quebap-projects-autoread-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quebap.projects.autoread.wikipedia.html">quebap.projects.autoread.wikipedia package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikipedia.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikipedia.html#module-quebap.projects.autoread.wikipedia.preprocess">quebap.projects.autoread.wikipedia.preprocess module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikipedia.html#module-quebap.projects.autoread.wikipedia.sampler">quebap.projects.autoread.wikipedia.sampler module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikipedia.html#module-quebap.projects.autoread.wikipedia">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quebap.projects.autoread.wikireading.html">quebap.projects.autoread.wikireading package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikireading.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikireading.html#module-quebap.projects.autoread.wikireading.my_seq2seq">quebap.projects.autoread.wikireading.my_seq2seq module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikireading.html#module-quebap.projects.autoread.wikireading.qa">quebap.projects.autoread.wikireading.qa module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikireading.html#module-quebap.projects.autoread.wikireading.sampler">quebap.projects.autoread.wikireading.sampler module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikireading.html#module-quebap.projects.autoread.wikireading.seq2seq_models">quebap.projects.autoread.wikireading.seq2seq_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.projects.autoread.wikireading.html#module-quebap.projects.autoread.wikireading">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="quebap-projects-autoread-autoreader-module">
+<h2>quebap.projects.autoread.autoreader module<a class="headerlink" href="#quebap-projects-autoread-autoreader-module" title="Permalink to this headline">¶</a></h2>
+<p>/ _ <a href="#id1"><span class="problematic" id="id2">`</span></a>/ // / __/ _ / __/ -_) _ <a href="#id3"><span class="problematic" id="id4">`</span></a>/ _  /
+_,_/_,_/__/___/_/  __/_,_/_,_/ v0.1</p>
+<p>Learning to read, unsupervised</p>
+<dl class="class">
+<dt id="quebap.projects.autoread.autoreader.AutoReader">
+<em class="property">class </em><code class="descclassname">quebap.projects.autoread.autoreader.</code><code class="descname">AutoReader</code><span class="sig-paren">(</span><em>size</em>, <em>vocab_size</em>, <em>is_train=True</em>, <em>learning_rate=0.01</em>, <em>dropout=1.0</em>, <em>cloze_noise=0.0</em>, <em>composition='GRU'</em>, <em>devices=None</em>, <em>name='AutoReader'</em>, <em>unk_id=-1</em>, <em>forward_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="staticmethod">
+<dt id="quebap.projects.autoread.autoreader.AutoReader.create_from_config">
+<em class="property">static </em><code class="descname">create_from_config</code><span class="sig-paren">(</span><em>config</em>, <em>devices=None</em>, <em>dropout=0.0</em>, <em>cloze_noise=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader.create_from_config" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; dictionary of parameters for creating an autoreader</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="quebap.projects.autoread.autoreader.AutoReader.load_vocab">
+<em class="property">static </em><code class="descname">load_vocab</code><span class="sig-paren">(</span><em>path='./quebap/projects/autoread/document.vocab'</em>, <em>max_vocab_size=50000</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader.load_vocab" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.autoread.autoreader.AutoReader.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>sess</em>, <em>goal</em>, <em>batch</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.autoread.autoreader.AutoReader.symbolizer">
+<code class="descname">symbolizer</code><span class="sig-paren">(</span><em>outputs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader.symbolizer" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>outputs</strong> &#8211; [batch_size * max_seq_length x output_dim]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.autoread.autoreader.AutoReader.unsupervised_loss">
+<code class="descname">unsupervised_loss</code><span class="sig-paren">(</span><em>logits</em>, <em>targets</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader.unsupervised_loss" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>logits</strong> &#8211; [batch_size * max_seq_length x vocab_size]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="quebap.projects.autoread.autoreader.AutoReader.vocab_to_ixmap">
+<em class="property">static </em><code class="descname">vocab_to_ixmap</code><span class="sig-paren">(</span><em>vocab</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.AutoReader.vocab_to_ixmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.projects.autoread.autoreader.ParallelInputRNNCell">
+<em class="property">class </em><code class="descclassname">quebap.projects.autoread.autoreader.</code><code class="descname">ParallelInputRNNCell</code><span class="sig-paren">(</span><em>cell</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.ParallelInputRNNCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tensorflow.python.ops.rnn_cell.RNNCell</span></code></p>
+<dl class="attribute">
+<dt id="quebap.projects.autoread.autoreader.ParallelInputRNNCell.output_size">
+<code class="descname">output_size</code><a class="headerlink" href="#quebap.projects.autoread.autoreader.ParallelInputRNNCell.output_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="quebap.projects.autoread.autoreader.ParallelInputRNNCell.state_size">
+<code class="descname">state_size</code><a class="headerlink" href="#quebap.projects.autoread.autoreader.ParallelInputRNNCell.state_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.autoread.autoreader.ParallelInputRNNCell.zero_state">
+<code class="descname">zero_state</code><span class="sig-paren">(</span><em>batch_size</em>, <em>dtype</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.autoreader.ParallelInputRNNCell.zero_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="quebap-projects-autoread-eval-module">
+<h2>quebap.projects.autoread.eval module<a class="headerlink" href="#quebap-projects-autoread-eval-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.projects.autoread.ptb">
+<span id="quebap-projects-autoread-ptb-module"></span><h2>quebap.projects.autoread.ptb module<a class="headerlink" href="#module-quebap.projects.autoread.ptb" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.projects.autoread.scratch">
+<span id="quebap-projects-autoread-scratch-module"></span><h2>quebap.projects.autoread.scratch module<a class="headerlink" href="#module-quebap.projects.autoread.scratch" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="quebap-projects-autoread-train-module">
+<h2>quebap.projects.autoread.train module<a class="headerlink" href="#quebap-projects-autoread-train-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.projects.autoread.util">
+<span id="quebap-projects-autoread-util-module"></span><h2>quebap.projects.autoread.util module<a class="headerlink" href="#module-quebap.projects.autoread.util" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.projects.autoread.util.init_with_word_embeddings">
+<code class="descclassname">quebap.projects.autoread.util.</code><code class="descname">init_with_word_embeddings</code><span class="sig-paren">(</span><em>sess</em>, <em>autoreader</em>, <em>fname='./quebap/data/word2vec/GoogleNews-vectors-negative300.bin'</em>, <em>format='word2vec_bin'</em>, <em>normalize=True</em>, <em>clean_words=True</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.util.init_with_word_embeddings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads embeddings from file and initialize embeddings of autoreader with it</p>
+<blockquote>
+<div><p>sess: Session (TF)</p>
+<p>autoreader: AutoReader</p>
+<dl class="docutils">
+<dt>fname: string</dt>
+<dd>Path to file containing embedding</dd>
+<dt>format: string</dt>
+<dd>Format of the embedding. Possible values are:
+&#8216;word2vec_bin&#8217;, &#8216;word2vec&#8217;, &#8216;glove&#8217;, &#8216;dict&#8217;</dd>
+<dt>normalize: bool, default: True</dt>
+<dd>If true will normalize all vector to unit length</dd>
+<dt>clean_words: bool, default: True</dt>
+<dd>If true will only keep alphanumeric characters and &#8220;_&#8221;, &#8220;-&#8221;
+Warning: shouldn&#8217;t be applied to embeddings with non-ascii characters</dd>
+<dt>load_kwargs:</dt>
+<dd>Additional parameters passed to load function. Mostly useful for &#8216;glove&#8217; format where you
+should pass vocab_size and dim.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.autoread">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-quebap.projects.autoread" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.projects.autoread.sampler_for">
+<code class="descclassname">quebap.projects.autoread.</code><code class="descname">sampler_for</code><span class="sig-paren">(</span><em>dataset='wikireading'</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.autoread.sampler_for" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">quebap.projects.autoread package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#quebap-projects-autoread-autoreader-module">quebap.projects.autoread.autoreader module</a></li>
+<li><a class="reference internal" href="#quebap-projects-autoread-eval-module">quebap.projects.autoread.eval module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.autoread.ptb">quebap.projects.autoread.ptb module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.autoread.scratch">quebap.projects.autoread.scratch module</a></li>
+<li><a class="reference internal" href="#quebap-projects-autoread-train-module">quebap.projects.autoread.train module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.autoread.util">quebap.projects.autoread.util module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.autoread">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="quebap.html">quebap package</a><ul>
+  <li><a href="quebap.projects.html">quebap.projects package</a><ul>
+      <li>Previous: <a href="quebap.projects.html" title="previous chapter">quebap.projects package</a></li>
+      <li>Next: <a href="quebap.projects.autoread.wikipedia.html" title="next chapter">quebap.projects.autoread.wikipedia package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quebap.projects.autoread.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/quebap.projects.autoread.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
