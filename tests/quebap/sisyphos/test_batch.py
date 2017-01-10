@@ -40,3 +40,27 @@ def test_get_batches():
 
     assert (batches[3]['data0'] == np.array([[2, 2]])).all()
     assert (batches[3]['data1'] == np.array([[2, 2, 2]])).all()
+
+
+def test_get_feed_dicts():
+    data = {
+        'data0': [[i] * 2 for i in range(5)],
+        'data1': [[i] * 3 for i in range(5)]
+    }
+
+    placeholders = {
+        'data0': 'X',
+        'data1': 'Y'
+    }
+
+    feed_dicts_it = batch.get_feed_dicts(data, placeholders, batch_size=2)
+    feed_dicts = list(feed_dicts_it)
+
+    assert (feed_dicts[0]['X'] == np.array([[2, 2], [1, 1]])).all()
+    assert (feed_dicts[0]['Y'] == np.array([[2, 2, 2], [1, 1, 1]])).all()
+
+    assert (feed_dicts[1]['X'] == np.array([[0, 0], [4, 4]])).all()
+    assert (feed_dicts[1]['Y'] == np.array([[0, 0, 0], [4, 4, 4]])).all()
+
+    assert (feed_dicts[2]['X'] == np.array([[3, 3]])).all()
+    assert (feed_dicts[2]['Y'] == np.array([[3, 3, 3]])).all()
