@@ -381,38 +381,33 @@ Say for example fun_name=&#8217;lengths&#8217;, and <cite>keys</cite> contains &
 </tbody>
 </table>
 <p>Example:</p>
-<p>(1) Test with sequence of stuff
-&gt;&gt;&gt; dave = [
-...         &#8220;All work and no play makes Jack a dull boy&#8221;,
-...         &#8220;All work and no play makes Jack a dull boy.&#8221;,
-...         &#8220;All work and no play makes Jack a very dull boy!&#8221;]
-&gt;&gt;&gt; jack = [
-...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that!&#8221;,
-...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that&#8221;,
-...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I cannot do that&#8221;]
-&gt;&gt;&gt; support = [
-...         [&#8220;Play makes really dull&#8221;, &#8220;really dull&#8221;],
-...         [&#8220;Dave is human&#8221;],
-...         [&#8220;All work&#8221;, &#8220;all dull&#8221;, &#8220;dull&#8221;]]
-&gt;&gt;&gt; data1 = [dave, jack, support]
-&gt;&gt;&gt; vocab1 = Vocab()
-&gt;&gt;&gt; data1_lower = deep_map(data1, lambda s:s.lower())
-&gt;&gt;&gt; data1_tokenized = deep_map(data1_lower, tokenize)
-&gt;&gt;&gt; data1_ids = deep_map(data1_tokenized, vocab1)
-&gt;&gt;&gt; pprint.pprint(data1_ids)
-[[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</p>
-<blockquote>
-<div><blockquote>
-<div>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-[1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</div></blockquote>
-<dl class="docutils">
-<dt>[[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</dt>
-<dd>[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
-[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</dd>
-</dl>
-<p>[[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]]]</p>
-</div></blockquote>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data1_ids_with_lengths</span> <span class="o">=</span> <span class="n">deep_seq_map</span><span class="p">(</span><span class="n">data1_ids</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">xs</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#(1) Test with sequence of stuff</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dave</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="s2">&quot;All work and no play makes Jack a dull boy&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;All work and no play makes Jack a dull boy.&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;All work and no play makes Jack a very dull boy!&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">jack</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="s2">&quot;I&#39;m sorry Dave, I&#39;m afraid I can&#39;t do that!&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;I&#39;m sorry Dave, I&#39;m afraid I can&#39;t do that&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;I&#39;m sorry Dave, I&#39;m afraid I cannot do that&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">support</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="p">[</span><span class="s2">&quot;Play makes really dull&quot;</span><span class="p">,</span> <span class="s2">&quot;really dull&quot;</span><span class="p">],</span>
+<span class="gp">... </span>        <span class="p">[</span><span class="s2">&quot;Dave is human&quot;</span><span class="p">],</span>
+<span class="gp">... </span>        <span class="p">[</span><span class="s2">&quot;All work&quot;</span><span class="p">,</span> <span class="s2">&quot;all dull&quot;</span><span class="p">,</span> <span class="s2">&quot;dull&quot;</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data1</span> <span class="o">=</span> <span class="p">[</span><span class="n">dave</span><span class="p">,</span> <span class="n">jack</span><span class="p">,</span> <span class="n">support</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab1</span> <span class="o">=</span> <span class="n">Vocab</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data1_lower</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span><span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data1_tokenized</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data1_lower</span><span class="p">,</span> <span class="n">tokenize</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data1_ids</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data1_tokenized</span><span class="p">,</span> <span class="n">vocab1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data1_ids</span><span class="p">)</span>
+<span class="go">[[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</span>
+<span class="go">  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],</span>
+<span class="go">  [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</span>
+<span class="go"> [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</span>
+<span class="go">  [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],</span>
+<span class="go">  [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</span>
+<span class="go"> [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data1_ids_with_lengths</span> <span class="o">=</span> <span class="n">deep_seq_map</span><span class="p">(</span><span class="n">data1_ids</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">xs</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span>
 <span class="gp">... </span>                                      <span class="n">fun_name</span><span class="o">=</span><span class="s1">&#39;lengths&#39;</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data1_ids_with_lengths</span><span class="p">)</span>
 <span class="go">[[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</span>
@@ -427,24 +422,19 @@ Say for example fun_name=&#8217;lengths&#8217;, and <cite>keys</cite> contains &
 <span class="go"> [[4, 2], [3], [2, 2, 1]]]</span>
 </pre></div>
 </div>
-<p>(2) Test with data dictionary
-&gt;&gt;&gt; data2 = {&#8216;dave&#8217;: dave, &#8216;jack&#8217;: jack, &#8216;support&#8217;: support}
-&gt;&gt;&gt; pprint.pprint(data2)
-{&#8216;dave&#8217;: [&#8216;All work and no play makes Jack a dull boy&#8217;,</p>
-<blockquote>
-<div><blockquote>
-<div>&#8216;All work and no play makes Jack a dull boy.&#8217;,
-&#8216;All work and no play makes Jack a very dull boy!&#8217;],</div></blockquote>
-<dl class="docutils">
-<dt>&#8216;jack&#8217;: [&#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that!&#8221;,</dt>
-<dd>&#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that&#8221;,
-&#8220;I&#8217;m sorry Dave, I&#8217;m afraid I cannot do that&#8221;],</dd>
-<dt>&#8216;support&#8217;: [[&#8216;Play makes really dull&#8217;, &#8216;really dull&#8217;],</dt>
-<dd>[&#8216;Dave is human&#8217;],
-[&#8216;All work&#8217;, &#8216;all dull&#8217;, &#8216;dull&#8217;]]}</dd>
-</dl>
-</div></blockquote>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data2_tokenized</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">tokenize</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#(2) Test with data dictionary</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data2</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dave&#39;</span><span class="p">:</span> <span class="n">dave</span><span class="p">,</span> <span class="s1">&#39;jack&#39;</span><span class="p">:</span> <span class="n">jack</span><span class="p">,</span> <span class="s1">&#39;support&#39;</span><span class="p">:</span> <span class="n">support</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data2</span><span class="p">)</span>
+<span class="go">{&#39;dave&#39;: [&#39;All work and no play makes Jack a dull boy&#39;,</span>
+<span class="go">          &#39;All work and no play makes Jack a dull boy.&#39;,</span>
+<span class="go">          &#39;All work and no play makes Jack a very dull boy!&#39;],</span>
+<span class="go"> &#39;jack&#39;: [&quot;I&#39;m sorry Dave, I&#39;m afraid I can&#39;t do that!&quot;,</span>
+<span class="go">          &quot;I&#39;m sorry Dave, I&#39;m afraid I can&#39;t do that&quot;,</span>
+<span class="go">          &quot;I&#39;m sorry Dave, I&#39;m afraid I cannot do that&quot;],</span>
+<span class="go"> &#39;support&#39;: [[&#39;Play makes really dull&#39;, &#39;really dull&#39;],</span>
+<span class="go">             [&#39;Dave is human&#39;],</span>
+<span class="go">             [&#39;All work&#39;, &#39;all dull&#39;, &#39;dull&#39;]]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data2_tokenized</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">tokenize</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data2_tokenized</span><span class="p">[</span><span class="s1">&#39;support&#39;</span><span class="p">])</span>
 <span class="go">[[[&#39;Play&#39;, &#39;makes&#39;, &#39;really&#39;, &#39;dull&#39;], [&#39;really&#39;, &#39;dull&#39;]],</span>
 <span class="go"> [[&#39;Dave&#39;, &#39;is&#39;, &#39;human&#39;]],</span>
@@ -511,40 +501,38 @@ Say for example fun_name=&#8217;count&#8217;, and <cite>keys</cite> contains &#8
 </tr>
 </tbody>
 </table>
-<p>Example:
-&gt;&gt;&gt; dave = [
-...         &#8220;All work and no play makes Jack a dull boy&#8221;,
-...         &#8220;All work and no play makes Jack a dull boy.&#8221;,
-...         &#8220;All work and no play makes Jack a very dull boy!&#8221;]
-&gt;&gt;&gt; jack = [
-...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that!&#8221;,
-...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I can&#8217;t do that&#8221;,
-...         &#8220;I&#8217;m sorry Dave, I&#8217;m afraid I cannot do that&#8221;]
-&gt;&gt;&gt; support = [
-...         [&#8220;Play makes really dull&#8221;, &#8220;really dull&#8221;],
-...         [&#8220;Dave is human&#8221;],
-...         [&#8220;All work&#8221;, &#8220;all dull&#8221;, &#8220;dull&#8221;]]
-&gt;&gt;&gt; data2 = {&#8216;dave&#8217;: dave, &#8216;jack&#8217;: jack, &#8216;support&#8217;: support}
-&gt;&gt;&gt; vocab2 = Vocab()
-&gt;&gt;&gt; data2_processed = deep_map(data2, lambda x: tokenize(x.lower()))
-&gt;&gt;&gt; data2_ids = deep_map(data2_processed, vocab2)
-&gt;&gt;&gt; data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=[&#8216;dave&#8217;,&#8217;jack&#8217;,&#8217;support&#8217;],
-...                                       fun_name=&#8217;lengths&#8217;, expand=True)
-&gt;&gt;&gt; pprint.pprint(data2_ids_with_lengths)
-{&#8216;dave&#8217;: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</p>
-<blockquote>
-<div><blockquote>
-<div>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-[1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</div></blockquote>
-<p>&#8216;dave_lengths&#8217;: [10, 11, 12],
-&#8216;jack&#8217;: [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</p>
-<blockquote>
-<div>[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
-[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</div></blockquote>
-<p>&#8216;jack_lengths&#8217;: [17, 16, 14],
-&#8216;support&#8217;: [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],
-&#8216;support_lengths&#8217;: [[4, 2], [3], [2, 2, 1]]}</p>
-</div></blockquote>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dave</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="s2">&quot;All work and no play makes Jack a dull boy&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;All work and no play makes Jack a dull boy.&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;All work and no play makes Jack a very dull boy!&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">jack</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="s2">&quot;I&#39;m sorry Dave, I&#39;m afraid I can&#39;t do that!&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;I&#39;m sorry Dave, I&#39;m afraid I can&#39;t do that&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;I&#39;m sorry Dave, I&#39;m afraid I cannot do that&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">support</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="p">[</span><span class="s2">&quot;Play makes really dull&quot;</span><span class="p">,</span> <span class="s2">&quot;really dull&quot;</span><span class="p">],</span>
+<span class="gp">... </span>        <span class="p">[</span><span class="s2">&quot;Dave is human&quot;</span><span class="p">],</span>
+<span class="gp">... </span>        <span class="p">[</span><span class="s2">&quot;All work&quot;</span><span class="p">,</span> <span class="s2">&quot;all dull&quot;</span><span class="p">,</span> <span class="s2">&quot;dull&quot;</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data2</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dave&#39;</span><span class="p">:</span> <span class="n">dave</span><span class="p">,</span> <span class="s1">&#39;jack&#39;</span><span class="p">:</span> <span class="n">jack</span><span class="p">,</span> <span class="s1">&#39;support&#39;</span><span class="p">:</span> <span class="n">support</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab2</span> <span class="o">=</span> <span class="n">Vocab</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data2_processed</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">tokenize</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data2_ids</span> <span class="o">=</span> <span class="n">deep_map</span><span class="p">(</span><span class="n">data2_processed</span><span class="p">,</span> <span class="n">vocab2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data2_ids_with_lengths</span> <span class="o">=</span> <span class="n">deep_seq_map</span><span class="p">(</span><span class="n">data2_ids</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">xs</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;dave&#39;</span><span class="p">,</span><span class="s1">&#39;jack&#39;</span><span class="p">,</span><span class="s1">&#39;support&#39;</span><span class="p">],</span>
+<span class="gp">... </span>                                      <span class="n">fun_name</span><span class="o">=</span><span class="s1">&#39;lengths&#39;</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">data2_ids_with_lengths</span><span class="p">)</span>
+<span class="go">{&#39;dave&#39;: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],</span>
+<span class="go">          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],</span>
+<span class="go">          [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],</span>
+<span class="go"> &#39;dave_lengths&#39;: [10, 11, 12],</span>
+<span class="go"> &#39;jack&#39;: [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],</span>
+<span class="go">          [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],</span>
+<span class="go">          [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],</span>
+<span class="go"> &#39;jack_lengths&#39;: [17, 16, 14],</span>
+<span class="go"> &#39;support&#39;: [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],</span>
+<span class="go"> &#39;support_lengths&#39;: [[4, 2], [3], [2, 2, 1]]}</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -993,11 +981,8 @@ clip_by_norm. Applies the respective TensowFlow function.</li>
 </dd></dl>
 
 </div>
-<div class="section" id="quebap-sisyphos-util-module">
-<h2>quebap.sisyphos.util module<a class="headerlink" href="#quebap-sisyphos-util-module" title="Permalink to this headline">¶</a></h2>
-<p>/ /_/ / /_/ / /
-____/__/_/_/ v0.2</p>
-<p>Making useful stuff happen since 2016</p>
+<div class="section" id="module-quebap.sisyphos.util">
+<span id="quebap-sisyphos-util-module"></span><h2>quebap.sisyphos.util module<a class="headerlink" href="#module-quebap.sisyphos.util" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="quebap.sisyphos.util.get_timestamped_dir">
 <code class="descclassname">quebap.sisyphos.util.</code><code class="descname">get_timestamped_dir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.get_timestamped_dir" title="Permalink to this definition">¶</a></dt>
@@ -1030,41 +1015,44 @@ ____/__/_/_/ v0.2</p>
 <em class="property">class </em><code class="descclassname">quebap.sisyphos.vocab.</code><code class="descname">NeuralVocab</code><span class="sig-paren">(</span><em>base_vocab</em>, <em>embedding_matrix=None</em>, <em>input_size=None</em>, <em>reduced_input_size=None</em>, <em>use_pretrained=True</em>, <em>train_pretrained=False</em>, <em>unit_normalize=True</em>, <em>seed=54321</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.NeuralVocab" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.vocab.Vocab" title="quebap.sisyphos.vocab.Vocab"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.vocab.Vocab</span></code></a></p>
 <p>Wrapper around Vocab to go from indices to tensors.</p>
-<p>Example:
-Start from same Vocab as the doctest example in Vocab
-&gt;&gt;&gt; def emb(w):
-...    v = {&#8216;blah&#8217;:[1.7,0,.3],&#8217;bluh&#8217;:[0,1.5,0.5],&#8217;bleh&#8217;:[0,0,2]}
-...    return None if not w in v else v[w]
-&gt;&gt;&gt; vocab = Vocab(emb=emb)
-&gt;&gt;&gt; vocab(&#8220;blah&#8221;, &#8220;bluh&#8221;, &#8220;bleh&#8221;, &#8220;hello&#8221;, &#8220;world&#8221;)  #symbols as multiple arguments
-[-1, -2, -3, 1, 2]
-&gt;&gt;&gt; vocab([&#8216;bluh&#8217;,&#8217;world&#8217;,&#8217;wake&#8217;,&#8217;up&#8217;]) #as list of symbols
-[-2, 2, 3, 4]</p>
-<p>Create NeuralVocab object
-&gt;&gt;&gt; with tf.variable_scope(&#8216;neural_test1&#8217;):
-...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
-...     tfrun(nvocab(vocab(&#8220;world&#8221;)))
-array([ 0.35790324, -0.15442504,  0.31915373], dtype=float32)
-&gt;&gt;&gt; tra1 = get_total_trainable_variables()</p>
-<p>Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)
-&gt;&gt;&gt; with tf.variable_scope(&#8216;neural_test2&#8217;):
-...     for w in [&#8216;blah&#8217;,&#8217;bluh&#8217;,&#8217;bleh&#8217;]:
-...         w, emb(w)
-...     nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
-...     tfrun(nvocab.embedding_matrix)
-(&#8216;blah&#8217;, [1.7, 0, 0.3])
-(&#8216;bluh&#8217;, [0, 1.5, 0.5])
-(&#8216;bleh&#8217;, [0, 0, 2])
-array([[ 0.95993018,  0.06397769,  0.63649762,  0.01743277],</p>
-<blockquote>
-<div>[ 0.33867511, -0.1801414 , -0.01724755,  0.22024423],
-[ 0.05380315, -0.44075871,  0.64322513,  0.69728172],
-[ 0.16105628,  0.11053304, -0.23188654, -0.51288235],
-[-0.15421754,  0.22732525, -0.54268581,  0.67570436],
-[ 0.98478359,  0.        ,  0.17378533,  1.2295723 ],
-[ 0.        ,  0.94868326,  0.31622776, -0.68760252],
-[ 0.        ,  0.        ,  1.        , -0.23400906]], dtype=float32)</div></blockquote>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_total_trainable_variables</span><span class="p">()</span><span class="o">-</span><span class="n">tra1</span>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Start from same Vocab as the doctest example in Vocab</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">emb</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;blah&#39;</span><span class="p">:[</span><span class="mf">1.7</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">.</span><span class="mi">3</span><span class="p">],</span><span class="s1">&#39;bluh&#39;</span><span class="p">:[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">0.5</span><span class="p">],</span><span class="s1">&#39;bleh&#39;</span><span class="p">:[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]}</span>
+<span class="gp">... </span>   <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">v</span> <span class="k">else</span> <span class="n">v</span><span class="p">[</span><span class="n">w</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span> <span class="o">=</span> <span class="n">Vocab</span><span class="p">(</span><span class="n">emb</span><span class="o">=</span><span class="n">emb</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;blah&quot;</span><span class="p">,</span> <span class="s2">&quot;bluh&quot;</span><span class="p">,</span> <span class="s2">&quot;bleh&quot;</span><span class="p">,</span> <span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="s2">&quot;world&quot;</span><span class="p">)</span>  <span class="c1">#symbols as multiple arguments</span>
+<span class="go">[-1, -2, -3, 1, 2]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="p">([</span><span class="s1">&#39;bluh&#39;</span><span class="p">,</span><span class="s1">&#39;world&#39;</span><span class="p">,</span><span class="s1">&#39;wake&#39;</span><span class="p">,</span><span class="s1">&#39;up&#39;</span><span class="p">])</span> <span class="c1">#as list of symbols</span>
+<span class="go">[-2, 2, 3, 4]</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Create NeuralVocab object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s1">&#39;neural_test1&#39;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">nvocab</span> <span class="o">=</span> <span class="n">NeuralVocab</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">unit_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">tfrun</span><span class="p">(</span><span class="n">nvocab</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;world&quot;</span><span class="p">)))</span>
+<span class="go">array([ 0.35790324, -0.15442504,  0.31915373], dtype=float32)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tra1</span> <span class="o">=</span> <span class="n">get_total_trainable_variables</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s1">&#39;neural_test2&#39;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;blah&#39;</span><span class="p">,</span><span class="s1">&#39;bluh&#39;</span><span class="p">,</span><span class="s1">&#39;bleh&#39;</span><span class="p">]:</span>
+<span class="gp">... </span>        <span class="n">w</span><span class="p">,</span> <span class="n">emb</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">nvocab</span> <span class="o">=</span> <span class="n">NeuralVocab</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">unit_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">train_pretrained</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">tfrun</span><span class="p">(</span><span class="n">nvocab</span><span class="o">.</span><span class="n">embedding_matrix</span><span class="p">)</span>
+<span class="go">(&#39;blah&#39;, [1.7, 0, 0.3])</span>
+<span class="go">(&#39;bluh&#39;, [0, 1.5, 0.5])</span>
+<span class="go">(&#39;bleh&#39;, [0, 0, 2])</span>
+<span class="go">array([[ 0.95993018,  0.06397769,  0.63649762,  0.01743277],</span>
+<span class="go">       [ 0.33867511, -0.1801414 , -0.01724755,  0.22024423],</span>
+<span class="go">       [ 0.05380315, -0.44075871,  0.64322513,  0.69728172],</span>
+<span class="go">       [ 0.16105628,  0.11053304, -0.23188654, -0.51288235],</span>
+<span class="go">       [-0.15421754,  0.22732525, -0.54268581,  0.67570436],</span>
+<span class="go">       [ 0.98478359,  0.        ,  0.17378533,  1.2295723 ],</span>
+<span class="go">       [ 0.        ,  0.94868326,  0.31622776, -0.68760252],</span>
+<span class="go">       [ 0.        ,  0.        ,  1.        , -0.23400906]], dtype=float32)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_total_trainable_variables</span><span class="p">()</span><span class="o">-</span><span class="n">tra1</span>
 <span class="go">23</span>
 </pre></div>
 </div>
@@ -1106,107 +1094,129 @@ or tensor with tf.int32 integers.</li>
 <em class="property">class </em><code class="descclassname">quebap.sisyphos.vocab.</code><code class="descname">Vocab</code><span class="sig-paren">(</span><em>unk='&lt;UNK&gt;'</em>, <em>emb=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>Vocab objects for use in sisyphos pipelines.</p>
-<p>Example:</p>
-<p>Test Vocab without pre-trained embeddings
-&gt;&gt;&gt; vocab = Vocab()
-&gt;&gt;&gt; print(vocab(&#8220;blah&#8221;))
-1
-&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
-2
-&gt;&gt;&gt; print(vocab(&#8220;bleh&#8221;))
-3
-&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
-2
-&gt;&gt;&gt; print(vocab(&#8220;hello&#8221;))
-4
-&gt;&gt;&gt; print(vocab(&#8220;world&#8221;))
-5</p>
-<p>Sym2id before freezing:
-&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
-...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
-&lt;UNK&gt;  :  0
-blah  :  1
-bleh  :  3
-bluh  :  2
-hello  :  4
-world  :  5</p>
-<p>Sym2id after freezing (no difference, because no pre-trained embeddings used):
-&gt;&gt;&gt; vocab.freeze()
-&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
-...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
-&lt;UNK&gt;  :  0
-blah  :  1
-bleh  :  3
-bluh  :  2
-hello  :  4
-world  :  5</p>
-<p>Test Vocab with pre-trained embeddings
-&gt;&gt;&gt; def emb(w):
-...    v = {&#8216;blah&#8217;:[1.7,0,.3],&#8217;bluh&#8217;:[0,1.5,0.5],&#8217;bleh&#8217;:[0,0,2]}
-...    return None if not w in v else v[w]
-&gt;&gt;&gt; vocab = Vocab(emb=emb)
-&gt;&gt;&gt; print(vocab(&#8220;blah&#8221;))
--1
-&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
--2
-&gt;&gt;&gt; print(vocab(&#8220;bleh&#8221;))
--3
-&gt;&gt;&gt; print(vocab(&#8220;bluh&#8221;))
--2
-&gt;&gt;&gt; print(vocab(&#8220;hello&#8221;))
-1
-&gt;&gt;&gt; print(vocab(&#8220;world&#8221;))
-2</p>
-<p>Sym2id before freezing:
-&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
-...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
-&lt;UNK&gt;  :  0
-blah  :  -1
-bleh  :  -3
-bluh  :  -2
-hello  :  1
-world  :  2</p>
-<p>Sym2id after freezing: normalized (positive) ids, also for pre-trained terms
-&gt;&gt;&gt; vocab.freeze()
-&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
-...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
-&lt;UNK&gt;  :  0
-blah  :  3
-bleh  :  5
-bluh  :  4
-hello  :  1
-world  :  2</p>
-<p>Test pretrained and out-of-vocab id&#8217;s before freezing
-&gt;&gt;&gt; vocab.unfreeze()
-&gt;&gt;&gt; vocab.get_ids_pretrained()
-[-1, -2, -3]
-&gt;&gt;&gt; vocab.get_ids_oov()
-[0, 1, 2]</p>
-<p>Test pretrained and out-of-vocab id&#8217;s after freezing
-&gt;&gt;&gt; vocab.freeze()
-&gt;&gt;&gt; vocab.get_ids_pretrained()
-[3, 4, 5]
-&gt;&gt;&gt; vocab.get_ids_oov()
-[0, 1, 2]</p>
-<p>Test calling frozen Vocab object
-&gt;&gt;&gt; vocab([&#8216;bluh&#8217;,&#8217;world&#8217;,&#8217;wake&#8217;,&#8217;up&#8217;]) #last 2 are new words, hence unknown
-[4, 2, 0, 0]</p>
-<p>Test calling unfrozen Vocab object
-&gt;&gt;&gt; vocab.unfreeze()
-&gt;&gt;&gt; vocab([&#8216;bluh&#8217;,&#8217;world&#8217;,&#8217;wake&#8217;,&#8217;up&#8217;]) #last 2 are new words, hence added to Vocab
-[-2, 2, 3, 4]</p>
-<p>Test sym2id after freezing again
-&gt;&gt;&gt; vocab.freeze()
-&gt;&gt;&gt; for k in sorted(vocab.sym2id.keys()):
-...     print(k,&#8217; : &#8216;,vocab.sym2id[k])
-&lt;UNK&gt;  :  0
-blah  :  5
-bleh  :  7
-bluh  :  6
-hello  :  1
-up  :  4
-wake  :  3
-world  :  2</p>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test Vocab without pre-trained embeddings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span> <span class="o">=</span> <span class="n">Vocab</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;blah&quot;</span><span class="p">))</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;bluh&quot;</span><span class="p">))</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;bleh&quot;</span><span class="p">))</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;bluh&quot;</span><span class="p">))</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">))</span>
+<span class="go">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;world&quot;</span><span class="p">))</span>
+<span class="go">5</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Sym2id before freezing:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="s1">&#39; : &#39;</span><span class="p">,</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+<span class="go">&lt;UNK&gt;  :  0</span>
+<span class="go">blah  :  1</span>
+<span class="go">bleh  :  3</span>
+<span class="go">bluh  :  2</span>
+<span class="go">hello  :  4</span>
+<span class="go">world  :  5</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Sym2id after freezing (no difference, because no pre-trained embeddings used):</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="s1">&#39; : &#39;</span><span class="p">,</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+<span class="go">&lt;UNK&gt;  :  0</span>
+<span class="go">blah  :  1</span>
+<span class="go">bleh  :  3</span>
+<span class="go">bluh  :  2</span>
+<span class="go">hello  :  4</span>
+<span class="go">world  :  5</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test Vocab with pre-trained embeddings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">emb</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;blah&#39;</span><span class="p">:[</span><span class="mf">1.7</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">.</span><span class="mi">3</span><span class="p">],</span><span class="s1">&#39;bluh&#39;</span><span class="p">:[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">0.5</span><span class="p">],</span><span class="s1">&#39;bleh&#39;</span><span class="p">:[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]}</span>
+<span class="gp">... </span>   <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">v</span> <span class="k">else</span> <span class="n">v</span><span class="p">[</span><span class="n">w</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span> <span class="o">=</span> <span class="n">Vocab</span><span class="p">(</span><span class="n">emb</span><span class="o">=</span><span class="n">emb</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;blah&quot;</span><span class="p">))</span>
+<span class="go">-1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;bluh&quot;</span><span class="p">))</span>
+<span class="go">-2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;bleh&quot;</span><span class="p">))</span>
+<span class="go">-3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;bluh&quot;</span><span class="p">))</span>
+<span class="go">-2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">))</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">vocab</span><span class="p">(</span><span class="s2">&quot;world&quot;</span><span class="p">))</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Sym2id before freezing:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="s1">&#39; : &#39;</span><span class="p">,</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+<span class="go">&lt;UNK&gt;  :  0</span>
+<span class="go">blah  :  -1</span>
+<span class="go">bleh  :  -3</span>
+<span class="go">bluh  :  -2</span>
+<span class="go">hello  :  1</span>
+<span class="go">world  :  2</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Sym2id after freezing: normalized (positive) ids, also for pre-trained terms</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="s1">&#39; : &#39;</span><span class="p">,</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+<span class="go">&lt;UNK&gt;  :  0</span>
+<span class="go">blah  :  3</span>
+<span class="go">bleh  :  5</span>
+<span class="go">bluh  :  4</span>
+<span class="go">hello  :  1</span>
+<span class="go">world  :  2</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test pretrained and out-of-vocab id&#39;s before freezing</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">unfreeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">get_ids_pretrained</span><span class="p">()</span>
+<span class="go">[-1, -2, -3]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">get_ids_oov</span><span class="p">()</span>
+<span class="go">[0, 1, 2]</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test pretrained and out-of-vocab id&#39;s after freezing</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">get_ids_pretrained</span><span class="p">()</span>
+<span class="go">[3, 4, 5]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">get_ids_oov</span><span class="p">()</span>
+<span class="go">[0, 1, 2]</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test calling frozen Vocab object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="p">([</span><span class="s1">&#39;bluh&#39;</span><span class="p">,</span><span class="s1">&#39;world&#39;</span><span class="p">,</span><span class="s1">&#39;wake&#39;</span><span class="p">,</span><span class="s1">&#39;up&#39;</span><span class="p">])</span> <span class="c1">#last 2 are new words, hence unknown</span>
+<span class="go">[4, 2, 0, 0]</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test calling unfrozen Vocab object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">unfreeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="p">([</span><span class="s1">&#39;bluh&#39;</span><span class="p">,</span><span class="s1">&#39;world&#39;</span><span class="p">,</span><span class="s1">&#39;wake&#39;</span><span class="p">,</span><span class="s1">&#39;up&#39;</span><span class="p">])</span> <span class="c1">#last 2 are new words, hence added to Vocab</span>
+<span class="go">[-2, 2, 3, 4]</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Test sym2id after freezing again</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vocab</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="s1">&#39; : &#39;</span><span class="p">,</span><span class="n">vocab</span><span class="o">.</span><span class="n">sym2id</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+<span class="go">&lt;UNK&gt;  :  0</span>
+<span class="go">blah  :  5</span>
+<span class="go">bleh  :  7</span>
+<span class="go">bluh  :  6</span>
+<span class="go">hello  :  1</span>
+<span class="go">up  :  4</span>
+<span class="go">wake  :  3</span>
+<span class="go">world  :  2</span>
+</pre></div>
+</div>
 <dl class="attribute">
 <dt id="quebap.sisyphos.vocab.Vocab.DEFAULT_UNK">
 <code class="descname">DEFAULT_UNK</code><em class="property"> = '&lt;UNK&gt;'</em><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.DEFAULT_UNK" title="Permalink to this definition">¶</a></dt>
@@ -1326,7 +1336,7 @@ will result in shifted id&#8217;s for pre-trained symbols.</p>
 <li><a class="reference internal" href="#module-quebap.sisyphos.pipelines">quebap.sisyphos.pipelines module</a></li>
 <li><a class="reference internal" href="#module-quebap.sisyphos.tfutil">quebap.sisyphos.tfutil module</a></li>
 <li><a class="reference internal" href="#module-quebap.sisyphos.train">quebap.sisyphos.train module</a></li>
-<li><a class="reference internal" href="#quebap-sisyphos-util-module">quebap.sisyphos.util module</a></li>
+<li><a class="reference internal" href="#module-quebap.sisyphos.util">quebap.sisyphos.util module</a></li>
 <li><a class="reference internal" href="#module-quebap.sisyphos.vocab">quebap.sisyphos.vocab module</a></li>
 <li><a class="reference internal" href="#module-quebap.sisyphos">Module contents</a></li>
 </ul>

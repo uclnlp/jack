@@ -1,11 +1,9 @@
-"""
-            __                       __
- ___ ___ __/ /____  _______ ___ ____/ /
-/ _ `/ // / __/ _ \/ __/ -_) _ `/ _  /
-\_,_/\_,_/\__/\___/_/  \__/\_,_/\_,_/ v0.1
-
-Learning to read, unsupervised
-"""
+#            __                       __
+# ___ ___ __/ /____  _______ ___ ____/ /
+#/ _ `/ // / __/ _ \/ __/ -_) _ `/ _  /
+#\_,_/\_,_/\__/\___/_/  \__/\_,_/\_,_/ v0.1
+#
+#Learning to read, unsupervised
 
 from tensorflow.python.ops.rnn_cell import GRUCell, BasicLSTMCell, RNNCell
 import tensorflow as tf
