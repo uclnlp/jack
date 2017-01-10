@@ -1,12 +1,10 @@
-"""
-         __  _ __
-  __  __/ /_(_) /
- / / / / __/ / /
-/ /_/ / /_/ / /
-\____/\__/_/_/ v0.2
-
-Making useful stuff happen since 2016
-"""
+#         __  _ __
+#  __  __/ /_(_) /
+# / / / / __/ / /
+#/ /_/ / /_/ / /
+#\____/\__/_/_/ v0.2
+#
+#Making useful stuff happen since 2016
 
 import numpy as np
 import contextlib

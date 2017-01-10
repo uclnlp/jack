@@ -28,16 +28,31 @@ from quebap.sisyphos.pipelines import create_placeholders, pipeline
 
 from quebap.load.read_quebap import quebap_load as _quebap_load
 
+"""Loads data, preprocesses it, and finally initializes and trains a model.
+
+   The script does step-by-step:
+      (1) Define sisyphos models
+      (2) Parse the input arguments
+      (3) Read the train, dev, and test data
+          (with optionally loading pretrained embeddings)
+      (4) Preprocesses the data (tokenize, normalize, add
+          start and end of sentence tags) via the sisyphos.pipeline method
+      (5) Create NeuralVocab
+      (6) Create TensorFlow placeholders and initialize model
+      (7) Batch the data via sisyphos.batch.get_feed_dicts
+      (8) Add hooks
+      (9) Train the model
+"""
 
 def quebap_load(path, max_count=None, **options):
     return _quebap_load(path, max_count, **options)
 
-
-
-
 def main():
 
     t0 = time()
+
+    #(1) Defined sisyphos models
+
     # this is where the list of all models lives, add those if they work
     reader_models = {
         'bicond_singlesupport_reader': models.conditional_reader_model,
@@ -58,19 +73,18 @@ def main():
 
     #todo clean up
     #common default input files - for rapid testing
-    """
-    train_default = 'data/SQuAD/snippet_quebapformat.json'
-    dev_default = 'data/sentihood/single_quebap.json'
-    test_default = 'data/sentihood/single_quebap.json'
-    """
-    """train_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_train_quebap_v1.json"
-    dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
-    test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"""
+    #train_default = 'data/SQuAD/snippet_quebapformat.json'
+    #dev_default = 'data/sentihood/single_quebap.json'
+    #test_default = 'data/sentihood/single_quebap.json'
+    #train_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_train_quebap_v1.json"
+    #dev_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_dev_quebap_v1.json"
+    #test_default = "./quebap/data/SNLI/snli_1.0/snli_1.0_test_quebap_v1.json"
 
     train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
     #train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
 
-    #args
+    #(2) Parse the input arguments
+
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default='False', choices={'True','False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
     parser.add_argument('--debug_examples', default=10, type=int, help="If in debug mode, how many examples should be used (default 2000)")
@@ -132,6 +146,9 @@ def main():
     for arg in vars(args):
         print('\t%s : %s'%(str(arg),str(getattr(args, arg))))
 
+    #(3) Read the train, dev, and test data
+    #    (with optionally loading pretrained embeddings)
+
     if args.debug:
         train_data = quebap_load(args.train, args.debug_examples, **vars(args))
         print('loaded %d samples as debug train/dev/test dataset '%args.debug_examples)
@@ -152,9 +169,12 @@ def main():
             print('loaded pre-trained embeddings (%s)'%emb_file)
 
     emb = embeddings.get if args.pretrain else None
-    
 
     checkpoint()
+
+    #  (4) Preprocesses the data (tokenize, normalize, add
+    #      start and end of sentence tags) via the sisyphos.pipeline method
+
     print('build vocab based on train data')
     train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
 
@@ -194,15 +214,21 @@ def main():
     test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
     checkpoint()
 
+    #(5) Create NeuralVocab
+
     print('build NeuralVocab')
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
-
     checkpoint()
+
+    #(6) Create TensorFlow placeholders and intialize model
+
     print('create placeholders')
     placeholders = create_placeholders(train_data)
     print('build model %s'%args.model)
     (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
+
+    #(7) Batch the data via sisyphos.batch.get_feed_dicts
 
     if args.supports != "none":
         bucket_order = ('question','support') #composite buckets; first over question, then over support
@@ -232,6 +258,8 @@ def main():
     else:
         answname = "answers"
 
+    #(8) Add hooks
+
     hooks = [
         TensorHook(20, [loss, nvocab.get_embedding_matrix()],
                    feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
@@ -250,6 +278,8 @@ def main():
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
                     at_every_epoch=args.epochs, metrics=['Acc','macroP','macroR','macroF1'], print_details=False, info="test data", print_to="test_out.txt")
     ]
+
+    #(9) Train the model
 
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
 

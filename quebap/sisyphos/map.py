@@ -72,7 +72,7 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
 
     Example:
 
-    (1) Test with sequence of stuff
+    >>> #(1) Test with sequence of stuff
     >>> dave = [
     ...         "All work and no play makes Jack a dull boy",
     ...         "All work and no play makes Jack a dull boy.",
@@ -113,7 +113,7 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
      [[4, 2], [3], [2, 2, 1]]]
 
 
-    (2) Test with data dictionary
+    >>> #(2) Test with data dictionary
     >>> data2 = {'dave': dave, 'jack': jack, 'support': support}
     >>> pprint.pprint(data2)
     {'dave': ['All work and no play makes Jack a dull boy',
@@ -221,35 +221,35 @@ def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
       Transformed sequence or dictionary.
 
     Example:
-    >>> dave = [
-    ...         "All work and no play makes Jack a dull boy",
-    ...         "All work and no play makes Jack a dull boy.",
-    ...         "All work and no play makes Jack a very dull boy!"]
-    >>> jack = [
-    ...         "I'm sorry Dave, I'm afraid I can't do that!",
-    ...         "I'm sorry Dave, I'm afraid I can't do that",
-    ...         "I'm sorry Dave, I'm afraid I cannot do that"]
-    >>> support = [
-    ...         ["Play makes really dull", "really dull"],
-    ...         ["Dave is human"],
-    ...         ["All work", "all dull", "dull"]]
-    >>> data2 = {'dave': dave, 'jack': jack, 'support': support}
-    >>> vocab2 = Vocab()
-    >>> data2_processed = deep_map(data2, lambda x: tokenize(x.lower()))
-    >>> data2_ids = deep_map(data2_processed, vocab2)
-    >>> data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=['dave','jack','support'],
-    ...                                       fun_name='lengths', expand=True)
-    >>> pprint.pprint(data2_ids_with_lengths)
-    {'dave': [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-              [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-              [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
-     'dave_lengths': [10, 11, 12],
-     'jack': [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],
-              [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
-              [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],
-     'jack_lengths': [17, 16, 14],
-     'support': [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],
-     'support_lengths': [[4, 2], [3], [2, 2, 1]]}
+        >>> dave = [
+        ...         "All work and no play makes Jack a dull boy",
+        ...         "All work and no play makes Jack a dull boy.",
+        ...         "All work and no play makes Jack a very dull boy!"]
+        >>> jack = [
+        ...         "I'm sorry Dave, I'm afraid I can't do that!",
+        ...         "I'm sorry Dave, I'm afraid I can't do that",
+        ...         "I'm sorry Dave, I'm afraid I cannot do that"]
+        >>> support = [
+        ...         ["Play makes really dull", "really dull"],
+        ...         ["Dave is human"],
+        ...         ["All work", "all dull", "dull"]]
+        >>> data2 = {'dave': dave, 'jack': jack, 'support': support}
+        >>> vocab2 = Vocab()
+        >>> data2_processed = deep_map(data2, lambda x: tokenize(x.lower()))
+        >>> data2_ids = deep_map(data2_processed, vocab2)
+        >>> data2_ids_with_lengths = deep_seq_map(data2_ids, lambda xs: len(xs), keys=['dave','jack','support'],
+        ...                                       fun_name='lengths', expand=True)
+        >>> pprint.pprint(data2_ids_with_lengths)
+        {'dave': [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                  [1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 10, 13]],
+         'dave_lengths': [10, 11, 12],
+         'jack': [[14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24, 13],
+                  [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 21, 15, 22, 23, 24],
+                  [14, 15, 16, 17, 18, 19, 14, 15, 16, 20, 14, 25, 23, 24]],
+         'jack_lengths': [17, 16, 14],
+         'support': [[[5, 6, 26, 9], [26, 9]], [[18, 27, 28]], [[1, 2], [1, 9], [9]]],
+         'support_lengths': [[4, 2], [3], [2, 2, 1]]}
     """
 
     if isinstance(xss, list) and all([not isinstance(xs, list) for xs in xss]):

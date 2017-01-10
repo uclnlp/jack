@@ -2,7 +2,7 @@ import numpy as np
 import random
 from itertools import islice
 
-from quebap.sisyphos.map import numpify
+#from quebap.sisyphos.map import numpify
 
 
 #make deterministic
@@ -62,6 +62,8 @@ TODO: update documentation with dicts...
             lengths = [len(data[_order[0]][id]) for id in ids]
             sorted_ids_lengths = sorted(zip(ids, lengths), key=lambda x: x[1])
             if isinstance(_structure[0], int):#automatic bucketing
+                # how many buckets do we need to divide everything into
+                # pieces of length structure[0]?
                 size = len(lengths)//_structure[0] if len(lengths)%_structure[0]==0 else 1+len(lengths)//_structure[0]
                 buckets = list(_chunk([tup[0] for tup in sorted_ids_lengths],size))
             else:# structure_now is sequence of ints

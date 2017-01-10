@@ -13,116 +13,116 @@ class Vocab(object):
 
     Example:
 
-    Test Vocab without pre-trained embeddings
-    >>> vocab = Vocab()
-    >>> print(vocab("blah"))
-    1
-    >>> print(vocab("bluh"))
-    2
-    >>> print(vocab("bleh"))
-    3
-    >>> print(vocab("bluh"))
-    2
-    >>> print(vocab("hello"))
-    4
-    >>> print(vocab("world"))
-    5
+        >>> #Test Vocab without pre-trained embeddings
+        >>> vocab = Vocab()
+        >>> print(vocab("blah"))
+        1
+        >>> print(vocab("bluh"))
+        2
+        >>> print(vocab("bleh"))
+        3
+        >>> print(vocab("bluh"))
+        2
+        >>> print(vocab("hello"))
+        4
+        >>> print(vocab("world"))
+        5
 
-    Sym2id before freezing:
-    >>> for k in sorted(vocab.sym2id.keys()):
-    ...     print(k,' : ',vocab.sym2id[k])
-    <UNK>  :  0
-    blah  :  1
-    bleh  :  3
-    bluh  :  2
-    hello  :  4
-    world  :  5
+        >>> #Sym2id before freezing:
+        >>> for k in sorted(vocab.sym2id.keys()):
+        ...     print(k,' : ',vocab.sym2id[k])
+        <UNK>  :  0
+        blah  :  1
+        bleh  :  3
+        bluh  :  2
+        hello  :  4
+        world  :  5
 
-    Sym2id after freezing (no difference, because no pre-trained embeddings used):
-    >>> vocab.freeze()
-    >>> for k in sorted(vocab.sym2id.keys()):
-    ...     print(k,' : ',vocab.sym2id[k])
-    <UNK>  :  0
-    blah  :  1
-    bleh  :  3
-    bluh  :  2
-    hello  :  4
-    world  :  5
+        >>> #Sym2id after freezing (no difference, because no pre-trained embeddings used):
+        >>> vocab.freeze()
+        >>> for k in sorted(vocab.sym2id.keys()):
+        ...     print(k,' : ',vocab.sym2id[k])
+        <UNK>  :  0
+        blah  :  1
+        bleh  :  3
+        bluh  :  2
+        hello  :  4
+        world  :  5
 
-    Test Vocab with pre-trained embeddings
-    >>> def emb(w):
-    ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
-    ...    return None if not w in v else v[w]
-    >>> vocab = Vocab(emb=emb)
-    >>> print(vocab("blah"))
-    -1
-    >>> print(vocab("bluh"))
-    -2
-    >>> print(vocab("bleh"))
-    -3
-    >>> print(vocab("bluh"))
-    -2
-    >>> print(vocab("hello"))
-    1
-    >>> print(vocab("world"))
-    2
+        >>> #Test Vocab with pre-trained embeddings
+        >>> def emb(w):
+        ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
+        ...    return None if not w in v else v[w]
+        >>> vocab = Vocab(emb=emb)
+        >>> print(vocab("blah"))
+        -1
+        >>> print(vocab("bluh"))
+        -2
+        >>> print(vocab("bleh"))
+        -3
+        >>> print(vocab("bluh"))
+        -2
+        >>> print(vocab("hello"))
+        1
+        >>> print(vocab("world"))
+        2
 
-    Sym2id before freezing:
-    >>> for k in sorted(vocab.sym2id.keys()):
-    ...     print(k,' : ',vocab.sym2id[k])
-    <UNK>  :  0
-    blah  :  -1
-    bleh  :  -3
-    bluh  :  -2
-    hello  :  1
-    world  :  2
+        >>> #Sym2id before freezing:
+        >>> for k in sorted(vocab.sym2id.keys()):
+        ...     print(k,' : ',vocab.sym2id[k])
+        <UNK>  :  0
+        blah  :  -1
+        bleh  :  -3
+        bluh  :  -2
+        hello  :  1
+        world  :  2
 
-    Sym2id after freezing: normalized (positive) ids, also for pre-trained terms
-    >>> vocab.freeze()
-    >>> for k in sorted(vocab.sym2id.keys()):
-    ...     print(k,' : ',vocab.sym2id[k])
-    <UNK>  :  0
-    blah  :  3
-    bleh  :  5
-    bluh  :  4
-    hello  :  1
-    world  :  2
+        >>> #Sym2id after freezing: normalized (positive) ids, also for pre-trained terms
+        >>> vocab.freeze()
+        >>> for k in sorted(vocab.sym2id.keys()):
+        ...     print(k,' : ',vocab.sym2id[k])
+        <UNK>  :  0
+        blah  :  3
+        bleh  :  5
+        bluh  :  4
+        hello  :  1
+        world  :  2
 
-    Test pretrained and out-of-vocab id's before freezing
-    >>> vocab.unfreeze()
-    >>> vocab.get_ids_pretrained()
-    [-1, -2, -3]
-    >>> vocab.get_ids_oov()
-    [0, 1, 2]
+        >>> #Test pretrained and out-of-vocab id's before freezing
+        >>> vocab.unfreeze()
+        >>> vocab.get_ids_pretrained()
+        [-1, -2, -3]
+        >>> vocab.get_ids_oov()
+        [0, 1, 2]
 
-    Test pretrained and out-of-vocab id's after freezing
-    >>> vocab.freeze()
-    >>> vocab.get_ids_pretrained()
-    [3, 4, 5]
-    >>> vocab.get_ids_oov()
-    [0, 1, 2]
+        >>> #Test pretrained and out-of-vocab id's after freezing
+        >>> vocab.freeze()
+        >>> vocab.get_ids_pretrained()
+        [3, 4, 5]
+        >>> vocab.get_ids_oov()
+        [0, 1, 2]
 
-    Test calling frozen Vocab object
-    >>> vocab(['bluh','world','wake','up']) #last 2 are new words, hence unknown
-    [4, 2, 0, 0]
+        >>> #Test calling frozen Vocab object
+        >>> vocab(['bluh','world','wake','up']) #last 2 are new words, hence unknown
+        [4, 2, 0, 0]
 
-    Test calling unfrozen Vocab object
-    >>> vocab.unfreeze()
-    >>> vocab(['bluh','world','wake','up']) #last 2 are new words, hence added to Vocab
-    [-2, 2, 3, 4]
+        >>> #Test calling unfrozen Vocab object
+        >>> vocab.unfreeze()
+        >>> vocab(['bluh','world','wake','up']) #last 2 are new words, hence added to Vocab
+        [-2, 2, 3, 4]
 
-    Test sym2id after freezing again
-    >>> vocab.freeze()
-    >>> for k in sorted(vocab.sym2id.keys()):
-    ...     print(k,' : ',vocab.sym2id[k])
-    <UNK>  :  0
-    blah  :  5
-    bleh  :  7
-    bluh  :  6
-    hello  :  1
-    up  :  4
-    wake  :  3
-    world  :  2
+        >>> #Test sym2id after freezing again
+        >>> vocab.freeze()
+        >>> for k in sorted(vocab.sym2id.keys()):
+        ...     print(k,' : ',vocab.sym2id[k])
+        <UNK>  :  0
+        blah  :  5
+        bleh  :  7
+        bluh  :  6
+        hello  :  1
+        up  :  4
+        wake  :  3
+        world  :  2
     """
 
     DEFAULT_UNK = "<UNK>"
@@ -306,43 +306,43 @@ class NeuralVocab(Vocab):
     Wrapper around Vocab to go from indices to tensors.
 
     Example:
-    Start from same Vocab as the doctest example in Vocab
-    >>> def emb(w):
-    ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
-    ...    return None if not w in v else v[w]
-    >>> vocab = Vocab(emb=emb)
-    >>> vocab("blah", "bluh", "bleh", "hello", "world")  #symbols as multiple arguments
-    [-1, -2, -3, 1, 2]
-    >>> vocab(['bluh','world','wake','up']) #as list of symbols
-    [-2, 2, 3, 4]
+        >>> #Start from same Vocab as the doctest example in Vocab
+        >>> def emb(w):
+        ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
+        ...    return None if not w in v else v[w]
+        >>> vocab = Vocab(emb=emb)
+        >>> vocab("blah", "bluh", "bleh", "hello", "world")  #symbols as multiple arguments
+        [-1, -2, -3, 1, 2]
+        >>> vocab(['bluh','world','wake','up']) #as list of symbols
+        [-2, 2, 3, 4]
 
-    Create NeuralVocab object
-    >>> with tf.variable_scope('neural_test1'):
-    ...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
-    ...     tfrun(nvocab(vocab("world")))
-    array([ 0.35790324, -0.15442504,  0.31915373], dtype=float32)
-    >>> tra1 = get_total_trainable_variables()
+        >>> #Create NeuralVocab object
+        >>> with tf.variable_scope('neural_test1'):
+        ...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
+        ...     tfrun(nvocab(vocab("world")))
+        array([ 0.35790324, -0.15442504,  0.31915373], dtype=float32)
+        >>> tra1 = get_total_trainable_variables()
 
 
-    Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)
-    >>> with tf.variable_scope('neural_test2'):
-    ...     for w in ['blah','bluh','bleh']:
-    ...         w, emb(w)
-    ...     nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
-    ...     tfrun(nvocab.embedding_matrix)
-    ('blah', [1.7, 0, 0.3])
-    ('bluh', [0, 1.5, 0.5])
-    ('bleh', [0, 0, 2])
-    array([[ 0.95993018,  0.06397769,  0.63649762,  0.01743277],
-           [ 0.33867511, -0.1801414 , -0.01724755,  0.22024423],
-           [ 0.05380315, -0.44075871,  0.64322513,  0.69728172],
-           [ 0.16105628,  0.11053304, -0.23188654, -0.51288235],
-           [-0.15421754,  0.22732525, -0.54268581,  0.67570436],
-           [ 0.98478359,  0.        ,  0.17378533,  1.2295723 ],
-           [ 0.        ,  0.94868326,  0.31622776, -0.68760252],
-           [ 0.        ,  0.        ,  1.        , -0.23400906]], dtype=float32)
-    >>> get_total_trainable_variables()-tra1
-    23
+        >>> #Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)
+        >>> with tf.variable_scope('neural_test2'):
+        ...     for w in ['blah','bluh','bleh']:
+        ...         w, emb(w)
+        ...     nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
+        ...     tfrun(nvocab.embedding_matrix)
+        ('blah', [1.7, 0, 0.3])
+        ('bluh', [0, 1.5, 0.5])
+        ('bleh', [0, 0, 2])
+        array([[ 0.95993018,  0.06397769,  0.63649762,  0.01743277],
+               [ 0.33867511, -0.1801414 , -0.01724755,  0.22024423],
+               [ 0.05380315, -0.44075871,  0.64322513,  0.69728172],
+               [ 0.16105628,  0.11053304, -0.23188654, -0.51288235],
+               [-0.15421754,  0.22732525, -0.54268581,  0.67570436],
+               [ 0.98478359,  0.        ,  0.17378533,  1.2295723 ],
+               [ 0.        ,  0.94868326,  0.31622776, -0.68760252],
+               [ 0.        ,  0.        ,  1.        , -0.23400906]], dtype=float32)
+        >>> get_total_trainable_variables()-tra1
+        23
 
     Interpretation of number of trainable variables from neural_test2:
     out-of-vocab: 8 - 3 = 5 symbols, with each 4 dimensions = 20;
