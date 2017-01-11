@@ -53,7 +53,8 @@
 <dl class="class">
 <dt id="quebap.load.embeddings.embeddings.Embeddings">
 <em class="property">class </em><code class="descclassname">quebap.load.embeddings.embeddings.</code><code class="descname">Embeddings</code><span class="sig-paren">(</span><em>vocabulary</em>, <em>lookup</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.embeddings.Embeddings" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>Wraps Vocabulary and embedding matrix to do lookups</p>
+<dl class="method">
 <dt id="quebap.load.embeddings.embeddings.Embeddings.get">
 <code class="descname">get</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.embeddings.Embeddings.get" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -68,10 +69,22 @@
 <dl class="function">
 <dt id="quebap.load.embeddings.embeddings.load_embeddings">
 <code class="descclassname">quebap.load.embeddings.embeddings.</code><code class="descname">load_embeddings</code><span class="sig-paren">(</span><em>file</em>, <em>typ</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.embeddings.load_embeddings" title="Permalink to this definition">¶</a></dt>
-<dd><p>wrapper that allows loading different types of embeddings
-:param file:  path to files like &#8220;GoogleNews-vectors-negative300.bin.gz&#8221; or &#8220;glove.42B.300d.zip&#8221;
-:param typ: &#8220;word2vec&#8221; or &#8220;glove&#8221;
-:return:  Embeddings object</p>
+<dd><p>Loads either GloVe or word2vec embeddings and wraps it into Embeddings
+:param file: Path to files like &#8220;GoogleNews-vectors-negative300.bin.gz&#8221;</p>
+<blockquote>
+<div>or &#8220;glove.42B.300d.zip&#8221;</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>typ</strong> &#8211; (string(: Either &#8220;word2vec&#8221; or &#8220;glove&#8221;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Wrapper class around Vocabulary embedding matrix.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#quebap.load.embeddings.embeddings.Embeddings" title="quebap.load.embeddings.embeddings.Embeddings">Embeddings</a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -80,12 +93,24 @@
 <dl class="function">
 <dt id="quebap.load.embeddings.glove.load_glove">
 <code class="descclassname">quebap.load.embeddings.glove.</code><code class="descname">load_glove</code><span class="sig-paren">(</span><em>stream</em>, <em>vocab=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.glove.load_glove" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="quebap.load.embeddings.glove.load_wordreps_from_vocabulary">
-<code class="descclassname">quebap.load.embeddings.glove.</code><code class="descname">load_wordreps_from_vocabulary</code><span class="sig-paren">(</span><em>stream</em>, <em>vocab</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.glove.load_wordreps_from_vocabulary" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Loads GloVe file and merges it if optional vocabulary
+:param stream: An opened filestream to the GloVe file.
+:type stream: iterable
+:param vocab: Word2idx dict of existing vocabulary.
+:type vocab: dict=None</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>return_vocab (Vocabulary), lookup (matrix); Vocabulary contains the</dt>
+<dd>word2idx and the matrix contains the embedded words.</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="module-quebap.load.embeddings.vocabulary">
@@ -93,7 +118,8 @@
 <dl class="class">
 <dt id="quebap.load.embeddings.vocabulary.Vocabulary">
 <em class="property">class </em><code class="descclassname">quebap.load.embeddings.vocabulary.</code><code class="descname">Vocabulary</code><span class="sig-paren">(</span><em>vocab=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>Manages word2idx and idx2word functionality; manages of word stats.</p>
+<dl class="method">
 <dt id="quebap.load.embeddings.vocabulary.Vocabulary.add_iterable">
 <code class="descname">add_iterable</code><span class="sig-paren">(</span><em>itr</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.add_iterable" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -166,17 +192,41 @@
 <dl class="function">
 <dt id="quebap.load.embeddings.word_to_vec.get_word2vec_vocabulary">
 <code class="descclassname">quebap.load.embeddings.word_to_vec.</code><code class="descname">get_word2vec_vocabulary</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.word_to_vec.get_word2vec_vocabulary" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Loads word2vec file and returns the vocabulary as dict word2idx.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="quebap.load.embeddings.word_to_vec.load_word2vec">
 <code class="descclassname">quebap.load.embeddings.word_to_vec.</code><code class="descname">load_word2vec</code><span class="sig-paren">(</span><em>filename</em>, <em>vocab=None</em>, <em>normalise=True</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.word_to_vec.load_word2vec" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Loads a word2vec file and merges existing vocabulary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>string</em>) &#8211; Path to the word2vec file.</li>
+<li><strong>vocab</strong> (<em>Vocabulary=None</em>) &#8211; Existing vocabulary to be merged.</li>
+<li><strong>normalize</strong> (<em>bool=True</em>) &#8211; If the word embeddings should be unit
+normalized or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The dict is a word2idx dict and
+the lookup matrix is the matrix of embedding vectors.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">return_vocab (dict), lookup (matrix)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="quebap.load.embeddings.word_to_vec.normalize">
 <code class="descclassname">quebap.load.embeddings.word_to_vec.</code><code class="descname">normalize</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.word_to_vec.normalize" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Unit normalize x with L2 norm.</p>
+</dd></dl>
 
 </div>
 <div class="section" id="module-quebap.load.embeddings">

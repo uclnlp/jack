@@ -4,6 +4,17 @@ from quebap.load.embeddings.vocabulary import Vocabulary
 
 
 def load_word2vec(filename, vocab=None, normalise=True):
+    """Loads a word2vec file and merges existing vocabulary.
+
+    Args:
+        filename (string): Path to the word2vec file.
+        vocab (Vocabulary=None): Existing vocabulary to be merged.
+        normalize (bool=True): If the word embeddings should be unit
+                  normalized or not.
+    Returns:
+        return_vocab (dict), lookup (matrix): The dict is a word2idx dict and
+        the lookup matrix is the matrix of embedding vectors.
+    """
     print("[Loading word2vec]")
     with gzip.open(filename, 'rb') as f:
         vec_n, vec_size = map(int, f.readline().split())
@@ -41,6 +52,7 @@ def load_word2vec(filename, vocab=None, normalise=True):
 
 
 def normalize(x):
+    """Unit normalize x with L2 norm."""
     return (1.0 / np.linalg.norm(x, ord=2)) * x
 
 
@@ -56,6 +68,7 @@ def normalize(x):
 
 
 def get_word2vec_vocabulary(fname):
+    """Loads word2vec file and returns the vocabulary as dict word2idx."""
     voc, _ = load_word2vec(fname)
     return voc
 

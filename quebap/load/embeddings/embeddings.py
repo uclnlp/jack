@@ -4,6 +4,7 @@ import zipfile
 
 
 class Embeddings:
+    """Wraps Vocabulary and embedding matrix to do lookups"""
     def __init__(self, vocabulary, lookup):
         self.vocabulary = vocabulary
         self.lookup = lookup
@@ -25,11 +26,13 @@ class Embeddings:
 
 
 def load_embeddings(file, typ, **options):
-    """
-    wrapper that allows loading different types of embeddings
-    :param file:  path to files like "GoogleNews-vectors-negative300.bin.gz" or "glove.42B.300d.zip"
-    :param typ: "word2vec" or "glove"
-    :return:  Embeddings object
+    """Loads either GloVe or word2vec embeddings and wraps it into Embeddings
+    Args:
+        file (string): Path to files like "GoogleNews-vectors-negative300.bin.gz"
+           or "glove.42B.300d.zip"
+        typ: (string(: Either "word2vec" or "glove"
+    Returns:
+        Embeddings: Wrapper class around Vocabulary embedding matrix.
     """
     assert typ in ["word2vec", "glove"], "so far only 'word2vec' and 'glove' foreseen"
 
