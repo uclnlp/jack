@@ -2,6 +2,9 @@
 [![wercker status](https://app.wercker.com/status/ebcd272ebfdc8c08c262a000f039bfb8/s/master "wercker status")](https://app.wercker.com/project/byKey/ebcd272ebfdc8c08c262a000f039bfb8)
 UCLMR KB and QA system/tools.
 
+See [Understanding Quebap](docs/Understanding_Quebap.md) for a brief introduction of Quebap and its components.
+
+
 # Preliminaries
 Install [word embeddings code](https://github.com/kudkudak/word-embeddings-benchmarks)
 
