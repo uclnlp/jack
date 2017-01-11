@@ -10,8 +10,10 @@ Quebap is best understood by going from the high-level function and classes to l
 - [Predefined models](../quebap/sisyphos/models.py) found in quebap.sisphos.models such as:
   - Conditional reader: Two bidirectional LSTM over two sequences where the second is conditioned on the final state of the other
   - Attentive reader: Like conditional reader, but all states are processed with attention so that the most important bits of each of the two sequences are filtered from the unimportant bits. Finally these two streams of filtered information are combined
+  
 ### 2. Parse the input arguments
 - Standard [argparse](https://docs.python.org/3/library/argparse.html). Arguments include: Batchsize, pretrain embeddings, learning rate, l2 penalty, clip value (gradients), dropout, epochs, negative sampling (amount)
+
 ### 3. Read the train, dev, and test data
 - Uses [quebap.load.read_quebap.quebap_load](../quebap/load/read_quebap.py) which loads a JSON file in a specific Quebap format. To transform your data into this Quebap JSON format there exist scripts which wrangle certain data sets into the required format. You can find these data wrangling scripts under the path [quebap/quebap/load/](../quebap/load). The JSON format can be seen as a python dictionary which contains high level names for different kind of data:
   - Question (Q): Question text or binary relation like (Donald Trump, presidentOf, X)
@@ -19,6 +21,7 @@ Quebap is best understood by going from the high-level function and classes to l
   - Candidates (C): A corpus may have 10000 entities, but for a question only 10 candidates might be relevant of which 2 are correct, for example all entities in the supporting passage are candidates. Candidates might also refer to all words in the vocabulary (no restrictions).
   - Answers: The answer or answers to the question or binary relation. This may also be a span like (17, 83) indicating the answer is located between character position 17 and 83 (Stanford SQuAD)
 - At this point in the pipeline one can also load pretrained embeddings and merge them with the vocabulary of the loaded datasets
+
 ### 4. Preprocesses the data (tokenize, normalize, add  start and end of sentence tags) via the sisyphos.pipeline method
 - This is the heaviest and most detailed processing step. In the script this data wrangling and preprocessing pipeline is called with a simple call [quebap.sisyphos.pipelines.pipeline(..)](../quebap/sisyphos/pipelines.py) but behind this method there are several preprocessing steps:
   - [Quebap.sisyphos.map.deep_map](../quebap/sisyphos/map.py): This is a clever method which traverses a dictionary for certain keys and transforms the values of given keys in-place in a very efficient manner. It does this by using a map function to the list of value under the given dictionary keys. It is usually used to transform a list of question strings, into a tokenized version, that is transform it into a list of question word-lists
@@ -37,5 +40,6 @@ Quebap is best understood by going from the high-level function and classes to l
 ### 7. Batch the data via sisyphos.batch.get_feed_dicts
 ### 8. Add hooks
 - [Hooks](../quebap/sisyphos/hooks.py) are functions which are invoked after either the end of an iteration or the end of an epoch. They usually print some information (loss value, time taken this epoch, ETA until the model is fully trained, statistics of certain tensors like weights) and save this information to the TensorFlow summary writer so that these data can be visualized via TensorBoard.
+
 ### 9. Train the model
 - Calls [quebap.sisyphos.train.train(..)](../quebap/sisyphos/train.py) with everything which was constructed in the previous steps such as the batched data, the model, the hooks, and the parameters.
