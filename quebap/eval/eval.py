@@ -5,7 +5,8 @@ import numpy as np
 import argparse
 
 def hits_at_k(predictions, golds, k=1):
-    gold_answers = get_gold_answers(golds)
+    """Returns k-hit rate for predictions and questions with ranked answers"""
+    gold_answers = get_nested_answers(golds)
     assert len(predictions) == len(gold_answers)
     num_pred_answers = 0
     num_gold_answers = 0
@@ -24,7 +25,8 @@ def hits_at_k(predictions, golds, k=1):
 
 # untested (no models currently produce rank output)
 def mean_reciprocal_rank(predictions, golds):
-    gold_answers = get_gold_answers(golds)
+    """Returs mean reciprocal rank for predictions and Qs with ranked As"""
+    gold_answers = get_nested_answers(golds)
     assert len(predictions) == len(gold_answers)
     rank_sum = 0
     # pred and gold are lists of answers for the same question
@@ -40,9 +42,10 @@ def mean_reciprocal_rank(predictions, golds):
         rank_sum += 1/(best_rank+1)
     return rank_sum / len(predictions)
 
-def get_gold_answers(golds):
+def get_nested_answers(nested_questions):
+    """Takes a list of question-sets; returns a list of answers."""
     return [question['answers']
-            for qset in golds
+            for qset in nested_questions
             for question in qset['questions']]
 
 def flatten(nlist):
@@ -55,9 +58,11 @@ def read_data(data_filename):
         return data
 
 def eval_quebap_data(test_data_file='../data/scienceQA/scienceQA_cloze_snippet.json', preds_outfile='../test_out.txt'):
-    # Read quebap data in and evaluate. Averages predictions for "multiple_flat" support setting.
-    # Currently only shows accuracy, but can easily be extended with mrr etc.
-    #test_data, to be loaded with quebap_load(), preds_outfile, produced with TestAllHook
+    """Read quebap data in and evaluate. Averages predictions for "multiple_flat" support setting.
+
+    Currently only shows accuracy, but can easily be extended with mrr etc.
+    test_data, to be loaded with quebap_load(), preds_outfile, produced with TestAllHook
+    """
 
     probs_all = []
     f = open(preds_outfile, "r")
@@ -106,6 +111,19 @@ def eval_quebap_data(test_data_file='../data/scienceQA/scienceQA_cloze_snippet.j
 
 
 def averagePredictions(probs):
+    """Sum probs for all preds; return average props by index, max-index
+
+    Note that different classes can occur multiple times, so that the
+    average probability for each class is summed. Finally the max index over
+    these sum of average probabilities is return.
+
+    Args:
+        probs (list of strings of probabilities for all classes.
+    Returns:
+        probdict (dict), predicted (int): A dictionary of summed average
+                 probabilities , the index of the max summed average
+                 probability.
+    """
     # sum probabilities, weight by number of predictions
     probdict = {}
     for p in probs:

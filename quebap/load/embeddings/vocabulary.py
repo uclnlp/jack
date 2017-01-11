@@ -1,6 +1,7 @@
 import itertools
 
 class Vocabulary:
+    """Manages word2idx and idx2word functionality; manages of word stats."""
     def __init__(self, vocab=None):
         self.__word2idx = {}
         self.__freqs = {}
