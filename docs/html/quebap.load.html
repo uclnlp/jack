@@ -1,0 +1,564 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>quebap.load package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="quebap.load.embeddings package" href="quebap.load.embeddings.html" />
+    <link rel="prev" title="quebap package" href="quebap.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quebap-load-package">
+<h1>quebap.load package<a class="headerlink" href="#quebap-load-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quebap.load.embeddings.html">quebap.load.embeddings package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quebap.load.embeddings.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.load.embeddings.html#module-quebap.load.embeddings.embeddings">quebap.load.embeddings.embeddings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.load.embeddings.html#module-quebap.load.embeddings.glove">quebap.load.embeddings.glove module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.load.embeddings.html#module-quebap.load.embeddings.vocabulary">quebap.load.embeddings.vocabulary module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.load.embeddings.html#module-quebap.load.embeddings.word_to_vec">quebap.load.embeddings.word_to_vec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quebap.load.embeddings.html#module-quebap.load.embeddings">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.load.FB15K2quebap">
+<span id="quebap-load-fb15k2quebap-module"></span><h2>quebap.load.FB15K2quebap module<a class="headerlink" href="#module-quebap.load.FB15K2quebap" title="Permalink to this headline">¶</a></h2>
+<p>quebap converter for the fb15k dataset.</p>
+<dl class="docutils">
+<dt>METADATA:   Training data: 483142 triples (subject, relation, object)</dt>
+<dd>14951 different entities
+1345 different relation types</dd>
+</dl>
+<p>data source: <a class="reference external" href="https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz">https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz</a></p>
+<p>webpage: <a class="reference external" href="https://everest.hds.utc.fr/doku.php?id=en:transe">https://everest.hds.utc.fr/doku.php?id=en:transe</a></p>
+<p>paper reference:
+Bordes et al. 2013: Translating Embeddings for Modeling Multi-relational Data</p>
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.compress_triples">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">compress_triples</code><span class="sig-paren">(</span><em>string_triples</em>, <em>unique_entities</em>, <em>unique_relations</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.compress_triples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.convert">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">convert</code><span class="sig-paren">(</span><em>triples</em>, <em>neighbourhoods</em>, <em>unique_entities</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts into quebap format.
+:param triples: fact triples that should be converted.
+:param neighbourhoods: dictionary of supporting facts per triple
+:unique_entities: List of strings
+:return quebap formatted fb15k data.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.extract_unique_entities_and_relations">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">extract_unique_entities_and_relations</code><span class="sig-paren">(</span><em>triples</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.extract_unique_entities_and_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identifies unique entities and relation types in collection of triples.
+:param triples: List of string triples.
+:return unique_entities: List of strings
+:return unique_relations: List of strings</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.get_fact_neighbourhoods">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">get_fact_neighbourhoods</code><span class="sig-paren">(</span><em>triples</em>, <em>facts_per_entity</em>, <em>facts_per_relation</em>, <em>include_relations=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.get_fact_neighbourhoods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts neighbouring facts for a collection of triples. neighbouring
+facts of fact f are such facts that share at least an entity with f.
+If relations are included, facts which share a relation are also considered
+neighbours.
+:param triples: list of facts triples
+:param facts_per_entity: dictionary; The facts an entity appears in
+:param facts_per_relation: dictionary; The facts a relation appears in
+:param include_relations: boolean. whether facts sharing the relation should</p>
+<blockquote>
+<div>be considered neighbours as well.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Return fact_neighbourhoods:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">dictionary mapping fact ID to set of fact IDs.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.get_facts_per_entity">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">get_facts_per_entity</code><span class="sig-paren">(</span><em>triples</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.get_facts_per_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>obtain dictionary with all train fact ids that contain an entity.
+:param triples: List of fact triples
+:return Dictionary entity &#8211;&gt; fact IDs it participates in</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.get_facts_per_relation">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">get_facts_per_relation</code><span class="sig-paren">(</span><em>triples</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.get_facts_per_relation" title="Permalink to this definition">¶</a></dt>
+<dd><p>obtain dictionary with all train fact ids that contain a relation type.
+:param triples: List of fact triples
+:return Dictionary relation type &#8211;&gt; fact IDs it participates in</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.FB15K2quebap.load_fb15k_triples">
+<code class="descclassname">quebap.load.FB15K2quebap.</code><code class="descname">load_fb15k_triples</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.FB15K2quebap.load_fb15k_triples" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads the raw data from file provided.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.SNLI2quebap_v1">
+<span id="quebap-load-snli2quebap-v1-module"></span><h2>quebap.load.SNLI2quebap_v1 module<a class="headerlink" href="#module-quebap.load.SNLI2quebap_v1" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a quebap datafile for the SNLI corpus,
+whereby each instance receives support under the form of &#8216;related&#8217; instances</p>
+<dl class="function">
+<dt id="quebap.load.SNLI2quebap_v1.convert_snli">
+<code class="descclassname">quebap.load.SNLI2quebap_v1.</code><code class="descname">convert_snli</code><span class="sig-paren">(</span><em>snli_file_jsonl</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.SNLI2quebap_v1.convert_snli" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert SNLI files into quebap format.
+Data source: <a class="reference external" href="http://nlp.stanford.edu/projects/snli/snli_1.0.zip">http://nlp.stanford.edu/projects/snli/snli_1.0.zip</a>
+Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
+(the <a href="#id1"><span class="problematic" id="id2">*</span></a>.txt files contain the same data in a different format)</p>
+<dl class="docutils">
+<dt>Format:</dt>
+<dd><ul class="first last simple">
+<li>support = the premise = &#8216;sentence1&#8217; in original SNLI data (as id, use &#8216;captionID&#8217;, the id of sentence1)</li>
+<li>question = the hypothesis = &#8216;sentence2&#8217; in original SNLI data</li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>instances with gold labels &#8216;-&#8216; are removed from the corpus</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.SNLI2quebap_v1.main">
+<code class="descclassname">quebap.load.SNLI2quebap_v1.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.SNLI2quebap_v1.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.SNLI2quebap_v2">
+<span id="quebap-load-snli2quebap-v2-module"></span><h2>quebap.load.SNLI2quebap_v2 module<a class="headerlink" href="#module-quebap.load.SNLI2quebap_v2" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a quebap datafile for the SNLI corpus,
+whereby
+- questions consist of premise + delim. + hypothesis
+- TODO: support facts can optinally be loaded from Wordnet / SNLItraining / PPDB</p>
+<dl class="function">
+<dt id="quebap.load.SNLI2quebap_v2.convert_snli">
+<code class="descclassname">quebap.load.SNLI2quebap_v2.</code><code class="descname">convert_snli</code><span class="sig-paren">(</span><em>snli_file_jsonl</em>, <em>support=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.SNLI2quebap_v2.convert_snli" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert SNLI files into quebap format.
+Data source: <a class="reference external" href="http://nlp.stanford.edu/projects/snli/snli_1.0.zip">http://nlp.stanford.edu/projects/snli/snli_1.0.zip</a>
+Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
+(the <a href="#id3"><span class="problematic" id="id4">*</span></a>.txt files contain the same data in a different format)</p>
+<dl class="docutils">
+<dt>Format:</dt>
+<dd><ul class="first last simple">
+<li>question = the premise + CONJ + the hypothesis  = &#8216;sentence1&#8217; + CONJ + &#8216;sentence2&#8217;</li>
+<li>support instance = part1 + CONJ + part2 + CONJ + label</li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>instances with gold labels &#8216;-&#8216; are removed from the corpus</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>snli_file_json</strong> &#8211; input file</li>
+<li><strong>support</strong> &#8211; False (no support), TODO: &#8216;WordNet&#8217;, &#8216;SNLItrain&#8217;, &#8216;PPDB&#8217;</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.SNLI2quebap_v2.main">
+<code class="descclassname">quebap.load.SNLI2quebap_v2.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.SNLI2quebap_v2.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.cbt2quebap">
+<span id="quebap-load-cbt2quebap-module"></span><h2>quebap.load.cbt2quebap module<a class="headerlink" href="#module-quebap.load.cbt2quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.cbt2quebap.convert_cbtest">
+<code class="descclassname">quebap.load.cbt2quebap.</code><code class="descname">convert_cbtest</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.cbt2quebap.convert_cbtest" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert Children Book Test file into quebap format. Path should indicate
+the file which should be converted, e.g.
+:param path: &#8216;.../data/cbtest_CN_train.txt&#8217;
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.cbt2quebap.load_cbt_file">
+<code class="descclassname">quebap.load.cbt2quebap.</code><code class="descname">load_cbt_file</code><span class="sig-paren">(</span><em>path=None</em>, <em>part='train'</em>, <em>mode='NE'</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.cbt2quebap.load_cbt_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path should be given and function will load raw data.
+If it is no given however, there&#8217;s three parts:
+&#8216;train&#8217;, &#8216;valid&#8217; and &#8216;test&#8217; as well as 5 modes.
+The modes are:</p>
+<blockquote>
+<div><ul class="simple">
+<li>&#8216;CN&#8217; (predicting common nouns)</li>
+<li>&#8216;NE&#8217; (predicting named entities)</li>
+<li>&#8216;P&#8217;  (predicting prepositions)</li>
+<li>&#8216;V&#8217;  (predicting verbs.)</li>
+<li>&#8216;all&#8217;(all of the above four categories)</li>
+</ul>
+</div></blockquote>
+<p>When calling this function both the dataset part and the mode have to
+be specified.
+&#8216;all&#8217; is not suitable for QA format, it seems to be just raw text.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.cbt2quebap.main">
+<code class="descclassname">quebap.load.cbt2quebap.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.cbt2quebap.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: provide path to CBT data file as single argument, e.g. &#8216;.../data/cbtest_CN_train.txt&#8217;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.cbt2quebap.parse_cbt_example">
+<code class="descclassname">quebap.load.cbt2quebap.</code><code class="descname">parse_cbt_example</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.cbt2quebap.parse_cbt_example" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns dictionary with support, question, correct answer and candidates.
+:param instance:
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.cbt2quebap.split_cbt">
+<code class="descclassname">quebap.load.cbt2quebap.</code><code class="descname">split_cbt</code><span class="sig-paren">(</span><em>raw_data</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.cbt2quebap.split_cbt" title="Permalink to this definition">¶</a></dt>
+<dd><p>splits raw cbt data into parts corresponding to each instance
+:param raw_data:
+:return:</p>
+</dd></dl>
+
+</div>
+<div class="section" id="quebap-load-create-dummpy-scienceqa-module">
+<h2>quebap.load.create_dummpy_scienceQA module<a class="headerlink" href="#quebap-load-create-dummpy-scienceqa-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="quebap-load-ls2quebap-module">
+<h2>quebap.load.ls2quebap module<a class="headerlink" href="#quebap-load-ls2quebap-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.load.mctest2quebap">
+<span id="quebap-load-mctest2quebap-module"></span><h2>quebap.load.mctest2quebap module<a class="headerlink" href="#module-quebap.load.mctest2quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.mctest2quebap.clean_mctest_text">
+<code class="descclassname">quebap.load.mctest2quebap.</code><code class="descname">clean_mctest_text</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.mctest2quebap.clean_mctest_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.mctest2quebap.convert_mctest">
+<code class="descclassname">quebap.load.mctest2quebap.</code><code class="descname">convert_mctest</code><span class="sig-paren">(</span><em>tsv_file</em>, <em>ans_file</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.mctest2quebap.convert_mctest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.mctest2quebap.main">
+<code class="descclassname">quebap.load.mctest2quebap.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.mctest2quebap.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.mctest2quebap.parse_mctest_instance">
+<code class="descclassname">quebap.load.mctest2quebap.</code><code class="descname">parse_mctest_instance</code><span class="sig-paren">(</span><em>tsv_chunk</em>, <em>ans_chunk</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.mctest2quebap.parse_mctest_instance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.mctest2quebap.parse_mctest_questions">
+<code class="descclassname">quebap.load.mctest2quebap.</code><code class="descname">parse_mctest_questions</code><span class="sig-paren">(</span><em>question_list</em>, <em>ans_tabs</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.mctest2quebap.parse_mctest_questions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.read_quebap">
+<span id="quebap-load-read-quebap-module"></span><h2>quebap.load.read_quebap module<a class="headerlink" href="#module-quebap.load.read_quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.load.read_quebap.Answer">
+<em class="property">class </em><code class="descclassname">quebap.load.read_quebap.</code><code class="descname">Answer</code><span class="sig-paren">(</span><em>adict</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.Answer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class which holds the text or span of the answer.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.load.read_quebap.Question">
+<em class="property">class </em><code class="descclassname">quebap.load.read_quebap.</code><code class="descname">Question</code><span class="sig-paren">(</span><em>qdict</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.Question" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class which holds answers and question as text.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.load.read_quebap.RichInstance">
+<em class="property">class </em><code class="descclassname">quebap.load.read_quebap.</code><code class="descname">RichInstance</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.RichInstance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Holds lists of supports and questions and manages their iteration.</p>
+<dl class="method">
+<dt id="quebap.load.read_quebap.RichInstance.question_support_pairs">
+<code class="descname">question_support_pairs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.RichInstance.question_support_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields nested pairs of question and support objects.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.read_quebap.RichInstance.vocab">
+<code class="descname">vocab</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.RichInstance.vocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the set of tokens from all questions and support objects.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="quebap.load.read_quebap.Support">
+<em class="property">class </em><code class="descclassname">quebap.load.read_quebap.</code><code class="descname">Support</code><span class="sig-paren">(</span><em>sdict</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.Support" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Holds a support which is a text or an interval between tokens (span).</p>
+<dl class="method">
+<dt id="quebap.load.read_quebap.Support.token_from_char">
+<code class="descname">token_from_char</code><span class="sig-paren">(</span><em>char_offset</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.Support.token_from_char" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns string between zero and the char_offset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.read_quebap.quebap_load">
+<code class="descclassname">quebap.load.read_quebap.</code><code class="descname">quebap_load</code><span class="sig-paren">(</span><em>path</em>, <em>max_count=None</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.quebap_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>General-purpose loader for quebap files
+Makes use of user-defined options for supports, questions, candidates, answers and only read in those
+things needed for model, e.g. if the dataset contains support, but the user defines support_alts == &#8216;none&#8217;
+because they want to train a model that does not make use of support, support information in dataset is not read in</p>
+<p>User options for quebap model/dataset attributes are:
+support_alts = {&#8216;none&#8217;, &#8216;single&#8217;, &#8216;multiple&#8217;}
+question_alts = answer_alts = {&#8216;single&#8217;, &#8216;multiple&#8217;}
+candidate_alts = {&#8216;open&#8217;, &#8216;per-instance&#8217;, &#8216;fixed&#8217;}</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.read_quebap.read_data">
+<code class="descclassname">quebap.load.read_quebap.</code><code class="descname">read_data</code><span class="sig-paren">(</span><em>data_filename</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.read_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads quebap JSON and returns the dictionary.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.read_quebap.read_rich_data">
+<code class="descclassname">quebap.load.read_quebap.</code><code class="descname">read_rich_data</code><span class="sig-paren">(</span><em>data_filename</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_quebap.read_rich_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms a quebap JSON file into a list of RichInstances (S,Q(A)).</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="quebap.load.read_quebap.token_pattern">
+<code class="descclassname">quebap.load.read_quebap.</code><code class="descname">token_pattern</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#quebap.load.read_quebap.token_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads quebap JSON files and manages the transformation into components.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.read_semeval2017Task10">
+<span id="quebap-load-read-semeval2017task10-module"></span><h2>quebap.load.read_semeval2017Task10 module<a class="headerlink" href="#module-quebap.load.read_semeval2017Task10" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.read_semeval2017Task10.readAnn">
+<code class="descclassname">quebap.load.read_semeval2017Task10.</code><code class="descname">readAnn</code><span class="sig-paren">(</span><em>textfolder='../data/SemEval2017Task10/'</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.read_semeval2017Task10.readAnn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read .ann files and look up corresponding spans in .txt files
+:param textfolder:
+:return:</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.scienceQA2quebap">
+<span id="quebap-load-scienceqa2quebap-module"></span><h2>quebap.load.scienceQA2quebap module<a class="headerlink" href="#module-quebap.load.scienceQA2quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.scienceQA2quebap.convert_scienceCloze_to_quebap">
+<code class="descclassname">quebap.load.scienceQA2quebap.</code><code class="descname">convert_scienceCloze_to_quebap</code><span class="sig-paren">(</span><em>scienceQAFile</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.scienceQA2quebap.convert_scienceCloze_to_quebap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.sentihood2quebap">
+<span id="quebap-load-sentihood2quebap-module"></span><h2>quebap.load.sentihood2quebap module<a class="headerlink" href="#module-quebap.load.sentihood2quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.sentihood2quebap.convert_to_quebap">
+<code class="descclassname">quebap.load.sentihood2quebap.</code><code class="descname">convert_to_quebap</code><span class="sig-paren">(</span><em>sentihood_data</em>, <em>exhaustive=True</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.sentihood2quebap.convert_to_quebap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.sentihood2quebap.main">
+<code class="descclassname">quebap.load.sentihood2quebap.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.sentihood2quebap.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.simpleQuestions2quebap">
+<span id="quebap-load-simplequestions2quebap-module"></span><h2>quebap.load.simpleQuestions2quebap module<a class="headerlink" href="#module-quebap.load.simpleQuestions2quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.simpleQuestions2quebap.convert_simpleQuestions_to_quebap">
+<code class="descclassname">quebap.load.simpleQuestions2quebap.</code><code class="descname">convert_simpleQuestions_to_quebap</code><span class="sig-paren">(</span><em>simpleQuestionFile</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.simpleQuestions2quebap.convert_simpleQuestions_to_quebap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.simpleQuestions2quebap.main">
+<code class="descclassname">quebap.load.simpleQuestions2quebap.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.simpleQuestions2quebap.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.squad2quebap">
+<span id="quebap-load-squad2quebap-module"></span><h2>quebap.load.squad2quebap module<a class="headerlink" href="#module-quebap.load.squad2quebap" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.squad2quebap.convert_squad">
+<code class="descclassname">quebap.load.squad2quebap.</code><code class="descname">convert_squad</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.squad2quebap.convert_squad" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.squad2quebap.main">
+<code class="descclassname">quebap.load.squad2quebap.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.squad2quebap.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.squad2quebap.parse_answer">
+<code class="descclassname">quebap.load.squad2quebap.</code><code class="descname">parse_answer</code><span class="sig-paren">(</span><em>answer_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.squad2quebap.parse_answer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.squad2quebap.parse_question">
+<code class="descclassname">quebap.load.squad2quebap.</code><code class="descname">parse_question</code><span class="sig-paren">(</span><em>qa_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.squad2quebap.parse_question" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.squad2quebap.parse_support">
+<code class="descclassname">quebap.load.squad2quebap.</code><code class="descname">parse_support</code><span class="sig-paren">(</span><em>para_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.squad2quebap.parse_support" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="quebap-load-test-cbt-module">
+<h2>quebap.load.test_cbt module<a class="headerlink" href="#quebap-load-test-cbt-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.load.validate">
+<span id="quebap-load-validate-module"></span><h2>quebap.load.validate module<a class="headerlink" href="#module-quebap.load.validate" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.validate.main">
+<code class="descclassname">quebap.load.validate.</code><code class="descname">main</code><span class="sig-paren">(</span><em>arg1</em>, <em>arg2</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.validate.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-quebap.load" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">quebap.load package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-quebap.load.FB15K2quebap">quebap.load.FB15K2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.SNLI2quebap_v1">quebap.load.SNLI2quebap_v1 module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.SNLI2quebap_v2">quebap.load.SNLI2quebap_v2 module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.cbt2quebap">quebap.load.cbt2quebap module</a></li>
+<li><a class="reference internal" href="#quebap-load-create-dummpy-scienceqa-module">quebap.load.create_dummpy_scienceQA module</a></li>
+<li><a class="reference internal" href="#quebap-load-ls2quebap-module">quebap.load.ls2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.mctest2quebap">quebap.load.mctest2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.read_quebap">quebap.load.read_quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.read_semeval2017Task10">quebap.load.read_semeval2017Task10 module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.scienceQA2quebap">quebap.load.scienceQA2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.sentihood2quebap">quebap.load.sentihood2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.simpleQuestions2quebap">quebap.load.simpleQuestions2quebap module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.squad2quebap">quebap.load.squad2quebap module</a></li>
+<li><a class="reference internal" href="#quebap-load-test-cbt-module">quebap.load.test_cbt module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.validate">quebap.load.validate module</a></li>
+<li><a class="reference internal" href="#module-quebap.load">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="quebap.html">quebap package</a><ul>
+      <li>Previous: <a href="quebap.html" title="previous chapter">quebap package</a></li>
+      <li>Next: <a href="quebap.load.embeddings.html" title="next chapter">quebap.load.embeddings package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quebap.load.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/quebap.load.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

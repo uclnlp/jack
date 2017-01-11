@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>quebap.load.embeddings package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="quebap.model package" href="quebap.model.html" />
+    <link rel="prev" title="quebap.load package" href="quebap.load.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quebap-load-embeddings-package">
+<h1>quebap.load.embeddings package<a class="headerlink" href="#quebap-load-embeddings-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.load.embeddings.embeddings">
+<span id="quebap-load-embeddings-embeddings-module"></span><h2>quebap.load.embeddings.embeddings module<a class="headerlink" href="#module-quebap.load.embeddings.embeddings" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.load.embeddings.embeddings.Embeddings">
+<em class="property">class </em><code class="descclassname">quebap.load.embeddings.embeddings.</code><code class="descname">Embeddings</code><span class="sig-paren">(</span><em>vocabulary</em>, <em>lookup</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.embeddings.Embeddings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps Vocabulary and embedding matrix to do lookups</p>
+<dl class="method">
+<dt id="quebap.load.embeddings.embeddings.Embeddings.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.embeddings.Embeddings.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="quebap.load.embeddings.embeddings.Embeddings.shape">
+<code class="descname">shape</code><a class="headerlink" href="#quebap.load.embeddings.embeddings.Embeddings.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.embeddings.embeddings.load_embeddings">
+<code class="descclassname">quebap.load.embeddings.embeddings.</code><code class="descname">load_embeddings</code><span class="sig-paren">(</span><em>file</em>, <em>typ</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.embeddings.load_embeddings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads either GloVe or word2vec embeddings and wraps it into Embeddings
+:param file: Path to files like &#8220;GoogleNews-vectors-negative300.bin.gz&#8221;</p>
+<blockquote>
+<div>or &#8220;glove.42B.300d.zip&#8221;</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>typ</strong> &#8211; (string(: Either &#8220;word2vec&#8221; or &#8220;glove&#8221;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Wrapper class around Vocabulary embedding matrix.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#quebap.load.embeddings.embeddings.Embeddings" title="quebap.load.embeddings.embeddings.Embeddings">Embeddings</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.embeddings.glove">
+<span id="quebap-load-embeddings-glove-module"></span><h2>quebap.load.embeddings.glove module<a class="headerlink" href="#module-quebap.load.embeddings.glove" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.embeddings.glove.load_glove">
+<code class="descclassname">quebap.load.embeddings.glove.</code><code class="descname">load_glove</code><span class="sig-paren">(</span><em>stream</em>, <em>vocab=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.glove.load_glove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads GloVe file and merges it if optional vocabulary
+:param stream: An opened filestream to the GloVe file.
+:type stream: iterable
+:param vocab: Word2idx dict of existing vocabulary.
+:type vocab: dict=None</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>return_vocab (Vocabulary), lookup (matrix); Vocabulary contains the</dt>
+<dd>word2idx and the matrix contains the embedded words.</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.embeddings.vocabulary">
+<span id="quebap-load-embeddings-vocabulary-module"></span><h2>quebap.load.embeddings.vocabulary module<a class="headerlink" href="#module-quebap.load.embeddings.vocabulary" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary">
+<em class="property">class </em><code class="descclassname">quebap.load.embeddings.vocabulary.</code><code class="descname">Vocabulary</code><span class="sig-paren">(</span><em>vocab=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manages word2idx and idx2word functionality; manages of word stats.</p>
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.add_iterable">
+<code class="descname">add_iterable</code><span class="sig-paren">(</span><em>itr</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.add_iterable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.add_word">
+<code class="descname">add_word</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.add_word" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.contains_word">
+<code class="descname">contains_word</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.contains_word" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.diff">
+<code class="descname">diff</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.diff" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.dump_all_tokens_to_file">
+<code class="descname">dump_all_tokens_to_file</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.dump_all_tokens_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.get_all_words">
+<code class="descname">get_all_words</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.get_all_words" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.get_idx_by_word">
+<code class="descname">get_idx_by_word</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.get_idx_by_word" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.get_size">
+<code class="descname">get_size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.get_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.get_word_by_idx">
+<code class="descname">get_word_by_idx</code><span class="sig-paren">(</span><em>idx</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.get_word_by_idx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.get_word_count">
+<code class="descname">get_word_count</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.get_word_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.idx2word">
+<code class="descname">idx2word</code><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.idx2word" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.sorted">
+<code class="descname">sorted</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.sorted" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="quebap.load.embeddings.vocabulary.Vocabulary.word2idx">
+<code class="descname">word2idx</code><a class="headerlink" href="#quebap.load.embeddings.vocabulary.Vocabulary.word2idx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.embeddings.word_to_vec">
+<span id="quebap-load-embeddings-word-to-vec-module"></span><h2>quebap.load.embeddings.word_to_vec module<a class="headerlink" href="#module-quebap.load.embeddings.word_to_vec" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="quebap.load.embeddings.word_to_vec.get_word2vec_vocabulary">
+<code class="descclassname">quebap.load.embeddings.word_to_vec.</code><code class="descname">get_word2vec_vocabulary</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.word_to_vec.get_word2vec_vocabulary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads word2vec file and returns the vocabulary as dict word2idx.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.embeddings.word_to_vec.load_word2vec">
+<code class="descclassname">quebap.load.embeddings.word_to_vec.</code><code class="descname">load_word2vec</code><span class="sig-paren">(</span><em>filename</em>, <em>vocab=None</em>, <em>normalise=True</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.word_to_vec.load_word2vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a word2vec file and merges existing vocabulary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>string</em>) &#8211; Path to the word2vec file.</li>
+<li><strong>vocab</strong> (<em>Vocabulary=None</em>) &#8211; Existing vocabulary to be merged.</li>
+<li><strong>normalize</strong> (<em>bool=True</em>) &#8211; If the word embeddings should be unit
+normalized or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The dict is a word2idx dict and
+the lookup matrix is the matrix of embedding vectors.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">return_vocab (dict), lookup (matrix)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.load.embeddings.word_to_vec.normalize">
+<code class="descclassname">quebap.load.embeddings.word_to_vec.</code><code class="descname">normalize</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.load.embeddings.word_to_vec.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unit normalize x with L2 norm.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.load.embeddings">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-quebap.load.embeddings" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">quebap.load.embeddings package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-quebap.load.embeddings.embeddings">quebap.load.embeddings.embeddings module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.embeddings.glove">quebap.load.embeddings.glove module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.embeddings.vocabulary">quebap.load.embeddings.vocabulary module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.embeddings.word_to_vec">quebap.load.embeddings.word_to_vec module</a></li>
+<li><a class="reference internal" href="#module-quebap.load.embeddings">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="quebap.html">quebap package</a><ul>
+  <li><a href="quebap.load.html">quebap.load package</a><ul>
+      <li>Previous: <a href="quebap.load.html" title="previous chapter">quebap.load package</a></li>
+      <li>Next: <a href="quebap.model.html" title="next chapter">quebap.model package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quebap.load.embeddings.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/quebap.load.embeddings.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
