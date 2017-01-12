@@ -96,3 +96,8 @@ quebap/data/SNLI/snli_1.0.zip
 quebap/data/SNLI/snli_1.0/
 quebap/data/SNLI/__MACOSX/
 
+# TensorBoard dirs
+.tb
+
+# Vim buffer files
+*.swp

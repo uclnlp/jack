@@ -1,8 +1,7 @@
 import numpy as np
 import random
 from itertools import islice
-
-#from quebap.sisyphos.map import numpify
+from quebap.sisyphos.map import numpify
 
 
 #make deterministic
