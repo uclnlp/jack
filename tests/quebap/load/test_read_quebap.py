@@ -11,4 +11,6 @@ def test_quebap_load():
         with open(quebap_path, 'r') as f:
             res = read_quebap.quebap_load(f, questions='single', supports='single', candidates='fixed', answers='single')
 
-        print(res)
+        assert set(res['answers']) == {'neutral', 'contradiction', 'entailment', 'neutral', 'entailment', 'contradiction', 'contradiction', 'entailment', 'neutral', 'neutral'}
+        assert 'A person on a horse jumps over a broken down airplane.' in res['support']
+        assert 'A person is training his horse for a competition.' in res['question']
