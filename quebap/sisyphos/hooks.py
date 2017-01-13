@@ -3,6 +3,7 @@ import numpy as np
 import time
 from time import gmtime, strftime, localtime
 from sklearn.metrics import classification_report
+from datetime import datetime
 
 
 # todo: hooks should also have prefixes so that one can use the same hook with different parameters
@@ -42,9 +43,9 @@ class TraceHook(object):
             value (float Scalar value for the message.
         """
         if self.summary_writer is not None:
-            cur_summary = tf.scalar_summary(title, value)
+            cur_summary = tf.summary.scalar(title, value)
             # if you are using some summaries, merge them
-            merged_summary_op = tf.merge_summary([cur_summary])
+            merged_summary_op = tf.summary.merge([cur_summary])
             summary_str = sess.run(merged_summary_op)
             self.summary_writer.add_summary(summary_str, current_step)
 
@@ -286,7 +287,8 @@ class EvalHook(TraceHook):
     To be used during training on dev-data, and after training on test-data.
     """
     def __init__(self, batches, logits, predict, target, at_every_epoch=1, placeholders=None,
-                 metrics=[], summary_writer=None, print_details=False, print_to="", info=""):
+                 metrics=[], summary_writer=None, print_details=False,
+                 write_metrics_to="", print_to="", info=""):
         """
         Initialize EvalHook object.
         Calling the hook prints calculated metrics to stdout, and returns targets, predictions, and a metrics dict.
@@ -325,6 +327,9 @@ class EvalHook(TraceHook):
             print_details:
                 if True, prints for each instance:
                 target, prediction, logits, and whether the prediction is entirely correct
+            write_metrics_to (filepath):
+                Write metrics to the given file. If empty no metrics will be
+                written to disk.
             print_to:
                 if a filename is specified, appends the details per instance (as for print_details) to that file.
             msg:
@@ -343,6 +348,7 @@ class EvalHook(TraceHook):
         self.print_to = print_to
         self.info = info
         self.metrics = metrics
+        self.write_metrics_to = write_metrics_to# + '_' + info
 
     def _calc_mrr(self, scores, targets):
         #todo: verify!
@@ -511,6 +517,10 @@ class EvalHook(TraceHook):
             #    res += '\n'
             res += '\t%s: %.3f'%(m, metrics[m])
             self.update_summary(sess, epoch, self.info+'_'+m, metrics[m])
+            if self.write_metrics_to != '':
+                with open(self.write_metrics_to, 'a') as f:
+                    f.write("{0} {1} {2:.5}\n".format(datetime.now(), self.info+'_'+m,
+                      np.round(metrics[m],5)))
         res += '\t(%s)'%self.info
         print(res)
 

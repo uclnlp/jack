@@ -101,3 +101,6 @@ quebap/data/SNLI/__MACOSX/
 
 # Vim buffer files
 *.swp
+
+# Test result files
+testresult_*

@@ -17,6 +17,10 @@ Install [word embeddings code](https://github.com/kudkudak/word-embeddings-bench
 #Training
 `$ python3 ./quebap/train.py --train path/to/train --test path/to/test --model your_model_name`
 
+#Tests
+
+See [How to test](./tests/HOW_TO_TEST.md) for information on how to invoke tests and how to add integration tests.
+
 #Completing the loop with MCTest
 Let's say you have MCTest downloaded, and at least have two data files, mc160.train.tsv and mc160.train.ans, in your working directory.  We can convert these (together) into quebap format, via stdout, as follows:
 ```
