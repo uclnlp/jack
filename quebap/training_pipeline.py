@@ -95,8 +95,10 @@ def main():
     parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
-    parser.add_argument('--batch_size', default=32, type=int, help="Batch size for training data, default 32")
-    parser.add_argument('--dev_batch_size', default=32, type=int, help="Batch size for development data, default 32")
+    parser.add_argument('--batch_size', default=128,
+        type=int, help="Batch size for training data, default 128")
+    parser.add_argument('--dev_batch_size', default=128,
+        type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
     parser.add_argument('--pretrain', default='False', choices={'True','False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
@@ -113,6 +115,8 @@ def main():
     parser.add_argument('--tokenize', default='True', choices={'True','False'},help="Tokenize question and support, default True")
     parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
+    parser.add_argument('--write_metrics_to', default='',
+        help='Filename to log the metrics of the EvalHooks')
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
     #                    help="Use if training and test are the same file and the training set needs to be split. Index of last training instance plus 1.")
@@ -268,15 +272,17 @@ def main():
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
         #evaluate on train data after each epoch
         EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="training",
+                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, write_metrics_to=args.write_metrics_to, info="training",
                  summary_writer=sw),
         #evaluate on dev data after each epoch
         EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, info="development",
+                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, write_metrics_to=args.write_metrics_to, info="development",
                  summary_writer=sw),
         #evaluate on test data after training
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=args.epochs, metrics=['Acc','macroP','macroR','macroF1'], print_details=False, info="test data", print_to="test_out.txt")
+                    at_every_epoch=args.epochs,
+                    metrics=['Acc','macroP','macroR','macroF1'],
+                    print_details=False, write_metrics_to=args.write_metrics_to, info="test")
     ]
 
     #(9) Train the model

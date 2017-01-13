@@ -3,3 +3,5 @@ numpy
 nltk
 jsonschema
 parse
+scipy
+sklearn
