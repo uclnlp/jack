@@ -12,6 +12,7 @@ setup(name='quebap',
       test_suite='tests',
       license='MIT',
       install_requires=[
-            'tensorflow>=0.8'
+            'tensorflow>=0.8',
+            'pycorenlp>=0.3.0'
       ],
       packages=find_packages())
