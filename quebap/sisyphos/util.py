@@ -59,7 +59,8 @@ def get_timestamped_dir(path, link_to_latest=False):
     if not os.path.exists(dir):
         os.makedirs(dir)
     if link_to_latest:
-        os.remove(path + "/latest")
+        if os.path.exists(path + "/latest"):
+            os.remove(path + "/latest")
         os.symlink(current_time, path + "/latest", target_is_directory=True)
     return dir
 
