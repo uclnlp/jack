@@ -10,6 +10,7 @@ import numpy as np
 import contextlib
 from time import gmtime, strftime
 import os
+import json
 
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
@@ -58,3 +59,45 @@ def get_timestamped_dir(path):
     if not os.path.exists(dir):
         os.makedirs(dir)
     return dir
+
+
+def load_conf(path, experiment_dir=None, default="default.conf"):
+    splits = path.split("/")
+    file_name = splits[-1]
+    dir = "/".join(splits[:-1]) + "/"
+    default_path = dir + default
+    default_exists = os.path.isfile(default_path) and not file_name == default
+
+    return_conf = None
+    if default_exists:
+        with open(default_path, 'r') as f_default:
+            default_conf = eval(f_default.read())
+            with open(path, 'r') as f:
+                conf = eval(f.read())
+                for key in conf:
+                    val = conf[key]
+                    if isinstance(val, dict):
+                        for inner_key in val:
+                            default_conf[key][inner_key] = conf[key][inner_key]
+                    else:
+                        default_conf[key] = conf[key]
+                return_conf = default_conf
+                f.close()
+            f_default.close()
+
+    else:
+        with open(path, 'r') as f:
+            conf = eval(f.read())
+            return_conf = conf
+            f.close()
+
+    if experiment_dir is not None:
+        with open(experiment_dir+file_name, "w") as f_out:
+            return_conf["meta"] = {
+                "conf": path,
+                "default": default_path
+            }
+            json.dump(return_conf, f_out, indent=4, sort_keys=True)
+            f_out.close()
+
+    return return_conf
