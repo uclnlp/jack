@@ -52,12 +52,15 @@ def nprint(x, prefix="", precision=3, surpress=True, max_list_len=5, show_shape=
             print(x)
 
 
-def get_timestamped_dir(path):
+def get_timestamped_dir(path, link_to_latest=False):
     """Create a directory with the current timestamp."""
     current_time = strftime("%y-%m-%d/%H-%M-%S", gmtime())
     dir = path + "/" + current_time + "/"
     if not os.path.exists(dir):
         os.makedirs(dir)
+    if link_to_latest:
+        os.remove(path + "/latest")
+        os.symlink(current_time, path + "/latest", target_is_directory=True)
     return dir
 
 
@@ -95,7 +98,8 @@ def load_conf(path, experiment_dir=None, default="default.conf"):
         with open(experiment_dir+file_name, "w") as f_out:
             return_conf["meta"] = {
                 "conf": path,
-                "default": default_path
+                "default": default_path,
+                "experiment_dir": experiment_dir
             }
             json.dump(return_conf, f_out, indent=4, sort_keys=True)
             f_out.close()

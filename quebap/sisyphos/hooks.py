@@ -40,14 +40,13 @@ class TraceHook(object):
             sess (TensorFlow session): The TensorFlow session object.
             current_step (int): Current step in the training procedure.
             title (string): The title of the summary.
-            value (float Scalar value for the message.
+            value (float): Scalar value for the message.
         """
         if self.summary_writer is not None:
-            cur_summary = tf.summary.scalar(title, value)
-            # if you are using some summaries, merge them
-            merged_summary_op = tf.summary.merge([cur_summary])
-            summary_str = sess.run(merged_summary_op)
-            self.summary_writer.add_summary(summary_str, current_step)
+            summary = tf.Summary(value=[
+                tf.Summary.Value(tag=title, simple_value=value),
+            ])
+            self.summary_writer.add_summary(summary, current_step)
 
 
 class LossHook(TraceHook):
@@ -234,7 +233,7 @@ class AccuracyHook(TraceHook):
     #todo: will be deprecated; less general (e.g. for binary vectors in multi-label problems etc).
     #todo: accuracy already covered by EvalHook
     def __init__(self, batches, predict, target, at_every_epoch=1,
-                 placeholders=None, summary_writer=None):
+                 placeholders=None, prefix="", summary_writer=None):
         super(AccuracyHook, self).__init__(summary_writer)
         self.batches = batches
         self.predict = predict
@@ -243,9 +242,10 @@ class AccuracyHook(TraceHook):
         self.placeholders = placeholders
         self.done_for_epoch = False
         self.iter = 0
+        self.prefix = prefix
 
     def __tag__(self):
-        return "Acc"
+        return self.prefix + "Acc"
 
     def __call__(self, sess, epoch, model, loss):
         self.iter += 1
