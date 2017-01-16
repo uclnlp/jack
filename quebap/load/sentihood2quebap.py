@@ -12,7 +12,7 @@ def main():
 
         convert_to_quebap(sentihood_data)
     elif len(sys.argv) ==1:
-        data_path = './quebap/data/sentihood/'
+        data_path = '../data/sentihood/'
         filenames = ['sentihood-train.json', 'sentihood-dev.json',
         'sentihood-test.json']
         for i, f in enumerate(filenames):
@@ -21,12 +21,12 @@ def main():
 
             if i == 0: # training data -> write overfit set
                 json.dump(wrap_into_quebap_global(instances[:100]),
-                        open('../quebap/tests/test_data/sentihood/overfit.json','w'),
+                        open('../../tests/test_data/sentihood/overfit.json','w'),
                         indent=2)
 
             # write data sets for smalldata tests
             json.dump(wrap_into_quebap_global(instances),
-                    open(os.path.join('../quebap/tests/test_data/sentihood/',f),'w'),
+                    open(os.path.join('../../tests/test_data/sentihood/',f),'w'),
                     indent=2)
 
 def wrap_into_quebap_global(instances):
@@ -63,8 +63,7 @@ def convert_to_quebap(sentihood_data, exhaustive=True):
         for aspect in aspects if exhaustive else answers.keys():
             reading_instance = {
                 'support': [{'text': text}],
-                'questions': [aspect],
-                'answers': [{'text': answers[aspect]}]
+                'questions': [{'question': aspect, 'answers': [{'text': answers[aspect]}]}]
             }
             instances.append(reading_instance)
 
