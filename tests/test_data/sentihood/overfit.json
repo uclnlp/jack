@@ -1,4 +1,1706 @@
 {
+  "instances": [
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Negative"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "    LOCATION1 is transforming and the prices will go up and up"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Positive"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Positive"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Positive"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Positive"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Positive"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Negative"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Negative"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Negative"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Negative"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "live"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "safety"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "touristy"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "green-nature"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "dining"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "quiet"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "general"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "shopping"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "transit-location"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Positive"
+            }
+          ],
+          "question": "multicultural"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "price"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Neutral"
+            }
+          ],
+          "question": "nightlife"
+        }
+      ],
+      "support": [
+        {
+          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
+        }
+      ]
+    }
+  ],
   "globals": {
     "candidates": [
       {
@@ -11,1707 +1713,5 @@
         "text": "Neutral"
       }
     ]
-  },
-  "instances": [
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Negative"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "    LOCATION1 is transforming and the prices will go up and up"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Positive"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Along LOCATION1 there are lots of Electronics shops (independent ones)"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Positive"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  And LOCATION1 is ten mins direct on the tube to LOCATION2:  "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Positive"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Positive"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Another option is LOCATION1 which is very central and has tons of clubs/bars within walking distance of each other"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Positive"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Best bet is around LOCATION2 and LOCATION1 area in the northwest corner really nice "
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Negative"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Central London based taxis mostly refuse fares to suburban areas like LOCATION1"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Negative"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Negative"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Negative"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Don't go looking at places like LOCATION1  now that IS a rough area you really wouldn't want to live in"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "quiet"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "dining"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "safety"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "multicultural"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "green-nature"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "shopping"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "nightlife"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "general"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Down here in South London the accent [local] tends to be a bit more Kent, while the accent [local] in LOCATION1 tends to be a bit more Essex and Hertfordshire"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "live"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "touristy"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "transit-location"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
-        }
-      ]
-    },
-    {
-      "questions": [
-        {
-          "answers": [
-            {
-              "text": "Neutral"
-            }
-          ],
-          "question": "price"
-        }
-      ],
-      "support": [
-        {
-          "text": "  Everyone in LOCATION1 is now black or Bangladeshi"
-        }
-      ]
-    }
-  ]
+  }
 }

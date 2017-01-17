@@ -15,11 +15,25 @@ Tests can be invoked by using the Makefile in the main quebap directory. There a
 | Run all unit tests                | `Make test`                                                  |
 | Run all overfit integration tests | `Make overfit`                                               |
 | Run all integration tests than are ran with small data samples (<2k samples)| `Make smalldata`   |
+| Run all sentihood integration test| `Make sentihood`                                             |
+| Run all SNLI integration test| `Make SNLI`                                                       |
 
 
 To run a test battery with the GPU simply add "gpu" to the make command, for example`Make overfitgpu` executes all overfit integration tests on the GPU. Please note if you do not have a GPU the code is executed on the CPU and compares the results with GPU baselines which will most likely yield an error.
 
+For more differentiated test execution you should run pytest directly from the main (first) quebap directory. The core command for this is `pytest -v -m "(flag1 and flag2 and not flag3)"`. You find some examples below.
+
+|  Description                                 | Make command                                                 |
+|----------------------------------------------|--------------------------------------------------------------|
+| Run all sentihood dataset test               | `pytest -v -m sentihood`                                     |
+| Run all sentihood dataset GPU tests          | `pytest -v -m "(sentihood and GPU)"`                         |
+| Run all sentihood dataset GPU overfit tests  | `pytest -v -m "(sentihood and GPU and overfit)"`             | 
+
 Unit tests are usually very fast, however the integration tests need quite some time even though they operate on small, truncated dataset. Current runtimes on my laptop (CPU) and desktop (GPU: GTX Titan X):
+  - SNLI CPU:      Overfit: 37 sec; Small data: 462 sec
+  - SNLI GPU:      Overfit: 55 sec; Small data: 563 sec
+  - sentihood GPU: Overfit: 36; Small data: 144 sec 
+  - sentihood CPU: Overfit: 56; Small data: 100 sec 
 
 ## How to Add Integration Tests
 
@@ -48,3 +62,8 @@ You can find existing integration test in [test_models.py](/quebap/test_models.p
 - Run your model for both the CPU and GPU, check the generated files in the [test_results](./test_results) folder. If the results seem plausible rename the files to baseline.txt
 - Rerun your model, it should now pass the tests
 - Commit your work, you are done!
+
+#### 6. Edit [conftest.py](conftest.py)
+- Explanation: This file is responsible to make it possible to filter test according their name, for example the "sentihood" in`pytest -v -m sentihood`
+- If you added a dataset and all test mosts contain the dataset name (they should do) then add it into the filter (take the other data sets as an example)
+- If you added a model you can also create a filter for that (currently no such filter exists as an example)

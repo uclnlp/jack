@@ -10,6 +10,13 @@ OVERFIT_PATH_GPU = './tests/test_results/overfit_test/GPU/'
 SMALLDATA_PATH_CPU = './tests/test_results/smalldata_test/CPU/'
 SMALLDATA_PATH_GPU = './tests/test_results/smalldata_test/GPU/'
 
+def pytest_collection_modifyitems(items):
+    for item in items:
+        if "interface" in item.nodeid:
+            item.add_marker(pytest.mark.interface)
+        elif "event" in item.nodeid:
+            item.add_marker(pytest.mark.event)
+
 def load_and_parse_test_results(filepath):
     '''This method loads and parses a metric file writen by EvalHook.'''
     name_value_metric_pair = []
@@ -56,9 +63,9 @@ def get_pipeline_script_cmdcall_SNLI_smalldata():
     return cmd
 
 def get_pipeline_script_cmdcall_sentihood_smalldata():
-    train_file = 'tests/test_data/sentihood/sentihood_train.json'
-    dev_file  = 'tests/test_data/sentihood/sentihood_dev.json'
-    test_file  = 'tests/test_data/sentihood/sentihood_test.json'
+    train_file = 'tests/test_data/sentihood/sentihood-train.json'
+    dev_file  = 'tests/test_data/sentihood/sentihood-dev.json'
+    test_file  = 'tests/test_data/sentihood/sentihood-test.json'
     # Setup command
     cmd = "python3 quebap/training_pipeline.py --train={0} --dev={1} \
     --test={2}" .format(train_file, dev_file, test_file,)
@@ -142,12 +149,11 @@ def model_test(model_name, useGPUID=-1, epochs=5, use_small_data=False,
         assert np.allclose([new[1]],[base[1]],atol=0.015), "Metric value different from baseline!"
 
 #-------------------------------
-#       CPU OVERFIT TESTS
-#-------------------------------
-
-
-#-------------------------------
 #           SNLI
+#-------------------------------
+
+#-------------------------------
+#       CPU OVERFIT TESTS
 #-------------------------------
 
 @pytest.mark.overfit
@@ -173,14 +179,6 @@ def test_bag_of_embeddings_with_support_SNLI_overfit():
 @pytest.mark.overfit
 def test_bag_of_embeddings_no_support_SNLI_overfit():
     model_test('boe_nosupport')
-
-#-------------------------------
-#           sentihood
-#-------------------------------
-
-@pytest.mark.overfit
-def test_biconditional_reader_sentihood_overfit():
-    model_test('boe_nosupport', dataset='sentihood')
 
 #-------------------------------
 #       GPU OVERFIT TESTS
@@ -264,3 +262,146 @@ def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata_GPU():
 @pytest.mark.smalldatagpu
 def test_bag_of_embeddings_with_support_SNLI_smalldata_GPU():
     model_test('boe_support', use_small_data=True, useGPUID=0)
+
+#-------------------------------
+#           SNLI END
+#-------------------------------
+
+#-------------------------------
+#           sentihood
+#-------------------------------
+
+#-------------------------------
+#       CPU OVERFIT TESTS
+#-------------------------------
+
+@pytest.mark.overfit
+def test_biconditional_reader_sentihood_overfit_CPU():
+    model_test('boe_nosupport', dataset='sentihood')
+
+@pytest.mark.overfit
+def test_biconditional_reader_sentihood_overfit_CPU():
+    model_test('bicond_singlesupport_reader', use_small_data=False,
+            dataset='sentihood')
+
+@pytest.mark.overfit
+def test_biconditional_reader_with_candidates_sentihood_overfit_CPU():
+    model_test('bicond_singlesupport_reader_with_cands',
+            use_small_data=False, dataset='sentihood')
+
+@pytest.mark.overfit
+def test_bilstm_reader_with_candidates_sentihood_overfit_CPU():
+    model_test('bilstm_singlesupport_reader_with_cands',
+            use_small_data=False, dataset='sentihood')
+
+@pytest.mark.overfit
+def test_bilstm_reader_with_candidates_no_support_sentihood_overfit_CPU():
+    model_test('bilstm_nosupport_reader_with_cands', use_small_data=False,
+            dataset='sentihood')
+
+@pytest.mark.overfit
+def test_bag_of_embeddings_with_support_sentihood_overfit_CPU():
+    model_test('boe_support', use_small_data=False, dataset='sentihood')
+
+#-------------------------------
+#       CPU SMALLDATA TESTS
+#-------------------------------
+
+@pytest.mark.smalldata
+def test_biconditional_reader_sentihood_smalldata_CPU():
+    model_test('boe_nosupport', use_small_data=True, dataset='sentihood', epochs=3)
+
+@pytest.mark.smalldata
+def test_biconditional_reader_sentihood_smalldata_CPU():
+    model_test('bicond_singlesupport_reader', use_small_data=True,
+            dataset='sentihood', epochs=3)
+
+@pytest.mark.smalldata
+def test_biconditional_reader_with_candidates_sentihood_smalldata_CPU():
+    model_test('bicond_singlesupport_reader_with_cands',
+            use_small_data=True, dataset='sentihood', epochs=3)
+
+@pytest.mark.smalldata
+def test_bilstm_reader_with_candidates_sentihood_smalldata_CPU():
+    model_test('bilstm_singlesupport_reader_with_cands',
+            use_small_data=True, dataset='sentihood', epochs=3)
+
+@pytest.mark.smalldata
+def test_bilstm_reader_with_candidates_no_support_sentihood_smalldata_CPU():
+    model_test('bilstm_nosupport_reader_with_cands', use_small_data=True,
+            dataset='sentihood', epochs=3)
+
+@pytest.mark.smalldata
+def test_bag_of_embeddings_with_support_sentihood_smalldata_CPU():
+    model_test('boe_support', use_small_data=True, dataset='sentihood', epochs=3)
+
+#-------------------------------
+#       GPU OVERFIT TESTS
+#-------------------------------
+
+@pytest.mark.overfit
+def test_biconditional_reader_sentihood_overfit_GPU():
+    model_test('boe_nosupport', dataset='sentihood', useGPUID=0)
+
+@pytest.mark.overfit
+def test_biconditional_reader_sentihood_overfit_GPU():
+    model_test('bicond_singlesupport_reader', use_small_data=False,
+            dataset='sentihood', useGPUID=0)
+
+@pytest.mark.overfit
+def test_biconditional_reader_with_candidates_sentihood_overfit_GPU():
+    model_test('bicond_singlesupport_reader_with_cands',
+            use_small_data=False, dataset='sentihood', useGPUID=0)
+
+@pytest.mark.overfit
+def test_bilstm_reader_with_candidates_sentihood_overfit_GPU():
+    model_test('bilstm_singlesupport_reader_with_cands',
+            use_small_data=False, dataset='sentihood', useGPUID=0)
+
+@pytest.mark.overfit
+def test_bilstm_reader_with_candidates_no_support_sentihood_overfit_GPU():
+    model_test('bilstm_nosupport_reader_with_cands', use_small_data=False,
+            dataset='sentihood', useGPUID=0)
+
+@pytest.mark.overfit
+def test_bag_of_embeddings_with_support_sentihood_overfit_GPU():
+    model_test('boe_support', use_small_data=False, dataset='sentihood',
+            useGPUID=0)
+
+#-------------------------------
+#       GPU SMALLDATA TESTS
+#-------------------------------
+
+@pytest.mark.smalldata
+def test_biconditional_reader_sentihood_smalldata_GPU():
+    model_test('boe_nosupport', use_small_data=True, dataset='sentihood',
+            epochs=3, useGPUID=0)
+
+@pytest.mark.smalldata
+def test_biconditional_reader_sentihood_smalldata_GPU():
+    model_test('bicond_singlesupport_reader', use_small_data=True,
+            dataset='sentihood', epochs=3, useGPUID=0)
+
+@pytest.mark.smalldata
+def test_biconditional_reader_with_candidates_sentihood_smalldata_GPU():
+    model_test('bicond_singlesupport_reader_with_cands',
+            use_small_data=True, dataset='sentihood', epochs=3, useGPUID=0)
+
+@pytest.mark.smalldata
+def test_bilstm_reader_with_candidates_sentihood_smalldata_GPU():
+    model_test('bilstm_singlesupport_reader_with_cands',
+            use_small_data=True, dataset='sentihood', epochs=3, useGPUID=0)
+
+@pytest.mark.smalldata
+def test_bilstm_reader_with_candidates_no_support_sentihood_smalldata_GPU():
+    model_test('bilstm_nosupport_reader_with_cands', use_small_data=True,
+            dataset='sentihood', epochs=3, useGPUID=0)
+
+@pytest.mark.smalldata
+def test_bag_of_embeddings_with_support_sentihood_smalldata_GPU():
+    model_test('boe_support', use_small_data=True, dataset='sentihood',
+            epochs=3, useGPUID=0)
+
+#-------------------------------
+#           sentihood END
+#-------------------------------

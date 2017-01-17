@@ -25,7 +25,7 @@ def main():
                         indent=2)
 
             # write data sets for smalldata tests
-            json.dump(wrap_into_quebap_global(instances),
+            json.dump(wrap_into_quebap_global(instances[:1000]),
                     open(os.path.join('../../tests/test_data/sentihood/',f),'w'),
                     indent=2)
 
