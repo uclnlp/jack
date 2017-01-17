@@ -109,10 +109,8 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
-    #parser.add_argument('--vocab_size', default=sys.maxsize, type=int)
-    #parser.add_argument('--answer_size', default=sys.maxsize, type=int)
-    #parser.add_argument('--candidate_size', default=sys.maxsize, type=int)
-    parser.add_argument('--vocab_minfreq', default=0, type=int)
+    parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
+    parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
@@ -186,11 +184,10 @@ def main():
     #  (4) Preprocesses the data (tokenize, normalize, add
     #      start and end of sentence tags) via the sisyphos.pipeline method
 
-    if args.vocab_minfreq != 0:
+    if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         print('build vocab based on train data')
         _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True)
-        if args.vocab_minfreq != 0:
-            train_vocab = train_vocab.prune(args.vocab_minfreq)
+        train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
         print('encode train data')
         train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True)
