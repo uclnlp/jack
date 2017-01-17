@@ -228,7 +228,6 @@ class Vocab(object):
             else: #can happen for `Vocab` initialized with `unk` argument set to `None`
                 return None
 
-
     def get_sym(self, id):
         """returns symbol for a given id (consistent with the `self.frozen` state), and None if not found."""
         return None if not id in self.id2sym else self.id2sym[id]
