@@ -64,7 +64,7 @@ def get_pipeline_script_cmdcall_sentihood_smalldata():
     --test={2}" .format(train_file, dev_file, test_file,)
     return cmd
 
-# This dictionary is here so that the test_model method does not need
+# This dictionary is here so that the model_test method does not need
 # to be changed when new datasets are added. The only change needed
 # will be to add an entry to this dictionary.
 
@@ -80,7 +80,7 @@ DATASET_TO_CMD_CALL_STRING ['SNLI'] = \
         get_pipeline_script_cmdcall_SNLI_smalldata())
 )
 
-def test_model(model_name, useGPUID=-1, epochs=5, use_small_data=False,
+def model_test(model_name, useGPUID=-1, epochs=5, use_small_data=False,
         dataset='SNLI'):
     '''Tests a model via training_pipeline.py by comparing with baseline.txt
     Args:
@@ -152,27 +152,27 @@ def test_model(model_name, useGPUID=-1, epochs=5, use_small_data=False,
 
 @pytest.mark.overfit
 def test_biconditional_reader_SNLI_overfit():
-    test_model('bicond_singlesupport_reader')
+    model_test('bicond_singlesupport_reader')
 
 @pytest.mark.overfit
 def test_biconditional_reader_with_candidates_SNLI_overfit():
-    test_model('bicond_singlesupport_reader_with_cands')
+    model_test('bicond_singlesupport_reader_with_cands')
 
 @pytest.mark.overfit
 def test_bilstm_reader_with_candidates_SNLI_overfit():
-    test_model('bilstm_singlesupport_reader_with_cands')
+    model_test('bilstm_singlesupport_reader_with_cands')
 
 @pytest.mark.overfit
 def test_bilstm_reader_with_candidates_no_support_SNLI_overfit():
-    test_model('bilstm_nosupport_reader_with_cands')
+    model_test('bilstm_nosupport_reader_with_cands')
 
 @pytest.mark.overfit
 def test_bag_of_embeddings_with_support_SNLI_overfit():
-    test_model('boe_support')
+    model_test('boe_support')
 
 @pytest.mark.overfit
 def test_bag_of_embeddings_no_support_SNLI_overfit():
-    test_model('boe_nosupport')
+    model_test('boe_nosupport')
 
 #-------------------------------
 #           sentihood
@@ -180,7 +180,7 @@ def test_bag_of_embeddings_no_support_SNLI_overfit():
 
 @pytest.mark.overfit
 def test_biconditional_reader_sentihood_overfit():
-    test_model('boe_nosupport', dataset='sentihood')
+    model_test('boe_nosupport', dataset='sentihood')
 
 #-------------------------------
 #       GPU OVERFIT TESTS
@@ -188,27 +188,27 @@ def test_biconditional_reader_sentihood_overfit():
 
 @pytest.mark.overfitgpu
 def test_biconditional_reader_SNLI_overfit_GPU():
-    test_model('bicond_singlesupport_reader', useGPUID=0)
+    model_test('bicond_singlesupport_reader', useGPUID=0)
 
 @pytest.mark.overfitgpu
 def test_biconditional_reader_with_candidates_SNLI_overfit_GPU():
-    test_model('bicond_singlesupport_reader_with_cands', useGPUID=0)
+    model_test('bicond_singlesupport_reader_with_cands', useGPUID=0)
 
 @pytest.mark.overfitgpu
 def test_bilstm_reader_with_candidates_SNLI_overfit_GPU():
-    test_model('bilstm_singlesupport_reader_with_cands', useGPUID=0)
+    model_test('bilstm_singlesupport_reader_with_cands', useGPUID=0)
 
 @pytest.mark.overfitgpu
 def test_bilstm_reader_with_candidates_no_support_SNLI_overfit_GPU():
-    test_model('bilstm_nosupport_reader_with_cands', useGPUID=0)
+    model_test('bilstm_nosupport_reader_with_cands', useGPUID=0)
 
 @pytest.mark.overfitgpu
 def test_bag_of_embeddings_with_support_SNLI_overfit_GPU():
-    test_model('boe_support', useGPUID=0)
+    model_test('boe_support', useGPUID=0)
 
 @pytest.mark.overfitgpu
 def test_bag_of_embeddings_no_support_SNLI_overfit_GPU():
-    test_model('boe_nosupport', useGPUID=0)
+    model_test('boe_nosupport', useGPUID=0)
 
 #-------------------------------
 #       CPU SMALLDATA TESTS
@@ -216,25 +216,25 @@ def test_bag_of_embeddings_no_support_SNLI_overfit_GPU():
 
 @pytest.mark.smalldata
 def test_biconditional_reader_SNLI_smalldata():
-    test_model('bicond_singlesupport_reader', use_small_data=True)
+    model_test('bicond_singlesupport_reader', use_small_data=True)
 
 @pytest.mark.smalldata
 def test_biconditional_reader_with_candidates_SNLI_smalldata():
-    test_model('bicond_singlesupport_reader_with_cands',
+    model_test('bicond_singlesupport_reader_with_cands',
             use_small_data=True)
 
 @pytest.mark.smalldata
 def test_bilstm_reader_with_candidates_SNLI_smalldata():
-    test_model('bilstm_singlesupport_reader_with_cands',
+    model_test('bilstm_singlesupport_reader_with_cands',
             use_small_data=True)
 
 @pytest.mark.smalldata
 def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata():
-    test_model('bilstm_nosupport_reader_with_cands', use_small_data=True)
+    model_test('bilstm_nosupport_reader_with_cands', use_small_data=True)
 
 @pytest.mark.smalldata
 def test_bag_of_embeddings_with_support_SNLI_smalldata():
-    test_model('boe_support', use_small_data=True)
+    model_test('boe_support', use_small_data=True)
 
 #-------------------------------
 #       GPU SMALLDATA TESTS
@@ -243,24 +243,24 @@ def test_bag_of_embeddings_with_support_SNLI_smalldata():
 
 @pytest.mark.smalldatagpu
 def test_biconditional_reader_SNLI_smalldata_GPU():
-    test_model('bicond_singlesupport_reader',
+    model_test('bicond_singlesupport_reader',
             use_small_data=True,useGPUID=0)
 
 @pytest.mark.smalldatagpu
 def test_biconditional_reader_with_candidates_SNLI_smalldata_GPU():
-    test_model('bicond_singlesupport_reader_with_cands',
+    model_test('bicond_singlesupport_reader_with_cands',
             use_small_data=True,useGPUID=0)
 
 @pytest.mark.smalldatagpu
 def test_bilstm_reader_with_candidates_SNLI_smalldata_GPU():
-    test_model('bilstm_singlesupport_reader_with_cands',
+    model_test('bilstm_singlesupport_reader_with_cands',
             use_small_data=True, useGPUID=0)
 
 @pytest.mark.smalldatagpu
 def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata_GPU():
-    test_model('bilstm_nosupport_reader_with_cands',
+    model_test('bilstm_nosupport_reader_with_cands',
             use_small_data=True, useGPUID=0)
 
 @pytest.mark.smalldatagpu
 def test_bag_of_embeddings_with_support_SNLI_smalldata_GPU():
-    test_model('boe_support', use_small_data=True, useGPUID=0)
+    model_test('boe_support', use_small_data=True, useGPUID=0)
