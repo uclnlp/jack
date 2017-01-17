@@ -17,17 +17,16 @@ def vocab_test():
     pprint(train_vocab.sym2freqs)
     pprint(train_vocab.sym2id)
 
-    # not working as quebap.sisyphos.vocab.Vocab.prune()
-    # function does not seem compatible with deep_map()
-    MIN_VOCAB_FREQ = 2
+    MIN_VOCAB_FREQ = 5
     train_vocab = train_vocab.prune(MIN_VOCAB_FREQ)
 
     pprint(train_vocab.sym2freqs)
     pprint(train_vocab.sym2id)
 
     print('encode train data')
-    train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab,
+    train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab,
                                 normalize=True, freeze=True)
+    print(train_data)
 
 
 if __name__ == "__main__":
