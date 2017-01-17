@@ -5,6 +5,8 @@ import tensorflow as tf
 tf.set_random_seed(1337)
 
 from time import time
+import sys
+from pprint import pprint
 
 class Duration(object):
     def __init__(self):
@@ -82,6 +84,7 @@ def main():
 
     train_default = dev_default = test_default = 'data/SNLI/snippet_quebapformat_v1.json'
     #train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
+    #train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
 
     #(2) Parse the input arguments
 
@@ -106,6 +109,10 @@ def main():
                         help="Continue training pretrained embeddings together with model parameters, default False")
     parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
+    #parser.add_argument('--vocab_size', default=sys.maxsize, type=int)
+    #parser.add_argument('--answer_size', default=sys.maxsize, type=int)
+    #parser.add_argument('--candidate_size', default=sys.maxsize, type=int)
+    parser.add_argument('--vocab_minfreq', default=0, type=int)
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
@@ -179,16 +186,16 @@ def main():
     #  (4) Preprocesses the data (tokenize, normalize, add
     #      start and end of sentence tags) via the sisyphos.pipeline method
 
-    print('build vocab based on train data')
-    train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
+    if args.vocab_minfreq != 0:
+        print('build vocab based on train data')
+        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True)
+        if args.vocab_minfreq != 0:
+            train_vocab = train_vocab.prune(args.vocab_minfreq)
 
-    """
-    # not working as prune() function does not seem compatible with deep_map()
-    MIN_VOCAB_FREQ = 2
-    train_vocab = train_vocab.prune(MIN_VOCAB_FREQ)
-
-    print('encode train data')
-    train_data, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, emb=emb, normalize=True, freeze=True, tokenization=args.tokenize, negsamples=args.negsamples)"""
+        print('encode train data')
+        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True)
+    else:
+        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
@@ -196,19 +203,12 @@ def main():
 
     vocab_size = len(train_vocab)
     answer_size = len(train_answer_vocab)
-    candidate_size = len(train_candidate_vocab)
-
-    # @todo: we should allow to set vocab_size for smaller vocab
 
     # this is a bit of a hack since args are supposed to be user-defined, but it's cleaner that way with passing on args to reader models
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
     parser.add_argument('--answer_size', default=answer_size, type=int)
     args = parser.parse_args()
     _prep_args()
-
-    print("\tvocab size:  %d" % vocab_size)
-    print("\tanswer size: %d" % answer_size)
-    print("\tcandidate size: %d" % candidate_size)
 
     checkpoint()
     print('encode dev data')
