@@ -45,9 +45,11 @@ build:
     # A custom script step, name value is used in the UI
     # and the code value contains the command that get executed
     - script:
-        name: install tensorflow
+        name: install
         code: |
-          pip3 install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0rc0-cp35-cp35m-linux_x86_64.whl
+          export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp35-cp35m-linux_x86_64.whl
+          pip3 install --upgrade $TF_BINARY_URL
+          python3 setup.py install
 
     - script:
         name: echo python information

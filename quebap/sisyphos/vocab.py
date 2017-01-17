@@ -2,7 +2,7 @@ import tensorflow as tf
 from quebap.sisyphos.tfutil import tfrun
 from quebap.sisyphos.models import get_total_trainable_variables, get_total_variables
 import numpy as np
-
+import operator, sys
 
 SEED = 54321 #for random embedding initialization in NeuralVocab
 
@@ -286,14 +286,17 @@ class Vocab(object):
         """equivalent to `len(get_ids_oov())`"""
         return self.next_pos
 
-    def prune(self, min_freq=5):
+    def prune(self, min_freq=5, max_size=sys.maxsize):
         """returns new Vocab object, pruned based on minimum symbol frequency"""
         pruned_vocab = Vocab(unk=self.unk, emb=self.emb)
-        for sym in self.sym2freqs:
-            freq = self.sym2freqs[sym]
-            if freq >= min_freq:
+        cnt = 0
+        for sym, freq in sorted(self.sym2freqs.items(), key=operator.itemgetter(1), reverse=True):
+        #for sym in self.sym2freqs:
+            #freq = self.sym2freqs[sym]
+            cnt += freq
+            if freq >= min_freq and cnt <= max_size:
                 pruned_vocab(sym)
-                pruned_vocab.sym2freqs[sym] = self.sym2freqs[sym]
+                pruned_vocab.sym2freqs[sym] = freq
         if self.frozen:#if original Vocab was frozen, freeze new one
             pruned_vocab.freeze()
 
