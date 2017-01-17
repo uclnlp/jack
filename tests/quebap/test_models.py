@@ -133,14 +133,7 @@ def model_test(model_name, useGPUID=-1, epochs=5, use_small_data=False,
     cmd = 'CUDA_VISIBLE_DEVICES={0} '.format(useGPUID) + cmd
 
     # Execute command and wait for results
-    try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-            shell=True)
-    except subprocess.CalledProcessError as e:
-        lines = str(e.output).split('\n')
-        print("".join(lines))
-        assert False
-        #raise Exception(subprocess.STDOUT)
+    subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
 
     # Load and parse the results and the baseline for testing
     new_results = load_and_parse_test_results(metric_filepath)
