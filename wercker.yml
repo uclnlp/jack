@@ -60,6 +60,5 @@ build:
 
     - script:
         name: run tests
-        source-dir: $SOURCE
         code: |
           py.test
