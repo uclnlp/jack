@@ -59,6 +59,11 @@ build:
           ls
 
     - script:
-        name: run tests
+        name: Run unit tests
         code: |
-          py.test
+          make test
+
+    - script:
+        name: Run CPU integration tests
+        code: |
+          py.test -v -m CPU
