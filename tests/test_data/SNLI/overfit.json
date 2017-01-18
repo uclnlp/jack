@@ -1,0 +1,1918 @@
+{
+  "meta": "SNLI",
+  "globals": {
+    "candidates": [
+      {
+        "text": "entailment"
+      },
+      {
+        "text": "neutral"
+      },
+      {
+        "text": "contradiction"
+      }
+    ]
+  },
+  "instances": [
+    {
+      "id": "3416050480.jpg#4r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A person is training his horse for a competition."
+        }
+      ],
+      "support": [
+        {
+          "id": "3416050480.jpg#4",
+          "text": "A person on a horse jumps over a broken down airplane."
+        }
+      ]
+    },
+    {
+      "id": "3416050480.jpg#4r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A person is at a diner, ordering an omelette."
+        }
+      ],
+      "support": [
+        {
+          "id": "3416050480.jpg#4",
+          "text": "A person on a horse jumps over a broken down airplane."
+        }
+      ]
+    },
+    {
+      "id": "3416050480.jpg#4r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A person is outdoors, on a horse."
+        }
+      ],
+      "support": [
+        {
+          "id": "3416050480.jpg#4",
+          "text": "A person on a horse jumps over a broken down airplane."
+        }
+      ]
+    },
+    {
+      "id": "2267923837.jpg#2r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "They are smiling at their parents"
+        }
+      ],
+      "support": [
+        {
+          "id": "2267923837.jpg#2",
+          "text": "Children smiling and waving at camera"
+        }
+      ]
+    },
+    {
+      "id": "2267923837.jpg#2r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "There are children present"
+        }
+      ],
+      "support": [
+        {
+          "id": "2267923837.jpg#2",
+          "text": "Children smiling and waving at camera"
+        }
+      ]
+    },
+    {
+      "id": "2267923837.jpg#2r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The kids are frowning"
+        }
+      ],
+      "support": [
+        {
+          "id": "2267923837.jpg#2",
+          "text": "Children smiling and waving at camera"
+        }
+      ]
+    },
+    {
+      "id": "3691670743.jpg#0r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The boy skates down the sidewalk."
+        }
+      ],
+      "support": [
+        {
+          "id": "3691670743.jpg#0",
+          "text": "A boy is jumping on skateboard in the middle of a red bridge."
+        }
+      ]
+    },
+    {
+      "id": "3691670743.jpg#0r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The boy does a skateboarding trick."
+        }
+      ],
+      "support": [
+        {
+          "id": "3691670743.jpg#0",
+          "text": "A boy is jumping on skateboard in the middle of a red bridge."
+        }
+      ]
+    },
+    {
+      "id": "3691670743.jpg#0r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The boy is wearing safety equipment."
+        }
+      ],
+      "support": [
+        {
+          "id": "3691670743.jpg#0",
+          "text": "A boy is jumping on skateboard in the middle of a red bridge."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#0r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "An older man drinks his juice as he waits for his daughter to get off work."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#0",
+          "text": "An older man sits with his orange juice at a small table in a coffee shop while employees in bright colored shirts smile in the background."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#0r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A boy flips a burger."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#0",
+          "text": "An older man sits with his orange juice at a small table in a coffee shop while employees in bright colored shirts smile in the background."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#0r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "An elderly man sits in a small shop."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#0",
+          "text": "An older man sits with his orange juice at a small table in a coffee shop while employees in bright colored shirts smile in the background."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#4r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "Some women are hugging on vacation."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#4",
+          "text": "Two blond women are hugging one another."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#4r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The women are sleeping."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#4",
+          "text": "Two blond women are hugging one another."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#4r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "There are women showing affection."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#4",
+          "text": "Two blond women are hugging one another."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#2r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The people are eating omelettes."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#2",
+          "text": "A few people in a restaurant setting, one of them is drinking orange juice."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#2r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The people are sitting at desks in school."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#2",
+          "text": "A few people in a restaurant setting, one of them is drinking orange juice."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#2r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The diners are at a restaurant."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#2",
+          "text": "A few people in a restaurant setting, one of them is drinking orange juice."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#3r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A man is drinking juice."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#3",
+          "text": "An older man is drinking orange juice at a restaurant."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#3r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Two women are at a restaurant drinking wine."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#3",
+          "text": "An older man is drinking orange juice at a restaurant."
+        }
+      ]
+    },
+    {
+      "id": "4804607632.jpg#3r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A man in a restaurant is waiting for his meal to arrive."
+        }
+      ],
+      "support": [
+        {
+          "id": "4804607632.jpg#3",
+          "text": "An older man is drinking orange juice at a restaurant."
+        }
+      ]
+    },
+    {
+      "id": "4850814517.jpg#1r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A blond man getting a drink of water from a fountain in the park."
+        }
+      ],
+      "support": [
+        {
+          "id": "4850814517.jpg#1",
+          "text": "A man with blond-hair, and a brown shirt drinking out of a public water fountain."
+        }
+      ]
+    },
+    {
+      "id": "4850814517.jpg#1r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A blond man wearing a brown shirt is reading a book on a bench in the park"
+        }
+      ],
+      "support": [
+        {
+          "id": "4850814517.jpg#1",
+          "text": "A man with blond-hair, and a brown shirt drinking out of a public water fountain."
+        }
+      ]
+    },
+    {
+      "id": "4850814517.jpg#1r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A blond man drinking water from a fountain."
+        }
+      ],
+      "support": [
+        {
+          "id": "4850814517.jpg#1",
+          "text": "A man with blond-hair, and a brown shirt drinking out of a public water fountain."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#0r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The friends scowl at each other over a full dinner table."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#0",
+          "text": "Two women who just had lunch hugging and saying goodbye."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#0r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "There are two woman in this picture."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#0",
+          "text": "Two women who just had lunch hugging and saying goodbye."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#0r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The friends have just met for the first time in 20 years, and have had a great time catching up."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#0",
+          "text": "Two women who just had lunch hugging and saying goodbye."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#3r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The two sisters saw each other across the crowded diner and shared a hug, both clutching their doggie bags."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#3",
+          "text": "Two women, holding food carryout containers, hug."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#3r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Two groups of rival gang members flipped each other off."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#3",
+          "text": "Two women, holding food carryout containers, hug."
+        }
+      ]
+    },
+    {
+      "id": "4705552913.jpg#3r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Two women hug each other."
+        }
+      ],
+      "support": [
+        {
+          "id": "4705552913.jpg#3",
+          "text": "Two women, holding food carryout containers, hug."
+        }
+      ]
+    },
+    {
+      "id": "3637966641.jpg#1r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A team is trying to score the games winning out."
+        }
+      ],
+      "support": [
+        {
+          "id": "3637966641.jpg#1",
+          "text": "A Little League team tries to catch a runner sliding into a base in an afternoon game."
+        }
+      ]
+    },
+    {
+      "id": "3637966641.jpg#1r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A team is trying to tag a runner out."
+        }
+      ],
+      "support": [
+        {
+          "id": "3637966641.jpg#1",
+          "text": "A Little League team tries to catch a runner sliding into a base in an afternoon game."
+        }
+      ]
+    },
+    {
+      "id": "3637966641.jpg#1r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A team is playing baseball on Saturn."
+        }
+      ],
+      "support": [
+        {
+          "id": "3637966641.jpg#1",
+          "text": "A Little League team tries to catch a runner sliding into a base in an afternoon game."
+        }
+      ]
+    },
+    {
+      "id": "3636329461.jpg#0r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A school hosts a basketball game."
+        }
+      ],
+      "support": [
+        {
+          "id": "3636329461.jpg#0",
+          "text": "The school is having a special event in order to show the american culture on how other cultures are dealt with in parties."
+        }
+      ]
+    },
+    {
+      "id": "3636329461.jpg#0r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A high school is hosting an event."
+        }
+      ],
+      "support": [
+        {
+          "id": "3636329461.jpg#0",
+          "text": "The school is having a special event in order to show the american culture on how other cultures are dealt with in parties."
+        }
+      ]
+    },
+    {
+      "id": "3636329461.jpg#0r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A school is hosting an event."
+        }
+      ],
+      "support": [
+        {
+          "id": "3636329461.jpg#0",
+          "text": "The school is having a special event in order to show the american culture on how other cultures are dealt with in parties."
+        }
+      ]
+    },
+    {
+      "id": "4934873039.jpg#0r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The women do not care what clothes they wear."
+        }
+      ],
+      "support": [
+        {
+          "id": "4934873039.jpg#0",
+          "text": "High fashion ladies wait outside a tram beside a crowd of people in the city."
+        }
+      ]
+    },
+    {
+      "id": "4934873039.jpg#0r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Women are waiting by a tram."
+        }
+      ],
+      "support": [
+        {
+          "id": "4934873039.jpg#0",
+          "text": "High fashion ladies wait outside a tram beside a crowd of people in the city."
+        }
+      ]
+    },
+    {
+      "id": "4934873039.jpg#0r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The women enjoy having a good fashion sense."
+        }
+      ],
+      "support": [
+        {
+          "id": "4934873039.jpg#0",
+          "text": "High fashion ladies wait outside a tram beside a crowd of people in the city."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#1r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A child with mom and dad, on summer vacation at the beach."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#1",
+          "text": "A man, woman, and child enjoying themselves on a beach."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#1r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A family of three is at the beach."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#1",
+          "text": "A man, woman, and child enjoying themselves on a beach."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#1r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A family of three is at the mall shopping."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#1",
+          "text": "A man, woman, and child enjoying themselves on a beach."
+        }
+      ]
+    },
+    {
+      "id": "4934873039.jpg#2r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The people waiting on the train are sitting."
+        }
+      ],
+      "support": [
+        {
+          "id": "4934873039.jpg#2",
+          "text": "People waiting to get on a train or just getting off."
+        }
+      ]
+    },
+    {
+      "id": "4934873039.jpg#2r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "There are people just getting on a train"
+        }
+      ],
+      "support": [
+        {
+          "id": "4934873039.jpg#2",
+          "text": "People waiting to get on a train or just getting off."
+        }
+      ]
+    },
+    {
+      "id": "4934873039.jpg#2r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "There are people waiting on a train."
+        }
+      ],
+      "support": [
+        {
+          "id": "4934873039.jpg#2",
+          "text": "People waiting to get on a train or just getting off."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#3r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A couple are playing with a young child outside."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#3",
+          "text": "A couple playing with a little boy on the beach."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#3r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A couple are playing frisbee with a young child at the beach."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#3",
+          "text": "A couple playing with a little boy on the beach."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#3r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A couple watch a little girl play by herself on the beach."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#3",
+          "text": "A couple playing with a little boy on the beach."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#4r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The family is sitting down for dinner."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#4",
+          "text": "A couple play in the tide with their young son."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#4r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The family is outside."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#4",
+          "text": "A couple play in the tide with their young son."
+        }
+      ]
+    },
+    {
+      "id": "2946464027.jpg#4r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The family is on vacation."
+        }
+      ],
+      "support": [
+        {
+          "id": "2946464027.jpg#4",
+          "text": "A couple play in the tide with their young son."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#4r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The people are standing still on the curb."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#4",
+          "text": "A man and a woman cross the street in front of a pizza and gyro restaurant."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#4r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Near a couple of restaurants, two people walk across the street."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#4",
+          "text": "A man and a woman cross the street in front of a pizza and gyro restaurant."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#4r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The couple are walking across the street together."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#4",
+          "text": "A man and a woman cross the street in front of a pizza and gyro restaurant."
+        }
+      ]
+    },
+    {
+      "id": "4950996568.jpg#2r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The woman is nake."
+        }
+      ],
+      "support": [
+        {
+          "id": "4950996568.jpg#2",
+          "text": "A woman in a green jacket and hood over her head looking towards a valley."
+        }
+      ]
+    },
+    {
+      "id": "4950996568.jpg#2r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The woman is cold."
+        }
+      ],
+      "support": [
+        {
+          "id": "4950996568.jpg#2",
+          "text": "A woman in a green jacket and hood over her head looking towards a valley."
+        }
+      ]
+    },
+    {
+      "id": "4950996568.jpg#2r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The woman is wearing green."
+        }
+      ],
+      "support": [
+        {
+          "id": "4950996568.jpg#2",
+          "text": "A woman in a green jacket and hood over her head looking towards a valley."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The man with the sign is caucasian."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r2c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "They are protesting outside the capital."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r3e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A woman in white."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r4e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A man is advertising for a restaurant."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r5c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The woman is wearing black."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r4n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A man and a woman walk down a crowded city street."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r5e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The woman is wearing white."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r2n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "They are working for John's Pizza."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r3c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Olympic swimming."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r4c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A man and a soman are eating together at John's Pizza and Gyro."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r2e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "They are walking with a sign."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r5n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The woman is waiting for a friend."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The man is sitting down while he has a sign for John's Pizza and Gyro in his arms."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The woman and man are outdoors."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#1r3n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A woman ordering pizza."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#1",
+          "text": "Woman in white in foreground and a man slightly behind walking with a sign for John's Pizza and Gyro in the background."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r5n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The people are related."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r4c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Two adults run across the street to get away from a red shirted person chasing them."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r5e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "The adults are both male and female."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r3n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "Two people walk home after a tasty steak dinner."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Two adults swimming in water"
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r3e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Two adults walk across a street."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r3c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Two people ride bicycles into a tunnel."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r2e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Two people walk away from a restaurant across a street."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "Two adults walking across a road near the convicted prisoner dressed in red"
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r2n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "Two friends cross a street."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r2c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Some people board a train."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r4e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Two adults walk across the street."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "Two adults walking across a road"
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r5c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "There are no women in the picture."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#0r4n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "Two adults walk across the street to get away from a red shirted person who is chasing them."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#0",
+          "text": "Two adults, one female in white, with shades and one male, gray clothes, walking across a street, away from a eatery with a blurred image of a dark colored red shirted person in the foreground."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#3r1c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A married couple is sleeping."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#3",
+          "text": "A woman wearing all white and eating, walks next to a man holding a briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#3r1e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A female is next to a man."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#3",
+          "text": "A woman wearing all white and eating, walks next to a man holding a briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#3r1n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A married couple is walking next to each other."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#3",
+          "text": "A woman wearing all white and eating, walks next to a man holding a briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r2c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "Nobody has food."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r4e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A woman eats a banana and walks across a street, and there is a man trailing behind her."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r3c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "The woman and man are playing baseball together."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r5n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "two coworkers cross pathes on a street"
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r4c",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "contradiction"
+            }
+          ],
+          "question": "A woman eats ice cream walking down the sidewalk, and there is another woman in front of her with a purse."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r3n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "The mans briefcase is for work."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r2e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "A person eating."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r2n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "A person that is hungry."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r4n",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "neutral"
+            }
+          ],
+          "question": "An actress and her favorite assistant talk a walk in the city."
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    },
+    {
+      "id": "190083339.jpg#2r5e",
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "entailment"
+            }
+          ],
+          "question": "a woman eating a banana crosses a street"
+        }
+      ],
+      "support": [
+        {
+          "id": "190083339.jpg#2",
+          "text": "A woman is walking across the street eating a banana, while a man is following with his briefcase."
+        }
+      ]
+    }
+  ]
+}

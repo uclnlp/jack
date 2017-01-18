@@ -122,6 +122,8 @@ def main():
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
     parser.add_argument('--write_metrics_to', default='',
         help='Filename to log the metrics of the EvalHooks')
+    parser.add_argument('--prune', default='False',
+        help='If the vocabulary should be pruned to the most frequent words.')
     #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
     #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
     #                    help="Use if training and test are the same file and the training set needs to be split. Index of last training instance plus 1.")
@@ -187,7 +189,8 @@ def main():
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         print('build vocab based on train data')
         _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True)
-        train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
+        if args.prune == 'True':
+            train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
         print('encode train data')
         train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True)
