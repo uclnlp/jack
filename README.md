@@ -2,7 +2,7 @@
 [![wercker status](https://app.wercker.com/status/ebcd272ebfdc8c08c262a000f039bfb8/s/master "wercker status")](https://app.wercker.com/project/byKey/ebcd272ebfdc8c08c262a000f039bfb8)
 UCLMR KB and QA system/tools.
 
-See [Understanding Quebap](docs/Understanding_Quebap.md) for a brief introduction of Quebap and its components.
+Read [How to Install and Run Quebap](docs/How_to_install_and_run.md) for more detailed information to install and run a first example using Quebap. For a general overview of Quebap and its high-level components see [Understanding Quebap](docs/Understanding_Quebap.md). 
 
 
 # Preliminaries

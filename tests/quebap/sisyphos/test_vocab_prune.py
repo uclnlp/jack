@@ -17,8 +17,8 @@ def vocab_test():
     pprint(train_vocab.sym2freqs)
     pprint(train_vocab.sym2id)
 
-    MIN_VOCAB_FREQ = 5
-    train_vocab = train_vocab.prune(MIN_VOCAB_FREQ)
+    MIN_VOCAB_FREQ, MAX_VOCAB_CNT = 2, 10
+    train_vocab = train_vocab.prune(MIN_VOCAB_FREQ, MAX_VOCAB_CNT)
 
     pprint(train_vocab.sym2freqs)
     pprint(train_vocab.sym2id)

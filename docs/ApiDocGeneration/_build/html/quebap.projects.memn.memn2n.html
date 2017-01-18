@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>quebap.projects.memn.memn2n package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="quebap.projects.modelF package" href="quebap.projects.modelF.html" />
+    <link rel="prev" title="quebap.projects.memn package" href="quebap.projects.memn.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quebap-projects-memn-memn2n-package">
+<h1>quebap.projects.memn.memn2n package<a class="headerlink" href="#quebap-projects-memn-memn2n-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-quebap.projects.memn.memn2n.memn2n">
+<span id="quebap-projects-memn-memn2n-memn2n-module"></span><h2>quebap.projects.memn.memn2n.memn2n module<a class="headerlink" href="#module-quebap.projects.memn.memn2n.memn2n" title="Permalink to this headline">¶</a></h2>
+<p>End-To-End Memory Networks.</p>
+<p>The implementation is based on <a class="reference external" href="http://arxiv.org/abs/1503.08895">http://arxiv.org/abs/1503.08895</a> [1]</p>
+<dl class="class">
+<dt id="quebap.projects.memn.memn2n.memn2n.MemN2N">
+<em class="property">class </em><code class="descclassname">quebap.projects.memn.memn2n.memn2n.</code><code class="descname">MemN2N</code><span class="sig-paren">(</span><em>batch_size</em>, <em>vocab_size</em>, <em>sentence_size</em>, <em>memory_size</em>, <em>embedding_size</em>, <em>hops=3</em>, <em>max_grad_norm=40.0</em>, <em>nonlin=None</em>, <em>initializer=&lt;function _initializer&gt;</em>, <em>optimizer=&lt;tensorflow.python.training.adam.AdamOptimizer object&gt;</em>, <em>encoding=&lt;function position_encoding&gt;</em>, <em>session=&lt;tensorflow.python.client.session.Session object&gt;</em>, <em>name='MemN2N'</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.MemN2N" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>End-To-End Memory Network.</p>
+<dl class="method">
+<dt id="quebap.projects.memn.memn2n.memn2n.MemN2N.batch_fit">
+<code class="descname">batch_fit</code><span class="sig-paren">(</span><em>stories</em>, <em>queries</em>, <em>answers</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.MemN2N.batch_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the training algorithm over the passed batch</p>
+<p>stories: Tensor (None, memory_size, sentence_size)
+queries: Tensor (None, sentence_size)
+answers: Tensor (None, vocab_size)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>loss</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">floating-point number, the loss computed for the batch</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.memn.memn2n.memn2n.MemN2N.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>stories</em>, <em>queries</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.MemN2N.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predicts answers as one-hot encoding.</p>
+<p>stories: Tensor (None, memory_size, sentence_size)
+queries: Tensor (None, sentence_size)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>answers</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Tensor (None, vocab_size)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.memn.memn2n.memn2n.MemN2N.predict_log_proba">
+<code class="descname">predict_log_proba</code><span class="sig-paren">(</span><em>stories</em>, <em>queries</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.MemN2N.predict_log_proba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predicts log probabilities of answers.</p>
+<p>stories: Tensor (None, memory_size, sentence_size)
+queries: Tensor (None, sentence_size)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>answers</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Tensor (None, vocab_size)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="quebap.projects.memn.memn2n.memn2n.MemN2N.predict_proba">
+<code class="descname">predict_proba</code><span class="sig-paren">(</span><em>stories</em>, <em>queries</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.MemN2N.predict_proba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predicts probabilities of answers.</p>
+<p>stories: Tensor (None, memory_size, sentence_size)
+queries: Tensor (None, sentence_size)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>answers</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Tensor (None, vocab_size)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.memn.memn2n.memn2n.add_gradient_noise">
+<code class="descclassname">quebap.projects.memn.memn2n.memn2n.</code><code class="descname">add_gradient_noise</code><span class="sig-paren">(</span><em>t</em>, <em>stddev=0.001</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.add_gradient_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds gradient noise as described in <a class="reference external" href="http://arxiv.org/abs/1511.06807">http://arxiv.org/abs/1511.06807</a> [2].</p>
+<p>The input Tensor <cite>t</cite> should be a gradient.</p>
+<p>The output will be <cite>t</cite> + gaussian noise.</p>
+<p>0.001 was said to be a good fixed value for memory networks [2].</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.memn.memn2n.memn2n.position_encoding">
+<code class="descclassname">quebap.projects.memn.memn2n.memn2n.</code><code class="descname">position_encoding</code><span class="sig-paren">(</span><em>sentence_size</em>, <em>embedding_size</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.position_encoding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Position Encoding described in section 4.1 [1]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="quebap.projects.memn.memn2n.memn2n.zero_nil_slot">
+<code class="descclassname">quebap.projects.memn.memn2n.memn2n.</code><code class="descname">zero_nil_slot</code><span class="sig-paren">(</span><em>t</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.projects.memn.memn2n.memn2n.zero_nil_slot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrites the nil_slot (first row) of the input Tensor with zeros.</p>
+<p>The nil_slot is a dummy slot and should not be trained and influence
+the training algorithm.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-quebap.projects.memn.memn2n">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-quebap.projects.memn.memn2n" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">quebap.projects.memn.memn2n package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.memn.memn2n.memn2n">quebap.projects.memn.memn2n.memn2n module</a></li>
+<li><a class="reference internal" href="#module-quebap.projects.memn.memn2n">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="quebap.html">quebap package</a><ul>
+  <li><a href="quebap.projects.html">quebap.projects package</a><ul>
+  <li><a href="quebap.projects.memn.html">quebap.projects.memn package</a><ul>
+      <li>Previous: <a href="quebap.projects.memn.html" title="previous chapter">quebap.projects.memn package</a></li>
+      <li>Next: <a href="quebap.projects.modelF.html" title="next chapter">quebap.projects.modelF package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quebap.projects.memn.memn2n.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/quebap.projects.memn.memn2n.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

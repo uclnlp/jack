@@ -3,8 +3,6 @@ PYTHON := python3
 PIP := pip
 PYTEST := pytest
 
-select := "not (overfit or smalldata or smalldatagpu or overfitgpu)"
-
 init:
 	$(PIP) install -r requirements.txt
 install:
@@ -15,16 +13,16 @@ install-user:
 	$(PYTHON) setup.py install --user
 clean:
 	$(PYTHON) setup.py clean --all
-test2:
+test:
 	$(PYTEST) tests -v -m "not (overfit or smalldata or smalldatagpu or overfitgpu)"	
 overfit:
-	$(PYTEST) tests -v -m (overfit and CPU)
+	$(PYTEST) tests -v -m "(overfit and CPU)"
 smalldata:
-	$(PYTEST) tests -v -m (smalldata and CPU)
+	$(PYTEST) tests -v -m "smalldata and CPU)"
 overfitgpu:
-	$(PYTEST) tests -v -m (overfit and GPU)
+	$(PYTEST) tests -v -m "overfit and GPU)"
 smalldatagpu:
-	$(PYTEST) tests -v -m (smalldata and GPU)
+	$(PYTEST) tests -v -m "smalldata and GPU)"
 
 sentihood:
 	$(PYTEST) tests -v -m sentihood
