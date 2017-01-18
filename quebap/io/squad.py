@@ -1,6 +1,32 @@
 import json
 
 
+def create_snippet(file_path):
+    with open(file_path) as data_file:
+        data = json.load(data_file)['data']
+        out = {
+            'data': [{
+                'title': data[0]['title'],
+                'paragraphs': [{
+                    'context': data[0]['paragraphs'][0]['context'],
+                    'qas': data[0]['paragraphs'][0]['qas'][0:3]
+                }]
+            }]
+        }
+        return json.dumps(out, indent=2)
+
+
+def create_quebap_snippet(quebap_dict):
+    out = {
+        'meta': quebap_dict['meta'],
+        'instances': [{
+            'support': quebap_dict['instances'][0]['support'],
+            'questions':quebap_dict['instances'][0]['questions'][0:3]
+        }]
+    }
+    return json.dumps(out, indent=2)
+
+
 def convert_squad(file_path):
     # meta info
     if '/' in file_path:
@@ -14,8 +40,8 @@ def convert_squad(file_path):
         for article in data:
             for paragraph in article['paragraphs']:
                 qa_set = {
-                    'support': [parse_support(paragraph)],
-                    'questions': [parse_question(qa_dict) for qa_dict in paragraph['qas']]
+                    'support': [__parse_support(paragraph)],
+                    'questions': [__parse_question(qa_dict) for qa_dict in paragraph['qas']]
                 }
                 question_sets.append(qa_set)
     corpus_dict = {
@@ -27,14 +53,14 @@ def convert_squad(file_path):
     return corpus_dict
 
 
-def parse_support(para_dict):
+def __parse_support(para_dict):
     return {
             'text': para_dict['context']
     }
 
 
-def parse_question(qa_dict):
-    answers = [parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
+def __parse_question(qa_dict):
+    answers = [__parse_answer(answer_dict) for answer_dict in qa_dict['answers']]
     return {
         'question': {
             'text': qa_dict['question'],
@@ -44,7 +70,7 @@ def parse_question(qa_dict):
     }
 
 
-def parse_answer(answer_dict):
+def __parse_answer(answer_dict):
     answer_text = answer_dict['text']
     answer_start = answer_dict['answer_start']
     answer_end = answer_start + len(answer_text)
@@ -60,7 +86,7 @@ def parse_answer(answer_dict):
 # From command line, two arguments converts arg1 and writes to arg2
 def main():
     import sys
-    corpus = convert_squad(sys.argv[1])
+    corpus = load_into_quebap(sys.argv[1])
     if len(sys.argv) == 2:
         print(json.dumps(corpus, indent=2))
     if len(sys.argv) == 3:
