@@ -3,10 +3,10 @@
 ## Install Quebap and test your installation
 
 The installing procedure currently has three plus one steps:
-1. Install Tensorflow
-2. Run [setup.py](../setup.py)
-3. Test your install
-4. (Optional) install missing dependencies
+  1. Install Tensorflow
+  2. Run [setup.py](../setup.py)
+  3. Test your install
+  4. (Optional) install missing dependencies
 
 #### 1. Install Tensorflow
   - Requirements: Python3, [pip3](http://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3)
@@ -26,10 +26,10 @@ The installing procedure currently has three plus one steps:
 ## Run an example in Quebap
 
 There are currently four steps to get an example running with Quebap:
-1. Download data via script
-2. Convert data with preprocessing script into the Quebap JSON format
-3. Run training_pipeline.py with parameters for your dataset and the model that you want
-4. You can find the list of available models in the models dictionary in the beginning of the training_pipeline.py file
+  1. Download data via script
+  2. Convert data with preprocessing script into the Quebap JSON format
+  3. Run training_pipeline.py with parameters for your dataset and the model that you want
+  4. You can find the list of available models in the models dictionary in the beginning of the training_pipeline.py file
 
 #### 1. Download data via script
   - Have a look to quebap/data to get an overview over the currently available dataset
