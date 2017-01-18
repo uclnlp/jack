@@ -35,7 +35,7 @@ def datetime_test_result_filename():
 
 def get_pipeline_script_cmdcall_SNLI_overfit():
     '''Creates a bash cmd with overfit data to invoke the pipeline script'''
-    train_file = 'quebap/data/SNLI/snippet_quebapformat_v1.json'
+    train_file = 'tests/test_data/SNLI/overfit.json'
     dev_file = train_file
     test_file = train_file
     # Setup command
@@ -160,27 +160,27 @@ def model_test(model_name, useGPUID=-1, epochs=5, use_small_data=False,
 #-------------------------------
 
 @pytest.mark.overfit
-def test_biconditional_reader_SNLI_overfit():
+def test_biconditional_reader_SNLI_overfit_CPU():
     model_test('bicond_singlesupport_reader')
 
 @pytest.mark.overfit
-def test_biconditional_reader_with_candidates_SNLI_overfit():
+def test_biconditional_reader_with_candidates_SNLI_overfit_CPU():
     model_test('bicond_singlesupport_reader_with_cands')
 
 @pytest.mark.overfit
-def test_bilstm_reader_with_candidates_SNLI_overfit():
+def test_bilstm_reader_with_candidates_SNLI_overfit_CPU():
     model_test('bilstm_singlesupport_reader_with_cands')
 
 @pytest.mark.overfit
-def test_bilstm_reader_with_candidates_no_support_SNLI_overfit():
+def test_bilstm_reader_with_candidates_no_support_SNLI_overfit_CPU():
     model_test('bilstm_nosupport_reader_with_cands')
 
 @pytest.mark.overfit
-def test_bag_of_embeddings_with_support_SNLI_overfit():
+def test_bag_of_embeddings_with_support_SNLI_overfit_CPU():
     model_test('boe_support')
 
 @pytest.mark.overfit
-def test_bag_of_embeddings_no_support_SNLI_overfit():
+def test_bag_of_embeddings_no_support_SNLI_overfit_CPU():
     model_test('boe_nosupport')
 
 #-------------------------------
@@ -216,25 +216,25 @@ def test_bag_of_embeddings_no_support_SNLI_overfit_GPU():
 #-------------------------------
 
 @pytest.mark.smalldata
-def test_biconditional_reader_SNLI_smalldata():
+def test_biconditional_reader_SNLI_smalldata_CPU():
     model_test('bicond_singlesupport_reader', use_small_data=True)
 
 @pytest.mark.smalldata
-def test_biconditional_reader_with_candidates_SNLI_smalldata():
+def test_biconditional_reader_with_candidates_SNLI_smalldata_CPU():
     model_test('bicond_singlesupport_reader_with_cands',
             use_small_data=True)
 
 @pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_SNLI_smalldata():
+def test_bilstm_reader_with_candidates_SNLI_smalldata_CPU():
     model_test('bilstm_singlesupport_reader_with_cands',
             use_small_data=True)
 
 @pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata():
+def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata_CPU():
     model_test('bilstm_nosupport_reader_with_cands', use_small_data=True)
 
 @pytest.mark.smalldata
-def test_bag_of_embeddings_with_support_SNLI_smalldata():
+def test_bag_of_embeddings_with_support_SNLI_smalldata_CPU():
     model_test('boe_support', use_small_data=True)
 
 #-------------------------------

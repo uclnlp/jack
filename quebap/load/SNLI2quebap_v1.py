@@ -70,7 +70,11 @@ def main():
         with open("../quebap/tests/test_data/SNLI/2000_samples_train_quebap_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
-        # create snippets
+        corpus['instances'] = corpus['instances'][:100]
+        with open("../quebap/tests/test_data/SNLI/overfit.json", 'w') as outfile:
+            json.dump(corpus, outfile, indent=2)
+
+        # create snippets and overfit test data
         corpus['instances'] = corpus['instances'][:10]
         with open("./quebap/data/SNLI/snli_1.0/snli_1.0_debug_quebap_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
