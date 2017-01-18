@@ -57,8 +57,6 @@ def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
 
     # [batch_size, max_seq2_length]
     support = placeholders['support']
-    # [batch_size]
-    support_lengths = placeholders['support_lengths']
 
     # [batch_size, candidate_size]
     targets = placeholders['targets']
@@ -68,8 +66,6 @@ def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
 
     with tf.variable_scope("embedders") as varscope:
         question_embedded = nvocab(question)
-        varscope.reuse_variables()
-        support_embedded = nvocab(support)
         varscope.reuse_variables()
         candidates_embedded = nvocab(candidates)
 

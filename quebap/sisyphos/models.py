@@ -117,7 +117,7 @@ def bilstm_readers(seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=No
     with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope1:
         # seq1_states: (c_fw, h_fw), (c_bw, h_bw)
         seq1_output, seq1_states = reader(seq1, seq1_lengths, output_size, scope=varscope1, drop_keep_prob=drop_keep_prob)
-    with tf.variable_scope(scope or "bilstm_reader_seq1") as varscope2:
+    with tf.variable_scope(scope or "bilstm_reader_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]
         seq2_output, seq2_states = reader(seq2, seq2_lengths, output_size, scope=varscope2, drop_keep_prob=drop_keep_prob)
