@@ -47,8 +47,12 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
     else:
         min_op = optim.minimize(loss)
 
+    # Do not take up all the GPU memory, all the time.
+    sess_config = tf.ConfigProto()
+    sess_config.gpu_options.allow_growth = True
+
     if sess is None:
-        sess = tf.Session()
+        sess = tf.Session(config=sess_config)
 
     tf.initialize_all_variables().run(session=sess)
 
