@@ -18,11 +18,11 @@ test:
 overfit:
 	$(PYTEST) tests -v -m "(overfit and CPU)"
 smalldata:
-	$(PYTEST) tests -v -m "smalldata and CPU)"
+	$(PYTEST) tests -v -m "(smalldata and CPU)"
 overfitgpu:
-	$(PYTEST) tests -v -m "overfit and GPU)"
+	$(PYTEST) tests -v -m "(overfit and GPU)"
 smalldatagpu:
-	$(PYTEST) tests -v -m "smalldata and GPU)"
+	$(PYTEST) tests -v -m "(smalldata and GPU)"
 
 sentihood:
 	$(PYTEST) tests -v -m sentihood
