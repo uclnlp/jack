@@ -80,18 +80,26 @@ def __parse_answer(answer_dict):
     }
 
 
-# Usage:
-# From other code, call convert_squad(filename)
-# From command line, a single argument converts and writes to stdout
-# From command line, two arguments converts arg1 and writes to arg2
 def main():
+    """
+    Usage:
+    From other code, call convert_squad(filename)
+    NOT APPLICABLE - From command line, a single argument converts and writes to stdout
+    From command line, two arguments converts arg1 and writes to arg2
+
+    Returns: nothing
+
+    """
     import sys
-    corpus = load_into_jtr(sys.argv[1])
-    if len(sys.argv) == 2:
-        print(json.dumps(corpus, indent=2))
+    # if len(sys.argv) == 2:
+    #     print(json.dumps(corpus, indent=2))
     if len(sys.argv) == 3:
+        corpus = convert_squad(sys.argv[1])
         with open(sys.argv[2], 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
+    else:
+        print("Usage: python3 SQuAD2jtr.py path/to/SQuAD path/to/SQuAD.jtr.json")
+
 
 if __name__ == "__main__":
     main()
