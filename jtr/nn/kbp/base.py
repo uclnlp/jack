@@ -82,7 +82,9 @@ class BilinearModel(BaseModel):
         :return: (batch_size) Tensor containing the scores associated by the models to the walks.
         """
         es = tf.expand_dims(self.subject_embeddings, 1)
-        sW = tf.squeeze(tf.batch_matmul(es, self.predicate_embeddings), axis=1)
+        emb_size = tf.shape(self.subject_embeddings)[1]
+        W = tf.reshape(self.predicate_embeddings, (-1, emb_size, emb_size))
+        sW = tf.batch_matmul(es, W)[:, 0, :]
 
         return self.similarity_function(sW, self.object_embeddings)
 
