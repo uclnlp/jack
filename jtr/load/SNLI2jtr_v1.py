@@ -59,13 +59,13 @@ def main():
         corpus = convert_snli(sys.argv[1])
     else:
         for corpus_name in ["dev", "train", "test"]:
-            corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % corpus_name)
-            with open("./jtr/data/SNLI/snli_1.0/snli_1.0_%s_jtr_v1.json" % corpus_name, 'w') as outfile:
+            corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % corpus_name)
+            with open("./data/SNLI/snli_1.0/snli_1.0_%s_jtr_v1.json" % corpus_name, 'w') as outfile:
                 print("Create file snli_1.0_%s_jtr.json" % corpus_name)
                 json.dump(corpus, outfile, indent=2)
 
         # create train set test data
-        corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_train.jsonl")
+        corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_train.jsonl")
         corpus['instances'] = corpus['instances'][:2000]
         with open("./tests/test_data/SNLI/2000_samples_train_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
@@ -76,19 +76,19 @@ def main():
 
         # create snippets and overfit test data
         corpus['instances'] = corpus['instances'][:10]
-        with open("./jtr/data/SNLI/snli_1.0/snli_1.0_debug_jtr_v1.json", 'w') as outfile:
+        with open("./data/SNLI/snli_1.0/snli_1.0_debug_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-        with open("./jtr/data/SNLI/snippet_jtrformat_v1.json", 'w') as outfile:
+        with open("./data/SNLI/snippet_jtrformat_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create dev set test data
-        corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_dev.jsonl")
+        corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_dev.jsonl")
         corpus['instances'] = corpus['instances'][:1000]
         with open("./tests/test_data/SNLI/1000_samples_dev_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create dev set test data
-        corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_test.jsonl")
+        corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_test.jsonl")
         corpus['instances'] = corpus['instances'][:2000]
         with open("./tests/test_data/SNLI/2000_samples_test_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
