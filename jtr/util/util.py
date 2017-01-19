@@ -90,7 +90,7 @@ def load_conf(path, experiment_dir=None):
         conf["meta"]["file_name"] = file_name
 
         if "parent" in conf["meta"]:
-            parent = load_conf_new(conf["meta"]["parent"])
+            parent = load_conf(conf["meta"]["parent"])
             conf = {**parent, **conf}
 
         if experiment_dir is not None:
