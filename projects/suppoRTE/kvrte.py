@@ -1,8 +1,8 @@
-import tensorflow as tf
-from pprint import pprint
+# -*- coding: utf-8 -*-
 
-from jtr.sisyphos.models import get_total_trainable_variables, get_total_variables, conditional_reader, \
-    predictor, boe_reader, bag_reader, bilstm_readers, reader
+import tensorflow as tf
+
+from jtr.nn.models import get_total_trainable_variables, get_total_variables, predictor
 
 
 def key_value_reader(inputs, lengths, output_size, contexts=(None, None),

@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
-import numpy as np
-from jtr.projects.autoread.autoreader import AutoReader
+from .autoreader import AutoReader
 from tensorflow.models.rnn.ptb import reader
 
 if __name__ == '__main__':

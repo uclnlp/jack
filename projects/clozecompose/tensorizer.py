@@ -558,6 +558,7 @@ def transSentToIO(sent, answs):
             enc[i][1] = 1.0  # the first one is O, the second one is I
     return enc
 
+
 def index(subseq, seq):
     i, n, m = -1, len(seq), len(subseq)
     try:
@@ -587,6 +588,7 @@ def tensoriserTest():
             except ValueError:
                 print("ValueError!")
                 continue
+
 
 def main():
     #pass

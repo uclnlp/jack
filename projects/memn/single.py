@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Example running MemN2N on a single bAbI task.
 Download tasks from facebook.ai/babi """
 from __future__ import absolute_import

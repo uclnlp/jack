@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 
 import numpy as np
@@ -47,10 +49,6 @@ def parse_stories(jsonfile):
             data.append((story, q, a))
 
     return data
-
-
-
-
 
 
 def vectorize_data(data, word_idx, sentence_size, memory_size):

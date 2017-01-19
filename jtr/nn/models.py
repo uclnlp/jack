@@ -132,18 +132,15 @@ def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
     output = tf.concat(1, [seq1_states[0][1], seq1_states[1][1], seq2_states[0][1], seq2_states[1][1]])
 
-
     scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
-
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
-    return (logits, loss, predict)
-
+    return logits, loss, predict
 
 
 def conditional_reader_model_with_cands(placeholders, nvocab, **options):
@@ -189,17 +186,15 @@ def conditional_reader_model_with_cands(placeholders, nvocab, **options):
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
     output = tf.concat(1, [states[0][1], states[1][1]])
 
-
     scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
-
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
-    return (logits, loss, predict)
+    return logits, loss, predict
 
 
 def boe_support_cands_reader_model(placeholders, nvocab, **options):
@@ -248,7 +243,7 @@ def boe_support_cands_reader_model(placeholders, nvocab, **options):
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
-    return (logits, loss, predict)
+    return logits, loss, predict
 
 
 def boenosupport_reader_model(placeholders, nvocab, **options):
@@ -280,7 +275,6 @@ def boenosupport_reader_model(placeholders, nvocab, **options):
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
     return (logits, loss, predict)
-
 
 
 def boe_reader_model(placeholders, nvocab, **options):
@@ -317,8 +311,6 @@ def boe_reader_model(placeholders, nvocab, **options):
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
     return (logits, loss, predict)
-
-
 
 
 def conditional_reader_model(placeholders, nvocab, **options):
@@ -381,6 +373,7 @@ def get_total_trainable_variables():
             variable_parameters *= dim.value
         total_parameters += variable_parameters
     return total_parameters
+
 
 def get_total_variables():
     """Calculates and returns the number of parameters in the model (these can be fixed)."""
@@ -501,6 +494,7 @@ def bag_reader(inputs, lengths):
     """
     output=tf.reduce_sum(inputs,1,keep_dims=False)
     return output
+
 
 def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
     """Sums the feature dimension of two sequences and return its concatenation

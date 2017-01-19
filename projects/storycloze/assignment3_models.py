@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
-import pprint
 
 
-def get_permute_model(vocab_size, input_size, output_size, target_size,
-                      layers=1, dropout=0.0):
+def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1, dropout=0.0):
     # Placeholders
     # [batch_size x max_length]
     story = tf.placeholder(tf.int64, [None, None], "story")

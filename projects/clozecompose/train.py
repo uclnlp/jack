@@ -1,11 +1,10 @@
-#import sys
-#sys.path.append("/home/isabelle/jtr")
+# -*- coding: utf-8 -*-
 
 import argparse
-from jtr.projects.clozecompose.models import *
-#from jtr.model.models import *
+from .models import *
 
 from time import time
+
 
 class Duration(object):
     def __init__(self):
@@ -19,7 +18,7 @@ checkpoint = Duration()
 
 
 def train_reader(reader: MultipleChoiceReader, train_data, test_data, num_epochs, batch_size,
-                 optimiserType="GradientDescent", gradDebug=False, use_train_generator_for_test=False): #optimiser=tf.train.AdamOptimizer(learning_rate=0.001)
+                 optimiserType="GradientDescent", gradDebug=False, use_train_generator_for_test=False):
     """
     Train a reader, and test on test set.
     :param reader: The reader to train
