@@ -8,8 +8,8 @@
     
     <title>quebap.sisyphos package &#8212; quebap  documentation</title>
     
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -21,15 +21,15 @@
         SOURCELINK_SUFFIX: '.txt'
       };
     </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="quebap.sisyphos.examples package" href="quebap.sisyphos.examples.html" />
     <link rel="prev" title="quebap.projects.storycloze package" href="quebap.projects.storycloze.html" />
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -115,7 +115,7 @@ which need bucketing.</td>
 <dd><blockquote class="first">
 <div><dl class="docutils">
 <dt>e.g. data = [array1, array2, array3, array4]</dt>
-<dd><p class="first">and we want bucketting according to lengths of examples in array1 and array3
+<dd><p class="first">and we want bucketing according to lengths of examples in array1 and array3
 order = (0, 2) :  performs bucketing on array1, and within each bucket,</p>
 <blockquote class="last">
 <div><blockquote>
@@ -192,7 +192,7 @@ iteration. A feed dict consists of { name : tensor } key-value pairs.</p>
 <span id="quebap-sisyphos-hooks-module"></span><h2>quebap.sisyphos.hooks module<a class="headerlink" href="#module-quebap.sisyphos.hooks" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="quebap.sisyphos.hooks.AccuracyHook">
-<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">AccuracyHook</code><span class="sig-paren">(</span><em>batches</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.AccuracyHook" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">AccuracyHook</code><span class="sig-paren">(</span><em>batches</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>prefix=''</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.AccuracyHook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
 </dd></dl>
 
@@ -205,7 +205,7 @@ iteration. A feed dict consists of { name : tensor } key-value pairs.</p>
 
 <dl class="class">
 <dt id="quebap.sisyphos.hooks.EvalHook">
-<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">EvalHook</code><span class="sig-paren">(</span><em>batches</em>, <em>logits</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>metrics=[]</em>, <em>summary_writer=None</em>, <em>print_details=False</em>, <em>print_to=''</em>, <em>info=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.EvalHook" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">quebap.sisyphos.hooks.</code><code class="descname">EvalHook</code><span class="sig-paren">(</span><em>batches</em>, <em>logits</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>metrics=[]</em>, <em>summary_writer=None</em>, <em>print_details=False</em>, <em>write_metrics_to=''</em>, <em>print_to=''</em>, <em>info=''</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.hooks.EvalHook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#quebap.sisyphos.hooks.TraceHook" title="quebap.sisyphos.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">quebap.sisyphos.hooks.TraceHook</span></code></a></p>
 <p>Hook which applies various metrics, such as recall, precision, F1.</p>
 <p>To be used during training on dev-data, and after training on test-data.</p>
@@ -304,7 +304,7 @@ iteration. A feed dict consists of { name : tensor } key-value pairs.</p>
 <li><strong>sess</strong> (<em>TensorFlow session</em>) &#8211; The TensorFlow session object.</li>
 <li><strong>current_step</strong> (<em>int</em>) &#8211; Current step in the training procedure.</li>
 <li><strong>title</strong> (<em>string</em>) &#8211; The title of the summary.</li>
-<li><strong></strong><strong>(</strong><strong>float Scalar value for the message.</strong> (<em>value</em>) &#8211; </li>
+<li><strong>value</strong> (<em>float</em>) &#8211; Scalar value for the message.</li>
 </ul>
 </td>
 </tr>
@@ -479,7 +479,7 @@ replaces the original entry.
 <p>The function <cite>deep_map</cite> is recursively applied to the values of <cite>xs</cite>;
 the function <cite>fun</cite> takes a sequence as input, and is applied at the one but deepest level,
 where the entries are sequences of objects (no longer sequences of sequences).
-This is the only difference with <cite>deeo_map</cite></p>
+This is the only difference with <cite>deep_map</cite></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -985,9 +985,14 @@ clip_by_norm. Applies the respective TensowFlow function.</li>
 <span id="quebap-sisyphos-util-module"></span><h2>quebap.sisyphos.util module<a class="headerlink" href="#module-quebap.sisyphos.util" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="quebap.sisyphos.util.get_timestamped_dir">
-<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">get_timestamped_dir</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.get_timestamped_dir" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">get_timestamped_dir</code><span class="sig-paren">(</span><em>path</em>, <em>name=None</em>, <em>link_to_latest=False</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.get_timestamped_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a directory with the current timestamp.</p>
 </dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.util.load_conf">
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">load_conf</code><span class="sig-paren">(</span><em>path</em>, <em>experiment_dir=None</em>, <em>default='default.conf'</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.load_conf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="quebap.sisyphos.util.nprint">
@@ -1000,6 +1005,11 @@ clip_by_norm. Applies the respective TensowFlow function.</li>
 <code class="descclassname">quebap.sisyphos.util.</code><code class="descname">printoptions</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.printoptions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Switches printoptions temporarily via yield before switching back.</p>
 </dd></dl>
+
+<dl class="function">
+<dt id="quebap.sisyphos.util.save_conf">
+<code class="descclassname">quebap.sisyphos.util.</code><code class="descname">save_conf</code><span class="sig-paren">(</span><em>path</em>, <em>conf</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.util.save_conf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="quebap.sisyphos.util.shape2str">
@@ -1294,7 +1304,7 @@ for symbols that have an embedding in <cite>self.emb</cite></p>
 
 <dl class="method">
 <dt id="quebap.sisyphos.vocab.Vocab.prune">
-<code class="descname">prune</code><span class="sig-paren">(</span><em>min_freq=5</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.prune" title="Permalink to this definition">¶</a></dt>
+<code class="descname">prune</code><span class="sig-paren">(</span><em>min_freq=5</em>, <em>max_size=9223372036854775807</em><span class="sig-paren">)</span><a class="headerlink" href="#quebap.sisyphos.vocab.Vocab.prune" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns new Vocab object, pruned based on minimum symbol frequency</p>
 </dd></dl>
 
@@ -1358,7 +1368,7 @@ will result in shifted id&#8217;s for pre-trained symbols.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/quebap.sisyphos.rst.txt"
+      <li><a href="sources/quebap.sisyphos.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -1384,7 +1394,7 @@ will result in shifted id&#8217;s for pre-trained symbols.</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
-      <a href="_sources/quebap.sisyphos.rst.txt"
+      <a href="sources/quebap.sisyphos.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
