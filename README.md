@@ -1,5 +1,5 @@
 # jtr -- Jack the Reader ///////////
-[![wercker status](https://app.wercker.com/status/ebcd272ebfdc8c08c262a000f039bfb8/s/master "wercker status")](https://app.wercker.com/project/byKey/ebcd272ebfdc8c08c262a000f039bfb8)
+[![wercker status](https://app.wercker.com/status/8ed61192a5b16769a41dc24c30a3bc6a/s/master "wercker status")](https://app.wercker.com/project/byKey/8ed61192a5b16769a41dc24c30a3bc6a)
 UCLMR KB and QA system/tools.
 
 ![Jack the Reader](https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg)
