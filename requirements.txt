@@ -5,3 +5,4 @@ jsonschema
 parse
 scipy
 sklearn
+tensorflow

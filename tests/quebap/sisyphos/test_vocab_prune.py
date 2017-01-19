@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
+
 from quebap.sisyphos.pipelines import pipeline
-from quebap.sisyphos.vocab import Vocab
 from pprint import pprint
 
 
