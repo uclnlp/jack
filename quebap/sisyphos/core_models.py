@@ -66,22 +66,3 @@ class ConditionalLSTMCell(RNNCell):
                 new_state = array_ops.concat(1, [new_c, new_h])
             return new_h, new_state
 
-
-if __name__ == '__main__':
-    input_size = 2
-    output_size = 3
-    batch_size = 5
-    max_length = 7
-    cell = ConditionalLSTMCell(output_size)
-    input_embedded = tf.placeholder(tf.float32, [None, None, input_size],
-                                    "input_embedded")
-    input_length = tf.placeholder(tf.int64, [None], "input_length")
-    outputs, states = \
-        tf.nn.dynamic_rnn(cell, input_embedded, sequence_length=input_length,
-                          dtype=tf.float32)
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-        print(sess.run(states, {
-            input_embedded: np.random.randn(batch_size, max_length, input_size),
-            input_length: np.random.randint(1, max_length, batch_size)
-        }).h)
