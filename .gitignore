@@ -1,3 +1,6 @@
+# OSX specific
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -95,6 +98,11 @@ ENV/
 jtr/data/SNLI/snli_1.0.zip
 jtr/data/SNLI/snli_1.0/
 jtr/data/SNLI/__MACOSX/
+
+data/SNLI/snli_1.0/
+
+data/SQuAD/dev-v1.1.json
+data/SQuAD/train-v1.1.json
 
 # TensorBoard dirs
 .tb
