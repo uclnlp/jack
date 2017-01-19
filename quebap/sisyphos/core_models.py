@@ -1,11 +1,11 @@
-import tensorflow as tf
+# -*- coding: utf-8 -*-
+
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops.math_ops import sigmoid
 from tensorflow.python.ops.math_ops import tanh
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.ops.rnn_cell import RNNCell, LSTMStateTuple, _linear
-import numpy as np
 
 
 class ConditionalLSTMCell(RNNCell):

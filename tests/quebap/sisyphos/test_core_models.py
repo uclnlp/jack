@@ -15,6 +15,7 @@ def test_conditional_lstm_cell():
 
     input_embedded = tf.placeholder(tf.float32, [None, None, input_size], "input_embedded")
     input_length = tf.placeholder(tf.int64, [None], "input_length")
+
     outputs, states = tf.nn.dynamic_rnn(cell, input_embedded, sequence_length=input_length, dtype=tf.float32)
 
     with tf.Session() as sess:
@@ -26,7 +27,8 @@ def test_conditional_lstm_cell():
         }
 
         outputs_value = sess.run(outputs, feed_dict)
-        assert outputs_value.shape == (5, 7, 3)
+        assert outputs_value.shape == (batch_size, max_length, output_size)
 
-        states_value = sess.run(states, feed_dict).h
-        assert states_value.shape == (5, 3)
+        states_value = sess.run(states, feed_dict)
+        assert states_value.c.shape == (batch_size, output_size)
+        assert states_value.h.shape == (batch_size, output_size)
