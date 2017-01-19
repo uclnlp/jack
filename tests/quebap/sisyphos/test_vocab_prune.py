@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from quebap.sisyphos.pipelines import pipeline
-from quebap.sisyphos.vocab import Vocab
 from pprint import pprint
 
 
-def vocab_test():
+def test_vocab():
     train_data = {
         'candidates': [['entailment', 'neutral', 'contradiction']],
         'answers': ['neutral'],
@@ -25,9 +26,5 @@ def vocab_test():
 
     print('encode train data')
     train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab,
-                                normalize=True, freeze=True)
+                                   normalize=True, freeze=True)
     print(train_data)
-
-
-if __name__ == "__main__":
-    vocab_test()

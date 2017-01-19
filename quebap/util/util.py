@@ -68,50 +68,6 @@ def get_timestamped_dir(path, name=None, link_to_latest=False):
         os.symlink(current_time, path + "/latest", target_is_directory=True)
     return dir
 
-
-def load_conf(path, experiment_dir=None, default="default.conf"):
-    splits = path.split("/")
-    file_name = splits[-1]
-    dir = "/".join(splits[:-1]) + "/"
-    default_path = dir + default
-    default_exists = os.path.isfile(default_path) and not file_name == default
-
-    return_conf = None
-    if default_exists:
-        with open(default_path, 'r') as f_default:
-            default_conf = eval(f_default.read())
-            with open(path, 'r') as f:
-                conf = eval(f.read())
-                for key in conf:
-                    val = conf[key]
-                    if isinstance(val, dict):
-                        for inner_key in val:
-                            default_conf[key][inner_key] = conf[key][inner_key]
-                    else:
-                        default_conf[key] = conf[key]
-                return_conf = default_conf
-                f.close()
-            f_default.close()
-
-    else:
-        with open(path, 'r') as f:
-            conf = eval(f.read())
-            return_conf = conf
-            f.close()
-
-    return_conf["meta"] = {
-        "conf": path,
-        "name": file_name.split(".")[0],
-        "file_name": file_name,
-        "default": default_path,
-    }
-
-    if experiment_dir is not None:
-        save_conf(experiment_dir+file_name, return_conf)
-
-    return return_conf
-
-
 def save_conf(path, conf):
     with open(path, "w") as f_out:
         splits = path.split("/")
@@ -119,3 +75,27 @@ def save_conf(path, conf):
         conf["meta"]["experiment_dir"] = dir
         json.dump(conf, f_out, indent=4, sort_keys=True)
         f_out.close()
+
+def load_conf(path, experiment_dir=None):
+    file_name = path.split("/")[-1]
+
+    with open(path, 'r') as f:
+        conf = eval(f.read())
+
+        if "meta" not in conf:
+            conf["meta"] = {}
+
+        conf["meta"]["conf"] = path
+        conf["meta"]["name"] = file_name.split(".")[0]
+        conf["meta"]["file_name"] = file_name
+
+        if "parent" in conf["meta"]:
+            parent = load_conf_new(conf["meta"]["parent"])
+            conf = {**parent, **conf}
+
+        if experiment_dir is not None:
+            save_conf(experiment_dir+file_name, conf)
+
+        f.close()
+
+        return conf

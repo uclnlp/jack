@@ -10,20 +10,20 @@ Currently, integration tests use truncated dataset files which are around 1MB in
 ## How to Invoke Tests
 Tests can be invoked by using the Makefile in the main quebap directory. There are several commands which execute different test batteries.
 
-|  Description                      | Make command                                                 |
+|  Description                      | make command                                                 |
 |-----------------------------------|--------------------------------------------------------------|
-| Run all unit tests                | `Make test`                                                  |
-| Run all overfit integration tests | `Make overfit`                                               |
-| Run all integration tests than are ran with small data samples (<2k samples)| `Make smalldata`   |
-| Run all sentihood integration test| `Make sentihood`                                             |
-| Run all SNLI integration test| `Make SNLI`                                                       |
+| Run all unit tests                | `make test`                                                  |
+| Run all overfit integration tests | `make overfit`                                               |
+| Run all integration tests than are ran with small data samples (<2k samples)| `make smalldata`   |
+| Run all sentihood integration test| `make sentihood`                                             |
+| Run all SNLI integration test| `make SNLI`                                                       |
 
 
-To run a test battery with the GPU simply add "gpu" to the make command, for example`Make overfitgpu` executes all overfit integration tests on the GPU. Please note if you do not have a GPU the code is executed on the CPU and compares the results with GPU baselines which will most likely yield an error.
+To run a test battery with the GPU simply add "gpu" to the make command, for example`make overfitgpu` executes all overfit integration tests on the GPU. Please note if you do not have a GPU the code is executed on the CPU and compares the results with GPU baselines which will most likely yield an error.
 
 For more differentiated test execution you should run pytest directly from the main (first) quebap directory. The core command for this is `pytest -v -m "(flag1 and flag2 and not flag3)"`. You find some examples below.
 
-|  Description                                 | Make command                                                 |
+|  Description                                 | make command                                                 |
 |----------------------------------------------|--------------------------------------------------------------|
 | Run all sentihood dataset test               | `pytest -v -m sentihood`                                     |
 | Run all sentihood dataset GPU tests          | `pytest -v -m "(sentihood and GPU)"`                         |
