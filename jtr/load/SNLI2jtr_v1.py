@@ -1,23 +1,23 @@
 """
 This files allows creating a jtr datafile for the SNLI corpus,
-whereby each instance receives support under the form of 'related' instances 
+whereby each instance receives support under the form of 'related' instances
 """
 
 
 import json
 
-__candidate_labels = ['entailment','neutral','contradiction']    
+__candidate_labels = ['entailment','neutral','contradiction']
 __candidates = [{'text':cl} for cl in __candidate_labels]
 
 
 def convert_snli(snli_file_jsonl):
-    """ convert SNLI files into jtr format. 
+    """ convert SNLI files into jtr format.
     Data source: http://nlp.stanford.edu/projects/snli/snli_1.0.zip
     Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
     (the *.txt files contain the same data in a different format)
 
     Format:
-        - support = the premise = 'sentence1' in original SNLI data (as id, use 'captionID', the id of sentence1) 
+        - support = the premise = 'sentence1' in original SNLI data (as id, use 'captionID', the id of sentence1)
         - question = the hypothesis = 'sentence2' in original SNLI data
     Notes:
         - instances with gold labels '-' are removed from the corpus
@@ -67,11 +67,11 @@ def main():
         # create train set test data
         corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_train.jsonl")
         corpus['instances'] = corpus['instances'][:2000]
-        with open("../jtr/tests/test_data/SNLI/2000_samples_train_jtr_v1.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/2000_samples_train_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         corpus['instances'] = corpus['instances'][:100]
-        with open("../jtr/tests/test_data/SNLI/overfit.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/overfit.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create snippets and overfit test data
@@ -84,13 +84,13 @@ def main():
         # create dev set test data
         corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_dev.jsonl")
         corpus['instances'] = corpus['instances'][:1000]
-        with open("../jtr/tests/test_data/SNLI/1000_samples_dev_jtr_v1.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/1000_samples_dev_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create dev set test data
         corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_test.jsonl")
         corpus['instances'] = corpus['instances'][:2000]
-        with open("../jtr/tests/test_data/SNLI/2000_samples_test_jtr_v1.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/2000_samples_test_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
 
