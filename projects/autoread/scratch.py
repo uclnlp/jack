@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
 import numpy as np
-from jtr.projects.autoread.autoreader import AutoReader
+from .autoreader import AutoReader
 
 if __name__ == '__main__':
     input_size = 10

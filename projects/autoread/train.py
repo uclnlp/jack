@@ -1,16 +1,17 @@
+# -*- coding: utf-8 -*-
+
 import os
 import random
 import time
-from jtr.projects.autoread import *
+from . import *
 import tensorflow as tf
 import sys
 import functools
 import web.embeddings as embeddings
-import numpy as np
 
 # data loading specifics
-from jtr.projects.autoread.autoreader import AutoReader
-from jtr.projects.autoread.wikireading import load_vocab
+from .autoreader import AutoReader
+from .wikireading import load_vocab
 
 tf.app.flags.DEFINE_string('data', None, 'Path to extracted TFRecord data. Assuming contains document.vocab')
 tf.app.flags.DEFINE_string("trainset_prefix", "train", "Comma separated datasets to train on.")

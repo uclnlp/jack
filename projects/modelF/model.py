@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
 from tensorflow import ConfigProto
 
 import numpy as np
 from numpy.random import randint
-from util import *
+from .util import *
 from copy import copy
 from time import time
 

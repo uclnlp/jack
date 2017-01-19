@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import json
-from jtr.projects.autoread.autoreader import AutoReader
-from jtr.projects.autoread.util import init_with_word_embeddings
+from .autoreader import AutoReader
+from .util import init_with_word_embeddings
 from jtr.tensorizer import GenericTensorizer
 import tensorflow as tf
 import numpy as np

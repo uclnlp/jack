@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
+
 from math import factorial
-from jtr.sisyphos.batch import get_feed_dicts
-from jtr.sisyphos.vocab import Vocab
-from jtr.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
-from jtr.sisyphos.train import train
 import tensorflow as tf
-from jtr.sisyphos.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, ETAHook
-from jtr.projects.storycloze.assignment3_models import get_permute_model, \
-    get_basic_model, get_selective_model, get_bowv_model
-import os
+
+from jtr.preprocess.batch import get_feed_dicts
+from jtr.preprocess.vocab import Vocab
+from jtr.preprocess.map import tokenize, deep_map, deep_seq_map
+from jtr.train import train
+
+from jtr.util.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, ETAHook
+from .assignment3_models import get_selective_model, get_bowv_model
 
 
 def load_corpus(name, use_permutation_index=True):

@@ -1,40 +1,38 @@
+# -*- coding: utf-8 -*-
 
 import argparse
-import json
+
 import os.path as path
 import tensorflow as tf
-tf.set_random_seed(1337)
 
 from time import time
+
+from jtr.preprocess.batch import get_feed_dicts
+from jtr.preprocess.vocab import NeuralVocab
+from jtr.train import train
+from jtr.util.hooks import ExamplesPerSecHook, LossHook, EvalHook
+from jtr.pipelines import simple_pipeline, create_placeholders
+import jtr.nn.models as models
+
+from jtr.load.embeddings.embeddings import load_embeddings
+from jtr.load.read_jtr import jtr_load
+
+from .kvrte import key_value_rte
+
+tf.set_random_seed(1337)
+
 
 class Duration(object):
     def __init__(self):
         self.t0 = time()
         self.t = time()
+
     def __call__(self):
         print('Time since last checkpoint : %.2fmin'%((time()-self.t)/60.))
         self.t = time()
 
 checkpoint = Duration()
 
-
-#from jtr.model.models import create_log_linear_reader, \
-#    create_model_f_reader, create_bag_of_embeddings_reader, \
-#    create_sequence_embeddings_reader, create_support_bag_of_embeddings_reader
-#from jtr.tensorizer import *
-
-from jtr.sisyphos.batch import get_feed_dicts
-from jtr.sisyphos.vocab import Vocab, NeuralVocab
-from jtr.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
-from jtr.sisyphos.train import train
-from jtr.sisyphos.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, TensorHook, EvalHook
-from jtr.sisyphos.pipelines import simple_pipeline, create_placeholders
-import jtr.model.models as models
-
-from jtr.io.embeddings.embeddings import load_embeddings
-from jtr.io.read_jtr import jtr_load
-
-from kvrte import key_value_rte
 
 def map_to_targets(xs, cands_name, ans_name):
     """

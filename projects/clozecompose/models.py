@@ -1,12 +1,10 @@
-import tensorflow as tf
-import numpy as np
-import jtr.util.tfutil as tfutil
-#from jtr.tensorizer import Feature_Tensorizer, MultipleChoiceReader, \
-#    AtomicTensorizer, SequenceTensorizer
-from jtr.projects.clozecompose.tensorizer import *
-from jtr.util import tfutil as tfutil
+# -*- coding: utf-8 -*-
+
+from .tensorizer import *
+from jtr.util import tfutil
 
 _FLOAT_TYPE = tf.float64
+
 
 def create_dense_embedding(ids, repr_dim, num_symbols):
     """

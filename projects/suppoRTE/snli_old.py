@@ -1,35 +1,32 @@
+# -*- coding: utf-8 -*-
+
 import json
-from pprint import pprint
-from time import time, sleep
 from os import path
 
-from jtr.sisyphos.batch import get_feed_dicts
-from jtr.sisyphos.vocab import Vocab, NeuralVocab
-from jtr.sisyphos.map import tokenize, lower, deep_map, deep_seq_map
-from jtr.sisyphos.models import conditional_reader_model
-from jtr.sisyphos.train import train
-from jtr.io.embeddings.embeddings import load_embeddings
 import tensorflow as tf
-import numpy as np
-import random
-from jtr.sisyphos.hooks import ExamplesPerSecHook, AccuracyHook, LossHook
 
+from jtr.preprocess.batch import get_feed_dicts
+from jtr.preprocess.vocab import Vocab, NeuralVocab
+from jtr.preprocess.map import tokenize, lower, deep_map, deep_seq_map
+from jtr.nn.models import conditional_reader_model
+from jtr.train import train
+from jtr.load.embeddings.embeddings import load_embeddings
+from jtr.util.hooks import ExamplesPerSecHook, AccuracyHook, LossHook
+from time import time
 
 tf.set_random_seed(1337)
-
-from time import time
 
 
 class Duration(object):
     def __init__(self):
         self.t0 = time()
         self.t = time()
+
     def __call__(self):
         print('Time since last checkpoint : %.2fmin'%((time()-self.t)/60.))
         self.t = time()
 
 checkpoint = Duration()
-
 
 
 def load(path, max_count=None):

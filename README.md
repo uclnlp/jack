@@ -4,6 +4,12 @@ UCLMR KB and QA system/tools.
 
 ![Jack the Reader](https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg)
 
+All work and no play makes Jack a great framework!
+
+All work and no play makes Jack a great framework!
+
+All work and no play makes Jack a great framework!
+
 Read [How to Install and Run Jack the Reader](docs/How_to_install_and_run.md) for more detailed information to install and run a first example using Jack the Reader. For a general overview of Jack the Reader and its high-level components see [Understanding Jack the Reader](docs/Understanding_Jack_the_Reader.md). For an overview of the Jack the Reader API see the [API documentation](https://uclmr.github.io/jtr/).
 
 
