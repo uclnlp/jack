@@ -19,7 +19,7 @@ def get_pipeline_script_cmdcall_SNLI_converter():
     #train_file = 'tests/test_data/SNLI/2000_samples_train_quebap_v1.json'
 
     # convert snli files into quebap format
-    cmd = "python3 jtr/load/SNLI2jtr_v1.py"
+    cmd = "python3 jtr/format/convert/SNLI2jtr_v1.py"
     #cmd = "pwd"
     return cmd
 
