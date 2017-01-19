@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 
 import os
 import re
 import numpy as np
+
 
 def load_task(data_dir, task_id, only_supporting=False):
     '''Load the nth task. There are 20 tasks in total.
@@ -20,6 +23,7 @@ def load_task(data_dir, task_id, only_supporting=False):
     test_data = get_stories(test_file, only_supporting)
     print(train_file, test_file)
     return train_data, test_data
+
 
 def tokenize(sent):
     '''Return the tokens of a sentence including punctuation.

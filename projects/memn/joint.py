@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+
 '''Joint training all/almost all tasks'''
 from __future__ import absolute_import
 from __future__ import print_function
 
-from data_utils import load_task, vectorize_data
+from .data_utils import load_task, vectorize_data
 from sklearn import cross_validation, metrics
-from memn2n.memn2n import MemN2N
+from memn2n import MemN2N
 from itertools import chain
 
 import tensorflow as tf
