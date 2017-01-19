@@ -1,0 +1,416 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jtr.nn package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="jtr.util package" href="jtr.util.html" />
+    <link rel="prev" title="jtr.load.embeddings package" href="jtr.load.embeddings.html" />
+   
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="jtr-nn-package">
+<h1>jtr.nn package<a class="headerlink" href="#jtr-nn-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.nn.core_models">
+<span id="jtr-nn-core-models-module"></span><h2>jtr.nn.core_models module<a class="headerlink" href="#module-jtr.nn.core_models" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jtr.nn.core_models.ConditionalLSTMCell">
+<em class="property">class </em><code class="descclassname">jtr.nn.core_models.</code><code class="descname">ConditionalLSTMCell</code><span class="sig-paren">(</span><em>num_units</em>, <em>forget_bias=1.0</em>, <em>input_size=None</em>, <em>state_is_tuple=True</em>, <em>activation=&lt;function tanh&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.core_models.ConditionalLSTMCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tensorflow.python.ops.rnn_cell.RNNCell</span></code></p>
+<p>Conditional LSTM (CLSTM) recurrent network cell.</p>
+<dl class="attribute">
+<dt id="jtr.nn.core_models.ConditionalLSTMCell.output_size">
+<code class="descname">output_size</code><a class="headerlink" href="#jtr.nn.core_models.ConditionalLSTMCell.output_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="jtr.nn.core_models.ConditionalLSTMCell.state_size">
+<code class="descname">state_size</code><a class="headerlink" href="#jtr.nn.core_models.ConditionalLSTMCell.state_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-jtr.nn.models">
+<span id="jtr-nn-models-module"></span><h2>jtr.nn.models module<a class="headerlink" href="#module-jtr.nn.models" title="Permalink to this headline">¶</a></h2>
+<p>Provides models that define no placeholders (&#8216;models_np&#8217;)</p>
+<p>todo: include other models; goal: should replace models.py</p>
+<dl class="function">
+<dt id="jtr.nn.models.bag_reader">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">bag_reader</code><span class="sig-paren">(</span><em>inputs</em>, <em>lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.bag_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sums along the feature dimension of inputs. Returns sum per sample.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tensor</em>) &#8211; Input sequence.</li>
+<li><strong>lengths</strong> (<em>tensor</em>) &#8211; Variable lengths of the input sequence.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Sum per sample.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">output (tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.bilstm_nosupport_reader_model_with_cands">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">bilstm_nosupport_reader_model_with_cands</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.bilstm_nosupport_reader_model_with_cands" title="Permalink to this definition">¶</a></dt>
+<dd><p>LSTM reader with pairs of (question, support) and candidates</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.bilstm_reader_model_with_cands">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">bilstm_reader_model_with_cands</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.bilstm_reader_model_with_cands" title="Permalink to this definition">¶</a></dt>
+<dd><p>LSTM reader with pairs of (question, support) and candidates</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.bilstm_readers">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">bilstm_readers</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em>, <em>output_size</em>, <em>scope=None</em>, <em>drop_keep_prob=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.bilstm_readers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duo of independent bi-LSTMs over seq1 and seq2.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>seq1</strong> (<em>tensor</em>) &#8211; The inputs into the first bi-LSTM.</li>
+<li><strong>seq1_lengths</strong> (<em>tensor</em>) &#8211; The lengths of the sequences.</li>
+<li><strong>seq2</strong> (<em>tensor</em>) &#8211; The inputs into the second bi-LSTM.</li>
+<li><strong>seq1_lengths</strong> &#8211; The lengths of the sequences.</li>
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Size of the LSTMs state.</li>
+<li><strong>scope</strong> (<em>string</em>) &#8211; The TensorFlow scope for the reader.</li>
+<li><strong>drop_keep_drop</strong> (<em>float=1.0</em>) &#8211; The keep probability for dropout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The outputs from the second bi-LSTM.
+States (tensor): The cell states from the second bi-LSTM.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Outputs (tensor)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.boe_nosupport_cands_reader_model">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">boe_nosupport_cands_reader_model</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.boe_nosupport_cands_reader_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bag of embedding reader with pairs of (question, support) and candidates</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.boe_reader">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">boe_reader</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.boe_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sums the feature dimension of two sequences and return its concatenation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>seq1</strong> (<em>tensor</em>) &#8211; First input sequence.</li>
+<li><strong>seq1_lengths</strong> (<em>tensor</em>) &#8211; Variable lengths of the first input sequence.</li>
+<li><strong>seq2</strong> (<em>tensor</em>) &#8211; Second input sequence.</li>
+<li><strong>seq2_lengths</strong> (<em>tensor</em>) &#8211; Variable lengths of the second input sequence.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Concatenation of the sums per sample for the sequences.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">output (tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.boe_reader_model">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">boe_reader_model</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.boe_reader_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bag of embeddings reader with pairs of (question, support)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.boe_support_cands_reader_model">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">boe_support_cands_reader_model</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.boe_support_cands_reader_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bag of embedding reader with pairs of (question, support) and candidates</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.boenosupport_reader_model">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">boenosupport_reader_model</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.boenosupport_reader_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bag of embeddings reader with questions</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.conditional_attentive_reader">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">conditional_attentive_reader</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em>, <em>output_size</em>, <em>scope=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.conditional_attentive_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates attentive reader where two bi-LSTMs attend to each others state.</p>
+<p>Reference: Teaching Machines to Read and Comprehend
+Link: <a class="reference external" href="https://arxiv.org/pdf/1506.03340.pdf">https://arxiv.org/pdf/1506.03340.pdf</a></p>
+<p>Creates an attentive reader which consists of two bi-directional LSTM
+where the second LSTM is conditioned by an attention value from all
+past cell states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>`seq1</strong> &#8211; <p>Size of first input sequence.</p>
+</li>
+<li><strong>`seq1_lengths</strong> &#8211; <p>Lengths of first input sequences.</p>
+</li>
+<li><strong>seq2</strong> (<em>tensor</em>) &#8211; Size of second input sequence.</li>
+<li><strong>seq2_lengths</strong> (<em>tensor</em>) &#8211; Lengths of second input sequences.</li>
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Hidden unit size of the two bi-LSTMs.</li>
+<li><strong>scope</strong> (<em>string</em>) &#8211; The TensorFlow scope for the reader.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Triple of logits,
+loss and predict (argmax) tensors,</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><p>(logits (tensor), loss (tensor), predict (tensor)</p>
+<dl class="docutils">
+<dt>{&#8216;sentence1&#8217;: sentence1 (TensorFlow placeholder),</dt>
+<dd><p class="first last">&#8216;sentence1_lengths&#8217;: sentence1_lengths (tensor),
+&#8216;sentence2&#8217;: sentence2 (TensorFlow placeholder),
+&#8216;sentence2_lengths&#8217;: sentence2_lengths (tensor),
+&#8216;targets&#8217;: targets (tensor)}: Dictionary of placeholders to feed data
+into.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.conditional_reader">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">conditional_reader</code><span class="sig-paren">(</span><em>seq1</em>, <em>seq1_lengths</em>, <em>seq2</em>, <em>seq2_lengths</em>, <em>output_size</em>, <em>scope=None</em>, <em>drop_keep_prob=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.conditional_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duo of bi-LSTMs over seq1 and seq2 where seq2 is conditioned on by the final state of seq1.</p>
+<p>See also: conditional_reader_model: Instantiates either condition or
+attentive reader with placeholders.
+:param seq1: The inputs into the first bi-LSTM.
+:type seq1: tensor
+:param seq1_lengths: The lengths of the sequences.
+:type seq1_lengths: tensor
+:param seq2: The inputs into the second bi-LSTM.
+:type seq2: tensor
+:param seq1_lengths: The lengths of the sequences.
+:type seq1_lengths: tensor
+:param output_size: Size of the LSTMs state.
+:type output_size: int
+:param scope: The TensorFlow scope for the reader.
+:type scope: string
+:param drop_keep_drop: The keep propability for dropout.
+:type drop_keep_drop: float=1.0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The outputs from the second bi-LSTM.
+States (tensor): The cell states from the second bi-LSTM.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Outputs (tensor)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.conditional_reader_model">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">conditional_reader_model</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.conditional_reader_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bidirectional conditional reader with pairs of (question, support)
+placeholders: dictionary that should contain placeholders for at least the following keys:
+&#8220;question&#8221;
+&#8220;question_length&#8221;
+&#8220;support&#8221;
+&#8220;support_length&#8221;
+&#8220;answers&#8221;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.conditional_reader_model_with_cands">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">conditional_reader_model_with_cands</code><span class="sig-paren">(</span><em>placeholders</em>, <em>nvocab</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.conditional_reader_model_with_cands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bidirectional conditional reader with pairs of (question, support) and candidates</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.get_total_trainable_variables">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">get_total_trainable_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.get_total_trainable_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and returns the number of trainable parameters in the model.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.get_total_variables">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">get_total_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.get_total_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and returns the number of parameters in the model (these can be fixed).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.predictor">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">predictor</code><span class="sig-paren">(</span><em>inputs</em>, <em>targets</em>, <em>target_size</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.predictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Projects inputs onto targets. Returns logits, loss, argmax.</p>
+<p>Creates fully connected projection layer(logits). Then applies cross entropy
+softmax to get the loss. Calculate predictions via argmax.
+:param inputs: Input into the projection layer.
+:type inputs: tensor
+:param targets: Targets for the loss function.
+:type targets: tensor
+:param target_size: Size of the targets (used in projection layer).
+:type target_size: int</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.nn.models.reader">
+<code class="descclassname">jtr.nn.models.</code><code class="descname">reader</code><span class="sig-paren">(</span><em>inputs</em>, <em>lengths</em>, <em>output_size</em>, <em>contexts=(None</em>, <em>None)</em>, <em>scope=None</em>, <em>drop_keep_prob=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.nn.models.reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dynamic bi-LSTM reader; can be conditioned with initial state of other rnn.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tensor</em>) &#8211; The inputs into the bi-LSTM</li>
+<li><strong>lengths</strong> (<em>tensor</em>) &#8211; The lengths of the sequences</li>
+<li><strong>output_size</strong> (<em>int</em>) &#8211; Size of the LSTM state of the reader.</li>
+<li><strong>context</strong> (<em>tensor=None</em><em>, </em><em>tensor=None</em>) &#8211; Tuple of initial (forward, backward) states
+for the LSTM</li>
+<li><strong>scope</strong> (<em>string</em>) &#8211; The TensorFlow scope for the reader.</li>
+<li><strong>drop_keep_drop</strong> (<em>float=1.0</em>) &#8211; The keep probability for dropout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The outputs from the bi-LSTM.
+States (tensor): The cell states from the bi-LSTM.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Outputs (tensor)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-jtr.nn">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-jtr.nn" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">jtr.nn package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-jtr.nn.core_models">jtr.nn.core_models module</a></li>
+<li><a class="reference internal" href="#module-jtr.nn.models">jtr.nn.models module</a></li>
+<li><a class="reference internal" href="#module-jtr.nn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="jtr.html">jtr package</a><ul>
+      <li>Previous: <a href="jtr.load.embeddings.html" title="previous chapter">jtr.load.embeddings package</a></li>
+      <li>Next: <a href="jtr.util.html" title="next chapter">jtr.util package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="sources/jtr.nn.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="sources/jtr.nn.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

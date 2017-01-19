@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jtr.load package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="jtr.load.embeddings package" href="jtr.load.embeddings.html" />
+    <link rel="prev" title="jtr.format.convert package" href="jtr.format.convert.html" />
+   
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="jtr-load-package">
+<h1>jtr.load package<a class="headerlink" href="#jtr-load-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="jtr.load.embeddings.html">jtr.load.embeddings package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jtr.load.embeddings.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jtr.load.embeddings.html#module-jtr.load.embeddings.embeddings">jtr.load.embeddings.embeddings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jtr.load.embeddings.html#module-jtr.load.embeddings.glove">jtr.load.embeddings.glove module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jtr.load.embeddings.html#module-jtr.load.embeddings.vocabulary">jtr.load.embeddings.vocabulary module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jtr.load.embeddings.html#module-jtr.load.embeddings.word_to_vec">jtr.load.embeddings.word_to_vec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jtr.load.embeddings.html#module-jtr.load.embeddings">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.load.FB15K2jtr">
+<span id="jtr-load-fb15k2jtr-module"></span><h2>jtr.load.FB15K2jtr module<a class="headerlink" href="#module-jtr.load.FB15K2jtr" title="Permalink to this headline">¶</a></h2>
+<p>jtr converter for the fb15k dataset.</p>
+<dl class="docutils">
+<dt>METADATA:   Training data: 483142 triples (subject, relation, object)</dt>
+<dd>14951 different entities
+1345 different relation types</dd>
+</dl>
+<p>data source: <a class="reference external" href="https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz">https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz</a></p>
+<p>webpage: <a class="reference external" href="https://everest.hds.utc.fr/doku.php?id=en:transe">https://everest.hds.utc.fr/doku.php?id=en:transe</a></p>
+<p>paper reference:
+Bordes et al. 2013: Translating Embeddings for Modeling Multi-relational Data</p>
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.compress_triples">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">compress_triples</code><span class="sig-paren">(</span><em>string_triples</em>, <em>unique_entities</em>, <em>unique_relations</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.compress_triples" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.convert">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">convert</code><span class="sig-paren">(</span><em>triples</em>, <em>neighbourhoods</em>, <em>unique_entities</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts into jtr format.
+:param triples: fact triples that should be converted.
+:param neighbourhoods: dictionary of supporting facts per triple
+:unique_entities: List of strings
+:return jtr formatted fb15k data.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.extract_unique_entities_and_relations">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">extract_unique_entities_and_relations</code><span class="sig-paren">(</span><em>triples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.extract_unique_entities_and_relations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identifies unique entities and relation types in collection of triples.
+:param triples: List of string triples.
+:return unique_entities: List of strings
+:return unique_relations: List of strings</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.get_fact_neighbourhoods">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">get_fact_neighbourhoods</code><span class="sig-paren">(</span><em>triples</em>, <em>facts_per_entity</em>, <em>facts_per_relation</em>, <em>include_relations=False</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.get_fact_neighbourhoods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts neighbouring facts for a collection of triples. neighbouring
+facts of fact f are such facts that share at least an entity with f.
+If relations are included, facts which share a relation are also considered
+neighbours.
+:param triples: list of facts triples
+:param facts_per_entity: dictionary; The facts an entity appears in
+:param facts_per_relation: dictionary; The facts a relation appears in
+:param include_relations: boolean. whether facts sharing the relation should</p>
+<blockquote>
+<div>be considered neighbours as well.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Return fact_neighbourhoods:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">dictionary mapping fact ID to set of fact IDs.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.get_facts_per_entity">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">get_facts_per_entity</code><span class="sig-paren">(</span><em>triples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.get_facts_per_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>obtain dictionary with all train fact ids that contain an entity.
+:param triples: List of fact triples
+:return Dictionary entity &#8211;&gt; fact IDs it participates in</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.get_facts_per_relation">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">get_facts_per_relation</code><span class="sig-paren">(</span><em>triples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.get_facts_per_relation" title="Permalink to this definition">¶</a></dt>
+<dd><p>obtain dictionary with all train fact ids that contain a relation type.
+:param triples: List of fact triples
+:return Dictionary relation type &#8211;&gt; fact IDs it participates in</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.FB15K2jtr.load_fb15k_triples">
+<code class="descclassname">jtr.load.FB15K2jtr.</code><code class="descname">load_fb15k_triples</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.FB15K2jtr.load_fb15k_triples" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads the raw data from file provided.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.NYT2jtr">
+<span id="jtr-load-nyt2jtr-module"></span><h2>jtr.load.NYT2jtr module<a class="headerlink" href="#module-jtr.load.NYT2jtr" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a jtr train and test datafiles for the NYT corpus
+based on ../data/NYT/naacl2013.txt
+* train file: one jtr per train instance ; candidates = all entity pairs
+* test file: one jtr per test relation, with all correct answers in the valid answers list</p>
+<p>usage:
+python3 NYT2jtr path/to/naacl2013.txt mode &gt;  naacl2013_mode.jtr.json
+in which mode = train or test</p>
+<dl class="function">
+<dt id="jtr.load.NYT2jtr.create_test_jtr">
+<code class="descclassname">jtr.load.NYT2jtr.</code><code class="descname">create_test_jtr</code><span class="sig-paren">(</span><em>testfacts</em>, <em>tuples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.NYT2jtr.create_test_jtr" title="Permalink to this definition">¶</a></dt>
+<dd><p>one jtr with all correct answers per relation in the test data</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.NYT2jtr.create_train_jtr">
+<code class="descclassname">jtr.load.NYT2jtr.</code><code class="descname">create_train_jtr</code><span class="sig-paren">(</span><em>trainfacts</em>, <em>tuples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.NYT2jtr.create_train_jtr" title="Permalink to this definition">¶</a></dt>
+<dd><p>one jtr per positive train fact</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.NYT2jtr.load_naacl2013">
+<code class="descclassname">jtr.load.NYT2jtr.</code><code class="descname">load_naacl2013</code><span class="sig-paren">(</span><em>path</em>, <em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.NYT2jtr.load_naacl2013" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.NYT2jtr.main">
+<code class="descclassname">jtr.load.NYT2jtr.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.NYT2jtr.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.SNLI2jtr_v1">
+<span id="jtr-load-snli2jtr-v1-module"></span><h2>jtr.load.SNLI2jtr_v1 module<a class="headerlink" href="#module-jtr.load.SNLI2jtr_v1" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a jtr datafile for the SNLI corpus,
+whereby each instance receives support under the form of &#8216;related&#8217; instances</p>
+<dl class="function">
+<dt id="jtr.load.SNLI2jtr_v1.convert_snli">
+<code class="descclassname">jtr.load.SNLI2jtr_v1.</code><code class="descname">convert_snli</code><span class="sig-paren">(</span><em>snli_file_jsonl</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.SNLI2jtr_v1.convert_snli" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert SNLI files into jtr format.
+Data source: <a class="reference external" href="http://nlp.stanford.edu/projects/snli/snli_1.0.zip">http://nlp.stanford.edu/projects/snli/snli_1.0.zip</a>
+Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
+(the <a href="#id1"><span class="problematic" id="id2">*</span></a>.txt files contain the same data in a different format)</p>
+<dl class="docutils">
+<dt>Format:</dt>
+<dd><ul class="first last simple">
+<li>support = the premise = &#8216;sentence1&#8217; in original SNLI data (as id, use &#8216;captionID&#8217;, the id of sentence1)</li>
+<li>question = the hypothesis = &#8216;sentence2&#8217; in original SNLI data</li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>instances with gold labels &#8216;-&#8216; are removed from the corpus</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.SNLI2jtr_v1.main">
+<code class="descclassname">jtr.load.SNLI2jtr_v1.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.SNLI2jtr_v1.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.SNLI2jtr_v2">
+<span id="jtr-load-snli2jtr-v2-module"></span><h2>jtr.load.SNLI2jtr_v2 module<a class="headerlink" href="#module-jtr.load.SNLI2jtr_v2" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a jtr datafile for the SNLI corpus,
+whereby
+- questions consist of premise + delim. + hypothesis
+- TODO: support facts can optinally be loaded from Wordnet / SNLItraining / PPDB</p>
+<dl class="function">
+<dt id="jtr.load.SNLI2jtr_v2.convert_snli">
+<code class="descclassname">jtr.load.SNLI2jtr_v2.</code><code class="descname">convert_snli</code><span class="sig-paren">(</span><em>snli_file_jsonl</em>, <em>support=False</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.SNLI2jtr_v2.convert_snli" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert SNLI files into jtr format.
+Data source: <a class="reference external" href="http://nlp.stanford.edu/projects/snli/snli_1.0.zip">http://nlp.stanford.edu/projects/snli/snli_1.0.zip</a>
+Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
+(the <a href="#id3"><span class="problematic" id="id4">*</span></a>.txt files contain the same data in a different format)</p>
+<dl class="docutils">
+<dt>Format:</dt>
+<dd><ul class="first last simple">
+<li>question = the premise + CONJ + the hypothesis  = &#8216;sentence1&#8217; + CONJ + &#8216;sentence2&#8217;</li>
+<li>support instance = part1 + CONJ + part2 + CONJ + label</li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>instances with gold labels &#8216;-&#8216; are removed from the corpus</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>snli_file_json</strong> &#8211; input file</li>
+<li><strong>support</strong> &#8211; False (no support), TODO: &#8216;WordNet&#8217;, &#8216;SNLItrain&#8217;, &#8216;PPDB&#8217;</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.SNLI2jtr_v2.main">
+<code class="descclassname">jtr.load.SNLI2jtr_v2.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.SNLI2jtr_v2.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="jtr-load-create-dummpy-scienceqa-module">
+<h2>jtr.load.create_dummpy_scienceQA module<a class="headerlink" href="#jtr-load-create-dummpy-scienceqa-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="jtr-load-ls2jtr-module">
+<h2>jtr.load.ls2jtr module<a class="headerlink" href="#jtr-load-ls2jtr-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.load.read_jtr">
+<span id="jtr-load-read-jtr-module"></span><h2>jtr.load.read_jtr module<a class="headerlink" href="#module-jtr.load.read_jtr" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jtr.load.read_jtr.Answer">
+<em class="property">class </em><code class="descclassname">jtr.load.read_jtr.</code><code class="descname">Answer</code><span class="sig-paren">(</span><em>adict</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.Answer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class which holds the text or span of the answer.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.load.read_jtr.Question">
+<em class="property">class </em><code class="descclassname">jtr.load.read_jtr.</code><code class="descname">Question</code><span class="sig-paren">(</span><em>qdict</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.Question" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class which holds answers and question as text.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.load.read_jtr.RichInstance">
+<em class="property">class </em><code class="descclassname">jtr.load.read_jtr.</code><code class="descname">RichInstance</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.RichInstance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Holds lists of supports and questions and manages their iteration.</p>
+<dl class="method">
+<dt id="jtr.load.read_jtr.RichInstance.question_support_pairs">
+<code class="descname">question_support_pairs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.RichInstance.question_support_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields nested pairs of question and support objects.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jtr.load.read_jtr.RichInstance.vocab">
+<code class="descname">vocab</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.RichInstance.vocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the set of tokens from all questions and support objects.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.load.read_jtr.Support">
+<em class="property">class </em><code class="descclassname">jtr.load.read_jtr.</code><code class="descname">Support</code><span class="sig-paren">(</span><em>sdict</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.Support" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Holds a support which is a text or an interval between tokens (span).</p>
+<dl class="method">
+<dt id="jtr.load.read_jtr.Support.token_from_char">
+<code class="descname">token_from_char</code><span class="sig-paren">(</span><em>char_offset</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.Support.token_from_char" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns string between zero and the char_offset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.read_jtr.jtr_load">
+<code class="descclassname">jtr.load.read_jtr.</code><code class="descname">jtr_load</code><span class="sig-paren">(</span><em>path</em>, <em>max_count=None</em>, <em>**options</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.jtr_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>General-purpose loader for jtr files
+Makes use of user-defined options for supports, questions, candidates, answers and only read in those
+things needed for model, e.g. if the dataset contains support, but the user defines support_alts == &#8216;none&#8217;
+because they want to train a model that does not make use of support, support information in dataset is not read in</p>
+<p>User options for jtr model/dataset attributes are:
+support_alts = {&#8216;none&#8217;, &#8216;single&#8217;, &#8216;multiple&#8217;}
+question_alts = answer_alts = {&#8216;single&#8217;, &#8216;multiple&#8217;}
+candidate_alts = {&#8216;open&#8217;, &#8216;per-instance&#8217;, &#8216;fixed&#8217;}</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.read_jtr.read_data">
+<code class="descclassname">jtr.load.read_jtr.</code><code class="descname">read_data</code><span class="sig-paren">(</span><em>data_filename</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.read_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads jtr JSON and returns the dictionary.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.read_jtr.read_rich_data">
+<code class="descclassname">jtr.load.read_jtr.</code><code class="descname">read_rich_data</code><span class="sig-paren">(</span><em>data_filename</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_jtr.read_rich_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms a jtr JSON file into a list of RichInstances (S,Q(A)).</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="jtr.load.read_jtr.token_pattern">
+<code class="descclassname">jtr.load.read_jtr.</code><code class="descname">token_pattern</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#jtr.load.read_jtr.token_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads jtr JSON files and manages the transformation into components.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.read_semeval2017Task10">
+<span id="jtr-load-read-semeval2017task10-module"></span><h2>jtr.load.read_semeval2017Task10 module<a class="headerlink" href="#module-jtr.load.read_semeval2017Task10" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jtr.load.read_semeval2017Task10.readAnn">
+<code class="descclassname">jtr.load.read_semeval2017Task10.</code><code class="descname">readAnn</code><span class="sig-paren">(</span><em>textfolder='../data/SemEval2017Task10/'</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.read_semeval2017Task10.readAnn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read .ann files and look up corresponding spans in .txt files
+:param textfolder:
+:return:</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.scienceQA2jtr">
+<span id="jtr-load-scienceqa2jtr-module"></span><h2>jtr.load.scienceQA2jtr module<a class="headerlink" href="#module-jtr.load.scienceQA2jtr" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jtr.load.scienceQA2jtr.convert_scienceCloze_to_jtr">
+<code class="descclassname">jtr.load.scienceQA2jtr.</code><code class="descname">convert_scienceCloze_to_jtr</code><span class="sig-paren">(</span><em>scienceQAFile</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.scienceQA2jtr.convert_scienceCloze_to_jtr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.sentihood2jtr">
+<span id="jtr-load-sentihood2jtr-module"></span><h2>jtr.load.sentihood2jtr module<a class="headerlink" href="#module-jtr.load.sentihood2jtr" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jtr.load.sentihood2jtr.convert_to_jtr">
+<code class="descclassname">jtr.load.sentihood2jtr.</code><code class="descname">convert_to_jtr</code><span class="sig-paren">(</span><em>sentihood_data</em>, <em>exhaustive=True</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.sentihood2jtr.convert_to_jtr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.sentihood2jtr.main">
+<code class="descclassname">jtr.load.sentihood2jtr.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.sentihood2jtr.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.sentihood2jtr.wrap_into_jtr_global">
+<code class="descclassname">jtr.load.sentihood2jtr.</code><code class="descname">wrap_into_jtr_global</code><span class="sig-paren">(</span><em>instances</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.sentihood2jtr.wrap_into_jtr_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load.simpleQuestions2jtr">
+<span id="jtr-load-simplequestions2jtr-module"></span><h2>jtr.load.simpleQuestions2jtr module<a class="headerlink" href="#module-jtr.load.simpleQuestions2jtr" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jtr.load.simpleQuestions2jtr.convert_simpleQuestions_to_jtr">
+<code class="descclassname">jtr.load.simpleQuestions2jtr.</code><code class="descname">convert_simpleQuestions_to_jtr</code><span class="sig-paren">(</span><em>simpleQuestionFile</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.simpleQuestions2jtr.convert_simpleQuestions_to_jtr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.load.simpleQuestions2jtr.main">
+<code class="descclassname">jtr.load.simpleQuestions2jtr.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.load.simpleQuestions2jtr.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.load">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-jtr.load" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">jtr.load package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-jtr.load.FB15K2jtr">jtr.load.FB15K2jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.NYT2jtr">jtr.load.NYT2jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.SNLI2jtr_v1">jtr.load.SNLI2jtr_v1 module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.SNLI2jtr_v2">jtr.load.SNLI2jtr_v2 module</a></li>
+<li><a class="reference internal" href="#jtr-load-create-dummpy-scienceqa-module">jtr.load.create_dummpy_scienceQA module</a></li>
+<li><a class="reference internal" href="#jtr-load-ls2jtr-module">jtr.load.ls2jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.read_jtr">jtr.load.read_jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.read_semeval2017Task10">jtr.load.read_semeval2017Task10 module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.scienceQA2jtr">jtr.load.scienceQA2jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.sentihood2jtr">jtr.load.sentihood2jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load.simpleQuestions2jtr">jtr.load.simpleQuestions2jtr module</a></li>
+<li><a class="reference internal" href="#module-jtr.load">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="jtr.html">jtr package</a><ul>
+      <li>Previous: <a href="jtr.format.convert.html" title="previous chapter">jtr.format.convert package</a></li>
+      <li>Next: <a href="jtr.load.embeddings.html" title="next chapter">jtr.load.embeddings package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="sources/jtr.load.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="sources/jtr.load.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

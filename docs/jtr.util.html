@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jtr.util package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="setup module" href="setup.html" />
+    <link rel="prev" title="jtr.nn package" href="jtr.nn.html" />
+   
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="jtr-util-package">
+<h1>jtr.util package<a class="headerlink" href="#jtr-util-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="jtr-util-gen-data-module">
+<h2>jtr.util.gen_data module<a class="headerlink" href="#jtr-util-gen-data-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.util.hooks">
+<span id="jtr-util-hooks-module"></span><h2>jtr.util.hooks module<a class="headerlink" href="#module-jtr.util.hooks" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="jtr.util.hooks.AccuracyHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">AccuracyHook</code><span class="sig-paren">(</span><em>batches</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>prefix=''</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.AccuracyHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.TraceHook" title="jtr.util.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.TraceHook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.ETAHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">ETAHook</code><span class="sig-paren">(</span><em>iter_interval</em>, <em>max_epochs</em>, <em>iter_per_epoch</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.ETAHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.TraceHook" title="jtr.util.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.TraceHook</span></code></a></p>
+<p>Estimates ETA from max_iter vs current_iter.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.EvalHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">EvalHook</code><span class="sig-paren">(</span><em>batches</em>, <em>logits</em>, <em>predict</em>, <em>target</em>, <em>at_every_epoch=1</em>, <em>placeholders=None</em>, <em>metrics=[]</em>, <em>summary_writer=None</em>, <em>print_details=False</em>, <em>write_metrics_to=''</em>, <em>print_to=''</em>, <em>info=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.EvalHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.TraceHook" title="jtr.util.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.TraceHook</span></code></a></p>
+<p>Hook which applies various metrics, such as recall, precision, F1.</p>
+<p>To be used during training on dev-data, and after training on test-data.</p>
+<dl class="method">
+<dt id="jtr.util.hooks.EvalHook.at_epoch_end">
+<code class="descname">at_epoch_end</code><span class="sig-paren">(</span><em>sess</em>, <em>epoch</em>, <em>model</em>, <em>loss</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.EvalHook.at_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="jtr.util.hooks.EvalHook.at_iteration_end">
+<code class="descname">at_iteration_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.EvalHook.at_iteration_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.ExamplesPerSecHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">ExamplesPerSecHook</code><span class="sig-paren">(</span><em>iter_interval</em>, <em>batch_size</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.ExamplesPerSecHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.TraceHook" title="jtr.util.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.TraceHook</span></code></a></p>
+<p>Prints the examples per sec and adds it to the summary writer.</p>
+<dl class="method">
+<dt id="jtr.util.hooks.ExamplesPerSecHook.at_epoch_end">
+<code class="descname">at_epoch_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.ExamplesPerSecHook.at_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="jtr.util.hooks.ExamplesPerSecHook.at_iteration_end">
+<code class="descname">at_iteration_end</code><span class="sig-paren">(</span><em>sess</em>, <em>epoch</em>, <em>model</em>, <em>loss</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.ExamplesPerSecHook.at_iteration_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.Hook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">Hook</code><a class="headerlink" href="#jtr.util.hooks.Hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Serves as Hook interface.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.LoadModelHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">LoadModelHook</code><span class="sig-paren">(</span><em>path</em>, <em>at_epoch</em>, <em>at_every_epoch=0</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.LoadModelHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.Hook" title="jtr.util.hooks.Hook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.Hook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.LossHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">LossHook</code><span class="sig-paren">(</span><em>iter_interval</em>, <em>batch_size</em>, <em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.LossHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.TraceHook" title="jtr.util.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.TraceHook</span></code></a></p>
+<p>A hook at prints the current loss and adds it to the summary.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.PRF1Hook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">PRF1Hook</code><span class="sig-paren">(</span><em>batcher</em>, <em>placeholders</em>, <em>at_every_epoch</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.PRF1Hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.Hook" title="jtr.util.hooks.Hook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.Hook</span></code></a></p>
+<p>Evaluate and print per-class and average precision, recall, F1.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.SaveModelHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">SaveModelHook</code><span class="sig-paren">(</span><em>path</em>, <em>at_epoch</em>, <em>at_every_epoch=0</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.SaveModelHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.Hook" title="jtr.util.hooks.Hook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.Hook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.TensorHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">TensorHook</code><span class="sig-paren">(</span><em>iter_interval, tensorlist, feed_dicts=None, summary_writer=None, modes=['mean_abs']</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.TensorHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jtr.util.hooks.TraceHook" title="jtr.util.hooks.TraceHook"><code class="xref py py-class docutils literal"><span class="pre">jtr.util.hooks.TraceHook</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jtr.util.hooks.TraceHook">
+<em class="property">class </em><code class="descclassname">jtr.util.hooks.</code><code class="descname">TraceHook</code><span class="sig-paren">(</span><em>summary_writer=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.TraceHook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Abstract hook class, which implements an update function the summary.</p>
+<dl class="method">
+<dt id="jtr.util.hooks.TraceHook.at_epoch_end">
+<code class="descname">at_epoch_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.TraceHook.at_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="jtr.util.hooks.TraceHook.at_iteration_end">
+<code class="descname">at_iteration_end</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.TraceHook.at_iteration_end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="jtr.util.hooks.TraceHook.update_summary">
+<code class="descname">update_summary</code><span class="sig-paren">(</span><em>sess</em>, <em>current_step</em>, <em>title</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.hooks.TraceHook.update_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds summary (title, value) to summary writer object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sess</strong> (<em>TensorFlow session</em>) &#8211; The TensorFlow session object.</li>
+<li><strong>current_step</strong> (<em>int</em>) &#8211; Current step in the training procedure.</li>
+<li><strong>title</strong> (<em>string</em>) &#8211; The title of the summary.</li>
+<li><strong>value</strong> (<em>float</em>) &#8211; Scalar value for the message.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="jtr-util-rs-module">
+<h2>jtr.util.rs module<a class="headerlink" href="#jtr-util-rs-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.util.tfutil">
+<span id="jtr-util-tfutil-module"></span><h2>jtr.util.tfutil module<a class="headerlink" href="#module-jtr.util.tfutil" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jtr.util.tfutil.gather_in_dim">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">gather_in_dim</code><span class="sig-paren">(</span><em>params</em>, <em>indices</em>, <em>dim</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.gather_in_dim" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Gathers slices in a defined dimension. If dim == 0 this is doing the same</dt>
+<dd>thing as tf.gather.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.get_by_index">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">get_by_index</code><span class="sig-paren">(</span><em>tensor</em>, <em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.get_by_index" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tensor</strong> &#8211; [dim1 x dim2 x dim3] tensor</li>
+<li><strong>index</strong> &#8211; [dim1] tensor of indices for dim2</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">[dim1 x dim3] tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.get_last">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">get_last</code><span class="sig-paren">(</span><em>tensor</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.get_last" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tensor</strong> &#8211; [dim1 x dim2 x dim3] tensor</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">[dim1 x dim3] tensor</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.mask_for_lengths">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">mask_for_lengths</code><span class="sig-paren">(</span><em>lengths</em>, <em>batch_size=None</em>, <em>max_length=None</em>, <em>mask_right=True</em>, <em>value=-1000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.mask_for_lengths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a [batch_size x max_length] mask.
+:param lengths: int64 1-dim tensor of batch_size lengths
+:param batch_size: int32 0-dim tensor or python int
+:param max_length: int32 0-dim tensor or python int
+:param mask_right: if True, everything before &#8220;lengths&#8221; becomes zero and the</p>
+<blockquote>
+<div>rest &#8220;value&#8221;, else vice versa</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; value for the mask</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">[batch_size x max_length] mask of zeros and &#8220;value&#8221;s</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfprint">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfprint</code><span class="sig-paren">(</span><em>tensor</em>, <em>fun=None</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints tensor; optionally applies function first.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfprints">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfprints</code><span class="sig-paren">(</span><em>tensors</em>, <em>fun=None</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfprints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfprintshape">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfprintshape</code><span class="sig-paren">(</span><em>tensor</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfprintshape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the shape of a tensor.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfprintshapes">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfprintshapes</code><span class="sig-paren">(</span><em>tensors</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfprintshapes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfrun">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfrun</code><span class="sig-paren">(</span><em>variables</em>, <em>feed_dict=None</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfrun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes variables in a new TensorFlow session, then returns results.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfrunprint">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfrunprint</code><span class="sig-paren">(</span><em>tensor</em>, <em>suffix=''</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfrunprint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.tfrunprintshape">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">tfrunprintshape</code><span class="sig-paren">(</span><em>tensor</em>, <em>suffix=''</em>, <em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.tfrunprintshape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.unit_length">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">unit_length</code><span class="sig-paren">(</span><em>tensor</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.unit_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.util.tfutil.unit_length_transform">
+<code class="descclassname">jtr.util.tfutil.</code><code class="descname">unit_length_transform</code><span class="sig-paren">(</span><em>x</em>, <em>dim=1</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.util.tfutil.unit_length_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalizes x with L2 norm to unit length.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="jtr-util-util-module">
+<h2>jtr.util.util module<a class="headerlink" href="#jtr-util-util-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.util">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-jtr.util" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">jtr.util package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#jtr-util-gen-data-module">jtr.util.gen_data module</a></li>
+<li><a class="reference internal" href="#module-jtr.util.hooks">jtr.util.hooks module</a></li>
+<li><a class="reference internal" href="#jtr-util-rs-module">jtr.util.rs module</a></li>
+<li><a class="reference internal" href="#module-jtr.util.tfutil">jtr.util.tfutil module</a></li>
+<li><a class="reference internal" href="#jtr-util-util-module">jtr.util.util module</a></li>
+<li><a class="reference internal" href="#module-jtr.util">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="jtr.html">jtr package</a><ul>
+      <li>Previous: <a href="jtr.nn.html" title="previous chapter">jtr.nn package</a></li>
+      <li>Next: <a href="setup.html" title="next chapter">setup module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="sources/jtr.util.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="sources/jtr.util.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

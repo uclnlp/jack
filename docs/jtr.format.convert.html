@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jtr.format.convert package &#8212; quebap  documentation</title>
+    
+    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="jtr.load package" href="jtr.load.html" />
+    <link rel="prev" title="jtr.format package" href="jtr.format.html" />
+   
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="jtr-format-convert-package">
+<h1>jtr.format.convert package<a class="headerlink" href="#jtr-format-convert-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-jtr.format.convert.nyt">
+<span id="jtr-format-convert-nyt-module"></span><h2>jtr.format.convert.nyt module<a class="headerlink" href="#module-jtr.format.convert.nyt" title="Permalink to this headline">¶</a></h2>
+<p>This files allows creating a jtr train and test datafiles for the NYT corpus
+based on ../data/NYT/naacl2013.txt
+* train file: one jtr per train instance ; candidates = all entity pairs
+* test file: one jtr per test relation, with all correct answers in the valid answers list</p>
+<p>usage:
+python3 NYT2jtr path/to/naacl2013.txt mode &gt;  naacl2013_mode.jtr.json
+in which mode = train or test</p>
+<dl class="function">
+<dt id="jtr.format.convert.nyt.create_test_jtr">
+<code class="descclassname">jtr.format.convert.nyt.</code><code class="descname">create_test_jtr</code><span class="sig-paren">(</span><em>testfacts</em>, <em>tuples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.nyt.create_test_jtr" title="Permalink to this definition">¶</a></dt>
+<dd><p>one jtr with all correct answers per relation in the test data</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.format.convert.nyt.create_train_jtr">
+<code class="descclassname">jtr.format.convert.nyt.</code><code class="descname">create_train_jtr</code><span class="sig-paren">(</span><em>trainfacts</em>, <em>tuples</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.nyt.create_train_jtr" title="Permalink to this definition">¶</a></dt>
+<dd><p>one jtr per positive train fact</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="jtr.format.convert.nyt.load_naacl2013">
+<code class="descclassname">jtr.format.convert.nyt.</code><code class="descname">load_naacl2013</code><span class="sig-paren">(</span><em>path</em>, <em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.nyt.load_naacl2013" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.format.convert.nyt.main">
+<code class="descclassname">jtr.format.convert.nyt.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.nyt.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.format.convert.squad">
+<span id="jtr-format-convert-squad-module"></span><h2>jtr.format.convert.squad module<a class="headerlink" href="#module-jtr.format.convert.squad" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="jtr.format.convert.squad.convert_squad">
+<code class="descclassname">jtr.format.convert.squad.</code><code class="descname">convert_squad</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.squad.convert_squad" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.format.convert.squad.create_jtr_snippet">
+<code class="descclassname">jtr.format.convert.squad.</code><code class="descname">create_jtr_snippet</code><span class="sig-paren">(</span><em>jtr_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.squad.create_jtr_snippet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.format.convert.squad.create_snippet">
+<code class="descclassname">jtr.format.convert.squad.</code><code class="descname">create_snippet</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.squad.create_snippet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="jtr.format.convert.squad.main">
+<code class="descclassname">jtr.format.convert.squad.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#jtr.format.convert.squad.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-jtr.format.convert">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-jtr.format.convert" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">jtr.format.convert package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-jtr.format.convert.nyt">jtr.format.convert.nyt module</a></li>
+<li><a class="reference internal" href="#module-jtr.format.convert.squad">jtr.format.convert.squad module</a></li>
+<li><a class="reference internal" href="#module-jtr.format.convert">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">quebap</a><ul>
+  <li><a href="jtr.html">jtr package</a><ul>
+  <li><a href="jtr.format.html">jtr.format package</a><ul>
+      <li>Previous: <a href="jtr.format.html" title="previous chapter">jtr.format package</a></li>
+      <li>Next: <a href="jtr.load.html" title="next chapter">jtr.load package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="sources/jtr.format.convert.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, UCL Machine Reading Group.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="sources/jtr.format.convert.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
