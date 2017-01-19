@@ -25,5 +25,8 @@ def test_conditional_lstm_cell():
             input_length: np.random.randint(1, max_length, batch_size)
         }
 
+        outputs_value = sess.run(outputs, feed_dict)
+        assert outputs_value.shape == (5, 7, 3)
+
         states_value = sess.run(states, feed_dict).h
         assert states_value.shape == (5, 3)
