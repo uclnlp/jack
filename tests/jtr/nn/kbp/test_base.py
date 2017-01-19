@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import tensorflow as tf
 
@@ -32,11 +30,11 @@ def test_translating_embeddings_score():
     with tf.Session() as session:
         session.run(init_op)
 
-        sscores = session.run(scores)
-        assert(sscores.shape[0] == batch_size)
+        scores_value = session.run(scores)
+        assert(scores_value.shape[0] == batch_size)
 
         tmp = - np.sum(np.abs(E[:, 0, :] + R[:, 0, :] - E[:, 1, :]), axis=1)
-        assert(np.isclose(sscores, tmp).all())
+        assert(np.isclose(scores_value, tmp).all())
 
 
 def test_bilinear_diagonal_score():
@@ -62,11 +60,11 @@ def test_bilinear_diagonal_score():
     with tf.Session() as session:
         session.run(init_op)
 
-        sscores = session.run(scores)
-        assert(sscores.shape[0] == batch_size)
+        scores_value = session.run(scores)
+        assert(scores_value.shape[0] == batch_size)
 
         tmp = - np.sum(np.abs(E[:, 0, :] * R[:, 0, :] - E[:, 1, :]), axis=1)
-        assert(np.isclose(sscores, tmp).all())
+        assert(np.isclose(scores_value, tmp).all())
 
 
 def test_bilinear_score():
