@@ -1,0 +1,133 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "jtr schema",
+	"description": "The jtr dataset schema.",
+	"type":"object",
+	"properties": {
+		"meta": {
+			"type": "string",
+			"description": "meta information."
+		},
+		"globals": {
+			"type": "object",
+			"description": "global lists to be used across all instances",
+			"properties": {
+				"candidates": {
+					"type": "array",
+					"description": "global list of answer candidates",
+					"items": {
+						"type": "object",
+						"properties":{
+							"text": {
+								"type":"string"
+							}
+						}
+					}
+				}
+			}
+		},
+		"instances": {
+			"type": "array",
+			"description": "List of jtr instances.",
+			"items": {
+				"type":"object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "json object for one support-questions-answers instance"
+					},
+					"support": {
+						"type": "array",
+						"description": "array of supporting documents",
+						"items": {
+							"id": "document",
+							"type": "object",
+							"description": "json object for a single support document",
+							"properties": {
+								"id": {
+									"type": "string",
+									"description": "[optional] id for current support instance"
+								},
+								"text": {
+									"type" : "string",
+									"description": "Textual support content; should be set in most cases"
+								},
+								"tokens": {
+									"type": "array",
+									"description": "TODO" }
+							},
+							"required": ["text"]
+						}
+					},
+					"questions": {
+						"type": "array",
+						"description": "array of question/answer objects",
+						"items": {
+							"type":"object",
+							"description": "a single question/answer object",
+							"properties": {
+								"question": {
+									"type": "string"
+								},
+								"candidates": {
+									"type":"array",
+									"description": "array of candidate answers for the current question",
+									"items": {
+										"type":"object",
+										"description": "json object for a single candidate answer",
+										"properties": {
+											"id": {
+												"type": "string",
+												"description": "[optional] ID for this candidate answer"
+											},
+											"text": {
+												"type":"string",
+												"description":
+												"Textual candidate answer"
+											},
+											"label": {
+												"type": "string",
+												"description": "TODO (special jason json field)"
+											},
+											"span": {
+												"type": "array",
+												"items": {
+													"type":"integer"
+												},
+												"description": "[TODO: verify!!] Character span within support[0]"
+											}
+										}
+									}
+								},
+								"answers": {
+									"type": "array",
+									"description": "Correct answer(s) for the current question/answer object. Should be an array, allowing for potentially multiple correct answers",
+									"items": {
+										"type":"object",
+										"properties": {
+											"text": {
+												"type":"string",
+												"description": "TODO"
+											},
+											"index": {
+												"type": "integer",
+												"description": "Index (starting at 0) in candidates array; should be set if answer is among the candidates"
+											},
+											"span": {
+												"type": "array",
+												"items": {
+													"type":"integer"
+												},
+												"description": "TODO"
+											}
+										}
+									}
+								}
+							}
+						}
+		            }
+		        }
+		    }
+		}
+	}
+}

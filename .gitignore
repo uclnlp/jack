@@ -92,9 +92,9 @@ ENV/
 .idea/
 
 # Datasets
-quebap/data/SNLI/snli_1.0.zip
-quebap/data/SNLI/snli_1.0/
-quebap/data/SNLI/__MACOSX/
+jtr/data/SNLI/snli_1.0.zip
+jtr/data/SNLI/snli_1.0/
+jtr/data/SNLI/__MACOSX/
 
 # TensorBoard dirs
 .tb
