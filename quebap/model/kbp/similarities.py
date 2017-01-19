@@ -2,8 +2,6 @@
 
 import tensorflow as tf
 
-import sys
-
 
 def negative_l1_distance(x1, x2, reduction_indices=1):
     """
