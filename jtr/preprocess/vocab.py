@@ -1,6 +1,6 @@
 import tensorflow as tf
-from jtr.sisyphos.tfutil import tfrun
-from jtr.sisyphos.models import get_total_trainable_variables, get_total_variables
+from jtr.util.tfutil import tfrun
+from jtr.nn.models import get_total_trainable_variables, get_total_variables
 import numpy as np
 import operator, sys
 

@@ -39,7 +39,7 @@ def get_pipeline_script_cmdcall_SNLI_overfit():
     dev_file = train_file
     test_file = train_file
     # Setup command
-    cmd = "python3 quebap/training_pipeline.py --train={0} --dev={1} \
+    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
     --test={2}" .format(train_file, dev_file, test_file,)
     return cmd
 
@@ -48,17 +48,17 @@ def get_pipeline_script_cmdcall_sentihood_overfit():
     dev_file = train_file
     test_file = train_file
     # Setup command
-    cmd = "python3 quebap/training_pipeline.py --train={0} --dev={1} \
+    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
     --test={2}" .format(train_file, dev_file, test_file,)
     return cmd
 
 def get_pipeline_script_cmdcall_SNLI_smalldata():
     '''Creates a bash cmd with a small dataset to invoke the pipeline script'''
-    train_file = 'tests/test_data/SNLI/2000_samples_train_quebap_v1.json'
-    dev_file  = 'tests/test_data/SNLI/1000_samples_dev_quebap_v1.json'
-    test_file  = 'tests/test_data/SNLI/2000_samples_test_quebap_v1.json'
+    train_file = 'tests/test_data/SNLI/2000_samples_train_jtr_v1.json'
+    dev_file  = 'tests/test_data/SNLI/1000_samples_dev_jtr_v1.json'
+    test_file  = 'tests/test_data/SNLI/2000_samples_test_jtr_v1.json'
     # Setup command
-    cmd = "python3 quebap/training_pipeline.py --train={0} --dev={1} \
+    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
     --test={2}" .format(train_file, dev_file, test_file,)
     return cmd
 
@@ -67,7 +67,7 @@ def get_pipeline_script_cmdcall_sentihood_smalldata():
     dev_file  = 'tests/test_data/sentihood/sentihood-dev.json'
     test_file  = 'tests/test_data/sentihood/sentihood-test.json'
     # Setup command
-    cmd = "python3 quebap/training_pipeline.py --train={0} --dev={1} \
+    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
     --test={2}" .format(train_file, dev_file, test_file,)
     return cmd
 

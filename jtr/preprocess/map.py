@@ -2,7 +2,7 @@ from collections import defaultdict
 import re
 import numpy as np
 import pprint
-from jtr.sisyphos.vocab import Vocab
+from jtr.preprocess.vocab import Vocab
 import random
 
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from quebap.preprocess import batch
+from jtr.preprocess import batch
 
 
 def test_get_buckets():

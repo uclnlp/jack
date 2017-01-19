@@ -2,7 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
-from quebap.sisyphos.core_models import ConditionalLSTMCell
+from jtr.nn.core_models import ConditionalLSTMCell
 
 
 def test_conditional_lstm_cell():

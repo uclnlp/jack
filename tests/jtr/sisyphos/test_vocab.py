@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 
-from quebap.sisyphos import vocab
+from jtr.preprocess import vocab
 
 
 def test_vocab():

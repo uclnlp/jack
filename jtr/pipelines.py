@@ -1,8 +1,8 @@
 import tensorflow as tf
 
-from jtr.sisyphos.vocab import Vocab, NeuralVocab
-from jtr.sisyphos.map import tokenize, deep_map, deep_seq_map, get_entry_dims, dynamic_subsample
-from jtr.sisyphos.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
+from jtr.preprocess.vocab import Vocab, NeuralVocab
+from jtr.preprocess.map import tokenize, deep_map, deep_seq_map, get_entry_dims, dynamic_subsample
+from jtr.preprocess.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 
 
 

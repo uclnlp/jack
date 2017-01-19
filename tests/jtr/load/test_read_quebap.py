@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
-from quebap.load import read_quebap
+from jtr.load import read_jtr
 
 
-def test_quebap_load():
-    quebap_path = './quebap/data/SNLI/snippet_quebapformat_v1.json'
-    if os.path.isfile(quebap_path):
-        with open(quebap_path, 'r') as f:
-            res = read_quebap.quebap_load(f, questions='single', supports='single',
+def test_jtr_load():
+    jtr_path = './jtr/data/SNLI/snippet_jtrformat_v1.json'
+    if os.path.isfile(jtr_path):
+        with open(jtr_path, 'r') as f:
+            res = read_jtr.jtr_load(f, questions='single', supports='single',
                                           candidates='fixed',answers='single')
 
         assert set(res['answers']) == {'neutral', 'contradiction', 'entailment', 'neutral', 'entailment',

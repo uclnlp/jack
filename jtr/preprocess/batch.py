@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from itertools import islice
-from jtr.sisyphos.map import numpify
+from jtr.preprocess.map import numpify
 
 
 #make deterministic

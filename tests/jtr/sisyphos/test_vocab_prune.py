@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from quebap.sisyphos.pipelines import pipeline
+from jtr.pipelines import pipeline
 from pprint import pprint
 
 

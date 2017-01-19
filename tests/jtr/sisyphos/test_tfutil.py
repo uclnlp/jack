@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 
-from quebap.sisyphos import tfutil
+from jtr.util import tfutil
 
 
 def test_get_last():

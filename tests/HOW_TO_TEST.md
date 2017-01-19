@@ -1,14 +1,14 @@
 # How to Test
 
 ## How Integration Tests Are Designed
-Integration tests execute given models and given datasets using the [training_pipeline.py](../quebap/training_pipeline.py) with its default parameters for training. In addition to that however, an extra argument is passed to the training_pipeline method which switches on the [EvalHook](../quebap/sisyphos/hooks.py) write-metrics-to-disk behavior. Once a model run is completed the thus created metrics file (with metrics like accuracy or F1-score) is compared to a baseline.txt file which gives the target values for the metrics during a test run. This constitutes the integration test which is currently passed when both the order of the metrics and the metric values are the same (with a small absolute tolerance of 0.015).
+Integration tests execute given models and given datasets using the [training_pipeline.py](../jtr/training_pipeline.py) with its default parameters for training. In addition to that however, an extra argument is passed to the training_pipeline method which switches on the [EvalHook](../jtr/sisyphos/hooks.py) write-metrics-to-disk behavior. Once a model run is completed the thus created metrics file (with metrics like accuracy or F1-score) is compared to a baseline.txt file which gives the target values for the metrics during a test run. This constitutes the integration test which is currently passed when both the order of the metrics and the metric values are the same (with a small absolute tolerance of 0.015).
 
 A baseline file is created upon test creation and then serves as the needed model performance.
 
 Currently, integration tests use truncated dataset files which are around 1MB in size (about 1-5k samples). These datasets are included in the [test_data](./test_data) folder. The pipeline file itself is currently executed via an external process created from Python. Once this process is being executed the Python program waits until finishes and then proceeds with the checking the data.
 
 ## How to Invoke Tests
-Tests can be invoked by using the Makefile in the main quebap directory. There are several commands which execute different test batteries.
+Tests can be invoked by using the Makefile in the main jtr directory. There are several commands which execute different test batteries.
 
 |  Description                      | make command                                                 |
 |-----------------------------------|--------------------------------------------------------------|
@@ -21,7 +21,7 @@ Tests can be invoked by using the Makefile in the main quebap directory. There a
 
 To run a test battery with the GPU simply add "gpu" to the make command, for example`make overfitgpu` executes all overfit integration tests on the GPU. Please note if you do not have a GPU the code is executed on the CPU and compares the results with GPU baselines which will most likely yield an error.
 
-For more differentiated test execution you should run pytest directly from the main (first) quebap directory. The core command for this is `pytest -v -m "(flag1 and flag2 and not flag3)"`. You find some examples below.
+For more differentiated test execution you should run pytest directly from the main (first) jtr directory. The core command for this is `pytest -v -m "(flag1 and flag2 and not flag3)"`. You find some examples below.
 
 |  Description                                 | make command                                                 |
 |----------------------------------------------|--------------------------------------------------------------|
@@ -37,7 +37,7 @@ Unit tests are usually very fast, however the integration tests need quite some 
 
 ## How to Add Integration Tests
 
-You can find existing integration test in [test_models.py](/quebap/test_models.py).
+You can find existing integration test in [test_models.py](/jtr/test_models.py).
 
 #### 1. Create test data
 - Currently test data is about 1 MB for each file which can hold about 1-5k samples.

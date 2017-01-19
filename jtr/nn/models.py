@@ -5,8 +5,6 @@ todo: include other models; goal: should replace models.py
 """
 
 import tensorflow as tf
-from jtr.sisyphos.models import get_total_trainable_variables, get_total_variables, conditional_reader, \
-    predictor, boe_reader, bag_reader, bilstm_readers, reader
 import numpy as np
 
 
@@ -541,85 +539,85 @@ def predictor(inputs, targets, target_size):
     return logits, loss, predict
 
 
-def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
-    """Creates reader that is attentive (each step) or conditional (last step)
-
-    Reference: Teaching Machines to Read and Comprehend
-    Link: https://arxiv.org/pdf/1506.03340.pdf
-
-    Creates either a conditional reader (condition on last timestep only) or
-    attentive reader (condition on all timesteps).
-    The model consists of two bi-directional LSTM where the second LSTM
-    is conditioned by the last cell state (conditional) or by an attention
-    value from all past cell states.
-
-    Args:
-        output_size (int): Size of the two bi-LSTMs.
-        target_size (int): Size of the targets (number of labels).
-        nvocab (NeuralVocab): NeuralVocab class; maps word-ids to embeddings.
-        attentive (bool=False): To create the attentive reader or not.
-    Returns:
-        (logits (tensor), loss (tensor), predict (tensor): Triple of logits,
-        loss and predict (argmax) tensors,
-       {'sentence1': sentence1 (TensorFlow placeholder),
-        'sentence1_lengths': sentence1_lengths (tensor),
-        'sentence2': sentence2 (TensorFlow placeholder),
-        'sentence2_lengths': sentence2_lengths (tensor),
-        'targets': targets (tensor)}: Dictionary of placeholders to feed data
-        into.
-    """
-    # Model
-    # [batch_size, max_seq1_length]
-    sentence1 = tf.placeholder(tf.int64, [None, None], "sentence1")
-    # [batch_size]
-    sentence1_lengths = tf.placeholder(tf.int64, [None], "sentence1_lengths")
-
-    # [batch_size, max_seq2_length]
-    sentence2 = tf.placeholder(tf.int64, [None, None], "sentence2")
-    # [batch_size]
-    sentence2_lengths = tf.placeholder(tf.int64, [None], "sentence2_lengths")
-
-    # [batch_size]
-    targets = tf.placeholder(tf.int64, [None], "targets")
-
-    with tf.variable_scope("embedders") as varscope:
-        seq1_embedded = nvocab(sentence1)
-        varscope.reuse_variables()
-        seq2_embedded = nvocab(sentence2)
-#        seq1_embedded = embedder(sentence1, input_size, vocab_size, embeddings=embeddings)
-#        seq2_embedded = embedder(sentence2, input_size, vocab_size, embeddings=embeddings)
-
-
-    print('TRAINABLE VARIABLES (only embeddings): %d'%get_total_trainable_variables())
-
-    if attentive:
-        le_conditional_reader = conditional_attentive_reader
-    else:
-        le_conditional_reader = conditional_reader
-
-    outputs, states = le_conditional_reader(seq1_embedded, sentence1_lengths,
-                                            seq2_embedded, sentence2_lengths,
-                                            output_size)
-
-    # fixme: also use bidirectional encoding for attention model?
-    if isinstance(states, tf.nn.rnn_cell.LSTMStateTuple):
-        output = states.h
-    elif isinstance(states, tuple):
-        # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-        output = tf.concat(1, [states[0][1], states[1][1]])
-    else:
-        raise AttributeError
-
-    logits, loss, predict = predictor(output, targets, target_size)
-
-    print('TRAINABLE VARIABLES (embeddings + model): %d'%get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d'%get_total_variables())
-
-
-    return (logits, loss, predict), \
-           {'sentence1': sentence1, 'sentence1_lengths': sentence1_lengths,
-            'sentence2': sentence2, 'sentence2_lengths': sentence2_lengths,
-            'targets': targets} #placeholders
+#def conditional_reader_model(output_size, target_size, nvocab, attentive=False):
+#    """Creates reader that is attentive (each step) or conditional (last step)
+#
+#    Reference: Teaching Machines to Read and Comprehend
+#    Link: https://arxiv.org/pdf/1506.03340.pdf
+#
+#    Creates either a conditional reader (condition on last timestep only) or
+#    attentive reader (condition on all timesteps).
+#    The model consists of two bi-directional LSTM where the second LSTM
+#    is conditioned by the last cell state (conditional) or by an attention
+#    value from all past cell states.
+#
+#    Args:
+#        output_size (int): Size of the two bi-LSTMs.
+#        target_size (int): Size of the targets (number of labels).
+#        nvocab (NeuralVocab): NeuralVocab class; maps word-ids to embeddings.
+#        attentive (bool=False): To create the attentive reader or not.
+#    Returns:
+#        (logits (tensor), loss (tensor), predict (tensor): Triple of logits,
+#        loss and predict (argmax) tensors,
+#       {'sentence1': sentence1 (TensorFlow placeholder),
+#        'sentence1_lengths': sentence1_lengths (tensor),
+#        'sentence2': sentence2 (TensorFlow placeholder),
+#        'sentence2_lengths': sentence2_lengths (tensor),
+#        'targets': targets (tensor)}: Dictionary of placeholders to feed data
+#        into.
+#    """
+#    # Model
+#    # [batch_size, max_seq1_length]
+#    sentence1 = tf.placeholder(tf.int64, [None, None], "sentence1")
+#    # [batch_size]
+#    sentence1_lengths = tf.placeholder(tf.int64, [None], "sentence1_lengths")
+#
+#    # [batch_size, max_seq2_length]
+#    sentence2 = tf.placeholder(tf.int64, [None, None], "sentence2")
+#    # [batch_size]
+#    sentence2_lengths = tf.placeholder(tf.int64, [None], "sentence2_lengths")
+#
+#    # [batch_size]
+#    targets = tf.placeholder(tf.int64, [None], "targets")
+#
+#    with tf.variable_scope("embedders") as varscope:
+#        seq1_embedded = nvocab(sentence1)
+#        varscope.reuse_variables()
+#        seq2_embedded = nvocab(sentence2)
+##        seq1_embedded = embedder(sentence1, input_size, vocab_size, embeddings=embeddings)
+##        seq2_embedded = embedder(sentence2, input_size, vocab_size, embeddings=embeddings)
+#
+#
+#    print('TRAINABLE VARIABLES (only embeddings): %d'%get_total_trainable_variables())
+#
+#    if attentive:
+#        le_conditional_reader = conditional_attentive_reader
+#    else:
+#        le_conditional_reader = conditional_reader
+#
+#    outputs, states = le_conditional_reader(seq1_embedded, sentence1_lengths,
+#                                            seq2_embedded, sentence2_lengths,
+#                                            output_size)
+#
+#    # fixme: also use bidirectional encoding for attention model?
+#    if isinstance(states, tf.nn.rnn_cell.LSTMStateTuple):
+#        output = states.h
+#    elif isinstance(states, tuple):
+#        # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
+#        output = tf.concat(1, [states[0][1], states[1][1]])
+#    else:
+#        raise AttributeError
+#
+#    logits, loss, predict = predictor(output, targets, target_size)
+#
+#    print('TRAINABLE VARIABLES (embeddings + model): %d'%get_total_trainable_variables())
+#    print('ALL VARIABLES (embeddings + model): %d'%get_total_variables())
+#
+#
+#    return (logits, loss, predict), \
+#           {'sentence1': sentence1, 'sentence1_lengths': sentence1_lengths,
+#            'sentence2': sentence2, 'sentence2_lengths': sentence2_lengths,
+#            'targets': targets} #placeholders
 
 
 def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
