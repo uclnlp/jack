@@ -30,7 +30,7 @@ class Duration(object):
         self.t = time()
 
     def __call__(self):
-        print('Time since last checkpoint : %.2fmin'%((time()-self.t)/60.))
+        logger.info('Time since last checkpoint : {0:.2g}min'.format((time()-self.t)/60.))
         self.t = time()
 
 tf.set_random_seed(1337)
@@ -296,7 +296,7 @@ def main():
 
     #(9) Train the model
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
-    logger.info('finished in {0:.3fh}'.format((time() - t0) / 3600.))
+    logger.info('finished in {0:.3g}'.format((time() - t0) / 3600.))
 
 
 if __name__ == "__main__":
