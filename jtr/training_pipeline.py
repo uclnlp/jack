@@ -62,11 +62,22 @@ def main():
 
     # (1) Defined JTR models
 
-    # Please add new models to models.__models__ when they work
-    reader_models = {model.__name__: model for model in models.__models__}
+    reader_models = {
+        'bicond_singlesupport_reader': models.conditional_reader_model,
+        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
+        'bilstm_singlesupport_reader_with_cands': models.bilstm_reader_model_with_cands,
+        'bilstm_nosupport_reader_with_cands': models.bilstm_nosupport_reader_model_with_cands,
+        'boe_multisupport_avg_reader_with_cands': models.boe_multisupport_avg_reader_with_cands,
+        'boe_support_cands': models.boe_support_cands_reader_model,
+        'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
+        'boe_support': models.boe_reader_model,
+        'boe_nosupport': models.boenosupport_reader_model,
+        # 'log_linear': ReaderModel.create_log_linear_reader,
+        # 'model_f': ReaderModel.create_model_f_reader,
+    }
 
-    # reader_models can be defined in a shorter way by doing:
-    #
+    # Please add new models to models.__models__ when they work
+    # reader_models = {model.__name__: model for model in models.__models__}
 
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
@@ -76,7 +87,7 @@ def main():
 
     # (2) Parse the input arguments
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--debug', default='False', choices={'True','False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
+    parser.add_argument('--debug', default='False', choices={'True', 'False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
     parser.add_argument('--debug_examples', default=10, type=int, help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="jtr training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="jtr dev file")
@@ -91,10 +102,10 @@ def main():
         type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
-    parser.add_argument('--pretrain', default='False', choices={'True','False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
-    parser.add_argument('--train_pretrain', default='False', choices={'True','False'},
+    parser.add_argument('--pretrain', default='False', choices={'True', 'False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
+    parser.add_argument('--train_pretrain', default='False', choices={'True', 'False'},
                         help="Continue training pretrained embeddings together with model parameters, default False")
-    parser.add_argument('--normalize_pretrain', default='True', choices={'True','False'},
+    parser.add_argument('--normalize_pretrain', default='True', choices={'True', 'False'},
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
