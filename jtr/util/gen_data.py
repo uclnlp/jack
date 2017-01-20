@@ -1,14 +1,22 @@
-from pycorenlp import StanfordCoreNLP
+# -*- coding: utf-8 -*-
+
+import json
+
 from enum import Enum
 from collections import defaultdict
-from nltk.tree import Tree
+
 import copy
 import abc
 from random import shuffle
 from os import path
 import time
-import sys, traceback
+import sys
+import traceback
+
 import numpy as np
+from pycorenlp import StanfordCoreNLP
+from nltk.tree import Tree
+
 
 adjective_dictionary = {}
 replacement_dictionary = {}
@@ -55,13 +63,6 @@ def transform_tree(tree, func, include_terminals=False):
             return Tree(tree.label(), children)
     else:
         return result
-
-
-import json
-from os import listdir
-
-
-# with open('../../../../corpora/sentihood/single_train.json') as data_file:
 
 
 def read_data(files):

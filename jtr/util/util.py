@@ -70,6 +70,7 @@ def get_timestamped_dir(path, name=None, link_to_latest=False):
         os.symlink(current_time, path + "/latest", target_is_directory=True)
     return dir
 
+
 def save_conf(path, conf):
     with open(path, "w") as f_out:
         splits = path.split("/")
@@ -77,6 +78,7 @@ def save_conf(path, conf):
         conf["meta"]["experiment_dir"] = dir
         json.dump(conf, f_out, indent=4, sort_keys=True)
         f_out.close()
+
 
 def load_conf(path, experiment_dir=None):
     file_name = path.split("/")[-1]

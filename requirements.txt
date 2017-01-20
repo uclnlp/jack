@@ -6,3 +6,4 @@ parse
 scipy
 sklearn
 tensorflow
+pycorenlp
