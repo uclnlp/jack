@@ -36,7 +36,7 @@ class TranslatingModel(BaseModel):
 
         :param similarity_function: Similarity function.
         """
-        super(self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.similarity_function = similarity_function
 
     def __call__(self):
@@ -55,7 +55,7 @@ class BilinearDiagonalModel(BaseModel):
 
         :param similarity_function: Similarity function.
         """
-        super(self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.similarity_function = similarity_function
 
     def __call__(self):
@@ -74,7 +74,7 @@ class BilinearModel(BaseModel):
 
         :param similarity_function: Similarity function.
         """
-        super(self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.similarity_function = similarity_function
 
     def __call__(self):
@@ -97,7 +97,7 @@ class ComplexModel(BaseModel):
 
         :param embedding size: Embedding size.
         """
-        super(self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.embedding_size = embedding_size
 
     def __call__(self):
@@ -129,7 +129,7 @@ class ERMLP(BaseModel):
         :param hidden_size: Hidden size of the MLP.
         :param f: non-linearity of the MLP.
         """
-        super(self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.f = f
 
         self.entity_embedding_size = entity_embedding_size
@@ -150,7 +150,7 @@ class ERMLP(BaseModel):
         return f_ijk
 
     def get_params(self):
-        params = super(self).get_params() + [self.C, self.w]
+        params = super().get_params() + [self.C, self.w]
         return params
 
 
