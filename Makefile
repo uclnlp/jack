@@ -14,19 +14,19 @@ install-user:
 clean:
 	$(PYTHON) setup.py clean --all
 test:
-	$(PYTEST) tests -v -m "not (overfit or smalldata or smalldatagpu or overfitgpu)"	
-overfit:
-	$(PYTEST) tests -v -m "(overfit and CPU)"
-smalldata:
-	$(PYTEST) tests -v -m "(smalldata and CPU)"
-overfitgpu:
-	$(PYTEST) tests -v -m "(overfit and GPU)"
-smalldatagpu:
-	$(PYTEST) tests -v -m "(smalldata and GPU)"
+	$(PYTEST) tests -v -m "not (test-overfit or test-smalldata or test-smalldatagpu or test-overfitgpu)"	
+test-overfit:
+	$(PYTEST) tests -v -m "(test-overfit and test-CPU)"
+test-smalldata:
+	$(PYTEST) tests -v -m "(test-smalldata and test-CPU)"
+test-overfitgpu:
+	$(PYTEST) tests -v -m "(test-overfit and test-GPU)"
+test-smalldatagpu:
+	$(PYTEST) tests -v -m "(test-smalldata and test-GPU)"
 
-sentihood:
-	$(PYTEST) tests -v -m sentihood
-SNLI:
-	$(PYTEST) tests -v -m SNLI
+test-sentihood:
+	$(PYTEST) tests -v -m test-sentihood
+test-SNLI:
+	$(PYTEST) tests -v -m test-SNLI
 doctests:
 	$(PYTEST) --doctest-modules jtr/preprocess/vocab.py
