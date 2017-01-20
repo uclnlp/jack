@@ -402,7 +402,7 @@ class NeuralVocab(Vocab):
             return v / np.sqrt(np.sum(np.square(v)))
 
         if embedding_matrix is None:
-            #construct part oov
+            # construct part oov
             n_oov = base_vocab.count_oov()
             n_pre = base_vocab.count_pretrained()
             E_oov = tf.get_variable("embeddings_oov", [n_oov, input_size],
@@ -417,15 +417,16 @@ class NeuralVocab(Vocab):
                 for id in base_vocab.get_ids_pretrained():
                     sym = base_vocab.id2sym[id]
                     i = id - n_oov  #shifted to start from 0
-                    np_E_pre[i,:] = base_vocab.emb(sym)[:min(input_size,base_vocab.emb_length)]
+                    np_E_pre[i, :] = base_vocab.emb(sym)[:min(input_size,base_vocab.emb_length)]
                     if unit_normalize:
-                        np_E_pre[i,:] = np_normalize(np_E_pre[i,:])
-                E_pre = tf.get_variable("embeddings_pretrained", initializer=tf.identity(np_E_pre),
+                        np_E_pre[i, :] = np_normalize(np_E_pre[i, :])
+                E_pre = tf.get_variable("embeddings_pretrained",
+                                        initializer=tf.identity(np_E_pre),
                                         trainable=False, dtype="float32")
 
                 if input_size > base_vocab.emb_length:
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
-                        initializer=tf.random_normal_initializer(0.0, 1./np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
+                                                initializer=tf.random_normal_initializer(0.0, 1. / np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
                     # note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
                     E_pre = tf.concat(1, [E_pre, E_pre_ext], name="embeddings_pretrained_extended")
             else:
@@ -440,16 +441,19 @@ class NeuralVocab(Vocab):
             self.embedding_matrix = tf.concat(0, [E_oov, E_pre], name="embeddings")
 
         else:
-            self.input_size = embedding_matrix.get_shape()[1] #ignore input argument input_size
+            # ignore input argument input_size
+            self.input_size = embedding_matrix.get_shape()[1]
             self.embedding_matrix = embedding_matrix
 
         if isinstance(reduced_input_size, int) and reduced_input_size > 0:
-            init = tf.contrib.layers.xavier_initializer(uniform=True)  # uniform=False for truncated normal
+            # uniform=False for truncated normal
+            init = tf.contrib.layers.xavier_initializer(uniform=True)
             self.embedding_matrix = tf.contrib.layers.fully_connected(self.embedding_matrix, reduced_input_size,
-                                                       weights_initializer=init,activation_fn=None)
+                                                                      weights_initializer=init, activation_fn=None)
 
-        #pre-assign embedding vectors to all ids
-        self.id2vec = [tf.nn.embedding_lookup(self.embedding_matrix, id) for id in range(len(self))] #always OK if frozen
+        # pre-assign embedding vectors to all ids
+        # always OK if frozen
+        self.id2vec = [tf.nn.embedding_lookup(self.embedding_matrix, idx) for idx in range(len(self))]
 
     def embed_symbol(self, ids):
         """returns embedded id's
@@ -478,7 +482,8 @@ class NeuralVocab(Vocab):
             Embedded `Tensor` in case a `Tensor` was provided as input,
             and otherwise a list of embedded input id's under the form of fixed-length embeddings (`Tensor` objects).
         """
-        if len(args) == 1:  # tuple with length 1: then either list with ids, tensor with ids, or single id
+        # tuple with length 1: then either list with ids, tensor with ids, or single id
+        if len(args) == 1:
             if isinstance(args[0], list):
                 ids = args[0]
             elif tf.contrib.framework.is_tensor(args[0]):
