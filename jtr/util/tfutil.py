@@ -58,7 +58,7 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
 
 def tfrun(tensor):
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         return sess.run(tensor)
 
 
@@ -136,7 +136,7 @@ def tfprintshape(tensor, prefix=""):
 def tfrun(variables, feed_dict=None):
     """Executes variables in a new TensorFlow session, then returns results."""
     with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         return sess.run(variables, feed_dict=feed_dict)
 
 

@@ -54,7 +54,7 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
     if sess is None:
         sess = tf.Session(config=sess_config)
 
-    tf.initialize_all_variables().run(session=sess)
+    tf.global_variables_initializer().run(session=sess)
 
     for i in range(1, max_epochs + 1):
         for j, batch in enumerate(batches):

@@ -27,7 +27,7 @@ tf_emoji2vec = tf.get_variable("emoji2vec", [len(vecs), 300], tf.float64)
 
 # save embeddings to file
 with tf.Session() as sess:
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
     sess.run(tf_emoji2vec.assign(emoji2vec))
 
     saver = tf.train.Saver()
