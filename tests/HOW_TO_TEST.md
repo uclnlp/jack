@@ -13,21 +13,21 @@ Tests can be invoked by using the Makefile in the main jtr directory. There are 
 |  Description                      | make command                                                 |
 |-----------------------------------|--------------------------------------------------------------|
 | Run all unit tests                | `make test`                                                  |
-| Run all overfit integration tests | `make overfit`                                               |
-| Run all integration tests than are ran with small data samples (<2k samples)| `make smalldata`   |
-| Run all sentihood integration test| `make sentihood`                                             |
-| Run all SNLI integration test| `make SNLI`                                                       |
+| Run all overfit integration tests | `make test-overfit`                                               |
+| Run all integration tests than are ran with small data samples (<2k samples)| `make test-smalldata`   |
+| Run all sentihood integration test| `make test-sentihood`                                             |
+| Run all SNLI integration test| `make test-SNLI`                                                       |
 
 
-To run a test battery with the GPU simply add "gpu" to the make command, for example`make overfitgpu` executes all overfit integration tests on the GPU. Please note if you do not have a GPU the code is executed on the CPU and compares the results with GPU baselines which will most likely yield an error.
+To run a test battery with the GPU simply add "gpu" to the make command, for example`make test-overfitgpu` executes all overfit integration tests on the GPU. Please note if you do not have a GPU the code is executed on the CPU and compares the results with GPU baselines which will most likely yield an error.
 
 For more differentiated test execution you should run pytest directly from the main (first) jtr directory. The core command for this is `pytest -v -m "(flag1 and flag2 and not flag3)"`. You find some examples below.
 
 |  Description                                 | make command                                                 |
 |----------------------------------------------|--------------------------------------------------------------|
-| Run all sentihood dataset test               | `pytest -v -m sentihood`                                     |
-| Run all sentihood dataset GPU tests          | `pytest -v -m "(sentihood and GPU)"`                         |
-| Run all sentihood dataset GPU overfit tests  | `pytest -v -m "(sentihood and GPU and overfit)"`             | 
+| Run all sentihood dataset test               | `pytest -v -m test-sentihood`                                     |
+| Run all sentihood dataset GPU tests          | `pytest -v -m "(test-sentihood and test-GPU)"`                         |
+| Run all sentihood dataset GPU overfit tests  | `pytest -v -m "(test-sentihood and test-GPU and test-overfit)"`             | 
 
 Unit tests are usually very fast, however the integration tests need quite some time even though they operate on small, truncated dataset. Current runtimes on my laptop (CPU) and desktop (GPU: GTX Titan X):
   - SNLI CPU:      Overfit: 37 sec; Small data: 462 sec
