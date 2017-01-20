@@ -77,6 +77,9 @@ def main():
         #'model_f': ReaderModel.create_model_f_reader,
     }
 
+    # reader_models can be defined in a shorter way by doing:
+    #  reader_models = {model.__name__: model for model in models.__models__}
+
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}

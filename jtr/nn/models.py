@@ -704,9 +704,6 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
         max_time = tf.shape(seq2)[1]
         input_depth = int(seq2.get_shape()[2])
 
-        #batch_size = tf.Print(batch_size, [batch_size])
-        #max_time = tf.Print(max_time, [max_time])
-
         # transforming seq2 to time major
         seq2 = tf.transpose(seq2, [1, 0, 2])
         num_units = output_size
@@ -797,6 +794,19 @@ boe_support_cands = boe_support_cands_reader_model
 boe_nosupport_cands = boe_nosupport_cands_reader_model
 boe_support = boe_reader_model
 boe_nosupport = boenosupport_reader_model
+
+# Available models
+__models__ = [
+    bicond_singlesupport_reader,
+    bicond_singlesupport_reader_with_cands,
+    bilstm_singlesupport_reader_with_cands,
+    bilstm_nosupport_reader_with_cands,
+    boe_multisupport_avg_reader_with_cands,
+    boe_support_cands,
+    boe_nosupport_cands,
+    boe_support,
+    boe_nosupport
+]
 
 
 def get_function(function_name):
