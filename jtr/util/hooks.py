@@ -1,9 +1,16 @@
-import tensorflow as tf
-import numpy as np
+# -*- coding: utf-8 -*-
+
 import time
-from time import gmtime, strftime, localtime
-from sklearn.metrics import classification_report
+from time import strftime, localtime
 from datetime import datetime
+
+import numpy as np
+import tensorflow as tf
+
+from sklearn.metrics import classification_report
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 # todo: hooks should also have prefixes so that one can use the same hook with different parameters
@@ -67,9 +74,7 @@ class LossHook(TraceHook):
         self.acc_loss += loss / self.batch_size
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             loss = self.acc_loss / self.iter_interval
-            print("Epoch " + str(epoch) +
-                  "\tIter " + str(self.iter) +
-                  "\tLoss " + str(loss))
+            logger.info("Epoch {}\tIter {}\tLoss {}".format(str(epoch), str(self.iter), str(loss)))
             self.update_summary(sess, self.iter, self.__tag__(), loss)
             self.acc_loss = 0
 
@@ -125,8 +130,7 @@ class TensorHook(TraceHook):
                     value_max = float(np.max(t))
                     self.update_summary(sess, self.iter, tag + '_max', value_max)
                 if 'print' in self.modes: #for debug purposes
-                    print('\n%s\n%s\n'%(tag, str(t)))
-
+                    logger.info('\n{}\n{}\n'.format(tag, str(t)))
 
 
 class ExamplesPerSecHook(TraceHook):
@@ -152,21 +156,18 @@ class ExamplesPerSecHook(TraceHook):
         elif self.iter % self.iter_interval == 0:
             diff = time.time() - self.t0
             speed = "%.2f" % (self.num_examples / diff)
-            print("Epoch " + str(epoch) +
-                  "\tIter " + str(self.iter) +
-                  "\tExamples/s " + str(speed))
+            logger.info("Epoch {}\tIter {}\tExamples/s {}".format(str(epoch), str(self.iter), str(speed)))
             self.update_summary(sess, self.iter, self.__tag__(), float(speed))
             self.t0 = time.time()
 
     def at_epoch_end(self, *args, **kwargs):
-        #to eliminate drop in measured speed due to post-epoch hooks:
-        #do not execute; reset for use during epochs only
+        # to eliminate drop in measured speed due to post-epoch hooks:
+        # do not execute; reset for use during epochs only
         self.reset = True
         return
 
     def at_iteration_end(self, sess, epoch, model, loss):
         return self.__call__(sess, epoch, model, loss)
-
 
 
 class ETAHook(TraceHook):
@@ -221,10 +222,9 @@ class ETAHook(TraceHook):
                     if len(seconds) < 2:
                         seconds = "0"+seconds
 
-                    return "%s:%s:%s" % (hours, minutes, seconds)
+                    return "{}:{}:{}".format(hours, minutes, seconds)
 
-            print("Epoch %d\tIter %d\tETA in %s [%2.2f"
-                  % (epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
+            logger.info("Epoch {}\tIter {}\tETA in {} {0:.2g}".format(epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
 
             self.update_summary(sess, self.iter, self.__tag__(), float(eta))
 
@@ -481,7 +481,7 @@ class EvalHook(TraceHook):
                 # alternative:
                 # probs = sess.run(tf.nn.softmax(self.logits), feed_dict=feed_dict)
             if self.print_details:
-                print(report)
+                logger.info(report)
             if self.print_to != "":
                 with open(self.print_to, "a") as myfile:
                     myfile.write(report)
@@ -522,13 +522,12 @@ class EvalHook(TraceHook):
                     f.write("{0} {1} {2:.5}\n".format(datetime.now(), self.info+'_'+m,
                       np.round(metrics[m],5)))
         res += '\t(%s)'%self.info
-        print(res)
+        logger.info(res)
 
 
 
         #self.done_for_epoch = True
         return targets, predictions, metrics  # return those so more they can be printed to file, etc
-
 
     def at_epoch_end(self, sess, epoch, model, loss):
         if epoch % self.at_every_epoch == 0:
@@ -538,8 +537,6 @@ class EvalHook(TraceHook):
 
     def at_iteration_end(self, *args, **kwargs):
         return
-
-
 
 
 class PRF1Hook(Hook):
@@ -582,7 +579,7 @@ class SaveModelHook(Hook):
 
     def __call__(self, sess, epoch, iter, model, loss):
         if epoch == self.at_epoch:
-            print("Saving model...")
+            logger.info("Saving model...")
             # todo
             pass
             #save_model(self.saver, sess, self.path, model, None)
@@ -597,7 +594,7 @@ class LoadModelHook(Hook):
 
     def __call__(self, sess, epoch, iter, model, loss):
         if epoch == self.at_epoch:
-            print("Loading model...")
+            logger.info("Loading model...")
             # todo
             pass
             #model = load_model(sess, self.path + "latest/")
