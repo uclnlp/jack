@@ -60,45 +60,21 @@ def jtr_load(path, max_count=None, **options):
 def main():
     t0 = time()
 
-    #(1) Defined sisyphos models
+    # (1) Defined JTR models
 
-    # this is where the list of all models lives, add those if they work
-    reader_models = {
-        'bicond_singlesupport_reader': models.conditional_reader_model,
-        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
-        'bilstm_singlesupport_reader_with_cands': models.bilstm_reader_model_with_cands,
-        'bilstm_nosupport_reader_with_cands': models.bilstm_nosupport_reader_model_with_cands,
-        'boe_multisupport_avg_reader_with_cands': models.boe_multisupport_avg_reader_with_cands,
-        'boe_support_cands': models.boe_support_cands_reader_model,
-        'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
-        'boe_support': models.boe_reader_model,
-        'boe_nosupport': models.boenosupport_reader_model,
-        #'log_linear': ReaderModel.create_log_linear_reader,
-        #'model_f': ReaderModel.create_model_f_reader,
-    }
+    # Please add new models to models.__models__ when they work
+    reader_models = {model.__name__: model for model in models.__models__}
 
     # reader_models can be defined in a shorter way by doing:
-    #  reader_models = {model.__name__: model for model in models.__models__}
+    #
 
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
-    #todo clean up
-    #common default input files - for rapid testing
-    #train_default = 'data/SQuAD/snippet_jtrformat.json'
-    #dev_default = 'data/sentihood/single_jtr.json'
-    #test_default = 'data/sentihood/single_jtr.json'
-    #train_default = "./jtr/data/SNLI/snli_1.0/snli_1.0_train_jtr_v1.json"
-    #dev_default = "./jtr/data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json"
-    #test_default = "./jtr/data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json"
-
-    #train_default = dev_default = test_default = 'data/SNLI/snippet_jtrformat_v1.json'
-    #train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
     train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
 
-    #(2) Parse the input arguments
-
+    # (2) Parse the input arguments
     parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
     parser.add_argument('--debug', default='False', choices={'True','False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
     parser.add_argument('--debug_examples', default=10, type=int, help="If in debug mode, how many examples should be used (default 2000)")
@@ -131,28 +107,13 @@ def main():
     parser.add_argument('--tokenize', default='True', choices={'True','False'},help="Tokenize question and support, default True")
     parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
-    parser.add_argument('--write_metrics_to', default='',
-        help='Filename to log the metrics of the EvalHooks')
-    parser.add_argument('--prune', default='False',
-        help='If the vocabulary should be pruned to the most frequent words.')
-    #parser.add_argument('--train_begin', default=0, metavar='B', type=int, help="Use if training and test are the same file and the training set needs to be split. Index of first training instance.")
-    #parser.add_argument('--train_end', default=-1, metavar='E', type=int,
-    #                    help="Use if training and test are the same file and the training set needs to be split. Index of last training instance plus 1.")
-    #parser.add_argument('--candidate_split', default="$", type=str, metavar="S",
-    #                    help="Regular Expression for tokenizing candidates. By default candidates are not split")
-    #parser.add_argument('--question_split', default="-", type=str, metavar="S",
-    #                    help="Regular Expression for tokenizing questions")
-    #parser.add_argument('--support_split', default="-", type=str, metavar="S",
-    #                    help="Regular Expression for tokenizing support")
-    #parser.add_argument('--use_train_generator_for_test', default=False, type=bool, metavar="B",
-    #                    help="Should the training candidate generator be used when testing")
-    #parser.add_argument('--feature_type', default=None, type=str, metavar="F",
-    #                    help="When using features: type of features.")
+    parser.add_argument('--write_metrics_to', default='', help='Filename to log the metrics of the EvalHooks')
+    parser.add_argument('--prune', default='False', help='If the vocabulary should be pruned to the most frequent words.')
 
     args = parser.parse_args()
 
-    #pre-process arguments
-    #(hack to circumvent lack of 'bool' type in parser)
+    # pre-process arguments
+    # (hack to circumvent lack of 'bool' type in parser)
     def _prep_args():
         read_bool = lambda l: {'True': True, 'False': False}[l]
         args.debug = read_bool(args.debug)
@@ -167,8 +128,7 @@ def main():
     for arg in vars(args):
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
 
-    #(3) Read the train, dev, and test data
-    #    (with optionally loading pretrained embeddings)
+    # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
 
     embeddings = None
     if args.debug:
@@ -195,7 +155,7 @@ def main():
     checkpoint()
 
     #  (4) Preprocesses the data (tokenize, normalize, add
-    #      start and end of sentence tags) via the sisyphos.pipeline method
+    #  start and end of sentence tags) via the JTR pipeline method
 
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         logger.info('build vocab based on train data')
@@ -215,7 +175,8 @@ def main():
     vocab_size = len(train_vocab)
     answer_size = len(train_answer_vocab)
 
-    # this is a bit of a hack since args are supposed to be user-defined, but it's cleaner that way with passing on args to reader models
+    # this is a bit of a hack since args are supposed to be user-defined,
+    # but it's cleaner that way with passing on args to reader models
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
     parser.add_argument('--answer_size', default=answer_size, type=int)
     args = parser.parse_args()
@@ -229,14 +190,14 @@ def main():
     test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
     checkpoint()
 
-    #(5) Create NeuralVocab
+    # (5) Create NeuralVocab
 
     logger.info('build NeuralVocab')
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     checkpoint()
 
-    #(6) Create TensorFlow placeholders and intialize model
+    # (6) Create TensorFlow placeholders and intialize model
 
     logger.info('create placeholders')
     placeholders = create_placeholders(train_data)
@@ -244,37 +205,37 @@ def main():
 
     (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
 
-    #(7) Batch the data via sisyphos.batch.get_feed_dicts
+    # (7) Batch the data via sisyphos.batch.get_feed_dicts
 
     if args.supports != "none":
-        bucket_order = ('question','support') #composite buckets; first over question, then over support
-        bucket_structure = (4,4) #will result in 16 composite buckets, evenly spaced over questions and supports
+        # composite buckets; first over question, then over support
+        bucket_order = ('question', 'support')
+        # will result in 16 composite buckets, evenly spaced over questions and supports
+        bucket_structure = (4, 4)
     else:
-        bucket_order = ('question',) #question buckets
-        bucket_structure = (4,) #4 buckets, evenly spaced over questions
+        # question buckets
+        bucket_order = ('question',)
+        # 4 buckets, evenly spaced over questions
+        bucket_structure = (4,)
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,
                        bucket_order=bucket_order, bucket_structure=bucket_structure)
-    dev_feed_dicts = \
-        get_feed_dicts(dev_data, placeholders, args.dev_batch_size,
-                       bucket_order=bucket_order, bucket_structure=bucket_structure)
+    dev_feed_dicts = get_feed_dicts(dev_data, placeholders, args.dev_batch_size,
+                                    bucket_order=bucket_order, bucket_structure=bucket_structure)
 
-    test_feed_dicts = \
-        get_feed_dicts(test_data, placeholders, 1,
-                       bucket_order=bucket_order, bucket_structure=bucket_structure)
+    test_feed_dicts = get_feed_dicts(test_data, placeholders, 1,
+                                     bucket_order=bucket_order, bucket_structure=bucket_structure)
 
     optim = tf.train.AdamOptimizer(args.learning_rate)
 
-    dev_feed_dict = next(dev_feed_dicts.__iter__()) #little bit hacky..; for visualization of dev data during training
+    # little bit hacky..; for visualization of dev data during training
+    dev_feed_dict = next(dev_feed_dicts.__iter__())
     sw = tf.train.SummaryWriter(args.tensorboard_folder)
 
-    if "cands" in args.model:
-        answname = "targets"
-    else:
-        answname = "answers"
+    answname = "targets" if "cands" in args.model else "answers"
 
-    #(8) Add hooks
+    # (8) Add hooks
 
     hooks = [
         TensorHook(20, [loss, nvocab.get_embedding_matrix()],
@@ -282,22 +243,22 @@ def main():
         # report_loss
         LossHook(100, args.batch_size, summary_writer=sw),
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
-        #evaluate on train data after each epoch
+        # evaluate on train data after each epoch
         EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, write_metrics_to=args.write_metrics_to, info="training",
                  summary_writer=sw),
-        #evaluate on dev data after each epoch
+        # evaluate on dev data after each epoch
         EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, write_metrics_to=args.write_metrics_to, info="development",
                  summary_writer=sw),
-        #evaluate on test data after training
+        # evaluate on test data after training
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
                     at_every_epoch=args.epochs,
                     metrics=['Acc','macroP','macroR','macroF1'],
                     print_details=False, write_metrics_to=args.write_metrics_to, info="test")
     ]
 
-    #(9) Train the model
+    # (9) Train the model
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
     logger.info('finished in {0:.3g}'.format((time() - t0) / 3600.))
 
