@@ -46,7 +46,7 @@ def check_file_adheres_to_schema(data_file_name):
 
 def loaders_test(dataset_name):
     '''Tests a dataset converter, checking whether the converted data adheres
-    to the Jack-the-Ripper (.jtr) format.
+    to the Jack-the-Reader (.jtr) format.
     Args:
         dataset_name (string): Dataset name as defined in
                 DATASET_TO_CMD_CALL_STRING.
