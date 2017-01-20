@@ -574,7 +574,7 @@ class SaveModelHook(Hook):
         self.at_every_epoch = at_every_epoch
 
         # fixme: don't save optimizer parameters
-        # self.saver = tf.train.Saver(tf.all_variables())
+        # self.saver = tf.train.Saver(tf.global_variables())
         self.saver = tf.train.Saver(tf.trainable_variables())
 
     def __call__(self, sess, epoch, iter, model, loss):
@@ -590,7 +590,7 @@ class LoadModelHook(Hook):
         self.path = path + "/"
         self.at_epoch = at_epoch
         self.at_every_epoch = at_every_epoch
-        self.saver = tf.train.Saver(tf.all_variables())
+        self.saver = tf.train.Saver(tf.global_variables())
 
     def __call__(self, sess, epoch, iter, model, loss):
         if epoch == self.at_epoch:

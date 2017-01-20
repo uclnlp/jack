@@ -430,7 +430,7 @@ def get_total_trainable_variables():
 def get_total_variables():
     """Calculates and returns the number of parameters in the model (these can be fixed)."""
     total_parameters = 0
-    for variable in tf.all_variables():
+    for variable in tf.global_variables():
         shape = variable.get_shape()
         variable_parameters = 1
         for dim in shape:
@@ -797,15 +797,15 @@ boe_nosupport = boenosupport_reader_model
 
 # Available models
 __models__ = [
-    bicond_singlesupport_reader,
-    bicond_singlesupport_reader_with_cands,
-    bilstm_singlesupport_reader_with_cands,
-    bilstm_nosupport_reader_with_cands,
-    boe_multisupport_avg_reader_with_cands,
-    boe_support_cands,
-    boe_nosupport_cands,
-    boe_support,
-    boe_nosupport
+    'bicond_singlesupport_reader',
+    'bicond_singlesupport_reader_with_cands',
+    'bilstm_singlesupport_reader_with_cands',
+    'bilstm_nosupport_reader_with_cands',
+    'boe_multisupport_avg_reader_with_cands',
+    'boe_support_cands',
+    'boe_nosupport_cands',
+    'boe_support',
+    'boe_nosupport'
 ]
 
 
