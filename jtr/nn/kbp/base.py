@@ -136,9 +136,8 @@ class ERMLP(BaseModel):
         self.predicate_embedding_size = predicate_embedding_size
         input_size = self.entity_embedding_size + self.entity_embedding_size + self.predicate_embedding_size
 
-        with tf.variable_scope("ERMLP") as _:
-            self.C = tf.get_variable('C', shape=[input_size, hidden_size], initializer=tf.contrib.layers.xavier_initializer())
-            self.w = tf.get_variable('w', shape=[hidden_size, 1], initializer=tf.contrib.layers.xavier_initializer())
+        self.C = tf.get_variable('C', shape=[input_size, hidden_size], initializer=tf.contrib.layers.xavier_initializer())
+        self.w = tf.get_variable('w', shape=[hidden_size, 1], initializer=tf.contrib.layers.xavier_initializer())
 
     def __call__(self):
         """
