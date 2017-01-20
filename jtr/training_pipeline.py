@@ -1,34 +1,34 @@
+# -*- coding: utf-8 -*-
+
 import argparse
-import json
 import os.path as path
 import tensorflow as tf
-tf.set_random_seed(1337)
 
 from time import time
 import sys
-from pprint import pprint
-
-class Duration(object):
-    def __init__(self):
-        self.t0 = time()
-        self.t = time()
-    def __call__(self):
-        print('Time since last checkpoint : %.2fmin'%((time()-self.t)/60.))
-        self.t = time()
-
-checkpoint = Duration()
-
 
 from jtr.preprocess.batch import get_feed_dicts
-from jtr.preprocess.vocab import Vocab, NeuralVocab
-from jtr.preprocess.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
+from jtr.preprocess.vocab import NeuralVocab
 from jtr.train import train
-from jtr.util.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, TensorHook, EvalHook
+from jtr.util.hooks import ExamplesPerSecHook, LossHook, TensorHook, EvalHook
 import jtr.nn.models as models
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
 
 from jtr.load.read_jtr import jtr_load as _jtr_load
+
+
+class Duration(object):
+    def __init__(self):
+        self.t0 = time()
+        self.t = time()
+
+    def __call__(self):
+        print('Time since last checkpoint : %.2fmin'%((time()-self.t)/60.))
+        self.t = time()
+
+tf.set_random_seed(1337)
+checkpoint = Duration()
 
 """Loads data, preprocesses it, and finally initializes and trains a model.
 

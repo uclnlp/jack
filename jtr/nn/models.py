@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Provides models that define no placeholders ('models_np')
 
@@ -5,7 +7,6 @@ todo: include other models; goal: should replace models.py
 """
 
 import tensorflow as tf
-import numpy as np
 
 
 def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
