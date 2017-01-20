@@ -22,9 +22,10 @@ def convert_snli(snli_file_jsonl):
     Notes:
         - instances with gold labels '-' are removed from the corpus
     """
-    assert 'snli_1.0' in snli_file_jsonl and snli_file_jsonl.endswith('.jsonl'), "input should be the snli_1.0_X.jsonl files (X=test/train/dev)"
+    assert 'snli_1.0' in snli_file_jsonl and snli_file_jsonl.endswith('.jsonl'),\
+        "input should be the snli_1.0_X.jsonl files (X=test/train/dev)"
 
-    with open(snli_file_jsonl,'r') as f:
+    with open(snli_file_jsonl, 'r') as f:
         data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
 
         return {'meta': 'SNLI',

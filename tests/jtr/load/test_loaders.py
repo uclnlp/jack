@@ -13,8 +13,11 @@ def pytest_collection_modifyitems(items):
 
 
 def get_pipeline_script_cmdcall_snli_converter():
-    '''Creates a bash cmd to convert the SNLI data into our format'''
-    # convert snli files into quebap format
+    """
+    Creates a bash cmd to convert the SNLI data into our format
+    :return:
+    """
+    # convert snli files into jtr format
     cmd = "python3 jtr/format/convert/SNLI2jtr_v1.py"
     return cmd
 
@@ -25,7 +28,7 @@ def check_file_adheres_to_schema(data_file_name):
     """
     schema_file_name = "jtr/load/dataset_schema.json"
     # validate schema adherence
-    cmd = "python3 jtr/format/validate.py "+ data_file_name + " " + schema_file_name
+    cmd = "python3 jtr/format/validate.py " + data_file_name + " " + schema_file_name
 
     # Execute command and wait for results
     try:
@@ -38,23 +41,23 @@ def check_file_adheres_to_schema(data_file_name):
 
 
 def loaders_test(dataset_name):
-    '''Tests a dataset converter, checking whether the converted data adheres
+    """
+    Tests a dataset converter, checking whether the converted data adheres
     to the Jack-the-Reader (.jtr) format.
     Args:
         dataset_name (string): Dataset name as defined in
                 DATASET_TO_CMD_CALL_STRING.
     Returns: None
-    '''
-
+    """
     # Setup command - get the command line call for a given dataset
     DATASET_TO_CMD_CALL_STRING = dict()
     DATASET_TO_CMD_CALL_STRING['SNLI'] = get_pipeline_script_cmdcall_snli_converter()
     cmd = DATASET_TO_CMD_CALL_STRING[dataset_name]
 
     # Execute conversion command and wait for results
+
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        # response = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout.read()
     except subprocess.CalledProcessError as e:
         assert False, str(e.output)
 

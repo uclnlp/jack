@@ -50,6 +50,7 @@ build:
           export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp35-cp35m-linux_x86_64.whl
           pip3 install --upgrade $TF_BINARY_URL
           python3 setup.py install
+          ./data/SNLI/download.sh
 
     - script:
         name: echo python information
