@@ -87,6 +87,6 @@ def test_snli_converter():
 
 
 @pytest.mark.data_loaders
-def test_snli_schea():
+def test_snli_schema():
     data_file_name = "jtr/tests/test_data/SNLI/2000_samples_train_jtr_v1.json"
     check_file_adheres_to_schema(data_file_name)
