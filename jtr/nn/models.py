@@ -790,6 +790,17 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
         # each [batch_size x max_seq_length x output_size]
         return outputs_batch_major, final_state
 
+# Aliases
+bicond_singlesupport_reader = conditional_reader_model
+bicond_singlesupport_reader_with_cands = conditional_reader_model_with_cands
+bilstm_singlesupport_reader_with_cands = bilstm_reader_model_with_cands
+bilstm_nosupport_reader_with_cands = bilstm_nosupport_reader_model_with_cands
+boe_multisupport_avg_reader_with_cands = boe_multisupport_avg_reader_with_cands
+boe_support_cands = boe_support_cands_reader_model
+boe_nosupport_cands = boe_nosupport_cands_reader_model
+boe_support = boe_reader_model
+boe_nosupport = boenosupport_reader_model
+
 
 def get_function(function_name):
     this_module = sys.modules[__name__]
