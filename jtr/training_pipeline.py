@@ -61,6 +61,7 @@ def main():
         'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
         'bilstm_singlesupport_reader_with_cands': models.bilstm_reader_model_with_cands,
         'bilstm_nosupport_reader_with_cands': models.bilstm_nosupport_reader_model_with_cands,
+        'boe_multisupport_avg_reader_with_cands': models.boe_multisupport_avg_reader_with_cands,
         'boe_support_cands': models.boe_support_cands_reader_model,
         'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
         'boe_support': models.boe_reader_model,
@@ -82,9 +83,9 @@ def main():
     #dev_default = "./jtr/data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json"
     #test_default = "./jtr/data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json"
 
-    train_default = dev_default = test_default = 'data/SNLI/snippet_jtrformat_v1.json'
+    #train_default = dev_default = test_default = 'data/SNLI/snippet_jtrformat_v1.json'
     #train_default = dev_default = test_default = 'data/scienceQA/scienceQA_cloze_snippet.json'
-    #train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
+    train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
 
     #(2) Parse the input arguments
 
