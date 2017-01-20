@@ -71,7 +71,7 @@ def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
         varscope.reuse_variables()
         candidates_embedded = nvocab(candidates)
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     #seq1, seq1_lengths, seq2, seq2_lengths, output_size, scope=None, drop_keep_prob=1.0
     with tf.variable_scope("bilstm_reader") as varscope1:
@@ -316,7 +316,7 @@ def boenosupport_reader_model(placeholders, nvocab, **options):
     with tf.variable_scope("embedders") as varscope:
         question_embedded = nvocab(question)
 
-    logger.info('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     output = bag_reader(question_embedded, question_lengths)
     logger.info("INPUT SHAPE {}".format(str(question_embedded.get_shape())))
@@ -351,19 +351,18 @@ def boe_reader_model(placeholders, nvocab, **options):
         varscope.reuse_variables()
         support_embedded = nvocab(support)
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
-    output = boe_reader(question_embedded, question_lengths,
-                        support_embedded, support_lengths)
-    print("INPUT SHAPE " + str(question_embedded.get_shape()))
-    print("OUTPUT SHAPE " + str(output.get_shape()))
+    output = boe_reader(question_embedded, question_lengths, support_embedded, support_lengths)
+    logger.info("INPUT SHAPE {}".format(str(question_embedded.get_shape())))
+    logger.info("OUTPUT SHAPE {}".format(str(output.get_shape())))
 
     logits, loss, predict = predictor(output, targets, options["answer_size"])
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    return (logits, loss, predict)
+    return logits, loss, predict
 
 
 def conditional_reader_model(placeholders, nvocab, **options):
@@ -395,7 +394,7 @@ def conditional_reader_model(placeholders, nvocab, **options):
 
     # todo: add option for attentive reader
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     # outputs,states = conditional_reader(question_embedded, question_lengths,
     #                            support_embedded, support_lengths,
@@ -410,10 +409,10 @@ def conditional_reader_model(placeholders, nvocab, **options):
 
     logits, loss, predict = predictor(output, targets, options["answer_size"])
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    return (logits, loss, predict)
+    return logits, loss, predict
 
 
 def get_total_trainable_variables():
