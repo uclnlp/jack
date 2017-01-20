@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 import os

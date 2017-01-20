@@ -1,9 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import subprocess
-import time
-from os.path import join, exists
-import os
 import pytest
-import numpy as np
+
 
 def pytest_collection_modifyitems(items):
     for item in items:
@@ -13,16 +12,11 @@ def pytest_collection_modifyitems(items):
             item.add_marker(pytest.mark.event)
 
 
-def get_pipeline_script_cmdcall_SNLI_converter():
+def get_pipeline_script_cmdcall_snli_converter():
     '''Creates a bash cmd to convert the SNLI data into our format'''
-    # download data if not exists
-    #train_file = 'tests/test_data/SNLI/2000_samples_train_quebap_v1.json'
-
     # convert snli files into quebap format
     cmd = "python3 jtr/format/convert/SNLI2jtr_v1.py"
-    #cmd = "pwd"
     return cmd
-
 
 
 def check_file_adheres_to_schema(data_file_name):
@@ -35,13 +29,12 @@ def check_file_adheres_to_schema(data_file_name):
 
     # Execute command and wait for results
     try:
-        print('ujjj')
+        pass
         #subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
         #response = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout.read()
         #assert response == "JSON successfully validated."
     except subprocess.CalledProcessError as e:
         assert False, str(e.output)
-
 
 
 def loaders_test(dataset_name):
@@ -53,24 +46,20 @@ def loaders_test(dataset_name):
     Returns: None
     '''
 
-    # Setup command
-    # get the command line call for a given dataset
+    # Setup command - get the command line call for a given dataset
     DATASET_TO_CMD_CALL_STRING = dict()
-    DATASET_TO_CMD_CALL_STRING['SNLI'] = get_pipeline_script_cmdcall_SNLI_converter()
+    DATASET_TO_CMD_CALL_STRING['SNLI'] = get_pipeline_script_cmdcall_snli_converter()
     cmd = DATASET_TO_CMD_CALL_STRING[dataset_name]
 
     # Execute conversion command and wait for results
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        #response = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout.read()
+        # response = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout.read()
     except subprocess.CalledProcessError as e:
         assert False, str(e.output)
 
     data_file_name = "jtr/tests/test_data/SNLI/2000_samples_train_jtr_v1.json"
     check_file_adheres_to_schema(data_file_name)
-
-
-
 
 
 #-------------------------------
@@ -80,6 +69,7 @@ def loaders_test(dataset_name):
 def test_test():
     assert 2 == 2
 
+
 @pytest.mark.data_loaders
-def test_SNLI_converter():
+def test_snli_converter():
     loaders_test(dataset_name='SNLI')
