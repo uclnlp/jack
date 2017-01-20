@@ -36,7 +36,7 @@ class TranslatingModel(BaseModel):
 
         :param similarity_function: Similarity function.
         """
-        super().__init__(*args, **kwargs)
+        super(self).__init__(*args, **kwargs)
         self.similarity_function = similarity_function
 
     def __call__(self):
@@ -55,7 +55,7 @@ class BilinearDiagonalModel(BaseModel):
 
         :param similarity_function: Similarity function.
         """
-        super().__init__(*args, **kwargs)
+        super(self).__init__(*args, **kwargs)
         self.similarity_function = similarity_function
 
     def __call__(self):
@@ -74,7 +74,7 @@ class BilinearModel(BaseModel):
 
         :param similarity_function: Similarity function.
         """
-        super().__init__(*args, **kwargs)
+        super(self).__init__(*args, **kwargs)
         self.similarity_function = similarity_function
 
     def __call__(self):
@@ -97,7 +97,7 @@ class ComplexModel(BaseModel):
 
         :param embedding size: Embedding size.
         """
-        super().__init__(*args, **kwargs)
+        super(self).__init__(*args, **kwargs)
         self.embedding_size = embedding_size
 
     def __call__(self):
@@ -117,21 +117,26 @@ class ComplexModel(BaseModel):
 
 class ERMLP(BaseModel):
     def __init__(self, entity_embedding_size=None, predicate_embedding_size=None,
-                 hidden_size=None, f=tf.tanh, reuse_variables=False, *args, **kwargs):
+                 hidden_size=None, f=tf.tanh, *args, **kwargs):
         """
         Implementation of the ER-MLP model described in [1, 2]
 
         [1] Dong, X. L. et al. - Knowledge Vault: A Web-Scale Approach to Probabilistic Knowledge Fusion - KDD 2014
         [2] Nickel, M. et al. - A Review of Relational Machine Learning for Knowledge Graphs - IEEE 2016
+
+        :param entity_embedding_size: Entity embedding size.
+        :param predicate_embedding_size: Predicate embedding size.
+        :param hidden_size: Hidden size of the MLP.
+        :param f: non-linearity of the MLP.
         """
-        super().__init__(*args, **kwargs)
+        super(self).__init__(*args, **kwargs)
         self.f = f
 
         self.entity_embedding_size = entity_embedding_size
         self.predicate_embedding_size = predicate_embedding_size
         input_size = self.entity_embedding_size + self.entity_embedding_size + self.predicate_embedding_size
 
-        with tf.variable_scope("ERMLP", reuse=reuse_variables) as _:
+        with tf.variable_scope("ERMLP") as _:
             self.C = tf.get_variable('C', shape=[input_size, hidden_size], initializer=tf.contrib.layers.xavier_initializer())
             self.w = tf.get_variable('w', shape=[hidden_size, 1], initializer=tf.contrib.layers.xavier_initializer())
 
