@@ -9,6 +9,9 @@ todo: include other models; goal: should replace models.py
 import tensorflow as tf
 import sys
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
     """
@@ -30,18 +33,17 @@ def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
         varscope.reuse_variables()
         candidates_embedded = nvocab(candidates)
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
     question_encoding = tf.reduce_sum(question_embedded, 1)
 
     scores = logits = tf.reduce_sum(tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    return (logits, loss, predict)
-
+    return logits, loss, predict
 
 
 def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
@@ -85,12 +87,10 @@ def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
-
-    return (logits, loss, predict)
-
+    return logits, loss, predict
 
 
 def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
@@ -124,7 +124,7 @@ def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
 
     # todo: add option for attentive reader
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     seq1_output, seq1_states, seq2_output, seq2_states = bilstm_readers(support_embedded, support_lengths,
                                          question_embedded, question_lengths,
@@ -139,8 +139,8 @@ def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
     return logits, loss, predict
 
@@ -173,7 +173,7 @@ def boe_multisupport_avg_reader_with_cands(placeholders, nvocab, **options):
     # support encodings are mean averaged
     support_embedded = tf.reduce_mean(support_embedded, 1)
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     question_encoding = tf.expand_dims(tf.reduce_sum(question_embedded, 1, keep_dims=True), 3)
 
@@ -190,11 +190,10 @@ def boe_multisupport_avg_reader_with_cands(placeholders, nvocab, **options):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
-
-    return (logits, loss, predict)
+    return logits, loss, predict
 
 
 def conditional_reader_model_with_cands(placeholders, nvocab, **options):
@@ -228,7 +227,7 @@ def conditional_reader_model_with_cands(placeholders, nvocab, **options):
 
     # todo: add option for attentive reader
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     # outputs,states = conditional_reader(question_embedded, question_lengths,
     #                            support_embedded, support_lengths,
@@ -245,8 +244,8 @@ def conditional_reader_model_with_cands(placeholders, nvocab, **options):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
     return logits, loss, predict
 
@@ -277,7 +276,7 @@ def boe_support_cands_reader_model(placeholders, nvocab, **options):
 
     # todo: add option for attentive reader
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
     question_encoding = tf.expand_dims(tf.reduce_sum(question_embedded, 1, keep_dims=True), 3)
 
@@ -286,7 +285,7 @@ def boe_support_cands_reader_model(placeholders, nvocab, **options):
 
     q_c = question_encoding * candidate_encoding
     combined = q_c * support_encoding
-    #combined = question_encoding * candidate_encoding * support_encoding
+    # combined = question_encoding * candidate_encoding * support_encoding
 
     # [batch_size, dim]
     scores = logits = tf.reduce_sum(combined, (2, 3))
@@ -294,8 +293,8 @@ def boe_support_cands_reader_model(placeholders, nvocab, **options):
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
     return logits, loss, predict
 
@@ -317,18 +316,18 @@ def boenosupport_reader_model(placeholders, nvocab, **options):
     with tf.variable_scope("embedders") as varscope:
         question_embedded = nvocab(question)
 
-    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+    logger.info('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
 
     output = bag_reader(question_embedded, question_lengths)
-    print("INPUT SHAPE " + str(question_embedded.get_shape()))
-    print("OUTPUT SHAPE " + str(output.get_shape()))
+    logger.info("INPUT SHAPE {}".format(str(question_embedded.get_shape())))
+    logger.info("OUTPUT SHAPE {}".format(str(output.get_shape())))
 
     logits, loss, predict = predictor(output, targets, options["answer_size"])
 
-    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
-    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    return (logits, loss, predict)
+    return logits, loss, predict
 
 
 def boe_reader_model(placeholders, nvocab, **options):
@@ -795,7 +794,6 @@ bicond_singlesupport_reader = conditional_reader_model
 bicond_singlesupport_reader_with_cands = conditional_reader_model_with_cands
 bilstm_singlesupport_reader_with_cands = bilstm_reader_model_with_cands
 bilstm_nosupport_reader_with_cands = bilstm_nosupport_reader_model_with_cands
-boe_multisupport_avg_reader_with_cands = boe_multisupport_avg_reader_with_cands
 boe_support_cands = boe_support_cands_reader_model
 boe_nosupport_cands = boe_nosupport_cands_reader_model
 boe_support = boe_reader_model
