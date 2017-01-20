@@ -84,6 +84,10 @@ def test_snli_converter():
     path = 'tests/test_data/SNLI/1000_samples_snli_1.0_train.jsonl'
     res = SNLI2jtr_v1.convert_snli(snli_file_jsonl=path)
     assert len(res) == 3
+    assert set(res.keys()) == {'meta', 'instances', 'globals'}
+    assert res['meta'] == 'SNLI'
+    assert res['globals'] == {'candidates': [{'text': 'entailment'}, {'text': 'neutral'}, {'text': 'contradiction'}]}
+    assert isinstance(res['instances'], list)
 
 
 @pytest.mark.data_loaders
