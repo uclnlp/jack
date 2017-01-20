@@ -194,7 +194,7 @@ def main():
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     checkpoint()
 
-    # (6) Create TensorFlow placeholders and intialize model
+    # (6) Create TensorFlow placeholders and initialize model
 
     logger.info('create placeholders')
     placeholders = create_placeholders(train_data)
@@ -242,17 +242,16 @@ def main():
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
         # evaluate on train data after each epoch
         EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, write_metrics_to=args.write_metrics_to, info="training",
-                 summary_writer=sw),
+                 at_every_epoch=1, metrics=['Acc', 'macroF1'],
+                 print_details=False, write_metrics_to=args.write_metrics_to, info="training", summary_writer=sw),
         # evaluate on dev data after each epoch
         EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=1, metrics=['Acc','macroF1'], print_details=False, write_metrics_to=args.write_metrics_to, info="development",
-                 summary_writer=sw),
+                 at_every_epoch=1, metrics=['Acc', 'macroF1'], print_details=False,
+                 write_metrics_to=args.write_metrics_to, info="development", summary_writer=sw),
         # evaluate on test data after training
         EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                    at_every_epoch=args.epochs,
-                    metrics=['Acc','macroP','macroR','macroF1'],
-                    print_details=False, write_metrics_to=args.write_metrics_to, info="test")
+                 at_every_epoch=args.epochs, metrics=['Acc', 'macroP', 'macroR', 'macroF1'],
+                 print_details=False, write_metrics_to=args.write_metrics_to, info="test")
     ]
 
     # (9) Train the model
