@@ -7,6 +7,7 @@ todo: include other models; goal: should replace models.py
 """
 
 import tensorflow as tf
+import sys
 
 
 def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
@@ -788,3 +789,10 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
 
         # each [batch_size x max_seq_length x output_size]
         return outputs_batch_major, final_state
+
+
+def get_function(function_name):
+    this_module = sys.modules[__name__]
+    if not hasattr(this_module, function_name):
+        raise ValueError('Unknown model: {}'.format(function_name))
+    return getattr(this_module, function_name)
