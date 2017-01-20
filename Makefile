@@ -28,3 +28,5 @@ sentihood:
 	$(PYTEST) tests -v -m sentihood
 SNLI:
 	$(PYTEST) tests -v -m SNLI
+doctests:
+	$(PYTEST) --doctest-modules jtr/preprocess/vocab.py

@@ -492,7 +492,3 @@ class NeuralVocab(Vocab):
 
     def get_embedding_matrix(self):
         return self.embedding_matrix
-
-if __name__ == '__main__':
-    import doctest
-    print(doctest.testmod())
