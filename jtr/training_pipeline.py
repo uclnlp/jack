@@ -189,7 +189,6 @@ def main():
     parser.add_argument('--vocab_size', default=vocab_size, type=int)
     parser.add_argument('--answer_size', default=answer_size, type=int)
     args = parser.parse_args()
-    _prep_args()
 
     checkpoint()
     logger.info('encode dev data')
@@ -214,7 +213,7 @@ def main():
 
     (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
 
-    # (7) Batch the data via sisyphos.batch.get_feed_dicts
+    # (7) Batch the data via jtr.batch.get_feed_dicts
 
     if args.supports != "none":
         # composite buckets; first over question, then over support
