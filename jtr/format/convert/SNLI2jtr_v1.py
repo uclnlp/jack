@@ -6,8 +6,8 @@ whereby each instance receives support under the form of 'related' instances
 
 import json
 
-__candidate_labels = ['entailment','neutral','contradiction']
-__candidates = [{'text':cl} for cl in __candidate_labels]
+__candidate_labels = ['entailment', 'neutral', 'contradiction']
+__candidates = [{'text': cl} for cl in __candidate_labels]
 
 
 def convert_snli(snli_file_jsonl):
@@ -93,8 +93,6 @@ def main():
         corpus['instances'] = corpus['instances'][:2000]
         with open("./tests/test_data/SNLI/2000_samples_test_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-
-
 
 if __name__ == "__main__":
     main()

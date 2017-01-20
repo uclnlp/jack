@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from jtr.format.convert import SNLI2jtr_v1
+
 import subprocess
 import pytest
 
@@ -73,6 +75,18 @@ def test_test():
     assert 2 == 2
 
 
+#@pytest.mark.data_loaders
+#def test_snli_converter():
+#    loaders_test(dataset_name='SNLI')
+
 @pytest.mark.data_loaders
 def test_snli_converter():
-    loaders_test(dataset_name='SNLI')
+    path = 'tests/test_data/SNLI/1000_samples_snli_1.0_train.jsonl'
+    res = SNLI2jtr_v1.convert_snli(snli_file_jsonl=path)
+    assert len(res) == 3
+
+
+@pytest.mark.data_loaders
+def test_snli_schea():
+    data_file_name = "jtr/tests/test_data/SNLI/2000_samples_train_jtr_v1.json"
+    check_file_adheres_to_schema(data_file_name)
