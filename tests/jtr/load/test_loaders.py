@@ -88,6 +88,9 @@ def test_snli_converter():
     assert res['meta'] == 'SNLI'
     assert res['globals'] == {'candidates': [{'text': 'entailment'}, {'text': 'neutral'}, {'text': 'contradiction'}]}
     assert isinstance(res['instances'], list)
+    assert res['instances'][0] == {'questions': [{'question': 'A person is training his horse for a competition.', 'answers': [{'text': 'neutral'}]}], 'id': '3416050480.jpg#4r1n', 'support': [{'text': 'A person on a horse jumps over a broken down airplane.', 'id': '3416050480.jpg#4'}]}
+    assert res['instances'][1] == {'questions': [{'question': 'A person is at a diner, ordering an omelette.', 'answers': [{'text': 'contradiction'}]}], 'support': [{'id': '3416050480.jpg#4', 'text': 'A person on a horse jumps over a broken down airplane.'}], 'id': '3416050480.jpg#4r1c'}
+    assert res['instances'][2] == {'support': [{'text': 'A person on a horse jumps over a broken down airplane.', 'id': '3416050480.jpg#4'}], 'questions': [{'answers': [{'text': 'entailment'}], 'question': 'A person is outdoors, on a horse.'}], 'id': '3416050480.jpg#4r1e'}
 
 
 @pytest.mark.data_loaders
