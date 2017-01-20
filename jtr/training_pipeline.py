@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import os
 import os.path as path
-import tensorflow as tf
 
 from time import time
 import sys
+
+import logging
+
+import tensorflow as tf
 
 from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import NeuralVocab
@@ -16,6 +20,8 @@ from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
 
 from jtr.load.read_jtr import jtr_load as _jtr_load
+
+logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 
 class Duration(object):
@@ -41,16 +47,17 @@ checkpoint = Duration()
           start and end of sentence tags) via the sisyphos.pipeline method
       (5) Create NeuralVocab
       (6) Create TensorFlow placeholders and initialize model
-      (7) Batch the data via sisyphos.batch.get_feed_dicts
+      (7) Batch the data via jtr.preprocess.batch.get_feed_dicts
       (8) Add hooks
       (9) Train the model
 """
 
+
 def jtr_load(path, max_count=None, **options):
     return _jtr_load(path, max_count, **options)
 
-def main():
 
+def main():
     t0 = time()
 
     #(1) Defined sisyphos models
@@ -153,32 +160,32 @@ def main():
         args.clip_value = None if args.clip_value == 0.0 else (-abs(args.clip_value),abs(args.clip_value))
     _prep_args()
 
-    #print out args
-    print('configuration:')
+    logger.info('configuration:')
     for arg in vars(args):
-        print('\t%s : %s'%(str(arg),str(getattr(args, arg))))
+        logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
 
     #(3) Read the train, dev, and test data
     #    (with optionally loading pretrained embeddings)
 
+    embeddings = None
     if args.debug:
         train_data = jtr_load(args.train, args.debug_examples, **vars(args))
-        print('loaded %d samples as debug train/dev/test dataset '%args.debug_examples)
+
+        logger.info('loaded {} samples as debug train/dev/test dataset '.format(args.debug_examples))
+
         dev_data = train_data
         test_data = train_data
         if args.pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
-            print('loaded pre-trained embeddings (%s)'%emb_file)
+            logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
     else:
         train_data, dev_data, test_data = [jtr_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
-        print('loaded train/dev/test data')
+        logger.info('loaded train/dev/test data')
         if args.pretrain:
             emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-            embeddings = load_embeddings(path.join('jtr', 'data', 'word2vec', emb_file),'word2vec')
-            #emb_file = 'glove.840B.300d.zip'
-            #embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
-            print('loaded pre-trained embeddings (%s)'%emb_file)
+            embeddings = load_embeddings(path.join('jtr', 'data', 'word2vec', emb_file), 'word2vec')
+            logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
 
     emb = embeddings.get if args.pretrain else None
 
@@ -188,19 +195,19 @@ def main():
     #      start and end of sentence tags) via the sisyphos.pipeline method
 
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
-        print('build vocab based on train data')
+        logger.info('build vocab based on train data')
         _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True)
         if args.prune == 'True':
             train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
-        print('encode train data')
+        logger.info('encode train data')
         train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True)
     else:
         train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
-    print('In Training data vocabulary: %d pre-trained, %d out-of-vocab.' % (N_pre, N_oov))
+    logger.info('In Training data vocabulary: {} pre-trained, {} out-of-vocab.'.format(N_pre, N_oov))
 
     vocab_size = len(train_vocab)
     answer_size = len(train_answer_vocab)
@@ -212,25 +219,26 @@ def main():
     _prep_args()
 
     checkpoint()
-    print('encode dev data')
+    logger.info('encode dev data')
     dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
     checkpoint()
-    print('encode test data')
+    logger.info('encode test data')
     test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
     checkpoint()
 
     #(5) Create NeuralVocab
 
-    print('build NeuralVocab')
+    logger.info('build NeuralVocab')
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     checkpoint()
 
     #(6) Create TensorFlow placeholders and intialize model
 
-    print('create placeholders')
+    logger.info('create placeholders')
     placeholders = create_placeholders(train_data)
-    print('build model %s'%args.model)
+    logger.info('build model {}'.format(args.model))
+
     (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
 
     #(7) Batch the data via sisyphos.batch.get_feed_dicts
@@ -287,11 +295,8 @@ def main():
     ]
 
     #(9) Train the model
-
     train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
-
-
-    print('finished in %.3fh' % ((time() - t0) / 3600.))
+    logger.info('finished in {0:.3fh}'.format((time() - t0) / 3600.))
 
 
 if __name__ == "__main__":
