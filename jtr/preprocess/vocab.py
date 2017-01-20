@@ -1,15 +1,20 @@
-import tensorflow as tf
-from jtr.util.tfutil import tfrun
-from jtr.nn.models import get_total_trainable_variables, get_total_variables
-import numpy as np
-import operator, sys
+# -*- coding: utf-8 -*-
+import operator
+import sys
 
-SEED = 54321 #for random embedding initialization in NeuralVocab
+import numpy as np
+import tensorflow as tf
+
+from jtr.util.tfutil import tfrun
+from jtr.nn.models import get_total_trainable_variables
+
+# for random embedding initialization in NeuralVocab
+SEED = 54321
 
 
 class Vocab(object):
     """
-    Vocab objects for use in sisyphos pipelines.
+    Vocab objects for use in jtr pipelines.
 
     Example:
 
@@ -140,12 +145,14 @@ class Vocab(object):
         """
         if unk is None:
             self.sym2id = {}
-            self.id2sym = {} #with pos and neg indices
+            # with pos and neg indices
+            self.id2sym = {}
             self.next_pos = 0
             self.sym2freqs = {}
         else:
             self.sym2id = {unk: 0}
-            self.id2sym = {0: unk} #with pos and neg indices
+            # with pos and neg indices
+            self.id2sym = {0: unk}
             self.next_pos = 1
             self.sym2freqs = {unk: 0}
 
@@ -165,7 +172,8 @@ class Vocab(object):
         - id's of symbols with pre-trained embeddings are converted to positive integer id's,
           counting up from the all out-of-vocab id's.
         """
-        if not self.frozen and self.next_neg < -1: #if any pretrained have been encountered
+        # if any pretrained have been encountered
+        if not self.frozen and self.next_neg < -1:
             sym2id = {sym: self._normalize(id) for sym,id in self.sym2id.items()}
             id2sym = {self._normalize(id): sym for id,sym in self.id2sym.items()}
             self.sym2id = sym2id
@@ -225,7 +233,8 @@ class Vocab(object):
         else:
             if self.unk in self.sym2id:
                 return self.sym2id[self.unk]
-            else: #can happen for `Vocab` initialized with `unk` argument set to `None`
+            # can happen for `Vocab` initialized with `unk` argument set to `None`
+            else:
                 return None
 
     def get_sym(self, id):
@@ -258,12 +267,12 @@ class Vocab(object):
 
     def _normalize(self,id):
         """map original (pos/neg) ids to normalized (non-neg) ids: first new symbols, then those in emb"""
-        #e.g. -1 should be mapped to self.next_pos + 0
-        #e.g. -3 should be mapped to self.next_pos + 2
+        # e.g. -1 should be mapped to self.next_pos + 0
+        # e.g. -3 should be mapped to self.next_pos + 2
         return id if id >=0 else self.next_pos - id - 1
 
     def _denormalize(self,id):
-        #self.next_pos + i is mapped back to  -1-i
+        # self.next_pos + i is mapped back to  -1-i
         return id if id < self.next_pos else -1-(id-self.next_pos)
 
     def get_ids_pretrained(self):
@@ -291,13 +300,14 @@ class Vocab(object):
         pruned_vocab = Vocab(unk=self.unk, emb=self.emb)
         cnt = 0
         for sym, freq in sorted(self.sym2freqs.items(), key=operator.itemgetter(1), reverse=True):
-        #for sym in self.sym2freqs:
-            #freq = self.sym2freqs[sym]
+            # for sym in self.sym2freqs:
+            # freq = self.sym2freqs[sym]
             cnt += freq
             if freq >= min_freq and cnt <= max_size:
                 pruned_vocab(sym)
                 pruned_vocab.sym2freqs[sym] = freq
-        if self.frozen:#if original Vocab was frozen, freeze new one
+        if self.frozen:
+            # if original Vocab was frozen, freeze new one
             pruned_vocab.freeze()
 
         return pruned_vocab
@@ -352,13 +362,11 @@ class NeuralVocab(Vocab):
     Total is 23.
     """
 
-
     def __init__(self, base_vocab, embedding_matrix=None,
                  input_size=None, reduced_input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True, seed=SEED):
         """
         Creates NeuralVocab object from a given Vocab object `base_vocab`.
         Pre-calculates embedding vector (as `Tensor` object) for each symbol in Vocab
-
 
         Args:
             `base_vocab`:
@@ -390,7 +398,8 @@ class NeuralVocab(Vocab):
         self.sym2freqs = base_vocab.sym2freqs
         self.unit_normalize = unit_normalize
 
-        np_normalize = lambda v: v/np.sqrt(np.sum(np.square(v)))
+        def np_normalize(v):
+            return v / np.sqrt(np.sum(np.square(v)))
 
         if embedding_matrix is None:
             #construct part oov
@@ -399,11 +408,11 @@ class NeuralVocab(Vocab):
             E_oov = tf.get_variable("embeddings_oov", [n_oov, input_size],
                                      initializer=tf.random_normal_initializer(0, 1./np.sqrt(input_size)),
                                      trainable=True, dtype="float32")
-            #stdev = 1/sqrt(length): then expected initial L2 norm is 1
+            # stdev = 1/sqrt(length): then expected initial L2 norm is 1
 
-            #construct part pretrained
+            # construct part pretrained
             if use_pretrained and base_vocab.emb_length is not None:
-                #load embeddings into numpy tensor with shape (count_pretrained, min(input_size,emb_length))
+                # load embeddings into numpy tensor with shape (count_pretrained, min(input_size,emb_length))
                 np_E_pre = np.zeros([n_pre, min(input_size, base_vocab.emb_length)]).astype("float32")
                 for id in base_vocab.get_ids_pretrained():
                     sym = base_vocab.id2sym[id]
@@ -417,16 +426,17 @@ class NeuralVocab(Vocab):
                 if input_size > base_vocab.emb_length:
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
                         initializer=tf.random_normal_initializer(0.0, 1./np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
-                    #note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
+                    # note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
                     E_pre = tf.concat(1, [E_pre, E_pre_ext], name="embeddings_pretrained_extended")
-
-            else: #initialize all randomly anyway
+            else:
+                # initialize all randomly anyway
                 E_pre = tf.get_variable("embeddings_not_pretrained", [n_pre, input_size],
                                         initializer=tf.random_normal_initializer(0., 1./np.sqrt(input_size)),
                                         trainable=True, dtype="float32")
-                #again: initialize with expected unit norm
+                # again: initialize with expected unit norm
 
-            self.input_size = input_size   #must be provided is embedding_matrix is None
+            # must be provided is embedding_matrix is None
+            self.input_size = input_size
             self.embedding_matrix = tf.concat(0, [E_oov, E_pre], name="embeddings")
 
         else:
@@ -441,21 +451,17 @@ class NeuralVocab(Vocab):
         #pre-assign embedding vectors to all ids
         self.id2vec = [tf.nn.embedding_lookup(self.embedding_matrix, id) for id in range(len(self))] #always OK if frozen
 
-
-
-    def embed_symbol(self, id):
+    def embed_symbol(self, ids):
         """returns embedded id's
 
         Args:
-            `id`: integer, ndarray with np.int32 integers,
-                  or tensor with tf.int32 integers.
+            `ids`: integer, ndarray with np.int32 integers, or tensor with tf.int32 integers.
             These integers correspond to (normalized) id's for symbols in `self.base_vocab`.
 
         Returns:
             tensor with id's embedded by numerical vectors (in last dimension)
         """
-        return tf.nn.embedding_lookup(self.embedding_matrix, id)
-
+        return tf.nn.embedding_lookup(self.embedding_matrix, ids)
 
     def __call__(self, *args, **kwargs):
         """
@@ -472,28 +478,21 @@ class NeuralVocab(Vocab):
             Embedded `Tensor` in case a `Tensor` was provided as input,
             and otherwise a list of embedded input id's under the form of fixed-length embeddings (`Tensor` objects).
         """
-        if len(args) == 1:  #tuple with length 1: then either list with ids, tensor with ids, or single id
+        if len(args) == 1:  # tuple with length 1: then either list with ids, tensor with ids, or single id
             if isinstance(args[0], list):
                 ids = args[0]
             elif tf.contrib.framework.is_tensor(args[0]):
-                #return embedded tensor
+                # return embedded tensor
                 return self.embed_symbol(args[0])
             else:
                 return self.id2vec[args[0]]
-        else: #tuple with ids
+        else: # tuple with ids
             ids = args
         return [self.id2vec[id] for id in ids]
 
     def get_embedding_matrix(self):
         return self.embedding_matrix
 
-
-
-
 if __name__ == '__main__':
-
-    print('perform doctest verification of functionality.')
-
     import doctest
     print(doctest.testmod())
-

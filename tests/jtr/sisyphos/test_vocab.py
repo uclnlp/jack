@@ -48,4 +48,3 @@ def test_neural_vocab():
         np.testing.assert_almost_equal(session.run(nv(v('A'))), [1.7, 0, .3])
         np.testing.assert_almost_equal(session.run(nv(v('B'))), [0., 1.5, 0.5])
         np.testing.assert_almost_equal(session.run(nv(v('C'))), [0., 0., 2.])
-
