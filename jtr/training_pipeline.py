@@ -36,15 +36,14 @@ class Duration(object):
 tf.set_random_seed(1337)
 checkpoint = Duration()
 
-"""Loads data, preprocesses it, and finally initializes and trains a model.
+"""
+    Loads data, preprocesses it, and finally initializes and trains a model.
 
    The script does step-by-step:
-      (1) Define sisyphos models
+      (1) Define JTR models
       (2) Parse the input arguments
-      (3) Read the train, dev, and test data
-          (with optionally loading pretrained embeddings)
-      (4) Preprocesses the data (tokenize, normalize, add
-          start and end of sentence tags) via the sisyphos.pipeline method
+      (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
+      (4) Preprocesses the data (tokenize, normalize, add start and end of sentence tags) via the sisyphos.pipeline method
       (5) Create NeuralVocab
       (6) Create TensorFlow placeholders and initialize model
       (7) Batch the data via jtr.preprocess.batch.get_feed_dicts
@@ -53,15 +52,13 @@ checkpoint = Duration()
 """
 
 
-def jtr_load(path, max_count=None, **options):
-    return _jtr_load(path, max_count, **options)
+def jtr_load(_path, max_count=None, **options):
+    return _jtr_load(_path, max_count, **options)
 
 
 def main():
     t0 = time()
-
     # (1) Defined JTR models
-
     # Please add new models to models.__models__ when they work
     reader_models = {model_name: models.get_function(model_name) for model_name in models.__models__}
 
@@ -72,54 +69,69 @@ def main():
     train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
 
     # (2) Parse the input arguments
-    parser = argparse.ArgumentParser(description='Train and Evaluate a machine reader')
-    parser.add_argument('--debug', default='False', choices={'True', 'False'}, help="Run in debug mode, in which case the training file is also used for testing (default False)")
-    parser.add_argument('--debug_examples', default=10, type=int, help="If in debug mode, how many examples should be used (default 2000)")
+    parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader')
+
+    parser.add_argument('--debug', action='store_true',
+                        help="Run in debug mode, in which case the training file is also used for testing")
+
+    parser.add_argument('--debug_examples', default=10, type=int,
+                        help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="jtr training file")
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="jtr dev file")
     parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="jtr test file")
-    parser.add_argument('--supports', default='single', choices=sorted(support_alts), help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
-    parser.add_argument('--questions', default='single', choices=sorted(question_alts), help="None, single (default), or multiple questions per instance")
-    parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts), help="Open, per-instance, or fixed (default) candidates")
-    parser.add_argument('--answers', default='single', choices=sorted(answer_alts), help="Open, per-instance, or fixed (default) candidates")
+    parser.add_argument('--supports', default='single', choices=sorted(support_alts),
+                        help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
+    parser.add_argument('--questions', default='single', choices=sorted(question_alts),
+                        help="None, single (default), or multiple questions per instance")
+    parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts),
+                        help="Open, per-instance, or fixed (default) candidates")
+    parser.add_argument('--answers', default='single', choices=sorted(answer_alts),
+                        help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--batch_size', default=128,
         type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
         type=int, help="Batch size for development data, default 128")
-    parser.add_argument('--repr_dim_input', default=100, type=int, help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
-    parser.add_argument('--repr_dim_output', default=100, type=int, help="Size of the output representation, default 100")
-    parser.add_argument('--pretrain', default='False', choices={'True', 'False'}, help="Use pretrained embeddings, by default the initialisation is random, default False")
-    parser.add_argument('--train_pretrain', default='False', choices={'True', 'False'},
-                        help="Continue training pretrained embeddings together with model parameters, default False")
-    parser.add_argument('--normalize_pretrain', default='True', choices={'True', 'False'},
+    parser.add_argument('--repr_dim_input', default=100, type=int,
+                        help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
+    parser.add_argument('--repr_dim_output', default=100, type=int,
+                        help="Size of the output representation, default 100")
+
+    parser.add_argument('--pretrain', action='store_true',
+                        help="Use pretrained embeddings, by default the initialisation is random")
+    parser.add_argument('--train_pretrain', action='store_true',
+                        help="Continue training pretrained embeddings together with model parameters")
+    parser.add_argument('--normalize_pretrain', action='store_true',
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
+
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
-    parser.add_argument('--clip_value', default=0.0, type=float, help="gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
-    parser.add_argument('--drop_keep_prob', default=0.9, type=float, help="keep probability for dropout on output (set to 1.0 for no dropout)")
+    parser.add_argument('--clip_value', default=0.0, type=float,
+                        help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
+    parser.add_argument('--drop_keep_prob', default=0.9, type=float,
+                        help="Keep probability for dropout on output (set to 1.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
-    parser.add_argument('--tokenize', default='True', choices={'True','False'},help="Tokenize question and support, default True")
-    parser.add_argument('--negsamples', default=0, type=int, help="Number of negative samples, default 0 (= use full candidate list)")
-    parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
-    parser.add_argument('--write_metrics_to', default='', help='Filename to log the metrics of the EvalHooks')
-    parser.add_argument('--prune', default='False', help='If the vocabulary should be pruned to the most frequent words.')
+
+    parser.add_argument('--tokenize', dest='tokenize', action='store_true', help="Tokenize question and support")
+    parser.add_argument('--no-tokenize', dest='tokenize', action='store_false', help="Tokenize question and support")
+    parser.set_defaults(tokenize=True)
+
+    parser.add_argument('--negsamples', default=0, type=int,
+                        help="Number of negative samples, default 0 (= use full candidate list)")
+    parser.add_argument('--tensorboard_folder', default='./.tb/',
+                        help='Folder for tensorboard logs')
+    parser.add_argument('--write_metrics_to', default='',
+                        help='Filename to log the metrics of the EvalHooks')
+    parser.add_argument('--prune', default='False',
+                        help='If the vocabulary should be pruned to the most frequent words.')
 
     args = parser.parse_args()
 
-    # pre-process arguments
-    # (hack to circumvent lack of 'bool' type in parser)
-    def _prep_args():
-        read_bool = lambda l: {'True': True, 'False': False}[l]
-        args.debug = read_bool(args.debug)
-        args.pretrain = read_bool(args.pretrain)
-        args.train_pretrain = read_bool(args.train_pretrain)
-        args.normalize_pretrain = read_bool(args.normalize_pretrain)
-        args.tokenize = read_bool(args.tokenize)
-        args.clip_value = None if args.clip_value == 0.0 else (-abs(args.clip_value),abs(args.clip_value))
-    _prep_args()
+    clip_value = None
+    if args.clip_value != 0.0:
+        clip_value = - abs(args.clip_value), abs(args.clip_value)
 
     logger.info('configuration:')
     for arg in vars(args):
@@ -255,7 +267,7 @@ def main():
     ]
 
     # (9) Train the model
-    train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=args.clip_value, hooks=hooks)
+    train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=clip_value, hooks=hooks)
     logger.info('finished in {0:.3g}'.format((time() - t0) / 3600.))
 
 
