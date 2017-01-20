@@ -62,22 +62,8 @@ def main():
 
     # (1) Defined JTR models
 
-    reader_models = {
-        'bicond_singlesupport_reader': models.conditional_reader_model,
-        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
-        'bilstm_singlesupport_reader_with_cands': models.bilstm_reader_model_with_cands,
-        'bilstm_nosupport_reader_with_cands': models.bilstm_nosupport_reader_model_with_cands,
-        'boe_multisupport_avg_reader_with_cands': models.boe_multisupport_avg_reader_with_cands,
-        'boe_support_cands': models.boe_support_cands_reader_model,
-        'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
-        'boe_support': models.boe_reader_model,
-        'boe_nosupport': models.boenosupport_reader_model,
-        # 'log_linear': ReaderModel.create_log_linear_reader,
-        # 'model_f': ReaderModel.create_model_f_reader,
-    }
-
     # Please add new models to models.__models__ when they work
-    # reader_models = {model.__name__: model for model in models.__models__}
+    reader_models = {model_name: models.get_function(model_name) for model_name in models.__models__}
 
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
@@ -242,7 +228,7 @@ def main():
 
     # little bit hacky..; for visualization of dev data during training
     dev_feed_dict = next(dev_feed_dicts.__iter__())
-    sw = tf.train.SummaryWriter(args.tensorboard_folder)
+    sw = tf.summary.FileWriter(args.tensorboard_folder)
 
     answname = "targets" if "cands" in args.model else "answers"
 

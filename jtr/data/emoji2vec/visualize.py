@@ -34,7 +34,7 @@ with tf.Session() as sess:
     saver.save(sess, os.path.join(dir, "model.ckpt"), 0)
 
     # Use the same LOG_DIR where you stored your checkpoint.
-    summary_writer = tf.train.SummaryWriter(dir)
+    summary_writer = tf.summary.FileWriter(dir)
 
     # Format: tensorflow/contrib/tensorboard/plugins/projector/projector_config.proto
     config = projector.ProjectorConfig()
