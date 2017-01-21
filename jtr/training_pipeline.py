@@ -58,6 +58,7 @@ def jtr_load(_path, max_count=None, **options):
 
 def main():
     t0 = time()
+
     # (1) Defined JTR models
     # Please add new models to models.__models__ when they work
     reader_models = {model_name: models.get_function(model_name) for model_name in models.__models__}
@@ -199,14 +200,12 @@ def main():
     checkpoint()
 
     # (5) Create NeuralVocab
-
     logger.info('build NeuralVocab')
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     checkpoint()
 
     # (6) Create TensorFlow placeholders and initialize model
-
     logger.info('create placeholders')
     placeholders = create_placeholders(train_data)
     logger.info('build model {}'.format(args.model))
@@ -214,7 +213,6 @@ def main():
     (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
 
     # (7) Batch the data via jtr.batch.get_feed_dicts
-
     if args.supports != "none":
         # composite buckets; first over question, then over support
         bucket_order = ('question', 'support')
@@ -244,7 +242,6 @@ def main():
     answname = "targets" if "cands" in args.model else "answers"
 
     # (8) Add hooks
-
     hooks = [
         TensorHook(20, [loss, nvocab.get_embedding_matrix()],
                    feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
