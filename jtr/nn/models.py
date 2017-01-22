@@ -147,7 +147,7 @@ def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
 
 def boe_multisupport_avg_reader_with_cands(placeholders, nvocab, **options):
     """
-    For datasets with multiple supports: bidirectional conditional reader with pairs of (question, [support]) and candidates
+    For datasets with multiple supports: bow reader with pairs of (question, [support]) and candidates. Mean averages the support embeddings.
     """
 
     # Model
