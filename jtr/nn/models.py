@@ -196,6 +196,97 @@ def boe_multisupport_avg_reader_with_cands(placeholders, nvocab, **options):
     return logits, loss, predict
 
 
+
+
+def boe_multisupport_lossavg_reader_with_cands(placeholders, nvocab, **options):
+    """
+    For datasets with multiple supports: bow reader with pairs of (question, [support]) and candidates.
+    Pairs each support encoding with the repective question and candidate encodings and
+    """
+
+    # Model
+    # [batch_size, max_seq1_length]
+    question = placeholders['question']
+
+    # [batch_size, num_sup, max_seq2_length]
+    support = placeholders['support']
+
+    # [batch_size, candidate_size]
+    targets = placeholders['targets']
+
+    # [batch_size, max_num_cands]
+    candidates = placeholders['candidates']
+
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        varscope.reuse_variables()
+        support_embedded = nvocab(support)
+        varscope.reuse_variables()
+        candidates_embedded = nvocab(candidates)
+
+    print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
+
+    dim1s, dim2s, dim3s, dim4s = tf.unpack(tf.shape(support_embedded))  # [batch_size, num_supports, max_seq2_length, emb_dim]
+
+    # iterate through all supports
+    num_steps = dim2s
+
+    initial_outputs = tf.TensorArray(size=num_steps, dtype='float32')
+    initial_i = tf.constant(0, dtype='int32')
+
+    def should_continue(i, *args):
+        # execute the loop for all i supports
+        return i < num_steps
+
+    def iteration(i, outputs_):
+        # get all instances, take only i-th support, flatten so this becomes a 3-dim tensor
+        sup_batchi = tf.reshape(tf.slice(support_embedded, [0, i, 0, 0], [dim1s, 1, dim3s, dim4s]), [dim1s, dim3s, dim4s]) # [batch_size, num_supports, max_seq2_length]
+
+        # below: get question, candidate, support embedding; can be substituted with arbitrary encoders
+        question_encoding = tf.expand_dims(tf.reduce_sum(question_embedded, 1, keep_dims=True), 3)  # [batch_size, max_seq1_length, emb_size] -> [batch_size, max_seq1_length, emb_size, X]
+
+        candidate_encoding = tf.expand_dims(candidates_embedded, 2)  # [batch_size, emb_size] -> [batch_size, emb_size, X]
+        support_encoding = tf.expand_dims(tf.reduce_sum(sup_batchi, 1, keep_dims=True), 3)  # [batch_size, max_seq2_length, emb_size] -> [batch_size, max_seq2_length, emb_size, X]
+
+        # combine encodings
+        q_c = question_encoding * candidate_encoding
+        combined = q_c * support_encoding
+        # combined = question_encoding * candidate_encoding * support_encoding
+
+        # [batch_size * num_sup, dim]
+        scores = tf.reduce_sum(combined, (2, 3))
+
+        # append scores for the i-th support to previous supports so we can combine scores for all supports later
+        outputs_ = outputs_.write(i, scores)
+
+        return i + 1, outputs_
+
+
+    i, outputs = tf.while_loop(
+        should_continue, iteration,
+        [initial_i, initial_outputs])
+
+    # packs along axis 0, there doesn't seem to be a way to change that (?)
+    outputs_logits = outputs.pack() # [num_support, batch_size, num_cands]
+
+    # so we'll need to combine losses on axis 0 as well
+    # here: plug in different ways of combining losses
+    scores = tf.reduce_sum(outputs_logits, 0) # [batch_size, num_cands]
+
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
+    predict = tf.arg_max(tf.nn.softmax(scores), 1, name='prediction')
+
+
+    print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
+    print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
+
+    return (scores, loss, predict)
+
+
+
+
+
+
 def conditional_reader_model_with_cands(placeholders, nvocab, **options):
     """
     Bidirectional conditional reader with pairs of (question, support) and candidates
@@ -802,6 +893,7 @@ __models__ = [
     'bilstm_singlesupport_reader_with_cands',
     'bilstm_nosupport_reader_with_cands',
     'boe_multisupport_avg_reader_with_cands',
+    'boe_multisupport_lossavg_reader_with_cands',
     'boe_support_cands',
     'boe_nosupport_cands',
     'boe_support',
