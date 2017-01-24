@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-wget http://www.thespermwhale.com/jaseweston/babi/CBTest.tgz
-tar -xzf CBTest.tgz
+wget -P data/CBT http://www.thespermwhale.com/jaseweston/babi/CBTest.tgz
+tar -xzf data/CBT/CBTest.tgz -C data/CBT/
