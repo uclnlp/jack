@@ -108,6 +108,12 @@ data/SQuAD/train-v1.1.json
 
 data/NYT/naacl2013.txt
 
+data/CBT/CBTest.tgz
+data/CBT/CBTest/
+
+data/rc-data/cnn
+data/rc-data/dailymail
+
 # TensorBoard dirs
 .tb
 
