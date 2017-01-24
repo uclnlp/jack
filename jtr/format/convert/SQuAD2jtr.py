@@ -98,7 +98,7 @@ def main():
         with open(sys.argv[2], 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
     else:
-        print("Usage: python3 SQuAD2jtr.py path/to/SQuAD path/to/SQuAD.jtr.json")
+        print("Usage: python3 SQuAD2jtr.py path/to/SQuAD save/to/SQuAD.jtr.json")
 
 
 if __name__ == "__main__":

@@ -119,12 +119,15 @@ def create_test_jtr(testfacts, tuples):
 
 def main():
     import sys
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         data = load_naacl2013(sys.argv[1], sys.argv[2])
-        print(json.dumps(data, indent=2))
+        with open(sys.argv[3], 'w') as outfile:
+            json.dumps(data, outfile, indent=2)
+
     else:
-        print("""usage: python3 NYT2jtr.py path/to/naacl2013.txt mode >  naacl2013_mode.jtr.json
-              in which mode = train or test""")
+        print("""Usage:
+    python3 NYT2jtr.py path/to/naacl2013 {mode} /save/to/naacl2013_mode.jtr.json
+        where {mode} = {train, test}""")
 
 if __name__ == "__main__":
     main()
