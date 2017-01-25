@@ -20,6 +20,7 @@ from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
 
 from jtr.load.read_jtr import jtr_load as _jtr_load
+from tensorflow.python.client import device_lib
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -138,6 +139,11 @@ def main():
     logger.info('configuration:')
     for arg in vars(args):
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
+
+    # Get information about available CPUs and GPUs
+    logger.info('available devices:')
+    for l in device_lib.list_local_devices():
+        logger.info('device info: ' + str(l).replace("\n", " "))
 
     # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
 
