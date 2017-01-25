@@ -158,7 +158,7 @@ def boe_multisupport_avg_reader_with_cands(placeholders, nvocab, **options):
     support = placeholders['support']
 
     # [batch_size, candidate_size]
-    targets = placeholders['targets']
+    targets = tf.to_float(placeholders['targets'])
 
     # [batch_size, max_num_cands]
     candidates = placeholders['candidates']
@@ -175,25 +175,19 @@ def boe_multisupport_avg_reader_with_cands(placeholders, nvocab, **options):
 
     logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
 
-    question_encoding = tf.expand_dims(tf.reduce_sum(question_embedded, 1, keep_dims=True), 3)
+    question_embedded = tf.reduce_sum(question_embedded, 1)
+    support_embedded = tf.reduce_sum(support_embedded, 1)
 
-    candidate_encoding = tf.expand_dims(candidates_embedded, 2)
-    support_encoding = tf.expand_dims(tf.reduce_sum(support_embedded, 1, keep_dims=True), 3)
-
-    q_c = question_encoding * candidate_encoding
-    combined = q_c * support_encoding
-    # combined = question_encoding * candidate_encoding * support_encoding
-
-    # [batch_size, dim]
-    scores = logits = tf.reduce_sum(combined, (2, 3))
+    # batch matrix multiplication to get per-candidate scores
+    scores = tf.einsum('bid,bcd->bc', tf.expand_dims(question_embedded + support_embedded, 1), candidates_embedded)
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(tf.nn.softmax(scores), 1, name='prediction')
 
     logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
     logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
 
-    return logits, loss, predict
+    return scores, loss, predict
 
 
 
@@ -212,7 +206,7 @@ def boe_multisupport_lossavg_reader_with_cands(placeholders, nvocab, **options):
     support = placeholders['support']
 
     # [batch_size, candidate_size]
-    targets = placeholders['targets']
+    targets = tf.to_float(placeholders['targets'])
 
     # [batch_size, max_num_cands]
     candidates = placeholders['candidates']
@@ -240,48 +234,38 @@ def boe_multisupport_lossavg_reader_with_cands(placeholders, nvocab, **options):
 
     def iteration(i, outputs_):
         # get all instances, take only i-th support, flatten so this becomes a 3-dim tensor
-        sup_batchi = tf.reshape(tf.slice(support_embedded, [0, i, 0, 0], [dim1s, 1, dim3s, dim4s]), [dim1s, dim3s, dim4s]) # [batch_size, num_supports, max_seq2_length]
+        sup_batchi = tf.reshape(tf.slice(support_embedded, [0, i, 0, 0], [dim1s, 1, dim3s, dim4s]),
+                                [dim1s, dim3s, dim4s])  # [batch_size, num_supports, max_seq2_length]
 
-        # below: get question, candidate, support embedding; can be substituted with arbitrary encoders
-        question_encoding = tf.expand_dims(tf.reduce_sum(question_embedded, 1, keep_dims=True), 3)  # [batch_size, max_seq1_length, emb_size] -> [batch_size, max_seq1_length, emb_size, X]
+        question_encoding = tf.reduce_sum(question_embedded, 1)
+        support_encoding = tf.reduce_sum(sup_batchi, 1)
 
-        candidate_encoding = tf.expand_dims(candidates_embedded, 2)  # [batch_size, emb_size] -> [batch_size, emb_size, X]
-        support_encoding = tf.expand_dims(tf.reduce_sum(sup_batchi, 1, keep_dims=True), 3)  # [batch_size, max_seq2_length, emb_size] -> [batch_size, max_seq2_length, emb_size, X]
-
-        # combine encodings
-        q_c = question_encoding * candidate_encoding
-        combined = q_c * support_encoding
-        # combined = question_encoding * candidate_encoding * support_encoding
-
-        # [batch_size * num_sup, dim]
-        scores = tf.reduce_sum(combined, (2, 3))
+        # batch matrix multiplication to get per-candidate scores
+        scores = tf.einsum('bid,bcd->bc', tf.expand_dims(question_encoding + support_encoding, 1), candidates_embedded)
 
         # append scores for the i-th support to previous supports so we can combine scores for all supports later
         outputs_ = outputs_.write(i, scores)
 
         return i + 1, outputs_
 
-
     i, outputs = tf.while_loop(
         should_continue, iteration,
         [initial_i, initial_outputs])
 
-    # packs along axis 0, there doesn't seem to be a way to change that (?)
-    outputs_logits = outputs.pack() # [num_support, batch_size, num_cands]
+    # packs along axis 0
+    outputs_logits = outputs.pack()  # [num_support, batch_size, num_cands]
 
     # so we'll need to combine losses on axis 0 as well
     # here: plug in different ways of combining losses
-    scores = tf.reduce_sum(outputs_logits, 0) # [batch_size, num_cands]
+    scores = tf.reduce_sum(outputs_logits, 0)  # [batch_size, num_cands]
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(scores), 1, name='prediction')
-
 
     print('TRAINABLE VARIABLES (embeddings + model): %d' % get_total_trainable_variables())
     print('ALL VARIABLES (embeddings + model): %d' % get_total_variables())
 
     return (scores, loss, predict)
-
 
 
 
