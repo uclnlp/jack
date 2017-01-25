@@ -4,7 +4,7 @@ import tensorflow as tf
 
 class ExampleInputModule(InputModule):
 
-    def training_generator(self, training_set: List[(Input, Answer)]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         pass
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
@@ -44,6 +44,6 @@ class ExampleOutputModule(OutputModule):
 data_set = [Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"])]
 
 example_reader = Reader(ExampleInputModule(), ExampleModelModule(), ExampleOutputModule())
-example_reader.train(data_set)
+# example_reader.train(data_set)
 
 answers = example_reader(data_set)

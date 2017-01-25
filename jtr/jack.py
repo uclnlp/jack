@@ -5,7 +5,7 @@ using a tensorflow model into other tensors, and one that converts these tensors
 """
 
 from abc import abstractmethod, ABCMeta, abstractproperty
-from typing import Mapping, Iterable
+from typing import Mapping, Iterable, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -74,7 +74,7 @@ class InputModule(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def training_generator(self, training_set: List[(Input, Answer)]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         pass
 
 
@@ -87,7 +87,7 @@ class ModelModule(metaclass=ABCMeta):
     """
 
     def __init__(self):
-        self.placeholders = [d.create_placeholder() for d in self.input_ports()]
+        self.placeholders = [d.create_placeholder() for d in self.input_ports]
         self.predictions, self.loss = self.create(*self.placeholders)
 
     @abstractmethod
@@ -188,7 +188,7 @@ class Reader:
         answers = self.output_module(inputs, prediction)
         return answers
 
-    def train(self, training_set: List[(Input, Answer)], **train_params):
+    def train(self, training_set: List[Tuple[Input, Answer]], **train_params):
         """
         This method trains the reader (and changes its state).
         Args:
