@@ -87,7 +87,7 @@ def main():
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts),
                         help="Open, per-instance, or fixed (default) candidates")
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts),
-                        help="Open, per-instance, or fixed (default) candidates")
+                        help="Single or multiple")
     parser.add_argument('--batch_size', default=128,
         type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
@@ -106,6 +106,7 @@ def main():
 
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
+    parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
@@ -169,14 +170,14 @@ def main():
 
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         logger.info('build vocab based on train data')
-        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True)
+        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, sepvocab=args.vocab_sep)
         if args.prune == 'True':
             train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
         logger.info('encode train data')
-        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True)
+        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True, sepvocab=args.vocab_sep)
     else:
-        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples)
+        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples, sepvocab=args.vocab_sep)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
@@ -193,10 +194,10 @@ def main():
 
     checkpoint()
     logger.info('encode dev data')
-    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
+    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize, sepvocab=args.vocab_sep)
     checkpoint()
     logger.info('encode test data')
-    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize)
+    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize, sepvocab=args.vocab_sep)
     checkpoint()
 
     # (5) Create NeuralVocab
