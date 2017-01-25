@@ -302,8 +302,8 @@ class Vocab(object):
         for sym, freq in sorted(self.sym2freqs.items(), key=operator.itemgetter(1), reverse=True):
             # for sym in self.sym2freqs:
             # freq = self.sym2freqs[sym]
-            cnt += freq
-            if freq >= min_freq and cnt <= max_size:
+            cnt += 1
+            if freq >= min_freq and cnt < max_size:
                 pruned_vocab(sym)
                 pruned_vocab.sym2freqs[sym] = freq
         if self.frozen:
