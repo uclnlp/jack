@@ -189,10 +189,23 @@ class OutputModule(metaclass=ABCMeta):
 
     @abstractproperty
     def input_port(self) -> TensorPort:
+        """
+        Returns: a port defines the input tensor to the output module.
+        """
         pass
 
     @abstractmethod
     def __call__(self, inputs: List[Input], prediction: np.ndarray) -> List[Answer]:
+        """
+        Process the prediction tensor for a batch to produce a list of answers. The module has access
+        to the original inputs.
+        Args:
+            inputs:
+            prediction:
+
+        Returns:
+
+        """
         pass
 
 
