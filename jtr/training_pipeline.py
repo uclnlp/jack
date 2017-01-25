@@ -141,6 +141,8 @@ def main():
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
 
     # Get information about available CPUs and GPUs
+    # to set specific device, add CUDA_VISIBLE_DEVICES environment variable, e.g. $ CUDA_VISIBLE_DEVICES = 0. / jtr_script.py
+
     logger.info('available devices:')
     for l in device_lib.list_local_devices():
         logger.info('device info: ' + str(l).replace("\n", " "))
