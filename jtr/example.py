@@ -3,6 +3,7 @@ import tensorflow as tf
 
 
 class ExampleInputModule(InputModule):
+
     def training_generator(self, training_set: List[(Input, Answer)]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         pass
 
@@ -40,7 +41,7 @@ class ExampleOutputModule(OutputModule):
         return []
 
 
-data_set = [Input(["yeah", "what?"], "which is it?", ["a", "b", "c"])]
+data_set = [Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"])]
 
 example_reader = Reader(ExampleInputModule(), ExampleModelModule(), ExampleOutputModule())
 example_reader.train(data_set)
