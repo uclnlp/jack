@@ -47,7 +47,7 @@ class Ports:
                                   "Represents instances with multiple support documents",
                                   "[batch_size, max_num_support, max_num_tokens")
     atomic_candidates = TensorPort(tf.int32, [None, None], "candidates",
-                                   "Represents candidate choices using single symbolst",
+                                   "Represents candidate choices using single symbols",
                                    "[batch_size, num_candidates")
     question = TensorPort(tf.int32, [None, None], "question",
                           "Represents questions using symbol vectors",
@@ -67,14 +67,38 @@ class InputModule(metaclass=ABCMeta):
 
     @abstractproperty
     def output_ports(self) -> List[TensorPort]:
+        """
+        Defines what types of tensors the output module produces in each batch.
+        Returns: a list of tensor ports that correspond to the tensor ports in the mapping
+        produced by `__call__`.
+        """
         pass
 
     @abstractmethod
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
+        """
+        Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
+        module.
+        Args:
+            inputs: a list of instances (question, support, optional candidates)
+
+        Returns:
+            A mapping from ports to tensors.
+
+        """
         pass
 
     @abstractmethod
     def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        """
+        Given a training set of input-answer pairs, this method produces an iterable/generator
+        that when iterated over returns a sequence of batches. These batches map ports to tensors
+        just as `__call__` does, using the `output_ports` of this object.
+        Args:
+            training_set: a set of pairs of input and answer.
+
+        Returns: An iterable/generator that, on each pass through the data, produces a list of batches.
+        """
         pass
 
 
@@ -87,6 +111,9 @@ class ModelModule(metaclass=ABCMeta):
     """
 
     def __init__(self):
+        """
+        Creates a ModelModule and instantiates the TF graphs that implement the layer's function.
+        """
         self.placeholders = [d.create_placeholder() for d in self.input_ports]
         self.predictions, self.loss = self.create(*self.placeholders)
 
@@ -107,22 +134,32 @@ class ModelModule(metaclass=ABCMeta):
 
     @abstractproperty
     def output_port(self) -> TensorPort:
+        """
+        Returns: Definition of the output port of this module.
+        """
         pass
 
     @abstractproperty
     def input_ports(self) -> List[TensorPort]:
+        """
+        Returns: Definition of the input ports. The method `create` will receive arguments with shapes and types
+        defined by this list, in an order corresponding to the order of this list.
+        """
         pass
 
     @abstractproperty
     def loss_port(self) -> TensorPort:
+        """
+        Returns: Definition of loss port.
+        """
         pass
 
     @property
     def input_tensors(self) -> List[tf.Tensor]:
+        """
+        Returns: The TF placeholders that correspond to the input ports.
+        """
         return self.placeholders
-
-    def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
-        return {ph: mapping[self.input_ports[i]] for i, ph in self.input_tensors}
 
     @property
     def output_tensor(self) -> List[tf.Tensor]:
@@ -131,6 +168,9 @@ class ModelModule(metaclass=ABCMeta):
     @property
     def loss_tensor(self) -> tf.Tensor:
         return self.loss
+
+    def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
+        return {ph: mapping[self.input_ports[i]] for i, ph in self.input_tensors}
 
 
 class OutputModule(metaclass=ABCMeta):
