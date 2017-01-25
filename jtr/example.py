@@ -2,25 +2,34 @@ from jtr.jack import *
 import tensorflow as tf
 from pipelines import pipeline
 from typing import Mapping
-
+from jtr.preprocess.batch import get_batches
 
 class ExampleInputModule(InputModule):
 
     def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        pass
-
-    def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = {
-            "support": [],
-            "question": [],
-            "candidates": []
+        corpus = {"support": [], "question": [], "candidates": []}
+        # fixme: not sure how to use answer here
+        for input, answer in training_set:
+            corpus["support"].append(input.support)
+            corpus["question"].append(input.question)
+            corpus["candidates"].append(input.candidates)
+        # todo: I have the feeling we can't easily decouple input from model
+        # module as the model needs access to the vocab (likewise the output)
+        corpus, vocab, target_vocab, candidate_vocab = pipeline(corpus)
+        output = {
+            Ports.multiple_support: corpus["support"],
+            Ports.question: corpus["question"],
+            Ports.atomic_candidates: corpus["candidates"],
         }
 
+        return get_batches(output)
+
+    def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
+        corpus = { "support": [], "question": [], "candidates": [] }
         for input in inputs:
             corpus["support"].append(input.support)
             corpus["question"].append(input.question)
             corpus["candidates"].append(input.candidates)
-
         corpus, vocab, target_vocab, candidate_vocab = pipeline(corpus, test_time=True)
         output = {
             Ports.multiple_support: corpus["support"],
@@ -48,8 +57,24 @@ class ExampleModelModule(ModelModule):
     def loss_port(self) -> TensorPort:
         return Ports.loss
 
+    # output scores and loss tensor
     def create(self, support: tf.Tensor, question: tf.Tensor) -> (tf.Tensor, tf.Tensor):
-        return None, None
+        with tf.variable_scope("embedders") as varscope:
+            question_embedded = question # nvocab(question)
+            varscope.reuse_variables()
+            # fixme: where does this model module get its candidates from?
+            candidates_embedded = candidates # nvocab(candidates)
+
+        question_encoding = tf.reduce_sum(question_embedded, 1)
+
+        scores = logits = tf.reduce_sum(
+            tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
+
+        loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(scores, targets),
+            name='predictor_loss')
+
+        return scores, loss
 
 
 class ExampleOutputModule(OutputModule):
