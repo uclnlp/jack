@@ -9,6 +9,7 @@ from typing import Mapping, Iterable, Tuple
 
 import numpy as np
 import tensorflow as tf
+import jtr.train as jtr_train
 
 from jtr.data_structures import *
 
@@ -163,10 +164,17 @@ class ModelModule(metaclass=ABCMeta):
 
     @property
     def output_tensor(self) -> List[tf.Tensor]:
+        """
+        Returns: the output TF tensor that represents the prediction. This may be a matrix of candidate
+        scores, or span markers, or actual symbol vectors generated. Should match the tensor type of `output_port`.
+        """
         return self.predictions
 
     @property
     def loss_tensor(self) -> tf.Tensor:
+        """
+        Returns: the tensor that defines the loss of a batch. Should match the type of `loss_port`.
+        """
         return self.loss
 
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
@@ -186,9 +194,6 @@ class OutputModule(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, inputs: List[Input], prediction: np.ndarray) -> List[Answer]:
         pass
-
-
-import jtr.train as jtr_train
 
 
 class Reader:
