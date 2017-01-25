@@ -1,5 +1,7 @@
 from jtr.jack import *
 import tensorflow as tf
+from pipelines import pipeline
+from typing import Mapping
 
 
 class ExampleInputModule(InputModule):
@@ -8,7 +10,25 @@ class ExampleInputModule(InputModule):
         pass
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
-        pass
+        corpus = {
+            "support": [],
+            "question": [],
+            "candidates": []
+        }
+
+        for input in inputs:
+            corpus["support"].append(input.support)
+            corpus["question"].append(input.question)
+            corpus["candidates"].append(input.candidates)
+
+        corpus, vocab, target_vocab, candidate_vocab = pipeline(corpus, test_time=True)
+        output = {
+            Ports.multiple_support: corpus["support"],
+            Ports.question: corpus["question"],
+            Ports.atomic_candidates: corpus["candidates"]
+        }
+        return output
+
 
     @property
     def output_ports(self) -> List[TensorPort]:

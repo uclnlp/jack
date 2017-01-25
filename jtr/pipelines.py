@@ -112,7 +112,9 @@ def _create_vocab(corpus, keys, vocab=None, emb=None, unk=Vocab.DEFAULT_UNK, low
 
 #@todo: rewrite such that it works for different types of jtr files / models
 # this is the general jtr pipeline
-def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=None, freeze=False, normalize=False, tokenization=True, negsamples=0, sepvocab=True):
+def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
+             emb=None, freeze=False, normalize=False, tokenization=True,
+             negsamples=0, sepvocab=True, test_time=False):
     vocab = vocab or Vocab(emb=emb)
     if sepvocab == True:
         target_vocab = target_vocab or Vocab(unk=None)
@@ -130,16 +132,18 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None, emb=No
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
     corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
-    corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
+    if not test_time:
+        corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
-    corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
+    if not test_time:
+        corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
     #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
     #todo: there is no guarantee that these are the same)
     #todo: alternative: use functions in pipeline.py
 
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
-    if negsamples > 0:#we want this to be the last thing we do to candidates
-        corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+    if negsamples > 0 and not test_time:#we want this to be the last thing we do to candidates
+            corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
