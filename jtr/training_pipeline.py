@@ -252,8 +252,8 @@ def main():
 
     # (8) Add hooks
     hooks = [
-        TensorHook(20, [loss, nvocab.get_embedding_matrix()],
-                   feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
+        #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
+        #           feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         # report_loss
         LossHook(100, args.batch_size, summary_writer=sw),
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
