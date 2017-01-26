@@ -186,7 +186,7 @@ def main():
         logger.info('encode train data')
         train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True, sepvocab=args.vocab_sep, tokenization=args.tokenize, negsamples=args.negsamples)
     else:
-        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples, sepvocab=args.vocab_sep)
+        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples, sepvocab=args.vocab_sep)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
