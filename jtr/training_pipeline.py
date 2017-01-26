@@ -140,8 +140,9 @@ def main():
     for arg in vars(args):
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
 
-    # Get information about available CPUs and GPUs
-    # to set specific device, add CUDA_VISIBLE_DEVICES environment variable, e.g. $ CUDA_VISIBLE_DEVICES = 0. / jtr_script.py
+    # Get information about available CPUs and GPUs:
+    # to set specific device, add CUDA_VISIBLE_DEVICES environment variable, e.g.
+    # $ CUDA_VISIBLE_DEVICES=0 ./jtr_script.py
 
     logger.info('available devices:')
     for l in device_lib.list_local_devices():
@@ -255,8 +256,8 @@ def main():
 
     # (8) Add hooks
     hooks = [
-        TensorHook(20, [loss, nvocab.get_embedding_matrix()],
-                   feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
+        #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
+        #           feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         # report_loss
         LossHook(100, args.batch_size, summary_writer=sw),
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
