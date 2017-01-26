@@ -178,14 +178,14 @@ def main():
 
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         logger.info('build vocab based on train data')
-        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, sepvocab=args.vocab_sep)
+        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, sepvocab=args.vocab_sep, tokenization=args.tokenize)
         if args.prune == 'True':
             train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
         logger.info('encode train data')
-        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True, sepvocab=args.vocab_sep)
+        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True, sepvocab=args.vocab_sep, tokenization=args.tokenize, negsamples=args.negsamples)
     else:
-        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples, sepvocab=args.vocab_sep)
+        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples, sepvocab=args.vocab_sep)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
@@ -212,6 +212,9 @@ def main():
     logger.info('build NeuralVocab')
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
+    with tf.variable_scope("candvocab") as varscope:
+        candvocab = NeuralVocab(train_candidate_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
+                                train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     checkpoint()
 
     # (6) Create TensorFlow placeholders and initialize model
@@ -219,7 +222,7 @@ def main():
     placeholders = create_placeholders(train_data)
     logger.info('build model {}'.format(args.model))
 
-    (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, **vars(args))
+    (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, candvocab=candvocab, **vars(args))
 
     # (7) Batch the data via jtr.batch.get_feed_dicts
     if args.supports != "none":

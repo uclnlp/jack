@@ -22,6 +22,10 @@ def tokenize(xs, pattern="([\s'\-\.\,\!])"):
     return [x for x in re.split(pattern, xs)
             if not re.match("\s", x) and x != ""]
 
+def notokenize(xs):
+    """Embeds deepest itemns into a list"""
+    return [xs]
+
 
 def lower(xs):
     """returns lowercase for sequence of strings"""
@@ -321,7 +325,7 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, seed=None):
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]]#DynamicSubsampledList is multiple answer ready, current data structure is not
+        answers = [answer_dataset[i]]
         new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, rand))
     result = {}
     result.update(xs)
@@ -357,20 +361,26 @@ class DynamicSubsampledList:
 
     def __len__(self):
         return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
+    
+    def __getitem__(self, key): 
+        return self.always_in[0]
 
 
 def get_list_shape(xs):
-    shape = [len(xs)]
-    for i, x in enumerate(xs):
-        if isinstance(x, list) or isinstance(x, DynamicSubsampledList):
-            if len(shape) == 1:
-                shape.append(0)
-            shape[1] = max(len(x), shape[1])
-            for j, y in enumerate(x):
-                if isinstance(y, list) or isinstance(y, DynamicSubsampledList):
-                    if len(shape) == 2:
-                        shape.append(0)
-                    shape[2] = max(len(y), shape[2])
+    if isinstance(xs,int):
+        shape=[]
+    else:
+        shape = [len(xs)]
+        for i, x in enumerate(xs):
+            if isinstance(x, list) or isinstance(x, DynamicSubsampledList):
+                if len(shape) == 1:
+                    shape.append(0)
+                shape[1] = max(len(x), shape[1])
+                for j, y in enumerate(x):
+                    if isinstance(y, list) or isinstance(y, DynamicSubsampledList):
+                        if len(shape) == 2:
+                            shape.append(0)
+                        shape[2] = max(len(y), shape[2])
     return shape
 
 
@@ -417,7 +427,9 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
                 dtype = dtypes[i]
             x_np = np.full(shape, pad, dtype)
             dims = len(shape)
-            if dims == 1:
+            if dims == 0:
+                x_np=x
+            elif dims == 1:
                 x_np[0:shape[0]] = x
             elif dims == 2:
                 for j, y in enumerate(x):

@@ -860,6 +860,51 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
         # each [batch_size x max_seq_length x output_size]
         return outputs_batch_major, final_state
 
+
+
+def model_f_reader_model(placeholders, nvocab, candvocab=None, **options):
+    """
+    modelf reader
+    """
+    
+    # Model
+    # [batch_size, 1]
+    question = placeholders["question"]
+    # [batch_size,1+negsamples]
+    candidates = placeholders["candidates"]
+    # [batch_size,1]
+    answers = placeholders["answers"]
+    
+    with tf.variable_scope("embedders") as varscope:
+        question_embedded = nvocab(question)
+        candidates_embedded = candvocab(candidates)
+        answers_embedded = tf.expand_dims(candvocab(answers),1)
+    
+    logger.info('TRAINABLE VARIABLES (only embeddings): {}'.format(get_total_trainable_variables()))
+    
+    logits, loss, predict = model_f_predictor(question_embedded, candidates_embedded, candidates, answers_embedded)
+    
+    logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
+    logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
+    
+    return logits, loss, predict
+
+
+
+def model_f_predictor(relation, candidate_tuples, candidate_ids, answer_tuple):
+    logits = tf.squeeze(tf.batch_matmul(relation, candidate_tuples, adj_y=True),squeeze_dims=1)
+    answer_logit=tf.squeeze(tf.batch_matmul(relation, answer_tuple, adj_y=True),squeeze_dims=1)
+    objective = tf.nn.softplus(tf.reduce_sum(logits,1,keep_dims=True)-2*answer_logit)
+    loss = tf.reduce_mean(objective, name='predictor_loss')
+    batchindex= tf.expand_dims(tf.to_int64(tf.range(tf.shape(candidate_ids)[0])),-1)
+    candindex = tf.expand_dims(tf.arg_max(logits,1),-1)
+    indexes   = tf.concat(1,[batchindex,candindex])
+    predict = tf.gather_nd(candidate_ids, indexes, name='prediction')
+    return logits, loss, predict
+
+
+
+
 # Aliases
 bicond_singlesupport_reader = conditional_reader_model
 bicond_singlesupport_reader_with_cands = conditional_reader_model_with_cands
@@ -869,6 +914,7 @@ boe_support_cands = boe_support_cands_reader_model
 boe_nosupport_cands = boe_nosupport_cands_reader_model
 boe_support = boe_reader_model
 boe_nosupport = boenosupport_reader_model
+model_f = model_f_reader_model
 
 # Available models
 __models__ = [
@@ -881,7 +927,8 @@ __models__ = [
     'boe_support_cands',
     'boe_nosupport_cands',
     'boe_support',
-    'boe_nosupport'
+    'boe_nosupport',
+    'model_f'
 ]
 
 

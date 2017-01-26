@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from jtr.preprocess.vocab import Vocab, NeuralVocab
 from jtr.preprocess.map import tokenize, deep_map, deep_seq_map, get_entry_dims, dynamic_subsample
-from jtr.preprocess.map import tokenize, lower, deep_map, deep_seq_map, dynamic_subsample
+from jtr.preprocess.map import tokenize, notokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 
 
 
@@ -127,10 +127,16 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
 
     if sepvocab == False:
         target_vocab = candidate_vocab = vocab
-
-    corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
+    
+    if tokenization == True:
+        corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
+    else:
+        corpus_tokenized =deep_map(corpus, notokenize, ['question', 'support'])
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
-    corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
+    if tokenization == True:
+        corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
+    else:
+        corpus_os = corpus_lower
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     if not test_time:
         corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
