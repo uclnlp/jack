@@ -5,8 +5,7 @@ using a tensorflow model into other tensors, and one that converts these tensors
 """
 
 from abc import abstractmethod, ABCMeta, abstractproperty
-from typing import Mapping, Iterable, Tuple
-
+from typing import Mapping, Iterable, Tuple, Callable
 import numpy as np
 import tensorflow as tf
 import jtr.train as jtr_train
@@ -48,28 +47,127 @@ class Ports:
     This class groups input ports. Different modules can refer to these ports
     to define their input or output, respectively.
     """
+    question = TensorPort(tf.int32, [None, None], "question",
+                          "Represents questions using symbol vectors",
+                          "[batch_size, max_num_question_tokens]")
+
+    loss = TensorPort(tf.float32, [None],
+                      "Represents loss on each instance in the batch",
+                      "[batch_size]")
+
+
+    # Support
     single_support = TensorPort(tf.int32, [None, None], "single_support",
                                 "Represents instances with a single support document. ",
                                 "[batch_size, max_num_tokens]")
     multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
                                   "Represents instances with multiple support documents",
                                   "[batch_size, max_num_support, max_num_tokens]")
+
+
+    # Candidates
     atomic_candidates = TensorPort(tf.int32, [None, None], "candidates",
                                    "Represents candidate choices using single symbols",
                                    "[batch_size, num_candidates]")
-    question = TensorPort(tf.int32, [None, None], "question",
-                          "Represents questions using symbol vectors",
-                          "[batch_size, max_num_question_tokens]")
-    scores = TensorPort(tf.float32, [None, None], "scores",
-                        "Represents output scores for each candidate",
-                        "[batch_size, num_candidates]")
-    loss = TensorPort(tf.float32, [None], "loss",
-                      "Represents loss on each instance in the batch",
-                      "[batch_size]")
+
+    candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
+                    "Represents output scores for each candidate",
+                    "[batch_size, num_candidates]")
 
     candidate_targets = TensorPort(tf.float32, [None, None], "candidate_targets",
                                    "Represents target (0/1) values for each candidate",
                                    "[batch_size, num_candidates]")
+
+    candidate_index = TensorPort(tf.int32, [None], "answer_idx",
+                                 "Represents answer as a single index",
+                                 "[batch_size]")
+
+    class Flat:
+        """
+         Number of questions in batch is Q, number of supports is S, number of answers is A, number of candidates is C.
+        Typical input ports such as support, candidates, answers are defined together with individual mapping ports. This
+        allows for more flexibility when numbers can vary between questions. Naming convention is to use suffix "_flat".
+        """
+
+        # Support
+        support_to_question = TensorPort(tf.int32, [None], "support2question",
+                                         "Represents mapping to question idx per support",
+                                         "[S]")
+
+        support = TensorPort(tf.int32, [None, None], "support_flat",
+                                     "Represents instances with a single support document. "
+                                     "[S, max_num_tokens]")
+
+        # Candidates
+        candidate_to_question = TensorPort(tf.int32, [None], "candidate2question",
+                                           "Represents mapping to question idx per candidate",
+                                           "[C]")
+
+        atomic_candidates = TensorPort(tf.int32, [None], "candidates_flat",
+                                       "Represents candidate choices using single symbols",
+                                       "[C]")
+
+        candidate_scores = TensorPort(tf.float32, [None], "candidate_scores_flat",
+                                      "Represents output scores for each candidate",
+                                      "[C]")
+
+        seq_candidates = TensorPort(tf.int32, [None, None], "seq_candidates_flat",
+                                    "Represents candidate choices using single symbols",
+                                    "[C, max_num_tokens]")
+
+        atomic_candidate_targets = TensorPort(tf.float32, [None], "candidate_targets_flat",
+                                             "Represents groundtruth candidate labels, usually 1 or 0",
+                                             "[C]")
+
+
+        # Answers
+        answer_to_question = TensorPort(tf.int32, [None], "answer2question",
+                                        "Represents mapping to question idx per answer",
+                                        "[A]")
+
+        # -extractive
+        seq_answer = TensorPort(tf.int32, [None, None], "answer_seq_flat",
+                                "Represents answer as a sequence of symbols",
+                                "[A, max_num_tokens]")
+
+        answer_span = TensorPort(tf.int32, [None, 2], "answer_span_flat",
+                                 "Represents answer as a (start, end) span",
+                                 "[A, 2]")
+
+        start_scores = TensorPort(tf.float32, [None, None], "start_scores",
+                                  "Represents start scores for each support sequence",
+                                  "[S, max_num_tokens]")
+
+        end_scores = TensorPort(tf.float32, [None, None], "end_scores",
+                                "Represents end scores for each support sequence",
+                                "[S, max_num_tokens]")
+
+        # -generative
+        generative_symbol_scores = TensorPort(tf.int32, [None, None], "symbol_scores",
+                                              "Represents symbol scores for each possible "
+                                              "sequential answer given during training",
+                                              "[A, max_num_tokens]")
+
+
+        # MISC intermediate ports that might come in handy
+        # -embeddings
+        embedded_seq_candidates = TensorPort(tf.int32, [None, None, None], "embedded_seq_candidates_flat",
+                                             "Represents the embedded sequential candidates",
+                                             "[C, max_num_tokens, N]")
+
+        embedded_candidates = TensorPort(tf.int32, [None, None], "embedded_candidates_flat",
+                                         "Represents the embedded candidates",
+                                         "[C, N]")
+
+        embedded_support = TensorPort(tf.int32, [None, None, None], "embedded_support_flat",
+                                      "Represents the embedded support",
+                                      "[S, max_num_tokens, N]")
+
+        embedded_question = TensorPort(tf.int32, [None, None, None], "embedded_question_flat",
+                                   "Represents the embedded question",
+                                   "[Q, max_num_question_tokens, N]")
+
+        # -attention, ...
 
 
 class SharedResources(metaclass=ABCMeta):
@@ -123,6 +221,13 @@ class InputModule(Module):
         """
         pass
 
+    @abstractproperty
+    def target_ports(self) -> List[TensorPort]:
+        """
+        Defines what type of tensor is used to represent the target solution during training.
+        """
+        pass
+
     @abstractmethod
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
         """
@@ -138,24 +243,25 @@ class InputModule(Module):
         pass
 
     @abstractmethod
-    def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def training_generator(self, training_set: List[Tuple[Input, List[Answer]]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
-        just as `__call__` does, using the `output_ports` of this object and the `target_port`.
+        just as `__call__` does, using the `output_ports` of this object.
         Args:
             training_set: a set of pairs of input and answer.
 
-        Returns: An iterable/generator that, on each pass through the data, produces a sequence of batches.
+        Returns: An iterable/generator that, on each pass through the data, produces a list of batches.
         """
         pass
 
     @abstractmethod
-    def setup(self, data: List[Tuple[Input, Answer]]):
+    def setup(self, data: List[Tuple[Input, Answer]]) -> SharedVocab:
         """
-        Set up this module, using a data set to create resources like vocabs.
         Args:
             data: a set of pairs of input and answer.
+
+        Returns: vocab
         """
         pass
 
@@ -167,6 +273,29 @@ class ModelModule(Module):
     It defines the expected input and output tensor shapes and types via its respective input
     and output pairs.
     """
+
+    def __call__(self, sess: tf.Session,
+                 batch: Mapping[TensorPort, np.ndarray],
+                 goal_ports: List[TensorPort]=None) -> Mapping[TensorPort, np.ndarray]:
+        """
+        Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
+        module.
+        Args:
+            inputs: a list of instances (question, support, optional candidates)
+
+        Returns:
+            A mapping from ports to tensors.
+
+        """
+        if goal_ports is None:
+            goals = self.output_tensors
+        else:
+            goals = [o for p, o in zip(self.output_ports, self.output_tensors) if p in goal_ports]
+
+        feed_dict = self.convert_to_feed_dict(batch)
+        outputs = sess.run(goals, feed_dict)
+
+        return {p: outputs[goals.index(o)] for p, o in zip(self.output_ports, self.output_tensors) if o in goals}
 
     @abstractproperty
     def output_ports(self) -> List[TensorPort]:
@@ -180,6 +309,21 @@ class ModelModule(Module):
         """
         Returns: Definition of the input ports. The method `create` will receive arguments with shapes and types
         defined by this list, in an order corresponding to the order of this list.
+        """
+        pass
+
+    @abstractproperty
+    def input_tensors(self) -> List[tf.Tensor]:
+        """
+        Returns: The TF placeholders that correspond to the input ports.
+        """
+        pass
+
+    @abstractproperty
+    def output_tensors(self) -> List[tf.Tensor]:
+        """
+        Returns: the output TF tensor that represents the prediction. This may be a matrix of candidate
+        scores, or span markers, or actual symbol vectors generated. Should match the tensor type of `output_port`.
         """
         pass
 
@@ -212,13 +356,6 @@ class ModelModule(Module):
 
 
 class SimpleModelModule(ModelModule):
-    def __init__(self):
-        """
-        Creates a ModelModule and instantiates the TF graphs that implement the layer's function.
-        """
-        self.input_placeholders = [d.create_placeholder() for d in self.input_ports]
-
-        self.outputs = None
 
     @abstractmethod
     def create(self, *input_tensors: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
@@ -267,7 +404,7 @@ class OutputModule(Module):
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Input], prediction: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+    def __call__(self, inputs: List[Input], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         """
         Process the prediction tensor for a batch to produce a list of answers. The module has access
         to the original inputs.
@@ -299,12 +436,12 @@ class Reader:
         self.output_module = output_module
         self.model_module = model_module
         self.input_module = input_module
-        assert self.input_module.output_ports == self.model_module.input_ports, \
-            "Input Module outputs must match model module inputs"
 
-        # fixme: this should test whether the output module inputs are a subset of the model-module outputs
-        # assert self.model_module.output_port == self.output_module.input_port, \
-        #     "Module model output must match output module inputs"
+        assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
+            "Input Module outputs must include model module inputs"
+
+        assert all(port in self.model_module.output_ports for port in self.output_module.input_ports), \
+            "Module model output must match output module inputs"
 
     def __call__(self, inputs: List[Input]) -> List[Answer]:
         """
@@ -315,17 +452,13 @@ class Reader:
         Returns: a list of answers.
         """
         batch = self.input_module(inputs)
-        feed_dict = {self.model_module.input_tensors[port]: value for port, value in batch.items()}
-        output_tensors = [self.model_module.output_tensors[port] for port in self.output_module.input_ports]
-        predictions = self.sess.run(output_tensors, feed_dict=feed_dict)
-        predictions_mapping = {self.output_module.input_ports[i]: prediction for i, prediction in
-                               enumerate(predictions)}
-        answers = self.output_module(inputs, predictions_mapping)
+        prediction = self.model_module(self.sess, batch)
+        answers = self.output_module(inputs, prediction)
         return answers
 
     def setup(self, data: List[Tuple[Input, Answer]]):
-        self.input_module.setup(data)
-        self.model_module.setup()
+        vocab = self.input_module.setup(data)
+        self.model_module.setup(vocab)
 
     def train(self,
               training_set: List[Tuple[Input, Answer]],
@@ -349,17 +482,23 @@ class Reader:
         # train_feed_dicts = (self.model_module.convert_to_feed_dict(m)
         #                    for m in train_port_mappings)
 
-        train_feed_dicts = [self.model_module.convert_to_feed_dict(m) for m in train_port_mappings]
+        train_feed_dicts = train_port_mappings.map(self.model_module.convert_to_feed_dict)
+
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
         hooks = [LossHook(1, 1)]
         args = {
-            'loss': self.model_module.output_tensors[Ports.loss],
+            'loss': self.model_module.loss,
             'batches': train_feed_dicts,
             'hooks': hooks,
             'max_epochs': 100,
             **train_params
         }
         jtr_train.train(**args)
+
+    def run_model(self, inputs: List[Input], goals: List[TensorPort]) -> List[np.ndarray]:
+        batch = self.input_module(inputs)
+        return self.model_module(self.sess, batch, goals)
 
     def store(self):
         """
