@@ -273,9 +273,7 @@ class AccuracyHook(TraceHook):
                 acc = float(correct) / total * 100
 
                 self.update_summary(sess, self.iter, self.__tag__(), acc)
-                print("Epoch " + str(epoch) +
-                      "\tAcc %4.2f" % acc +
-                      "%\tCorrect " + str(correct) + "\tTotal " + str(total))
+                logger.info("Epoch {}\tAcc {:.2f}\tCorrect {}\tTotal {}".format(str(epoch), acc, str(correct), str(total)))
                 self.done_for_epoch = True
         else:
             self.done_for_epoch = False
