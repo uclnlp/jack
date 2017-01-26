@@ -32,8 +32,8 @@ def model_module(input_defs: List[TensorPort],
             def loss_def(self) -> TensorPort:
                 return loss_def
 
-            def create(self, *tensors: tf.Tensor) -> (tf.Tensor, tf.Tensor):
-                return f(*tensors)
+            def create(self, *input_tensors: tf.Tensor) -> (tf.Tensor, tf.Tensor):
+                return f(*input_tensors)
 
             def __call__(self, *args, **kwargs):
                 return f(*args, **kwargs)

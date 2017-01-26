@@ -1,11 +1,11 @@
 from jtr.jack import *
 import tensorflow as tf
-from pipelines import pipeline
+from jtr.pipelines import pipeline
 from typing import Mapping
 from jtr.preprocess.batch import get_batches
 
-class ExampleInputModule(InputModule):
 
+class ExampleInputModule(InputModule):
     def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = {"support": [], "question": [], "candidates": []}
         # fixme: not sure how to use answer here
@@ -25,7 +25,7 @@ class ExampleInputModule(InputModule):
         return get_batches(output)
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = { "support": [], "question": [], "candidates": [] }
+        corpus = {"support": [], "question": [], "candidates": []}
         for input in inputs:
             corpus["support"].append(input.support)
             corpus["question"].append(input.question)
@@ -38,13 +38,20 @@ class ExampleInputModule(InputModule):
         }
         return output
 
-
     @property
     def output_ports(self) -> List[TensorPort]:
         return [Ports.multiple_support, Ports.question]
 
+    @property
+    def target_port(self):
+        return Ports.candidate_targets
 
-class ExampleModelModule(ModelModule):
+
+class ExampleModelModule(SimpleModelModule):
+    @property
+    def target_port(self) -> TensorPort:
+        return Ports.candidate_targets
+
     @property
     def output_port(self) -> TensorPort:
         return Ports.scores
@@ -58,12 +65,12 @@ class ExampleModelModule(ModelModule):
         return Ports.loss
 
     # output scores and loss tensor
-    def create(self, support: tf.Tensor, question: tf.Tensor) -> (tf.Tensor, tf.Tensor):
+    def create(self, target: tf.Tensor, support: tf.Tensor, question: tf.Tensor) -> (tf.Tensor, tf.Tensor):
         with tf.variable_scope("embedders") as varscope:
-            question_embedded = question # nvocab(question)
+            question_embedded = question  # nvocab(question)
             varscope.reuse_variables()
             # fixme: where does this model module get its candidates from?
-            candidates_embedded = candidates # nvocab(candidates)
+            candidates_embedded = candidates  # nvocab(candidates)
 
         question_encoding = tf.reduce_sum(question_embedded, 1)
 

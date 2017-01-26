@@ -46,10 +46,10 @@ class Ports:
                                 "[batch_size, max_num_tokens]")
     multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
                                   "Represents instances with multiple support documents",
-                                  "[batch_size, max_num_support, max_num_tokens")
+                                  "[batch_size, max_num_support, max_num_tokens]")
     atomic_candidates = TensorPort(tf.int32, [None, None], "candidates",
                                    "Represents candidate choices using single symbols",
-                                   "[batch_size, num_candidates")
+                                   "[batch_size, num_candidates]")
     question = TensorPort(tf.int32, [None, None], "question",
                           "Represents questions using symbol vectors",
                           "[batch_size, max_num_question_tokens]")
@@ -59,6 +59,10 @@ class Ports:
     loss = TensorPort(tf.float32, [None],
                       "Represents loss on each instance in the batch",
                       "[batch_size]")
+
+    candidate_targets = TensorPort(tf.float32, [None, None],
+                                   "Represents target (0/1) values for each candidate",
+                                   "[batch_size, num_candidates]")
 
 
 class InputModule(metaclass=ABCMeta):
@@ -72,6 +76,13 @@ class InputModule(metaclass=ABCMeta):
         Defines what types of tensors the output module produces in each batch.
         Returns: a list of tensor ports that correspond to the tensor ports in the mapping
         produced by `__call__`.
+        """
+        pass
+
+    @abstractproperty
+    def target_port(self) -> TensorPort:
+        """
+        Defines what type of tensor is used to represent the target solution during training.
         """
         pass
 
@@ -94,11 +105,11 @@ class InputModule(metaclass=ABCMeta):
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
-        just as `__call__` does, using the `output_ports` of this object.
+        just as `__call__` does, using the `output_ports` of this object and the `target_port`.
         Args:
             training_set: a set of pairs of input and answer.
 
-        Returns: An iterable/generator that, on each pass through the data, produces a list of batches.
+        Returns: An iterable/generator that, on each pass through the data, produces a sequence of batches.
         """
         pass
 
@@ -110,28 +121,6 @@ class ModelModule(metaclass=ABCMeta):
     It defines the expected input and output tensor shapes and types via its respective input
     and output pairs.
     """
-
-    def __init__(self):
-        """
-        Creates a ModelModule and instantiates the TF graphs that implement the layer's function.
-        """
-        self.placeholders = [d.create_placeholder() for d in self.input_ports]
-        self.predictions, self.loss = self.create(*self.placeholders)
-
-    @abstractmethod
-    def create(self, *tensors: tf.Tensor) -> (tf.Tensor, tf.Tensor):
-        """
-        This function needs to be implemented in order to define how the module produces
-        output and loss tensors from input tensors.
-        Args:
-            *tensors: a list of input tensors. They are expected to match the order and type of ports in `input_ports`.
-
-        Returns:
-            output tensor, should match the shape and type of `output_port`
-            loss tensor, should match the shape and type of `loss_port`
-
-        """
-        pass
 
     @abstractproperty
     def output_port(self) -> TensorPort:
@@ -155,12 +144,81 @@ class ModelModule(metaclass=ABCMeta):
         """
         pass
 
+    @abstractproperty
+    def target_port(self) -> TensorPort:
+        """
+        Returns: Definition of the input target port. The target port receives information at training
+        time about the gold answer.
+        """
+        pass
+
+    @abstractproperty
+    def input_tensors(self) -> List[tf.Tensor]:
+        """
+        Returns: The TF placeholders that correspond to the input ports.
+        """
+        pass
+
+    @abstractproperty
+    def output_tensor(self) -> List[tf.Tensor]:
+        """
+        Returns: the output TF tensor that represents the prediction. This may be a matrix of candidate
+        scores, or span markers, or actual symbol vectors generated. Should match the tensor type of `output_port`.
+        """
+        pass
+
+    @abstractproperty
+    def loss_tensor(self) -> tf.Tensor:
+        """
+        Returns: the tensor that defines the loss of a batch. Should match the type of `loss_port`.
+        """
+        pass
+
+    @abstractproperty
+    def target_tensor(self) -> tf.Tensor:
+        """
+        Returns: the placeholder to pass in the target/gold answer information.
+        """
+        pass
+
+    def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
+        result = {ph: mapping[self.input_ports[i]] for i, ph in self.input_tensors}
+        if self.target_port in mapping:
+            result[self.target_tensor] = mapping[self.target_port]
+        return result
+
+
+class SimpleModelModule(ModelModule):
+    def __init__(self):
+        """
+        Creates a ModelModule and instantiates the TF graphs that implement the layer's function.
+        """
+        self.input_placeholders = [d.create_placeholder() for d in self.input_ports]
+        self.target_placeholder = self.target_port.create_placeholder()
+        self.predictions, self.loss = self.create(self.target_placeholder, *self.input_placeholders)
+
+    @abstractmethod
+    def create(self, *target_and_input_tensors: tf.Tensor) -> (tf.Tensor, tf.Tensor):
+        """
+        This function needs to be implemented in order to define how the module produces
+        output and loss tensors from input tensors.
+        Args:
+            *target_and_input_tensors: a list of input tensors.
+            The first argument is the target tensor, they remaining ones are expected to match the order and type
+            of ports in `input_ports`.
+
+        Returns:
+            output tensor, should match the shape and type of `output_port`
+            loss tensor, should match the shape and type of `loss_port`
+        """
+        pass
+
     @property
     def input_tensors(self) -> List[tf.Tensor]:
         """
         Returns: The TF placeholders that correspond to the input ports.
         """
-        return self.placeholders
+        return self.input_placeholders
 
     @property
     def output_tensor(self) -> List[tf.Tensor]:
@@ -177,8 +235,12 @@ class ModelModule(metaclass=ABCMeta):
         """
         return self.loss
 
-    def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
-        return {ph: mapping[self.input_ports[i]] for i, ph in self.input_tensors}
+    @property
+    def target_tensor(self) -> tf.Tensor:
+        """
+        Returns: the placeholder to pass in the target/gold answer information.
+        """
+        return self.target_placeholder
 
 
 class OutputModule(metaclass=ABCMeta):
