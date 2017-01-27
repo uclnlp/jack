@@ -10,92 +10,74 @@ OVERFIT_PATH_GPU = './tests/test_results/overfit_test/GPU/'
 SMALLDATA_PATH_CPU = './tests/test_results/smalldata_test/CPU/'
 SMALLDATA_PATH_GPU = './tests/test_results/smalldata_test/GPU/'
 
-def pytest_collection_modifyitems(items):
-    for item in items:
-        if "interface" in item.nodeid:
-            item.add_marker(pytest.mark.interface)
-        elif "event" in item.nodeid:
-            item.add_marker(pytest.mark.event)
+# the runtime factor gives the approximate speed of the GPU relative
+# to the baseline of a GTX Titan X
+GPU_MODELS_RUNTIME_FACTOR = {}
+GPU_MODELS_RUNTIME_FACTOR['GeForce GTX Titan X'] = 1.0
 
-def load_and_parse_test_results(filepath):
-    '''This method loads and parses a metric file writen by EvalHook.'''
-    name_value_metric_pair = []
-    with open(filepath) as f:
-        for line in f:
-            print(line)
-            _date, _time, metric_name, metric_value = line.strip().split(' ')
-            name_value_metric_pair.append([metric_name,
-                np.float32(metric_value)])
-    return name_value_metric_pair
+models = \
+[
+    'boe_nosupport',
+    'boe_support',
+    'bicond_singlesupport_reader',
+    'bicond_singlesupport_reader_with_cands',
+    'bilstm_singlesupport_reader_with_cands',
+    'bilstm_nosupport_reader_with_cands'
+]
 
-def datetime_test_result_filename():
-    '''Generates a string of the format testresult_CURRENT_DATE-TIME'''
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    return 'testresult_' + timestr
+# if you add a model here, you need the data in the format of:
 
-def get_pipeline_script_cmdcall_SNLI_overfit():
-    '''Creates a bash cmd with overfit data to invoke the pipeline script'''
-    train_file = 'tests/test_data/SNLI/overfit.json'
-    dev_file = train_file
-    test_file = train_file
-    # Setup command
-    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
-    --test={2}" .format(train_file, dev_file, test_file,)
-    return cmd
+# test_data/dataset-name/dataset_name-train.json
+# test_data/dataset-name/dataset_name-dev.json
+# test_data/dataset-name/dataset_name-test.json
+# test_data/dataset-name/overfit.json
 
-def get_pipeline_script_cmdcall_sentihood_overfit():
-    train_file = 'tests/test_data/sentihood/overfit.json'
-    dev_file = train_file
-    test_file = train_file
-    # Setup command
-    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
-    --test={2}" .format(train_file, dev_file, test_file,)
-    return cmd
+dataset_epochs = \
+[
+    ('SNLI',5),
+    ('sentihood',3)
+]
 
-def get_pipeline_script_cmdcall_SNLI_smalldata():
-    '''Creates a bash cmd with a small dataset to invoke the pipeline script'''
-    train_file = 'tests/test_data/SNLI/2000_samples_train_jtr_v1.json'
-    dev_file  = 'tests/test_data/SNLI/1000_samples_dev_jtr_v1.json'
-    test_file  = 'tests/test_data/SNLI/2000_samples_test_jtr_v1.json'
-    # Setup command
-    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
-    --test={2}" .format(train_file, dev_file, test_file,)
-    return cmd
+ids = []
+testdata = []
 
-def get_pipeline_script_cmdcall_sentihood_smalldata():
-    train_file = 'tests/test_data/sentihood/sentihood-train.json'
-    dev_file  = 'tests/test_data/sentihood/sentihood-dev.json'
-    test_file  = 'tests/test_data/sentihood/sentihood-test.json'
-    # Setup command
-    cmd = "python3 jtr/training_pipeline.py --train={0} --dev={1} \
-    --test={2}" .format(train_file, dev_file, test_file,)
-    return cmd
+def generate_test_data():
+    '''Creates all permutations of models and datasets as tests.'''
+    for dataset, epochs in dataset_epochs:
+        for useGPUID in [-1, 0]:
+            for use_small_data in [False, True]:
+                for model in models:
+                    testdata.append([model, useGPUID, epochs, use_small_data, \
+                        dataset])
 
-# This dictionary is here so that the model_test method does not need
-# to be changed when new datasets are added. The only change needed
-# will be to add an entry to this dictionary.
 
-DATASET_TO_CMD_CALL_STRING = {}
-DATASET_TO_CMD_CALL_STRING ['sentihood'] = \
-(
-        (get_pipeline_script_cmdcall_sentihood_overfit(),
-        get_pipeline_script_cmdcall_sentihood_smalldata())
-)
-DATASET_TO_CMD_CALL_STRING ['SNLI'] = \
-(
-        (get_pipeline_script_cmdcall_SNLI_overfit(),
-        get_pipeline_script_cmdcall_SNLI_smalldata())
-)
+def get_string_for_test(model_name, useGPUID, epochs, use_small_data, dataset):
+    '''Creates a name for each test, so the output of PyTest is readable'''
+    return ('model_name={0}, {1}, '
+             'epochs={2}, run_type={3}, '
+             'dataset={4}').format(model_name,
+                ('GPU' if useGPUID >= 0 else 'CPU'), epochs,
+                ('smalldata' if use_small_data else 'overfit'), dataset)
 
-def model_test(model_name, useGPUID=-1, epochs=5, use_small_data=False,
-        dataset='SNLI'):
-    '''Tests a model via training_pipeline.py by comparing with baseline.txt
+def generate_names():
+    '''Generates all names for all test cases'''
+    for args in testdata:
+        ids.append(get_string_for_test(*args))
+
+generate_test_data()
+generate_names()
+
+@pytest.mark.parametrize("model_name, useGPUID, epochs, use_small_data, \
+        dataset", testdata, ids=ids)
+def test_model(model_name, useGPUID, epochs, use_small_data,
+        dataset):
+    '''Tests a model via training_pipeline.py by comparing with expected_result.txt
     Args:
         model_name (string): The model name as defined in the
                    training_pipeline.py dictionary.
         useGPUID (int): -1 means the CPU is used; > -1 means the GPU is used,
                  that is if a GPU is available. NOTE: if > -1 always compares
-                 against GPU baselines, even if the CPU is used.
+                 against GPU expected results, even if the CPU is used.
         epochs (int=5): Some models need more time to overfit data; increase
                this the case of overfitting problems.
         use_small_data (bool=False): Switches between 'overfit' and 'smalldata'
@@ -105,306 +87,103 @@ def model_test(model_name, useGPUID=-1, epochs=5, use_small_data=False,
                 to the test_result folder.
     Returns: None
     '''
-    # Setup paths and filenames
+    # Setup paths and filenames for the expected_results file
     if use_small_data and useGPUID >= 0:
-        test_result_path = join(SMALLDATA_PATH_GPU, model_name + '_' + dataset)
+        test_result_path = join(SMALLDATA_PATH_GPU, dataset, model_name)
     elif use_small_data and useGPUID == -1:
-        test_result_path = join(SMALLDATA_PATH_CPU, model_name + '_' + dataset)
+        test_result_path = join(SMALLDATA_PATH_CPU, dataset, model_name)
     elif not use_small_data and useGPUID >= 0:
-        test_result_path = join(OVERFIT_PATH_GPU, model_name + '_' + dataset)
+        test_result_path = join(OVERFIT_PATH_GPU, dataset, model_name)
     elif not use_small_data and useGPUID == -1:
-        test_result_path = join(OVERFIT_PATH_CPU, model_name + '_' + dataset)
+        test_result_path = join(OVERFIT_PATH_CPU, dataset, model_name)
 
     metric_filepath = join(test_result_path, datetime_test_result_filename())
 
     # create dir if it does not exists
-    if not exists(test_result_path): os.mkdir(test_result_path)
+    print(exists(test_result_path))
+    if not exists(test_result_path):
+        os.makedirs(test_result_path)
 
-    # Setup command
-    cmd = ""
-    if use_small_data:
-        cmd = DATASET_TO_CMD_CALL_STRING[dataset][1]
+    # Stich together test data paths
+    if not use_small_data:
+        train_file = 'tests/test_data/{0}/overfit.json'.format(dataset)
+        dev_file = train_file
+        test_file = train_file
     else:
-        cmd = DATASET_TO_CMD_CALL_STRING[dataset][0]
+        train_file = 'tests/test_data/{0}/{0}-train.json'.format(dataset)
+        dev_file  = 'tests/test_data/{0}/{0}-dev.json'.format(dataset)
+        test_file  = 'tests/test_data/{0}/{0}-test.json'.format(dataset)
+
+    # Setup the process call command
+    cmd = 'CUDA_VISIBLE_DEVICES={0} '.format(useGPUID)
+    cmd += "python3 jtr/training_pipeline.py --train={0} --dev={1} \
+    --test={2}" .format(train_file, dev_file, test_file,)
     cmd += ' --write_metrics_to={0}'.format(metric_filepath)
     cmd += ' --model={0}'.format(model_name)
     cmd += ' --epochs={0}'.format(epochs)
 
-    cmd = 'CUDA_VISIBLE_DEVICES={0} '.format(useGPUID) + cmd
-
     # Execute command and wait for results
+    t0 = time.time()
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
     except subprocess.CalledProcessError as e:
+        for line in e.output.split(b'\n'):
+            print(line)
         assert False, str(e.output)
-        #raise Exception(subprocess.STDOUT)
+    runtime = time.time()-t0
 
-    # Load and parse the results and the baseline for testing
-    new_results = load_and_parse_test_results(metric_filepath)
-    baseline = load_and_parse_test_results(join(test_result_path,
-        'baseline.txt'))
+    # add runtime information for GPU runs
+    if useGPUID>=0:
+        with open(metric_filepath, 'a') as f:
+            f.write('{0}\n'.format(np.round(runtime)))
 
-    # Match baseline with current results; the order is important to
+    # Load and parse the results and the expected rults for testing
+    new_results, runtime = load_and_parse_test_results(metric_filepath,
+            useGPUID>=0)
+    expected_results, expected_runtime = load_and_parse_test_results(join(test_result_path,
+        'expected_results.txt'), useGPUID>=0)
+
+    # Match expected results with current results; the order is important to
     #assert np.testing.assert_array_almost_equal(results[:,1], atol=0.01)
 
-    for new, base in zip(new_results, baseline):
+    for new, base in zip(new_results, expected_results):
         assert new[0] == base[0], "Different order of metrics!"
-        assert np.allclose([new[1]],[base[1]],atol=0.015), "Metric value different from baseline!"
+        assert np.allclose([new[1]],[base[1]],atol=0.015), \
+            "Metric value different from expected results!"
 
-#-------------------------------
-#           SNLI
-#-------------------------------
-
-#-------------------------------
-#       CPU OVERFIT TESTS
-#-------------------------------
-
-@pytest.mark.overfit
-def test_biconditional_reader_SNLI_overfit_CPU():
-    model_test('bicond_singlesupport_reader')
-
-@pytest.mark.overfit
-def test_biconditional_reader_with_candidates_SNLI_overfit_CPU():
-    model_test('bicond_singlesupport_reader_with_cands')
-
-@pytest.mark.overfit
-def test_bilstm_reader_with_candidates_SNLI_overfit_CPU():
-    model_test('bilstm_singlesupport_reader_with_cands')
-
-@pytest.mark.overfit
-def test_bilstm_reader_with_candidates_no_support_SNLI_overfit_CPU():
-    model_test('bilstm_nosupport_reader_with_cands')
-
-@pytest.mark.overfit
-def test_bag_of_embeddings_with_support_SNLI_overfit_CPU():
-    model_test('boe_support')
-
-@pytest.mark.overfit
-def test_bag_of_embeddings_no_support_SNLI_overfit_CPU():
-    model_test('boe_nosupport')
-
-#-------------------------------
-#       GPU OVERFIT TESTS
-#-------------------------------
-
-@pytest.mark.overfitgpu
-def test_biconditional_reader_SNLI_overfit_GPU():
-    model_test('bicond_singlesupport_reader', useGPUID=0)
-
-@pytest.mark.overfitgpu
-def test_biconditional_reader_with_candidates_SNLI_overfit_GPU():
-    model_test('bicond_singlesupport_reader_with_cands', useGPUID=0)
-
-@pytest.mark.overfitgpu
-def test_bilstm_reader_with_candidates_SNLI_overfit_GPU():
-    model_test('bilstm_singlesupport_reader_with_cands', useGPUID=0)
-
-@pytest.mark.overfitgpu
-def test_bilstm_reader_with_candidates_no_support_SNLI_overfit_GPU():
-    model_test('bilstm_nosupport_reader_with_cands', useGPUID=0)
-
-@pytest.mark.overfitgpu
-def test_bag_of_embeddings_with_support_SNLI_overfit_GPU():
-    model_test('boe_support', useGPUID=0)
-
-@pytest.mark.overfitgpu
-def test_bag_of_embeddings_no_support_SNLI_overfit_GPU():
-    model_test('boe_nosupport', useGPUID=0)
-
-#-------------------------------
-#       CPU SMALLDATA TESTS
-#-------------------------------
-
-@pytest.mark.smalldata
-def test_biconditional_reader_SNLI_smalldata_CPU():
-    model_test('bicond_singlesupport_reader', use_small_data=True)
-
-@pytest.mark.smalldata
-def test_biconditional_reader_with_candidates_SNLI_smalldata_CPU():
-    model_test('bicond_singlesupport_reader_with_cands',
-            use_small_data=True)
-
-@pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_SNLI_smalldata_CPU():
-    model_test('bilstm_singlesupport_reader_with_cands',
-            use_small_data=True)
-
-@pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata_CPU():
-    model_test('bilstm_nosupport_reader_with_cands', use_small_data=True)
-
-@pytest.mark.smalldata
-def test_bag_of_embeddings_with_support_SNLI_smalldata_CPU():
-    model_test('boe_support', use_small_data=True)
-
-#-------------------------------
-#       GPU SMALLDATA TESTS
-#-------------------------------
+    if useGPUID>=0:
+        # We check only GPU runtime and weight it by a GPU runtime weight
+        # where faster GPUs need less time. CPU runtime is too difficult to compare
+        # and is neglected at this point.
+        GPU_names = subprocess.check_output( \
+            "nvidia-smi --query-gpu=gpu_name --format=csv,noheader", shell=True)
+        # we use the GPU at ID=0 for testing, that is index 0 of what is returned
+        # by nvidia-smi
+        GPU0_name = GPU_names.strip().split(b'\n')[0]
+        if GPU0_name in GPU_MODELS_RUNTIME_FACTOR:
+            factor = GPU_MODELS_RUNTIME_FACTOR[GPU0_name]
+            assert np.allclose([runtime],[expected_runtime/factor],rtol=0.05), \
+                "Runtime performance is off by more than 5%"
 
 
-@pytest.mark.smalldatagpu
-def test_biconditional_reader_SNLI_smalldata_GPU():
-    model_test('bicond_singlesupport_reader',
-            use_small_data=True,useGPUID=0)
+def load_and_parse_test_results(filepath, useGPU=False):
+    '''This method loads and parses a metric file writen by EvalHook.'''
+    name_value_metric_pair = []
+    runtime = 0
+    with open(filepath) as f:
+        data = f.readlines()
+        n = len(data)
+        for i, line in enumerate(data):
+            if i == n-1 and useGPU:
+                runtime = np.float32(line.strip())
+            else:
+                _date, _time, metric_name, metric_value = line.strip().split(' ')
+                name_value_metric_pair.append([metric_name,
+                    np.float32(metric_value)])
+    return name_value_metric_pair, runtime
 
-@pytest.mark.smalldatagpu
-def test_biconditional_reader_with_candidates_SNLI_smalldata_GPU():
-    model_test('bicond_singlesupport_reader_with_cands',
-            use_small_data=True,useGPUID=0)
+def datetime_test_result_filename():
+    '''Generates a string of the format testresult_CURRENT_DATE-TIME'''
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    return 'testresult_' + timestr
 
-@pytest.mark.smalldatagpu
-def test_bilstm_reader_with_candidates_SNLI_smalldata_GPU():
-    model_test('bilstm_singlesupport_reader_with_cands',
-            use_small_data=True, useGPUID=0)
-
-@pytest.mark.smalldatagpu
-def test_bilstm_reader_with_candidates_no_support_SNLI_smalldata_GPU():
-    model_test('bilstm_nosupport_reader_with_cands',
-            use_small_data=True, useGPUID=0)
-
-@pytest.mark.smalldatagpu
-def test_bag_of_embeddings_with_support_SNLI_smalldata_GPU():
-    model_test('boe_support', use_small_data=True, useGPUID=0)
-
-#-------------------------------
-#           SNLI END
-#-------------------------------
-
-#-------------------------------
-#           sentihood
-#-------------------------------
-
-#-------------------------------
-#       CPU OVERFIT TESTS
-#-------------------------------
-
-@pytest.mark.overfit
-def test_biconditional_reader_sentihood_overfit_CPU():
-    model_test('boe_nosupport', dataset='sentihood')
-
-@pytest.mark.overfit
-def test_biconditional_reader_sentihood_overfit_CPU():
-    model_test('bicond_singlesupport_reader', use_small_data=False,
-            dataset='sentihood')
-
-@pytest.mark.overfit
-def test_biconditional_reader_with_candidates_sentihood_overfit_CPU():
-    model_test('bicond_singlesupport_reader_with_cands',
-            use_small_data=False, dataset='sentihood')
-
-@pytest.mark.overfit
-def test_bilstm_reader_with_candidates_sentihood_overfit_CPU():
-    model_test('bilstm_singlesupport_reader_with_cands',
-            use_small_data=False, dataset='sentihood')
-
-@pytest.mark.overfit
-def test_bilstm_reader_with_candidates_no_support_sentihood_overfit_CPU():
-    model_test('bilstm_nosupport_reader_with_cands', use_small_data=False,
-            dataset='sentihood')
-
-@pytest.mark.overfit
-def test_bag_of_embeddings_with_support_sentihood_overfit_CPU():
-    model_test('boe_support', use_small_data=False, dataset='sentihood')
-
-#-------------------------------
-#       CPU SMALLDATA TESTS
-#-------------------------------
-
-@pytest.mark.smalldata
-def test_biconditional_reader_sentihood_smalldata_CPU():
-    model_test('boe_nosupport', use_small_data=True, dataset='sentihood', epochs=3)
-
-@pytest.mark.smalldata
-def test_biconditional_reader_sentihood_smalldata_CPU():
-    model_test('bicond_singlesupport_reader', use_small_data=True,
-            dataset='sentihood', epochs=3)
-
-@pytest.mark.smalldata
-def test_biconditional_reader_with_candidates_sentihood_smalldata_CPU():
-    model_test('bicond_singlesupport_reader_with_cands',
-            use_small_data=True, dataset='sentihood', epochs=3)
-
-@pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_sentihood_smalldata_CPU():
-    model_test('bilstm_singlesupport_reader_with_cands',
-            use_small_data=True, dataset='sentihood', epochs=3)
-
-@pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_no_support_sentihood_smalldata_CPU():
-    model_test('bilstm_nosupport_reader_with_cands', use_small_data=True,
-            dataset='sentihood', epochs=3)
-
-@pytest.mark.smalldata
-def test_bag_of_embeddings_with_support_sentihood_smalldata_CPU():
-    model_test('boe_support', use_small_data=True, dataset='sentihood', epochs=3)
-
-#-------------------------------
-#       GPU OVERFIT TESTS
-#-------------------------------
-
-@pytest.mark.overfit
-def test_biconditional_reader_sentihood_overfit_GPU():
-    model_test('boe_nosupport', dataset='sentihood', useGPUID=0)
-
-@pytest.mark.overfit
-def test_biconditional_reader_sentihood_overfit_GPU():
-    model_test('bicond_singlesupport_reader', use_small_data=False,
-            dataset='sentihood', useGPUID=0)
-
-@pytest.mark.overfit
-def test_biconditional_reader_with_candidates_sentihood_overfit_GPU():
-    model_test('bicond_singlesupport_reader_with_cands',
-            use_small_data=False, dataset='sentihood', useGPUID=0)
-
-@pytest.mark.overfit
-def test_bilstm_reader_with_candidates_sentihood_overfit_GPU():
-    model_test('bilstm_singlesupport_reader_with_cands',
-            use_small_data=False, dataset='sentihood', useGPUID=0)
-
-@pytest.mark.overfit
-def test_bilstm_reader_with_candidates_no_support_sentihood_overfit_GPU():
-    model_test('bilstm_nosupport_reader_with_cands', use_small_data=False,
-            dataset='sentihood', useGPUID=0)
-
-@pytest.mark.overfit
-def test_bag_of_embeddings_with_support_sentihood_overfit_GPU():
-    model_test('boe_support', use_small_data=False, dataset='sentihood',
-            useGPUID=0)
-
-#-------------------------------
-#       GPU SMALLDATA TESTS
-#-------------------------------
-
-@pytest.mark.smalldata
-def test_biconditional_reader_sentihood_smalldata_GPU():
-    model_test('boe_nosupport', use_small_data=True, dataset='sentihood',
-            epochs=3, useGPUID=0)
-
-@pytest.mark.smalldata
-def test_biconditional_reader_sentihood_smalldata_GPU():
-    model_test('bicond_singlesupport_reader', use_small_data=True,
-            dataset='sentihood', epochs=3, useGPUID=0)
-
-@pytest.mark.smalldata
-def test_biconditional_reader_with_candidates_sentihood_smalldata_GPU():
-    model_test('bicond_singlesupport_reader_with_cands',
-            use_small_data=True, dataset='sentihood', epochs=3, useGPUID=0)
-
-@pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_sentihood_smalldata_GPU():
-    model_test('bilstm_singlesupport_reader_with_cands',
-            use_small_data=True, dataset='sentihood', epochs=3, useGPUID=0)
-
-@pytest.mark.smalldata
-def test_bilstm_reader_with_candidates_no_support_sentihood_smalldata_GPU():
-    model_test('bilstm_nosupport_reader_with_cands', use_small_data=True,
-            dataset='sentihood', epochs=3, useGPUID=0)
-
-@pytest.mark.smalldata
-def test_bag_of_embeddings_with_support_sentihood_smalldata_GPU():
-    model_test('boe_support', use_small_data=True, dataset='sentihood',
-            epochs=3, useGPUID=0)
-
-#-------------------------------
-#           sentihood END
-#-------------------------------

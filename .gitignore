@@ -95,10 +95,6 @@ ENV/
 .idea/
 
 # Datasets
-jtr/data/SNLI/snli_1.0.zip
-jtr/data/SNLI/snli_1.0/
-jtr/data/SNLI/__MACOSX/
-
 data/SNLI/snli_1.0.zip
 data/SNLI/snli_1.0/
 data/SNLI/__MACOSX/
