@@ -5,7 +5,7 @@ import pprint
 from jtr.preprocess.vocab import Vocab
 from jtr.util.rs import DefaultRandomState
 
-rs = DefaultRandomState()
+rs = DefaultRandomState(1337)#new seed ignored if set previously
 
 # sym (e.g. token, token id or class label)
 # seq (e.g. sequence of tokens)
