@@ -43,10 +43,11 @@ def test_dynamic_subsample():
         'answers': [[1, 2], [3, 4]],
         'candidates': [range(0, 100), range(0, 100)]
     }
-    data_ss = map.dynamic_subsample(xs=data, candidate_key='candidates', answer_key='answers', how_many=2, seed=0)
+    data_ss = map.dynamic_subsample(xs=data, candidate_key='candidates', answer_key='answers', how_many=2)
+
     assert data_ss['answers'] == [[1, 2], [3, 4]]
-    assert list(data_ss['candidates'][0]) == [[1, 2], 49, 97]
-    assert list(data_ss['candidates'][1]) == [[3, 4], 53, 5]
+    assert list(data_ss['candidates'][0]) == [1, 2, 18, 26]
+    assert list(data_ss['candidates'][1]) == [3, 4, 67, 34]
 
 
 def test_get_list_shape():
