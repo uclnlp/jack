@@ -18,6 +18,7 @@ from jtr.util.hooks import ExamplesPerSecHook, LossHook, TensorHook, EvalHook
 import jtr.nn.models as models
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
+from jtr.util.rs import DefaultRandomState
 
 from jtr.load.read_jtr import jtr_load as _jtr_load
 from tensorflow.python.client import device_lib
@@ -34,7 +35,6 @@ class Duration(object):
         logger.info('Time since last checkpoint : {0:.2g}min'.format((time()-self.t)/60.))
         self.t = time()
 
-tf.set_random_seed(1337)
 checkpoint = Duration()
 
 """
@@ -129,6 +129,7 @@ def main():
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
+    parser.add_argument('--seed', default=1337, type=int, help='random seed')
 
     args = parser.parse_args()
 
@@ -139,6 +140,10 @@ def main():
     logger.info('configuration:')
     for arg in vars(args):
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
+
+    #set random seed
+    tf.set_random_seed(args.seed)
+    DefaultRandomState(args.seed)
 
     # Get information about available CPUs and GPUs:
     # to set specific device, add CUDA_VISIBLE_DEVICES environment variable, e.g.

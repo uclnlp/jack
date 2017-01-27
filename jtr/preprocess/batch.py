@@ -2,15 +2,12 @@ import numpy as np
 import random
 from itertools import islice
 from jtr.preprocess.map import numpify
+from jtr.util.rs import DefaultRandomState
+
+rs = DefaultRandomState()
 
 
-#make deterministic
-SEED = 1337
-np.random.seed(SEED)
-random.seed(SEED)
-
-
-def get_buckets(data, order, structure, seed=SEED):
+def get_buckets(data, order, structure):
     """
     :param data: sequence or dict of sequences in which entries of the inner sequence have the __len__ attribute
     :param order: tuple with highest-level indices (in case data is list) or keys (if data is dict) in data,
@@ -32,13 +29,10 @@ TODO: update documentation with dicts...
               e.g.: `order` = (0, 2) and `structure` = (3, [10]) generates 6 buckets:
               within each of 3 partition based on array1 lengths,
               there is a bucket with array2 instances of length 10 or less, and one for length > 10.
-    :param seed: random seed
     :return: dict that maps instance-id (index along 1st dimension of elements in data) to bucket-id
              bucket-id's are tuples with same length as `order`.
     """
     #todo: asserts to check input arguments
-
-    np.random.seed(int(10000*random.random())) #remains deterministic, but seems to be more random
 
     is_dict = isinstance(data,dict)
     n_tot = len(list(data.values())[0]) if is_dict else len(data[0])
@@ -94,12 +88,10 @@ TODO: update documentation with dicts...
 
 
 
-# todo: set seed
-def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, batch_size_fixed=False, seed=SEED):
+def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, batch_size_fixed=False):
     """
     :param data: either a list of numpy arrays (or list of lists), or a dict with numpy arrays or lists
     :param batch_size: the desired batch size
-    :param seed: random seed for shuffling
     :param pad: padding symbol in case data is list of lists of different sizes
     :param bucket_order: argument `order` in get_buckets (list with indices or keys); `None` if no bucketing
     :param bucket_structure: argument `structure` in get_buckets; `None` if no bucketing
@@ -119,9 +111,9 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
         return {bid: len(ids)/N if N>0. else 0. for bid,ids in _buckets2instances.items()}
     def shuffle_buckets(_buckets2instances):
         for bid in sorted(_buckets2instances.keys()):#sorted: to keep deterministic
-            random.shuffle(_buckets2instances[bid])
+            rs.shuffle(_buckets2instances[bid])
 
-    buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure, seed=int(10000*random.random()))
+    buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)
     probs = get_bucket_probs(buckets2instances)
 
     def bucket_generator():
@@ -134,7 +126,7 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
             if np.sum(probs) == 0.:
                 all_seen = True
             else:
-                bid = np.random.choice(bids, replace=False, p=probs) #sample bucket according to remaining size
+                bid = rs.choice(bids, replace=False, p=probs) #sample bucket according to remaining size
                 batch_indices = buckets2instances[bid][:batch_size]
                 buckets2instances[bid] = buckets2instances[bid][batch_size:]
                 # if required by batch_size_fixed: ignore last batch in bucket if too small

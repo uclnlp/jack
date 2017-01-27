@@ -13,6 +13,7 @@ from jtr.train import train
 from jtr.util.hooks import ExamplesPerSecHook, LossHook, EvalHook
 from jtr.pipelines import simple_pipeline, create_placeholders
 import jtr.nn.models as models
+from jtr.util.rs import DefaultRandomState
 
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.load.read_jtr import jtr_load
@@ -104,6 +105,7 @@ def main():
     parser.add_argument('--tensorboard_folder', default='./.tb/', help='Folder for tensorboard logs')
     parser.add_argument('--experimental', default='False', choices={'True','False'}, help="Use experimental SNLI models (default False)")
     parser.add_argument('--buckets', default=5, type=int, help="Number of buckets per field, default 5")
+    parser.add_argument('--seed', default=1337, type=int, help='random seed')
 
 
     args = parser.parse_args()
@@ -121,6 +123,12 @@ def main():
         args.clip_value = None if args.clip_value == 0.0 else (-abs(args.clip_value),abs(args.clip_value))
         args.experimental = read_bool(args.experimental)
     _prep_args()
+
+
+    #set random seed
+    tf.set_random_seed(args.seed)
+    DefaultRandomState(args.seed)
+
 
     #print out args
     print('configuration:')
