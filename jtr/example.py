@@ -16,6 +16,8 @@ class ExampleInputModule(InputModule):
         # todo: I have the feeling we can't easily decouple input from model
         # module as the model needs access to the vocab (likewise the output)
         corpus, vocab, target_vocab, candidate_vocab = pipeline(corpus)
+
+        # fixme: use candidate_targets for answer
         output = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
