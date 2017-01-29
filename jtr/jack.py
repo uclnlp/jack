@@ -65,7 +65,20 @@ class Ports:
                                    "[batch_size, num_candidates]")
 
 
-class InputModule(metaclass=ABCMeta):
+class Module(metaclass=ABCMeta):
+    """
+    Class to specify shared signature between modules.
+    """
+
+    @abstractmethod
+    def store(self):
+        """
+        Store the state of this module.
+        """
+        pass
+
+
+class InputModule(Module):
     """
     An input module processes inputs and turns them into tensors to be processed by the model module.
     """
@@ -114,7 +127,7 @@ class InputModule(metaclass=ABCMeta):
         pass
 
 
-class ModelModule(metaclass=ABCMeta):
+class ModelModule(Module):
     """
     A model module encapsulates two tensorflow trees (possibly overlapping): a tree representing
     the answer prediction (to be processed by the outout module) and a tree representing the loss.
@@ -243,7 +256,7 @@ class SimpleModelModule(ModelModule):
         return self.target_placeholder
 
 
-class OutputModule(metaclass=ABCMeta):
+class OutputModule(Module):
     """
     An output module takes the output (numpy) tensors of the model module and turns them into
     jack data structures.
@@ -271,6 +284,18 @@ class OutputModule(metaclass=ABCMeta):
         pass
 
 
+class SharedResources:
+    """
+    A class to store explicit shared resources between layers. It is recommended to minimise information stored here.
+    """
+
+    def __init__(self, config):
+        pass
+
+    def store(self):
+        pass
+
+
 class Reader:
     """
     A Reader reads inputs consisting of questions, supports and possibly candidates, and produces answers.
@@ -282,7 +307,9 @@ class Reader:
                  input_module: InputModule,
                  model_module: ModelModule,
                  output_module: OutputModule,
+                 shared_resources=None,
                  sess: tf.Session = None):
+        self.shared_resources = shared_resources
         self.sess = sess or tf.Session()
         self.output_module = output_module
         self.model_module = model_module
@@ -327,3 +354,12 @@ class Reader:
             **train_params
         }
         jtr_train.train(**args)
+
+    def store(self):
+        """
+        Store module states and shared resources.
+        """
+        self.shared_resources.store()
+        self.input_module.store()
+        self.model_module.store()
+        self.output_module.store()
