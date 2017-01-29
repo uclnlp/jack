@@ -9,8 +9,12 @@ class ExampleInputModule(InputModule):
     def store(self):
         pass
 
+    # fixme: providing the input module with a vocab does not make so much sense
+    # as we first have to go through the corpus to build the vocab, and doing
+    # this depends on the pipeline which is encapsulated within this module
     def __init__(self, vocab=None, config=None):
-        pass
+        self.vocab = vocab
+        self.config = config
 
     def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
@@ -27,7 +31,19 @@ class ExampleInputModule(InputModule):
             Ports.atomic_candidates: corpus["candidates"],
             Ports.candidate_targets: corpus["answer"]
         }
+        # fixme: we need to map ids to embeddings at this point already
+        # the problem is that this becomes inefficient as we should perform
+        # this mapping on a per-batch basis
+
+        # solution?
+        generator = get_batches(xy_dict)
+        def embed(x):
+            return x
+        generator.iterator = [embed(x) for x in generator.iterator]
+
         return get_batches(xy_dict)
+
+
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
         corpus = {"support": [], "question": [], "candidates": []}
@@ -58,6 +74,7 @@ class ExampleModelModule(SimpleModelModule):
         pass
 
     def __init__(self, vocab=None, config=None):
+        self.vocab = vocab
         super().__init__()
 
     @property
