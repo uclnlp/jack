@@ -2,10 +2,11 @@ import argparse
 
 from jtr.example import *
 from jtr.jack import *
+from jtr.preprocess.vocab import Vocab
 
 
 def example_reader(config):
-    resources = SharedResources(config)
+    resources = SharedVocab(Vocab(), config)
     input_module = ExampleInputModule(resources, config)
     model_module = ExampleModelModule(resources, config)
     output_module = ExampleOutputModule()
@@ -27,7 +28,7 @@ def main():
         dev_data = None
         test_data = None
         # todo: train should accept train and dev and maybe test data
-        reader.train(train_data, train_params=config)
+        reader.train(train_data, dev_data, test_data, train_params=config)
         reader.store()
 
 
