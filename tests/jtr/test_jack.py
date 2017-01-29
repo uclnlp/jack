@@ -1,4 +1,4 @@
-from pytest import xfail
+from pytest import skip
 
 import jtr.jack as jack
 import jtr.example as example
@@ -6,7 +6,7 @@ from jtr.data_structures import *
 from jtr.preprocess.vocab import Vocab
 
 
-@xfail("Not implemented yet")
+@skip("Not implemented yet")
 def test_example_reader_overfit():
     vocab = jack.SharedVocab(Vocab())
     input_module = example.ExampleInputModule(vocab)
