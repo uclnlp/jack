@@ -6,40 +6,43 @@ from jtr.preprocess.batch import get_batches
 
 
 class ExampleInputModule(InputModule):
-    def __init__(self, vocab, config):
+    def store(self):
         pass
 
-    def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = {"support": [], "question": [], "candidates": []}
-        # fixme: not sure how to use answer here
-        for input, answer in training_set:
-            corpus["support"].append(input.support)
-            corpus["question"].append(input.question)
-            corpus["candidates"].append(input.candidates)
-        # todo: I have the feeling we can't easily decouple input from model
-        # module as the model needs access to the vocab (likewise the output)
+    def __init__(self, vocab=None, config=None):
+        pass
+
+    def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
+            -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        corpus = {"support": [], "question": [], "candidates": [], "answer": []}
+        for x, y in training_set:
+            corpus["support"].append(x.support)
+            corpus["question"].append(x.question)
+            corpus["candidates"].append(x.candidates)
+            corpus["answer"].append(y)
         corpus, vocab, target_vocab, candidate_vocab = pipeline(corpus)
-        output = {
+        xy_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
             Ports.atomic_candidates: corpus["candidates"],
+            Ports.candidate_targets: corpus["answer"]
         }
-
-        return get_batches(output)
+        return get_batches(xy_dict)
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
         corpus = {"support": [], "question": [], "candidates": []}
-        for input in inputs:
-            corpus["support"].append(input.support)
-            corpus["question"].append(input.question)
-            corpus["candidates"].append(input.candidates)
-        corpus, vocab, target_vocab, candidate_vocab = pipeline(corpus, test_time=True)
-        output = {
+        for x in inputs:
+            corpus["support"].append(x.support)
+            corpus["question"].append(x.question)
+            corpus["candidates"].append(x.candidates)
+        corpus, vocab, target_vocab, candidate_vocab = \
+            pipeline(corpus, test_time=True)
+        x_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
             Ports.atomic_candidates: corpus["candidates"]
         }
-        return output
+        return x_dict
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -51,8 +54,11 @@ class ExampleInputModule(InputModule):
 
 
 class ExampleModelModule(SimpleModelModule):
-    def __init__(self, vocab, config):
+    def store(self):
         pass
+
+    def __init__(self, vocab=None, config=None):
+        super().__init__()
 
     @property
     def target_port(self) -> TensorPort:
@@ -91,6 +97,9 @@ class ExampleModelModule(SimpleModelModule):
 
 
 class ExampleOutputModule(OutputModule):
+    def store(self):
+        pass
+
     @property
     def input_port(self) -> TensorPort:
         return Ports.scores
@@ -101,7 +110,9 @@ class ExampleOutputModule(OutputModule):
 
 data_set = [Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"])]
 
-example_reader = Reader(ExampleInputModule(), ExampleModelModule(), ExampleOutputModule())
+example_reader = Reader(ExampleInputModule(),
+                        ExampleModelModule(),
+                        ExampleOutputModule())
 # example_reader.train(data_set)
 
 answers = example_reader(data_set)
