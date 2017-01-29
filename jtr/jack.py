@@ -42,7 +42,7 @@ class Ports:
     to define their input or output, respectively.
     """
     single_support = TensorPort(tf.int32, [None, None], "single_support",
-                                "Represents instances with a single support document. "
+                                "Represents instances with a single support document. ",
                                 "[batch_size, max_num_tokens]")
     multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
                                   "Represents instances with multiple support documents",
@@ -53,14 +53,14 @@ class Ports:
     question = TensorPort(tf.int32, [None, None], "question",
                           "Represents questions using symbol vectors",
                           "[batch_size, max_num_question_tokens]")
-    scores = TensorPort(tf.float32, [None, None],
+    scores = TensorPort(tf.float32, [None, None], "scores",
                         "Represents output scores for each candidate",
                         "[batch_size, num_candidates]")
-    loss = TensorPort(tf.float32, [None],
+    loss = TensorPort(tf.float32, [None], "loss",
                       "Represents loss on each instance in the batch",
                       "[batch_size]")
 
-    candidate_targets = TensorPort(tf.float32, [None, None],
+    candidate_targets = TensorPort(tf.float32, [None, None], "candidate_targets",
                                    "Represents target (0/1) values for each candidate",
                                    "[batch_size, num_candidates]")
 
