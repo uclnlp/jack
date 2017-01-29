@@ -70,27 +70,27 @@ class ExampleModelModule(SimpleModelModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.multiple_support, Ports.question]
+        return [Ports.multiple_support, Ports.question, Ports.candidate_targets]
 
     @property
     def loss_port(self) -> TensorPort:
         return Ports.loss
 
     # output scores and loss tensor
-    def create(self, target: tf.Tensor, support: tf.Tensor, question: tf.Tensor) -> (tf.Tensor, tf.Tensor):
+    def create(self, target: tf.Tensor, support: tf.Tensor, question: tf.Tensor,
+               candidates: tf.Tensor) -> (tf.Tensor, tf.Tensor):
         with tf.variable_scope("embedders") as varscope:
-            question_embedded = question  # nvocab(question)
+            question_embedded = question  # todo: nvocab(question)
             varscope.reuse_variables()
-            # fixme: where does this model module get its candidates from?
-            candidates_embedded = candidates  # nvocab(candidates)
+            candidates_embedded = candidates  # todo: nvocab(candidates)
 
         question_encoding = tf.reduce_sum(question_embedded, 1)
 
-        scores = logits = tf.reduce_sum(
+        scores = tf.reduce_sum(
             tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
 
         loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(scores, targets),
+            tf.nn.softmax_cross_entropy_with_logits(scores, target),
             name='predictor_loss')
 
         return scores, loss
