@@ -284,15 +284,27 @@ class OutputModule(Module):
         pass
 
 
-class SharedResources:
+class SharedResources(metaclass=ABCMeta):
     """
     A class to store explicit shared resources between layers. It is recommended to minimise information stored here.
     """
 
-    def __init__(self, config):
+    @abstractmethod
+    def store(self):
         pass
 
+
+class SharedVocab(SharedResources):
+    """
+    A class to provide and store a vocab shared across some of the reader modules.
+    """
+
+    def __init__(self, vocab, config = None):
+        self.config = config
+        self.vocab = vocab
+
     def store(self):
+        # todo: store vocab to file location specified in vocab
         pass
 
 
@@ -335,10 +347,16 @@ class Reader:
         answers = self.output_module(inputs, prediction)
         return answers
 
-    def train(self, training_set: List[Tuple[Input, Answer]], **train_params):
+    def train(self,
+              training_set: List[Tuple[Input, Answer]],
+              dev_set: List[Tuple[Input, Answer]] = None,
+              test_set: List[Tuple[Input, Answer]] = None,
+              **train_params):
         """
         This method trains the reader (and changes its state).
         Args:
+            test_set: test set
+            dev_set: dev set
             training_set: the training instances.
             **train_params: parameters to be sent to the training function `jtr.train.train`.
 
