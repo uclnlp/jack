@@ -1,9 +1,12 @@
+from pytest import xfail
+
 import jtr.jack as jack
 import jtr.example as example
 from jtr.data_structures import *
 from jtr.preprocess.vocab import Vocab
 
 
+@xfail("Not implemented yet")
 def test_example_reader_overfit():
     vocab = jack.SharedVocab(Vocab())
     input_module = example.ExampleInputModule(vocab)
@@ -22,4 +25,4 @@ def test_example_reader_overfit():
 
     answer = reader([example_input])
 
-    # assert answer[0].text == "Abe"
+    assert answer[0].text == "Abe"
