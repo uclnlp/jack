@@ -2,7 +2,7 @@ from jtr.jack import *
 import tensorflow as tf
 from jtr.pipelines import pipeline, deep_seq_map, deep_map
 from typing import Mapping
-from jtr.preprocess.batch import get_batches
+from jtr.preprocess.batch import get_batches, GeneratorWithRestart
 
 
 class ExampleInputModule(InputModule):
@@ -39,8 +39,11 @@ class ExampleInputModule(InputModule):
         return self.embed(get_batches(xy_dict))
 
     def embed(self, generator):
-        # fixme: hard coded input size should be replaced by config
+        # fixme: hardcoded input size should be replaced by config
         input_size = 10
+
+        # todo: support different embedding matrices
+        # fixme: embed should not create embedding matrices
         embeddings = tf.get_variable(
             "embeddings", [len(self.vocab), input_size],
             trainable=True, dtype="float32")
@@ -51,9 +54,7 @@ class ExampleInputModule(InputModule):
             return deep_map(
                 batch, lambda xs: tf.nn.embedding_lookup(embeddings, xs), keys)
 
-        generator = [embed_batch(x) for x in generator.iterator()]
-
-        return generator
+        return (embed_batch(x) for x in generator)
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
         corpus = {"support": [], "question": [], "candidates": []}
@@ -123,8 +124,9 @@ class ExampleModelModule(SimpleModelModule):
         #     tf.nn.softmax_cross_entropy_with_logits(scores, target),
         #     name='predictor_loss')
 
-        scores = 0
-        loss = 0
+        # todo
+        scores = 0.0
+        loss = tf.Variable(0.0)
 
         return scores, loss
 
@@ -150,6 +152,7 @@ example_reader = Reader(ExampleInputModule(),
                         ExampleModelModule(),
                         ExampleOutputModule())
 
-example_reader.train(data_set)
+# todo: chose optimizer based on config
+example_reader.train(data_set, optim=tf.train.AdamOptimizer())
 
 # answers = example_reader(data_set)

@@ -180,15 +180,12 @@ def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, 
     return GeneratorWithRestart(generator)
 
 
-
-
 class GeneratorWithRestart(object):
     def __init__(self, iterator):
         self.iterator = iterator
 
     def __iter__(self):
         return self.iterator()
-
 
 
 #test bucketing

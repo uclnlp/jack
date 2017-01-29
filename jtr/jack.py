@@ -367,6 +367,7 @@ class Reader:
 
         """
         train_port_mappings = self.input_module.training_generator(training_set)
+
         # note that this generator comprehension, not list comprehension
         train_feed_dicts = (self.model_module.convert_to_feed_dict(m) for m in train_port_mappings)
         args = {

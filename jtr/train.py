@@ -30,10 +30,9 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
         Returns: None
 
     """
-
     if l2 != 0.0:
-        loss = loss + tf.add_n(
-            [tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+        loss += \
+            tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
     if clip is not None:
         gradients = optim.compute_gradients(loss)
