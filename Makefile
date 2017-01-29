@@ -15,23 +15,25 @@ clean:
 	$(PYTHON) setup.py clean --all
 test:
 	$(PYTEST) tests -v -m "not (overfit or smalldata or smalldatagpu or overfitgpu)"	
-test-overfit:
+
+# FIXME: this should probably be test-overfit rather than overfit
+overfit:
 	$(PYTEST) tests -v -m "(overfit and CPU)"
-test-smalldata:
+smalldata:
 	$(PYTEST) tests -v -m "(smalldata and CPU)"
-test-overfitgpu:
+overfitgpu:
 	$(PYTEST) tests -v -m "(overfit and GPU)"
-test-smalldatagpu:
+smalldatagpu:
 	$(PYTEST) tests -v -m "(smalldata and GPU)"
 
-test-sentihood:
+sentihood:
 	$(PYTEST) tests -v -m sentihood
-test-SNLI:
+SNLI:
 	$(PYTEST) tests -v -m SNLI
 doctests:
 	$(PYTEST) --doctest-modules jtr/preprocess/vocab.py
 
-test-gpu:
+gpu:
 	$(PYTEST) tests -v -m GPU
-test-cpu:
+cpu:
 	$(PYTEST) tests -v -m CPU
