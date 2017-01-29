@@ -68,6 +68,30 @@ class Ports:
                                    "[batch_size, num_candidates]")
 
 
+class SharedResources(metaclass=ABCMeta):
+    """
+    A class to store explicit shared resources between layers. It is recommended to minimise information stored here.
+    """
+
+    @abstractmethod
+    def store(self):
+        pass
+
+
+class SharedVocab(SharedResources):
+    """
+    A class to provide and store a vocab shared across some of the reader modules.
+    """
+
+    def __init__(self, vocab, config = None):
+        self.config = config
+        self.vocab = vocab
+
+    def store(self):
+        # todo: store vocab to file location specified in vocab
+        pass
+
+
 class Module(metaclass=ABCMeta):
     """
     Class to specify shared signature between modules.
@@ -126,6 +150,16 @@ class InputModule(Module):
             training_set: a set of pairs of input and answer.
 
         Returns: An iterable/generator that, on each pass through the data, produces a sequence of batches.
+        """
+        pass
+
+    @abstractmethod
+    def setup(self, data: List[Tuple[Input, Answer]]) -> SharedVocab:
+        """
+        Args:
+            data: a set of pairs of input and answer.
+
+        Returns: vocab
         """
         pass
 
@@ -198,10 +232,19 @@ class ModelModule(Module):
         pass
 
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
-        result = {ph: mapping[self.input_ports[i]] for i, ph in self.input_tensors}
+        result = {ph: mapping[self.input_ports[i]]
+                  for i, ph in enumerate(self.input_tensors)}
         if self.target_port in mapping:
             result[self.target_tensor] = mapping[self.target_port]
         return result
+
+    @abstractmethod
+    def setup(self, vocab):
+        """
+        Args:
+            vocab: a vocabulary
+        """
+        pass
 
 
 class SimpleModelModule(ModelModule):
@@ -211,6 +254,8 @@ class SimpleModelModule(ModelModule):
         """
         self.input_placeholders = [d.create_placeholder() for d in self.input_ports]
         self.target_placeholder = self.target_port.create_placeholder()
+
+        # fixme: needs to happen in setup
         self.predictions, self.loss = self.create(self.target_placeholder, *self.input_placeholders)
 
     @abstractmethod
@@ -287,30 +332,6 @@ class OutputModule(Module):
         pass
 
 
-class SharedResources(metaclass=ABCMeta):
-    """
-    A class to store explicit shared resources between layers. It is recommended to minimise information stored here.
-    """
-
-    @abstractmethod
-    def store(self):
-        pass
-
-
-class SharedVocab(SharedResources):
-    """
-    A class to provide and store a vocab shared across some of the reader modules.
-    """
-
-    def __init__(self, vocab, config = None):
-        self.config = config
-        self.vocab = vocab
-
-    def store(self):
-        # todo: store vocab to file location specified in vocab
-        pass
-
-
 class Reader:
     """
     A Reader reads inputs consisting of questions, supports and possibly candidates, and produces answers.
@@ -350,6 +371,10 @@ class Reader:
         answers = self.output_module(inputs, prediction)
         return answers
 
+    def setup(self, data: List[Tuple[Input, Answer]]):
+        vocab = self.input_module.setup(data)
+        self.model_module.setup(vocab)
+
     def train(self,
               training_set: List[Tuple[Input, Answer]],
               dev_set: List[Tuple[Input, Answer]] = None,
@@ -367,6 +392,8 @@ class Reader:
 
         """
         train_port_mappings = self.input_module.training_generator(training_set)
+
+        print("jack train port mappings", train_port_mappings)
 
         # note that this generator comprehension, not list comprehension
         train_feed_dicts = (self.model_module.convert_to_feed_dict(m) for m in train_port_mappings)

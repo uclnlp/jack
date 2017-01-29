@@ -13,57 +13,43 @@ class ExampleInputModule(InputModule):
         self.vocab = vocab
         self.config = config
 
-    def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
-            -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = {"support": [], "question": [], "candidates": [], "answers": []}
-        for x, y in training_set:
+    def preprocess(self, data, test_time=False):
+        corpus = {"support": [], "question": [], "candidates": []}
+        if not test_time:
+            corpus["answers"] = []
+        for xy in data:
+            if test_time:
+                x = xy
+                y = None
+            else:
+                x, y = xy
             corpus["support"].append(x.support)
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.candidates)
-            corpus["answers"].append(y.text)
+            if not test_time:
+                corpus["answers"].append([y.text])
+        corpus, vocab, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
+                                       test_time=test_time)
+        return corpus, vocab
 
-        # todo: for now using the same vocab
-        corpus, vocab, _, _ = \
-            pipeline(corpus, self.vocab, sepvocab=False)
+    def setup(self, data: List[Tuple[Input, Answer]]):
+        corpus, vocab = self.preprocess(data)
+        self.vocab = vocab
+        return self.vocab
 
-        if self.vocab is None:
-            self.vocab = vocab
-
+    def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
+            -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        corpus, _ = self.preprocess(training_set)
         xy_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
             Ports.atomic_candidates: corpus["candidates"],
             Ports.candidate_targets: corpus["answers"]
         }
-
-        return self.embed(get_batches(xy_dict))
-
-    def embed(self, generator):
-        # fixme: hardcoded input size should be replaced by config
-        input_size = 10
-
-        # todo: support different embedding matrices
-        # fixme: embed should not create embedding matrices
-        embeddings = tf.get_variable(
-            "embeddings", [len(self.vocab), input_size],
-            trainable=True, dtype="float32")
-
-        keys = self.output_ports + [self.target_port]
-
-        def embed_batch(batch):
-            return deep_map(
-                batch, lambda xs: tf.nn.embedding_lookup(embeddings, xs), keys)
-
-        return (embed_batch(x) for x in generator)
+        return get_batches(xy_dict)
 
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = {"support": [], "question": [], "candidates": []}
-        for x in inputs:
-            corpus["support"].append(x.support)
-            corpus["question"].append(x.question)
-            corpus["candidates"].append(x.candidates)
-        corpus, vocab, target_vocab, candidate_vocab = \
-            pipeline(corpus, test_time=True)
+        corpus, vocab = self.preprocess(inputs, test_time=True)
         x_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
@@ -89,6 +75,7 @@ class ExampleModelModule(SimpleModelModule):
 
     def __init__(self, vocab=None, config=None):
         self.vocab = vocab
+        self.embeddings = None
         super().__init__()
 
     @property
@@ -107,6 +94,27 @@ class ExampleModelModule(SimpleModelModule):
     def loss_port(self) -> TensorPort:
         return Ports.loss
 
+    def setup(self, vocab):
+        self.vocab = vocab
+
+        # fixme: hardcoded input size should be replaced by config
+        input_size = 10
+
+        self.embeddings = tf.get_variable(
+            "embeddings", [len(self.vocab), input_size],
+            trainable=True, dtype="float32")
+        print(self.embeddings)
+
+    def embed(self, generator):
+        keys = self.output_ports + [self.target_port]
+
+        def embed_batch(batch):
+            return deep_map(
+                batch, lambda xs: tf.nn.embedding_lookup(self.embeddings, xs), keys)
+
+        return (embed_batch(x) for x in generator)
+
+    # fixme: needs to happen later (when setup is called)
     # output scores and loss tensor
     def create(self, target: tf.Tensor, support: tf.Tensor, question: tf.Tensor,
                candidates: tf.Tensor) -> (tf.Tensor, tf.Tensor):
@@ -151,6 +159,8 @@ data_set = [
 example_reader = Reader(ExampleInputModule(),
                         ExampleModelModule(),
                         ExampleOutputModule())
+
+example_reader.setup(data_set)
 
 # todo: chose optimizer based on config
 example_reader.train(data_set, optim=tf.train.AdamOptimizer())

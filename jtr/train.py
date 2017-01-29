@@ -65,6 +65,8 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
             if pre_run is not None:
                 pre_run(sess, i, feed_dict, loss, predict)
 
+            print(feed_dict)
+
             _, current_loss = sess.run([min_op, loss], feed_dict=feed_dict)
 
             if post_run is not None:
