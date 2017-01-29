@@ -3,6 +3,7 @@ import tensorflow as tf
 from jtr.pipelines import pipeline, deep_seq_map, deep_map
 from typing import Mapping
 from jtr.preprocess.batch import get_batches, GeneratorWithRestart
+from jtr.preprocess.vocab import Vocab
 
 
 class ExampleInputModule(InputModule):
@@ -79,34 +80,22 @@ class ExampleModelModule(SimpleModelModule):
         super().__init__()
 
     @property
-    def target_port(self) -> TensorPort:
-        return Ports.candidate_targets
-
-    @property
-    def output_port(self) -> TensorPort:
-        return Ports.scores
+    def output_ports(self) -> TensorPort:
+        return [Ports.scores, Ports.loss]
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.multiple_support, Ports.question, Ports.atomic_candidates]
+        return [Ports.multiple_support, Ports.question, Ports.atomic_candidates, Ports.candidate_targets]
 
-    @property
-    def loss_port(self) -> TensorPort:
-        return Ports.loss
-
-    def setup(self, vocab):
-        self.vocab = vocab
-
-        # fixme: hardcoded input size should be replaced by config
+    # output scores and loss tensor
+    def create(self, support: tf.Tensor, question: tf.Tensor,
+               candidates: tf.Tensor, target: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
         input_size = 10
-
         self.embeddings = tf.get_variable(
             "embeddings", [len(self.vocab), input_size],
             trainable=True, dtype="float32")
 
-    # output scores and loss tensor
-    def create(self, target: tf.Tensor, support: tf.Tensor, question: tf.Tensor,
-               candidates: tf.Tensor) -> (tf.Tensor, tf.Tensor):
+
         # with tf.variable_scope("embedders") as varscope:
         #     question_embedded = question  # todo: nvocab(question)
         #     varscope.reuse_variables()
@@ -128,7 +117,10 @@ class ExampleModelModule(SimpleModelModule):
         scores = 0.0
         loss = tf.Variable(0.0)
 
-        return scores, loss
+        return {
+            Ports.scores: scores,
+            Ports.loss: loss
+        }
 
 
 class ExampleOutputModule(OutputModule):
@@ -148,9 +140,11 @@ data_set = [
      Answer("a", 1.0))
 ]
 
-example_reader = Reader(ExampleInputModule(),
-                        ExampleModelModule(),
-                        ExampleOutputModule())
+vocab = SharedVocab(Vocab())
+example_reader = Reader(ExampleInputModule(vocab),
+                        ExampleModelModule(vocab),
+                        ExampleOutputModule(),
+                        vocab)
 
 example_reader.setup(data_set)
 
