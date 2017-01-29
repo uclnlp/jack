@@ -6,6 +6,9 @@ from jtr.preprocess.batch import get_batches
 
 
 class ExampleInputModule(InputModule):
+    def __init__(self, vocab, config):
+        pass
+
     def training_generator(self, training_set: List[Tuple[Input, Answer]]) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = {"support": [], "question": [], "candidates": []}
         # fixme: not sure how to use answer here
@@ -48,6 +51,9 @@ class ExampleInputModule(InputModule):
 
 
 class ExampleModelModule(SimpleModelModule):
+    def __init__(self, vocab, config):
+        pass
+
     @property
     def target_port(self) -> TensorPort:
         return Ports.candidate_targets
