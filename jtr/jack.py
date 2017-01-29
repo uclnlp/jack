@@ -35,6 +35,9 @@ class TensorPort:
         """
         return tf.placeholder(self.dtype, self.shape, self.name)
 
+    def __gt__(self, port):
+        return self.name > port.name
+
 
 class Ports:
     """

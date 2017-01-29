@@ -131,7 +131,7 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
     if tokenization == True:
         corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
     else:
-        corpus_tokenized =deep_map(corpus, notokenize, ['question', 'support'])
+        corpus_tokenized = deep_map(corpus, notokenize, ['question', 'support'])
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
     if tokenization == True:
         corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
