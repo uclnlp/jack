@@ -103,18 +103,7 @@ class ExampleModelModule(SimpleModelModule):
         self.embeddings = tf.get_variable(
             "embeddings", [len(self.vocab), input_size],
             trainable=True, dtype="float32")
-        print(self.embeddings)
 
-    def embed(self, generator):
-        keys = self.output_ports + [self.target_port]
-
-        def embed_batch(batch):
-            return deep_map(
-                batch, lambda xs: tf.nn.embedding_lookup(self.embeddings, xs), keys)
-
-        return (embed_batch(x) for x in generator)
-
-    # fixme: needs to happen later (when setup is called)
     # output scores and loss tensor
     def create(self, target: tf.Tensor, support: tf.Tensor, question: tf.Tensor,
                candidates: tf.Tensor) -> (tf.Tensor, tf.Tensor):
@@ -133,6 +122,9 @@ class ExampleModelModule(SimpleModelModule):
         #     name='predictor_loss')
 
         # todo
+
+        # tf.nn.embedding_lookup(self.embeddings, xs)
+
         scores = 0.0
         loss = tf.Variable(0.0)
 

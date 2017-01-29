@@ -187,6 +187,12 @@ class GeneratorWithRestart(object):
     def __iter__(self):
         return self.iterator()
 
+    def map(self, fun):
+        def inner():
+            for x in self:
+                yield fun(x)
+        return GeneratorWithRestart(inner)
+
 
 #test bucketing
 if __name__ == '__main__':
