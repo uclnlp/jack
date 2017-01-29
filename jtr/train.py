@@ -65,8 +65,6 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
             if pre_run is not None:
                 pre_run(sess, i, feed_dict, loss, predict)
 
-            print(feed_dict)
-
             _, current_loss = sess.run([min_op, loss], feed_dict=feed_dict)
 
             if post_run is not None:
@@ -74,9 +72,7 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
 
             for hook in hooks:
                 hook.at_iteration_end(sess, i, predict, current_loss)
-                #hook(sess, i, predict, current_loss)
 
         # calling post-epoch hooks
         for hook in hooks:
             hook.at_epoch_end(sess, i, predict, 0)
-            #hook(sess, i, predict, 0, post_epoch=True)

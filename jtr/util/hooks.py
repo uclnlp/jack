@@ -35,7 +35,8 @@ class TraceHook(object):
         raise NotImplementedError
 
     def at_epoch_end(self, *args, **kwargs):
-        self.__call__(*args, **kwargs)
+        # self.__call__(*args, **kwargs)
+        pass
 
     def at_iteration_end(self, *args, **kwargs):
         self.__call__(*args, **kwargs)

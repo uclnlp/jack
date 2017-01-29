@@ -12,6 +12,10 @@ import tensorflow as tf
 import jtr.train as jtr_train
 
 from jtr.data_structures import *
+from jtr.util.hooks import LossHook
+
+import logging
+import sys
 
 
 class TensorPort:
@@ -393,13 +397,20 @@ class Reader:
         """
         train_port_mappings = self.input_module.training_generator(training_set)
 
-        print("jack train port mappings", train_port_mappings)
-
         # note that this generator comprehension, not list comprehension
-        train_feed_dicts = (self.model_module.convert_to_feed_dict(m) for m in train_port_mappings)
+        # train_feed_dicts = (self.model_module.convert_to_feed_dict(m)
+        #                    for m in train_port_mappings)
+
+        train_feed_dicts = train_port_mappings.map(self.model_module.convert_to_feed_dict)
+
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
+        hooks = [LossHook(1, 1)]
         args = {
             'loss': self.model_module.loss,
             'batches': train_feed_dicts,
+            'hooks': hooks,
+            'max_epochs': 100,
             **train_params
         }
         jtr_train.train(**args)
