@@ -135,6 +135,8 @@ class ExampleOutputModule(OutputModule):
         return []
 
 
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
 data_set = [
     (Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
      Answer("a", 1.0))
