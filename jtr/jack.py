@@ -268,14 +268,14 @@ class OutputModule(Module):
     """
 
     @abstractproperty
-    def input_port(self) -> TensorPort:
+    def input_ports(self) -> List[TensorPort]:
         """
         Returns: a port defines the input tensor to the output module.
         """
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Input], prediction: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: List[Input], prediction: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         """
         Process the prediction tensor for a batch to produce a list of answers. The module has access
         to the original inputs.
@@ -310,8 +310,9 @@ class Reader:
         assert self.input_module.output_ports == self.model_module.input_ports, \
             "Input Module outputs must match model module inputs"
 
-        assert self.model_module.output_port == self.output_module.input_port, \
-            "Module model output must match output module inputs"
+        # fixme: this should test whether the output module inputs are a subset of the model-module outputs
+        # assert self.model_module.output_port == self.output_module.input_port, \
+        #     "Module model output must match output module inputs"
 
     def __call__(self, inputs: List[Input]) -> List[Answer]:
         """
@@ -322,10 +323,12 @@ class Reader:
         Returns: a list of answers.
         """
         batch = self.input_module(inputs)
-        feed_dict = {input_tensor: batch[self.input_module.output_ports[i]]
-                     for i, input_tensor in enumerate(self.model_module.input_tensors)}
-        prediction = self.sess.run(self.model_module.output_tensor, feed_dict=feed_dict)
-        answers = self.output_module(inputs, prediction)
+        feed_dict = {self.model_module.input_tensors[port]: value for port, value in batch.items()}
+        output_tensors = [self.model_module.output_tensors[port] for port in self.output_module.input_ports]
+        predictions = self.sess.run(output_tensors, feed_dict=feed_dict)
+        predictions_mapping = {self.output_module.input_ports[i]: prediction for i, prediction in
+                               enumerate(predictions)}
+        answers = self.output_module(inputs, predictions_mapping)
         return answers
 
     def setup(self, data: List[Tuple[Input, Answer]]):
@@ -354,13 +357,11 @@ class Reader:
         # train_feed_dicts = (self.model_module.convert_to_feed_dict(m)
         #                    for m in train_port_mappings)
 
-        train_feed_dicts = train_port_mappings.map(self.model_module.convert_to_feed_dict)
-
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        train_feed_dicts = [self.model_module.convert_to_feed_dict(m) for m in train_port_mappings]
 
         hooks = [LossHook(1, 1)]
         args = {
-            'loss': self.model_module.loss,
+            'loss': self.model_module.output_tensors[Ports.loss],
             'batches': train_feed_dicts,
             'hooks': hooks,
             'max_epochs': 100,
