@@ -123,13 +123,6 @@ class InputModule(Module):
         """
         pass
 
-    @abstractproperty
-    def target_port(self) -> TensorPort:
-        """
-        Defines what type of tensor is used to represent the target solution during training.
-        """
-        pass
-
     @abstractmethod
     def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
         """
@@ -158,12 +151,11 @@ class InputModule(Module):
         pass
 
     @abstractmethod
-    def setup(self, data: List[Tuple[Input, Answer]]) -> SharedVocab:
+    def setup(self, data: List[Tuple[Input, Answer]]):
         """
+        Set up this module, using a data set to create resources like vocabs.
         Args:
             data: a set of pairs of input and answer.
-
-        Returns: vocab
         """
         pass
 
@@ -332,8 +324,8 @@ class Reader:
         return answers
 
     def setup(self, data: List[Tuple[Input, Answer]]):
-        vocab = self.input_module.setup(data)
-        self.model_module.setup(vocab)
+        self.input_module.setup(data)
+        self.model_module.setup()
 
     def train(self,
               training_set: List[Tuple[Input, Answer]],
