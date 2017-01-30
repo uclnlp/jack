@@ -11,7 +11,7 @@ class ExampleInputModule(InputModule):
         pass
 
     def __init__(self, vocab=None, config=None):
-        self.vocab = vocab
+        self.vocab = vocab.vocab
         self.config = config
 
     def preprocess(self, data, test_time=False):
@@ -29,18 +29,16 @@ class ExampleInputModule(InputModule):
             corpus["candidates"].append(x.candidates)
             if not test_time:
                 corpus["answers"].append([y.text])
-        corpus, vocab, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                       test_time=test_time)
-        return corpus, vocab
+        corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
+                                   test_time=test_time)
+        return corpus
 
     def setup(self, data: List[Tuple[Input, Answer]]):
-        corpus, vocab = self.preprocess(data)
-        self.vocab = vocab
-        return self.vocab
+        self.preprocess(data)
 
     def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, _ = self.preprocess(training_set)
+        corpus = self.preprocess(training_set)
         xy_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
@@ -63,19 +61,15 @@ class ExampleInputModule(InputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.multiple_support, Ports.question, Ports.atomic_candidates]
-
-    @property
-    def target_port(self):
-        return Ports.candidate_targets
+        return [Ports.multiple_support, Ports.question, Ports.atomic_candidates, Ports.candidate_targets]
 
 
 class ExampleModelModule(SimpleModelModule):
     def store(self):
         pass
 
-    def __init__(self, vocab=None, config=None):
-        self.vocab = vocab
+    def __init__(self, vocab: SharedVocab, config=None):
+        self.vocab = vocab.vocab
         self.embeddings = None
         super().__init__()
 
@@ -94,7 +88,6 @@ class ExampleModelModule(SimpleModelModule):
         self.embeddings = tf.get_variable(
             "embeddings", [len(self.vocab), input_size],
             trainable=True, dtype="float32")
-
 
         # with tf.variable_scope("embedders") as varscope:
         #     question_embedded = question  # todo: nvocab(question)
@@ -128,8 +121,8 @@ class ExampleOutputModule(OutputModule):
         pass
 
     @property
-    def input_port(self) -> TensorPort:
-        return Ports.scores
+    def input_ports(self) -> TensorPort:
+        return [Ports.scores]
 
     def __call__(self, inputs: List[Input], model_results: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         return []
