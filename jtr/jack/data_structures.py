@@ -19,7 +19,6 @@ def NamedTupleWithDefaults(typename, fields, default_values=()):
     return T
 
 
-
 Answer = NamedTuple("Answer", [('text', str), ('span', Tuple[int, int]), ('score', float)])
 Input = NamedTuple("QASetting", [('question', str),
                                  ('support', List[str]),
@@ -41,7 +40,7 @@ def AnswerWithDefault(text: str, span: Tuple[int, int]=None, score: float=1.0):
     return Answer(text, span, score)
 
 
-def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Input, Answer]]:
+def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Input, List[Answer]]]:
     """
     This function loads a jtr json file with labelled answers from a specific location.
     Args:
@@ -66,9 +65,11 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Input, Ans
     def convert_instance(index):
         support = to_list(dict_data['support'][index])
         question = dict_data['question'][index]
-        candidates = dict_data['candidates'][index]
-        answer = dict_data['answer'][index]
-        return Input(support, question, candidates), Answer(answer, 1.0)
+        candidates = to_list(dict_data['candidates'][index])
+        answer = to_list(dict_data['answer'][index])
+        answer_spans = to_list(dict_data['answer_spans'][index])
+        return InputWithDefaults(question, support, atomic_candidates=candidates), \
+               [Answer(a, s, 1.0) for a, s in zip(answer, answer_spans)]
 
     result = [convert_instance(i) for i in range(0, len(dict_data['question']))]
     return result

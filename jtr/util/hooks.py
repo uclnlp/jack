@@ -60,6 +60,7 @@ class TraceHook(object):
 class LossHook(TraceHook):
     """A hook at prints the current loss and adds it to the summary."""
     def __init__(self, iter_interval, batch_size, summary_writer=None):
+        #TODO(dirk): Why batch_size as parameter? loss should be batch normalized anyway during training and when it comes in here.
         super(LossHook, self).__init__(summary_writer)
         self.iter_interval = iter_interval
         self.acc_loss = 0
