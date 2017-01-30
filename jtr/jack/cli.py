@@ -1,16 +1,16 @@
 import argparse
 
-from jtr.example import *
+from jtr.jack.example import *
 from jtr.jack import *
 from jtr.preprocess.vocab import Vocab
 
 
 def example_reader(config):
-    resources = SharedVocab(Vocab(), config)
+    resources = SharedVocabAndConfig(Vocab(), config)
     input_module = ExampleInputModule(resources, config)
     model_module = ExampleModelModule(resources, config)
     output_module = ExampleOutputModule()
-    reader = Reader(input_module, model_module, output_module, resources)
+    reader = JTReader(input_module, model_module, output_module, resources)
     return reader
 
 

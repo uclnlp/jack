@@ -132,7 +132,7 @@ class Vocab(object):
 
     DEFAULT_UNK = "<UNK>"
 
-    def __init__(self, unk=DEFAULT_UNK, emb=None):
+    def __init__(self, unk=DEFAULT_UNK, emb=None, init_from_embeddings=False):
         """
         Creates Vocab object.
 
@@ -146,21 +146,45 @@ class Vocab(object):
         if unk is None:
             self.sym2id = {}
             # with pos and neg indices
-            self.id2sym = {}
+            self.id2sym = list()
             self.next_pos = 0
             self.sym2freqs = {}
         else:
             self.sym2id = {unk: 0}
             # with pos and neg indices
-            self.id2sym = {0: unk}
+            self.id2sym = [unk]
             self.next_pos = 1
             self.sym2freqs = {unk: 0}
 
         self.next_neg = -1
         self.unk = unk
         self.emb = emb if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
-        self.emb_length = None
-        self.frozen = False
+
+        if init_from_embeddings and emb is not None:
+            self.sym2id = dict(emb.vocabulary.word2idx)
+            self.id2sym = dict(enumerate(emb.vocabulary.idx2word))
+            self.emb_length = None
+            if unk is not None and unk not in self.sym2id:
+                self.sym2id[unk] = len(self.sym2id)
+                self.id2sym[len(self.id2sym)] = unk
+            self.sym2freqs = {w: emb.get_word_count(w) for w in self.sym2id}
+            self.frozen = True
+        else:
+            self.sym2id = {}
+            # with pos and neg indices
+            self.id2sym = list()
+            self.next_pos = 0
+            self.sym2freqs = {}
+            if unk is not None:
+                self.sym2id[unk] = 0
+                # with pos and neg indices
+                self.id2sym[0] = unk
+                self.next_pos = 1
+                self.sym2freqs[unk] = 0
+            self.frozen = False
+
+        if emb is not None:
+            self.emb_length = emb.lookup.shape[1]
 
     def freeze(self):
         """Freeze current Vocab object (set `self.frozen` to True).
@@ -224,7 +248,6 @@ class Vocab(object):
                     self.sym2id[sym] = self.next_neg
                     self.id2sym[self.next_neg] = sym
                     self.next_neg -= 1
-                    self.emb_length = len(vec)
                 self.sym2freqs[sym] = 1
             else:
                 self.sym2freqs[sym] += 1
@@ -265,7 +288,7 @@ class Vocab(object):
         """checks if `sym` already in the Vocab object"""
         return sym in self.sym2id
 
-    def _normalize(self,id):
+    def _normalize(self, id):
         """map original (pos/neg) ids to normalized (non-neg) ids: first new symbols, then those in emb"""
         # e.g. -1 should be mapped to self.next_pos + 0
         # e.g. -3 should be mapped to self.next_pos + 2

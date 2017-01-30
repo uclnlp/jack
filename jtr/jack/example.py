@@ -1,7 +1,8 @@
 from jtr.jack import *
 import tensorflow as tf
+
+from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline, deep_seq_map, deep_map
-from typing import Mapping
 from jtr.preprocess.batch import get_batches, GeneratorWithRestart
 from jtr.preprocess.vocab import Vocab
 
@@ -10,9 +11,10 @@ class ExampleInputModule(InputModule):
     def store(self):
         pass
 
-    def __init__(self, vocab=None, config=None):
-        self.vocab = vocab
-        self.config = config
+    def __init__(self, shared_resource):
+        self.vocab = shared_resource.vocab
+        self.config = shared_resource.config
+        self.shared_resource = shared_resource
 
     def preprocess(self, data, test_time=False):
         corpus = {"support": [], "question": [], "candidates": []}
@@ -34,13 +36,12 @@ class ExampleInputModule(InputModule):
         return corpus, vocab
 
     def setup(self, data: List[Tuple[Input, Answer]]):
-        corpus, vocab = self.preprocess(data)
-        self.vocab = vocab
-        return self.vocab
+        self.preprocess(data)
+        return self.shared_resource
 
-    def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
+    def dataset_generator(self, dataset: List[Tuple[Input, Answer]]) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, _ = self.preprocess(training_set)
+        corpus, _ = self.preprocess(dataset)
         xy_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
@@ -88,8 +89,8 @@ class ExampleModelModule(SimpleModelModule):
         return [Ports.multiple_support, Ports.question, Ports.atomic_candidates, Ports.candidate_targets]
 
     # output scores and loss tensor
-    def create(self, support: tf.Tensor, question: tf.Tensor,
-               candidates: tf.Tensor, target: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
+    def create_output(self, support: tf.Tensor, question: tf.Tensor,
+                      candidates: tf.Tensor, target: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
         input_size = 10
         self.embeddings = tf.get_variable(
             "embeddings", [len(self.vocab), input_size],
@@ -140,11 +141,11 @@ data_set = [
      Answer("a", 1.0))
 ]
 
-vocab = SharedVocab(Vocab())
-example_reader = Reader(ExampleInputModule(vocab),
-                        ExampleModelModule(vocab),
-                        ExampleOutputModule(),
-                        vocab)
+vocab = SharedVocabAndConfig(Vocab())
+example_reader = JTReader(ExampleInputModule(vocab),
+                          ExampleModelModule(vocab),
+                          ExampleOutputModule(),
+                          vocab)
 
 example_reader.setup(data_set)
 

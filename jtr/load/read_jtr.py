@@ -72,8 +72,6 @@ class Support(object):
         return -1
 
 
-
-
 def jtr_load(path, max_count=None, **options):
     """
     General-purpose loader for jtr files
@@ -89,47 +87,55 @@ def jtr_load(path, max_count=None, **options):
 
     reading_dataset = json.load(path)
 
-    def textOrDict(c):
+    def value(c, key="text"):
         if isinstance(c, dict):
-            c = c["text"]
-        return c
+            return c.get(key, None)
+        elif key != "text":
+            return None
+        else:
+            return c
 
     # The script reads into those lists. If IDs for questions, supports or targets are defined, those are ignored.
     questions = []
     supports = []
     answers = []
+    answer_spans = []
     candidates = []
     global_candidates = []
     count = 0
     if "globals" in reading_dataset:
-        global_candidates = [textOrDict(c) for c in reading_dataset['globals']['candidates']]
+        global_candidates = [value(c) for c in reading_dataset['globals']['candidates']]
 
     for instance in reading_dataset['instances']:
-        question, support, answer, candidate = "", "", "", ""  # initialisation
+        question, support, answer, candidate, answer_span = None, None, None, None, None  # initialisation
         if max_count is None or count < max_count:
             if options["supports"] == "single":
-                support = textOrDict(instance['support'][0])
+                support = value(instance['support'][0])
             elif options["supports"].startswith("multiple"):
-                support = [textOrDict(c) for c in instance['support']]
+                support = [value(c) for c in instance['support']]
             if options["questions"] == "single":
-                question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
+                question = value(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
                 if options["answers"] == "single":
-                    answer = textOrDict(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
+                    answer = value(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
+                    answer_span = value(instance['questions'][0]['answers'][0], 'span')
                 elif options["answers"] == "multiple":
-                    answer = [textOrDict(c) for c in instance['questions'][0]['answers']]
+                    answer = [value(c) for c in instance['questions'][0]['answers']]
+                    answer_span = [value(c, 'span') for c in instance['questions'][0]['answers']]
                 if options["candidates"] == "per-instance":
-                    candidate = [textOrDict(c) for c in instance['questions'][0]['candidates']]
+                    candidate = [value(c) for c in instance['questions'][0]['candidates']]
 
             elif options["questions"] == "multiple":
                 answer = []
                 candidate = []
-                question = [textOrDict(c["question"]) for c in instance['questions']]
+                question = [value(c["question"]) for c in instance['questions']]
                 if options["answers"] == "single":
-                    answer = [textOrDict(c["answers"][0]) for c in instance['questions']]
+                    answer = [value(c["answers"][0]) for c in instance['questions']]
+                    answer_span = [value(c["answers"][0], 'span') for c in instance['questions']]
                 elif options["answers"] == "multiple":
-                    answer = [textOrDict(c) for q in instance['questions'] for c in q["answers"]]
+                    answer = [value(c) for q in instance['questions'] for c in q["answers"]]
+                    answer_span = [value(c, 'span') for q in instance['questions'] for c in q["answers"]]
                 if options["candidates"] == "per-instance":
-                    candidate = [textOrDict(c) for quest in instance["questions"] for c in quest["candidates"]]
+                    candidate = [value(c) for quest in instance["questions"] for c in quest["candidates"]]
 
             if options["supports"] == "multiple_flat":
                 for s in support:
@@ -142,6 +148,7 @@ def jtr_load(path, max_count=None, **options):
 
                     questions.append(question)
                     answers.append(answer)
+                    answer_spans.append(answer_span)
 
             else:
                 if options["candidates"] == "fixed":
@@ -149,6 +156,8 @@ def jtr_load(path, max_count=None, **options):
 
                 questions.append(question)
                 answers.append(answer)
+                answer_spans.append(answer_span)
+
                 if options["supports"] != "none":
                     supports.append(support)
                 if options["candidates"] != "fixed":
@@ -159,6 +168,7 @@ def jtr_load(path, max_count=None, **options):
 
     print("Loaded %d examples from %s" % (len(questions), path))
     if options["supports"] != "none": 
-        return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
+        return {'question': questions, 'support': supports, 'answers': answers,
+                'answer_spans':answer_spans, 'candidates': candidates}
     else:
        return {'question': questions, 'answers': answers, 'candidates': candidates} 

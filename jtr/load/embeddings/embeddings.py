@@ -13,7 +13,7 @@ class Embeddings:
         id = self.vocabulary.get_idx_by_word(word)
         #out-of-vocab word
         if id is None:
-            return None #lookup[None] would return entire lookup table
+            return None  #lookup[None] would return entire lookup table
         #known embedding
         else:
             return self.lookup[id]
@@ -21,8 +21,6 @@ class Embeddings:
     @property
     def shape(self):
         return self.lookup.shape
-
-
 
 
 def load_embeddings(file, typ, **options):

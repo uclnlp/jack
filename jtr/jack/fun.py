@@ -1,8 +1,10 @@
 from jtr.jack import *
+from typing import List
 
-
-def model_module(input_defs: List[TensorPort],
-                 output_defs: List[TensorPort]):
+def model_module(input_ports: List[TensorPort],
+                 output_ports: List[TensorPort],
+                 training_input_ports: List[TensorPort],
+                 training_ouptut_ports: List[TensorPort]):
     """
     This (meta-)decorator creates a decorator that
     takes functions from input tensors to output tensors and turns them into ModelModules.
@@ -14,30 +16,40 @@ def model_module(input_defs: List[TensorPort],
     Returns: a decorator that turns functions into ModelModules.
     """
 
-    def create(f):
+    def create(f, g):
         class MyModelModule(SimpleModelModule):
 
             @property
             def output_ports(self) -> List[TensorPort]:
-                return output_defs
+                return output_ports
 
             @property
             def input_ports(self) -> List[TensorPort]:
-                return input_defs
+                return input_ports
 
-            def create(self, *tensors: tf.Tensor) -> List[TensorPort]:
+            def training_input_ports(self) -> Mapping[TensorPort, tf.Tensor]:
+                return training_input_ports
+
+            def training_output_ports(self) -> List[TensorPort]:
+                return training_ouptut_ports
+
+            def create_output(self, *tensors: tf.Tensor) -> List[TensorPort]:
                 return f(*tensors)
+
+            def create_training_output(self, *tensors: tf.Tensor) -> List[TensorPort]:
+                return g(*tensors)
 
         return MyModelModule()
 
     return create
 
 
-def model_module_factory(input_defs: List[TensorPort],
-                         output_defs: List[TensorPort],
-                         port2ph):
-    def create(f):
-        return model_module(input_defs, output_defs)(f)
+def model_module_factory(input_ports: List[TensorPort],
+                         output_ports: List[TensorPort],
+                         training_input_ports: List[TensorPort],
+                         training_ouptut_ports: List[TensorPort]):
+    def create(f, g):
+        return model_module(input_ports, training_input_ports, output_ports, training_ouptut_ports)(f, g)
 
     return create
 
