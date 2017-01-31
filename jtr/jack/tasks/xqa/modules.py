@@ -4,6 +4,7 @@ This file contains modules for extractive QA models that have an additional
 
 import random
 
+import jtr
 from jtr.jack import *
 from jtr.jack.fun import model_module_factory, model_module
 from jtr.preprocess.batch import get_batches, GeneratorWithRestart
@@ -71,7 +72,7 @@ class XqaWiqInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [XqaPorts.answer_span, XqaPorts.answer_to_question]
 
-    def setup_from_data(self, data: List[Tuple[Input, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
         # Assumes that vocab and embeddings are given during creation
         return self.shared_vocab_config
 
@@ -80,15 +81,16 @@ class XqaWiqInputModule(InputModule):
             "shared_resources for XqaWiqInputModule must be an instance of SharedVocabAndConfig"
         self.shared_vocab_config = shared_resources
 
-    def dataset_generator(self, dataset: List[Tuple[Input, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = {"support": [], "question": []}
 
         answer_spans = []
         for input, answers in dataset:
-            corpus["support"].append(input.support)
+            corpus["support"].append(input.support[0])
             corpus["question"].append(input.question)
             answer_spans.append([a.span for a in answers])
 
+        corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
         word_in_question = []
         for q, s in zip(corpus["question"], corpus["support"]):
             wiq = []
@@ -99,7 +101,8 @@ class XqaWiqInputModule(InputModule):
         corpus_ids = deep_map(corpus, self.shared_vocab_config.vocab, ['question', 'support'])
 
         def batch_generator():
-            todo = self._rng.shuffle(list(range(len(corpus_ids["question"]))))
+            todo = list(range(len(corpus_ids["question"])))
+            self._rng.shuffle(todo)
             while todo:
                 supports = list()
                 support_lengths = list()
@@ -141,7 +144,7 @@ class XqaWiqInputModule(InputModule):
 
         return GeneratorWithRestart(batch_generator)
 
-    def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
         supports = list()
         questions = list()
         for input in inputs:
@@ -173,7 +176,7 @@ class XqaWiqInputModule(InputModule):
 
 
 class XqaOutputModule(OutputModule):
-    def __call__(self, inputs: List[Input], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+    def __call__(self, inputs: List[Question], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         pass
 
     @property

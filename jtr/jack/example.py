@@ -35,11 +35,11 @@ class ExampleInputModule(InputModule):
                                        test_time=test_time)
         return corpus, vocab
 
-    def setup(self, data: List[Tuple[Input, Answer]]):
+    def setup(self, data: List[Tuple[Question, Answer]]):
         self.preprocess(data)
         return self.shared_resource
 
-    def dataset_generator(self, dataset: List[Tuple[Input, Answer]]) \
+    def dataset_generator(self, dataset: List[Tuple[Question, Answer]]) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus, _ = self.preprocess(dataset)
         xy_dict = {
@@ -50,7 +50,7 @@ class ExampleInputModule(InputModule):
         }
         return get_batches(xy_dict)
 
-    def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
         corpus, vocab = self.preprocess(inputs, test_time=True)
         x_dict = {
             Ports.multiple_support: corpus["support"],
@@ -132,13 +132,13 @@ class ExampleOutputModule(OutputModule):
     def input_port(self) -> TensorPort:
         return Ports.scores
 
-    def __call__(self, inputs: List[Input], model_results: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+    def __call__(self, inputs: List[Question], model_results: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         return []
 
 
 if __name__ == '__main__':
     data_set = [
-        (Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
+        (Question(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
          Answer("a", 1.0))
     ]
 

@@ -272,7 +272,7 @@ class InputModule(Module):
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
         """
         Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
         module.
@@ -286,7 +286,7 @@ class InputModule(Module):
         pass
 
     @abstractmethod
-    def dataset_generator(self, dataset: List[Tuple[Input, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
@@ -299,7 +299,7 @@ class InputModule(Module):
         pass
 
     @abstractmethod
-    def setup_from_data(self, data: List[Tuple[Input, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
         """
         Args:
             data: a set of pairs of input and answer.
@@ -487,7 +487,7 @@ class OutputModule(Module):
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Input], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+    def __call__(self, inputs: List[Question], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         """
         Process the prediction tensor for a batch to produce a list of answers. The module has access
         to the original inputs.
@@ -545,7 +545,7 @@ class JTReader:
         assert all(port in self.model_module.output_ports for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
 
-    def __call__(self, inputs: List[Input]) -> List[Answer]:
+    def __call__(self, inputs: List[Question]) -> List[Answer]:
         """
         Reads all inputs (support and question), then returns an answer for each input.
         Args:
@@ -559,9 +559,9 @@ class JTReader:
         return answers
 
     def train(self, optim,
-              training_set: List[Tuple[Input, Answer]],
-              dev_set: List[Tuple[Input, Answer]]=None,
-              test_set: List[Tuple[Input, Answer]]=None,
+              training_set: List[Tuple[Question, Answer]],
+              dev_set: List[Tuple[Question, Answer]]=None,
+              test_set: List[Tuple[Question, Answer]]=None,
               max_epochs=10, hooks=[LossHook(10, 1.0)],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
@@ -622,11 +622,11 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(self.sess, i, predict, 0)
 
-    def run_model(self, inputs: List[Input], goals: List[TensorPort]) -> List[np.ndarray]:
+    def run_model(self, inputs: List[Question], goals: List[TensorPort]) -> List[np.ndarray]:
         batch = self.input_module(inputs)
         return self.model_module(self.sess, batch, goals)
 
-    def setup_from_data(self, data: List[Tuple[Input, Answer]]):
+    def setup_from_data(self, data: List[Tuple[Question, Answer]]):
         """
         Overrides shared-resources
         Args:

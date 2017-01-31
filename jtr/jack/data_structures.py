@@ -3,7 +3,7 @@ Here we define light data structures to store the input to jtr readers, and thei
 """
 
 from typing import NamedTuple, List, Tuple
-from jtr.load.read_jtr import jtr_load
+import json
 
 import collections
 
@@ -20,27 +20,27 @@ def NamedTupleWithDefaults(typename, fields, default_values=()):
 
 
 Answer = NamedTuple("Answer", [('text', str), ('span', Tuple[int, int]), ('score', float)])
-Input = NamedTuple("QASetting", [('question', str),
-                                 ('support', List[str]),
-                                 # id of the instance
-                                 ('id', str),
-                                 # candidates if any
-                                 ('atomic_candidates', List[str]),
-                                 ('seq_candidates', List[List[str]]),
-                                 ('candidate_spans', List[Tuple[int, int]])])
+Question = NamedTuple("Question", [('question', str),
+                                   ('support', List[str]),
+                                   # id of the instance
+                                   ('id', str),
+                                   # candidates if any
+                                   ('atomic_candidates', List[str]),
+                                   ('seq_candidates', List[List[str]]),
+                                   ('candidate_spans', List[Tuple[int, int]])])
 
 
 # Wrapper for creating input
-def InputWithDefaults(question, support, id=None,
-                      atomic_candidates=None, seq_candidates=None, candidate_spans=None):
-    return Input(question, support, id,
-                 atomic_candidates, seq_candidates, candidate_spans)
+def QuestionWithDefaults(question, support, id=None,
+                         atomic_candidates=None, seq_candidates=None, candidate_spans=None):
+    return Question(question, support, id,
+                    atomic_candidates, seq_candidates, candidate_spans)
 
 def AnswerWithDefault(text: str, span: Tuple[int, int]=None, score: float=1.0):
     return Answer(text, span, score)
 
 
-def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Input, List[Answer]]]:
+def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Question, List[Answer]]]:
     """
     This function loads a jtr json file with labelled answers from a specific location.
     Args:
@@ -52,24 +52,36 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Input, Lis
         A list of input-answer pairs.
 
     """
-    dict_data = jtr_load(path, max_count, **options)
-    if "support" not in dict_data:
-        dict_data["support"] = []
+    #TODO: we cannot use jtr_load, because it produces option specific output, whereas the jtr json schema is fixed
+    #dict_data = jtr_load(path, max_count, **options)
 
-    def to_list(text_or_list):
-        if isinstance(text_or_list, str):
-            return [text_or_list]
+    #We load json directly instead
+    jtr_data = json.load(path)
+
+    def value(c, key="text"):
+        if isinstance(c, dict):
+            return c.get(key, None)
+        elif key != "text":
+            return None
         else:
-            return text_or_list
+            return c
 
-    def convert_instance(index):
-        support = to_list(dict_data['support'][index])
-        question = dict_data['question'][index]
-        candidates = to_list(dict_data['candidates'][index])
-        answer = to_list(dict_data['answers'][index])
-        answer_spans = to_list(dict_data['answer_spans'][index])
-        return InputWithDefaults(question, support, atomic_candidates=candidates), \
-               [Answer(a, s, 1.0) for a, s in zip(answer, answer_spans)]
+    global_candidates = None
+    if "globals" in jtr_data:
+        global_candidates = [value(c) for c in jtr_data['globals']['candidates']]
 
-    result = [convert_instance(i) for i in range(0, len(dict_data['question']))]
+    def convert_instance(instance):
+        support = [value(s) for s in instance["support"]] if "support" in instance else None
+        for question_instance in instance["questions"]:
+            question = value(question_instance['question'])
+            idd = value(question_instance['question'], 'id')
+            if global_candidates is None:
+                candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
+            else:
+                candidates = global_candidates
+            answers = [Answer(value(c), value(c, 'span'), 1.0)
+                       for c in question_instance['answers']] if "answers" in question_instance else None
+            yield QuestionWithDefaults(question, support, atomic_candidates=candidates, id=idd), answers
+
+    result = [(inp, answer) for i in jtr_data["instances"] for inp, answer in convert_instance(i)]
     return result

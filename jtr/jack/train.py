@@ -162,7 +162,7 @@ def main():
 
     #TODO: Hooks
     reader.train(optim, training_set=train_data, dev_set=dev_data, test_set=test_data,
-                 max_epochs=args.epochs, hooks=[LossHook(10, 1.0, summary_writer=sw)],
+                 max_epochs=args.epochs, hooks=[LossHook(1, 1.0, summary_writer=sw)],
                  l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
 if __name__ == "__main__":

@@ -97,6 +97,7 @@ def jtr_load(path, max_count=None, **options):
 
     # The script reads into those lists. If IDs for questions, supports or targets are defined, those are ignored.
     questions = []
+    ids = []
     supports = []
     answers = []
     answer_spans = []
@@ -107,7 +108,7 @@ def jtr_load(path, max_count=None, **options):
         global_candidates = [value(c) for c in reading_dataset['globals']['candidates']]
 
     for instance in reading_dataset['instances']:
-        question, support, answer, candidate, answer_span = None, None, None, None, None  # initialisation
+        question, support, answer, candidate, answer_span, idd = None, None, None, None, None, None  # initialisation
         if max_count is None or count < max_count:
             if options["supports"] == "single":
                 support = value(instance['support'][0])
@@ -115,6 +116,7 @@ def jtr_load(path, max_count=None, **options):
                 support = [value(c) for c in instance['support']]
             if options["questions"] == "single":
                 question = value(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
+                idd = value(instance['questions'][0]["question"], "id")
                 if options["answers"] == "single":
                     answer = value(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
                     answer_span = value(instance['questions'][0]['answers'][0], 'span')
@@ -128,6 +130,7 @@ def jtr_load(path, max_count=None, **options):
                 answer = []
                 candidate = []
                 question = [value(c["question"]) for c in instance['questions']]
+                idd = [value(c["question"], "id") for c in instance['questions']]
                 if options["answers"] == "single":
                     answer = [value(c["answers"][0]) for c in instance['questions']]
                     answer_span = [value(c["answers"][0], 'span') for c in instance['questions']]
@@ -147,6 +150,7 @@ def jtr_load(path, max_count=None, **options):
                         candidates.append(candidate)
 
                     questions.append(question)
+                    ids.append(idd)
                     answers.append(answer)
                     answer_spans.append(answer_span)
 
@@ -155,6 +159,7 @@ def jtr_load(path, max_count=None, **options):
                     candidates.append(global_candidates)
 
                 questions.append(question)
+                ids.append(idd)
                 answers.append(answer)
                 answer_spans.append(answer_span)
 
@@ -169,6 +174,6 @@ def jtr_load(path, max_count=None, **options):
     print("Loaded %d examples from %s" % (len(questions), path))
     if options["supports"] != "none": 
         return {'question': questions, 'support': supports, 'answers': answers,
-                'answer_spans':answer_spans, 'candidates': candidates}
+                'answer_spans':answer_spans, 'candidates': candidates, 'ids': ids}
     else:
-       return {'question': questions, 'answers': answers, 'candidates': candidates} 
+       return {'question': questions, 'answers': answers, 'candidates': candidates, 'ids': ids}
