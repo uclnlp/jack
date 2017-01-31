@@ -28,7 +28,7 @@ def model_module(input_ports: List[TensorPort],
                 return input_ports
 
             @property
-            def training_input_ports(self) -> Mapping[TensorPort, tf.Tensor]:
+            def training_input_ports(self) -> List[TensorPort]:
                 return training_input_ports
 
             @property

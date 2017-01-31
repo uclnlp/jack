@@ -362,7 +362,7 @@ class ModelModule(Module):
         pass
 
     @abstractproperty
-    def training_input_ports(self) -> Mapping[TensorPort, tf.Tensor]:
+    def training_input_ports(self) -> List[TensorPort]:
         """
         Returns: A mapping from input target ports to the TF placeholders that correspond to them.
         """
@@ -376,9 +376,16 @@ class ModelModule(Module):
         pass
 
     @abstractproperty
+    def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
+        """
+        Returns: A mapping from ports to the TF placeholders that correspond to them.
+        """
+        pass
+
+    @abstractproperty
     def input_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
         """
-        Returns: A mapping from input ports to the TF placeholders that correspond to them.
+        Returns: A mapping from input ports to the TF tensors that correspond to them.
         """
         pass
 
@@ -398,7 +405,7 @@ class ModelModule(Module):
         pass
 
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
-        result = {ph: mapping[port] for port, ph in self.input_tensors.items()}
+        result = {ph: mapping[port] for port, ph in self.placeholders.items()}
         return result
 
     @abstractmethod
@@ -441,14 +448,22 @@ class SimpleModelModule(ModelModule):
 
     def setup(self, shared_resources: SharedResources, is_training=True):
         self._input_tensors = {d: d.create_placeholder() for d in self.input_ports}
+        self._placeholders = dict(self._input_tensors)
         output_tensors = self.create_output(shared_resources, *[self._input_tensors[port] for port in self.input_ports])
         self._output_tensors = dict(zip(self.output_ports, output_tensors))
         if is_training:
-            input_target_tensors = {p: self._input_tensors.get(p, self._output_tensors.get(p, p.create_placeholder()))
+            self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
+                                      if p not in self._placeholders and p not in self._output_tensors)
+
+            input_target_tensors = {p: self._output_tensors.get(p, self._placeholders.get(p, None))
                                     for p in self.training_input_ports}
             training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
                                                                   for port in self.training_input_ports])
             self._training_tensors = dict(zip(self.training_output_ports, training_output_tensors))
+
+    @property
+    def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
+        return self._placeholders
 
     @property
     def input_tensors(self) -> Mapping[TensorPort, tf.Tensor]:

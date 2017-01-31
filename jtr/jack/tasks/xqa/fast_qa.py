@@ -52,9 +52,9 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         dropout_shape = tf.unpack(tf.shape(emb_question))
         dropout_shape[1] = 1
 
-        emb_question, emb_support = tf.cond(is_eval,
-                                            lambda: [emb_question, emb_support],
-                                            lambda: fixed_dropout([emb_question, emb_support], keep_prob, dropout_shape))
+        [emb_question, emb_support] = tf.cond(is_eval,
+                                              lambda: [emb_question, emb_support],
+                                              lambda: fixed_dropout([emb_question, emb_support], keep_prob, dropout_shape))
 
         # extend embeddings with features
         emb_question_ext = tf.concat(2, [emb_question, question_features])
@@ -63,12 +63,12 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         # encode question and support
         rnn = tf.contrib.rnn.LSTMBlockFusedCell
         encoded_question = birnn_projection_layer(size, rnn,
-                                                  emb_question_ext, support_length,
+                                                  emb_question_ext, question_length,
                                                   projection_scope="question_proj")
 
         encoded_support = birnn_projection_layer(size, rnn,
                                                  emb_support_ext, support_length,
-                                                 share_rnn=True, projection_scope="context_proj")
+                                                 share_rnn=True, projection_scope="support_proj")
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights = \
             fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length)
@@ -169,7 +169,8 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                          weights_initializer=None,
                                                          biases_initializer=None,
                                                          scope="question_attention")
-    attention_scores = attention_scores + tf.expand_dims(tfutil.mask_for_lengths(question_length, batch_size), 2)
+    q_mask = tfutil.mask_for_lengths(question_length, batch_size)
+    attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
     question_attention_weights = tf.nn.softmax(attention_scores, 1)
     question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
 

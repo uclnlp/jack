@@ -115,7 +115,7 @@ class XqaWiqInputModule(InputModule):
                 while offsets[start] < a.span[0]:
                     start += 1
                 end = start
-                while end < len(offsets) and offsets[end] < a.span[1]:
+                while end+1 < len(offsets) and offsets[end+1] < a.span[1]:
                     end += 1
                 if (start, end) not in spans:
                     spans.append((start, end))
@@ -136,9 +136,7 @@ class XqaWiqInputModule(InputModule):
             todo = list(range(len(corpus_ids["question"])))
             self._rng.shuffle(todo)
             while todo:
-                supports = list()
                 support_lengths = list()
-                questions = list()
                 question_lengths = list()
                 wiq = list()
                 spans = list()
@@ -147,26 +145,21 @@ class XqaWiqInputModule(InputModule):
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
-                    supports.append(corpus_ids["support"][j])
+                    for k in range(len(corpus_ids["support"][j])):
+                        emb_supports[i, k] = self._get_emb(corpus_ids["support"][j][k])
+                    for k in range(len(corpus_ids["question"][j])):
+                        emb_supports[i, k] = self._get_emb(corpus_ids["question"][j][k])
                     support_lengths.append(corpus["support_lengths"][j])
-                    questions.append(corpus_ids["question"][j])
                     question_lengths.append(corpus["question_lengths"][j])
                     spans.extend(answer_spans[j])
                     span2question.extend(i for _ in answer_spans[j])
                     wiq.append(word_in_question[j])
                     offsets.append(token_offsets[j])
 
-                for i in range(len(supports)):
-                    for j in range(len(supports[i])):
-                        emb_supports[i, j] = self._get_emb(supports[i][j])
-                for i in range(len(questions)):
-                    for j in range(len(questions[i])):
-                        emb_questions[i, j] = self._get_emb(questions[i][j])
-
                 output = {
-                    XqaPorts.emb_support: emb_supports[:len(supports),:max(support_lengths),:],
+                    XqaPorts.emb_support: emb_supports[:len(support_lengths), :max(support_lengths), :],
                     XqaPorts.support_length: support_lengths,
-                    XqaPorts.emb_question: emb_questions[:len(questions),:max(question_lengths),:],
+                    XqaPorts.emb_question: emb_questions[:len(question_lengths), :max(question_lengths), :],
                     XqaPorts.question_length: question_lengths,
                     XqaPorts.word_in_question: wiq,
                     XqaPorts.answer_span: spans,
@@ -178,6 +171,7 @@ class XqaWiqInputModule(InputModule):
 
                 # we can only numpify in here, because bucketing is not possible prior
                 batch = numpify(output, keys=[XqaPorts.word_in_question, XqaPorts.token_char_offsets])
+                todo = todo[self.batch_size:]
                 yield batch
 
         return GeneratorWithRestart(batch_generator)
@@ -240,9 +234,10 @@ class XqaOutputModule(OutputModule):
 
 def xqa_min_crossentropy_loss(shared_resources, start_scores, end_scores, answer_span, answer_to_question) -> List[tf.Tensor]:
     start, end = [tf.squeeze(t, 1) for t in tf.split(1, 2, answer_span)]
+    start_scores = tf.gather(start_scores, answer_to_question)
+    end_scores = tf.gather(end_scores, answer_to_question)
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(start_scores, start) + \
-                   tf.nn.sparse_softmax_cross_entropy_with_logits(end_scores, end)
-
+           tf.nn.sparse_softmax_cross_entropy_with_logits(end_scores, end)
     loss = tf.segment_min(loss, answer_to_question)
     return [tf.reduce_mean(loss)]
 
