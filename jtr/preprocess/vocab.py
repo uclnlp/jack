@@ -167,7 +167,7 @@ class Vocab(object):
             if unk is not None and unk not in self.sym2id:
                 self.sym2id[unk] = len(self.sym2id)
                 self.id2sym[len(self.id2sym)] = unk
-            self.sym2freqs = {w: emb.get_word_count(w) for w in self.sym2id}
+            self.sym2freqs = {w: emb.vocabulary.get_word_count(w) for w in self.sym2id}
             self.frozen = True
         else:
             self.sym2id = {}

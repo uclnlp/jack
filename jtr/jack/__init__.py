@@ -94,8 +94,6 @@ class Ports:
                              "boolean that determines whether input is eval or training.",
                              "[]")
 
-
-
     class Prediction:
         candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
                         "Represents output scores for each candidate",
@@ -104,7 +102,6 @@ class Ports:
         candidate_index = TensorPort(tf.int32, [None], "candidate_idx",
                                      "Represents answer as a single index",
                                      "[batch_size]")
-
 
     class Targets:
         candidate_index = TensorPort(tf.float32, [None, None], "candidate_targets",
@@ -183,7 +180,6 @@ class FlatPorts:
                                               "answer predicted by the model",
                                               "[A, max_num_tokens]")
 
-
     class Target:
         candidate_idx = TensorPort(tf.float32, [None], "candidate_targets_flat",
                                    "Represents groundtruth candidate labels, usually 1 or 0",
@@ -201,23 +197,22 @@ class FlatPorts:
                                               "sequential answer given during training",
                                               "[A, max_num_tokens]")
 
-
     class Misc:
         # MISC intermediate ports that might come in handy
         # -embeddings
-        embedded_seq_candidates = TensorPort(tf.int32, [None, None, None], "embedded_seq_candidates_flat",
+        embedded_seq_candidates = TensorPort(tf.float32, [None, None, None], "embedded_seq_candidates_flat",
                                              "Represents the embedded sequential candidates",
                                              "[C, max_num_tokens, N]")
 
-        embedded_candidates = TensorPort(tf.int32, [None, None], "embedded_candidates_flat",
+        embedded_candidates = TensorPort(tf.float32, [None, None], "embedded_candidates_flat",
                                          "Represents the embedded candidates",
                                          "[C, N]")
 
-        embedded_support = TensorPort(tf.int32, [None, None, None], "embedded_support_flat",
+        embedded_support = TensorPort(tf.float32, [None, None, None], "embedded_support_flat",
                                       "Represents the embedded support",
                                       "[S, max_num_tokens, N]")
 
-        embedded_question = TensorPort(tf.int32, [None, None, None], "embedded_question_flat",
+        embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question_flat",
                                    "Represents the embedded question",
                                    "[Q, max_num_question_tokens, N]")
         # -attention, ...
@@ -241,14 +236,12 @@ class Module(metaclass=ABCMeta):
     Class to specify shared signature between modules.
     """
 
-    @abstractmethod
     def store(self, path):
         """
         Store the state of this module. Default is that there is no state, so nothing to store.
         """
         pass
 
-    @abstractmethod
     def load(self, path):
         """
         Load the state of this module. Default is that there is no state, so nothing to load.
@@ -448,13 +441,13 @@ class SimpleModelModule(ModelModule):
 
     def setup(self, shared_resources: SharedResources, is_training=True):
         self._input_tensors = {d: d.create_placeholder() for d in self.input_ports}
-        output_tensors = self.create_output(*[self._input_tensors[port] for port in self.input_ports], shared_resources)
+        output_tensors = self.create_output(shared_resources, *[self._input_tensors[port] for port in self.input_ports])
         self._output_tensors = dict(zip(self.output_ports, output_tensors))
         if is_training:
             input_target_tensors = {p: self._input_tensors.get(p, self._output_tensors.get(p, p.create_placeholder()))
                                     for p in self.training_input_ports}
-            training_output_tensors = self.create_training_output(*[input_target_tensors[port]
-                                                             for port in self.training_input_ports], shared_resources)
+            training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
+                                                                  for port in self.training_input_ports])
             self._training_tensors = dict(zip(self.training_output_ports, training_output_tensors))
 
     @property
@@ -507,6 +500,7 @@ class OutputModule(Module):
         """
         pass
 
+    @abstractmethod
     def setup(self, shared_resources: SharedResources):
         """
         Args:
@@ -544,9 +538,9 @@ class JTReader:
         assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
             "Input Module outputs must include model module inputs"
 
-        assert all(port in self.input_module.training_ports or port in self.model_module.output_ports
-                   or port in self.input_module.output_ports for port in self.model_module.training_input_ports), \
-            "Input Module training outputs and model module outputs must include model module training inputs"
+        assert all(port in self.input_module.training_ports or port in self.model_module.output_ports or
+                   port in self.input_module.output_ports for port in self.model_module.training_input_ports), \
+            "Input Module (training) outputs and model module outputs must include model module training inputs"
 
         assert all(port in self.model_module.output_ports for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
@@ -588,7 +582,7 @@ class JTReader:
         self.model_module.setup(self.shared_resources, True)
         self.output_module.setup(self.shared_resources)
 
-        batches = self.input_module.dataset_generator(training_set)
+        batches = self.input_module.dataset_generator(training_set, is_eval=False)
 
         # note that this generator comprehension, not list comprehension
         # train_feed_dicts = (self.model_module.convert_to_feed_dict(m)

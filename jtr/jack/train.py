@@ -47,7 +47,7 @@ def main():
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
-    train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
+    train_default = dev_default = test_default = 'tests/test_data/sentihood/overfit.json'
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader')
     parser.add_argument('--debug', action='store_true',
@@ -137,16 +137,18 @@ def main():
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
+            args.repr_input_dim = embeddings.lookup.shape[1]
     else:
-        #TODO: add options for other embeddings
         train_data, dev_data, test_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev, args.test]]
         logger.info('loaded train/dev/test data')
         if args.pretrain:
+            #TODO: add options for other embeddings
             emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-            embeddings = load_embeddings(path.join('jtr', 'data', 'word2vec', emb_file), 'word2vec')
+            embeddings = load_embeddings(path.join('jtr', 'data', 'SG_GoogleNews', emb_file), 'word2vec')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
+            args.repr_input_dim = embeddings.lookup.shape[1]
 
-    emb = embeddings.get if args.pretrain else None
+    emb = embeddings if args.pretrain else None
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 

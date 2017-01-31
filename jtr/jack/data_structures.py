@@ -66,7 +66,7 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Input, Lis
         support = to_list(dict_data['support'][index])
         question = dict_data['question'][index]
         candidates = to_list(dict_data['candidates'][index])
-        answer = to_list(dict_data['answer'][index])
+        answer = to_list(dict_data['answers'][index])
         answer_spans = to_list(dict_data['answer_spans'][index])
         return InputWithDefaults(question, support, atomic_candidates=candidates), \
                [Answer(a, s, 1.0) for a, s in zip(answer, answer_spans)]
