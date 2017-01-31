@@ -7,6 +7,7 @@ import random
 import jtr
 from jtr.jack import *
 from jtr.jack.fun import model_module_factory, model_module
+from jtr.jack.tasks.xqa.util import token_to_char_offsets
 from jtr.preprocess.batch import get_batches, GeneratorWithRestart
 from jtr.preprocess.map import deep_map, numpify
 from jtr.jack.tasks.xqa.fast_qa import fastqa_model
@@ -29,12 +30,18 @@ class XqaPorts:
     word_in_question = TensorPort(tf.float32, [None, None], "word_in_question_feature",
                                   "Represents a 1/0 feature for all context tokens denoting"
                                   " whether it is part of the question or not",
-                                  "[Q, context_length]")
+                                  "[Q, support_length]")
 
     # output ports
     start_scores = FlatPorts.Prediction.start_scores
     end_scores = FlatPorts.Prediction.end_scores
     span_prediction = FlatPorts.Prediction.answer_span
+
+    # port provided by input but only consumed by output module -> needed to transform token to char offsets
+    token_char_offsets = TensorPort(tf.int32, [None, None], "token_char_offsets",
+                                    "Character offsets of tokens in support.",
+                                    "[S, support_length]")
+
 
     # ports used during training
     answer_to_question = FlatPorts.Input.answer_to_question
@@ -66,7 +73,8 @@ class XqaWiqInputModule(InputModule):
     def output_ports(self) -> List[TensorPort]:
         return [XqaPorts.emb_question, XqaPorts.question_length,
                 XqaPorts.emb_support, XqaPorts.support_length,
-                XqaPorts.word_in_question, XqaPorts.keep_prob, XqaPorts.is_eval]
+                XqaPorts.word_in_question, XqaPorts.keep_prob, XqaPorts.is_eval,
+                XqaPorts.token_char_offsets]
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -82,21 +90,45 @@ class XqaWiqInputModule(InputModule):
         self.shared_vocab_config = shared_resources
 
     def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = {"support": [], "question": []}
+        corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
 
-        answer_spans = []
         for input, answers in dataset:
             corpus["support"].append(input.support[0])
             corpus["question"].append(input.question)
-            answer_spans.append([a.span for a in answers])
 
         corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
         word_in_question = []
-        for q, s in zip(corpus["question"], corpus["support"]):
+
+        token_offsets = []
+        answer_spans = []
+        for i, (q, s) in enumerate(zip(corpus["question"], corpus["support"])):
+            input, answers = dataset[i]
+            corpus["support_lengths"].append(len(s))
+            corpus["question_lengths"].append(len(q))
+
+            # char to token offsets
+            offsets = token_to_char_offsets(input.support[0], s)
+            token_offsets.append(offsets)
+            spans = []
+            for a in answers:
+                start = 0
+                while offsets[start] < a.span[0]:
+                    start += 1
+                end = start
+                while end < len(offsets) and offsets[end] < a.span[1]:
+                    end += 1
+                if (start, end) not in spans:
+                    spans.append((start, end))
+            answer_spans.append(spans)
+
+            # word in question feature
             wiq = []
             for token in s:
                 wiq.append(float(token in q))
             word_in_question.append(wiq)
+
+        emb_supports = np.zeros([self.batch_size, max(corpus["support_lengths"]), self.emb_matrix.shape[1]])
+        emb_questions = np.zeros([self.batch_size, max(corpus["question_lengths"]), self.emb_matrix.shape[1]])
 
         corpus_ids = deep_map(corpus, self.shared_vocab_config.vocab, ['question', 'support'])
 
@@ -111,35 +143,41 @@ class XqaWiqInputModule(InputModule):
                 wiq = list()
                 spans = list()
                 span2question = []
+                offsets = []
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
                     supports.append(corpus_ids["support"][j])
-                    support_lengths.append(len(supports[-1]))
+                    support_lengths.append(corpus["support_lengths"][j])
                     questions.append(corpus_ids["question"][j])
-                    question_lengths.append(len(questions[-1]))
-                    spans.extend(spans[j])
-                    span2question.extend(i for _ in spans[j])
+                    question_lengths.append(corpus["question_lengths"][j])
+                    spans.extend(answer_spans[j])
+                    span2question.extend(i for _ in answer_spans[j])
                     wiq.append(word_in_question[j])
+                    offsets.append(token_offsets[j])
 
-                supports = deep_map(supports, self._get_emb)
-                questions = deep_map(questions, self._get_emb)
+                for i in range(len(supports)):
+                    for j in range(len(supports[i])):
+                        emb_supports[i, j] = self._get_emb(supports[i][j])
+                for i in range(len(questions)):
+                    for j in range(len(questions[i])):
+                        emb_questions[i, j] = self._get_emb(questions[i][j])
 
                 output = {
-                    XqaPorts.emb_support: supports,
+                    XqaPorts.emb_support: emb_supports[:len(supports),:max(support_lengths),:],
                     XqaPorts.support_length: support_lengths,
-                    XqaPorts.emb_question: questions,
+                    XqaPorts.emb_question: emb_questions[:len(questions),:max(question_lengths),:],
                     XqaPorts.question_length: question_lengths,
                     XqaPorts.word_in_question: wiq,
                     XqaPorts.answer_span: spans,
                     XqaPorts.answer_to_question: span2question,
                     XqaPorts.keep_prob: 0.0 if is_eval else 1 - self.dropout,
-                    XqaPorts.is_eval: is_eval
+                    XqaPorts.is_eval: is_eval,
+                    XqaPorts.token_char_offsets: offsets
                 }
 
                 # we can only numpify in here, because bucketing is not possible prior
-                batch = numpify(output, keys=[XqaPorts.emb_support, XqaPorts.emb_question,
-                                              XqaPorts.word_in_question])
+                batch = numpify(output, keys=[XqaPorts.word_in_question, XqaPorts.token_char_offsets])
                 yield batch
 
         return GeneratorWithRestart(batch_generator)
@@ -176,12 +214,25 @@ class XqaWiqInputModule(InputModule):
 
 
 class XqaOutputModule(OutputModule):
-    def __call__(self, inputs: List[Question], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
-        pass
+    def __call__(self, inputs: List[Question], span_prediction:np.array, token_char_offsets:np.array) -> List[Answer]:
+        answers = []
+        for i, q in enumerate(inputs):
+            start, end = span_prediction[i, 0], span_prediction[i, 1]
+            char_start = token_char_offsets[start]
+            char_end = token_char_offsets[end]
+            answer = q.support[0][char_start: char_end]
+            #strip answer
+            while answer[-1].isspace():
+                answer = answer[:-1]
+                char_end -= 1
+
+            answers.append(AnswerWithDefault(answer, (char_start, char_end)))
+
+        return answers
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [XqaPorts.span_prediction]
+        return [XqaPorts.span_prediction, XqaPorts.token_char_offsets]
 
     def setup(self, shared_resources):
         self.vocab = shared_resources.vocab

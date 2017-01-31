@@ -487,7 +487,7 @@ class OutputModule(Module):
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Question], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+    def __call__(self, inputs: List[Question], *tensor_inputs: np.array) -> List[Answer]:
         """
         Process the prediction tensor for a batch to produce a list of answers. The module has access
         to the original inputs.
@@ -542,7 +542,8 @@ class JTReader:
                    port in self.input_module.output_ports for port in self.model_module.training_input_ports), \
             "Input Module (training) outputs and model module outputs must include model module training inputs"
 
-        assert all(port in self.model_module.output_ports for port in self.output_module.input_ports), \
+        assert all(port in self.model_module.output_ports or port in self.input_module.output_ports
+                   for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
 
     def __call__(self, inputs: List[Question]) -> List[Answer]:
@@ -555,7 +556,11 @@ class JTReader:
         """
         batch = self.input_module(inputs)
         prediction = self.model_module(self.sess, batch, self.output_module.input_ports)
-        answers = self.output_module(inputs, prediction)
+        # output module receives everything
+        output_module_input = dict(batch)
+        output_module_input.update(prediction)
+        output_module_input = [prediction.get(port, batch[port]) for port in self.output_module.input_ports]
+        answers = self.output_module(inputs, *output_module_input)
         return answers
 
     def train(self, optim,
@@ -584,10 +589,6 @@ class JTReader:
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
 
-        # note that this generator comprehension, not list comprehension
-        # train_feed_dicts = (self.model_module.convert_to_feed_dict(m)
-        #                    for m in train_port_mappings)
-
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
         loss = self.model_module.training_output_tensors[Ports.loss]
@@ -613,7 +614,10 @@ class JTReader:
 
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
-                _, current_loss = self.model_module(self.sess, batch, [min_op, loss])
+                feed_dict = self.model_module.convert_to_feed_dict(batch)
+                _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
+
+                print(current_loss)
 
                 for hook in hooks:
                     hook.at_iteration_end(self.sess, i, predict, current_loss)
