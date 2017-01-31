@@ -1,5 +1,7 @@
 import tensorflow as tf
-import numpy as np
+
+from jtr.jack.tf_fun.dropout import fixed_dropout
+from jtr.jack.tf_fun.rnn import birnn_with_projection
 from jtr.util import tfutil
 
 
@@ -52,9 +54,9 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         dropout_shape = tf.unpack(tf.shape(emb_question))
         dropout_shape[1] = 1
 
-        emb_question, emb_support = tf.cond(is_eval,
-                                            lambda: [emb_question, emb_support],
-                                            lambda: fixed_dropout([emb_question, emb_support], keep_prob, dropout_shape))
+        [emb_question, emb_support] = tf.cond(is_eval,
+                                              lambda: [emb_question, emb_support],
+                                              lambda: fixed_dropout([emb_question, emb_support], keep_prob, dropout_shape))
 
         # extend embeddings with features
         emb_question_ext = tf.concat(2, [emb_question, question_features])
@@ -62,13 +64,13 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
 
         # encode question and support
         rnn = tf.contrib.rnn.LSTMBlockFusedCell
-        encoded_question = birnn_projection_layer(size, rnn,
-                                                  emb_question_ext, support_length,
-                                                  projection_scope="question_proj")
+        encoded_question = birnn_with_projection(size, rnn,
+                                                 emb_question_ext, question_length,
+                                                 projection_scope="question_proj")
 
-        encoded_support = birnn_projection_layer(size, rnn,
-                                                 emb_support_ext, support_length,
-                                                 share_rnn=True, projection_scope="context_proj")
+        encoded_support = birnn_with_projection(size, rnn,
+                                                emb_support_ext, support_length,
+                                                share_rnn=True, projection_scope="support_proj")
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights = \
             fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length)
@@ -77,83 +79,6 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
                              tf.expand_dims(predicted_end_pointer, 1)])
 
         return start_scores, end_scores, span
-
-
-# PREPROCESSING
-
-def fixed_dropout(xs, keep_prob, noise_shape, seed=None):
-    """
-    Apply dropout with same mask over all inputs
-    Args:
-        xs: list of tensors
-        keep_prob:
-        noise_shape:
-        seed:
-
-    Returns:
-        list of dropped inputs
-    """
-    with tf.name_scope("dropout", values=xs):
-        noise_shape = noise_shape
-        # uniform [keep_prob, 1.0 + keep_prob)
-        random_tensor = keep_prob
-        random_tensor += tf.random_uniform(noise_shape, seed=seed, dtype=xs[0].dtype)
-        # 0. if [keep_prob, 1.0) and 1. if [1.0, 1.0 + keep_prob)
-        binary_tensor = tf.floor(random_tensor)
-        outputs = []
-        for x in xs:
-            ret = tf.div(x, keep_prob) * binary_tensor
-            ret.set_shape(x.get_shape())
-            outputs.append(ret)
-        return outputs
-
-
-def birnn_projection_layer(size, fused_rnn_constructor, inputs, length, share_rnn=False, projection_scope=None):
-    projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
-    fused_rnn = fused_rnn_constructor(size)
-    with tf.variable_scope("RNN", reuse=share_rnn):
-        encoded = fused_birnn(fused_rnn, inputs, sequence_length=length, dtype=tf.float32, time_major=False)[0]
-        encoded = tf.concat(2, encoded)
-
-    projected = tf.contrib.layers.fully_connected(encoded, size,
-                                                  activation_fn=tf.tanh,
-                                                  weights_initializer=projection_initializer,
-                                                  scope=projection_scope)
-    return projected
-
-
-def fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state=None, dtype=None, scope=None, time_major=True):
-    if not time_major:
-        inputs = tf.transpose(inputs, [1, 0, 2])
-    #assumes that time dim is 0 and batch is 1
-    rev_inputs = tf.reverse_sequence(inputs, sequence_length, 0, 1)
-    rev_outputs, last_state = fused_rnn(rev_inputs, sequence_length=sequence_length, initial_state=initial_state,
-                                        dtype=dtype, scope=scope)
-    outputs = tf.reverse_sequence(rev_outputs, sequence_length, 0, 1)
-    if not time_major:
-        outputs = tf.transpose(outputs, [1, 0, 2])
-    return outputs, last_state
-
-
-def fused_birnn(fused_rnn, inputs, sequence_length, initial_state=None, dtype=None, scope=None, time_major=True,
-                backward_device=None):
-    with tf.variable_scope(scope or "BiRNN"):
-        sequence_length = tf.cast(sequence_length, tf.int32)
-        if not time_major:
-            inputs = tf.transpose(inputs, [1, 0, 2])
-        outputs_fw, state_fw = fused_rnn(inputs, sequence_length=sequence_length, initial_state=initial_state,
-                                         dtype=dtype, scope="FW")
-
-        if backward_device is not None:
-            with tf.device(backward_device):
-                outputs_bw, state_bw = fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state, dtype, scope="BW")
-        else:
-            outputs_bw, state_bw = fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state, dtype, scope="BW")
-
-        if not time_major:
-            outputs_fw = tf.transpose(outputs_fw, [1, 0, 2])
-            outputs_bw = tf.transpose(outputs_bw, [1, 0, 2])
-    return (outputs_fw, outputs_bw), (state_fw, state_bw)
 
 
 # ANSWER LAYER
@@ -169,7 +94,8 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                          weights_initializer=None,
                                                          biases_initializer=None,
                                                          scope="question_attention")
-    attention_scores = attention_scores + tf.expand_dims(tfutil.mask_for_lengths(question_length, batch_size), 2)
+    q_mask = tfutil.mask_for_lengths(question_length, batch_size)
+    attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
     question_attention_weights = tf.nn.softmax(attention_scores, 1)
     question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
 

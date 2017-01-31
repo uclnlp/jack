@@ -1,19 +1,20 @@
 """
-This file contains modules for extractive QA models that have an additional
+This file contains FastQA specific modules and ports
 """
 
 import random
 
 import jtr
 from jtr.jack import *
-from jtr.jack.fun import model_module_factory, model_module
+from jtr.jack.fun import model_module_factory, no_shared_resources
+from jtr.jack.tasks.xqa.shared import XqaPorts
 from jtr.jack.tasks.xqa.util import token_to_char_offsets
-from jtr.preprocess.batch import get_batches, GeneratorWithRestart
+from jtr.jack.tf_fun.xqa import xqa_min_crossentropy_loss
+from jtr.preprocess.batch import GeneratorWithRestart
 from jtr.preprocess.map import deep_map, numpify
-from jtr.jack.tasks.xqa.fast_qa import fastqa_model
 
 
-class XqaPorts:
+class FastQAPorts:
     """
     It is good practice define all ports needed for a single model jointly, to get an overview
     """
@@ -36,19 +37,27 @@ class XqaPorts:
     start_scores = FlatPorts.Prediction.start_scores
     end_scores = FlatPorts.Prediction.end_scores
     span_prediction = FlatPorts.Prediction.answer_span
-
-    # port provided by input but only consumed by output module -> needed to transform token to char offsets
-    token_char_offsets = TensorPort(tf.int32, [None, None], "token_char_offsets",
-                                    "Character offsets of tokens in support.",
-                                    "[S, support_length]")
-
+    token_char_offsets = XqaPorts.token_char_offsets
 
     # ports used during training
     answer_to_question = FlatPorts.Input.answer_to_question
     answer_span = FlatPorts.Target.answer_span
 
 
-class XqaWiqInputModule(InputModule):
+# FastQA model module factory method, like fastqa.model.fastqa_model
+fastqa_with_min_crossentropy_loss =\
+    model_module_factory(input_ports=[FastQAPorts.emb_question, FastQAPorts.question_length,
+                                      FastQAPorts.emb_support, FastQAPorts.support_length,
+                                      FastQAPorts.word_in_question,
+                                      FastQAPorts.keep_prob, FastQAPorts.is_eval],
+                         output_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores, FastQAPorts.span_prediction],
+                         training_input_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores, FastQAPorts.answer_span,
+                                               FastQAPorts.answer_to_question],
+                         training_output_ports=[Ports.loss],
+                         training_function=no_shared_resources(xqa_min_crossentropy_loss))
+
+
+class FastQAInputModule(InputModule):
 
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedVocabAndConfig), \
@@ -71,14 +80,14 @@ class XqaWiqInputModule(InputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [XqaPorts.emb_question, XqaPorts.question_length,
-                XqaPorts.emb_support, XqaPorts.support_length,
-                XqaPorts.word_in_question, XqaPorts.keep_prob, XqaPorts.is_eval,
-                XqaPorts.token_char_offsets]
+        return [FastQAPorts.emb_question, FastQAPorts.question_length,
+                FastQAPorts.emb_support, FastQAPorts.support_length,
+                FastQAPorts.word_in_question, FastQAPorts.keep_prob, FastQAPorts.is_eval,
+                FastQAPorts.token_char_offsets]
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [XqaPorts.answer_span, XqaPorts.answer_to_question]
+        return [FastQAPorts.answer_span, FastQAPorts.answer_to_question]
 
     def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
         # Assumes that vocab and embeddings are given during creation
@@ -115,7 +124,7 @@ class XqaWiqInputModule(InputModule):
                 while offsets[start] < a.span[0]:
                     start += 1
                 end = start
-                while end < len(offsets) and offsets[end] < a.span[1]:
+                while end+1 < len(offsets) and offsets[end+1] < a.span[1]:
                     end += 1
                 if (start, end) not in spans:
                     spans.append((start, end))
@@ -136,9 +145,7 @@ class XqaWiqInputModule(InputModule):
             todo = list(range(len(corpus_ids["question"])))
             self._rng.shuffle(todo)
             while todo:
-                supports = list()
                 support_lengths = list()
-                questions = list()
                 question_lengths = list()
                 wiq = list()
                 spans = list()
@@ -147,37 +154,33 @@ class XqaWiqInputModule(InputModule):
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
-                    supports.append(corpus_ids["support"][j])
+                    for k in range(len(corpus_ids["support"][j])):
+                        emb_supports[i, k] = self._get_emb(corpus_ids["support"][j][k])
+                    for k in range(len(corpus_ids["question"][j])):
+                        emb_supports[i, k] = self._get_emb(corpus_ids["question"][j][k])
                     support_lengths.append(corpus["support_lengths"][j])
-                    questions.append(corpus_ids["question"][j])
                     question_lengths.append(corpus["question_lengths"][j])
                     spans.extend(answer_spans[j])
                     span2question.extend(i for _ in answer_spans[j])
                     wiq.append(word_in_question[j])
                     offsets.append(token_offsets[j])
 
-                for i in range(len(supports)):
-                    for j in range(len(supports[i])):
-                        emb_supports[i, j] = self._get_emb(supports[i][j])
-                for i in range(len(questions)):
-                    for j in range(len(questions[i])):
-                        emb_questions[i, j] = self._get_emb(questions[i][j])
-
                 output = {
-                    XqaPorts.emb_support: emb_supports[:len(supports),:max(support_lengths),:],
-                    XqaPorts.support_length: support_lengths,
-                    XqaPorts.emb_question: emb_questions[:len(questions),:max(question_lengths),:],
-                    XqaPorts.question_length: question_lengths,
-                    XqaPorts.word_in_question: wiq,
-                    XqaPorts.answer_span: spans,
-                    XqaPorts.answer_to_question: span2question,
-                    XqaPorts.keep_prob: 0.0 if is_eval else 1 - self.dropout,
-                    XqaPorts.is_eval: is_eval,
-                    XqaPorts.token_char_offsets: offsets
+                    FastQAPorts.emb_support: emb_supports[:len(support_lengths), :max(support_lengths), :],
+                    FastQAPorts.support_length: support_lengths,
+                    FastQAPorts.emb_question: emb_questions[:len(question_lengths), :max(question_lengths), :],
+                    FastQAPorts.question_length: question_lengths,
+                    FastQAPorts.word_in_question: wiq,
+                    FastQAPorts.answer_span: spans,
+                    FastQAPorts.answer_to_question: span2question,
+                    FastQAPorts.keep_prob: 0.0 if is_eval else 1 - self.dropout,
+                    FastQAPorts.is_eval: is_eval,
+                    FastQAPorts.token_char_offsets: offsets
                 }
 
                 # we can only numpify in here, because bucketing is not possible prior
-                batch = numpify(output, keys=[XqaPorts.word_in_question, XqaPorts.token_char_offsets])
+                batch = numpify(output, keys=[FastQAPorts.word_in_question, FastQAPorts.token_char_offsets])
+                todo = todo[self.batch_size:]
                 yield batch
 
         return GeneratorWithRestart(batch_generator)
@@ -204,56 +207,10 @@ class XqaWiqInputModule(InputModule):
         questions = deep_map(questions, self._get_emb)
 
         output = {
-            XqaPorts.emb_support: supports,
-            XqaPorts.emb_question: questions,
-            XqaPorts.word_in_question: word_in_question,
-            XqaPorts.keep_prob: 0.0
+            FastQAPorts.emb_support: supports,
+            FastQAPorts.emb_question: questions,
+            FastQAPorts.word_in_question: word_in_question,
+            FastQAPorts.keep_prob: 0.0
         }
 
         return numpify(output)
-
-
-class XqaOutputModule(OutputModule):
-    def __call__(self, inputs: List[Question], span_prediction:np.array, token_char_offsets:np.array) -> List[Answer]:
-        answers = []
-        for i, q in enumerate(inputs):
-            start, end = span_prediction[i, 0], span_prediction[i, 1]
-            char_start = token_char_offsets[start]
-            char_end = token_char_offsets[end]
-            answer = q.support[0][char_start: char_end]
-            #strip answer
-            while answer[-1].isspace():
-                answer = answer[:-1]
-                char_end -= 1
-
-            answers.append(AnswerWithDefault(answer, (char_start, char_end)))
-
-        return answers
-
-    @property
-    def input_ports(self) -> List[TensorPort]:
-        return [XqaPorts.span_prediction, XqaPorts.token_char_offsets]
-
-    def setup(self, shared_resources):
-        self.vocab = shared_resources.vocab
-
-
-def xqa_min_crossentropy_loss(shared_resources, start_scores, end_scores, answer_span, answer_to_question) -> List[tf.Tensor]:
-    start, end = [tf.squeeze(t, 1) for t in tf.split(1, 2, answer_span)]
-    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(start_scores, start) + \
-                   tf.nn.sparse_softmax_cross_entropy_with_logits(end_scores, end)
-
-    loss = tf.segment_min(loss, answer_to_question)
-    return [tf.reduce_mean(loss)]
-
-
-xqa_wiq_with_min_crossentropy_loss =\
-    model_module_factory(input_ports=[XqaPorts.emb_question, XqaPorts.question_length,
-                                      XqaPorts.emb_support, XqaPorts.support_length,
-                                      XqaPorts.word_in_question,
-                                      XqaPorts.keep_prob, XqaPorts.is_eval],
-                         output_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.span_prediction],
-                         training_input_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.answer_span,
-                                               XqaPorts.answer_to_question],
-                         training_output_ports=[Ports.loss],
-                         training_function=xqa_min_crossentropy_loss)

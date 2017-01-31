@@ -28,7 +28,7 @@ def model_module(input_ports: List[TensorPort],
                 return input_ports
 
             @property
-            def training_input_ports(self) -> Mapping[TensorPort, tf.Tensor]:
+            def training_input_ports(self) -> List[TensorPort]:
                 return training_input_ports
 
             @property
@@ -44,6 +44,12 @@ def model_module(input_ports: List[TensorPort],
         return MyModelModule()
 
     return create
+
+
+def no_shared_resources(f):
+    def g(shared_resources: SharedResources, *tensors: tf.Tensor):
+        return f(*tensors)
+    return g
 
 
 def model_module_factory(input_ports: List[TensorPort],
