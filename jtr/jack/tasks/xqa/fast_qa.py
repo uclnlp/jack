@@ -27,11 +27,18 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         support_mask = tfutil.mask_for_lengths(support_length, batch_size)
         question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
 
+        input_size = shared_resources.config["repr_input_dim"]
+        size = shared_resources.config["repr_dim"]
+
+        # set shapes for inputs
+        emb_question.set_shape([None, None, input_size])
+        emb_support.set_shape([None, None, input_size])
+
         # compute encoder features
         question_features = tf.ones(tf.pack([batch_size, max_question_length, 2]))
 
-        emb_size = emb_question.get_shape()[-1].value
-        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, emb_size], initializer=tf.constant_initializer(1.0))
+        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
+                                 initializer=tf.constant_initializer(1.0))
 
         wiq_w = tf.batch_matmul(emb_question * v_wiqw, emb_support, adj_y=True)
         wiq_w = wiq_w + tf.expand_dims(support_mask, 1)
@@ -54,18 +61,17 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         emb_support_ext = tf.concat(2, [emb_support, support_features])
 
         # encode question and support
-        rnn = tf.contrib.rnn.LSTMBlockFusedCell(shared_resources.config["repr_dim"])
-        encoded_question = birnn_projection_layer(shared_resources.config["repr_dim"], rnn,
+        rnn = tf.contrib.rnn.LSTMBlockFusedCell
+        encoded_question = birnn_projection_layer(size, rnn,
                                                   emb_question_ext, support_length,
                                                   projection_scope="question_proj")
 
-        encoded_support = birnn_projection_layer(shared_resources.config["repr_dim"], rnn,
+        encoded_support = birnn_projection_layer(size, rnn,
                                                  emb_support_ext, support_length,
                                                  share_rnn=True, projection_scope="context_proj")
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights = \
-            fastqa_answer_layer(shared_resources.config["repr_dim"], encoded_question, question_length, encoded_support,
-                                support_length)
+            fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length)
 
         span = tf.concat(1, [tf.expand_dims(predicted_start_pointer, 1),
                              tf.expand_dims(predicted_end_pointer, 1)])
@@ -88,10 +94,6 @@ def fixed_dropout(xs, keep_prob, noise_shape, seed=None):
         list of dropped inputs
     """
     with tf.name_scope("dropout", values=xs):
-        # Do nothing if we know keep_prob == 1
-        if tf.tensor_util.constant_value(keep_prob) == 1:
-          return xs
-
         noise_shape = noise_shape
         # uniform [keep_prob, 1.0 + keep_prob)
         random_tensor = keep_prob
@@ -159,7 +161,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     batch_size = tf.shape(question_length)[0]
     input_size = encoded_support.get_shape()[-1].value
     support_states_flat = tf.reshape(encoded_support, [-1, input_size])
-    offsets = tf.cast(tf.range(0, batch_size), dtype=tf.int64) * (tf.reduce_max(support_length))
+    offsets = tf.cast(tf.range(0, batch_size) * (tf.reduce_max(support_length)), dtype=tf.int64)
 
     # computing single time attention over question
     attention_scores = tf.contrib.layers.fully_connected(encoded_question, 1,

@@ -2,7 +2,12 @@ from jtr.jack.example import ExampleInputModule, ExampleModelModule, ExampleOutp
 from jtr.jack.tasks.xqa.modules import *
 
 models = {}
-reader = lambda f: models.setdefault(f.__name__, f)
+
+
+def reader(f):
+    models.setdefault(f.__name__, f)
+    return f
+
 
 @reader
 def example_reader(vocab, config):
@@ -11,8 +16,9 @@ def example_reader(vocab, config):
     input_module = ExampleInputModule(resources)
     model_module = ExampleModelModule(resources)
     output_module = ExampleOutputModule()
-    reader = JTReader(input_module, model_module, output_module, resources)
-    return reader
+    jtreader = JTReader(input_module, model_module, output_module, resources)
+    return jtreader
+
 
 @reader
 def fastqa_reader(vocab, config):

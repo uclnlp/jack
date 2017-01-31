@@ -27,9 +27,11 @@ def model_module(input_ports: List[TensorPort],
             def input_ports(self) -> List[TensorPort]:
                 return input_ports
 
+            @property
             def training_input_ports(self) -> Mapping[TensorPort, tf.Tensor]:
                 return training_input_ports
 
+            @property
             def training_output_ports(self) -> List[TensorPort]:
                 return training_ouptut_ports
 
@@ -47,11 +49,11 @@ def model_module(input_ports: List[TensorPort],
 def model_module_factory(input_ports: List[TensorPort],
                          output_ports: List[TensorPort],
                          training_input_ports: List[TensorPort],
-                         training_ouptut_ports: List[TensorPort],
-                         g):
-    model_module_constructor = model_module(input_ports, training_input_ports, output_ports, training_ouptut_ports)
+                         training_output_ports: List[TensorPort],
+                         training_function):
+    model_module_constructor = model_module(input_ports, output_ports, training_input_ports, training_output_ports)
     def create(f):
-        return model_module_constructor(f, g)
+        return model_module_constructor(f, training_function)
     return create
 
 #

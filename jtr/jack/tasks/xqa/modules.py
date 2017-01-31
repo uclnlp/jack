@@ -43,6 +43,9 @@ class XqaPorts:
 class XqaWiqInputModule(InputModule):
 
     def __init__(self, shared_vocab_config):
+        assert isinstance(shared_vocab_config, SharedVocabAndConfig), \
+            "shared_resources for XqaWiqInputModule must be an instance of SharedVocabAndConfig"
+
         self.shared_vocab_config = shared_vocab_config
         vocab=shared_vocab_config.vocab
         config=shared_vocab_config.config
@@ -58,16 +61,24 @@ class XqaWiqInputModule(InputModule):
         else:
             return self.default_vec
 
+    @property
     def output_ports(self) -> List[TensorPort]:
-        return [XqaPorts.emb_question, XqaPorts.emb_support, XqaPorts.word_in_question,
-                XqaPorts.keep_prob, XqaPorts.is_eval]
+        return [XqaPorts.emb_question, XqaPorts.question_length,
+                XqaPorts.emb_support, XqaPorts.support_length,
+                XqaPorts.word_in_question, XqaPorts.keep_prob, XqaPorts.is_eval]
 
+    @property
     def training_ports(self) -> List[TensorPort]:
         return [XqaPorts.answer_span, XqaPorts.answer_to_question]
 
-    def setup(self, data: List[Tuple[Input, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[Input, List[Answer]]]) -> SharedResources:
         # Assumes that vocab and embeddings are given during creation
         return self.shared_vocab_config
+
+    def setup(self, shared_resources: SharedResources):
+        assert isinstance(shared_resources, SharedVocabAndConfig), \
+            "shared_resources for XqaWiqInputModule must be an instance of SharedVocabAndConfig"
+        self.shared_vocab_config = shared_resources
 
     def dataset_generator(self, dataset: List[Tuple[Input, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = {"support": [], "question": []}
@@ -91,7 +102,9 @@ class XqaWiqInputModule(InputModule):
             todo = self._rng.shuffle(list(range(len(corpus_ids["question"]))))
             while todo:
                 supports = list()
+                support_lengths = list()
                 questions = list()
+                question_lengths = list()
                 wiq = list()
                 spans = list()
                 span2question = []
@@ -99,7 +112,9 @@ class XqaWiqInputModule(InputModule):
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
                     supports.append(corpus_ids["support"][j])
+                    support_lengths.append(len(supports[-1]))
                     questions.append(corpus_ids["question"][j])
+                    question_lengths.append(len(questions[-1]))
                     spans.extend(spans[j])
                     span2question.extend(i for _ in spans[j])
                     wiq.append(word_in_question[j])
@@ -109,7 +124,9 @@ class XqaWiqInputModule(InputModule):
 
                 output = {
                     XqaPorts.emb_support: supports,
+                    XqaPorts.support_length: support_lengths,
                     XqaPorts.emb_question: questions,
+                    XqaPorts.question_length: question_lengths,
                     XqaPorts.word_in_question: wiq,
                     XqaPorts.answer_span: spans,
                     XqaPorts.answer_to_question: span2question,
@@ -154,11 +171,12 @@ class XqaWiqInputModule(InputModule):
 
         return numpify(output)
 
+
 class XqaOutputModule(OutputModule):
     def __call__(self, inputs: List[Input], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+        pass
 
-        return super().__call__(inputs, model_outputs)
-
+    @property
     def input_ports(self) -> List[TensorPort]:
         return [XqaPorts.span_prediction]
 
@@ -166,13 +184,13 @@ class XqaOutputModule(OutputModule):
         self.vocab = shared_resources.vocab
 
 
-def xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer_to_question) -> List[tf.Tensor]:
+def xqa_min_crossentropy_loss(shared_resources, start_scores, end_scores, answer_span, answer_to_question) -> List[tf.Tensor]:
     start, end = [tf.squeeze(t, 1) for t in tf.split(1, 2, answer_span)]
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(start_scores, start) + \
                    tf.nn.sparse_softmax_cross_entropy_with_logits(end_scores, end)
 
     loss = tf.segment_min(loss, answer_to_question)
-    return tf.reduce_mean(loss)
+    return [tf.reduce_mean(loss)]
 
 
 xqa_wiq_with_min_crossentropy_loss =\
@@ -183,5 +201,5 @@ xqa_wiq_with_min_crossentropy_loss =\
                          output_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.span_prediction],
                          training_input_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.answer_span,
                                                XqaPorts.answer_to_question],
-                         training_ouptut_ports=[Ports.loss],
-                         g=xqa_min_crossentropy_loss)
+                         training_output_ports=[Ports.loss],
+                         training_function=xqa_min_crossentropy_loss)

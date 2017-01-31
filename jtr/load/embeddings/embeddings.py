@@ -18,6 +18,9 @@ class Embeddings:
         else:
             return self.lookup[id]
 
+    def __call__(self, word):
+        return self.get(word)
+
     @property
     def shape(self):
         return self.lookup.shape
