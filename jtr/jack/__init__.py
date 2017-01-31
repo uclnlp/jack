@@ -421,7 +421,7 @@ class ModelModule(Module):
 class SimpleModelModule(ModelModule):
 
     @abstractmethod
-    def create_output(self, *input_tensors: tf.Tensor, shared_resources: SharedResources) -> Mapping[TensorPort, tf.Tensor]:
+    def create_output(self, shared_resources: SharedResources, *input_tensors: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output and loss tensors from input tensors.
@@ -434,8 +434,7 @@ class SimpleModelModule(ModelModule):
         pass
 
     @abstractmethod
-    def create_training_output(self, *target_input_tensors: tf.Tensor,
-                               shared_resources: SharedResources) -> Mapping[TensorPort, tf.Tensor]:
+    def create_training_output(self, shared_resources: SharedResources, *target_input_tensors: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output and loss tensors from input tensors.
@@ -530,11 +529,17 @@ class JTReader:
                  is_train:bool = True,
                  shared_resources=None):
         self.shared_resources = shared_resources
-        self.sess = sess or tf.Session()
+        self.sess = sess
         self.output_module = output_module
         self.model_module = model_module
         self.input_module = input_module
         self.is_train = is_train
+
+        sess_config = tf.ConfigProto()
+        sess_config.gpu_options.allow_growth = True
+
+        if self.sess is None:
+            self.sess = tf.Session(config=sess_config)
 
         assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
             "Input Module outputs must include model module inputs"
@@ -564,8 +569,7 @@ class JTReader:
               dev_set: List[Tuple[Input, Answer]]=None,
               test_set: List[Tuple[Input, Answer]]=None,
               max_epochs=10, hooks=[LossHook(10, 1.0)],
-              sess=None, l2=0.0, clip=None,
-              clip_op=tf.clip_by_value):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -579,7 +583,7 @@ class JTReader:
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
-        #First setup shared resources, e.g., vocabulary
+        #First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.shared_resources = self.input_module.setup_from_data(training_set)
         self.model_module.setup(self.shared_resources, True)
         self.output_module.setup(self.shared_resources)
@@ -602,34 +606,27 @@ class JTReader:
         if clip is not None:
             gradients = optim.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
-                capped_gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
+                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
                                     for grad, var in gradients]
             elif clip_op == tf.clip_by_norm:
-                capped_gradients = [(tf.clip_by_norm(grad, clip), var)
+                gradients = [(tf.clip_by_norm(grad, clip), var)
                                     for grad, var in gradients]
-            min_op = optim.apply_gradients(capped_gradients)
+            min_op = optim.apply_gradients(gradients)
         else:
             min_op = optim.minimize(loss)
 
-        # Do not take up all the GPU memory, all the time.
-        sess_config = tf.ConfigProto()
-        sess_config.gpu_options.allow_growth = True
-
-        if sess is None:
-            sess = tf.Session(config=sess_config)
-
-        tf.global_variables_initializer().run(session=sess)
+        tf.global_variables_initializer().run(session=self.sess)
 
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
-                _, current_loss = self.model_module(sess, batch, [min_op, loss])
+                _, current_loss = self.model_module(self.sess, batch, [min_op, loss])
 
                 for hook in hooks:
-                    hook.at_iteration_end(sess, i, predict, current_loss)
+                    hook.at_iteration_end(self.sess, i, predict, current_loss)
 
             # calling post-epoch hooks
             for hook in hooks:
-                hook.at_epoch_end(sess, i, predict, 0)
+                hook.at_epoch_end(self.sess, i, predict, 0)
 
     def run_model(self, inputs: List[Input], goals: List[TensorPort]) -> List[np.ndarray]:
         batch = self.input_module(inputs)
@@ -661,7 +658,7 @@ class JTReader:
         """
         Store module states and shared resources.
         """
-        self.shared_resources.store(os.path.join(dir, "shared_resources"))
+        pickle.dump(self.shared_resources, os.path.join(dir, "shared_resources"))
         self.input_module.store(os.path.join(dir, "input_module"))
         self.model_module.store(os.path.join(dir, "model_module"))
         self.output_module.store(os.path.join(dir, "output_module"))

@@ -3,11 +3,12 @@ import numpy as np
 from jtr.util import tfutil
 
 
-def fastqa_model(emb_question, question_length, emb_support, support_length, word_in_question, keep_prob, is_eval,
-                 shared_resource):
+def fastqa_model(shared_resources, emb_question, question_length, emb_support, support_length, word_in_question,
+                 keep_prob, is_eval):
     """
     fast_qa model
     Args:
+        shared_resources: has at least a field config (dict) with key "rep_dim" -> int
         emb_question: [B, L_q, N]
         question_length: [B]
         emb_support: [B, L_s, N]
@@ -15,7 +16,6 @@ def fastqa_model(emb_question, question_length, emb_support, support_length, wor
         word_in_question: [B, L_s]
         keep_prob: []
         is_eval: []
-        shared_resource: has at least a field rep_dim
 
     Returns:
         start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
@@ -54,17 +54,17 @@ def fastqa_model(emb_question, question_length, emb_support, support_length, wor
         emb_support_ext = tf.concat(2, [emb_support, support_features])
 
         # encode question and support
-        rnn = tf.contrib.rnn.LSTMBlockFusedCell(shared_resource.rep_dim)
-        encoded_question = birnn_projection_layer(shared_resource.rep_dim, rnn,
+        rnn = tf.contrib.rnn.LSTMBlockFusedCell(shared_resources.config["repr_dim"])
+        encoded_question = birnn_projection_layer(shared_resources.config["repr_dim"], rnn,
                                                   emb_question_ext, support_length,
                                                   projection_scope="question_proj")
 
-        encoded_support = birnn_projection_layer(shared_resource.rep_dim, rnn,
+        encoded_support = birnn_projection_layer(shared_resources.config["repr_dim"], rnn,
                                                  emb_support_ext, support_length,
                                                  share_rnn=True, projection_scope="context_proj")
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights = \
-            fastqa_answer_layer(shared_resource.rep_dim, encoded_question, question_length, encoded_support,
+            fastqa_answer_layer(shared_resources.config["repr_dim"], encoded_question, question_length, encoded_support,
                                 support_length)
 
         span = tf.concat(1, [tf.expand_dims(predicted_start_pointer, 1),

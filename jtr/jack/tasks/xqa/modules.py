@@ -42,12 +42,13 @@ class XqaPorts:
 
 class XqaWiqInputModule(InputModule):
 
-    def __init__(self, shared_vocab_config, batch_size, dropout, seed=123):
+    def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
         vocab=shared_vocab_config.vocab
-        self.batch_size = batch_size
-        self.dropout = dropout
-        self._rng = random.Random(seed)
+        config=shared_vocab_config.config
+        self.batch_size = config["batch_size"]
+        self.dropout = config.get("dropout", 1)
+        self._rng = random.Random(config.get("seed", 123))
         self.emb_matrix = vocab.emb.lookup
         self.default_vec = np.zeros([vocab.emb_length])
 
@@ -153,7 +154,6 @@ class XqaWiqInputModule(InputModule):
 
         return numpify(output)
 
-
 class XqaOutputModule(OutputModule):
     def __call__(self, inputs: List[Input], model_outputs: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
 
@@ -165,6 +165,7 @@ class XqaOutputModule(OutputModule):
     def setup(self, shared_resources):
         self.vocab = shared_resources.vocab
 
+
 def xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer_to_question) -> List[tf.Tensor]:
     start, end = [tf.squeeze(t, 1) for t in tf.split(1, 2, answer_span)]
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(start_scores, start) + \
@@ -174,29 +175,13 @@ def xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer_to_q
     return tf.reduce_mean(loss)
 
 
-@model_module_factory(input_ports=[XqaPorts.emb_question, XqaPorts.question_length,
-                                   XqaPorts.emb_support, XqaPorts.support_length,
-                                   XqaPorts.word_in_question,
-                                   XqaPorts.keep_prob, XqaPorts.is_eval],
-                      output_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.span_prediction],
-                      training_input_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.answer_span,
-                                            XqaPorts.answer_to_question],
-                      training_ouptut_ports=[Ports.loss])
-def xqa_wiq_with_min_crossentropy_loss(prediction_function):
-    """
-    Creates an ModelModule extractive qa with min cross-entropy loss on answer options
-    Args:
-        prediction_function: function with signature specified by the ports:
-        (XqaWiqPorts.emb_question,
-        XqaWiqPorts.emb_support,
-        XqaWiqPorts.word_in_question,
-        XqaWiqPorts.keep_prob,
-        XqaWiqPorts.is_eval)
-        ->
-        [XqaWiqPorts.start_scores,
-        XqaWiqPorts.end_scores,
-        XqaWiqPorts.span_prediction]
-    Returns:
-
-    """
-    return prediction_function, xqa_min_crossentropy_loss
+xqa_wiq_with_min_crossentropy_loss =\
+    model_module_factory(input_ports=[XqaPorts.emb_question, XqaPorts.question_length,
+                                      XqaPorts.emb_support, XqaPorts.support_length,
+                                      XqaPorts.word_in_question,
+                                      XqaPorts.keep_prob, XqaPorts.is_eval],
+                         output_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.span_prediction],
+                         training_input_ports=[XqaPorts.start_scores, XqaPorts.end_scores, XqaPorts.answer_span,
+                                               XqaPorts.answer_to_question],
+                         training_ouptut_ports=[Ports.loss],
+                         g=xqa_min_crossentropy_loss)

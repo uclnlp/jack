@@ -33,11 +33,11 @@ def model_module(input_ports: List[TensorPort],
             def training_output_ports(self) -> List[TensorPort]:
                 return training_ouptut_ports
 
-            def create_output(self, *tensors: tf.Tensor) -> List[TensorPort]:
-                return f(*tensors)
+            def create_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[TensorPort]:
+                return f(shared_resources, *tensors)
 
-            def create_training_output(self, *tensors: tf.Tensor) -> List[TensorPort]:
-                return g(*tensors)
+            def create_training_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[TensorPort]:
+                return g(shared_resources, *tensors)
 
         return MyModelModule()
 
@@ -47,29 +47,30 @@ def model_module(input_ports: List[TensorPort],
 def model_module_factory(input_ports: List[TensorPort],
                          output_ports: List[TensorPort],
                          training_input_ports: List[TensorPort],
-                         training_ouptut_ports: List[TensorPort]):
-    def create(f, g):
-        return model_module(input_ports, training_input_ports, output_ports, training_ouptut_ports)(f, g)
-
+                         training_ouptut_ports: List[TensorPort],
+                         g):
+    model_module_constructor = model_module(input_ports, training_input_ports, output_ports, training_ouptut_ports)
+    def create(f):
+        return model_module_constructor(f, g)
     return create
 
-
-@model_module([Ports.single_support,
-               Ports.question,
-               Ports.atomic_candidates], [Ports.candidate_scores])
-def average_model_multi_choice(supports: tf.Tensor,
-                               question: tf.Tensor,
-                               candidates: tf.Tensor) -> List[tf.Tensor]:
-    return None, None
-
-
-@model_module_factory([Ports.single_support,
-                       Ports.question,
-                       Ports.atomic_candidates], [Ports.candidate_scores, Ports.loss])
-def model_multi_choice(pooling_op):
-    def model(supports: tf.Tensor,
-              question: tf.Tensor,
-              candidates: tf.Tensor) -> List[tf.Tensor]:
-        return None
-
-    return model
+#
+# @model_module([Ports.single_support,
+#                Ports.question,
+#                Ports.atomic_candidates], [Ports.candidate_scores])
+# def average_model_multi_choice(supports: tf.Tensor,
+#                                question: tf.Tensor,
+#                                candidates: tf.Tensor) -> List[tf.Tensor]:
+#     return None, None
+#
+#
+# @model_module_factory([Ports.single_support,
+#                        Ports.question,
+#                        Ports.atomic_candidates], [Ports.candidate_scores, Ports.loss])
+# def model_multi_choice(pooling_op):
+#     def model(supports: tf.Tensor,
+#               question: tf.Tensor,
+#               candidates: tf.Tensor) -> List[tf.Tensor]:
+#         return None
+#
+#     return model

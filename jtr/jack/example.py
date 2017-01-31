@@ -136,20 +136,21 @@ class ExampleOutputModule(OutputModule):
         return []
 
 
-data_set = [
-    (Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
-     Answer("a", 1.0))
-]
+if __name__ == '__main__':
+    data_set = [
+        (Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
+         Answer("a", 1.0))
+    ]
 
-vocab = SharedVocabAndConfig(Vocab())
-example_reader = JTReader(ExampleInputModule(vocab),
-                          ExampleModelModule(vocab),
-                          ExampleOutputModule(),
-                          vocab)
+    vocab = SharedVocabAndConfig(Vocab())
+    example_reader = JTReader(ExampleInputModule(vocab),
+                              ExampleModelModule(vocab),
+                              ExampleOutputModule(),
+                              vocab)
 
-example_reader.setup(data_set)
+    example_reader.setup(data_set)
 
-# todo: chose optimizer based on config
-example_reader.train(data_set, optim=tf.train.AdamOptimizer())
+    # todo: chose optimizer based on config
+    example_reader.train(data_set, optim=tf.train.AdamOptimizer())
 
-# answers = example_reader(data_set)
+    # answers = example_reader(data_set)

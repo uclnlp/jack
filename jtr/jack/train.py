@@ -11,6 +11,7 @@ import logging
 
 import tensorflow as tf
 
+from jtr.jack import load_labelled_data
 from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import Vocab
 from jtr.train import train
@@ -37,31 +38,9 @@ class Duration(object):
 tf.set_random_seed(1337)
 checkpoint = Duration()
 
-"""
-    Loads data, preprocesses it, and finally initializes and trains a model.
-
-   The script does step-by-step:
-      (1) Define JTR models
-      (2) Parse the input arguments
-      (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
-      (4) Preprocesses the data (tokenize, normalize, add start and end of sentence tags) via the sisyphos.pipeline method
-      (5) Create NeuralVocab
-      (6) Create TensorFlow placeholders and initialize model
-      (7) Batch the data via jtr.preprocess.batch.get_feed_dicts
-      (8) Add hooks
-      (9) Train the model
-"""
-
-
-def jtr_load(_path, max_count=None, **options):
-    return _jtr_load(_path, max_count, **options)
-
 
 def main():
-    t0 = time()
-
-    # (1) Defined JTR models
-    # Please add new models to models.__models__ when they work
+    # Please add new models to readers when they work
     reader_models = readers.models
 
     support_alts = {'none', 'single', 'multiple'}
@@ -70,9 +49,7 @@ def main():
 
     train_default = dev_default = test_default = '../tests/test_data/sentihood/overfit.json'
 
-    # (2) Parse the input arguments
     parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader')
-
     parser.add_argument('--debug', action='store_true',
                         help="Run in debug mode, in which case the training file is also used for testing")
 
@@ -95,8 +72,8 @@ def main():
         type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=100, type=int,
                         help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
-    parser.add_argument('--repr_dim_output', default=100, type=int,
-                        help="Size of the output representation, default 100")
+    parser.add_argument('--repr_dim', default=100, type=int,
+                        help="Size of the hidden representations, default 100")
 
     parser.add_argument('--pretrain', action='store_true',
                         help="Use pretrained embeddings, by default the initialisation is random")
@@ -110,18 +87,14 @@ def main():
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
-    parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='fastqa_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float,
                         help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
-    parser.add_argument('--drop_keep_prob', default=0.9, type=float,
-                        help="Keep probability for dropout on output (set to 1.0 for no dropout)")
+    parser.add_argument('--dropout', default=0.0, type=float,
+                        help="Probability for dropout on output (set to 0.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
-
-    parser.add_argument('--tokenize', dest='tokenize', action='store_true', help="Tokenize question and support")
-    parser.add_argument('--no-tokenize', dest='tokenize', action='store_false', help="Tokenize question and support")
-    parser.set_defaults(tokenize=True)
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
@@ -154,7 +127,7 @@ def main():
 
     embeddings = None
     if args.debug:
-        train_data = jtr_load(args.train, args.debug_examples, **vars(args))
+        train_data = load_labelled_data(args.train, args.debug_examples, **vars(args))
 
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(args.debug_examples))
 
@@ -165,7 +138,8 @@ def main():
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
     else:
-        train_data, dev_data, test_data = [jtr_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
+        #TODO: add options for other embeddings
+        train_data, dev_data, test_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev, args.test]]
         logger.info('loaded train/dev/test data')
         if args.pretrain:
             emb_file = 'GoogleNews-vectors-negative300.bin.gz'
@@ -176,71 +150,18 @@ def main():
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
-
-
+    # build JTReader
+    reader = reader_models[args.model](vocab, vars(args))
     checkpoint()
 
-    # (6) Create TensorFlow placeholders and initialize model
-    logger.info('create placeholders')
-    placeholders = create_placeholders(train_data)
-    logger.info('build model {}'.format(args.model))
-
-    (logits, loss, predict) = reader_models[args.model](vocab, **vars(args))
-
-    # (7) Batch the data via jtr.batch.get_feed_dicts
-    if args.supports != "none":
-        # composite buckets; first over question, then over support
-        bucket_order = ('question', 'support')
-        # will result in 16 composite buckets, evenly spaced over questions and supports
-        bucket_structure = (4, 4)
-    else:
-        # question buckets
-        bucket_order = ('question',)
-        # 4 buckets, evenly spaced over questions
-        bucket_structure = (4,)
-
-    train_feed_dicts = \
-        get_feed_dicts(train_data, placeholders, args.batch_size,
-                       bucket_order=bucket_order, bucket_structure=bucket_structure)
-    dev_feed_dicts = get_feed_dicts(dev_data, placeholders, args.dev_batch_size,
-                                    bucket_order=bucket_order, bucket_structure=bucket_structure)
-
-    test_feed_dicts = get_feed_dicts(test_data, placeholders, 1,
-                                     bucket_order=bucket_order, bucket_structure=bucket_structure)
-
     optim = tf.train.AdamOptimizer(args.learning_rate)
-
     # little bit hacky..; for visualization of dev data during training
-    dev_feed_dict = next(dev_feed_dicts.__iter__())
     sw = tf.summary.FileWriter(args.tensorboard_folder)
 
-    answname = "targets" if "cands" in args.model else "answers"
-
-    # (8) Add hooks
-    hooks = [
-        #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
-        #           feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
-        # report_loss
-        LossHook(100, args.batch_size, summary_writer=sw),
-        ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
-        # evaluate on train data after each epoch
-        EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=1, metrics=['Acc', 'macroF1'],
-                 print_details=False, write_metrics_to=args.write_metrics_to, info="training", summary_writer=sw),
-        # evaluate on dev data after each epoch
-        EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=1, metrics=['Acc', 'macroF1'], print_details=False,
-                 write_metrics_to=args.write_metrics_to, info="development", summary_writer=sw),
-        # evaluate on test data after training
-        EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
-                 at_every_epoch=args.epochs, metrics=['Acc', 'macroP', 'macroR', 'macroF1'],
-                 print_details=False, write_metrics_to=args.write_metrics_to, info="test")
-    ]
-
-    # (9) Train the model
-    train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=clip_value, hooks=hooks)
-    logger.info('finished in {0:.3g}'.format((time() - t0) / 3600.))
-
+    #TODO: Hooks
+    reader.train(optim, training_set=train_data, dev_set=dev_data, test_set=test_data,
+                 max_epochs=args.epochs, hooks=[LossHook(10, 1.0, summary_writer=sw)],
+                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
