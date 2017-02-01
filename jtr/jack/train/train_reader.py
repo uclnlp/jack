@@ -12,10 +12,10 @@ import logging
 import tensorflow as tf
 
 from jtr.jack import load_labelled_data
+from jtr.jack.train.hooks import EvalHook, XQAEvalHook, LossHook
 from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import Vocab
 from jtr.train import train
-from jtr.util.hooks import ExamplesPerSecHook, LossHook, TensorHook, EvalHook
 import jtr.jack.readers as readers
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
@@ -41,7 +41,6 @@ checkpoint = Duration()
 
 def main():
     # Please add new models to readers when they work
-    reader_models = readers.models
 
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
@@ -87,14 +86,15 @@ def main():
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
-    parser.add_argument('--model', default='fastqa_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
+    parser.add_argument('--model', default='fastqa_reader', choices=sorted(readers.readers.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
+    parser.add_argument('--learning_rate_decay', default=0.5, type=float, help="Learning rate decay, default 0.5")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float,
                         help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
     parser.add_argument('--dropout', default=0.0, type=float,
                         help="Probability for dropout on output (set to 0.0 for no dropout)")
-    parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
+    parser.add_argument('--epochs', default=100, type=int, help="Number of epochs to train for, default 5")
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
@@ -152,17 +152,34 @@ def main():
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
-    # build JTReader
-    reader = reader_models[args.model](vocab, vars(args))
-    checkpoint()
-
-    optim = tf.train.AdamOptimizer(args.learning_rate)
-    # little bit hacky..; for visualization of dev data during training
+    learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32, trainable=False)
+    optim = tf.train.AdamOptimizer(learning_rate)
     sw = tf.summary.FileWriter(args.tensorboard_folder)
 
-    #TODO: Hooks
-    reader.train(optim, training_set=train_data, dev_set=dev_data, test_set=test_data,
-                 max_epochs=args.epochs, hooks=[LossHook(1, 1.0, summary_writer=sw)],
+    # build JTReader
+    checkpoint()
+    reader = readers.readers[args.model](vocab, vars(args))
+    checkpoint()
+
+    # Hooks
+    hooks = [LossHook(reader, 1 if args.debug else 100, summary_writer=sw)]
+    if args.model in readers.xqa_readers:
+        lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
+        def side_effect(metrics, prev_f1):
+            f1 = metrics["f1"]
+            if prev_f1 is not None and f1 < prev_f1:
+                reader.sess.run(lr_decay_op)
+                logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
+            return f1
+        hooks.append(XQAEvalHook(reader, dev_data, summary_writer=sw, side_effect=side_effect))
+    if args.model in readers.genqa_readers:
+        pass
+    if args.model in readers.mcqa_readers:
+        pass
+
+    # Train
+    reader.train(optim, training_set=train_data,
+                 max_epochs=args.epochs, hooks=hooks,
                  l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
 if __name__ == "__main__":

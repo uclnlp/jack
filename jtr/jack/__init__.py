@@ -12,11 +12,9 @@ import tensorflow as tf
 import jtr.train as jtr_train
 
 from jtr.jack.data_structures import *
-from jtr.util.hooks import LossHook
 
 import logging
 import sys
-
 
 class TensorPort:
     """
@@ -329,7 +327,7 @@ class ModelModule(Module):
 
     def __call__(self, sess: tf.Session,
                  batch: Mapping[TensorPort, np.ndarray],
-                 goal_ports: List[TensorPort]=None) -> Mapping[TensorPort, np.ndarray]:
+                 goal_ports: List[TensorPort]=list()) -> Mapping[TensorPort, np.ndarray]:
         """
         Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
         module.
@@ -340,11 +338,17 @@ class ModelModule(Module):
             A mapping from ports to tensors.
 
         """
+        goal_ports = goal_ports or self.output_ports()
 
         feed_dict = self.convert_to_feed_dict(batch)
         outputs = sess.run([self.output_tensors[p] for p in goal_ports if p in self.output_tensors], feed_dict)
 
-        return dict(zip(filter(lambda p: p in self.output_tensors, goal_ports), outputs))
+        ret = dict(zip(filter(lambda p: p in self.output_tensors, goal_ports), outputs))
+        for p in goal_ports:
+            if p not in ret and p in batch:
+                ret[p] = batch[p]
+
+        return ret
 
     @abstractproperty
     def output_ports(self) -> List[TensorPort]:
@@ -570,19 +574,13 @@ class JTReader:
         Returns: a list of answers.
         """
         batch = self.input_module(inputs)
-        prediction = self.model_module(self.sess, batch, self.output_module.input_ports)
-        # output module receives everything
-        output_module_input = dict(batch)
-        output_module_input.update(prediction)
-        output_module_input = [prediction.get(port, batch[port]) for port in self.output_module.input_ports]
+        output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *output_module_input)
         return answers
 
     def train(self, optim,
               training_set: List[Tuple[Question, Answer]],
-              dev_set: List[Tuple[Question, Answer]]=None,
-              test_set: List[Tuple[Question, Answer]]=None,
-              max_epochs=10, hooks=[LossHook(10, 1.0)],
+              max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
@@ -607,7 +605,6 @@ class JTReader:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
         loss = self.model_module.training_output_tensors[Ports.loss]
-        predict = None #TODO, what do we need for the Hooks. Hooks should maybe define ports themselves
 
         if l2 != 0.0:
             loss += \
@@ -633,11 +630,11 @@ class JTReader:
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
 
                 for hook in hooks:
-                    hook.at_iteration_end(self.sess, i, predict, current_loss)
+                    hook.at_iteration_end(i, current_loss)
 
             # calling post-epoch hooks
             for hook in hooks:
-                hook.at_epoch_end(self.sess, i, predict, 0)
+                hook.at_epoch_end(i)
 
     def run_model(self, inputs: List[Question], goals: List[TensorPort]) -> List[np.ndarray]:
         batch = self.input_module(inputs)
