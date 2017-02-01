@@ -1,14 +1,36 @@
 from jtr.jack import *
 
-models = {}
+readers = {}
+
+xqa_readers = {}
+genqa_readers = {}
+mcqa_readers = {}
 
 
-def reader(f):
-    models.setdefault(f.__name__, f)
+def __reader(f):
+    readers.setdefault(f.__name__, f)
     return f
 
 
-@reader
+def __xqa_reader(f):
+    __reader(f)
+    xqa_readers.setdefault(f.__name__, f)
+    return f
+
+
+def __mcqa_reader(f):
+    __reader(f)
+    mcqa_readers.setdefault(f.__name__, f)
+    return f
+
+
+def __genqa_reader(f):
+    __reader(f)
+    genqa_readers.setdefault(f.__name__, f)
+    return f
+
+
+@__mcqa_reader
 def example_reader(vocab, config):
     """ Creates an example multiple choice reader. """
     from jtr.jack.example import ExampleInputModule, ExampleModelModule, ExampleOutputModule
@@ -20,7 +42,7 @@ def example_reader(vocab, config):
     return jtreader
 
 
-@reader
+@__xqa_reader
 def fastqa_reader(vocab, config):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.jack.tasks.xqa.fastqa import FastQAInputModule
