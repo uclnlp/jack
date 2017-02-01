@@ -56,7 +56,8 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Question, 
     #dict_data = jtr_load(path, max_count, **options)
 
     #We load json directly instead
-    jtr_data = json.load(path)
+    with open(path) as f:
+        jtr_data = json.load(f)
 
     def value(c, key="text"):
         if isinstance(c, dict):

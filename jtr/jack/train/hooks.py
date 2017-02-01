@@ -100,7 +100,6 @@ class EvalHook(TraceHook):
         super(EvalHook, self).__init__(reader, summary_writer)
         self._batches = reader.input_module.dataset_generator(dataset, is_eval=True)
         self._total = len(dataset)
-        print(self._total)
         self._ports = ports
         self._epoch_interval = epoch_interval
         self._iter_interval = iter_interval
