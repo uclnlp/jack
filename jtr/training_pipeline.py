@@ -75,7 +75,6 @@ def main():
 
     parser.add_argument('--debug', action='store_true',
                         help="Run in debug mode, in which case the training file is also used for testing")
-
     parser.add_argument('--debug_examples', default=10, type=int,
                         help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="jtr training file")
@@ -93,8 +92,10 @@ def main():
         type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
         type=int, help="Batch size for development data, default 128")
-    parser.add_argument('--repr_dim_input', default=100, type=int,
+    parser.add_argument('--repr_dim_input', default=300, type=int,
                         help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
+    parser.add_argument('--repr_dim_input_trf', default=100, type=int,
+                        help="Size of the input embeddings after reducing with fully_connected layer (default 100)")
     parser.add_argument('--repr_dim_output', default=100, type=int,
                         help="Size of the output representation, default 100")
 
@@ -103,11 +104,11 @@ def main():
     parser.add_argument('--train_pretrain', action='store_true',
                         help="Continue training pretrained embeddings together with model parameters")
     parser.add_argument('--normalize_pretrain', action='store_true',
-                        help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
+                        help="Normalize pretrained embeddings, default False (randomly initialized embeddings have expected unit norm too)")
 
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
-    parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
+    parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions and supports, vs. candidates and answers. This needs to be set to True for candidate-based methods.')
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
@@ -130,12 +131,21 @@ def main():
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
     parser.add_argument('--seed', default=1337, type=int, help='random seed')
+    parser.add_argument('--logfile', default='', help='log file')
+
 
     args = parser.parse_args()
 
     clip_value = None
     if args.clip_value != 0.0:
         clip_value = - abs(args.clip_value), abs(args.clip_value)
+
+    if len(args.logfile) > 0:
+        fh = logging.FileHandler(args.logfile)
+        fh.setLevel(logging.INFO)
+        fo = logging.Formatter('%(levelname)s:%(name)s:\t%(message)s')
+        fh.setFormatter(fo)
+        logger.addHandler(fh)
 
     logger.info('configuration:')
     for arg in vars(args):
@@ -167,12 +177,15 @@ def main():
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
+
+
+
     else:
         train_data, dev_data, test_data = [jtr_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
         logger.info('loaded train/dev/test data')
         if args.pretrain:
             emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-            embeddings = load_embeddings(path.join('jtr', 'data', 'word2vec', emb_file), 'word2vec')
+            embeddings = load_embeddings(path.join('jtr', 'data', 'SG_GoogleNews', emb_file), 'word2vec')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
 
     emb = embeddings.get if args.pretrain else None
@@ -184,7 +197,7 @@ def main():
 
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         logger.info('build vocab based on train data')
-        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, sepvocab=args.vocab_sep, tokenization=args.tokenize)
+        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, sepvocab=args.vocab_sep, tokenization=args.tokenize, emb=emb)
         if args.prune == 'True':
             train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
@@ -235,26 +248,22 @@ def main():
         # composite buckets; first over question, then over support
         bucket_order = ('question', 'support')
         # will result in 16 composite buckets, evenly spaced over questions and supports
-        bucket_structure = (4, 4)
+        bucket_structure = (1, 1) #(4, 4)
     else:
         # question buckets
         bucket_order = ('question',)
         # 4 buckets, evenly spaced over questions
-        bucket_structure = (4,)
+        bucket_structure = (1,) #(4,)
 
     train_feed_dicts = \
         get_feed_dicts(train_data, placeholders, args.batch_size,
-                       bucket_order=bucket_order, bucket_structure=bucket_structure)
-    dev_feed_dicts = get_feed_dicts(dev_data, placeholders, args.dev_batch_size,
-                                    bucket_order=bucket_order, bucket_structure=bucket_structure)
+                       bucket_order=bucket_order, bucket_structure=bucket_structure, exact_epoch=False)
+    dev_feed_dicts = get_feed_dicts(dev_data, placeholders, args.dev_batch_size, exact_epoch=True)
 
-    test_feed_dicts = get_feed_dicts(test_data, placeholders, 1,
-                                     bucket_order=bucket_order, bucket_structure=bucket_structure)
+    test_feed_dicts = get_feed_dicts(test_data, placeholders, args.dev_batch_size, exact_epoch=True)
 
     optim = tf.train.AdamOptimizer(args.learning_rate)
 
-    # little bit hacky..; for visualization of dev data during training
-    dev_feed_dict = next(dev_feed_dicts.__iter__())
     sw = tf.summary.FileWriter(args.tensorboard_folder)
 
     answname = "targets" if "cands" in args.model else "answers"
