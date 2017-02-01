@@ -2,7 +2,13 @@ import json
 import re
 token_pattern = re.compile('[^ ]+')
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 """Loads jtr JSON files and manages the transformation into components."""
+
+
 
 def read_data(data_filename):
     """Reads jtr JSON and returns the dictionary."""
@@ -156,9 +162,8 @@ def jtr_load(path, max_count=None, **options):
 
             count += 1
 
-
-    print("Loaded %d examples from %s" % (len(questions), path))
-    if options["supports"] != "none": 
+    logger.info("Loaded %d instances from %s" % (len(questions), path.name))
+    if options["supports"] != "none":
         return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
     else:
        return {'question': questions, 'answers': answers, 'candidates': candidates} 
