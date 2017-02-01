@@ -417,7 +417,7 @@ class NeuralVocab(Vocab):
                         np_E_pre[i, :] = np_normalize(np_E_pre[i, :])
                 E_pre = tf.get_variable("embeddings_pretrained",
                                         initializer=tf.identity(np_E_pre),
-                                        trainable=False, dtype="float32")
+                                        trainable=train_pretrained, dtype="float32")
 
                 if input_size > base_vocab.emb_length:
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
