@@ -131,6 +131,11 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
             rs.shuffle(_buckets2instances[bid])
 
     buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)
+    n_buckets = len(buckets2instances)
+
+    exact_epoch = True if len(data0) < n_buckets*batch_size else exact_epoch
+    #if average instances/bucket smaller than batch_size: set exact_epoch = True
+    #to avoid empty batches during debugging on small data samples
 
     def bucket_generator():
         buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)
@@ -150,7 +155,6 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
                     yield {k: data_np[k][batch_indices] for k in data_np}
 
     return GeneratorWithRestart(bucket_generator)
-
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):
     """Creates feed dicts for all batches with a given batch size.
