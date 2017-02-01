@@ -632,8 +632,6 @@ class JTReader:
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
 
-                print(current_loss)
-
                 for hook in hooks:
                     hook.at_iteration_end(self.sess, i, predict, current_loss)
 
