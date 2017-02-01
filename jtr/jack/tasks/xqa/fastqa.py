@@ -61,11 +61,11 @@ class FastQAInputModule(InputModule):
 
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedVocabAndConfig), \
-            "shared_resources for XqaWiqInputModule must be an instance of SharedVocabAndConfig"
+            "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
 
         self.shared_vocab_config = shared_vocab_config
-        vocab=shared_vocab_config.vocab
-        config=shared_vocab_config.config
+        vocab = shared_vocab_config.vocab
+        config = shared_vocab_config.config
         self.batch_size = config["batch_size"]
         self.dropout = config.get("dropout", 1)
         self._rng = random.Random(config.get("seed", 123))
@@ -95,7 +95,7 @@ class FastQAInputModule(InputModule):
 
     def setup(self, shared_resources: SharedResources):
         assert isinstance(shared_resources, SharedVocabAndConfig), \
-            "shared_resources for XqaWiqInputModule must be an instance of SharedVocabAndConfig"
+            "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
         self.shared_vocab_config = shared_resources
 
     def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
@@ -186,31 +186,50 @@ class FastQAInputModule(InputModule):
         return GeneratorWithRestart(batch_generator)
 
     def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
-        supports = list()
-        questions = list()
+        corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
         for input in inputs:
-            supports.append(input.support[0])
-            questions.append(input.question)
+            corpus["support"].append(input.support[0])
+            corpus["question"].append(input.question)
 
-        supports = deep_map(supports, self.shared_vocab_config.vocab)
-        questions = deep_map(questions, self.shared_vocab_config.vocab)
-
+        corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
         word_in_question = []
 
-        for q, s in zip(questions, supports):
+        token_offsets = []
+        for q, s, input in enumerate(zip(corpus["question"], corpus["support"], inputs)):
+            corpus["support_lengths"].append(len(s))
+            corpus["question_lengths"].append(len(q))
+
+            # char to token offsets
+            offsets = token_to_char_offsets(input.support[0], s)
+            token_offsets.append(offsets)
+
+            # word in question feature
             wiq = []
             for token in s:
                 wiq.append(float(token in q))
             word_in_question.append(wiq)
 
-        supports = deep_map(supports, self._get_emb)
-        questions = deep_map(questions, self._get_emb)
+        emb_supports = np.zeros([self.batch_size, max(corpus["support_lengths"]), self.emb_matrix.shape[1]])
+        emb_questions = np.zeros([self.batch_size, max(corpus["question_lengths"]), self.emb_matrix.shape[1]])
+
+        corpus_ids = deep_map(corpus, self.shared_vocab_config.vocab, ['question', 'support'])
+
+        for i, j in enumerate(len(corpus_ids["question"])):
+            for k in range(len(corpus_ids["support"][j])):
+                emb_supports[i, k] = self._get_emb(corpus_ids["support"][j][k])
+            for k in range(len(corpus_ids["question"][j])):
+                emb_supports[i, k] = self._get_emb(corpus_ids["question"][j][k])
 
         output = {
-            FastQAPorts.emb_support: supports,
-            FastQAPorts.emb_question: questions,
+            FastQAPorts.emb_support: emb_supports,
+            FastQAPorts.support_length: corpus["support_lengths"],
+            FastQAPorts.emb_question: emb_questions,
+            FastQAPorts.question_length: corpus["question_lengths"],
             FastQAPorts.word_in_question: word_in_question,
-            FastQAPorts.keep_prob: 0.0
+            FastQAPorts.is_eval: True,
+            FastQAPorts.token_char_offsets: token_offsets
         }
+
+        output = numpify(output, [FastQAPorts.word_in_question, FastQAPorts.token_char_offsets])
 
         return numpify(output)

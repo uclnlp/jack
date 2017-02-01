@@ -10,7 +10,7 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
     """
     fast_qa model
     Args:
-        shared_resources: has at least a field config (dict) with key "rep_dim" -> int
+        shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_input_dim"
         emb_question: [B, L_q, N]
         question_length: [B]
         emb_support: [B, L_s, N]
