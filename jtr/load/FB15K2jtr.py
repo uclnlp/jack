@@ -179,4 +179,4 @@ if __name__ == "__main__":
         json.dump(D, f)
 
     corpus = convert(triples, neighbourhoods, unique_entities)
-    print( json.dumps(corpus, indent=2) )
+    print(json.dumps(corpus, indent=2))

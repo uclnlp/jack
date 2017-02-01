@@ -79,7 +79,7 @@ def main():
         corpus['instances'] = corpus['instances'][:10]
         with open("./data/SNLI/snli_1.0/snli_1.0_debug_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-        with open("./data/SNLI/snippet_jtrformat_v1.json", 'w') as outfile:
+        with open("./data/SNLI/snippet.jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create dev set test data

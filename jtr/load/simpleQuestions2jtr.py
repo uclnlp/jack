@@ -44,7 +44,7 @@ def main():
     # instances = split_cbt(raw_data)
     # = parse_cbt_example(instances[0])
     corpus = convert_simpleQuestions_to_jtr("/Users/Isabelle/Documents/UCLMR/SimpleQuestions/SimpleQuestions_v2/annotated_fb_data_train.txt")
-    with open("../../jtr/data/simpleQuestions/snippet_jtrformat.json", 'w') as outfile:
+    with open("../../data/simpleQuestions/snippet.jtr.json", 'w') as outfile:
         json.dump(corpus, outfile, indent=2)
 
     outfile.close()
