@@ -8,6 +8,7 @@ import pickle
 from abc import abstractmethod, ABCMeta, abstractproperty
 from typing import Mapping, Iterable, Tuple, Callable
 import numpy as np
+import shutil
 import tensorflow as tf
 import jtr.train as jtr_train
 
@@ -229,26 +230,7 @@ class SharedVocabAndConfig(SharedResources):
         self.vocab = vocab
 
 
-class Module(metaclass=ABCMeta):
-    """
-    Class to specify shared signature between modules.
-    """
-
-    def store(self, path):
-        """
-        Store the state of this module. Default is that there is no state, so nothing to store.
-        """
-        pass
-
-    def load(self, path):
-        """
-        Load the state of this module. Default is that there is no state, so nothing to load.
-        """
-        pass
-
-
-
-class InputModule(Module):
+class InputModule:
     """
     An input module processes inputs and turns them into tensors to be processed by the model module.
     """
@@ -316,8 +298,20 @@ class InputModule(Module):
         """
         pass
 
+    def store(self, path):
+        """
+        Store the state of this module. Default is that there is no state, so nothing to store.
+        """
+        pass
 
-class ModelModule(Module):
+    def load(self, path):
+        """
+        Load the state of this module. Default is that there is no state, so nothing to load.
+        """
+        pass
+
+
+class ModelModule:
     """
     A model module encapsulates two tensorflow trees (possibly overlapping): a tree representing
     the answer prediction (to be processed by the outout module) and a tree representing the loss.
@@ -421,6 +415,18 @@ class ModelModule(Module):
         """
         pass
 
+    def store(self, sess, path):
+        """
+        Store the state of this module. Default is that there is no state, so nothing to store.
+        """
+        pass
+
+    def load(self, sess, path):
+        """
+        Load the state of this module. Default is that there is no state, so nothing to load.
+        """
+        pass
+
 
 class SimpleModelModule(ModelModule):
 
@@ -451,6 +457,7 @@ class SimpleModelModule(ModelModule):
         pass
 
     def setup(self, shared_resources: SharedResources, is_training=True):
+        old_variables = tf.trainable_variables()
         self._input_tensors = {d: d.create_placeholder() for d in self.input_ports}
         self._placeholders = dict(self._input_tensors)
         output_tensors = self.create_output(shared_resources, *[self._input_tensors[port] for port in self.input_ports])
@@ -464,6 +471,8 @@ class SimpleModelModule(ModelModule):
             training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
                                                                   for port in self.training_input_ports])
             self._training_tensors = dict(zip(self.training_output_ports, training_output_tensors))
+        self._training_variables = [v for v in tf.trainable_variables() if v not in old_variables]
+        self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
 
     @property
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
@@ -491,8 +500,14 @@ class SimpleModelModule(ModelModule):
         """
         return self._training_tensors if hasattr(self, "_training_tensors") else None
 
+    def store(self, sess, path):
+        self._saver.save(sess, path)
 
-class OutputModule(Module):
+    def load(self, sess, path):
+        self._saver.restore(sess, path)
+
+
+class OutputModule:
     """
     An output module takes the output (numpy) tensors of the model module and turns them into
     jack data structures.
@@ -526,6 +541,17 @@ class OutputModule(Module):
             shared_resources: sets up this module with shared resources
         """
 
+    def store(self, path):
+        """
+        Store the state of this module. Default is that there is no state, so nothing to store.
+        """
+        pass
+
+    def load(self, path):
+        """
+        Load the state of this module. Default is that there is no state, so nothing to load.
+        """
+        pass
 
 class JTReader:
     """
@@ -654,11 +680,12 @@ class JTReader:
         self.output_module.setup(self.shared_resources)
 
     def setup_from_file(self, dir):
-        self.shared_resources = pickle.load(os.path.join(dir, "shared_resources"))
+        with open(os.path.join(dir, "shared_resources"), 'rb') as f:
+            self.shared_resources = pickle.load(f)
         self.input_module.setup(self.shared_resources)
         self.input_module.load(os.path.join(dir, "model_module"))
         self.model_module.setup(self.shared_resources, self.is_train)
-        self.model_module.load(os.path.join(dir, "model_module"))
+        self.model_module.load(self.sess, os.path.join(dir, "model_module"))
         self.output_module.setup(self.shared_resources)
         self.output_module.load(os.path.join(dir, "output_module"))
 
@@ -666,7 +693,11 @@ class JTReader:
         """
         Store module states and shared resources.
         """
-        pickle.dump(self.shared_resources, os.path.join(dir, "shared_resources"))
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
+        with open(os.path.join(dir, "shared_resources"), "wb") as f:
+            pickle.dump(self.shared_resources, f)
         self.input_module.store(os.path.join(dir, "input_module"))
-        self.model_module.store(os.path.join(dir, "model_module"))
+        self.model_module.store(self.sess, os.path.join(dir, "model_module"))
         self.output_module.store(os.path.join(dir, "output_module"))

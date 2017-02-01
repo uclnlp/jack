@@ -72,8 +72,6 @@ class ExampleInputModule(InputModule):
 
 
 class ExampleModelModule(SimpleModelModule):
-    def store(self):
-        pass
 
     def __init__(self, vocab=None, config=None):
         self.vocab = vocab

@@ -54,9 +54,9 @@ def main():
 
     parser.add_argument('--debug_examples', default=10, type=int,
                         help="If in debug mode, how many examples should be used (default 2000)")
-    parser.add_argument('--train', default=train_default, type=argparse.FileType('r'), help="jtr training file")
-    parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="jtr dev file")
-    parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="jtr test file")
+    parser.add_argument('--train', default=train_default, type=str, help="jtr training file")
+    parser.add_argument('--dev', default=dev_default, type=str, help="jtr dev file")
+    parser.add_argument('--test', default=test_default, type=str, help="jtr test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts),
                         help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts),
@@ -94,7 +94,7 @@ def main():
                         help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
     parser.add_argument('--dropout', default=0.0, type=float,
                         help="Probability for dropout on output (set to 0.0 for no dropout)")
-    parser.add_argument('--epochs', default=100, type=int, help="Number of epochs to train for, default 5")
+    parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
@@ -104,6 +104,7 @@ def main():
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
+    parser.add_argument('--model_dir', default=None, type=str, help="Directory to write reader to.")
 
     args = parser.parse_args()
 
@@ -163,14 +164,21 @@ def main():
 
     # Hooks
     hooks = [LossHook(reader, 1 if args.debug else 100, summary_writer=sw)]
+
+    preferred_metric = "f1"  #TODO: this should depend on the task, for now I set it to 1
+    def side_effect(metrics, prev_metric):
+        """Returns: a state (in this case a metric) that is used as input for the next call"""
+        m = metrics[preferred_metric]
+        if prev_metric is not None and m < prev_metric:
+            reader.sess.run(lr_decay_op)
+            logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
+        else:
+            reader.store(args.model_dir)
+            logger.info("Saving model to: %s" % args.model_dir)
+        return m
+
     if args.model in readers.xqa_readers:
         lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
-        def side_effect(metrics, prev_f1):
-            f1 = metrics["f1"]
-            if prev_f1 is not None and f1 < prev_f1:
-                reader.sess.run(lr_decay_op)
-                logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
-            return f1
         hooks.append(XQAEvalHook(reader, dev_data, summary_writer=sw, side_effect=side_effect))
     if args.model in readers.genqa_readers:
         pass
@@ -181,6 +189,12 @@ def main():
     reader.train(optim, training_set=train_data,
                  max_epochs=args.epochs, hooks=hooks,
                  l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
+
+    if args.debug:
+        with tf.Graph().as_default():
+            print("Test loading of reader.")
+            # Load model to ensure loading works
+            reader.setup_from_file(args.model_dir)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
