@@ -46,6 +46,12 @@ def model_module(input_ports: List[TensorPort],
     return create
 
 
+def no_shared_resources(f):
+    def g(shared_resources: SharedResources, *tensors: tf.Tensor):
+        return f(*tensors)
+    return g
+
+
 def model_module_factory(input_ports: List[TensorPort],
                          output_ports: List[TensorPort],
                          training_input_ports: List[TensorPort],
