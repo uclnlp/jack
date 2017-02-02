@@ -36,7 +36,7 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
                      value=-1000.0):
     """
     Creates a [batch_size x max_length] mask.
-    :param lengths: int64 1-dim tensor of batch_size lengths
+    :param lengths: int32 1-dim tensor of batch_size lengths
     :param batch_size: int32 0-dim tensor or python int
     :param max_length: int32 0-dim tensor or python int
     :param mask_right: if True, everything before "lengths" becomes zero and the
@@ -45,15 +45,15 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
     :return: [batch_size x max_length] mask of zeros and "value"s
     """
     if max_length is None:
-        max_length = tf.cast(tf.reduce_max(lengths), tf.int32)
+        max_length = tf.reduce_max(lengths)
     if batch_size is None:
         batch_size = tf.shape(lengths)[0]
     # [batch_size x max_length]
     mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.pack([batch_size, -1]))
     if mask_right:
-        mask = tf.greater_equal(tf.cast(mask, tf.int64), tf.expand_dims(lengths, 1))
+        mask = tf.greater_equal(mask, tf.expand_dims(lengths, 1))
     else:
-        mask = tf.less(tf.cast(mask, tf.int64), tf.expand_dims(lengths, 1))
+        mask = tf.less(mask, tf.expand_dims(lengths, 1))
     mask = tf.cast(mask, tf.float32) * value
     return mask
 
@@ -159,3 +159,60 @@ def unit_length_transform(x, dim=1):
     l2norm = tf.rsqrt(l2norm_sq)
     #return x * tf.nn.l2_normalize(x, 0) #l2norm
     return x * l2norm
+
+
+def segment_softmax(scores, partition):
+    """Given scores and a partition, converts scores to probs by performing
+    softmax over all rows within a partition."""
+
+    # Subtract max
+    max_per_partition = tf.segment_max(tf.reduce_max(scores, axis=1), partition)
+    scores -= tf.expand_dims(tf.gather(max_per_partition, partition), axis=1)
+
+    # Compute probs
+    scores_exp = tf.exp(scores)
+    scores_exp_sum_per_partition = tf.segment_sum(tf.reduce_sum(scores_exp, axis=1), partition)
+    probs = scores_exp / tf.expand_dims(tf.gather(scores_exp_sum_per_partition, partition), axis=1)
+
+    return probs
+
+
+def segment_argmax(input, partition):
+    """Computes row and col indices Tensors of the segment max in the 2D input."""
+
+    with tf.name_scope("segment_argmax"):
+
+        num_partitions = tf.reduce_max(partition) + 1
+
+        def segment_is_max(i, p):
+            max_per_partition = tf.segment_max(tf.reduce_max(i, axis=1), p)
+            return tf.equal(i, tf.expand_dims(tf.gather(max_per_partition, p), 1))
+
+        is_max = segment_is_max(input, partition)
+
+        # The current is_max could still contain multiple True entries per
+        # partition. As long as they are in the same row, that is not a problem.
+        # However, we do need to remove duplicate Trues in the same partition
+        # in multiple rows.
+        # For that, we'll multiply is_max with the row indices + 1 and perform
+        # segment_is_max() again.
+
+        rows = tf.shape(input)[0]
+        cols = tf.shape(input)[1]
+        row_indices = tf.tile(tf.expand_dims(tf.range(rows), 1), [1, cols])
+        is_max = segment_is_max(tf.cast(is_max, tf.int32) * (row_indices + 1), partition)
+
+        # Get selected rows and columns
+        row_selected = tf.reduce_any(is_max, axis=1)
+        row_indices = tf.squeeze(tf.where(row_selected))
+        rows_selected = tf.reduce_sum(tf.cast(row_selected, tf.int64))
+
+        # Assert rows_selected is correct & ensure row_indices is always 1D
+        with tf.control_dependencies([tf.assert_equal(rows_selected, num_partitions)]):
+            row_indices = tf.reshape(row_indices, [-1])
+
+        selected_rows_is_max = tf.gather(is_max, row_indices)
+        col_indices = tf.argmax(tf.cast(selected_rows_is_max, tf.int64), axis=1)
+
+        # Pack indices
+        return row_indices, col_indices

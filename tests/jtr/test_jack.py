@@ -8,11 +8,11 @@ from jtr.preprocess.vocab import Vocab
 
 @skip("Not implemented yet")
 def test_example_reader_overfit():
-    vocab = jack.SharedVocab(Vocab())
+    vocab = jack.SharedVocabAndConfig(Vocab())
     input_module = example.ExampleInputModule(vocab)
     model_module = example.ExampleModelModule(vocab)
     output_module = example.ExampleOutputModule()
-    reader = jack.Reader(input_module, model_module, output_module, vocab)
+    reader = jack.JTReader(input_module, model_module, output_module, vocab)
 
     example_input = Input(["the father of Bart is Homer", "the father of Homer is Abe"], "Who is the father of Homer?",
                           ["Homer", "Bart", "Abe", "Lisa"])
