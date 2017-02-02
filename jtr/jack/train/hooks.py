@@ -117,7 +117,7 @@ class EvalHook(TraceHook):
         """Returns: list of metric keys this evaluation hook produces. """
 
     @abstractmethod
-    def apply_metrics(self, tensors: Mapping[TensorPort, np.array]) -> Mapping[str, float]:
+    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         """Returns: dict from metric name to float"""
 
     def combine_metrics(self, accumulated_metrics: Mapping[str, List[float]]) -> Mapping[str, float]:
@@ -181,7 +181,7 @@ class XQAEvalHook(EvalHook):
     def possible_metrics(self) -> List[str]:
         return ["exact", "f1"]
 
-    def apply_metrics(self, tensors: Mapping[TensorPort, np.array]) -> Mapping[str, float]:
+    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[FlatPorts.Target.answer_span]
         predicted_spans = tensors[FlatPorts.Prediction.answer_span]
         correct2prediction = tensors[FlatPorts.Input.answer_to_question]
