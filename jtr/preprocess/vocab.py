@@ -169,7 +169,7 @@ class Vocab(object):
         else:
             self.sym2id = {}
             # with pos and neg indices
-            self.id2sym = list()
+            self.id2sym = {}
             self.next_pos = 0
             self.sym2freqs = {}
             if unk is not None:

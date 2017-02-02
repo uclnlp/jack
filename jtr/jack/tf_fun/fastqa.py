@@ -73,7 +73,7 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
                                                 share_rnn=True, projection_scope="support_proj")
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights = \
-            fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length)
+            fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length, is_eval)
 
         span = tf.concat(1, [tf.expand_dims(predicted_start_pointer, 1),
                              tf.expand_dims(predicted_end_pointer, 1)])
@@ -82,7 +82,7 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
 
 
 # ANSWER LAYER
-def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length):
+def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length, is_eval):
     batch_size = tf.shape(question_length)[0]
     input_size = encoded_support.get_shape()[-1].value
     support_states_flat = tf.reshape(encoded_support, [-1, input_size])
@@ -151,6 +151,12 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                    scope="end_scores")
     end_scores = tf.squeeze(end_scores, [2])
     end_scores = end_scores + support_mask
+
+    end_scores = tf.cond(is_eval,
+                         lambda: end_scores + tfutil.mask_for_lengths(tf.cast(predicted_start_pointer, tf.int32),
+                                                                      batch_size,
+                                                                      tf.reduce_max(support_length), mask_right=False),
+                         lambda: end_scores)
 
     predicted_end_pointer = tf.argmax(end_scores, 1)
 

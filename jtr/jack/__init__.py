@@ -54,7 +54,7 @@ class TensorPortWithDefault(TensorPort):
         Returns: a constant tensor of same type, shape and name. It can nevertheless be fed with external values
         as if it was a placeholder.
         """
-        return tf.constant(self.dtype, self.shape, self.name)
+        return tf.constant(self.default_value, self.dtype, self.shape, self.name)
 
 
 
@@ -85,9 +85,9 @@ class Ports:
                                        "Represents candidate choices using single symbols",
                                        "[batch_size, num_candidates]")
 
-        keep_prob = TensorPort(tf.float32, [], "keep_prob",
-                               "scalar representing keep probability when using dropout",
-                               "[]")
+        keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
+                                          "scalar representing keep probability when using dropout",
+                                          "[]")
 
         is_eval = TensorPort(tf.bool, [], "is_eval",
                              "boolean that determines whether input is eval or training.",
@@ -403,7 +403,7 @@ class ModelModule:
         pass
 
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
-        result = {ph: mapping[port] for port, ph in self.placeholders.items()}
+        result = {ph: mapping[port] for port, ph in self.placeholders.items() if port in mapping}
         return result
 
     @abstractmethod
@@ -426,6 +426,15 @@ class ModelModule:
         Load the state of this module. Default is that there is no state, so nothing to load.
         """
         pass
+
+    @abstractproperty
+    def train_variables(self) -> List[tf.Variable]:
+        """ Returns: A list of training variables """
+
+    @abstractproperty
+    def variables(self) -> List[tf.Variable]:
+        """ Returns: A list of variables """
+
 
 
 class SimpleModelModule(ModelModule):
@@ -457,7 +466,8 @@ class SimpleModelModule(ModelModule):
         pass
 
     def setup(self, shared_resources: SharedResources, is_training=True):
-        old_variables = tf.trainable_variables()
+        old_train_variables = tf.trainable_variables()
+        old_variables = tf.global_variables()
         self._input_tensors = {d: d.create_placeholder() for d in self.input_ports}
         self._placeholders = dict(self._input_tensors)
         output_tensors = self.create_output(shared_resources, *[self._input_tensors[port] for port in self.input_ports])
@@ -471,8 +481,9 @@ class SimpleModelModule(ModelModule):
             training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
                                                                   for port in self.training_input_ports])
             self._training_tensors = dict(zip(self.training_output_ports, training_output_tensors))
-        self._training_variables = [v for v in tf.trainable_variables() if v not in old_variables]
+        self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
+        self._variables = [v for v in tf.global_variables() if v not in old_variables]
 
     @property
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
@@ -505,6 +516,17 @@ class SimpleModelModule(ModelModule):
 
     def load(self, sess, path):
         self._saver.restore(sess, path)
+
+    @property
+    def train_variables(self) -> List[tf.Tensor]:
+        """ Returns: A list of training variables """
+        return self._training_variables
+
+    @property
+    def variables(self) -> List[tf.Tensor]:
+        """ Returns: A list of variables """
+        return self._variables
+
 
 
 class OutputModule:
@@ -601,7 +623,7 @@ class JTReader:
         """
         batch = self.input_module(inputs)
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
-        answers = self.output_module(inputs, *output_module_input)
+        answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
     def train(self, optim,
@@ -622,14 +644,10 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         #First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.shared_resources = self.input_module.setup_from_data(training_set)
-        self.model_module.setup(self.shared_resources, True)
-        self.output_module.setup(self.shared_resources)
+        self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
-
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
         loss = self.model_module.training_output_tensors[Ports.loss]
 
         if l2 != 0.0:
@@ -648,7 +666,8 @@ class JTReader:
         else:
             min_op = optim.minimize(loss)
 
-        tf.global_variables_initializer().run(session=self.sess)
+        #initialize non model variables like learning rate, optim vars ...
+        self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
@@ -678,6 +697,7 @@ class JTReader:
         self.shared_resources = self.input_module.setup_from_data(data)
         self.model_module.setup(self.shared_resources, self.is_train)
         self.output_module.setup(self.shared_resources)
+        self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, dir):
         with open(os.path.join(dir, "shared_resources"), 'rb') as f:
@@ -685,6 +705,7 @@ class JTReader:
         self.input_module.setup(self.shared_resources)
         self.input_module.load(os.path.join(dir, "input_module"))
         self.model_module.setup(self.shared_resources, self.is_train)
+        self.sess.run([v.initializer for v in self.model_module.variables])
         self.model_module.load(self.sess, os.path.join(dir, "model_module"))
         self.output_module.setup(self.shared_resources)
         self.output_module.load(os.path.join(dir, "output_module"))
