@@ -1,6 +1,8 @@
 from jtr.jack import *
+from jtr.jack.train.hooks import XQAEvalHook
 
 readers = {}
+eval_hooks = {}
 
 xqa_readers = {}
 genqa_readers = {}
@@ -15,18 +17,21 @@ def __reader(f):
 def __xqa_reader(f):
     __reader(f)
     xqa_readers.setdefault(f.__name__, f)
+    eval_hooks.setdefault(f.__name__, XQAEvalHook)
     return f
 
 
 def __mcqa_reader(f):
     __reader(f)
     mcqa_readers.setdefault(f.__name__, f)
+    #TODO eval hook
     return f
 
 
 def __genqa_reader(f):
     __reader(f)
     genqa_readers.setdefault(f.__name__, f)
+    #TODO eval hook
     return f
 
 

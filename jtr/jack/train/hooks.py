@@ -167,7 +167,7 @@ class XQAEvalHook(EvalHook):
 
     def __init__(self, reader: JTReader, dataset: List[Tuple[Question, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None):
+                 write_metrics_to=None, info="", side_effect=None, **kwargs):
         ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer_to_question]
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
