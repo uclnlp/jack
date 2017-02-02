@@ -1,7 +1,16 @@
 import json
+import argparse
 
 
 def create_snippet(file_path):
+    """
+    Creates a snippet of the original data
+
+    Args:
+        file_path: path to the original file
+
+    Returns: string containing file contents
+    """
     with open(file_path) as data_file:
         data = json.load(data_file)['data']
         out = {
@@ -16,18 +25,35 @@ def create_snippet(file_path):
         return json.dumps(out, indent=2)
 
 
-def create_jtr_snippet(jtr_dict):
-    out = {
-        'meta': jtr_dict['meta'],
-        'instances': [{
-            'support': jtr_dict['instances'][0]['support'],
-            'questions':jtr_dict['instances'][0]['questions'][0:3]
-        }]
-    }
-    return json.dumps(out, indent=2)
+def create_jtr_snippet(jtr_dict, num_instances=1):
+    """
+    Creates a jtr format snippet
+    Args:
+        jtr_dict: jtr dictionary
+        num_instances: number of (first) instances
+
+    Returns: dictionary in jtr format
+    """
+    out = dict()
+    out['meta'] = jtr_dict['meta']
+    out['instances'] = jtr_dict['instances'][0:num_instances]
+    return out
 
 
 def convert_squad(file_path):
+    """
+    SQuAD dataset converter
+
+    Original paper: https://arxiv.org/abs/1606.05250
+    Data: https://rajpurkar.github.io/SQuAD-explorer/
+
+    Download script: data/SQuAD/download.sh
+
+    Args:
+        file_path: path to the SQuAD json file (train-v1.1.json and dev-v1.1.json in data/SQuAD/)
+
+    Returns: dictionary in jtr format
+    """
     # meta info
     if '/' in file_path:
         filename = file_path[file_path.rfind('/')+1:]   # Maybe support a system-specific delimiter
@@ -82,23 +108,32 @@ def __parse_answer(answer_dict):
 
 def main():
     """
+
+    Main call function
+
     Usage:
-    From other code, call convert_squad(filename)
-    NOT APPLICABLE - From command line, a single argument converts and writes to stdout
-    From command line, two arguments converts arg1 and writes to arg2
+        from other code:
+            call convert_squad(filename)
+        from command line:
+            call with --help for help
 
     Returns: nothing
-
     """
-    import sys
-    # if len(sys.argv) == 2:
-    #     print(json.dumps(corpus, indent=2))
-    if len(sys.argv) == 3:
-        corpus = convert_squad(sys.argv[1])
-        with open(sys.argv[2], 'w') as outfile:
-            json.dump(corpus, outfile, indent=2)
-    else:
-        print("Usage: python3 SQuAD2jtr.py path/to/SQuAD save/to/SQuAD.jtr.json")
+    parser = argparse.ArgumentParser(description='SQuAD dataset to jtr format converter.')
+    parser.add_argument('infile',
+                        help="path to the input file, original SQuAD file (e.g. data/SQuAD/train-v1.1.json)")
+    parser.add_argument('outfile',
+                        help="path to the jtr format -generated output file (e.g. data/SQuAD/train.jtr.json)")
+    parser.add_argument('-s', '--snippet', action="store_true",
+                        help="Export a snippet (first 5 instances) instead of the full file")
+
+    args = parser.parse_args()
+    corpus = convert_squad(args.infile)
+    if args.snippet:
+        corpus = create_jtr_snippet(corpus, num_instances=5)
+
+    with open(args.outfile, 'w') as outfile:
+        json.dump(corpus, outfile, indent=2)
 
 
 if __name__ == "__main__":
