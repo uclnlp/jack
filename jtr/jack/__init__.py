@@ -683,10 +683,16 @@ class JTReader:
         with open(os.path.join(dir, "shared_resources"), 'rb') as f:
             self.shared_resources = pickle.load(f)
         self.input_module.setup(self.shared_resources)
-        self.input_module.load(os.path.join(dir, "model_module"))
+        self.input_module.load(os.path.join(dir, "input_module"))
         self.model_module.setup(self.shared_resources, self.is_train)
         self.model_module.load(self.sess, os.path.join(dir, "model_module"))
         self.output_module.setup(self.shared_resources)
+        self.output_module.load(os.path.join(dir, "output_module"))
+
+    def load(self, dir):
+        # assumes that everything is setup perfectly
+        self.input_module.load(os.path.join(dir, "input_module"))
+        self.model_module.load(self.sess, os.path.join(dir, "model_module"))
         self.output_module.load(os.path.join(dir, "output_module"))
 
     def store(self, dir):
