@@ -90,6 +90,7 @@ class LossHook(TraceHook):
             self._epoch_loss = 0
             self._iter_epoch = 0
 
+        self._iter = 0
         return self._epoch_loss / self._iter_epoch
 
 
