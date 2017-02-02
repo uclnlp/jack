@@ -105,7 +105,7 @@ class EvalHook(TraceHook):
         self._iter_interval = iter_interval
         #self.done_for_epoch = False
         self._iter = 0
-        self._info = info
+        self._info = info or self.__class__.__name__
         self._write_metrics_to = write_metrics_to
         self._metrics = metrics or self.possible_metrics
         self._side_effect = side_effect
@@ -126,6 +126,7 @@ class EvalHook(TraceHook):
         return {k: sum(vs)/self._total for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
+        logger.info("Started evaluation %s" % self._info)
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
@@ -134,9 +135,6 @@ class EvalHook(TraceHook):
                 metrics[k].append(m[k])
 
         metrics = self.combine_metrics(metrics)
-
-        if self._side_effect is not None:
-            self._side_effect_state = self._side_effect(metrics, self._side_effect_state)
 
         printmetrics = sorted(metrics.keys())
         res = "Epoch %d\tIteration %d\ttotal %d" % (epoch, self._iter, self._total)
@@ -150,9 +148,13 @@ class EvalHook(TraceHook):
         res += '\t' + self._info
         logger.info(res)
 
+        if self._side_effect is not None:
+            self._side_effect_state = self._side_effect(metrics, self._side_effect_state)
+
     def at_epoch_end(self, epoch: int, **kwargs):
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
+        self._iter = 0
 
     def at_iteration_end(self, epoch: int, loss: float, **kwargs):
         self._iter += 1

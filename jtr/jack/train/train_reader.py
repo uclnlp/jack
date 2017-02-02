@@ -95,6 +95,7 @@ def main():
     parser.add_argument('--dropout', default=0.0, type=float,
                         help="Probability for dropout on output (set to 0.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
+    parser.add_argument('--checkpoint', default=None, type=int, help="Number of batches before evaluation on devset.")
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
@@ -166,6 +167,8 @@ def main():
     hooks = [LossHook(reader, 1 if args.debug else 100, summary_writer=sw)]
 
     preferred_metric = "f1"  #TODO: this should depend on the task, for now I set it to 1
+    best_metric = [0.0]
+    lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""
         m = metrics[preferred_metric]
@@ -173,13 +176,17 @@ def main():
             reader.sess.run(lr_decay_op)
             logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
         else:
-            reader.store(args.model_dir)
+            best_metric[0] = m
+            if prev_metric is None: # store whole model only at beginning of training
+                reader.store(args.model_dir)
+            else:
+                reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
             logger.info("Saving model to: %s" % args.model_dir)
         return m
 
     if args.model in readers.xqa_readers:
-        lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
-        hooks.append(XQAEvalHook(reader, dev_data, summary_writer=sw, side_effect=side_effect))
+        hooks.append(XQAEvalHook(reader, dev_data, summary_writer=sw, side_effect=side_effect,
+                                 iter_interval=args.checkpoint))
     if args.model in readers.genqa_readers:
         pass
     if args.model in readers.mcqa_readers:
@@ -190,11 +197,19 @@ def main():
                  max_epochs=args.epochs, hooks=hooks,
                  l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
-    if args.debug:
-        with tf.Graph().as_default():
-            print("Test loading of reader.")
-            # Load model to ensure loading works
-            reader.setup_from_file(args.model_dir)
+    # Test final model
+    if test_data:
+        logger.info("Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
+        test_eval_hook = None
+        if args.model in readers.xqa_readers:
+            test_eval_hook = XQAEvalHook(reader, test_data, summary_writer=sw, side_effect=side_effect,
+                                         epoch_interval=1)
+        if args.model in readers.genqa_readers:
+            pass
+        if args.model in readers.mcqa_readers:
+            pass
+        reader.load(args.model_dir)
+        test_eval_hook.at_epoch_end(1)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
