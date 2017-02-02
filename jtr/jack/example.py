@@ -1,7 +1,8 @@
 from jtr.jack import *
 import tensorflow as tf
+
+from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline, deep_seq_map, deep_map
-from typing import Mapping
 from jtr.preprocess.batch import get_batches, GeneratorWithRestart
 from jtr.preprocess.vocab import Vocab
 
@@ -10,9 +11,10 @@ class ExampleInputModule(InputModule):
     def store(self):
         pass
 
-    def __init__(self, vocab=None, config=None):
-        self.vocab = vocab.vocab
-        self.config = config
+    def __init__(self, shared_resource):
+        self.vocab = shared_resource.vocab
+        self.config = shared_resource.config
+        self.shared_resource = shared_resource
 
     def preprocess(self, data, test_time=False):
         corpus = {"support": [], "question": [], "candidates": []}
@@ -33,12 +35,13 @@ class ExampleInputModule(InputModule):
                                    test_time=test_time)
         return corpus
 
-    def setup(self, data: List[Tuple[Input, Answer]]):
+    def setup(self, data: List[Tuple[Question, Answer]]):
         self.preprocess(data)
+        return self.shared_resource
 
-    def training_generator(self, training_set: List[Tuple[Input, Answer]]) \
+    def dataset_generator(self, dataset: List[Tuple[Question, Answer]], is_eval:bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(training_set)
+        corpus, _ = self.preprocess(dataset)
         xy_dict = {
             Ports.multiple_support: corpus["support"],
             Ports.question: corpus["question"],
@@ -47,7 +50,7 @@ class ExampleInputModule(InputModule):
         }
         return get_batches(xy_dict)
 
-    def __call__(self, inputs: List[Input]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
         corpus, vocab = self.preprocess(inputs, test_time=True)
         x_dict = {
             Ports.multiple_support: corpus["support"],
@@ -65,8 +68,6 @@ class ExampleInputModule(InputModule):
 
 
 class ExampleModelModule(SimpleModelModule):
-    def store(self):
-        pass
 
     def __init__(self, vocab: SharedVocab, config=None):
         self.vocab = vocab.vocab
@@ -82,8 +83,8 @@ class ExampleModelModule(SimpleModelModule):
         return [Ports.multiple_support, Ports.question, Ports.atomic_candidates, Ports.candidate_targets]
 
     # output scores and loss tensor
-    def create(self, support: tf.Tensor, question: tf.Tensor,
-               candidates: tf.Tensor, target: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
+    def create_output(self, support: tf.Tensor, question: tf.Tensor,
+                      candidates: tf.Tensor, target: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
         input_size = 10
         self.embeddings = tf.get_variable(
             "embeddings", [len(self.vocab), input_size],
@@ -124,26 +125,25 @@ class ExampleOutputModule(OutputModule):
     def input_ports(self) -> TensorPort:
         return [Ports.scores]
 
-    def __call__(self, inputs: List[Input], model_results: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+    def __call__(self, inputs: List[Question], model_results: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         return []
 
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+if __name__ == '__main__':
+    data_set = [
+        (Question(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
+         Answer("a", 1.0))
+    ]
 
-data_set = [
-    (Input(["a is true", "b isn't"], "which is it?", ["a", "b", "c"]),
-     Answer("a", 1.0))
-]
+    vocab = SharedVocabAndConfig(Vocab())
+    example_reader = JTReader(ExampleInputModule(vocab),
+                              ExampleModelModule(vocab),
+                              ExampleOutputModule(),
+                              vocab)
 
-vocab = SharedVocab(Vocab())
-example_reader = Reader(ExampleInputModule(vocab),
-                        ExampleModelModule(vocab),
-                        ExampleOutputModule(),
-                        vocab)
+    example_reader.setup(data_set)
 
-example_reader.setup(data_set)
+    # todo: chose optimizer based on config
+    example_reader.train(data_set, optim=tf.train.AdamOptimizer())
 
-# todo: chose optimizer based on config
-example_reader.train(data_set, optim=tf.train.AdamOptimizer())
-
-# answers = example_reader(data_set)
+    # answers = example_reader(data_set)

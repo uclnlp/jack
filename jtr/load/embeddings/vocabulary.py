@@ -34,7 +34,7 @@ class Vocabulary:
         return self.__word2idx.get(word, None)
 
     def get_word_count(self, word):
-        return self.__freqs.get(word, None)
+        return self.__freqs.get(word, 0)
 
     def get_size(self):
         return len(self.__word2idx)
@@ -52,11 +52,16 @@ class Vocabulary:
     @property
     def idx2word(self):
         if self.__idx2word is None:
-            self.__idx2word = {idx: word for word, idx in self.__word2idx.items()}
+            self.__idx2word = [None] * len(self.__word2idx)
+            for word, idx in self.__word2idx.items():
+                self.__idx2word[idx] = word
         return self.__idx2word
 
     def get_word_by_idx(self, idx):
-        return self.idx2word.get(idx, None)
+        if idx < len(self.idx2word):
+            return self.idx2word[idx]
+        else:
+            return None
 
     def dump_all_tokens_to_file(self, filename):
         with open(filename, 'w') as f:
