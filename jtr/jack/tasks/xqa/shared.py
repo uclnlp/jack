@@ -16,8 +16,8 @@ class XqaOutputModule(OutputModule):
         answers = []
         for i, q in enumerate(inputs):
             start, end = span_prediction[i, 0], span_prediction[i, 1]
-            char_start = token_char_offsets[start]
-            char_end = token_char_offsets[end]
+            char_start = token_char_offsets[i, start]
+            char_end = token_char_offsets[i, end+1]
             answer = q.support[0][char_start: char_end]
             #strip answer
             while answer[-1].isspace():

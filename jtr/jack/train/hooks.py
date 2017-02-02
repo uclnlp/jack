@@ -98,7 +98,8 @@ class EvalHook(TraceHook):
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None):
         super(EvalHook, self).__init__(reader, summary_writer)
-        self._batches = reader.input_module.dataset_generator(dataset, is_eval=True)
+        self._dataset = dataset
+        self._batches = None
         self._total = len(dataset)
         self._ports = ports
         self._epoch_interval = epoch_interval
@@ -127,6 +128,10 @@ class EvalHook(TraceHook):
 
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
+
+        if self._batches is None:
+            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True)
+
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
