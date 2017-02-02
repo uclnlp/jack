@@ -184,13 +184,8 @@ def main():
             logger.info("Saving model to: %s" % args.model_dir)
         return m
 
-    if args.model in readers.xqa_readers:
-        hooks.append(XQAEvalHook(reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                 iter_interval=args.checkpoint))
-    if args.model in readers.genqa_readers:
-        pass
-    if args.model in readers.mcqa_readers:
-        pass
+    hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
+                                                iter_interval=args.checkpoint))
 
     # Train
     reader.train(optim, training_set=train_data,
@@ -200,16 +195,10 @@ def main():
     # Test final model
     if test_data:
         logger.info("Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
-        test_eval_hook = None
-        if args.model in readers.xqa_readers:
-            test_eval_hook = XQAEvalHook(reader, test_data, summary_writer=sw, side_effect=side_effect,
-                                         epoch_interval=1)
-        if args.model in readers.genqa_readers:
-            pass
-        if args.model in readers.mcqa_readers:
-            pass
+        test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
+
         reader.load(args.model_dir)
-        test_eval_hook.at_epoch_end(1)
+        test_eval_hook(1)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
