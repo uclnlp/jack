@@ -83,6 +83,11 @@ def main():
     parser.add_argument('--normalize_pretrain', action='store_true',
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
 
+    parser.add_argument('--embedding_format', default='word2vec', choices=["glove", "word2vec"],
+                        help="format of embeddings to be loaded")
+    parser.add_argument('--embedding_file', default='jtr/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz',
+                        type=str, help="format of embeddings to be loaded")
+
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
@@ -144,10 +149,8 @@ def main():
         train_data, dev_data, test_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev, args.test]]
         logger.info('loaded train/dev/test data')
         if args.pretrain:
-            #TODO: add options for other embeddings
-            emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-            embeddings = load_embeddings(path.join('jtr', 'data', 'SG_GoogleNews', emb_file), 'word2vec')
-            logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
+            embeddings = load_embeddings(args.embedding_file, args.embedding_format)
+            logger.info('loaded pre-trained embeddings ({})'.format(args.embedding_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
 
     emb = embeddings if args.pretrain else None
