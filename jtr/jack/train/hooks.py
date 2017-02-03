@@ -178,8 +178,8 @@ class ETAHook(TraceHook):
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             current_time = time()
             def log_eta(progress, start_time, name):
-                elapsed = current_time - self.start
-                eta = (1-progress) * elapsed
+                elapsed = current_time - start_time
+                eta = elapsed/progress
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
                 self.update_summary(self.reader.sess, self.iter, self.__tag__()+"_"+name, float(eta))
 
