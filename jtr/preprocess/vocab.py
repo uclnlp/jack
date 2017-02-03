@@ -143,19 +143,6 @@ class Vocab(object):
             `emb`: function handle; returns pre-trained embedding (fixed-size numerical list or ndarray)
               for a given symbol, and None for unknown symbols.
         """
-        if unk is None:
-            self.sym2id = {}
-            # with pos and neg indices
-            self.id2sym = list()
-            self.next_pos = 0
-            self.sym2freqs = {}
-        else:
-            self.sym2id = {unk: 0}
-            # with pos and neg indices
-            self.id2sym = [unk]
-            self.next_pos = 1
-            self.sym2freqs = {unk: 0}
-
         self.next_neg = -1
         self.unk = unk
         self.emb = emb if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
