@@ -174,7 +174,7 @@ class XQAEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[Question, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer_to_question]
+        ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer2question]
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -185,7 +185,7 @@ class XQAEvalHook(EvalHook):
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[FlatPorts.Target.answer_span]
         predicted_spans = tensors[FlatPorts.Prediction.answer_span]
-        correct2prediction = tensors[FlatPorts.Input.answer_to_question]
+        correct2prediction = tensors[FlatPorts.Input.answer2question]
 
         def len_np_or_list(v):
             if isinstance(v, list):
