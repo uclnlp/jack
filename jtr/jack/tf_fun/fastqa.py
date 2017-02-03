@@ -1,14 +1,17 @@
 import tensorflow as tf
 
 from jtr.jack.tf_fun.dropout import fixed_dropout
-from jtr.jack.tf_fun.embedding import conv_char_embeddings
+from jtr.jack.tf_fun.embedding import conv_char_embeddings, conv_char_embedding_alt
 from jtr.jack.tf_fun.highway import highway_network
 from jtr.jack.tf_fun.rnn import birnn_with_projection
 from jtr.util import tfutil
 
 
-def fastqa_model(shared_resources, question, emb_question, question_length,
-                 support, emb_support, support_length, word_in_question,
+def fastqa_model(shared_resources, emb_question, question_length,
+                 emb_support, support_length,
+                 unique_word_chars, unique_word_char_length,
+                 question_words2unique, support_words2unique,
+                 word_in_question,
                  correct_start, answer2question, keep_prob, is_eval):
     """
     fast_qa model
@@ -18,6 +21,10 @@ def fastqa_model(shared_resources, question, emb_question, question_length,
         question_length: [Q]
         emb_support: [Q, L_s, N]
         support_length: [Q]
+        unique_word_chars
+        unique_word_char_length
+        question_words2unique
+        support_words2unique
         word_in_question: [Q, L_s]
         correct_start: [A], only during training, i.e., is_eval=False
         answer2question: [A], only during training, i.e., is_eval=False
@@ -42,8 +49,9 @@ def fastqa_model(shared_resources, question, emb_question, question_length,
         emb_support.set_shape([None, None, input_size])
 
         # compute combined embeddings
-        [char_emb_question, char_emb_support] = conv_char_embeddings(shared_resources.vocab, size, [question, support],
-                                                                     [question_length, support_length])
+        [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_resources.config["char_vocab"], size,
+                                                                        unique_word_chars, unique_word_char_length,
+                                                                        [question_words2unique, support_words2unique])
 
         emb_question = tf.concat(2, [emb_question, char_emb_question])
         emb_support = tf.concat(2, [emb_support, char_emb_support])

@@ -163,7 +163,8 @@ def main():
     optim = tf.train.AdamOptimizer(learning_rate)
 
     if args.tensorboard_folder is not None:
-        shutil.rmtree(args.tensorboard_folder)
+        if os.path.exists(args.tensorboard_folder):
+            shutil.rmtree(args.tensorboard_folder)
         sw = tf.summary.FileWriter(args.tensorboard_folder)
     else:
         sw = None
