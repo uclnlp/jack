@@ -6,7 +6,7 @@ class Vocabulary:
         self.__word2idx = {}
         self.__freqs = {}
         if vocab is not None and isinstance(vocab, dict):
-            self.__word2idx = {key: value for key, value in vocab.items()}
+            self.__word2idx = dict(vocab)
             self.__freqs = {key: None for key, _ in vocab.items()}
         self.__idx2word = None
 

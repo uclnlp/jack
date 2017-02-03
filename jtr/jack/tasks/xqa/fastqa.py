@@ -143,8 +143,12 @@ class FastQAInputModule(InputModule):
             spans = []
             for a in answers:
                 start = 0
-                while offsets[start] < a.span[0]:
+                while start < len(offsets) and offsets[start] < a.span[0]:
                     start += 1
+
+                if start == len(offsets):
+                    continue
+
                 end = start
                 while end+1 < len(offsets) and offsets[end+1] < a.span[1]:
                     end += 1
