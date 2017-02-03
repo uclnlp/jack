@@ -1,29 +1,71 @@
+"""
+
+Hermann, Karl Moritz, et al.
+"Teaching machines to read and comprehend."
+Advances in Neural Information Processing Systems. 2015.
+
+Original paper: https://arxiv.org/abs/1506.03340
+Data:   https://github.com/deepmind/rc-data
+        http://cs.nyu.edu/~kcho/DMQA/       (direct download)
+JTR download script: no download script, check README.md
+
+Metadata:
+
+Number of questions:
+
+        CNN     DailyMail
+
+train   380298  879450
+dev     3924    64835
+test    3198    53182
+
+"""
+
 import json
 import os
+import argparse
 
 
-def convert_rcdata(directory, dataset, mode, resolve_entities=False):
+def create_jtr_snippet(directory, dataset, split, resolve_entities=False, num_instances=5):
+    """
+    Creates a jtr format snippet from rc-data data.
+
+    Args:
+        directory: root directory of rc-data
+        dataset: which dataset, 'cnn' of 'dailymail'
+        split: 'train', 'dev' or 'test'
+        resolve_entities: whether to de-anonymise entities. Default: False
+        num_instances: number of (first) instances
+
+    Returns:
+    """
+    return convert_rcdata(directory, dataset, split, resolve_entities, num_instances)
+
+
+def convert_rcdata(directory, dataset, split, resolve_entities=False, first_n=None):
     """
     Convert subset of rc-data (definet by a combination of dataset and mode) to jtk format
     Args:
         directory: root directory of rc-data
         dataset: which dataset, 'cnn' of 'dailymail'
-        mode: 'train', 'dev' or 'test'
+        split: 'train', 'dev' or 'test'
         resolve_entities: whether to de-anonymise entities. Default: False
-
+        first_n: export a snippet containing the first n instances of the dataset
     Returns:
         jtr json
 
     """
-    mode_mapping = {'train': 'training', 'test': 'test', 'dev': 'validation'}
-    assert mode in mode_mapping.keys()
+    split_mapping = {'train': 'training', 'test': 'test', 'dev': 'validation'}
+    assert split in split_mapping.keys()
+    assert dataset in {'cnn', 'dailymail'}
 
     if directory[-1] != '/':
         directory += "/"
-    directory += "{0}/questions/{1}/".format(dataset, mode_mapping[mode])
+    directory += "{0}/questions/{1}/".format(dataset, split_mapping[split])
     filenames = [file for file in os.listdir(directory) if file.endswith('question')]
 
     data = {}
+    i = 0
     for fname in filenames:
         with open(directory + fname, 'r') as f:
             url = f.readline().strip()
@@ -53,6 +95,9 @@ def convert_rcdata(directory, dataset, mode, resolve_entities=False):
                     'text': text,
                     'rest': [(fname, cloze_q, answer)]
                 }
+        i += 1
+        if first_n and i == first_n:
+            break
 
     instances = []
     counter = 0
@@ -83,29 +128,44 @@ def convert_rcdata(directory, dataset, mode, resolve_entities=False):
 
     print(' ...loaded {0} questions.'.format(counter))
     return {
-        "meta": "{0}_{1}".format(dataset, mode),
+        "meta": "{0}_{1}".format(dataset, split),
         "instances": instances
     }
 
 
 def main():
-    import sys
+    """
+    Main call function
 
-    if len(sys.argv) == 5:
-        dataset = sys.argv[1]
-        mode = sys.argv[2]
-        directory = sys.argv[3]
-        outfname = sys.argv[4]
-        corpus = convert_rcdata(directory, dataset, mode)
-        with open(outfname, 'w') as outfile:
-            json.dump(corpus, outfile, indent=2)
-            print(" ...saved data to {0}.".format(outfname))
+    Usage:
+        from other code:
+            call convert_rcdata(filename)
+        from command line:
+            call with --help for help
+
+    Returns: nothing
+    """
+    parser = argparse.ArgumentParser(description='rc-data datasets to jtr format converter.')
+    parser.add_argument('indir',
+                        help="path to the rc-data root directory (e.g. data/rc-data/)")
+    parser.add_argument('outfile',
+                        help="path to the jtr format -generated output file (e.g. data/rc-data/cnn_train.jtr.json)")
+    parser.add_argument('dataset', choices=['cnn', 'dailymail'],
+                        help="which dataset to access: cnn or dailymail")
+    parser.add_argument('split', choices=['train', 'dev', 'test'],
+                        help="which split of the dataset to convert: train, dev or test")
+    parser.add_argument('-s', '--snippet', action="store_true",
+                        help="Export a snippet (first 5 instances) instead of the full file")
+    args = parser.parse_args()
+
+    if args.snippet:
+        corpus = create_jtr_snippet(args.indir, args.dataset, args.split, num_instances=5)
     else:
-        print("""Usage:
-    python3 {dataset} {mode} rc-data2jtr.py path/to/rc-data_dir save/to/rc-data.jtr.json
-        where:
-            {dataset} = {cnn, dailymail}
-            {mode} = {train, dev, test}""")
+        corpus = convert_rcdata(args.indir, args.dataset, args.split)
 
-if __name__ == '__main__':
+    with open(args.outfile, 'w') as outfile:
+        json.dump(corpus, outfile, indent=2)
+
+
+if __name__ == "__main__":
     main()
