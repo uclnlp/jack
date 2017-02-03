@@ -52,7 +52,7 @@ class Vocabulary:
     @property
     def idx2word(self):
         if self.__idx2word is None:
-            self.__idx2word = [None] * len(self.__word2idx)
+            self.__idx2word = [None] * (max(self.__word2idx.values()) + 1)
             for word, idx in self.__word2idx.items():
                 self.__idx2word[idx] = word
         return self.__idx2word
