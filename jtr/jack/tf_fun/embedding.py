@@ -28,8 +28,7 @@ def conv_char_embeddings(vocab, size, word_ids, seq_lengths, conv_width=5,
     char_vocab["PAD"] = 0
     word_to_chars_arr = np.zeros((vocab_size, max_l), np.int16)
     word_lengths_arr = np.zeros([vocab_size], np.int8)
-    for i in range(len(vocab.id2sym)):
-        w = vocab.id2sym[i]
+    for w, i in vocab.sym2id.items():
         for k, c in enumerate(w):
             j = char_vocab[c]
             word_to_chars_arr[i, k] = j
