@@ -569,10 +569,9 @@ class JTReader:
         self.input_module = input_module
         self.is_train = is_train
 
-        sess_config = tf.ConfigProto()
-        sess_config.gpu_options.allow_growth = True
-
         if self.sess is None:
+            sess_config = tf.ConfigProto()
+            sess_config.gpu_options.allow_growth = True
             self.sess = tf.Session(config=sess_config)
 
         assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
@@ -616,6 +615,7 @@ class JTReader:
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
+        logging.info("Setting up data and model...")
         #First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
 
@@ -642,6 +642,7 @@ class JTReader:
         #initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
+        logging.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)

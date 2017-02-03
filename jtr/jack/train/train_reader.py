@@ -9,10 +9,13 @@ import sys
 
 import logging
 
+import math
+
+import shutil
 import tensorflow as tf
 
 from jtr.jack import load_labelled_data
-from jtr.jack.train.hooks import EvalHook, XQAEvalHook, LossHook
+from jtr.jack.train.hooks import EvalHook, XQAEvalHook, LossHook, ExamplesPerSecHook, ETAHook
 from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import Vocab
 from jtr.train import train
@@ -56,7 +59,7 @@ def main():
                         help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=str, help="jtr training file")
     parser.add_argument('--dev', default=dev_default, type=str, help="jtr dev file")
-    parser.add_argument('--test', default=test_default, type=str, help="jtr test file")
+    parser.add_argument('--test', default='', type=str, help="jtr test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts),
                         help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts),
@@ -83,6 +86,11 @@ def main():
     parser.add_argument('--normalize_pretrain', action='store_true',
                         help="Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)")
 
+    parser.add_argument('--embedding_format', default='word2vec', choices=["glove", "word2vec"],
+                        help="format of embeddings to be loaded")
+    parser.add_argument('--embedding_file', default='jtr/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz',
+                        type=str, help="format of embeddings to be loaded")
+
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
@@ -99,13 +107,13 @@ def main():
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
-    parser.add_argument('--tensorboard_folder', default='./.tb/',
-                        help='Folder for tensorboard logs')
+    parser.add_argument('--tensorboard_folder', default='', help='Folder for tensorboard logs')
     parser.add_argument('--write_metrics_to', default='',
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
     parser.add_argument('--model_dir', default=None, type=str, help="Directory to write reader to.")
+    parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
 
     args = parser.parse_args()
 
@@ -125,8 +133,6 @@ def main():
     for l in device_lib.list_local_devices():
         logger.info('device info: ' + str(l).replace("\n", " "))
 
-    # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
-
     embeddings = None
     if args.debug:
         train_data = load_labelled_data(args.train, args.debug_examples, **vars(args))
@@ -141,13 +147,12 @@ def main():
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
     else:
-        train_data, dev_data, test_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev, args.test]]
+        train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
+        test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
         logger.info('loaded train/dev/test data')
         if args.pretrain:
-            #TODO: add options for other embeddings
-            emb_file = 'GoogleNews-vectors-negative300.bin.gz'
-            embeddings = load_embeddings(path.join('jtr', 'data', 'SG_GoogleNews', emb_file), 'word2vec')
-            logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
+            embeddings = load_embeddings(args.embedding_file, args.embedding_format)
+            logger.info('loaded pre-trained embeddings ({})'.format(args.embedding_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
 
     emb = embeddings if args.pretrain else None
@@ -156,7 +161,13 @@ def main():
 
     learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32, trainable=False)
     optim = tf.train.AdamOptimizer(learning_rate)
-    sw = tf.summary.FileWriter(args.tensorboard_folder)
+
+    if args.tensorboard_folder is not None:
+        if os.path.exists(args.tensorboard_folder):
+            shutil.rmtree(args.tensorboard_folder)
+        sw = tf.summary.FileWriter(args.tensorboard_folder)
+    else:
+        sw = None
 
     # build JTReader
     checkpoint()
@@ -164,7 +175,10 @@ def main():
     checkpoint()
 
     # Hooks
-    hooks = [LossHook(reader, 1 if args.debug else 100, summary_writer=sw)]
+    iter_iterval = 1 if args.debug else args.log_interval
+    hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
+             ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
+             ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint, sw)]
 
     preferred_metric = "f1"  #TODO: this should depend on the task, for now I set it to 1
     best_metric = [0.0]
@@ -185,7 +199,8 @@ def main():
         return m
 
     hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                                iter_interval=args.checkpoint))
+                                                iter_interval=args.checkpoint,
+                                                epoch_interval=1 if args.checkpoint is None else None))
 
     # Train
     reader.train(optim, training_set=train_data,
@@ -193,7 +208,7 @@ def main():
                  l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model
-    if test_data:
+    if test_data is not None:
         logger.info("Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
         test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
 

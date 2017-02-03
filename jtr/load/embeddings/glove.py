@@ -20,20 +20,19 @@ def load_glove(stream, vocab=None):
     lookup[0] = np.fromstring(first_line.split(maxsplit=1)[1], sep=' ')
     word2idx[first_line.split(maxsplit=1)[0]] = 0
     n = 1
-    idx = 1
     for line in stream:
         word, vec = line.rstrip().split(maxsplit=1)
-        if vocab is None or word in vocab:
+        if vocab is None or word in vocab and word not in word2idx:
             word = word.decode('utf-8')
+            idx = len(word2idx)
             word2idx[word] = idx
             if idx > np.size(lookup, axis=0) - 1:
                 lookup.resize([lookup.shape[0] + 500000, lookup.shape[1]])
             lookup[idx] = np.fromstring(vec, sep=' ')
-            idx += 1
         n += 1
         if n % 100000 == 0:
             print('  ' + str(n // 1000) + 'k vectors processed...\r')
-    lookup.resize([idx, dim])
+    lookup.resize([len(word2idx), dim])
     return_vocab = Vocabulary(word2idx)
     print('[Loading GloVe DONE]')
     return return_vocab, lookup
