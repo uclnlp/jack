@@ -23,6 +23,8 @@ def load_glove(stream, vocab=None):
     idx = 1
     for line in stream:
         word, vec = line.rstrip().split(maxsplit=1)
+        if word in word2idx:
+            continue
         if vocab is None or word in vocab:
             word = word.decode('utf-8')
             word2idx[word] = idx
