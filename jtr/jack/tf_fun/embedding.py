@@ -22,14 +22,13 @@ def conv_char_embeddings(vocab, size, word_ids, seq_lengths, conv_width=5,
 
     # create character vocab + word lengths + char ids per word
     pad_right = math.ceil(conv_width / 2) # "fixed PAD o right side"
-    vocab_size = len(vocab)
+    vocab_size = max(vocab.sym2id.values()) + 1
     max_l = max(len(w) for w in vocab.sym2id) + pad_right
     char_vocab = defaultdict(lambda: len(char_vocab))
     char_vocab["PAD"] = 0
     word_to_chars_arr = np.zeros((vocab_size, max_l), np.int16)
     word_lengths_arr = np.zeros([vocab_size], np.int8)
-    for i in range(len(vocab.id2sym)):
-        w = vocab.id2sym[i]
+    for w, i in vocab.sym2id.items():
         for k, c in enumerate(w):
             j = char_vocab[c]
             word_to_chars_arr[i, k] = j
