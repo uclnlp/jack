@@ -9,10 +9,11 @@ import sys
 
 import logging
 
+import math
 import tensorflow as tf
 
 from jtr.jack import load_labelled_data
-from jtr.jack.train.hooks import EvalHook, XQAEvalHook, LossHook
+from jtr.jack.train.hooks import EvalHook, XQAEvalHook, LossHook, ExamplesPerSecHook, ETAHook
 from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import Vocab
 from jtr.train import train
@@ -168,7 +169,10 @@ def main():
     checkpoint()
 
     # Hooks
-    hooks = [LossHook(reader, 1 if args.debug else 100, summary_writer=sw)]
+    iter_iterval = 1 if args.debug else 100
+    hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
+             ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
+             ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint, sw)]
 
     preferred_metric = "f1"  #TODO: this should depend on the task, for now I set it to 1
     best_metric = [0.0]
