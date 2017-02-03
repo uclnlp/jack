@@ -182,7 +182,7 @@ class ETAHook(TraceHook):
                 eta = (1-progress) * elapsed
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
 
-                logger.info("Epoch %d\tIter %d\tETA(%s) in %s - %s  (%.2f%%)" % (epoch, self.iter, name,
+                logger.info("Epoch %d\tIter %d\tETA(%s) in %s\t%s (%.2f%%)" % (epoch, self.iter, name,
                                                                                  format_eta(eta), eta_date,
                                                                                  progress * 100))
 
