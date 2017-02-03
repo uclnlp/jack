@@ -105,8 +105,7 @@ def main():
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
-    parser.add_argument('--tensorboard_folder', default='./.tb/',
-                        help='Folder for tensorboard logs')
+    parser.add_argument('--tensorboard_folder', default='', help='Folder for tensorboard logs')
     parser.add_argument('--write_metrics_to', default='',
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
@@ -160,7 +159,7 @@ def main():
 
     learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32, trainable=False)
     optim = tf.train.AdamOptimizer(learning_rate)
-    sw = tf.summary.FileWriter(args.tensorboard_folder)
+    sw = tf.summary.FileWriter(args.tensorboard_folder) if args.tensorboard_folder else None
 
     # build JTReader
     checkpoint()
@@ -192,7 +191,8 @@ def main():
         return m
 
     hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                                iter_interval=args.checkpoint))
+                                                iter_interval=args.checkpoint,
+                                                epoch_interval=1 if args.checkpoint is None else None))
 
     # Train
     reader.train(optim, training_set=train_data,
