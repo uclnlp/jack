@@ -569,10 +569,9 @@ class JTReader:
         self.input_module = input_module
         self.is_train = is_train
 
-        sess_config = tf.ConfigProto()
-        sess_config.gpu_options.allow_growth = True
-
         if self.sess is None:
+            sess_config = tf.ConfigProto()
+            sess_config.gpu_options.allow_growth = True
             self.sess = tf.Session(config=sess_config)
 
         assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
