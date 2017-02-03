@@ -229,7 +229,7 @@ class FastQAInputModule(InputModule):
                     question2unique.append(q2u)
                     s2u = list()
                     for w in corpus["support"][j]:
-                        if w not in unique_words:
+                        if w not in unique_words_set:
                             unique_word_lengths.append(len(w))
                             unique_words.append([self.char_vocab.get(c, 0) for c in w])
                             unique_words_set[w] = len(unique_words_set)
