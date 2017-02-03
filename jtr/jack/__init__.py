@@ -616,6 +616,7 @@ class JTReader:
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
+        logging.info("Setting up data and model...")
         #First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
 
@@ -642,6 +643,7 @@ class JTReader:
         #initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
+        logging.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
