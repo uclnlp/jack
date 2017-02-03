@@ -54,8 +54,11 @@ class TensorPortWithDefault(TensorPort):
         Returns: a constant tensor of same type, shape and name. It can nevertheless be fed with external values
         as if it was a placeholder.
         """
-        return tf.constant(self.default_value, self.dtype, self.shape, self.name)
-
+        ph = tf.placeholder_with_default(self.default_value, self.shape, self.name)
+        if ph.dtype != self.dtype:
+            logging.warning("Placeholder %s with default of type %s created for TensorPort with type %s!" %
+                            (self.name, ph.dtype, self.dtype))
+        return ph
 
 
 class Ports:
@@ -65,8 +68,8 @@ class Ports:
     """
 
     loss = TensorPort(tf.float32, [None],
-                  "Represents loss on each instance in the batch",
-                  "[batch_size]")
+                      "Represents loss on each instance in the batch",
+                      "[batch_size]")
 
     class Input:
         question = TensorPort(tf.int32, [None, None], "question",
@@ -89,9 +92,9 @@ class Ports:
                                           "scalar representing keep probability when using dropout",
                                           "[]")
 
-        is_eval = TensorPort(tf.bool, [], "is_eval",
-                             "boolean that determines whether input is eval or training.",
-                             "[]")
+        is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
+                                        "boolean that determines whether input is eval or training.",
+                                        "[]")
 
     class Prediction:
         candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
@@ -122,9 +125,9 @@ class FlatPorts:
         candidate_to_question = TensorPort(tf.int32, [None], "candidate2question",
                                            "Represents mapping to question idx per candidate",
                                            "[C]")
-        answer_to_question = TensorPort(tf.int32, [None], "answer2question",
-                                        "Represents mapping to question idx per answer",
-                                        "[A]")
+        answer2question = TensorPort(tf.int32, [None], "answer2question",
+                                     "Represents mapping to question idx per answer",
+                                     "[A]")
 
         support = TensorPort(tf.int32, [None, None], "support_flat",
                              "Represents instances with a single support document. "
@@ -332,12 +335,12 @@ class ModelModule:
             A mapping from ports to tensors.
 
         """
-        goal_ports = goal_ports or self.output_ports()
+        goal_ports = goal_ports or self.output_ports
 
         feed_dict = self.convert_to_feed_dict(batch)
-        outputs = sess.run([self.output_tensors[p] for p in goal_ports if p in self.output_tensors], feed_dict)
+        outputs = sess.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
 
-        ret = dict(zip(filter(lambda p: p in self.output_tensors, goal_ports), outputs))
+        ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
         for p in goal_ports:
             if p not in ret and p in batch:
                 ret[p] = batch[p]
@@ -381,26 +384,12 @@ class ModelModule:
         pass
 
     @abstractproperty
-    def input_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
+    def tensors(self) -> Mapping[TensorPort, tf.Tensor]:
         """
-        Returns: A mapping from input ports to the TF tensors that correspond to them.
-        """
-        pass
-
-    @abstractproperty
-    def output_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
-        """
-        Returns: A mapping from output ports to the TF tensors that correspond to them.
+        Returns: A mapping from ports to the TF tensors that correspond to them.
         """
         pass
 
-    @abstractproperty
-    def training_output_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
-        """
-        Returns: A mapping from training related ports (e.g., loss) to the TF tensors that correspond to them.
-        By this, we make the distinction between training related and actually model related ports explicit
-        """
-        pass
 
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
         result = {ph: mapping[port] for port, ph in self.placeholders.items() if port in mapping}
@@ -468,19 +457,18 @@ class SimpleModelModule(ModelModule):
     def setup(self, shared_resources: SharedResources, is_training=True):
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
-        self._input_tensors = {d: d.create_placeholder() for d in self.input_ports}
-        self._placeholders = dict(self._input_tensors)
-        output_tensors = self.create_output(shared_resources, *[self._input_tensors[port] for port in self.input_ports])
-        self._output_tensors = dict(zip(self.output_ports, output_tensors))
+        self._tensors = {d: d.create_placeholder() for d in self.input_ports}
+        self._placeholders = dict(self._tensors)
+        output_tensors = self.create_output(shared_resources, *[self._tensors[port] for port in self.input_ports])
+        self._tensors.update(zip(self.output_ports, output_tensors))
         if is_training:
             self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
-                                      if p not in self._placeholders and p not in self._output_tensors)
-
-            input_target_tensors = {p: self._output_tensors.get(p, self._placeholders.get(p, None))
-                                    for p in self.training_input_ports}
+                                      if p not in self._placeholders and p not in self._tensors)
+            self._tensors.update(self._placeholders)
+            input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
             training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
                                                                   for port in self.training_input_ports])
-            self._training_tensors = dict(zip(self.training_output_ports, training_output_tensors))
+            self._tensors.update(zip(self.training_output_ports, training_output_tensors))
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
         self._variables = [v for v in tf.global_variables() if v not in old_variables]
@@ -490,26 +478,11 @@ class SimpleModelModule(ModelModule):
         return self._placeholders
 
     @property
-    def input_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
+    def tensors(self) -> Mapping[TensorPort, tf.Tensor]:
         """
-        Returns: The TF placeholders that correspond to the input ports.
+        Returns: Mapping from ports to tensors
         """
-        return self._input_tensors if hasattr(self, "_input_tensors") else None
-
-    @property
-    def output_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
-        """
-        Returns: the output TF tensor that represents the prediction. This may be a matrix of candidate
-        scores, or span markers, or actual symbol vectors generated. Should match the tensor type of `output_port`.
-        """
-        return self._output_tensors if hasattr(self, "_output_tensors") else None
-
-    @property
-    def training_output_tensors(self) -> Mapping[TensorPort, tf.Tensor]:
-        """
-        Returns: The TF placeholders that correspond to the input ports.
-        """
-        return self._training_tensors if hasattr(self, "_training_tensors") else None
+        return self._tensors if hasattr(self, "_tensors") else None
 
     def store(self, sess, path):
         self._saver.save(sess, path)
@@ -648,7 +621,7 @@ class JTReader:
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        loss = self.model_module.training_output_tensors[Ports.loss]
+        loss = self.model_module.tensors[Ports.loss]
 
         if l2 != 0.0:
             loss += \
