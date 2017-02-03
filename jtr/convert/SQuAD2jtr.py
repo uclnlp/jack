@@ -1,10 +1,22 @@
+"""
+
+Rajpurkar, Pranav, et al.
+"Squad: 100,000+ questions for machine comprehension of text."
+arXiv preprint arXiv:1606.05250 (2016).
+
+Original paper: https://arxiv.org/abs/1606.05250
+Data: https://rajpurkar.github.io/SQuAD-explorer/
+JTR download script: data/SQuAD/download.sh
+
+"""
+
 import json
 import argparse
 
 
 def create_snippet(file_path):
     """
-    Creates a snippet of the original data
+    Creates a snippet of the original SQuAD data.
 
     Args:
         file_path: path to the original file
@@ -27,7 +39,8 @@ def create_snippet(file_path):
 
 def create_jtr_snippet(jtr_dict, num_instances=1):
     """
-    Creates a jtr format snippet
+    Creates a jtr format snippet from SQuAD data.
+
     Args:
         jtr_dict: jtr dictionary
         num_instances: number of (first) instances
@@ -42,12 +55,7 @@ def create_jtr_snippet(jtr_dict, num_instances=1):
 
 def convert_squad(file_path):
     """
-    SQuAD dataset converter
-
-    Original paper: https://arxiv.org/abs/1606.05250
-    Data: https://rajpurkar.github.io/SQuAD-explorer/
-
-    Download script: data/SQuAD/download.sh
+    Converts SQuAD dataset to jtr format.
 
     Args:
         file_path: path to the SQuAD json file (train-v1.1.json and dev-v1.1.json in data/SQuAD/)
@@ -108,7 +116,6 @@ def __parse_answer(answer_dict):
 
 def main():
     """
-
     Main call function
 
     Usage:

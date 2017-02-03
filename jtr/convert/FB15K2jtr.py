@@ -151,32 +151,56 @@ def compress_triples(string_triples, unique_entities, unique_relations):
 
 
 if __name__ == "__main__":
-    data_file = argv[1]      # dataset path you're interested in, train/dev/test.
-    reference_file = argv[2] # use training set path here.
 
-    # load data from files into fact triples
-    triples = load_fb15k_triples(data_file)
-    reference_triples = load_fb15k_triples(reference_file)
-
-    # unique entity and relation types in reference triples
-    unique_entities, unique_relations = \
-                        extract_unique_entities_and_relations(reference_triples)
+    import sys
 
 
-    # represent string triples with numeric IDs for entities and relations
-    triples = compress_triples(triples, unique_entities, unique_relations)
-    reference_triples = compress_triples(reference_triples, unique_entities, unique_relations)
 
-    # get neighbouring facts for each fact in triples
-    facts_per_entity = get_facts_per_entity(reference_triples)
-    facts_per_relation = get_facts_per_relation(reference_triples)
-    neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
+    # if len(sys.argv) == 2:
+    #     print(json.dumps(corpus, indent=2))
+    if len(sys.argv) == 3:
 
-    # dump the entity and relation ids for understanding the jtr contents.
-    with open('fb15k_entities_relations.json', 'w') as f:
-        D = {"unique_entities" : unique_entities,
-        "unique_relations" : unique_relations}
-        json.dump(D, f)
+        data_file = argv[1]  # dataset path you're interested in, train/dev/test.
+        reference_file = argv[2]  # use training set path here.
 
-    corpus = convert(triples, neighbourhoods, unique_entities)
-    print(json.dumps(corpus, indent=2))
+        # load data from files into fact triples
+        triples = load_fb15k_triples(data_file)
+        reference_triples = load_fb15k_triples(reference_file)
+        print('1')
+        # unique entity and relation types in reference triples
+        unique_entities, unique_relations = \
+            extract_unique_entities_and_relations(reference_triples)
+        print('2')
+        # represent string triples with numeric IDs for entities and relations
+        triples = compress_triples(triples, unique_entities, unique_relations)
+        reference_triples = compress_triples(reference_triples, unique_entities, unique_relations)
+        print('3')
+        # get neighbouring facts for each fact in triples
+        facts_per_entity = get_facts_per_entity(reference_triples)
+        print('4')
+        facts_per_relation = get_facts_per_relation(reference_triples)
+        print('5')
+        neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
+        print('6')
+        # dump the entity and relation ids for understanding the jtr contents.
+        with open('fb15k_entities_relations.json', 'w') as f:
+            D = {"unique_entities": unique_entities,
+                 "unique_relations": unique_relations}
+            json.dump(D, f)
+
+        corpus = convert(triples, neighbourhoods, unique_entities)
+        print(json.dumps(corpus, indent=2))
+
+
+
+        # corpus = convert_squad(sys.argv[1])
+        # with open(sys.argv[2], 'w') as outfile:
+        #     json.dump(corpus, outfile, indent=2)
+    else:
+        print("Usage: python3 FB15K2jtr.py path/to/FB15K2 /path/to/FB15K2_train save/to/directory")
+
+
+
+
+
+
