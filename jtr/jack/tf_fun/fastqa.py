@@ -6,16 +6,18 @@ from jtr.util import tfutil
 
 
 def fastqa_model(shared_resources, emb_question, question_length, emb_support, support_length, word_in_question,
-                 keep_prob, is_eval):
+                 correct_start, answer2question, keep_prob, is_eval):
     """
     fast_qa model
     Args:
         shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_input_dim"
-        emb_question: [B, L_q, N]
-        question_length: [B]
-        emb_support: [B, L_s, N]
-        support_length: [B]
-        word_in_question: [B, L_s]
+        emb_question: [Q, L_q, N]
+        question_length: [Q]
+        emb_support: [Q, L_s, N]
+        support_length: [Q]
+        word_in_question: [Q, L_s]
+        correct_start: [A], only during training, i.e., is_eval=False
+        answer2question: [A], only during training, i.e., is_eval=False
         keep_prob: []
         is_eval: []
 
@@ -72,8 +74,9 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
                                                 emb_support_ext, support_length,
                                                 share_rnn=True, projection_scope="support_proj")
 
-        start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights = \
-            fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length, is_eval)
+        start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
+            fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
+                                correct_start, answer2question, is_eval)
 
         span = tf.concat(1, [tf.expand_dims(predicted_start_pointer, 1),
                              tf.expand_dims(predicted_end_pointer, 1)])
@@ -82,7 +85,8 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
 
 
 # ANSWER LAYER
-def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length, is_eval):
+def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
+                        correct_start, answer2question, is_eval):
     batch_size = tf.shape(question_length)[0]
     input_size = encoded_support.get_shape()[-1].value
     support_states_flat = tf.reshape(encoded_support, [-1, input_size])
@@ -96,7 +100,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                          scope="question_attention")
     q_mask = tfutil.mask_for_lengths(question_length, batch_size)
     attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
-    question_attention_weights = tf.nn.softmax(attention_scores, 1)
+    question_attention_weights = tf.nn.softmax(attention_scores, 1, name="question_attention_weights")
     question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
 
     # prediction
@@ -127,9 +131,21 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     predicted_start_pointer = tf.argmax(start_scores, 1)
 
-    start_pointer = predicted_start_pointer
+    # use correct start during training, because p(end|start) should be optimized
+    start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: correct_start)
 
+    # gather states for training, where spans should be predicted using multiple correct start per answer
+    def align_tensor_with_answers_per_question(t):
+        return tf.cond(is_eval, lambda: t, lambda: tf.gather(t, answer2question))
+
+    offsets = align_tensor_with_answers_per_question(offsets)
     u_s = tf.gather(support_states_flat, start_pointer + offsets)
+
+    start_scores = align_tensor_with_answers_per_question(start_scores)
+    start_input = align_tensor_with_answers_per_question(start_input)
+    encoded_support = align_tensor_with_answers_per_question(encoded_support)
+    question_state = align_tensor_with_answers_per_question(question_state)
+    support_mask = align_tensor_with_answers_per_question(support_mask)
 
     #END
     end_input = tf.concat(2, [tf.expand_dims(u_s, 1) * encoded_support, start_input])
@@ -151,7 +167,6 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                    scope="end_scores")
     end_scores = tf.squeeze(end_scores, [2])
     end_scores = end_scores + support_mask
-
     end_scores = tf.cond(is_eval,
                          lambda: end_scores + tfutil.mask_for_lengths(tf.cast(predicted_start_pointer, tf.int32),
                                                                       batch_size,
@@ -160,4 +175,4 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     predicted_end_pointer = tf.argmax(end_scores, 1)
 
-    return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer, question_attention_weights
+    return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer

@@ -33,6 +33,17 @@ class FastQAPorts:
                                   " whether it is part of the question or not",
                                   "[Q, support_length]")
 
+    correct_start_training = TensorPortWithDefault(np.array([0], np.int64), tf.int64, [None], "correct_start_training",
+                                                   "Represents the correct start of the span which is given to the"
+                                                   "model during training for use to predicting end.",
+                                                   "[A]")
+
+    answer2question_training = TensorPortWithDefault([0], tf.int32, [None], "answer2question_training",
+                                                     "Represents mapping to question idx per answer, which is used "
+                                                     "together with correct_start_training during training.",
+                                                     "[A]")
+
+
     # output ports
     start_scores = FlatPorts.Prediction.start_scores
     end_scores = FlatPorts.Prediction.end_scores
@@ -40,7 +51,7 @@ class FastQAPorts:
     token_char_offsets = XqaPorts.token_char_offsets
 
     # ports used during training
-    answer_to_question = FlatPorts.Input.answer_to_question
+    answer2question = FlatPorts.Input.answer2question
     answer_span = FlatPorts.Target.answer_span
 
 
@@ -49,10 +60,12 @@ fastqa_with_min_crossentropy_loss =\
     model_module_factory(input_ports=[FastQAPorts.emb_question, FastQAPorts.question_length,
                                       FastQAPorts.emb_support, FastQAPorts.support_length,
                                       FastQAPorts.word_in_question,
+                                      # optional input, provided only during training
+                                      FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
                                       FastQAPorts.keep_prob, FastQAPorts.is_eval],
                          output_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores, FastQAPorts.span_prediction],
-                         training_input_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores, FastQAPorts.answer_span,
-                                               FastQAPorts.answer_to_question],
+                         training_input_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores,
+                                               FastQAPorts.answer_span, FastQAPorts.answer2question],
                          training_output_ports=[Ports.loss],
                          training_function=no_shared_resources(xqa_min_crossentropy_loss))
 
@@ -74,12 +87,16 @@ class FastQAInputModule(InputModule):
     def output_ports(self) -> List[TensorPort]:
         return [FastQAPorts.emb_question, FastQAPorts.question_length,
                 FastQAPorts.emb_support, FastQAPorts.support_length,
-                FastQAPorts.word_in_question, FastQAPorts.keep_prob, FastQAPorts.is_eval,
+                FastQAPorts.word_in_question,
+                # optional, only during training
+                FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
+                FastQAPorts.keep_prob, FastQAPorts.is_eval,
+                # for output module
                 FastQAPorts.token_char_offsets]
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [FastQAPorts.answer_span, FastQAPorts.answer_to_question]
+        return [FastQAPorts.answer_span, FastQAPorts.answer2question]
 
     def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
         # Assumes that vocab and embeddings are given during creation
@@ -102,7 +119,7 @@ class FastQAInputModule(InputModule):
         corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
 
         for input, answers in dataset:
-            corpus["support"].append(input.support[0])
+            corpus["support"].append(" ".join(input.support))
             corpus["question"].append(input.question)
 
         corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
@@ -165,14 +182,18 @@ class FastQAInputModule(InputModule):
                     wiq.append(word_in_question[j])
                     offsets.append(token_offsets[j])
 
+                batch_size = len(question_lengths)
+
                 output = {
-                    FastQAPorts.emb_support: emb_supports[:len(support_lengths), :max(support_lengths), :],
+                    FastQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
                     FastQAPorts.support_length: support_lengths,
-                    FastQAPorts.emb_question: emb_questions[:len(question_lengths), :max(question_lengths), :],
+                    FastQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
                     FastQAPorts.question_length: question_lengths,
                     FastQAPorts.word_in_question: wiq,
                     FastQAPorts.answer_span: spans,
-                    FastQAPorts.answer_to_question: span2question,
+                    FastQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
+                    FastQAPorts.answer2question: span2question if is_eval else list(range(len(span2question))),
+                    FastQAPorts.answer2question_training: [] if is_eval else span2question,
                     FastQAPorts.keep_prob: 0.0 if is_eval else 1 - self.dropout,
                     FastQAPorts.is_eval: is_eval,
                     FastQAPorts.token_char_offsets: offsets
@@ -188,7 +209,7 @@ class FastQAInputModule(InputModule):
     def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
         corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
         for input in inputs:
-            corpus["support"].append(input.support[0])
+            corpus["support"].append(" ".join(input.support))
             corpus["question"].append(input.question)
 
         corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
@@ -227,7 +248,6 @@ class FastQAInputModule(InputModule):
             FastQAPorts.emb_question: emb_questions,
             FastQAPorts.question_length: corpus["question_lengths"],
             FastQAPorts.word_in_question: word_in_question,
-            FastQAPorts.is_eval: True,
             FastQAPorts.token_char_offsets: token_offsets
         }
 
