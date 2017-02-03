@@ -132,8 +132,6 @@ def main():
     for l in device_lib.list_local_devices():
         logger.info('device info: ' + str(l).replace("\n", " "))
 
-    # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
-
     embeddings = None
     if args.debug:
         train_data = load_labelled_data(args.train, args.debug_examples, **vars(args))

@@ -181,22 +181,23 @@ class ETAHook(TraceHook):
                 elapsed = current_time - self.start
                 eta = (1-progress) * elapsed
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
-
-                logger.info("Epoch %d\tIter %d\tETA(%s) in %s\t%s (%.2f%%)" % (epoch, self.iter, name,
-                                                                                 format_eta(eta), eta_date,
-                                                                                 progress * 100))
-
                 self.update_summary(self.reader.sess, self.iter, self.__tag__()+"_"+name, float(eta))
 
+                return format_eta(eta), eta_date
+
+            log = "Epoch %d\tIter %d" % (epoch, self.iter)
             total_progress = float(self.iter) / self.max_iters
-            log_eta(total_progress, self.start, "total")
-
+            eta, eta_data = log_eta(total_progress, self.start, "total")
+            log += "\tETA in %s, %s (%.2f%%)" % (eta, eta_data, total_progress * 100)
             epoch_progress = float((self.iter-1) % self.iter_per_epoch + 1) / self.iter_per_epoch
-            log_eta(epoch_progress, self.start_epoch, "epoch")
-
+            eta, _ = log_eta(epoch_progress, self.start_epoch, "epoch")
+            log += "\tETA(epoch) in %s (%.2f%%)" % (eta, epoch_progress * 100)
             if self.iter_per_checkpoint is not None:
                 checkpoint_progress = float((self.iter-1) % self.iter_per_checkpoint + 1) / self.iter_per_checkpoint
-                log_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
+                eta, _ = log_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
+                log += "\tETA(checkpoint) in %s (%.2f%%)" % (eta, checkpoint_progress * 100)
+
+            logger.info(log)
 
         if self.iter_per_checkpoint is not None and self.iter % self.iter_per_checkpoint == 0:
             self.start_checkpoint = time()
