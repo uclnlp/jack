@@ -24,6 +24,11 @@ class FastQAPorts:
     question_length = FlatPorts.Input.question_length
     emb_support = FlatPorts.Misc.embedded_support
     support_length = FlatPorts.Input.support_length
+
+    # but also ids, for char-based embeddings
+    question = Ports.Input.question
+    support = FlatPorts.Input.support
+
     keep_prob = Ports.Input.keep_prob
     is_eval = Ports.Input.is_eval
 
@@ -57,8 +62,8 @@ class FastQAPorts:
 
 # FastQA model module factory method, like fastqa.model.fastqa_model
 fastqa_with_min_crossentropy_loss =\
-    model_module_factory(input_ports=[FastQAPorts.emb_question, FastQAPorts.question_length,
-                                      FastQAPorts.emb_support, FastQAPorts.support_length,
+    model_module_factory(input_ports=[FastQAPorts.question, FastQAPorts.emb_question, FastQAPorts.question_length,
+                                      FastQAPorts.support, FastQAPorts.emb_support, FastQAPorts.support_length,
                                       FastQAPorts.word_in_question,
                                       # optional input, provided only during training
                                       FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
@@ -85,8 +90,8 @@ class FastQAInputModule(InputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [FastQAPorts.emb_question, FastQAPorts.question_length,
-                FastQAPorts.emb_support, FastQAPorts.support_length,
+        return [FastQAPorts.question, FastQAPorts.emb_question, FastQAPorts.question_length,
+                FastQAPorts.support, FastQAPorts.emb_support, FastQAPorts.support_length,
                 FastQAPorts.word_in_question,
                 # optional, only during training
                 FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
@@ -162,6 +167,8 @@ class FastQAInputModule(InputModule):
             todo = list(range(len(corpus_ids["question"])))
             self._rng.shuffle(todo)
             while todo:
+                question = list()
+                support = list()
                 support_lengths = list()
                 question_lengths = list()
                 wiq = list()
@@ -171,10 +178,12 @@ class FastQAInputModule(InputModule):
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
-                    for k in range(len(corpus_ids["support"][j])):
-                        emb_supports[i, k] = self._get_emb(corpus_ids["support"][j][k])
-                    for k in range(len(corpus_ids["question"][j])):
-                        emb_supports[i, k] = self._get_emb(corpus_ids["question"][j][k])
+                    question.append(corpus_ids["question"][j])
+                    support.append(corpus_ids["support"][j])
+                    for k in range(len(support[-1])):
+                        emb_supports[i, k] = self._get_emb(support[-1][k])
+                    for k in range(len(question[-1])):
+                        emb_supports[i, k] = self._get_emb(question[-1][k])
                     support_lengths.append(corpus["support_lengths"][j])
                     question_lengths.append(corpus["question_lengths"][j])
                     spans.extend(answer_spans[j])
@@ -185,6 +194,8 @@ class FastQAInputModule(InputModule):
                 batch_size = len(question_lengths)
 
                 output = {
+                    FastQAPorts.question: question,
+                    FastQAPorts.support: support,
                     FastQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
                     FastQAPorts.support_length: support_lengths,
                     FastQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
@@ -200,7 +211,8 @@ class FastQAInputModule(InputModule):
                 }
 
                 # we can only numpify in here, because bucketing is not possible prior
-                batch = numpify(output, keys=[FastQAPorts.word_in_question, FastQAPorts.token_char_offsets])
+                batch = numpify(output, keys=[FastQAPorts.question, FastQAPorts.support,
+                                              FastQAPorts.word_in_question, FastQAPorts.token_char_offsets])
                 todo = todo[self.batch_size:]
                 yield batch
 
@@ -243,6 +255,8 @@ class FastQAInputModule(InputModule):
                 emb_questions[i, k] = self._get_emb(v)
 
         output = {
+            FastQAPorts.question: corpus_ids["question"],
+            FastQAPorts.support: corpus_ids["support"],
             FastQAPorts.emb_support: emb_supports,
             FastQAPorts.support_length: corpus["support_lengths"],
             FastQAPorts.emb_question: emb_questions,
