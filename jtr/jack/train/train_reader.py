@@ -112,6 +112,7 @@ def main():
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
     parser.add_argument('--model_dir', default=None, type=str, help="Directory to write reader to.")
+    parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
 
     args = parser.parse_args()
 
@@ -169,7 +170,7 @@ def main():
     checkpoint()
 
     # Hooks
-    iter_iterval = 1 if args.debug else 100
+    iter_iterval = 1 if args.debug else args.log_interval
     hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
              ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
              ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint, sw)]

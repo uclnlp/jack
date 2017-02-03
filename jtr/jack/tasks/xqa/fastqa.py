@@ -138,7 +138,8 @@ class FastQAInputModule(InputModule):
             corpus["question_lengths"].append(len(q))
 
             # char to token offsets
-            offsets = token_to_char_offsets(input.support[0], s)
+            support = " ".join(input.support)
+            offsets = token_to_char_offsets(support, s)
             token_offsets.append(offsets)
             spans = []
             for a in answers:
