@@ -10,6 +10,8 @@ import sys
 import logging
 
 import math
+
+import shutil
 import tensorflow as tf
 
 from jtr.jack import load_labelled_data
@@ -159,7 +161,12 @@ def main():
 
     learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32, trainable=False)
     optim = tf.train.AdamOptimizer(learning_rate)
-    sw = tf.summary.FileWriter(args.tensorboard_folder) if args.tensorboard_folder else None
+
+    if args.tensorboard_folder is not None:
+        shutil.rmtree(args.tensorboard_folder)
+        sw = tf.summary.FileWriter(args.tensorboard_folder)
+    else:
+        sw = None
 
     # build JTReader
     checkpoint()
