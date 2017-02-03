@@ -1,11 +1,14 @@
 import tensorflow as tf
 
 from jtr.jack.tf_fun.dropout import fixed_dropout
+from jtr.jack.tf_fun.embedding import conv_char_embeddings
+from jtr.jack.tf_fun.highway import highway_network
 from jtr.jack.tf_fun.rnn import birnn_with_projection
 from jtr.util import tfutil
 
 
-def fastqa_model(shared_resources, emb_question, question_length, emb_support, support_length, word_in_question,
+def fastqa_model(shared_resources, question, emb_question, question_length,
+                 support, emb_support, support_length, word_in_question,
                  correct_start, answer2question, keep_prob, is_eval):
     """
     fast_qa model
@@ -38,10 +41,17 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         emb_question.set_shape([None, None, input_size])
         emb_support.set_shape([None, None, input_size])
 
+        # compute combined embeddings
+        [char_emb_question, char_emb_support] = conv_char_embeddings(shared_resources.vocab, size, [question, support],
+                                                                     [question_length, support_length])
+
+        emb_question = tf.concat(2, [emb_question, char_emb_question])
+        emb_support = tf.concat(2, [emb_support, char_emb_support])
+
         # compute encoder features
         question_features = tf.ones(tf.pack([batch_size, max_question_length, 2]))
 
-        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
+        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size + size],
                                  initializer=tf.constant_initializer(1.0))
 
         wiq_w = tf.batch_matmul(emb_question * v_wiqw, emb_support, adj_y=True)
@@ -52,17 +62,27 @@ def fastqa_model(shared_resources, emb_question, question_length, emb_support, s
         # [B, L , 1]
         support_features = tf.concat(2, [tf.expand_dims(word_in_question, 2), tf.expand_dims(wiq_w,  2)])
 
+        # highway layer to allow for interaction between concatenated embeddings
+        all_embedded_hw = highway_network(tf.concat(1, [emb_question, emb_support]), 1)
+
+        emb_question_hw = tf.slice(all_embedded_hw, [0, 0, 0], tf.pack([-1, max_question_length, -1]))
+        emb_support_hw = tf.slice(all_embedded_hw, tf.pack([0, max_question_length, 0]), [-1, -1, -1])
+
+        emb_question_hw.set_shape([None, None, input_size + size])
+        emb_support_hw.set_shape([None, None, input_size + size])
+
         # variational dropout
-        dropout_shape = tf.unpack(tf.shape(emb_question))
+        dropout_shape = tf.unpack(tf.shape(emb_question_hw))
         dropout_shape[1] = 1
 
-        [emb_question, emb_support] = tf.cond(is_eval,
-                                              lambda: [emb_question, emb_support],
-                                              lambda: fixed_dropout([emb_question, emb_support], keep_prob, dropout_shape))
+        [emb_question_hw, emb_support_hw] = tf.cond(is_eval,
+                                                    lambda: [emb_question_hw, emb_support_hw],
+                                                    lambda: fixed_dropout([emb_question, emb_support_hw],
+                                                                          keep_prob, dropout_shape))
 
         # extend embeddings with features
-        emb_question_ext = tf.concat(2, [emb_question, question_features])
-        emb_support_ext = tf.concat(2, [emb_support, support_features])
+        emb_question_ext = tf.concat(2, [emb_question_hw, question_features])
+        emb_support_ext = tf.concat(2, [emb_support_hw, support_features])
 
         # encode question and support
         rnn = tf.contrib.rnn.LSTMBlockFusedCell
