@@ -56,7 +56,7 @@ def main():
                         help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=str, help="jtr training file")
     parser.add_argument('--dev', default=dev_default, type=str, help="jtr dev file")
-    parser.add_argument('--test', default=test_default, type=str, help="jtr test file")
+    parser.add_argument('--test', default='', type=str, help="jtr test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts),
                         help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts),
@@ -146,7 +146,8 @@ def main():
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
     else:
-        train_data, dev_data, test_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev, args.test]]
+        train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
+        test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
         logger.info('loaded train/dev/test data')
         if args.pretrain:
             embeddings = load_embeddings(args.embedding_file, args.embedding_format)
@@ -196,7 +197,7 @@ def main():
                  l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model
-    if test_data:
+    if test_data is not None:
         logger.info("Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
         test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
 
