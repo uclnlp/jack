@@ -162,7 +162,7 @@ class Vocab(object):
 
         if init_from_embeddings and emb is not None:
             self.sym2id = dict(emb.vocabulary.word2idx)
-            self.id2sym = dict(enumerate(emb.vocabulary.idx2word))
+            self.id2sym = {v: k for k, v in emb.vocabulary.word2idx.items()}
             self.emb_length = None
             if unk is not None and unk not in self.sym2id:
                 self.sym2id[unk] = len(self.sym2id)
