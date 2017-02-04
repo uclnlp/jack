@@ -17,6 +17,7 @@ from jtr.jack.data_structures import *
 import logging
 import sys
 
+
 class TensorPort:
     """
     A TensorPort defines an input or output tensor for a ModelModule. This subsumes a
@@ -43,7 +44,6 @@ class TensorPort:
 
 
 class TensorPortWithDefault(TensorPort):
-
     def __init__(self, default_value, dtype, shape, name, doc_string=None, shape_string=None):
         self.default_value = default_value
         super().__init__(dtype, shape, name, doc_string, shape_string)
@@ -98,17 +98,17 @@ class Ports:
 
     class Prediction:
         candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
-                        "Represents output scores for each candidate",
-                        "[batch_size, num_candidates]")
+                                      "Represents output scores for each candidate",
+                                      "[batch_size, num_candidates]")
 
         candidate_index = TensorPort(tf.int32, [None], "candidate_idx",
                                      "Represents answer as a single index",
                                      "[batch_size]")
 
     class Targets:
-        candidate_index = TensorPort(tf.float32, [None, None], "candidate_targets",
-                                     "Represents target (0/1) values for each candidate",
-                                     "[batch_size, num_candidates]")
+        candidate_labels = TensorPort(tf.float32, [None, None], "candidate_targets",
+                                      "Represents target (0/1) values for each candidate",
+                                      "[batch_size, num_candidates]")
 
 
 class FlatPorts:
@@ -149,7 +149,6 @@ class FlatPorts:
                                      "Represents length of questions in batch",
                                      "[Q]")
 
-
     class Prediction:
         candidate_scores = TensorPort(tf.float32, [None], "candidate_scores_flat",
                                       "Represents output scores for each candidate",
@@ -159,7 +158,7 @@ class FlatPorts:
                                    "Represents groundtruth candidate labels, usually 1 or 0",
                                    "[C]")
 
-        #extractive QA
+        # extractive QA
         start_scores = TensorPort(tf.float32, [None, None], "start_scores_flat",
                                   "Represents start scores for each support sequence",
                                   "[S, max_num_tokens]")
@@ -178,9 +177,9 @@ class FlatPorts:
                                               "[A, max_num_tokens, vocab_len]")
 
         generative_symbols = TensorPort(tf.int32, [None, None], "symbol_prediction",
-                                              "Represents symbol sequence for each possible "
-                                              "answer predicted by the model",
-                                              "[A, max_num_tokens]")
+                                        "Represents symbol sequence for each possible "
+                                        "answer predicted by the model",
+                                        "[A, max_num_tokens]")
 
     class Target:
         candidate_idx = TensorPort(tf.float32, [None], "candidate_targets_flat",
@@ -195,9 +194,9 @@ class FlatPorts:
                                 "[A, max_num_tokens]")
 
         generative_symbols = TensorPort(tf.int32, [None, None], "symbol_targets",
-                                              "Represents symbol scores for each possible "
-                                              "sequential answer given during training",
-                                              "[A, max_num_tokens]")
+                                        "Represents symbol scores for each possible "
+                                        "sequential answer given during training",
+                                        "[A, max_num_tokens]")
 
     class Misc:
         # MISC intermediate ports that might come in handy
@@ -215,13 +214,14 @@ class FlatPorts:
                                       "[S, max_num_tokens, N]")
 
         embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question_flat",
-                                   "Represents the embedded question",
-                                   "[Q, max_num_question_tokens, N]")
+                                       "Represents the embedded question",
+                                       "[Q, max_num_question_tokens, N]")
         # -attention, ...
 
 
-#alias: shared resources can be any kind of pickable object
-SharedResources=object
+# alias: shared resources can be any kind of pickable object
+SharedResources = object
+
 
 class SharedVocabAndConfig(SharedResources):
     """
@@ -250,7 +250,7 @@ class InputModule:
     @abstractproperty
     def training_ports(self) -> List[TensorPort]:
         """
-        Defines what type of tensor is used to represent the target solution during training.
+        Defines what types of tensor is used to represent the target solution during training.
         """
         pass
 
@@ -269,7 +269,9 @@ class InputModule:
         pass
 
     @abstractmethod
-    def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self,
+                          dataset: List[Tuple[Question, List[Answer]]],
+                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
@@ -296,8 +298,6 @@ class InputModule:
         """
         Args:
             data: a set of pairs of input and answer.
-
-        Returns: vocab
         """
         pass
 
@@ -324,7 +324,7 @@ class ModelModule:
 
     def __call__(self, sess: tf.Session,
                  batch: Mapping[TensorPort, np.ndarray],
-                 goal_ports: List[TensorPort]=list()) -> Mapping[TensorPort, np.ndarray]:
+                 goal_ports: List[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
         """
         Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
         module.
@@ -390,7 +390,6 @@ class ModelModule:
         """
         pass
 
-
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
         result = {ph: mapping[port] for port, ph in self.placeholders.items() if port in mapping}
         return result
@@ -425,11 +424,10 @@ class ModelModule:
         """ Returns: A list of variables """
 
 
-
 class SimpleModelModule(ModelModule):
-
     @abstractmethod
-    def create_output(self, shared_resources: SharedResources, *input_tensors: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
+    def create_output(self, shared_resources: SharedResources, *input_tensors: tf.Tensor) -> Mapping[
+        TensorPort, tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output and loss tensors from input tensors.
@@ -442,7 +440,8 @@ class SimpleModelModule(ModelModule):
         pass
 
     @abstractmethod
-    def create_training_output(self, shared_resources: SharedResources, *target_input_tensors: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
+    def create_training_output(self, shared_resources: SharedResources, *target_input_tensors: tf.Tensor) -> Mapping[
+        TensorPort, tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output and loss tensors from input tensors.
@@ -467,7 +466,8 @@ class SimpleModelModule(ModelModule):
             self._tensors.update(self._placeholders)
             input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
             training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
-                                                                  for port in self.training_input_ports])
+                                                                                      for port in
+                                                                                      self.training_input_ports])
             self._tensors.update(zip(self.training_output_ports, training_output_tensors))
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
@@ -501,7 +501,6 @@ class SimpleModelModule(ModelModule):
         return self._variables
 
 
-
 class OutputModule:
     """
     An output module takes the output (numpy) tensors of the model module and turns them into
@@ -516,7 +515,7 @@ class OutputModule:
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Question], *tensor_inputs: np.array) -> List[Answer]:
+    def __call__(self, inputs: List[Question], *tensor_inputs: np.ndarray) -> List[Answer]:
         """
         Process the prediction tensor for a batch to produce a list of answers. The module has access
         to the original inputs.
@@ -548,6 +547,7 @@ class OutputModule:
         """
         pass
 
+
 class JTReader:
     """
     A Reader reads inputs consisting of questions, supports and possibly candidates, and produces answers.
@@ -559,8 +559,8 @@ class JTReader:
                  input_module: InputModule,
                  model_module: ModelModule,
                  output_module: OutputModule,
-                 sess: tf.Session=None,
-                 is_train:bool = True,
+                 sess: tf.Session = None,
+                 is_train: bool = True,
                  shared_resources=None):
         self.shared_resources = shared_resources
         self.sess = sess
@@ -616,7 +616,7 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logging.info("Setting up data and model...")
-        #First setup shared resources, e.g., vocabulary. This depends on the input module.
+        # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
@@ -631,15 +631,15 @@ class JTReader:
             gradients = optim.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                                    for grad, var in gradients]
+                             for grad, var in gradients]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
-                                    for grad, var in gradients]
+                             for grad, var in gradients]
             min_op = optim.apply_gradients(gradients)
         else:
             min_op = optim.minimize(loss)
 
-        #initialize non model variables like learning rate, optim vars ...
+        # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
         logging.info("Start training...")
@@ -654,10 +654,6 @@ class JTReader:
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
-
-    def run_model(self, inputs: List[Question], goals: List[TensorPort]) -> List[np.ndarray]:
-        batch = self.input_module(inputs)
-        return self.model_module(self.sess, batch, goals)
 
     def setup_from_data(self, data: List[Tuple[Question, Answer]]):
         """
