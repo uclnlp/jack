@@ -36,7 +36,8 @@ def QuestionWithDefaults(question, support, id=None,
     return Question(question, support, id,
                     atomic_candidates, seq_candidates, candidate_spans)
 
-def AnswerWithDefault(text: str, span: Tuple[int, int]=None, score: float=1.0):
+
+def AnswerWithDefault(text: str, span: Tuple[int, int] = None, score: float = 1.0):
     return Answer(text, span, score)
 
 
@@ -52,10 +53,10 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Question, 
         A list of input-answer pairs.
 
     """
-    #TODO: we cannot use jtr_load, because it produces option specific output, whereas the jtr json schema is fixed
-    #dict_data = jtr_load(path, max_count, **options)
+    # TODO: we cannot use jtr_load, because it produces option specific output, whereas the jtr json schema is fixed
+    # dict_data = jtr_load(path, max_count, **options)
 
-    #We load json directly instead
+    # We load json directly instead
     with open(path) as f:
         jtr_data = json.load(f)
 
@@ -77,7 +78,8 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Question, 
             question = value(question_instance['question'])
             idd = value(question_instance['question'], 'id')
             if global_candidates is None:
-                candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
+                candidates = [value(c) for c in
+                              question_instance['candidates']] if "candidates" in question_instance else None
             else:
                 candidates = global_candidates
             answers = [Answer(value(c), value(c, 'span'), 1.0)
