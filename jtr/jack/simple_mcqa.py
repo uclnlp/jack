@@ -85,7 +85,7 @@ class SimpleMCModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return self.input_ports + [Ports.Targets.candidate_labels]
+        return [Ports.Prediction.candidate_scores, Ports.Targets.candidate_labels]
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -93,34 +93,33 @@ class SimpleMCModelModule(SimpleModelModule):
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
-                               multiple_support: tf.Tensor,
-                               question: tf.Tensor,
-                               atomic_candidates: tf.Tensor,
+                               candidate_scores: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
-        output = self.create_output(shared_resources, multiple_support, question, atomic_candidates)
-        scores = output[Ports.Prediction.candidate_scores]  # [num_batches,num_candidates]
-        loss = tf.nn.softmax_cross_entropy_with_logits(scores, candidate_labels)
-
+        loss = tf.nn.softmax_cross_entropy_with_logits(candidate_scores, candidate_labels)
         return {
             Ports.loss: loss,
-            **output
         }
 
-    def create_output(self, shared_resources: SharedVocabAndConfig,
+    def create_output(self,
+                      shared_resources: SharedVocabAndConfig,
                       multiple_support: tf.Tensor,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
         emb_dim = shared_resources.config["emb_dim"]
-        embeddings = tf.get_variable(
-            "embeddings", [len(self.vocab), emb_dim],
-            trainable=True, dtype="float32")
+        with tf.variable_scope("embeddings") as varscope:
+            # varscope.reuse_variables()
+            embeddings = tf.get_variable(
+                "embeddings", [len(self.vocab), emb_dim],
+                trainable=True, dtype="float32")
 
         embedded_supports = tf.reduce_sum(tf.gather(embeddings, multiple_support), (1, 2))  # [batch_size, emb_dim]
         embedded_question = tf.reduce_sum(tf.gather(embeddings, question), (1,))  # [batch_size, emb_dim]
         embedded_supports_and_question = embedded_supports + embedded_question
         embedded_candidates = tf.gather(embeddings, question)  # [batch_size, num_candidates, emb_dim]
 
-        scores = tf.einsum("bce,be->bc", embedded_candidates, embedded_supports_and_question)
+        scores = tf.batch_matmul(embedded_candidates, tf.expand_dims(embedded_supports_and_question, -1))
+
+        # scores = tf.einsum("bce,be->bc", embedded_candidates, embedded_supports_and_question)
 
         return {
             Ports.Prediction.candidate_scores: scores
