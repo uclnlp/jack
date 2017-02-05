@@ -6,7 +6,7 @@ using a tensorflow model into other tensors, and one that converts these tensors
 import os
 import pickle
 from abc import abstractmethod, ABCMeta, abstractproperty
-from typing import Mapping, Iterable, Tuple, Callable
+from typing import Mapping, Iterable, Tuple, Callable, Sequence
 import numpy as np
 import shutil
 import tensorflow as tf
@@ -109,6 +109,9 @@ class Ports:
         candidate_labels = TensorPort(tf.float32, [None, None], "candidate_targets",
                                       "Represents target (0/1) values for each candidate",
                                       "[batch_size, num_candidates]")
+        target_index = TensorPort(tf.int32, [None], "target_index",
+                                  "Represents symbol id of target candidate",
+                                  "[batch_size]")
 
 
 class FlatPorts:
@@ -426,8 +429,8 @@ class ModelModule:
 
 class SimpleModelModule(ModelModule):
     @abstractmethod
-    def create_output(self, shared_resources: SharedResources, *input_tensors: tf.Tensor) -> Mapping[
-        TensorPort, tf.Tensor]:
+    def create_output(self, shared_resources: SharedResources,
+                      *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output and loss tensors from input tensors.
@@ -440,8 +443,8 @@ class SimpleModelModule(ModelModule):
         pass
 
     @abstractmethod
-    def create_training_output(self, shared_resources: SharedResources, *target_input_tensors: tf.Tensor) -> Mapping[
-        TensorPort, tf.Tensor]:
+    def create_training_output(self, shared_resources: SharedResources,
+                               *target_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output and loss tensors from input tensors.

@@ -11,7 +11,7 @@ def test_example_reader_overfit():
     vocab = jack.SharedVocabAndConfig(Vocab())
     input_module = example.SimpleMCInputModule(vocab)
     model_module = example.SimpleMCModelModule(vocab)
-    output_module = example.ExampleOutputModule()
+    output_module = example.SimpleMCOutputModule()
     reader = jack.JTReader(input_module, model_module, output_module, vocab)
 
     example_input = Question(["the father of Bart is Homer", "the father of Homer is Abe"],
