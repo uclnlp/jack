@@ -1,27 +1,40 @@
 """
+
 jtr converter for the fb15k dataset.
 
-METADATA:   Training data: 483142 triples (subject, relation, object)
-            14951 different entities
-            1345 different relation types
+Bordes, Antoine, et al.
+"Translating embeddings for modeling multi-relational data."
+Advances in neural information processing systems. 2013.
 
-data source: https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz
+Original paper:
+        https://papers.nips.cc/paper/5071-translating-embeddings-for-modeling-multi-relational-data
+Data:   https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:fb15k.tgz
+Web:    https://everest.hds.utc.fr/doku.php?id=en:transe
+JTR download script: data/FB15k/download.sh
 
-webpage: https://everest.hds.utc.fr/doku.php?id=en:transe
+Metadata:
 
-paper reference:
-Bordes et al. 2013: Translating Embeddings for Modeling Multi-relational Data
+Training data:
+    483142 triples (subject, relation, object)
+    14951 different entities
+    1345 different relation types
+
 """
 
-import json
-from sys import argv
 from collections import defaultdict
 import gc
 import json
+import argparse
 
 
 def load_fb15k_triples(path):
-    """ loads the raw data from file provided.
+    """
+    Loads the raw data from file provided.
+
+    Args:
+        path: path to the file
+
+    Returns: triples
     """
     with open(path, 'r') as f:
         triples = [line.strip('\n').split('\t') for line in f.readlines()]
@@ -29,56 +42,76 @@ def load_fb15k_triples(path):
 
 
 def extract_unique_entities_and_relations(triples):
-    """ Identifies unique entities and relation types in collection of triples.
-    :param triples: List of string triples.
-    :return unique_entities: List of strings
-    :return unique_relations: List of strings
+    """
+    Identifies unique entities and relation types in collection of triples.
+
+    Args:
+        triples: List of string triples.
+
+    Returns:
+        unique_entities: List of strings
+        unique_relations: List of strings
     """
     s_entities = set([triple[0] for triple in triples])
     o_entities = set([triple[2] for triple in triples])
     r_types = set([triple[1] for triple in triples])
 
     unique_relations = sorted(list(r_types))
-    unique_entities = sorted(list( s_entities | o_entities ))  # union of sets
+    unique_entities = sorted(list(s_entities | o_entities))  # union of sets
 
     return unique_entities, unique_relations
 
 
 def get_facts_per_entity(triples):
-    """ obtain dictionary with all train fact ids that contain an entity.
-    :param triples: List of fact triples
-    :return Dictionary entity --> fact IDs it participates in
     """
-    D = defaultdict(set)
+    Obtain dictionary with all train fact ids that contain an entity.
+
+    Args:
+        triples: List of fact triples
+
+    Returns:
+        Dictionary entity --> fact IDs it participates in
+    """
+    d = defaultdict(set)
     for i_triple, triple in enumerate(triples):
-        D[triple[0]].add(i_triple)
-        D[triple[2]].add(i_triple)
-    return D
+        d[triple[0]].add(i_triple)
+        d[triple[2]].add(i_triple)
+    return d
 
 
 def get_facts_per_relation(triples):
-    """ obtain dictionary with all train fact ids that contain a relation type.
-    :param triples: List of fact triples
-    :return Dictionary relation type --> fact IDs it participates in
     """
-    D = defaultdict(set)
+    Obtain dictionary with all train fact ids that contain a relation type.
+
+    Args:
+        triples: List of fact triples
+
+    Returns:
+        Dictionary relation type --> fact IDs it participates in
+    """
+    d = defaultdict(set)
     for i_triple, triple in enumerate(triples):
-        D[triple[1]].add(i_triple)
-    return D
+        d[triple[1]].add(i_triple)
+    return d
 
 
 def get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation,
                             include_relations=False):
-    """ Extracts neighbouring facts for a collection of triples. neighbouring
+    """
+    Extracts neighbouring facts for a collection of triples. neighbouring
     facts of fact f are such facts that share at least an entity with f.
     If relations are included, facts which share a relation are also considered
     neighbours.
-    :param triples: list of facts triples
-    :param facts_per_entity: dictionary; The facts an entity appears in
-    :param facts_per_relation: dictionary; The facts a relation appears in
-    :param include_relations: boolean. whether facts sharing the relation should
-        be considered neighbours as well.
-    :return fact_neighbourhoods: dictionary mapping fact ID to set of fact IDs.
+
+    Args:
+        triples: list of facts triples
+        facts_per_entity: dictionary; The facts an entity appears in
+        facts_per_relation: dictionary; The facts a relation appears in
+        include_relations: boolean. whether facts sharing the relation should
+            be considered neighbours as well.
+
+    Returns:
+        fact_neighbourhoods: dictionary mapping fact ID to set of fact IDs.
     """
     fact_neighbourhoods = defaultdict(set)
     for i_triple, triple in enumerate(triples):
@@ -96,14 +129,17 @@ def get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation,
     return fact_neighbourhoods
 
 
-def convert(triples, neighbourhoods, unique_entities):
-    """ Converts into jtr format.
-    :param triples: fact triples that should be converted.
-    :param neighbourhoods: dictionary of supporting facts per triple
-    :unique_entities: List of strings
-    :return jtr formatted fb15k data.
+def convert_fb15k2(triples, neighbourhoods, unique_entities):
     """
+    Converts into jtr format.
+    Args:
+        triples: fact triples that should be converted.
+        neighbourhoods: dictionary of supporting facts per triple
+        unique_entities: List of strings
 
+    Returns:
+        jtr formatted fb15k data.
+    """
     # figure out cases with multiple possible true answers
     multiple_answers_dict = defaultdict(set)
     for triple in triples:
@@ -111,8 +147,8 @@ def convert(triples, neighbourhoods, unique_entities):
 
     instances = []
     for i, triple in enumerate(triples):
-        if not i%1000:
-            #print(i)
+        if not i % 1000:
+            # print(i)
             gc.collect()
         # correct answers for this (s,r,.) case
         correct_answers = multiple_answers_dict[triple[:2]]
@@ -123,84 +159,79 @@ def convert(triples, neighbourhoods, unique_entities):
 
         # create a single jtr instance
         qset_dict = {}
-        support_texts = [" ".join([str(s), str(r), str(o)]) for (s,r,o) in neighbour_triples]
+        support_texts = [" ".join([str(s), str(r), str(o)]) for (s, r, o) in neighbour_triples]
 
-        qset_dict['support'] = [ {'text': t} for t in support_texts]
+        qset_dict['support'] = [{'text': t} for t in support_texts]
         qset_dict['questions'] = [{
-            "question" : " ".join([str(triple[0]), str(triple[1])]),  #subject and relation
-            "candidates" : [],  #use global candidates instead.
-            "answers": [ {'text': str(a)} for a in correct_answers]  #object
+            "question": " ".join([str(triple[0]), str(triple[1])]),  # subject and relation
+            "candidates": [],  # use global candidates instead.
+            "answers": [{'text': str(a)} for a in correct_answers]  # object
         }]
         instances.append(qset_dict)
 
     return {
         'meta': 'FB15K with entity neighbours as supporting facts.',
-        'globals': {'candidates': [{'text': str(i)} for (i, u) in enumerate(unique_entities)]},
+        'globals': {
+            'candidates': [{'text': str(i)} for (i, u) in enumerate(unique_entities)]
+        },
         'instances': instances
     }
 
 
 def compress_triples(string_triples, unique_entities, unique_relations):
     id_triples = []
-    for (s,r,o) in string_triples:
-        s_id = unique_entities.index(s)
-        r_id = unique_relations.index(r)
-        o_id = unique_entities.index(o)
-        id_triples.append( (s_id, r_id, o_id) )
+    dict_unique_entities = {elem: i for i, elem in enumerate(unique_entities)}
+    dict_unique_relations = {elem: i for i, elem in enumerate(unique_relations)}
+    for (s, r, o) in string_triples:
+        s_id = dict_unique_entities[s]
+        r_id = dict_unique_relations[r]
+        o_id = dict_unique_entities[o]
+        id_triples.append((s_id, r_id, o_id))
     return id_triples
 
 
+def main():
+    parser = argparse.ArgumentParser(description='FB15K2 dataset to jtr format converter.')
+    #
+    parser.add_argument('infile',
+                        help="dataset path you're interested in, train/dev/test."
+                             "(e.g. data/FB15k/FB15k/freebase_mtr100_mte100-train.txt)")
+    parser.add_argument('reffile',
+                        help="reference file - use training set path here.")
+    parser.add_argument('outfile',
+                        help="path to the jtr format -generated output file (e.g. data/FB15K2/FB15k_train.jtr.json)")
+    # parser.add_argument('dataset', choices=['cnn', 'dailymail'],
+    #                     help="which dataset to access: cnn or dailymail")
+    # parser.add_argument('split', choices=['train', 'dev', 'test'],
+    #                     help="which split of the dataset to convert: train, dev or test")
+    args = parser.parse_args()
+
+    # load data from files into fact triples
+    triples = load_fb15k_triples(args.infile)
+    reference_triples = load_fb15k_triples(args.reffile)
+
+    # unique entity and relation types in reference triples
+    unique_entities, unique_relations = \
+        extract_unique_entities_and_relations(reference_triples)
+    # represent string triples with numeric IDs for entities and relations
+    triples = compress_triples(triples, unique_entities, unique_relations)
+    reference_triples = compress_triples(reference_triples, unique_entities, unique_relations)
+
+    # get neighbouring facts for each fact in triples
+    facts_per_entity = get_facts_per_entity(reference_triples)
+    facts_per_relation = get_facts_per_relation(reference_triples)
+    neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
+
+    # dump the entity and relation ids for understanding the jtr contents.
+    with open('fb15k_entities_relations.json', 'w') as f:
+        d = {"unique_entities": unique_entities,
+             "unique_relations": unique_relations}
+        json.dump(d, f)
+
+    corpus = convert_fb15k2(triples, neighbourhoods, unique_entities)
+    with open(args.outfile, 'w') as outfile:
+        json.dump(corpus, outfile, indent=2)
+
+
 if __name__ == "__main__":
-
-    import sys
-
-
-
-    # if len(sys.argv) == 2:
-    #     print(json.dumps(corpus, indent=2))
-    if len(sys.argv) == 3:
-
-        data_file = argv[1]  # dataset path you're interested in, train/dev/test.
-        reference_file = argv[2]  # use training set path here.
-
-        # load data from files into fact triples
-        triples = load_fb15k_triples(data_file)
-        reference_triples = load_fb15k_triples(reference_file)
-        print('1')
-        # unique entity and relation types in reference triples
-        unique_entities, unique_relations = \
-            extract_unique_entities_and_relations(reference_triples)
-        print('2')
-        # represent string triples with numeric IDs for entities and relations
-        triples = compress_triples(triples, unique_entities, unique_relations)
-        reference_triples = compress_triples(reference_triples, unique_entities, unique_relations)
-        print('3')
-        # get neighbouring facts for each fact in triples
-        facts_per_entity = get_facts_per_entity(reference_triples)
-        print('4')
-        facts_per_relation = get_facts_per_relation(reference_triples)
-        print('5')
-        neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
-        print('6')
-        # dump the entity and relation ids for understanding the jtr contents.
-        with open('fb15k_entities_relations.json', 'w') as f:
-            D = {"unique_entities": unique_entities,
-                 "unique_relations": unique_relations}
-            json.dump(D, f)
-
-        corpus = convert(triples, neighbourhoods, unique_entities)
-        print(json.dumps(corpus, indent=2))
-
-
-
-        # corpus = convert_squad(sys.argv[1])
-        # with open(sys.argv[2], 'w') as outfile:
-        #     json.dump(corpus, outfile, indent=2)
-    else:
-        print("Usage: python3 FB15K2jtr.py path/to/FB15K2 /path/to/FB15K2_train save/to/directory")
-
-
-
-
-
-
+    main()
