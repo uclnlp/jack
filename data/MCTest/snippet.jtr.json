@@ -1,0 +1,590 @@
+{
+  "meta": "MCTest",
+  "instances": [
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Window",
+              "index": 2
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Door",
+              "label": "A"
+            },
+            {
+              "text": "House",
+              "label": "B"
+            },
+            {
+              "text": "Window",
+              "label": "C"
+            },
+            {
+              "text": "Toilet",
+              "label": "D"
+            }
+          ],
+          "question": " What was the hardest thing for Tom and his friends to fix?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Toilet",
+              "index": 3
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Door",
+              "label": "A"
+            },
+            {
+              "text": "House",
+              "label": "B"
+            },
+            {
+              "text": "Window",
+              "label": "C"
+            },
+            {
+              "text": "Toilet",
+              "label": "D"
+            }
+          ],
+          "question": " What did Tom need to fix first?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Dolly",
+              "index": 1
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Jim",
+              "label": "A"
+            },
+            {
+              "text": "Dolly",
+              "label": "B"
+            },
+            {
+              "text": "Molly",
+              "label": "C"
+            },
+            {
+              "text": "Holly",
+              "label": "D"
+            }
+          ],
+          "question": " Jim didn't bring which person with him?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Jim",
+              "index": 2
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Molly",
+              "label": "A"
+            },
+            {
+              "text": "Holly",
+              "label": "B"
+            },
+            {
+              "text": "Jim",
+              "label": "C"
+            },
+            {
+              "text": "Dolly",
+              "label": "D"
+            }
+          ],
+          "question": " Who was Tom's best friend?"
+        }
+      ],
+      "support": [
+        {
+          "text": "Tom had to fix some things around the house. He had to fix the door. He had to fix the  window. But before he did anything he had to fix the toilet. Tom called over his best  friend Jim to help him. Jim brought with him his friends Molly and Holly. Tom thought that  Jim was going to bring Dolly with him but he didn't. The four of them got to work right  away. Fixing the toilet was easy. Fixing the door was also easy but fixing the window was  very hard. The window was stuck and could not be opened. They all pushed on the window  really hard until finally it opened. Once the window was fixed the four of them made a  delicious dinner and talked about all of the good work that they had done. Tom was glad  that he had such good friends to help him with his work."
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Saturday",
+              "index": 3
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Today",
+              "label": "A"
+            },
+            {
+              "text": "Last year",
+              "label": "B"
+            },
+            {
+              "text": "Friday",
+              "label": "C"
+            },
+            {
+              "text": "Saturday",
+              "label": "D"
+            }
+          ],
+          "question": " What day is Whisker's Birthday?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Sleep in the sun and drink creamy milk",
+              "index": 0
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Sleep in the sun and drink creamy milk",
+              "label": "A"
+            },
+            {
+              "text": "Play",
+              "label": "B"
+            },
+            {
+              "text": "Drink",
+              "label": "C"
+            },
+            {
+              "text": "Sleep",
+              "label": "D"
+            }
+          ],
+          "question": " What does Whiskers like to do?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Black with white paws and a white spot",
+              "index": 3
+            }
+          ],
+          "candidates": [
+            {
+              "text": "All white with a black spot",
+              "label": "A"
+            },
+            {
+              "text": "White",
+              "label": "B"
+            },
+            {
+              "text": "Black",
+              "label": "C"
+            },
+            {
+              "text": "Black with white paws and a white spot",
+              "label": "D"
+            }
+          ],
+          "question": " What color is Whiskers?"
+        },
+        {
+          "answers": [
+            {
+              "text": "A red ball of yarn and a bowl with a cat on it",
+              "index": 2
+            }
+          ],
+          "candidates": [
+            {
+              "text": "A bowl with a cat on it",
+              "label": "A"
+            },
+            {
+              "text": "A play mouse",
+              "label": "B"
+            },
+            {
+              "text": "A red ball of yarn and a bowl with a cat on it",
+              "label": "C"
+            },
+            {
+              "text": "A blue feather",
+              "label": "D"
+            }
+          ],
+          "question": " What does Lisa buy for Whiskers for this birthday?"
+        }
+      ],
+      "support": [
+        {
+          "text": "Lisa has a pet cat named Whiskers. Whiskers is black with a white spot on her  chest. Whiskers also has white paws that look like little white mittens.    Whiskers likes to sleep in the sun on her favorite chair. Whiskers  also likes to drink creamy milk.    Lisa is excited because on Saturday, Whiskers turns two years  old.    After school on Friday, Lisa rushes to the pet store. She wants to buy  Whiskers' birthday presents. Last year, she gave Whiskers a play mouse  and a blue feather.    For this birthday, Lisa is going to give Whiskers a red ball of yarn  and a bowl with a picture of a cat on the side. The picture is of a  black cat. It looks a lot like Whiskers."
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "A home for orphans.",
+              "index": 0
+            }
+          ],
+          "candidates": [
+            {
+              "text": "A home for orphans.",
+              "label": "A"
+            },
+            {
+              "text": "A house.",
+              "label": "B"
+            },
+            {
+              "text": "An Apartment.",
+              "label": "C"
+            },
+            {
+              "text": "A trailer park.",
+              "label": "D"
+            }
+          ],
+          "question": " Where do the main characters live?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Kate",
+              "index": 2
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Patty",
+              "label": "A"
+            },
+            {
+              "text": "Katerina",
+              "label": "B"
+            },
+            {
+              "text": "Kate",
+              "label": "C"
+            },
+            {
+              "text": "Katherine",
+              "label": "D"
+            }
+          ],
+          "question": " What is the girl's name?"
+        },
+        {
+          "answers": [
+            {
+              "text": "She has a heart problem.",
+              "index": 1
+            }
+          ],
+          "candidates": [
+            {
+              "text": "She has the flu.",
+              "label": "A"
+            },
+            {
+              "text": "She has a heart problem.",
+              "label": "B"
+            },
+            {
+              "text": "She has diabetes.",
+              "label": "C"
+            },
+            {
+              "text": "She has a cold.",
+              "label": "D"
+            }
+          ],
+          "question": " What is wrong with the girl?"
+        },
+        {
+          "answers": [
+            {
+              "text": "Hawthorne",
+              "index": 0
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Hawthorne",
+              "label": "A"
+            },
+            {
+              "text": "Hawthorne's",
+              "label": "B"
+            },
+            {
+              "text": "Hamlet",
+              "label": "C"
+            },
+            {
+              "text": "Jeremy",
+              "label": "D"
+            }
+          ],
+          "question": " What is the boy's name?"
+        }
+      ],
+      "support": [
+        {
+          "text": "Hawthorne rolled over in bed and looked around the room.  He let out a breath.  His eyes were half-closed as he shoved the covers back from his bed, and moved  towards the door.  He knew that he had to check on Kate, if he did nothing else. She was  ill, with a heart problem, and he worried about her all the time.    They both lived in a home for orphans, and he had since his parents had died, when he was  the age of four. He had taken care of Kate as if she were his sister ever since. He  wandered to her room sitting himself by her on her bed, shoving her hair from her  face.    She moved on the bed as he pulled her into his arms, \"Kate.\" He said into her ear, \"It's  time to wake up.\" He pressed a kiss to her head, and her eyes opened.    \"Hawthy?\" She said, her nickname for him moving from her lips.    \"Yea.\" He moved her hair.    \"I want to go outside today,\" she said, and he nodded in response.    \"If you are up to it, I won't stop you\", he told her, and she smiled.    \"Thanks Hawthy\", she said.    It wasn't long until she fell back to sleep."
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "trying to beat him",
+              "index": 3
+            }
+          ],
+          "candidates": [
+            {
+              "text": "enjoying a meal",
+              "label": "A"
+            },
+            {
+              "text": "talking about his job",
+              "label": "B"
+            },
+            {
+              "text": "talking to him",
+              "label": "C"
+            },
+            {
+              "text": "trying to beat him",
+              "label": "D"
+            }
+          ],
+          "question": " What was the strange guy doing with the friend?"
+        },
+        {
+          "answers": [
+            {
+              "text": "because he heard the cop car",
+              "index": 0
+            }
+          ],
+          "candidates": [
+            {
+              "text": "because he heard the cop car",
+              "label": "A"
+            },
+            {
+              "text": "because he saw his friend",
+              "label": "B"
+            },
+            {
+              "text": "because he didn't like the dinner",
+              "label": "C"
+            },
+            {
+              "text": "because it was getting late",
+              "label": "D"
+            }
+          ],
+          "question": " Why did the strange guy run away?"
+        },
+        {
+          "answers": [
+            {
+              "text": "a superhero",
+              "index": 2
+            }
+          ],
+          "candidates": [
+            {
+              "text": "a sword",
+              "label": "A"
+            },
+            {
+              "text": "a car",
+              "label": "B"
+            },
+            {
+              "text": "a superhero",
+              "label": "C"
+            },
+            {
+              "text": "a cop",
+              "label": "D"
+            }
+          ],
+          "question": " Who was the strange guy dressed up as?"
+        },
+        {
+          "answers": [
+            {
+              "text": "dinner",
+              "index": 3
+            }
+          ],
+          "candidates": [
+            {
+              "text": "lunch",
+              "label": "A"
+            },
+            {
+              "text": "snack",
+              "label": "B"
+            },
+            {
+              "text": "breakfast",
+              "label": "C"
+            },
+            {
+              "text": "dinner",
+              "label": "D"
+            }
+          ],
+          "question": " What did they eat at the friend's house?"
+        }
+      ],
+      "support": [
+        {
+          "text": "One night I was at my friend's house where he threw a party. We were enjoying our dinner  at night when all of a sudden we heard a knock on the door. I opened the door and saw this  guy who had scar on his face. I asked my friend \"who is that guy?\", and he told me that it  was his friend. I didn't trust that guy because he looked very strange.    After we had dinner the strange guy asked my friend to come outside because he wanted to  talk to him. A few seconds later I heard a noise from outside and when I ran outside I saw  that the strange guy was trying to beat my friend. I ran towards him and asked him to  leave our house. He left the house but after half an hour he came back and this time he  was dressed up as superhero and he also had a sword. As soon as I saw him I ran inside the  house and called the cops. The cops came and the guy ran away as soon as he heard the cop  car coming. We never found out what happened to that guy after that day."
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "answers": [
+            {
+              "text": "Alex was proud because James was brave.",
+              "index": 0
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Alex was proud because James was brave.",
+              "label": "A"
+            },
+            {
+              "text": "He was proud because he was his hero.",
+              "label": "B"
+            },
+            {
+              "text": "He was proud because he was weak.",
+              "label": "C"
+            },
+            {
+              "text": "He was proud because he was scared.",
+              "label": "D"
+            }
+          ],
+          "question": " Why was Alex proud of James?"
+        },
+        {
+          "answers": [
+            {
+              "text": "James",
+              "index": 3
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Alex",
+              "label": "A"
+            },
+            {
+              "text": "Gordon",
+              "label": "B"
+            },
+            {
+              "text": "Johnny",
+              "label": "C"
+            },
+            {
+              "text": "James",
+              "label": "D"
+            }
+          ],
+          "question": " Who is the character that is fat and is being bullied?"
+        },
+        {
+          "answers": [
+            {
+              "text": "The bullies didn't know what to do and gave up. They went away to look for more fun things.",
+              "index": 1
+            }
+          ],
+          "candidates": [
+            {
+              "text": "They wanted to be heroes. They were protecting themselves.",
+              "label": "A"
+            },
+            {
+              "text": "The bullies didn't know what to do and gave up. They went away to look for more fun things.",
+              "label": "B"
+            },
+            {
+              "text": "They were scared. They stood up for each other.",
+              "label": "C"
+            },
+            {
+              "text": "They were weak. They remembered all the times they were being protected.",
+              "label": "D"
+            }
+          ],
+          "question": " What did the bullies do after James stood up to them?"
+        },
+        {
+          "answers": [
+            {
+              "text": "He wanted to protect himself. He didn't want Alex to always help him.",
+              "index": 1
+            }
+          ],
+          "candidates": [
+            {
+              "text": "Because he was weak. He wanted to be the opposite.",
+              "label": "A"
+            },
+            {
+              "text": "He wanted to protect himself. He didn't want Alex to always help him.",
+              "label": "B"
+            },
+            {
+              "text": "Because they grew up together. They were best friends.",
+              "label": "C"
+            },
+            {
+              "text": "He wanted to not be scared. He wanted someone to be proud of him.",
+              "label": "D"
+            }
+          ],
+          "question": " Why did James stand up to the bullies?"
+        }
+      ],
+      "support": [
+        {
+          "text": "Two best friends lived in a small town. They grew up together and did everything  together. One boy was named James, and he was a cute, fat kid who was always picked  on. And then the other boy was named Alex, and he was handsome and cool. They were  opposites, but they didn't care. Alex would always protect James from the bullies because  James was weak.    One day, James was being teased by the bullies, Gordon and Johnny, but Alex wasn't there  to save him. James didn't know what to do and was scared. But then he remembered all of  the times Alex stood up for him. James looked up to Alex and he thought of him as his  hero. James wanted to protect himself and not have Alex always come to help. So this time,  James got up and was brave. He stood up to Gordon and Johnny and told them that he wasn't  scared. The bullies didn't know what to do and then gave up. They went away to look for  more fun things to do. Alex saw the whole thing and was proud of James for being brave.    Now James and Alex protect each other and stand up for each other. They still are the best  of friends."
+        }
+      ]
+    }
+  ]
+}

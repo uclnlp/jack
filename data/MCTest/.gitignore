@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+*
+
+# ...except:
+!.gitignore
+!download.sh
+!snippet.jtr.json
