@@ -3,19 +3,18 @@ Here we define the basic interfaces of jtr. jtr readers consist of 3 layers, one
 jtr data structures into tensors, one that processes predicts the outputs and losses
 using a tensorflow model into other tensors, and one that converts these tensors back to jtr data structures.
 """
+import logging
 import os
 import pickle
-from abc import abstractmethod, ABCMeta, abstractproperty
-from typing import Mapping, Iterable, Tuple, Callable, Sequence
-import numpy as np
 import shutil
+import sys
+from abc import abstractmethod, abstractproperty
+from typing import Mapping, Iterable, Sequence
+
+import numpy as np
 import tensorflow as tf
-import jtr.train as jtr_train
 
 from jtr.jack.data_structures import *
-
-import logging
-import sys
 
 
 class TensorPort:
@@ -25,6 +24,15 @@ class TensorPort:
     """
 
     def __init__(self, dtype, shape, name, doc_string=None, shape_string=None):
+        """
+        Create a new TensorPort.
+        :param dtype: the (TF) data type of the port.
+        :param shape: the shape of the tensor.
+        :param name: the name of this port (should be a valid TF name)
+        :param doc_string: a documentation string associated with this port
+        :param shape_string: a string of the form [size_1,size_2,size_3] where size_i is a text describing the
+        size of the tensor's dimension i (such as "number of batches").
+        """
         self.shape_string = shape_string
         self.name = name
         self.dtype = dtype
@@ -44,6 +52,10 @@ class TensorPort:
 
 
 class TensorPortWithDefault(TensorPort):
+    """
+    TensorPort that also defines a default value.
+    """
+
     def __init__(self, default_value, dtype, shape, name, doc_string=None, shape_string=None):
         self.default_value = default_value
         super().__init__(dtype, shape, name, doc_string, shape_string)
@@ -246,14 +258,17 @@ class InputModule:
         """
         Defines what types of tensors the output module produces in each batch.
         Returns: a list of tensor ports that correspond to the tensor ports in the mapping
-        produced by `__call__`.
+        produced by `__call__`. The `dataset_generator` method will return bindings for these
+        ports and the ones in `training_ports`.
         """
         pass
 
     @abstractproperty
     def training_ports(self) -> List[TensorPort]:
         """
-        Defines what types of tensor is used to represent the target solution during training.
+        Defines what types of tensor are provided in addition to `output_ports` during training
+        in the `dataset_generator` function. Typically these will be ports that describe
+        the target solution at training time.
         """
         pass
 
@@ -278,9 +293,11 @@ class InputModule:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
-        just as `__call__` does, using the `output_ports` of this object.
+        just as `__call__` does, but provides additional bindings for the `training_ports` ports in
+        case `is_eval` is `False`.
         Args:
             dataset: a set of pairs of input and answer.
+            is_eval: is this dataset generated for evaluation only (not training).
 
         Returns: An iterable/generator that, on each pass through the data, produces a list of batches.
         """
@@ -300,6 +317,7 @@ class InputModule:
     def setup(self, shared_resources: SharedResources):
         """
         Args:
+            shared_resources:
             data: a set of pairs of input and answer.
         """
         pass
