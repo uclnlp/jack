@@ -306,6 +306,8 @@ class InputModule:
     @abstractmethod
     def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
         """
+        Sets up the module based on input data. This usually involves setting up vocabularies and other
+        resources.
         Args:
             data: a set of pairs of input and answer.
 
@@ -318,7 +320,6 @@ class InputModule:
         """
         Args:
             shared_resources:
-            data: a set of pairs of input and answer.
         """
         pass
 
@@ -446,6 +447,12 @@ class ModelModule:
 
 
 class SimpleModelModule(ModelModule):
+    """
+    This class simplifies the implementation of ModelModules by requiring
+    to implement a small set of methods that produce the TF graph, and define
+    the ports.
+    """
+
     @abstractmethod
     def create_output(self, shared_resources: SharedResources,
                       *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
