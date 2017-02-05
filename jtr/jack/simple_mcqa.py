@@ -45,12 +45,12 @@ class SimpleMCInputModule(InputModule):
 
     def dataset_generator(self, dataset: List[Tuple[Question, Answer]], is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, _ = self.preprocess(dataset)
+        corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.candidate_labels: corpus["answers"]
+            Ports.Targets.candidate_labels: corpus["targets"]
         }
         return get_batches(xy_dict)
 
@@ -94,39 +94,35 @@ class SimpleMCModelModule(SimpleModelModule):
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
                                candidate_scores: tf.Tensor,
-                               candidate_labels: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
+                               candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
         loss = tf.nn.softmax_cross_entropy_with_logits(candidate_scores, candidate_labels)
-        return {
-            Ports.loss: loss,
-        }
+        return loss,
 
     def create_output(self,
                       shared_resources: SharedVocabAndConfig,
                       multiple_support: tf.Tensor,
                       question: tf.Tensor,
-                      atomic_candidates: tf.Tensor) -> Mapping[TensorPort, tf.Tensor]:
+                      atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
         emb_dim = shared_resources.config["emb_dim"]
-        with tf.variable_scope("embeddings") as varscope:
+        with tf.variable_scope("simplce_mcqa"):
             # varscope.reuse_variables()
             embeddings = tf.get_variable(
                 "embeddings", [len(self.vocab), emb_dim],
                 trainable=True, dtype="float32")
 
-        embedded_supports = tf.reduce_sum(tf.gather(embeddings, multiple_support), (1, 2))  # [batch_size, emb_dim]
-        embedded_question = tf.reduce_sum(tf.gather(embeddings, question), (1,))  # [batch_size, emb_dim]
-        embedded_supports_and_question = embedded_supports + embedded_question
-        embedded_candidates = tf.gather(embeddings, question)  # [batch_size, num_candidates, emb_dim]
+            embedded_supports = tf.reduce_sum(tf.gather(embeddings, multiple_support), (1, 2))  # [batch_size, emb_dim]
+            embedded_question = tf.reduce_sum(tf.gather(embeddings, question), (1,))  # [batch_size, emb_dim]
+            embedded_supports_and_question = embedded_supports + embedded_question
+            embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, emb_dim]
 
-        scores = tf.batch_matmul(embedded_candidates, tf.expand_dims(embedded_supports_and_question, -1))
+            scores = tf.batch_matmul(embedded_candidates,
+                                     tf.expand_dims(embedded_supports_and_question, -1))
 
-        # scores = tf.einsum("bce,be->bc", embedded_candidates, embedded_supports_and_question)
-
-        return {
-            Ports.Prediction.candidate_scores: scores
-        }
+            squeezed = tf.squeeze(scores, 2)
+            return squeezed,
 
 
-class ExampleOutputModule(OutputModule):
+class SimpleMCOutputModule(OutputModule):
     def setup(self, shared_resources: SharedResources):
         pass
 
@@ -151,16 +147,17 @@ if __name__ == '__main__':
         (QuestionWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
          AnswerWithDefault("a", score=1.0))
     ]
+    questions = [q for q,_ in data_set]
 
     resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 10})
     example_reader = JTReader(SimpleMCInputModule(resources),
                               SimpleMCModelModule(resources),
-                              ExampleOutputModule(),
-                              resources)
+                              SimpleMCOutputModule(),
+                              shared_resources=resources)
 
-    example_reader.setup_from_data(data_set)
+    # example_reader.setup_from_data(data_set)
 
     # todo: chose optimizer based on config
     example_reader.train(tf.train.AdamOptimizer(), data_set)
 
-    # answers = example_reader(data_set)
+    answers = example_reader(questions)

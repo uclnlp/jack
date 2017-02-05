@@ -9,7 +9,7 @@ def example_reader(config):
     resources = SharedVocabAndConfig(Vocab(), config)
     input_module = SimpleMCInputModule(resources)
     model_module = SimpleMCModelModule(resources)
-    output_module = ExampleOutputModule()
+    output_module = SimpleMCOutputModule()
     reader = JTReader(input_module, model_module, output_module, resources)
     return reader
 
