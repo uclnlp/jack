@@ -1,7 +1,7 @@
 import argparse
 
-from jtr.jack.simple_mcqa import *
 from jtr.jack import *
+from jtr.jack.tasks.mcqa.simple_mcqa import *
 from jtr.preprocess.vocab import Vocab
 
 

@@ -44,8 +44,8 @@ class SimpleMCInputModule(InputModule):
                                    test_time=test_time)
         return corpus
 
-    def dataset_generator(self, dataset: List[Tuple[Question, Answer]], is_eval: bool) \
-            -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: List[Tuple[Question, Answer]],
+                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -148,9 +148,9 @@ if __name__ == '__main__':
         (QuestionWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
          AnswerWithDefault("a", score=1.0))
     ]
-    questions = [q for q,_ in data_set]
+    questions = [q for q, _ in data_set]
 
-    resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 10})
+    resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 100})
     example_reader = JTReader(SimpleMCInputModule(resources),
                               SimpleMCModelModule(resources),
                               SimpleMCOutputModule(),
@@ -159,6 +159,8 @@ if __name__ == '__main__':
     # example_reader.setup_from_data(data_set)
 
     # todo: chose optimizer based on config
-    example_reader.train(tf.train.AdamOptimizer(), data_set)
+    example_reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=10)
 
     answers = example_reader(questions)
+
+    print(answers)

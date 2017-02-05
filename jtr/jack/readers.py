@@ -38,7 +38,7 @@ def __genqa_reader(f):
 @__mcqa_reader
 def example_reader(vocab, config):
     """ Creates an example multiple choice reader. """
-    from jtr.jack.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
+    from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
     resources = SharedVocabAndConfig(vocab, config)
     input_module = SimpleMCInputModule(resources)
     model_module = SimpleMCModelModule(resources)

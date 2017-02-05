@@ -1,7 +1,7 @@
 from pytest import skip
 
 import jtr.jack as jack
-import jtr.jack.simple_mcqa as example
+import jtr.jack.tasks.mcqa.simple_mcqa as example
 from jtr.jack.data_structures import *
 from jtr.preprocess.vocab import Vocab
 
