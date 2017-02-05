@@ -4,6 +4,7 @@ import tensorflow as tf
 from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline, deep_seq_map, deep_map
 from jtr.preprocess.batch import get_batches, GeneratorWithRestart
+from jtr.preprocess.map import numpify
 from jtr.preprocess.vocab import Vocab
 
 
@@ -61,7 +62,7 @@ class SimpleMCInputModule(InputModule):
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"]
         }
-        return x_dict
+        return numpify(x_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -138,7 +139,7 @@ class SimpleMCOutputModule(OutputModule):
         for index_in_batch, question in enumerate(inputs):
             winning_index = winning_indices[index_in_batch]
             score = candidate_scores[index_in_batch, winning_index]
-            result.append(AnswerWithDefault(question.candidates[winning_index], score=score))
+            result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
 
 
