@@ -113,7 +113,7 @@ def _create_vocab(corpus, keys, vocab=None, emb=None, unk=Vocab.DEFAULT_UNK, low
 #@todo: rewrite such that it works for different types of jtr files / models
 # this is the general jtr pipeline
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
-             emb=None, freeze=False, normalize=False, tokenization=True,
+             emb=None, freeze=False, normalize=False, tokenization=True, lowercase=True,
              negsamples=0, sepvocab=True, test_time=False):
     vocab = vocab or Vocab(emb=emb)
     if sepvocab == True:
@@ -132,7 +132,9 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
         corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
     else:
         corpus_tokenized =deep_map(corpus, notokenize, ['question', 'support'])
-    corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support'])
+
+    corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support']) if lowercase else corpus_tokenized
+
     if tokenization == True:
         corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
     else:
