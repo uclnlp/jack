@@ -538,7 +538,7 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop
         )
 
         if drop_keep_prob != 1.0:
-            cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob)
+            cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob, input_keep_prob=drop_keep_prob)
 
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
             cell,
