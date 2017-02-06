@@ -15,6 +15,7 @@ import numpy as np
 import tensorflow as tf
 
 from jtr.jack.data_structures import *
+from jtr.preprocess.vocab import Vocab
 
 
 class TensorPort:
@@ -234,8 +235,20 @@ class FlatPorts:
         # -attention, ...
 
 
-# alias: shared resources can be any kind of pickable object
-SharedResources = object
+class SharedResources:
+    @abstractmethod
+    def load(self, path):
+        """
+        Loads this (potentially empty) resource from path
+        :param path: path to shared resources
+        """
+
+    @abstractmethod
+    def store(self, path):
+        """
+        Saves this resource from path
+        :param path: path to save shared resources
+        """
 
 
 class SharedVocabAndConfig(SharedResources):
@@ -243,9 +256,23 @@ class SharedVocabAndConfig(SharedResources):
     A class to provide and store a vocab shared across some of the reader modules.
     """
 
-    def __init__(self, vocab, config=None):
+    def __init__(self, vocab: Vocab, config: dict = None):
         self.config = config
         self.vocab = vocab
+
+    def store(self, path):
+        if not os.path.exists(path):
+            os.mkdir(path)
+        with open(os.path.join(path, "vocab"), 'wb') as f:
+            pickle.dump(self.vocab, f)
+        with open(os.path.join(path, "config"), 'wb') as f:
+            pickle.dump(self.config, f)
+
+    def load(self, path):
+        with open(os.path.join(path, "vocab"), 'rb') as f:
+            self.vocab = pickle.load(f)
+        with open(os.path.join(path, "config"), 'rb') as f:
+            self.config = pickle.load(f)
 
 
 class InputModule:
@@ -316,7 +343,7 @@ class InputModule:
         pass
 
     @abstractmethod
-    def setup(self, shared_resources: SharedResources):
+    def setup(self):
         """
         Args:
             shared_resources:
@@ -417,7 +444,7 @@ class ModelModule:
         return result
 
     @abstractmethod
-    def setup(self, shared_resources: SharedResources, is_training=True):
+    def setup(self, is_training=True):
         """
         Sets up the module. This usually involves creating the actual tensorflow graph. It is expected
         to be called after the input module is set up. This means that shared resources, such as the vocab,
@@ -453,12 +480,15 @@ class SimpleModelModule(ModelModule):
     the ports.
     """
 
+    def __init__(self, shared_resources: SharedResources):
+        self.shared_resources = shared_resources
+
     @abstractmethod
     def create_output(self, shared_resources: SharedResources,
                       *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
-        output and loss tensors from input tensors.
+        output from input tensors corresponding to `input_ports`.
         Args:
             *input_tensors: a list of input tensors.
 
@@ -469,33 +499,34 @@ class SimpleModelModule(ModelModule):
 
     @abstractmethod
     def create_training_output(self, shared_resources: SharedResources,
-                               *target_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
+                               *training_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
         """
-        This function needs to be implemented in order to define how the module produces
-        output and loss tensors from input tensors.
+        This function needs to be implemented in order to define how the module produces tensors only used
+        during training given tensors corresponding to the ones defined by `training_input_ports`, which might include
+        tensors corresponding to ports defined by `output_ports`. This sub-graph should only be created during training.
         Args:
-            *input_tensors: a list of input tensors.
+            *training_input_tensors: a list of input tensors.
 
         Returns:
             mapping from output ports to their tensors.
         """
         pass
 
-    def setup(self, shared_resources: SharedResources, is_training=True):
+    def setup(self, is_training=True):
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
         self._tensors = {d: d.create_placeholder() for d in self.input_ports}
         self._placeholders = dict(self._tensors)
-        output_tensors = self.create_output(shared_resources, *[self._tensors[port] for port in self.input_ports])
+        output_tensors = self.create_output(self.shared_resources, *[self._tensors[port] for port in self.input_ports])
         self._tensors.update(zip(self.output_ports, output_tensors))
         if is_training:
             self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
                                       if p not in self._placeholders and p not in self._tensors)
             self._tensors.update(self._placeholders)
             input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
-            training_output_tensors = self.create_training_output(shared_resources, *[input_target_tensors[port]
-                                                                                      for port in
-                                                                                      self.training_input_ports])
+            training_output_tensors = self.create_training_output(self.shared_resources, *[input_target_tensors[port]
+                                                                                           for port in
+                                                                                           self.training_input_ports])
             self._tensors.update(zip(self.training_output_ports, training_output_tensors))
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
@@ -545,8 +576,8 @@ class OutputModule:
     @abstractmethod
     def __call__(self, inputs: List[Question], *tensor_inputs: np.ndarray) -> List[Answer]:
         """
-        Process the prediction tensor for a batch to produce a list of answers. The module has access
-        to the original inputs.
+        Process the tensors corresponding to the defined `input_ports` for a batch to produce a list of answers.
+        The module has access to the original inputs.
         Args:
             inputs:
             prediction:
@@ -557,7 +588,7 @@ class OutputModule:
         pass
 
     @abstractmethod
-    def setup(self, shared_resources: SharedResources):
+    def setup(self):
         """
         Args:
             shared_resources: sets up this module with shared resources
@@ -584,12 +615,12 @@ class JTReader:
     """
 
     def __init__(self,
+                 shared_resources: SharedResources,
                  input_module: InputModule,
                  model_module: ModelModule,
                  output_module: OutputModule,
                  sess: tf.Session = None,
-                 is_train: bool = True,
-                 shared_resources=None):
+                 is_train: bool = True):
         self.shared_resources = shared_resources
         self.sess = sess
         self.output_module = output_module
@@ -692,20 +723,19 @@ class JTReader:
         Returns:
 
         """
-        self.shared_resources = self.input_module.setup_from_data(data)
-        self.model_module.setup(self.shared_resources, self.is_train)
-        self.output_module.setup(self.shared_resources)
+        self.input_module.setup_from_data(data)
+        self.model_module.setup(self.is_train)
+        self.output_module.setup()
         self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, dir):
-        with open(os.path.join(dir, "shared_resources"), 'rb') as f:
-            self.shared_resources = pickle.load(f)
-        self.input_module.setup(self.shared_resources)
+        self.shared_resources.load(os.path.join(dir, "shared_resources"))
+        self.input_module.setup()
         self.input_module.load(os.path.join(dir, "input_module"))
-        self.model_module.setup(self.shared_resources, self.is_train)
+        self.model_module.setup(self.is_train)
         self.sess.run([v.initializer for v in self.model_module.variables])
         self.model_module.load(self.sess, os.path.join(dir, "model_module"))
-        self.output_module.setup(self.shared_resources)
+        self.output_module.setup()
         self.output_module.load(os.path.join(dir, "output_module"))
 
     def load(self, dir):
@@ -721,8 +751,7 @@ class JTReader:
         if os.path.exists(dir):
             shutil.rmtree(dir)
         os.makedirs(dir)
-        with open(os.path.join(dir, "shared_resources"), "wb") as f:
-            pickle.dump(self.shared_resources, f)
+        self.shared_resources.store(os.path.join(dir, "shared_resources"))
         self.input_module.store(os.path.join(dir, "input_module"))
         self.model_module.store(self.sess, os.path.join(dir, "model_module"))
         self.output_module.store(os.path.join(dir, "output_module"))

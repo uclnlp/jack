@@ -1,4 +1,4 @@
-from pytest import skip
+import pytest
 
 import jtr.jack as jack
 import jtr.jack.tasks.mcqa.simple_mcqa as example
@@ -6,13 +6,13 @@ from jtr.jack.data_structures import *
 from jtr.preprocess.vocab import Vocab
 
 
-@skip("Not implemented yet")
+@pytest.mark.skip("Not implemented yet")
 def test_example_reader_overfit():
     vocab = jack.SharedVocabAndConfig(Vocab())
     input_module = example.SimpleMCInputModule(vocab)
     model_module = example.SimpleMCModelModule(vocab)
     output_module = example.SimpleMCOutputModule()
-    reader = jack.JTReader(input_module, model_module, output_module, vocab)
+    reader = jack.JTReader(vocab, input_module, model_module, output_module)
 
     example_input = Question(["the father of Bart is Homer", "the father of Homer is Abe"],
                              "Who is the father of Homer?",

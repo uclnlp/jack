@@ -1,9 +1,9 @@
-from jtr.jack import *
 import tensorflow as tf
 
+from jtr.jack import *
 from jtr.jack.data_structures import *
-from jtr.pipelines import pipeline, deep_seq_map, deep_map
-from jtr.preprocess.batch import get_batches, GeneratorWithRestart
+from jtr.pipelines import pipeline
+from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify
 from jtr.preprocess.vocab import Vocab
 
@@ -71,10 +71,6 @@ class SimpleMCInputModule(InputModule):
 
 
 class SimpleMCModelModule(SimpleModelModule):
-    def __init__(self, vocab: SharedVocabAndConfig):
-        self.vocab = vocab.vocab
-        self.embeddings = None
-        super().__init__()
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -124,7 +120,7 @@ class SimpleMCModelModule(SimpleModelModule):
 
 
 class SimpleMCOutputModule(OutputModule):
-    def setup(self, shared_resources: SharedResources):
+    def setup(self):
         pass
 
     @property
@@ -151,10 +147,10 @@ if __name__ == '__main__':
     questions = [q for q, _ in data_set]
 
     resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 100})
-    example_reader = JTReader(SimpleMCInputModule(resources),
+    example_reader = JTReader(resources,
+                              SimpleMCInputModule(resources),
                               SimpleMCModelModule(resources),
-                              SimpleMCOutputModule(),
-                              shared_resources=resources)
+                              SimpleMCOutputModule())
 
     # example_reader.setup_from_data(data_set)
 

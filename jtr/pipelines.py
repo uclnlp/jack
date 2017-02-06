@@ -1,8 +1,8 @@
 import tensorflow as tf
 
-from jtr.preprocess.vocab import Vocab, NeuralVocab
-from jtr.preprocess.map import tokenize, deep_map, deep_seq_map, get_entry_dims, dynamic_subsample
+from jtr.preprocess.map import get_entry_dims
 from jtr.preprocess.map import tokenize, notokenize, lower, deep_map, deep_seq_map, dynamic_subsample
+from jtr.preprocess.vocab import Vocab
 
 
 
@@ -165,7 +165,7 @@ def jtr_map_to_targets(xs, cands_name, ans_name):
     for i in range(len(xs[ans_name])):
         targ = []
         for cand in xs[cands_name][i]:
-            if xs[ans_name][i][0] == cand:
+            if xs[ans_name][i] == cand:
                 targ.append(1.0)
             else:
                 targ.append(0.0)

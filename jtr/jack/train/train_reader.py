@@ -1,30 +1,22 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import logging
+import math
 import os
 import os.path as path
-
-from time import time
-import sys
-
-import logging
-
-import math
-
 import shutil
+import sys
+from time import time
+
 import tensorflow as tf
-
-from jtr.jack import load_labelled_data
-from jtr.jack.train.hooks import EvalHook, XQAEvalHook, LossHook, ExamplesPerSecHook, ETAHook
-from jtr.preprocess.batch import get_feed_dicts
-from jtr.preprocess.vocab import Vocab
-from jtr.train import train
-import jtr.jack.readers as readers
-from jtr.load.embeddings.embeddings import load_embeddings
-from jtr.pipelines import create_placeholders, pipeline
-
-from jtr.load.read_jtr import jtr_load as _jtr_load
 from tensorflow.python.client import device_lib
+
+import jtr.jack.readers as readers
+from jtr.jack import load_labelled_data
+from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
+from jtr.load.embeddings.embeddings import load_embeddings
+from jtr.preprocess.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -35,8 +27,9 @@ class Duration(object):
         self.t = time()
 
     def __call__(self):
-        logger.info('Time since last checkpoint : {0:.2g}min'.format((time()-self.t)/60.))
+        logger.info('Time since last checkpoint : {0:.2g}min'.format((time() - self.t) / 60.))
         self.t = time()
+
 
 tf.set_random_seed(1337)
 checkpoint = Duration()
@@ -69,9 +62,9 @@ def main():
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts),
                         help="Single or multiple")
     parser.add_argument('--batch_size', default=128,
-        type=int, help="Batch size for training data, default 128")
+                        type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
-        type=int, help="Batch size for development data, default 128")
+                        type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=100, type=int,
                         help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim', default=100, type=int,
@@ -93,8 +86,10 @@ def main():
 
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
-    parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
-    parser.add_argument('--model', default='fastqa_reader', choices=sorted(readers.readers.keys()), help="Reading model to use")
+    parser.add_argument('--vocab_sep', default=True, type=bool,
+                        help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
+    parser.add_argument('--model', default='fastqa_reader', choices=sorted(readers.readers.keys()),
+                        help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--learning_rate_decay', default=0.5, type=float, help="Learning rate decay, default 0.5")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
@@ -178,11 +173,13 @@ def main():
     iter_iterval = 1 if args.debug else args.log_interval
     hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
              ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
-             ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint, sw)]
+             ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint,
+                     sw)]
 
-    preferred_metric = "f1"  #TODO: this should depend on the task, for now I set it to 1
+    preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
     best_metric = [0.0]
     lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
+
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""
         m = metrics[preferred_metric]
@@ -191,7 +188,7 @@ def main():
             logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
         else:
             best_metric[0] = m
-            if prev_metric is None: # store whole model only at beginning of training
+            if prev_metric is None:  # store whole model only at beginning of training
                 reader.store(args.model_dir)
             else:
                 reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
@@ -209,11 +206,13 @@ def main():
 
     # Test final model
     if test_data is not None:
-        logger.info("Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
+        logger.info(
+            "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
         test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
 
         reader.load(args.model_dir)
         test_eval_hook(1)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

@@ -5,8 +5,8 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from jtr.util.tfutil import tfrun
 from jtr.nn.models import get_total_trainable_variables
+from jtr.util.tfutil import tfrun
 
 # for random embedding initialization in NeuralVocab
 SEED = 54321
@@ -150,7 +150,6 @@ class Vocab(object):
         if init_from_embeddings and emb is not None:
             self.sym2id = dict(emb.vocabulary.word2idx)
             self.id2sym = {v: k for k, v in emb.vocabulary.word2idx.items()}
-            self.emb_length = None
             if unk is not None and unk not in self.sym2id:
                 self.sym2id[unk] = len(self.sym2id)
                 self.id2sym[len(self.id2sym)] = unk
@@ -170,8 +169,10 @@ class Vocab(object):
                 self.sym2freqs[unk] = 0
             self.frozen = False
 
-        if emb is not None:
+        if emb is not None and hasattr(emb, "lookup") and isinstance(emb.lookup, np.array):
             self.emb_length = emb.lookup.shape[1]
+        else:
+            self.emb_length = None
 
     def freeze(self):
         """Freeze current Vocab object (set `self.frozen` to True).
@@ -226,6 +227,8 @@ class Vocab(object):
         """
         if not self.frozen:
             vec = self.emb(sym)
+            if self.emb_length is None and vec is not None:
+                self.emb_length = len(vec) if isinstance(vec, list) else vec.shape[0]
             if sym not in self.sym2id:
                 if vec is None:
                     self.sym2id[sym] = self.next_pos
