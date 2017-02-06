@@ -313,10 +313,8 @@ class XQAEvalHook(EvalHook):
         for i in range(len_np_or_list(predicted_spans)):
             f1, exact = 0.0, 0.0
             p_start, p_end = predicted_spans[i][0], predicted_spans[i][1]
-            print("predicted", p_start, p_end)
             while k < len_np_or_list(correct_spans) and correct2prediction[k] == i:
                 c_start, c_end = correct_spans[k][0], correct_spans[k][1]
-                print("    correct: ", c_start, c_end)
                 if p_start == c_start and p_end == c_end:
                     f1 = 1.0
                     exact = 1.0
