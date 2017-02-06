@@ -1,5 +1,3 @@
-import tensorflow as tf
-
 from jtr.jack import *
 from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline
@@ -104,7 +102,7 @@ class SimpleMCModelModule(SimpleModelModule):
         with tf.variable_scope("simplce_mcqa"):
             # varscope.reuse_variables()
             embeddings = tf.get_variable(
-                "embeddings", [len(self.vocab), emb_dim],
+                "embeddings", [len(self.shared_resources.vocab), emb_dim],
                 trainable=True, dtype="float32")
 
             embedded_supports = tf.reduce_sum(tf.gather(embeddings, multiple_support), (1, 2))  # [batch_size, emb_dim]
