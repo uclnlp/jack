@@ -629,7 +629,7 @@ class JTReader:
         self.is_train = is_train
 
         if self.sess is None:
-            sess_config = tf.ConfigProto()
+            sess_config = tf.ConfigProto(allow_soft_placement=True)
             sess_config.gpu_options.allow_growth = True
             self.sess = tf.Session(config=sess_config)
 
@@ -660,7 +660,8 @@ class JTReader:
     def train(self, optim,
               training_set: List[Tuple[Question, Answer]],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value,
+              device="/cpu:0"):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -675,8 +676,9 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logging.info("Setting up data and model...")
-        # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.setup_from_data(training_set)
+        with tf.device(device):
+            # First setup shared resources, e.g., vocabulary. This depends on the input module.
+            self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

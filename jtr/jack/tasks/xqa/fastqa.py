@@ -3,8 +3,8 @@ This file contains FastQA specific modules and ports
 """
 
 import random
+import re
 
-import jtr
 from jtr.jack import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
 from jtr.jack.tasks.xqa.shared import XQAPorts
@@ -80,6 +80,11 @@ class FastQAInputModule(InputModule):
             "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
         self.shared_vocab_config = shared_vocab_config
 
+        self.__pattern = re.compile('\w+|[^\w\s]')
+
+    def __tokenize(self, text):
+        return self.__pattern.findall(text)
+
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
             return self.emb_matrix[idx]
@@ -136,21 +141,25 @@ class FastQAInputModule(InputModule):
         corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
 
         for input, answers in dataset:
-            corpus["support"].append(" ".join(input.support))
-            corpus["question"].append(input.question)
+            if self.shared_vocab_config.config.get("lowercase", False):
+                corpus["support"].append(" ".join(input.support).lower())
+                corpus["question"].append(input.question.lower())
+            else:
+                corpus["support"].append(" ".join(input.support))
+                corpus["question"].append(input.question)
 
-        corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
+        corpus_tokenized = deep_map(corpus, self.__tokenize, ['question', 'support'])
         word_in_question = []
 
         token_offsets = []
         answer_spans = []
-        for i, (q, s) in enumerate(zip(corpus["question"], corpus["support"])):
+        for i, (q, s) in enumerate(zip(corpus_tokenized["question"], corpus_tokenized["support"])):
             input, answers = dataset[i]
             corpus["support_lengths"].append(len(s))
             corpus["question_lengths"].append(len(q))
 
             # char to token offsets
-            support = " ".join(input.support)
+            support = corpus["support"][i]
             offsets = token_to_char_offsets(support, s)
             token_offsets.append(offsets)
             spans = []
@@ -178,14 +187,12 @@ class FastQAInputModule(InputModule):
         emb_supports = np.zeros([self.batch_size, max(corpus["support_lengths"]), self.emb_matrix.shape[1]])
         emb_questions = np.zeros([self.batch_size, max(corpus["question_lengths"]), self.emb_matrix.shape[1]])
 
-        corpus_ids = deep_map(corpus, self.shared_vocab_config.vocab, ['question', 'support'])
+        corpus_ids = deep_map(corpus_tokenized, self.shared_vocab_config.vocab, ['question', 'support'])
 
         def batch_generator():
             todo = list(range(len(corpus_ids["question"])))
             self._rng.shuffle(todo)
             while todo:
-                question = list()
-                support = list()
                 support_lengths = list()
                 question_lengths = list()
                 wiq = list()
@@ -201,7 +208,7 @@ class FastQAInputModule(InputModule):
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
                     q2u = list()
-                    for w in corpus["question"][j]:
+                    for w in corpus_tokenized["question"][j]:
                         if w not in unique_words_set:
                             unique_word_lengths.append(len(w))
                             unique_words.append([self.char_vocab.get(c, 0) for c in w])
@@ -209,7 +216,7 @@ class FastQAInputModule(InputModule):
                         q2u.append(unique_words_set[w])
                     question2unique.append(q2u)
                     s2u = list()
-                    for w in corpus["support"][j]:
+                    for w in corpus_tokenized["support"][j]:
                         if w not in unique_words_set:
                             unique_word_lengths.append(len(w))
                             unique_words.append([self.char_vocab.get(c, 0) for c in w])
@@ -217,12 +224,12 @@ class FastQAInputModule(InputModule):
                         s2u.append(unique_words_set[w])
                     support2unique.append(s2u)
 
-                    question.append(corpus_ids["question"][j])
-                    support.append(corpus_ids["support"][j])
-                    for k in range(len(support[-1])):
-                        emb_supports[i, k] = self._get_emb(support[-1][k])
-                    for k in range(len(question[-1])):
-                        emb_supports[i, k] = self._get_emb(question[-1][k])
+                    question = corpus_ids["question"][j]
+                    support = corpus_ids["support"][j]
+                    for k in range(len(support)):
+                        emb_supports[i, k] = self._get_emb(support[k])
+                    for k in range(len(question)):
+                        emb_questions[i, k] = self._get_emb(question[k])
                     support_lengths.append(corpus["support_lengths"][j])
                     question_lengths.append(corpus["question_lengths"][j])
                     spans.extend(answer_spans[j])
@@ -244,7 +251,7 @@ class FastQAInputModule(InputModule):
                     FastQAPorts.word_in_question: wiq,
                     FastQAPorts.answer_span: spans,
                     FastQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
-                    FastQAPorts.answer2question: span2question if is_eval else list(range(len(span2question))),
+                    FastQAPorts.answer2question: span2question,
                     FastQAPorts.answer2question_training: [] if is_eval else span2question,
                     FastQAPorts.keep_prob: 0.0 if is_eval else 1 - self.dropout,
                     FastQAPorts.is_eval: is_eval,
@@ -263,10 +270,14 @@ class FastQAInputModule(InputModule):
     def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
         corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
         for input in inputs:
-            corpus["support"].append(" ".join(input.support))
-            corpus["question"].append(input.question)
+            if self.shared_vocab_config.config.get("lowercase", False):
+                corpus["support"].append(" ".join(input.support).lower())
+                corpus["question"].append(input.question.lower())
+            else:
+                corpus["support"].append(" ".join(input.support))
+                corpus["question"].append(input.question)
 
-        corpus = deep_map(corpus, jtr.preprocess.map.tokenize, ['question', 'support'])
+        corpus = deep_map(corpus, self.__tokenize, ['question', 'support'])
         word_in_question = []
         token_offsets = []
         unique_words_set = dict()
@@ -477,7 +488,6 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     batch_size = tf.shape(question_length)[0]
     input_size = encoded_support.get_shape()[-1].value
     support_states_flat = tf.reshape(encoded_support, [-1, input_size])
-    offsets = tf.cast(tf.range(0, batch_size) * (tf.reduce_max(support_length)), dtype=tf.int64)
 
     # computing single time attention over question
     attention_scores = tf.contrib.layers.fully_connected(encoded_question, 1,
@@ -525,6 +535,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     def align_tensor_with_answers_per_question(t):
         return tf.cond(is_eval, lambda: t, lambda: tf.gather(t, answer2question))
 
+    offsets = tf.cast(tf.range(0, batch_size) * tf.reduce_max(support_length), dtype=tf.int64)
     offsets = align_tensor_with_answers_per_question(offsets)
     u_s = tf.gather(support_states_flat, start_pointer + offsets)
 

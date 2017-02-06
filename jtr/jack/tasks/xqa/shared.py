@@ -25,6 +25,7 @@ class XQAOutputModule(OutputModule):
         answers = []
         for i, q in enumerate(questions):
             start, end = span_prediction[i, 0], span_prediction[i, 1]
+            print(start, end)
             char_start = token_char_offsets[i, start]
             if end + 1 < token_char_offsets.shape[1]:
                 char_end = token_char_offsets[i, end + 1]

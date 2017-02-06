@@ -4,8 +4,8 @@ import logging
 from abc import *
 from collections import defaultdict
 from datetime import datetime
-from time import time
 from time import strftime, localtime
+from time import time
 from typing import List, Tuple, Mapping
 
 import numpy as np
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # todo: hooks should also have prefixes so that one can use the same hook with different parameters
 class TrainingHook(metaclass=ABCMeta):
     """Serves as Hook interface."""
+
     @abstractproperty
     def reader(self) -> JTReader:
         """ Returns: JTReader instance"""
@@ -34,6 +35,7 @@ class TrainingHook(metaclass=ABCMeta):
 
 class TraceHook(TrainingHook):
     """Abstract hook class, which implements an update function the summary."""
+
     def __init__(self, reader, summary_writer=None):
         self._summary_writer = summary_writer
         self._reader = reader
@@ -59,6 +61,7 @@ class TraceHook(TrainingHook):
 
 class LossHook(TraceHook):
     """A hook at prints the current loss and adds it to the summary."""
+
     def __init__(self, reader, iter_interval=None, summary_writer=None):
         super(LossHook, self).__init__(reader, summary_writer)
         self._iter_interval = iter_interval
@@ -97,12 +100,13 @@ class LossHook(TraceHook):
 
 class ExamplesPerSecHook(TraceHook):
     """Prints the examples per sec and adds it to the summary writer."""
+
     def __init__(self, reader, batch_size, iter_interval=None, summary_writer=None):
         super(ExamplesPerSecHook, self).__init__(reader, summary_writer)
         self._iter_interval = iter_interval
         self._iter = 0
         self.num_examples = iter_interval * batch_size
-        self.reset=True
+        self.reset = True
 
     def __tag__(self):
         return "Speed"
@@ -128,7 +132,9 @@ class ExamplesPerSecHook(TraceHook):
 
 class ETAHook(TraceHook):
     """Estimates ETA to next checkpoint, epoch end and training end."""
-    def __init__(self, reader, iter_interval, iter_per_epoch, max_epochs, iter_per_checkpoint=None, summary_writer=None):
+
+    def __init__(self, reader, iter_interval, iter_per_epoch, max_epochs, iter_per_checkpoint=None,
+                 summary_writer=None):
         super(ETAHook, self).__init__(reader, summary_writer)
         self.iter_interval = iter_interval
         self.iter_per_epoch = iter_per_epoch
@@ -144,7 +150,6 @@ class ETAHook(TraceHook):
 
     def __tag__(self):
         return "ETA"
-
 
     def at_epoch_end(self, epoch, **kwargs):
         # to eliminate drop in measured speed due to post-epoch hooks:
@@ -167,21 +172,22 @@ class ETAHook(TraceHook):
                 hours = str(int(hours))
 
                 if len(hours) < 2:
-                    hours = "0"+hours
+                    hours = "0" + hours
                 if len(minutes) < 2:
-                    minutes = "0"+minutes
+                    minutes = "0" + minutes
                 if len(seconds) < 2:
-                    seconds = "0"+seconds
+                    seconds = "0" + seconds
 
                 return "{}:{}:{}".format(hours, minutes, seconds)
 
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             current_time = time()
+
             def log_eta(progress, start_time, name):
                 elapsed = current_time - start_time
-                eta = elapsed/progress
+                eta = elapsed / progress
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
-                self.update_summary(self.reader.sess, self.iter, self.__tag__()+"_"+name, float(eta))
+                self.update_summary(self.reader.sess, self.iter, self.__tag__() + "_" + name, float(eta))
 
                 return format_eta(eta), eta_date
 
@@ -189,11 +195,11 @@ class ETAHook(TraceHook):
             total_progress = float(self.iter) / self.max_iters
             eta, eta_data = log_eta(total_progress, self.start, "total")
             log += "\tETA in %s, %s (%.2f%%)" % (eta, eta_data, total_progress * 100)
-            epoch_progress = float((self.iter-1) % self.iter_per_epoch + 1) / self.iter_per_epoch
+            epoch_progress = float((self.iter - 1) % self.iter_per_epoch + 1) / self.iter_per_epoch
             eta, _ = log_eta(epoch_progress, self.start_epoch, "epoch")
             log += "\tETA(epoch) in %s (%.2f%%)" % (eta, epoch_progress * 100)
             if self.iter_per_checkpoint is not None:
-                checkpoint_progress = float((self.iter-1) % self.iter_per_checkpoint + 1) / self.iter_per_checkpoint
+                checkpoint_progress = float((self.iter - 1) % self.iter_per_checkpoint + 1) / self.iter_per_checkpoint
                 eta, _ = log_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
                 log += "\tETA(checkpoint) in %s (%.2f%%)" % (eta, checkpoint_progress * 100)
 
@@ -214,7 +220,7 @@ class EvalHook(TraceHook):
         self._ports = ports
         self._epoch_interval = epoch_interval
         self._iter_interval = iter_interval
-        #self.done_for_epoch = False
+        # self.done_for_epoch = False
         self._iter = 0
         self._info = info or self.__class__.__name__
         self._write_metrics_to = write_metrics_to
@@ -234,7 +240,7 @@ class EvalHook(TraceHook):
         """Returns:
                dict from metric name to float. Per default batch metrics are simply averaged by
                total number of examples"""
-        return {k: sum(vs)/self._total for k, vs in accumulated_metrics.items()}
+        return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
@@ -259,7 +265,7 @@ class EvalHook(TraceHook):
             if self._write_metrics_to is not None:
                 with open(self._write_metrics_to, 'a') as f:
                     f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
-                                                      np.round(metrics[m],5)))
+                                                      np.round(metrics[m], 5)))
         res += '\t' + self._info
         logger.info(res)
 
@@ -269,7 +275,6 @@ class EvalHook(TraceHook):
     def at_epoch_end(self, epoch: int, **kwargs):
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
-        self._iter = 0
 
     def at_iteration_end(self, epoch: int, loss: float, **kwargs):
         self._iter += 1
@@ -328,8 +333,3 @@ class XQAEvalHook(EvalHook):
             acc_exact += exact
 
         return {"f1": acc_f1, "exact": acc_exact}
-
-
-
-
-

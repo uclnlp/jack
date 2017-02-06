@@ -102,13 +102,15 @@ def main():
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
-    parser.add_argument('--tensorboard_folder', default='', help='Folder for tensorboard logs')
+    parser.add_argument('--tensorboard_folder', default=None, help='Folder for tensorboard logs')
     parser.add_argument('--write_metrics_to', default='',
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
     parser.add_argument('--model_dir', default=None, type=str, help="Directory to write reader to.")
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
+    parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
+    parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
 
     args = parser.parse_args()
 
@@ -202,7 +204,8 @@ def main():
     # Train
     reader.train(optim, training_set=train_data,
                  max_epochs=args.epochs, hooks=hooks,
-                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value,
+                 device=args.device)
 
     # Test final model
     if test_data is not None:
