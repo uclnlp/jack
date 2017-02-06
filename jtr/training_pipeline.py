@@ -121,6 +121,7 @@ def main():
     parser.add_argument('--tokenize', dest='tokenize', action='store_true', help="Tokenize question and support")
     parser.add_argument('--no-tokenize', dest='tokenize', action='store_false', help="Tokenize question and support")
     parser.set_defaults(tokenize=True)
+    parser.add_argument('--lowercase', dest='lowercase', action='store_true', help="Lowercase data")
 
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
@@ -197,14 +198,25 @@ def main():
 
     if args.vocab_minfreq != 0 and args.vocab_maxsize != 0:
         logger.info('build vocab based on train data')
-        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True, sepvocab=args.vocab_sep, tokenization=args.tokenize, emb=emb)
+        _, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, normalize=True,
+                                                                             sepvocab=args.vocab_sep,
+                                                                             tokenization=args.tokenize,
+                                                                             lowercase=args.lowercase,
+                                                                             emb=emb)
         if args.prune == 'True':
             train_vocab = train_vocab.prune(args.vocab_minfreq, args.vocab_maxsize)
 
         logger.info('encode train data')
-        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab, normalize=True, freeze=True, sepvocab=args.vocab_sep, tokenization=args.tokenize, negsamples=args.negsamples)
+        train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab,
+                                       normalize=True, freeze=True, sepvocab=args.vocab_sep,
+                                       tokenization=args.tokenize, lowercase=args.lowercase, negsamples=args.negsamples)
     else:
-        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb, normalize=True, tokenization=args.tokenize, negsamples=args.negsamples, sepvocab=args.vocab_sep)
+        train_data, train_vocab, train_answer_vocab, train_candidate_vocab = pipeline(train_data, emb=emb,
+                                                                                      normalize=True,
+                                                                                      tokenization=args.tokenize,
+                                                                                      lowercase=args.lowercase,
+                                                                                      negsamples=args.negsamples,
+                                                                                      sepvocab=args.vocab_sep)
 
     N_oov = train_vocab.count_oov()
     N_pre = train_vocab.count_pretrained()
@@ -221,10 +233,12 @@ def main():
 
     checkpoint()
     logger.info('encode dev data')
-    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize, sepvocab=args.vocab_sep)
+    dev_data, _, _, _ = pipeline(dev_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True,
+                                 tokenization=args.tokenize, lowercase=args.lowercase, sepvocab=args.vocab_sep)
     checkpoint()
     logger.info('encode test data')
-    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True, tokenization=args.tokenize, sepvocab=args.vocab_sep)
+    test_data, _, _, _ = pipeline(test_data, train_vocab, train_answer_vocab, train_candidate_vocab, freeze=True,
+                                  tokenization=args.tokenize, lowercase=args.lowercase, sepvocab=args.vocab_sep)
     checkpoint()
 
     # (5) Create NeuralVocab
@@ -241,7 +255,20 @@ def main():
     placeholders = create_placeholders(train_data)
     logger.info('build model {}'.format(args.model))
 
-    (logits, loss, predict) = reader_models[args.model](placeholders, nvocab, candvocab=candvocab, **vars(args))
+    #add dropout on the model level
+    #todo: more general solution
+    options_train = vars(args)
+    with tf.name_scope("Train"):
+        with tf.variable_scope("Model", reuse=None):
+            (logits_train, loss_train, predict_train) = reader_models[args.model](placeholders, nvocab, candvocab=candvocab, **options_train)
+
+    options_valid = {k: v for k, v in options_train.items()}
+    options_valid["drop_keep_prob"] = 1.0
+    with tf.name_scope("Valid_Test"):
+        with tf.variable_scope("Model", reuse=True):
+            (logits_valid, loss_valid, predict_valid) = reader_models[args.model](placeholders, nvocab,
+                                                                                          candvocab=candvocab,
+                                                                                          **options_valid)
 
     # (7) Batch the data via jtr.batch.get_feed_dicts
     if args.supports != "none":
@@ -268,6 +295,9 @@ def main():
 
     answname = "targets" if "cands" in args.model else "answers"
 
+
+
+
     # (8) Add hooks
     hooks = [
         #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
@@ -276,21 +306,21 @@ def main():
         LossHook(100, args.batch_size, summary_writer=sw),
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
         # evaluate on train data after each epoch
-        EvalHook(train_feed_dicts, logits, predict, placeholders[answname],
+        EvalHook(train_feed_dicts, logits_valid, predict_valid, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc', 'macroF1'],
                  print_details=False, write_metrics_to=args.write_metrics_to, info="training", summary_writer=sw),
         # evaluate on dev data after each epoch
-        EvalHook(dev_feed_dicts, logits, predict, placeholders[answname],
+        EvalHook(dev_feed_dicts, logits_valid, predict_valid, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc', 'macroF1'], print_details=False,
                  write_metrics_to=args.write_metrics_to, info="development", summary_writer=sw),
         # evaluate on test data after training
-        EvalHook(test_feed_dicts, logits, predict, placeholders[answname],
+        EvalHook(test_feed_dicts, logits_valid, predict_valid, placeholders[answname],
                  at_every_epoch=args.epochs, metrics=['Acc', 'macroP', 'macroR', 'macroF1'],
                  print_details=False, write_metrics_to=args.write_metrics_to, info="test")
     ]
 
     # (9) Train the model
-    train(loss, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=clip_value, hooks=hooks)
+    train(loss_train, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=clip_value, hooks=hooks)
     logger.info('finished in {0:.3g}'.format((time() - t0) / 3600.))
 
 
