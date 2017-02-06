@@ -264,9 +264,9 @@ class SharedVocabAndConfig(SharedResources):
         if not os.path.exists(path):
             os.mkdir(path)
         with open(os.path.join(path, "vocab"), 'wb') as f:
-            pickle.dump(self.vocab, f)
+            pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
         with open(os.path.join(path, "config"), 'wb') as f:
-            pickle.dump(self.config, f)
+            pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
         with open(os.path.join(path, "vocab"), 'rb') as f:
