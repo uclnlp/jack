@@ -166,7 +166,7 @@ class Vocab(object):
                 self.sym2freqs[unk] = 0
             self.frozen = False
 
-        if emb is not None and hasattr(emb, "lookup") and isinstance(emb.lookup, np.array):
+        if emb is not None and hasattr(emb, "lookup") and isinstance(emb.lookup, np.ndarray):
             self.emb_length = emb.lookup.shape[1]
         else:
             self.emb_length = None
