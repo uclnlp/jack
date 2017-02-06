@@ -1,10 +1,12 @@
-from jtr.jack import *
 from typing import List
 
-def model_module(input_ports: List[TensorPort],
-                 output_ports: List[TensorPort],
-                 training_input_ports: List[TensorPort],
-                 training_ouptut_ports: List[TensorPort]):
+from jtr.jack import *
+
+
+def simple_model_module(input_ports: List[TensorPort],
+                        output_ports: List[TensorPort],
+                        training_input_ports: List[TensorPort],
+                        training_output_ports: List[TensorPort]):
     """
     This (meta-)decorator creates a decorator that
     takes functions from input tensors to output tensors and turns them into ModelModules.
@@ -16,9 +18,8 @@ def model_module(input_ports: List[TensorPort],
     Returns: a decorator that turns functions into ModelModules.
     """
 
-    def create(f, g):
+    def create(shared_vocab_config, f, g):
         class MyModelModule(SimpleModelModule):
-
             @property
             def output_ports(self) -> List[TensorPort]:
                 return output_ports
@@ -33,15 +34,16 @@ def model_module(input_ports: List[TensorPort],
 
             @property
             def training_output_ports(self) -> List[TensorPort]:
-                return training_ouptut_ports
+                return training_output_ports
 
             def create_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[TensorPort]:
                 return f(shared_resources, *tensors)
 
-            def create_training_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[TensorPort]:
+            def create_training_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[
+                TensorPort]:
                 return g(shared_resources, *tensors)
 
-        return MyModelModule()
+        return MyModelModule(shared_vocab_config)
 
     return create
 
@@ -49,18 +51,8 @@ def model_module(input_ports: List[TensorPort],
 def no_shared_resources(f):
     def g(shared_resources: SharedResources, *tensors: tf.Tensor):
         return f(*tensors)
+
     return g
-
-
-def model_module_factory(input_ports: List[TensorPort],
-                         output_ports: List[TensorPort],
-                         training_input_ports: List[TensorPort],
-                         training_output_ports: List[TensorPort],
-                         training_function):
-    model_module_constructor = model_module(input_ports, output_ports, training_input_ports, training_output_ports)
-    def create(f):
-        return model_module_constructor(f, training_function)
-    return create
 
 #
 # @model_module([Ports.single_support,
