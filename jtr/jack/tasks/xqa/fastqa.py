@@ -430,6 +430,11 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
             emb_support = tf.concat(2, [emb_support, char_emb_support])
             input_size += size
 
+            # set shapes for inputs
+            emb_question.set_shape([None, None, input_size])
+            emb_support.set_shape([None, None, input_size])
+
+
         # compute encoder features
         question_features = tf.ones(tf.pack([batch_size, max_question_length, 2]))
 
