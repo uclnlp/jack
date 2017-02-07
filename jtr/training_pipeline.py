@@ -114,7 +114,7 @@ def main():
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=0.0, type=float,
                         help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
-    parser.add_argument('--drop_keep_prob', default=0.9, type=float,
+    parser.add_argument('--drop_keep_prob', default=1.0, type=float,
                         help="Keep probability for dropout on output (set to 1.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
 
@@ -243,10 +243,12 @@ def main():
 
     # (5) Create NeuralVocab
     logger.info('build NeuralVocab')
-    nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
+    nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, reduced_input_size=args.repr_dim_input_trf,
+                         use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     with tf.variable_scope("candvocab") as varscope:
-        candvocab = NeuralVocab(train_candidate_vocab, input_size=args.repr_dim_input, use_pretrained=args.pretrain,
+        candvocab = NeuralVocab(train_candidate_vocab, input_size=args.repr_dim_input,
+                                reduced_input_size=args.repr_dim_input_trf, use_pretrained=args.pretrain,
                                 train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
     checkpoint()
 
@@ -303,7 +305,7 @@ def main():
         #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
         #           feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         # report_loss
-        LossHook(100, args.batch_size, summary_writer=sw),
+        LossHook(1, args.batch_size, summary_writer=sw),
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
         # evaluate on train data after each epoch
         EvalHook(train_feed_dicts, logits_valid, predict_valid, placeholders[answname],
