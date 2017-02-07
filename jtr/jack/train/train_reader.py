@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import os.path as path
+import random
 import shutil
 import sys
 from time import time
@@ -72,6 +73,8 @@ def main():
 
     parser.add_argument('--pretrain', action='store_true',
                         help="Use pretrained embeddings, by default the initialisation is random")
+    parser.add_argument('--with_char_embeddings', action='store_true',
+                        help="Use also character based embeddings in readers which support it.")
     parser.add_argument('--vocab_from_embeddings', action='store_true',
                         help="Use fixed vocab of pretrained embeddings")
     parser.add_argument('--train_pretrain', action='store_true',
@@ -111,8 +114,13 @@ def main():
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
     parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
+    parser.add_argument('--seed', default=63783, type=int, help="Seed for rngs.")
 
     args = parser.parse_args()
+
+    # make everything deterministic
+    random.seed(args.seed)
+    tf.set_random_seed(args.seed)
 
     clip_value = None
     if args.clip_value != 0.0:

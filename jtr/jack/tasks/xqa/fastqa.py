@@ -136,8 +136,8 @@ class FastQAInputModule(InputModule):
         self.default_vec = np.zeros([vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
 
-    def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) -> Iterable[
-        Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) \
+            -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
 
         for input, answers in dataset:
@@ -238,7 +238,6 @@ class FastQAInputModule(InputModule):
                     offsets.append(token_offsets[j])
 
                 batch_size = len(question_lengths)
-
                 output = {
                     FastQAPorts.unique_word_chars: unique_words,
                     FastQAPorts.unique_word_char_length: unique_word_lengths,
@@ -253,7 +252,7 @@ class FastQAInputModule(InputModule):
                     FastQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
                     FastQAPorts.answer2question: span2question,
                     FastQAPorts.answer2question_training: [] if is_eval else span2question,
-                    FastQAPorts.keep_prob: 0.0 if is_eval else 1 - self.dropout,
+                    FastQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
                     FastQAPorts.is_eval: is_eval,
                     FastQAPorts.token_char_offsets: offsets
                 }
@@ -413,23 +412,28 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
 
         input_size = shared_vocab_config.config["repr_input_dim"]
         size = shared_vocab_config.config["repr_dim"]
+        with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
 
         # set shapes for inputs
         emb_question.set_shape([None, None, input_size])
         emb_support.set_shape([None, None, input_size])
 
-        # compute combined embeddings
-        [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"], size,
-                                                                        unique_word_chars, unique_word_char_length,
-                                                                        [question_words2unique, support_words2unique])
+        if with_char_embeddings:
+            # compute combined embeddings
+            [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"],
+                                                                            size,
+                                                                            unique_word_chars, unique_word_char_length,
+                                                                            [question_words2unique,
+                                                                             support_words2unique])
 
-        emb_question = tf.concat(2, [emb_question, char_emb_question])
-        emb_support = tf.concat(2, [emb_support, char_emb_support])
+            emb_question = tf.concat(2, [emb_question, char_emb_question])
+            emb_support = tf.concat(2, [emb_support, char_emb_support])
+            input_size += size
 
         # compute encoder features
         question_features = tf.ones(tf.pack([batch_size, max_question_length, 2]))
 
-        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size + size],
+        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
                                  initializer=tf.constant_initializer(1.0))
 
         wiq_w = tf.batch_matmul(emb_question * v_wiqw, emb_support, adj_y=True)
@@ -437,39 +441,45 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
 
         wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
 
-        # [B, L , 1]
+        # [B, L , 2]
         support_features = tf.concat(2, [tf.expand_dims(word_in_question, 2), tf.expand_dims(wiq_w, 2)])
 
         # highway layer to allow for interaction between concatenated embeddings
-        all_embedded_hw = highway_network(tf.concat(1, [emb_question, emb_support]), 1)
+        if with_char_embeddings:
+            all_embedded = tf.concat(1, [emb_question, emb_support])
+            all_embedded = tf.contrib.layers.fully_connected(all_embedded, size,
+                                                             activation_fn=None,
+                                                             weights_initializer=None,
+                                                             biases_initializer=None,
+                                                             scope="embeddings_projection")
 
-        emb_question_hw = tf.slice(all_embedded_hw, [0, 0, 0], tf.pack([-1, max_question_length, -1]))
-        emb_support_hw = tf.slice(all_embedded_hw, tf.pack([0, max_question_length, 0]), [-1, -1, -1])
+            all_embedded_hw = highway_network(all_embedded, 1)
 
-        emb_question_hw.set_shape([None, None, input_size + size])
-        emb_support_hw.set_shape([None, None, input_size + size])
+            emb_question = tf.slice(all_embedded_hw, [0, 0, 0], tf.pack([-1, max_question_length, -1]))
+            emb_support = tf.slice(all_embedded_hw, tf.pack([0, max_question_length, 0]), [-1, -1, -1])
+
+            emb_question.set_shape([None, None, size])
+            emb_support.set_shape([None, None, size])
 
         # variational dropout
-        dropout_shape = tf.unpack(tf.shape(emb_question_hw))
+        dropout_shape = tf.unpack(tf.shape(emb_question))
         dropout_shape[1] = 1
 
-        [emb_question_hw, emb_support_hw] = tf.cond(is_eval,
-                                                    lambda: [emb_question_hw, emb_support_hw],
-                                                    lambda: fixed_dropout([emb_question, emb_support_hw],
+        [emb_question, emb_support] = tf.cond(is_eval,
+                                              lambda: [emb_question, emb_support],
+                                              lambda: fixed_dropout([emb_question, emb_support],
                                                                           keep_prob, dropout_shape))
 
         # extend embeddings with features
-        emb_question_ext = tf.concat(2, [emb_question_hw, question_features])
-        emb_support_ext = tf.concat(2, [emb_support_hw, support_features])
+        emb_question_ext = tf.concat(2, [emb_question, question_features])
+        emb_support_ext = tf.concat(2, [emb_support, support_features])
 
         # encode question and support
         rnn = tf.contrib.rnn.LSTMBlockFusedCell
-        encoded_question = birnn_with_projection(size, rnn,
-                                                 emb_question_ext, question_length,
+        encoded_question = birnn_with_projection(size, rnn, emb_question_ext, question_length,
                                                  projection_scope="question_proj")
 
-        encoded_support = birnn_with_projection(size, rnn,
-                                                emb_support_ext, support_length,
+        encoded_support = birnn_with_projection(size, rnn, emb_support_ext, support_length,
                                                 share_rnn=True, projection_scope="support_proj")
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
@@ -500,9 +510,8 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     question_attention_weights = tf.nn.softmax(attention_scores, 1, name="question_attention_weights")
     question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
 
-    # prediction
-
-    # START
+    # Prediction
+    # start
     start_input = tf.concat(2, [tf.expand_dims(question_state, 1) * encoded_support,
                                 encoded_support])
 
@@ -514,6 +523,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     q_start_state = tf.contrib.layers.fully_connected(start_input, size,
                                                       activation_fn=None,
                                                       weights_initializer=None,
+                                                      biases_initializer=None,
                                                       scope="q_start") + tf.expand_dims(q_start_inter, 1)
 
     start_scores = tf.contrib.layers.fully_connected(tf.nn.relu(q_start_state), 1,
@@ -528,12 +538,13 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     predicted_start_pointer = tf.argmax(start_scores, 1)
 
-    # use correct start during training, because p(end|start) should be optimized
-    start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: correct_start)
-
     # gather states for training, where spans should be predicted using multiple correct start per answer
     def align_tensor_with_answers_per_question(t):
         return tf.cond(is_eval, lambda: t, lambda: tf.gather(t, answer2question))
+
+    # use correct start during training, because p(end|start) should be optimized
+    predicted_start_pointer = align_tensor_with_answers_per_question(predicted_start_pointer)
+    start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: correct_start)
 
     offsets = tf.cast(tf.range(0, batch_size) * tf.reduce_max(support_length), dtype=tf.int64)
     offsets = align_tensor_with_answers_per_question(offsets)
@@ -545,7 +556,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     question_state = align_tensor_with_answers_per_question(question_state)
     support_mask = align_tensor_with_answers_per_question(support_mask)
 
-    # END
+    # end
     end_input = tf.concat(2, [tf.expand_dims(u_s, 1) * encoded_support, start_input])
 
     q_end_inter = tf.contrib.layers.fully_connected(tf.concat(1, [question_state, u_s]), size,
@@ -556,6 +567,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     q_end_state = tf.contrib.layers.fully_connected(end_input, size,
                                                     activation_fn=None,
                                                     weights_initializer=None,
+                                                    biases_initializer=None,
                                                     scope="q_end") + tf.expand_dims(q_end_inter, 1)
 
     end_scores = tf.contrib.layers.fully_connected(tf.nn.relu(q_end_state), 1,
@@ -567,8 +579,8 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     end_scores = end_scores + support_mask
     end_scores = tf.cond(is_eval,
                          lambda: end_scores + tfutil.mask_for_lengths(tf.cast(predicted_start_pointer, tf.int32),
-                                                                      batch_size,
-                                                                      tf.reduce_max(support_length), mask_right=False),
+                                                                      batch_size, tf.reduce_max(support_length),
+                                                                      mask_right=False),
                          lambda: end_scores)
 
     predicted_end_pointer = tf.argmax(end_scores, 1)
