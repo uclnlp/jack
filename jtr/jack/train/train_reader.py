@@ -164,12 +164,12 @@ def main():
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
-    # build JTReader
-    checkpoint()
-    reader = readers.readers[args.model](vocab, vars(args))
-    checkpoint()
-
     with tf.device(args.device):
+        # build JTReader
+        checkpoint()
+        reader = readers.readers[args.model](vocab, vars(args))
+        checkpoint()
+
         learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
                                         trainable=False)
         lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
@@ -182,49 +182,50 @@ def main():
         else:
             sw = None
 
-    # Hooks
-    iter_iterval = 1 if args.debug else args.log_interval
-    hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
-             ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
-             ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint,
-                     sw)]
+        # Hooks
+        iter_iterval = 1 if args.debug else args.log_interval
+        hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
+                 ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
+                 ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs,
+                         args.checkpoint,
+                         sw)]
 
-    preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
-    best_metric = [0.0]
+        preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
+        best_metric = [0.0]
 
-    def side_effect(metrics, prev_metric):
-        """Returns: a state (in this case a metric) that is used as input for the next call"""
-        m = metrics[preferred_metric]
-        if prev_metric is not None and m < prev_metric:
-            reader.sess.run(lr_decay_op)
-            logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
-        else:
-            best_metric[0] = m
-            if prev_metric is None:  # store whole model only at beginning of training
-                reader.store(args.model_dir)
+        def side_effect(metrics, prev_metric):
+            """Returns: a state (in this case a metric) that is used as input for the next call"""
+            m = metrics[preferred_metric]
+            if prev_metric is not None and m < prev_metric:
+                reader.sess.run(lr_decay_op)
+                logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
             else:
-                reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
-            logger.info("Saving model to: %s" % args.model_dir)
-        return m
+                best_metric[0] = m
+                if prev_metric is None:  # store whole model only at beginning of training
+                    reader.store(args.model_dir)
+                else:
+                    reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
+                logger.info("Saving model to: %s" % args.model_dir)
+            return m
 
-    hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                                iter_interval=args.checkpoint,
-                                                epoch_interval=1 if args.checkpoint is None else None))
+        hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
+                                                    iter_interval=args.checkpoint,
+                                                    epoch_interval=1 if args.checkpoint is None else None))
 
-    # Train
-    reader.train(optim, training_set=train_data,
-                 max_epochs=args.epochs, hooks=hooks,
-                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value,
-                 device=args.device)
+        # Train
+        reader.train(optim, training_set=train_data,
+                     max_epochs=args.epochs, hooks=hooks,
+                     l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value,
+                     device=args.device)
 
-    # Test final model
-    if test_data is not None:
-        logger.info(
-            "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
-        test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
+        # Test final model
+        if test_data is not None:
+            logger.info(
+                "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
+            test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
 
-        reader.load(args.model_dir)
-        test_eval_hook(1)
+            reader.load(args.model_dir)
+            test_eval_hook(1)
 
 
 if __name__ == "__main__":

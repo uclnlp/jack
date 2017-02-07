@@ -1,6 +1,7 @@
-from collections import defaultdict
-import numpy as np
 import math
+from collections import defaultdict
+
+import numpy as np
 import tensorflow as tf
 
 from jtr.util import tfutil
@@ -55,10 +56,9 @@ def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
             embedded_chars = tf.nn.embedding_lookup(char_embedding_matrix, tf.cast(chars, tf.int32))
 
             with tf.variable_scope("conv"):
-                # [B, T, S]
+                # create filter like this to get fan-in and fan-out right for initializers depending on those
                 filter = tf.get_variable("filter", [conv_width*size, size])
                 filter_reshaped = tf.reshape(filter, [conv_width, size, size])
-                # [B, T, S]
                 conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "SAME")
                 conv_mask = tf.expand_dims(tfutil.mask_for_lengths(wl - pad_right, max_length=max_word_length), 2)
                 conv_out = conv_out + conv_mask
@@ -74,10 +74,9 @@ def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
 
 def conv_char_embedding_alt(char_vocab, size, unique_word_chars, unique_word_lengths, word_to_uniqs,
                             conv_width=5, emb_initializer=tf.random_normal_initializer(0.0, 0.1), scope=None):
-    # "fixed PAD on right side"
-    pad_right = math.ceil(conv_width / 2)
-    unique_word_chars = tf.concat(1, [unique_word_chars, tf.zeros(tf.pack([tf.shape(unique_word_lengths)[0], pad_right]),
-                                                                  tf.int32)])
+    # "fixed PADDING on character level"
+    pad = tf.zeros(tf.pack([tf.shape(unique_word_lengths)[0], math.floor(conv_width / 2)]), tf.int32)
+    unique_word_chars = tf.concat(1, [pad, unique_word_chars, pad])
 
     if not isinstance(word_to_uniqs, list):
         word_to_uniqs = [word_to_uniqs]
@@ -88,18 +87,15 @@ def conv_char_embedding_alt(char_vocab, size, unique_word_chars, unique_word_len
                             initializer=emb_initializer, trainable=True)
 
         max_word_length = tf.reduce_max(unique_word_lengths)
-        unique_word_chars = tf.slice(unique_word_chars, [0, 0], tf.pack([-1, max_word_length]))
-
         embedded_chars = tf.nn.embedding_lookup(char_embedding_matrix, tf.cast(unique_word_chars, tf.int32))
 
         with tf.variable_scope("conv"):
-            # [B, T, S]
+            # create filter like this to get fan-in and fan-out right for initializers depending on those
             filter = tf.get_variable("filter", [conv_width*size, size])
             filter_reshaped = tf.reshape(filter, [conv_width, size, size])
-            # [B, T, S]
-            conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "SAME")
-            conv_mask = tf.expand_dims(tfutil.mask_for_lengths(unique_word_lengths - pad_right,
-                                                               max_length=max_word_length), 2)
+            # [B, T, S + pad_right]
+            conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "VALID")
+            conv_mask = tf.expand_dims(tfutil.mask_for_lengths(unique_word_lengths, max_length=max_word_length), 2)
             conv_out = conv_out + conv_mask
 
         unique_embedded_words = tf.reduce_max(conv_out, [1])
