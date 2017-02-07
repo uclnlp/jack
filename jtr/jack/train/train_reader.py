@@ -164,20 +164,23 @@ def main():
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
-    learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32, trainable=False)
-    optim = tf.train.AdamOptimizer(learning_rate)
-
-    if args.tensorboard_folder is not None:
-        if os.path.exists(args.tensorboard_folder):
-            shutil.rmtree(args.tensorboard_folder)
-        sw = tf.summary.FileWriter(args.tensorboard_folder)
-    else:
-        sw = None
-
     # build JTReader
     checkpoint()
     reader = readers.readers[args.model](vocab, vars(args))
     checkpoint()
+
+    with tf.device(args.device):
+        learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
+                                        trainable=False)
+        lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
+        optim = tf.train.AdamOptimizer(learning_rate)
+
+        if args.tensorboard_folder is not None:
+            if os.path.exists(args.tensorboard_folder):
+                shutil.rmtree(args.tensorboard_folder)
+            sw = tf.summary.FileWriter(args.tensorboard_folder)
+        else:
+            sw = None
 
     # Hooks
     iter_iterval = 1 if args.debug else args.log_interval
@@ -188,7 +191,6 @@ def main():
 
     preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
     best_metric = [0.0]
-    lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
 
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""
