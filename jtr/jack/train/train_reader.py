@@ -32,7 +32,6 @@ class Duration(object):
         self.t = time()
 
 
-tf.set_random_seed(1337)
 checkpoint = Duration()
 
 
@@ -183,12 +182,11 @@ def main():
             sw = None
 
         # Hooks
-        iter_iterval = 1 if args.debug else args.log_interval
-        hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
-                 ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
-                 ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs,
-                         args.checkpoint,
-                         sw)]
+        iter_interval = 1 if args.debug else args.log_interval
+        hooks = [LossHook(reader, iter_interval, summary_writer=sw),
+                 ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw),
+                 ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
+                         args.checkpoint, sw)]
 
         preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
         best_metric = [0.0]

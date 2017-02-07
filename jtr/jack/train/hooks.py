@@ -183,9 +183,9 @@ class ETAHook(TraceHook):
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             current_time = time()
 
-            def log_eta(progress, start_time, name):
+            def get_eta(progress, start_time, name):
                 elapsed = current_time - start_time
-                eta = elapsed / progress
+                eta = elapsed / progress * (1.0 - progress)
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
                 self.update_summary(self.reader.sess, self.iter, self.__tag__() + "_" + name, float(eta))
 
@@ -193,15 +193,15 @@ class ETAHook(TraceHook):
 
             log = "Epoch %d\tIter %d" % (epoch, self.iter)
             total_progress = float(self.iter) / self.max_iters
-            eta, eta_data = log_eta(total_progress, self.start, "total")
-            log += "\tETA in %s, %s (%.2f%%)" % (eta, eta_data, total_progress * 100)
+            eta, eta_data = get_eta(total_progress, self.start, "total")
+            log += "\tETA: %s, %s (%.2f%%)" % (eta, eta_data, total_progress * 100)
             epoch_progress = float((self.iter - 1) % self.iter_per_epoch + 1) / self.iter_per_epoch
-            eta, _ = log_eta(epoch_progress, self.start_epoch, "epoch")
-            log += "\tETA(epoch) in %s (%.2f%%)" % (eta, epoch_progress * 100)
+            eta, _ = get_eta(epoch_progress, self.start_epoch, "epoch")
+            log += "\tETA(epoch): %s (%.2f%%)" % (eta, epoch_progress * 100)
             if self.iter_per_checkpoint is not None:
                 checkpoint_progress = float((self.iter - 1) % self.iter_per_checkpoint + 1) / self.iter_per_checkpoint
-                eta, _ = log_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
-                log += "\tETA(checkpoint) in %s (%.2f%%)" % (eta, checkpoint_progress * 100)
+                eta, _ = get_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
+                log += "\tETA(checkpoint): %s (%.2f%%)" % (eta, checkpoint_progress * 100)
 
             logger.info(log)
 
