@@ -80,10 +80,11 @@ class FastQAInputModule(InputModule):
             "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
         self.shared_vocab_config = shared_vocab_config
 
-        self.__pattern = re.compile('\w+|[^\w\s]')
+    __pattern = re.compile('\w+|[^\w\s]')
 
-    def __tokenize(self, text):
-        return self.__pattern.findall(text)
+    @staticmethod
+    def tokenize(text):
+        return FastQAInputModule.__pattern.findall(text)
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -148,7 +149,7 @@ class FastQAInputModule(InputModule):
                 corpus["support"].append(" ".join(input.support))
                 corpus["question"].append(input.question)
 
-        corpus_tokenized = deep_map(corpus, self.__tokenize, ['question', 'support'])
+        corpus_tokenized = deep_map(corpus, self.tokenize, ['question', 'support'])
         word_in_question = []
 
         token_offsets = []
@@ -276,7 +277,7 @@ class FastQAInputModule(InputModule):
                 corpus["support"].append(" ".join(input.support))
                 corpus["question"].append(input.question)
 
-        corpus = deep_map(corpus, self.__tokenize, ['question', 'support'])
+        corpus = deep_map(corpus, self.tokenize, ['question', 'support'])
         word_in_question = []
         token_offsets = []
         unique_words_set = dict()
