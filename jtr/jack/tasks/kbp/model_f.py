@@ -2,8 +2,8 @@ import tensorflow as tf
 
 from typing import List, Sequence
 
-from jtr.jack import QuestionWithDefaults, AnswerWithDefault, SharedVocabAndConfig, JTReader, SimpleModelModule, \
-    TensorPort, Ports
+from jtr.jack import AnswerWithDefault, SharedVocabAndConfig, JTReader, SimpleModelModule, \
+    TensorPort, Ports, QASettingWithDefaults
 from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCOutputModule
 from jtr.preprocess.vocab import Vocab
 
@@ -63,9 +63,10 @@ class SimpleKBPModelModule(SimpleModelModule):
 
 
 if __name__ == '__main__':
+    global_candidates = ["(a,b)", "(b,c)", "(c,a)"]
     data_set = [
-        (QuestionWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
-         AnswerWithDefault("a", score=1.0))
+        (QASettingWithDefaults("worksFor", atomic_candidates=global_candidates),
+         AnswerWithDefault("(a,b)", score=1.0))
     ]
     questions = [q for q, _ in data_set]
 

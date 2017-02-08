@@ -30,7 +30,7 @@ QASetting = NamedTuple("QASetting", [('question', str),
 
 
 # Wrapper for creating input
-def QASettingWithDefaults(question, support, id=None,
+def QASettingWithDefaults(question, support=(), id=None,
                           atomic_candidates=None, seq_candidates=None, candidate_spans=None):
     return QASetting(question, support, id,
                      atomic_candidates, seq_candidates, candidate_spans)
