@@ -197,7 +197,7 @@ def main():
             if prev_metric is not None and m < prev_metric:
                 reader.sess.run(lr_decay_op)
                 logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
-            else:
+            elif m > best_metric[0]:
                 best_metric[0] = m
                 if prev_metric is None:  # store whole model only at beginning of training
                     reader.store(args.model_dir)
