@@ -2,10 +2,9 @@
 Here we define light data structures to store the input to jtr readers, and their output.
 """
 
-from typing import NamedTuple, List, Tuple
-import json
-
 import collections
+import json
+from typing import NamedTuple, List, Tuple
 
 
 def NamedTupleWithDefaults(typename, fields, default_values=()):
@@ -20,28 +19,28 @@ def NamedTupleWithDefaults(typename, fields, default_values=()):
 
 
 Answer = NamedTuple("Answer", [('text', str), ('span', Tuple[int, int]), ('score', float)])
-Question = NamedTuple("Question", [('question', str),
-                                   ('support', List[str]),
-                                   # id of the instance
-                                   ('id', str),
-                                   # candidates if any
-                                   ('atomic_candidates', List[str]),
-                                   ('seq_candidates', List[List[str]]),
-                                   ('candidate_spans', List[Tuple[int, int]])])
+QASetting = NamedTuple("QASetting", [('question', str),
+                                     ('support', List[str]),
+                                     # id of the instance
+                                     ('id', str),
+                                     # candidates if any
+                                     ('atomic_candidates', List[str]),
+                                     ('seq_candidates', List[List[str]]),
+                                     ('candidate_spans', List[Tuple[int, int]])])
 
 
 # Wrapper for creating input
-def QuestionWithDefaults(question, support, id=None,
-                         atomic_candidates=None, seq_candidates=None, candidate_spans=None):
-    return Question(question, support, id,
-                    atomic_candidates, seq_candidates, candidate_spans)
+def QASettingWithDefaults(question, support, id=None,
+                          atomic_candidates=None, seq_candidates=None, candidate_spans=None):
+    return QASetting(question, support, id,
+                     atomic_candidates, seq_candidates, candidate_spans)
 
 
 def AnswerWithDefault(text: str, span: Tuple[int, int] = None, score: float = 1.0):
     return Answer(text, span, score)
 
 
-def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Question, List[Answer]]]:
+def load_labelled_data(path, max_count=None, **options) -> List[Tuple[QASetting, List[Answer]]]:
     """
     This function loads a jtr json file with labelled answers from a specific location.
     Args:
@@ -84,7 +83,7 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[Question, 
                 candidates = global_candidates
             answers = [Answer(value(c), value(c, 'span'), 1.0)
                        for c in question_instance['answers']] if "answers" in question_instance else None
-            yield QuestionWithDefaults(question, support, atomic_candidates=candidates, id=idd), answers
+            yield QASettingWithDefaults(question, support, atomic_candidates=candidates, id=idd), answers
 
     result = [(inp, answer) for i in jtr_data["instances"] for inp, answer in convert_instance(i)]
     return result

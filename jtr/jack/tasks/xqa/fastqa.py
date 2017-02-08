@@ -111,7 +111,7 @@ class FastQAInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [FastQAPorts.answer_span, FastQAPorts.answer2question]
 
-    def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         # create character vocab + word lengths + char ids per word
         vocab = self.shared_vocab_config.vocab
         char_vocab = dict()
@@ -137,47 +137,38 @@ class FastQAInputModule(InputModule):
         self.default_vec = np.zeros([vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
 
-    def dataset_generator(self, dataset: List[Tuple[Question, List[Answer]]], is_eval: bool) \
-            -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
-
-        for input, answers in dataset:
-            if self.shared_vocab_config.config.get("lowercase", False):
-                corpus["support"].append(" ".join(input.support).lower())
-                corpus["question"].append(input.question.lower())
+    def prepare_data(self, dataset, with_answers=False):
+        corpus = {"support": [], "question": []}
+        for d in dataset:
+            if isinstance(d, QASetting):
+                qa_setting = d
             else:
-                corpus["support"].append(" ".join(input.support))
-                corpus["question"].append(input.question)
+                qa_setting, answer = d
+
+            if self.shared_vocab_config.config.get("lowercase", False):
+                corpus["support"].append(" ".join(qa_setting.support).lower())
+                corpus["question"].append(qa_setting.question.lower())
+            else:
+                corpus["support"].append(" ".join(qa_setting.support))
+                corpus["question"].append(qa_setting.question)
 
         corpus_tokenized = deep_map(corpus, self.tokenize, ['question', 'support'])
-        word_in_question = []
+        corpus_ids = deep_map(corpus_tokenized, self.shared_vocab_config.vocab, ['question', 'support'])
 
+        word_in_question = []
+        question_lengths = []
+        support_lengths = []
         token_offsets = []
         answer_spans = []
+
         for i, (q, s) in enumerate(zip(corpus_tokenized["question"], corpus_tokenized["support"])):
-            input, answers = dataset[i]
-            corpus["support_lengths"].append(len(s))
-            corpus["question_lengths"].append(len(q))
+            support_lengths.append(len(s))
+            question_lengths.append(len(q))
 
             # char to token offsets
             support = corpus["support"][i]
             offsets = token_to_char_offsets(support, s)
             token_offsets.append(offsets)
-            spans = []
-            for a in answers:
-                start = 0
-                while start < len(offsets) and offsets[start] < a.span[0]:
-                    start += 1
-
-                if start == len(offsets):
-                    continue
-
-                end = start
-                while end + 1 < len(offsets) and offsets[end + 1] < a.span[1]:
-                    end += 1
-                if (start, end) not in spans:
-                    spans.append((start, end))
-            answer_spans.append(spans)
 
             # word in question feature
             wiq = []
@@ -185,13 +176,67 @@ class FastQAInputModule(InputModule):
                 wiq.append(float(token in q))
             word_in_question.append(wiq)
 
-        emb_supports = np.zeros([self.batch_size, max(corpus["support_lengths"]), self.emb_matrix.shape[1]])
-        emb_questions = np.zeros([self.batch_size, max(corpus["question_lengths"]), self.emb_matrix.shape[1]])
+            if with_answers:
+                answers = dataset[i][1]
+                spans = []
+                for a in answers:
+                    start = 0
+                    while start < len(offsets) and offsets[start] < a.span[0]:
+                        start += 1
 
-        corpus_ids = deep_map(corpus_tokenized, self.shared_vocab_config.vocab, ['question', 'support'])
+                    if start == len(offsets):
+                        continue
+
+                    end = start
+                    while end + 1 < len(offsets) and offsets[end + 1] < a.span[1]:
+                        end += 1
+                    if (start, end) not in spans:
+                        spans.append((start, end))
+                answer_spans.append(spans)
+
+        return corpus_tokenized["question"], corpus_ids["question"], question_lengths, \
+               corpus_tokenized["support"], corpus_ids["support"], support_lengths, \
+               word_in_question, token_offsets, answer_spans
+
+    def unique_words(self, q_tokenized, s_tokenized, indices=None):
+        indices = indices or range(len(q_tokenized))
+
+        unique_words_set = dict()
+        unique_words = list()
+        unique_word_lengths = list()
+        question2unique = list()
+        support2unique = list()
+
+        for j in indices:
+            q2u = list()
+            for w in q_tokenized[j]:
+                if w not in unique_words_set:
+                    unique_word_lengths.append(len(w))
+                    unique_words.append([self.char_vocab.get(c, 0) for c in w])
+                    unique_words_set[w] = len(unique_words_set)
+                q2u.append(unique_words_set[w])
+            question2unique.append(q2u)
+            s2u = list()
+            for w in s_tokenized[j]:
+                if w not in unique_words_set:
+                    unique_word_lengths.append(len(w))
+                    unique_words.append([self.char_vocab.get(c, 0) for c in w])
+                    unique_words_set[w] = len(unique_words_set)
+                s2u.append(unique_words_set[w])
+            support2unique.append(s2u)
+
+        return unique_words, unique_word_lengths, question2unique, support2unique
+
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) \
+            -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
+        word_in_question, token_offsets, answer_spans = self.prepare_data(dataset, with_answers=True)
+
+        emb_supports = np.zeros([self.batch_size, max(s_lengths), self.emb_matrix.shape[1]])
+        emb_questions = np.zeros([self.batch_size, max(q_lengths), self.emb_matrix.shape[1]])
 
         def batch_generator():
-            todo = list(range(len(corpus_ids["question"])))
+            todo = list(range(len(q_ids)))
             self._rng.shuffle(todo)
             while todo:
                 support_lengths = list()
@@ -200,39 +245,20 @@ class FastQAInputModule(InputModule):
                 spans = list()
                 span2question = []
                 offsets = []
-                unique_words_set = dict()
-                unique_words = list()
-                unique_word_lengths = list()
-                question2unique = list()
-                support2unique = list()
+
+                unique_words, unique_word_lengths, question2unique, support2unique = \
+                    self.unique_words(q_tokenized, s_tokenized, todo[:self.batch_size])
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
-                    q2u = list()
-                    for w in corpus_tokenized["question"][j]:
-                        if w not in unique_words_set:
-                            unique_word_lengths.append(len(w))
-                            unique_words.append([self.char_vocab.get(c, 0) for c in w])
-                            unique_words_set[w] = len(unique_words_set)
-                        q2u.append(unique_words_set[w])
-                    question2unique.append(q2u)
-                    s2u = list()
-                    for w in corpus_tokenized["support"][j]:
-                        if w not in unique_words_set:
-                            unique_word_lengths.append(len(w))
-                            unique_words.append([self.char_vocab.get(c, 0) for c in w])
-                            unique_words_set[w] = len(unique_words_set)
-                        s2u.append(unique_words_set[w])
-                    support2unique.append(s2u)
-
-                    question = corpus_ids["question"][j]
-                    support = corpus_ids["support"][j]
+                    support = s_ids[j]
                     for k in range(len(support)):
                         emb_supports[i, k] = self._get_emb(support[k])
+                    question = q_ids[j]
                     for k in range(len(question)):
                         emb_questions[i, k] = self._get_emb(question[k])
-                    support_lengths.append(corpus["support_lengths"][j])
-                    question_lengths.append(corpus["question_lengths"][j])
+                    support_lengths.append(s_lengths[j])
+                    question_lengths.append(q_lengths[j])
                     spans.extend(answer_spans[j])
                     span2question.extend(i for _ in answer_spans[j])
                     wiq.append(word_in_question[j])
@@ -267,63 +293,18 @@ class FastQAInputModule(InputModule):
 
         return GeneratorWithRestart(batch_generator)
 
-    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = {"support": [], "support_lengths": [], "question": [], "question_lengths": []}
-        for input in inputs:
-            if self.shared_vocab_config.config.get("lowercase", False):
-                corpus["support"].append(" ".join(input.support).lower())
-                corpus["question"].append(input.question.lower())
-            else:
-                corpus["support"].append(" ".join(input.support))
-                corpus["question"].append(input.question)
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
+        word_in_question, token_offsets, answer_spans = self.prepare_data(qa_settings, with_answers=False)
 
-        corpus = deep_map(corpus, self.tokenize, ['question', 'support'])
-        word_in_question = []
-        token_offsets = []
-        unique_words_set = dict()
-        unique_words = list()
-        unique_word_lengths = list()
-        question2unique = list()
-        support2unique = list()
+        unique_words, unique_word_lengths, question2unique, support2unique = self.unique_words(q_tokenized, s_tokenized)
 
-        for q, s, input in zip(corpus["question"], corpus["support"], inputs):
-            corpus["support_lengths"].append(len(s))
-            corpus["question_lengths"].append(len(q))
-            q2u = list()
-            for w in q:
-                if w not in unique_words_set:
-                    unique_word_lengths.append(len(w))
-                    unique_words.append([self.char_vocab.get(c, 0) for c in w])
-                    unique_words_set[w] = len(unique_words_set)
-                q2u.append(unique_words_set[w])
-            question2unique.append(q2u)
-            s2u = list()
-            for w in s:
-                if w not in unique_words:
-                    unique_word_lengths.append(len(w))
-                    unique_words.append([self.char_vocab.get(c, 0) for c in w])
-                    unique_words_set[w] = len(unique_words_set)
-                s2u.append(unique_words_set[w])
-            support2unique.append(s2u)
+        batch_size = len(qa_settings)
+        emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
+        emb_questions = np.zeros([batch_size, max(q_lengths), self.emb_matrix.shape[1]])
 
-            # char to token offsets
-            offsets = token_to_char_offsets(input.support[0], s)
-            token_offsets.append(offsets)
-
-            # word in question feature
-            wiq = []
-            for token in s:
-                wiq.append(float(token in q))
-            word_in_question.append(wiq)
-
-        batch_size = len(inputs)
-        emb_supports = np.zeros([batch_size, max(corpus["support_lengths"]), self.emb_matrix.shape[1]])
-        emb_questions = np.zeros([batch_size, max(corpus["question_lengths"]), self.emb_matrix.shape[1]])
-
-        corpus_ids = deep_map(corpus, self.shared_vocab_config.vocab, ['question', 'support'])
-
-        for i, q in enumerate(corpus_ids["question"]):
-            for k, v in enumerate(corpus_ids["support"][i]):
+        for i, q in enumerate(q_ids):
+            for k, v in enumerate(s_ids[i]):
                 emb_supports[i, k] = self._get_emb(v)
             for k, v in enumerate(q):
                 emb_questions[i, k] = self._get_emb(v)
@@ -334,9 +315,9 @@ class FastQAInputModule(InputModule):
             FastQAPorts.question_words2unique: question2unique,
             FastQAPorts.support_words2unique: support2unique,
             FastQAPorts.emb_support: emb_supports,
-            FastQAPorts.support_length: corpus["support_lengths"],
+            FastQAPorts.support_length: s_lengths,
             FastQAPorts.emb_question: emb_questions,
-            FastQAPorts.question_length: corpus["question_lengths"],
+            FastQAPorts.question_length: q_lengths,
             FastQAPorts.word_in_question: word_in_question,
             FastQAPorts.token_char_offsets: token_offsets
         }
@@ -345,10 +326,8 @@ class FastQAInputModule(InputModule):
                                        FastQAPorts.support_words2unique, FastQAPorts.word_in_question,
                                        FastQAPorts.token_char_offsets])
 
-        return output
+        return output  # FastQA model module factory method, like fastqa.model.fastqa_model
 
-
-# FastQA model module factory method, like fastqa.model.fastqa_model
 
 fastqa_like_model_module_factory = simple_model_module(
     input_ports=[FastQAPorts.emb_question, FastQAPorts.question_length,
@@ -435,7 +414,6 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
             emb_question.set_shape([None, None, input_size])
             emb_support.set_shape([None, None, input_size])
 
-
         # compute encoder features
         question_features = tf.ones(tf.pack([batch_size, max_question_length, 2]))
 
@@ -474,7 +452,7 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
         [emb_question, emb_support] = tf.cond(is_eval,
                                               lambda: [emb_question, emb_support],
                                               lambda: fixed_dropout([emb_question, emb_support],
-                                                                          keep_prob, dropout_shape))
+                                                                    keep_prob, dropout_shape))
 
         # extend embeddings with features
         emb_question_ext = tf.concat(2, [emb_question, question_features])

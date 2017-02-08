@@ -300,12 +300,12 @@ class InputModule:
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """
         Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
         module.
         Args:
-            inputs: a list of instances (question, support, optional candidates)
+            qa_settings: a list of instances (question, support, optional candidates)
 
         Returns:
             A mapping from ports to tensors.
@@ -315,7 +315,7 @@ class InputModule:
 
     @abstractmethod
     def dataset_generator(self,
-                          dataset: List[Tuple[Question, List[Answer]]],
+                          dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -331,7 +331,7 @@ class InputModule:
         pass
 
     @abstractmethod
-    def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other
         resources.
@@ -574,7 +574,7 @@ class OutputModule:
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[Question], *tensor_inputs: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
         """
         Process the tensors corresponding to the defined `input_ports` for a batch to produce a list of answers.
         The module has access to the original inputs.
@@ -644,7 +644,7 @@ class JTReader:
                    for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
 
-    def __call__(self, inputs: List[Question]) -> List[Answer]:
+    def __call__(self, inputs: List[QASetting]) -> List[Answer]:
         """
         Reads all inputs (support and question), then returns an answer for each input.
         Args:
@@ -658,7 +658,7 @@ class JTReader:
         return answers
 
     def train(self, optim,
-              training_set: List[Tuple[Question, Answer]],
+              training_set: List[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value,
               device="/cpu:0"):
@@ -716,7 +716,7 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def setup_from_data(self, data: List[Tuple[Question, Answer]]):
+    def setup_from_data(self, data: List[Tuple[QASetting, Answer]]):
         """
         Overrides shared-resources
         Args:

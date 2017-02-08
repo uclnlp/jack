@@ -12,7 +12,7 @@ class SimpleMCInputModule(InputModule):
         self.config = shared_resources.config
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: List[Tuple[Question, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
         return self.shared_resources
 
@@ -42,7 +42,7 @@ class SimpleMCInputModule(InputModule):
                                    test_time=test_time)
         return corpus
 
-    def dataset_generator(self, dataset: List[Tuple[Question, Answer]],
+    def dataset_generator(self, dataset: List[Tuple[QASetting, Answer]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
@@ -53,8 +53,8 @@ class SimpleMCInputModule(InputModule):
         }
         return get_batches(xy_dict)
 
-    def __call__(self, inputs: List[Question]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = self.preprocess(inputs, test_time=True)
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        corpus = self.preprocess(qa_settings, test_time=True)
         x_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
@@ -125,7 +125,7 @@ class SimpleMCOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.candidate_scores]
 
-    def __call__(self, inputs: List[Question], candidate_scores: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: List[QASetting], candidate_scores: np.ndarray) -> List[Answer]:
         # len(inputs) == batch size
         # candidate_scores: [batch_size, max_num_candidates]
         winning_indices = np.argmax(candidate_scores, axis=1)
@@ -139,7 +139,7 @@ class SimpleMCOutputModule(OutputModule):
 
 if __name__ == '__main__':
     data_set = [
-        (QuestionWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
+        (QASettingWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
          AnswerWithDefault("a", score=1.0))
     ]
     questions = [q for q, _ in data_set]

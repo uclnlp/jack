@@ -11,7 +11,7 @@ from typing import List, Tuple, Mapping
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack import JTReader, TensorPort, Answer, Question, FlatPorts
+from jtr.jack import JTReader, TensorPort, Answer, QASetting, FlatPorts
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +210,7 @@ class ETAHook(TraceHook):
 
 
 class EvalHook(TraceHook):
-    def __init__(self, reader: JTReader, dataset: List[Tuple[Question, List[Answer]]], ports: List[TensorPort],
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None):
         super(EvalHook, self).__init__(reader, summary_writer)
@@ -285,7 +285,7 @@ class EvalHook(TraceHook):
 class XQAEvalHook(EvalHook):
     """This evaluation hook computes the following metrics: exact and per-answer f1 on token basis."""
 
-    def __init__(self, reader: JTReader, dataset: List[Tuple[Question, List[Answer]]],
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
         ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer2question]
