@@ -8,9 +8,6 @@ import tensorflow as tf
 from jtr.nn.models import get_total_trainable_variables
 from jtr.util.tfutil import tfrun
 
-# for random embedding initialization in NeuralVocab
-SEED = 54321
-
 
 class Vocab(object):
     """
@@ -345,7 +342,7 @@ class NeuralVocab(Vocab):
         >>> with tf.variable_scope('neural_test1'):
         ...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
         ...     tfrun(nvocab(vocab("world")))
-        array([ 0.35790324, -0.15442504,  0.31915373], dtype=float32)
+        array([ 0.46077079,  0.38316524, -0.63771147], dtype=float32)
         >>> tra1 = get_total_trainable_variables()
 
 
@@ -358,14 +355,14 @@ class NeuralVocab(Vocab):
         ('blah', [1.7, 0, 0.3])
         ('bluh', [0, 1.5, 0.5])
         ('bleh', [0, 0, 2])
-        array([[ 0.95993018,  0.06397769,  0.63649762,  0.01743277],
-               [ 0.33867511, -0.1801414 , -0.01724755,  0.22024423],
-               [ 0.05380315, -0.44075871,  0.64322513,  0.69728172],
-               [ 0.16105628,  0.11053304, -0.23188654, -0.51288235],
-               [-0.15421754,  0.22732525, -0.54268581,  0.67570436],
-               [ 0.98478359,  0.        ,  0.17378533,  1.2295723 ],
-               [ 0.        ,  0.94868326,  0.31622776, -0.68760252],
-               [ 0.        ,  0.        ,  1.        , -0.23400906]], dtype=float32)
+        array([[-0.26461828,  0.65265107,  0.39575091, -0.30496973],
+               [ 0.48515028,  0.19880073, -0.02314733, -0.02336031],
+               [ 0.26688093, -0.24634691,  0.2248017 ,  0.24709973],
+               [-0.39200979, -0.49848005, -1.11226082, -0.15154324],
+               [ 0.46785676,  1.64755058,  0.15274598,  0.17200644],
+               [ 0.98478359,  0.        ,  0.17378533, -0.46795556],
+               [ 0.        ,  0.94868326,  0.31622776, -0.72465843],
+               [ 0.        ,  0.        ,  1.        , -0.46098801]], dtype=float32)
         >>> get_total_trainable_variables()-tra1
         23
 
@@ -376,7 +373,7 @@ class NeuralVocab(Vocab):
     """
 
     def __init__(self, base_vocab, embedding_matrix=None,
-                 input_size=None, reduced_input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True, seed=SEED):
+                 input_size=None, reduced_input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True):
         """
         Creates NeuralVocab object from a given Vocab object `base_vocab`.
         Pre-calculates embedding vector (as `Tensor` object) for each symbol in Vocab
@@ -398,8 +395,6 @@ class NeuralVocab(Vocab):
               (note: randomly initialized embeddings are always initialized with expected unit norm)
         """
         super(NeuralVocab, self).__init__(unk=base_vocab.unk, emb=base_vocab.emb)
-        np.random.seed(seed)
-        tf.set_random_seed(seed)
 
         assert (embedding_matrix, input_size) is not (None, None), "if no embedding_matrix is provided, define input_size"
 
@@ -435,7 +430,7 @@ class NeuralVocab(Vocab):
                         np_E_pre[i, :] = np_normalize(np_E_pre[i, :])
                 E_pre = tf.get_variable("embeddings_pretrained",
                                         initializer=tf.identity(np_E_pre),
-                                        trainable=False, dtype="float32")
+                                        trainable=train_pretrained, dtype="float32")
 
                 if input_size > base_vocab.emb_length:
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
@@ -510,3 +505,10 @@ class NeuralVocab(Vocab):
 
     def get_embedding_matrix(self):
         return self.embedding_matrix
+
+
+if __name__ == '__main__':
+    import doctest
+    tf.set_random_seed(1337)
+
+    print(doctest.testmod())

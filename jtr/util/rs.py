@@ -17,5 +17,4 @@ class DefaultRandomState(np.random.RandomState):
         super().__init__(seed)
 
 
-rs = DefaultRandomState(1337)
 

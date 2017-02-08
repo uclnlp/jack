@@ -1,5 +1,5 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
 
 def birnn_with_projection(size, fused_rnn_constructor, inputs, length, share_rnn=False, projection_scope=None):
@@ -9,8 +9,7 @@ def birnn_with_projection(size, fused_rnn_constructor, inputs, length, share_rnn
         encoded = fused_birnn(fused_rnn, inputs, sequence_length=length, dtype=tf.float32, time_major=False)[0]
         encoded = tf.concat(2, encoded)
 
-    projected = tf.contrib.layers.fully_connected(encoded, size,
-                                                  activation_fn=tf.tanh,
+    projected = tf.contrib.layers.fully_connected(encoded, size, activation_fn=None,
                                                   weights_initializer=projection_initializer,
                                                   scope=projection_scope)
     return projected
@@ -19,7 +18,7 @@ def birnn_with_projection(size, fused_rnn_constructor, inputs, length, share_rnn
 def fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state=None, dtype=None, scope=None, time_major=True):
     if not time_major:
         inputs = tf.transpose(inputs, [1, 0, 2])
-    #assumes that time dim is 0 and batch is 1
+    # assumes that time dim is 0 and batch is 1
     rev_inputs = tf.reverse_sequence(inputs, sequence_length, 0, 1)
     rev_outputs, last_state = fused_rnn(rev_inputs, sequence_length=sequence_length, initial_state=initial_state,
                                         dtype=dtype, scope=scope)
@@ -40,9 +39,11 @@ def fused_birnn(fused_rnn, inputs, sequence_length, initial_state=None, dtype=No
 
         if backward_device is not None:
             with tf.device(backward_device):
-                outputs_bw, state_bw = fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state, dtype, scope="BW")
+                outputs_bw, state_bw = fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state, dtype,
+                                                          scope="BW")
         else:
-            outputs_bw, state_bw = fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state, dtype, scope="BW")
+            outputs_bw, state_bw = fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state, dtype,
+                                                      scope="BW")
 
         if not time_major:
             outputs_fw = tf.transpose(outputs_fw, [1, 0, 2])

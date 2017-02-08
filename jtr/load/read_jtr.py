@@ -2,7 +2,13 @@ import json
 import re
 token_pattern = re.compile('[^ ]+')
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 """Loads jtr JSON files and manages the transformation into components."""
+
+
 
 def read_data(data_filename):
     """Reads jtr JSON and returns the dictionary."""
@@ -72,6 +78,8 @@ class Support(object):
         return -1
 
 
+
+
 def jtr_load(path, max_count=None, **options):
     """
     General-purpose loader for jtr files
@@ -87,58 +95,47 @@ def jtr_load(path, max_count=None, **options):
 
     reading_dataset = json.load(path)
 
-    def value(c, key="text"):
+    def textOrDict(c):
         if isinstance(c, dict):
-            return c.get(key, None)
-        elif key != "text":
-            return None
-        else:
-            return c
+            c = c["text"]
+        return c
 
     # The script reads into those lists. If IDs for questions, supports or targets are defined, those are ignored.
     questions = []
-    ids = []
     supports = []
     answers = []
-    answer_spans = []
     candidates = []
     global_candidates = []
     count = 0
     if "globals" in reading_dataset:
-        global_candidates = [value(c) for c in reading_dataset['globals']['candidates']]
+        global_candidates = [textOrDict(c) for c in reading_dataset['globals']['candidates']]
 
     for instance in reading_dataset['instances']:
-        question, support, answer, candidate, answer_span, idd = None, None, None, None, None, None  # initialisation
+        question, support, answer, candidate = "", "", "", ""  # initialisation
         if max_count is None or count < max_count:
             if options["supports"] == "single":
-                support = value(instance['support'][0])
+                support = textOrDict(instance['support'][0])
             elif options["supports"].startswith("multiple"):
-                support = [value(c) for c in instance['support']]
+                support = [textOrDict(c) for c in instance['support']]
             if options["questions"] == "single":
-                question = value(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
-                idd = value(instance['questions'][0]["question"], "id")
+                question = textOrDict(instance['questions'][0]["question"]) # if single, just take the first one, could also change this to random
                 if options["answers"] == "single":
-                    answer = value(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
-                    answer_span = value(instance['questions'][0]['answers'][0], 'span')
+                    answer = textOrDict(instance['questions'][0]['answers'][0]) # if single, just take the first one, could also change this to random
                 elif options["answers"] == "multiple":
-                    answer = [value(c) for c in instance['questions'][0]['answers']]
-                    answer_span = [value(c, 'span') for c in instance['questions'][0]['answers']]
+                    answer = [textOrDict(c) for c in instance['questions'][0]['answers']]
                 if options["candidates"] == "per-instance":
-                    candidate = [value(c) for c in instance['questions'][0]['candidates']]
+                    candidate = [textOrDict(c) for c in instance['questions'][0]['candidates']]
 
             elif options["questions"] == "multiple":
                 answer = []
                 candidate = []
-                question = [value(c["question"]) for c in instance['questions']]
-                idd = [value(c["question"], "id") for c in instance['questions']]
+                question = [textOrDict(c["question"]) for c in instance['questions']]
                 if options["answers"] == "single":
-                    answer = [value(c["answers"][0]) for c in instance['questions']]
-                    answer_span = [value(c["answers"][0], 'span') for c in instance['questions']]
+                    answer = [textOrDict(c["answers"][0]) for c in instance['questions']]
                 elif options["answers"] == "multiple":
-                    answer = [value(c) for q in instance['questions'] for c in q["answers"]]
-                    answer_span = [value(c, 'span') for q in instance['questions'] for c in q["answers"]]
+                    answer = [textOrDict(c) for q in instance['questions'] for c in q["answers"]]
                 if options["candidates"] == "per-instance":
-                    candidate = [value(c) for quest in instance["questions"] for c in quest["candidates"]]
+                    candidate = [textOrDict(c) for quest in instance["questions"] for c in quest["candidates"]]
 
             if options["supports"] == "multiple_flat":
                 for s in support:
@@ -150,19 +147,14 @@ def jtr_load(path, max_count=None, **options):
                         candidates.append(candidate)
 
                     questions.append(question)
-                    ids.append(idd)
                     answers.append(answer)
-                    answer_spans.append(answer_span)
 
             else:
                 if options["candidates"] == "fixed":
                     candidates.append(global_candidates)
 
                 questions.append(question)
-                ids.append(idd)
                 answers.append(answer)
-                answer_spans.append(answer_span)
-
                 if options["supports"] != "none":
                     supports.append(support)
                 if options["candidates"] != "fixed":
@@ -170,10 +162,8 @@ def jtr_load(path, max_count=None, **options):
 
             count += 1
 
-
-    print("Loaded %d examples from %s" % (len(questions), path))
-    if options["supports"] != "none": 
-        return {'question': questions, 'support': supports, 'answers': answers,
-                'answer_spans':answer_spans, 'candidates': candidates, 'ids': ids}
+    logger.info("Loaded %d instances from %s" % (len(questions), path.name))
+    if options["supports"] != "none":
+        return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
     else:
-       return {'question': questions, 'answers': answers, 'candidates': candidates, 'ids': ids}
+       return {'question': questions, 'answers': answers, 'candidates': candidates} 

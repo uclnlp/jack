@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import os.path as path
+import random
 import shutil
 import sys
 from time import time
@@ -31,7 +32,6 @@ class Duration(object):
         self.t = time()
 
 
-tf.set_random_seed(1337)
 checkpoint = Duration()
 
 
@@ -72,6 +72,8 @@ def main():
 
     parser.add_argument('--pretrain', action='store_true',
                         help="Use pretrained embeddings, by default the initialisation is random")
+    parser.add_argument('--with_char_embeddings', action='store_true',
+                        help="Use also character based embeddings in readers which support it.")
     parser.add_argument('--vocab_from_embeddings', action='store_true',
                         help="Use fixed vocab of pretrained embeddings")
     parser.add_argument('--train_pretrain', action='store_true',
@@ -107,12 +109,17 @@ def main():
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
-    parser.add_argument('--model_dir', default=None, type=str, help="Directory to write reader to.")
+    parser.add_argument('--model_dir', default='/tmp/jtreader', type=str, help="Directory to write reader to.")
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
     parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
+    parser.add_argument('--seed', default=63783, type=int, help="Seed for rngs.")
 
     args = parser.parse_args()
+
+    # make everything deterministic
+    random.seed(args.seed)
+    tf.set_random_seed(args.seed)
 
     clip_value = None
     if args.clip_value != 0.0:
@@ -156,65 +163,67 @@ def main():
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
-    learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32, trainable=False)
-    optim = tf.train.AdamOptimizer(learning_rate)
+    with tf.device(args.device):
+        # build JTReader
+        checkpoint()
+        reader = readers.readers[args.model](vocab, vars(args))
+        checkpoint()
 
-    if args.tensorboard_folder is not None:
-        if os.path.exists(args.tensorboard_folder):
-            shutil.rmtree(args.tensorboard_folder)
-        sw = tf.summary.FileWriter(args.tensorboard_folder)
-    else:
-        sw = None
+        learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
+                                        trainable=False)
+        lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
+        optim = tf.train.AdamOptimizer(learning_rate)
 
-    # build JTReader
-    checkpoint()
-    reader = readers.readers[args.model](vocab, vars(args))
-    checkpoint()
-
-    # Hooks
-    iter_iterval = 1 if args.debug else args.log_interval
-    hooks = [LossHook(reader, iter_iterval, summary_writer=sw),
-             ExamplesPerSecHook(reader, args.batch_size, iter_iterval, sw),
-             ETAHook(reader, iter_iterval, math.ceil(len(train_data) / args.batch_size), args.epochs, args.checkpoint,
-                     sw)]
-
-    preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
-    best_metric = [0.0]
-    lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
-
-    def side_effect(metrics, prev_metric):
-        """Returns: a state (in this case a metric) that is used as input for the next call"""
-        m = metrics[preferred_metric]
-        if prev_metric is not None and m < prev_metric:
-            reader.sess.run(lr_decay_op)
-            logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
+        if args.tensorboard_folder is not None:
+            if os.path.exists(args.tensorboard_folder):
+                shutil.rmtree(args.tensorboard_folder)
+            sw = tf.summary.FileWriter(args.tensorboard_folder)
         else:
-            best_metric[0] = m
-            if prev_metric is None:  # store whole model only at beginning of training
-                reader.store(args.model_dir)
-            else:
-                reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
-            logger.info("Saving model to: %s" % args.model_dir)
-        return m
+            sw = None
 
-    hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                                iter_interval=args.checkpoint,
-                                                epoch_interval=1 if args.checkpoint is None else None))
+        # Hooks
+        iter_interval = 1 if args.debug else args.log_interval
+        hooks = [LossHook(reader, iter_interval, summary_writer=sw),
+                 ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw),
+                 ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
+                         args.checkpoint, sw)]
 
-    # Train
-    reader.train(optim, training_set=train_data,
-                 max_epochs=args.epochs, hooks=hooks,
-                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value,
-                 device=args.device)
+        preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
+        best_metric = [0.0]
 
-    # Test final model
-    if test_data is not None:
-        logger.info(
-            "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
-        test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
+        def side_effect(metrics, prev_metric):
+            """Returns: a state (in this case a metric) that is used as input for the next call"""
+            m = metrics[preferred_metric]
+            if prev_metric is not None and m < prev_metric:
+                reader.sess.run(lr_decay_op)
+                logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
+            elif m > best_metric[0]:
+                best_metric[0] = m
+                if prev_metric is None:  # store whole model only at beginning of training
+                    reader.store(args.model_dir)
+                else:
+                    reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
+                logger.info("Saving model to: %s" % args.model_dir)
+            return m
 
-        reader.load(args.model_dir)
-        test_eval_hook(1)
+        hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
+                                                    iter_interval=args.checkpoint,
+                                                    epoch_interval=1 if args.checkpoint is None else None))
+
+        # Train
+        reader.train(optim, training_set=train_data,
+                     max_epochs=args.epochs, hooks=hooks,
+                     l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value,
+                     device=args.device)
+
+        # Test final model
+        if test_data is not None:
+            logger.info(
+                "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
+            test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
+
+            reader.load(args.model_dir)
+            test_eval_hook(1)
 
 
 if __name__ == "__main__":

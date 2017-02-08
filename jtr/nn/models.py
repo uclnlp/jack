@@ -537,8 +537,8 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
-        if drop_keep_prob != 1.0:
-            cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob)
+        #if drop_keep_prob != 1.0:
+        cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob, input_keep_prob=drop_keep_prob, seed=1233)
 
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
             cell,

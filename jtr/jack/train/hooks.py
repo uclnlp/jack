@@ -11,7 +11,7 @@ from typing import List, Tuple, Mapping
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack import JTReader, TensorPort, Answer, Question, FlatPorts
+from jtr.jack import JTReader, TensorPort, Answer, QASetting, FlatPorts
 
 logger = logging.getLogger(__name__)
 
@@ -183,9 +183,9 @@ class ETAHook(TraceHook):
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             current_time = time()
 
-            def log_eta(progress, start_time, name):
+            def get_eta(progress, start_time, name):
                 elapsed = current_time - start_time
-                eta = elapsed / progress
+                eta = elapsed / progress * (1.0 - progress)
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
                 self.update_summary(self.reader.sess, self.iter, self.__tag__() + "_" + name, float(eta))
 
@@ -193,15 +193,15 @@ class ETAHook(TraceHook):
 
             log = "Epoch %d\tIter %d" % (epoch, self.iter)
             total_progress = float(self.iter) / self.max_iters
-            eta, eta_data = log_eta(total_progress, self.start, "total")
-            log += "\tETA in %s, %s (%.2f%%)" % (eta, eta_data, total_progress * 100)
+            eta, eta_data = get_eta(total_progress, self.start, "total")
+            log += "\tETA: %s, %s (%.2f%%)" % (eta, eta_data, total_progress * 100)
             epoch_progress = float((self.iter - 1) % self.iter_per_epoch + 1) / self.iter_per_epoch
-            eta, _ = log_eta(epoch_progress, self.start_epoch, "epoch")
-            log += "\tETA(epoch) in %s (%.2f%%)" % (eta, epoch_progress * 100)
+            eta, _ = get_eta(epoch_progress, self.start_epoch, "epoch")
+            log += "\tETA(epoch): %s (%.2f%%)" % (eta, epoch_progress * 100)
             if self.iter_per_checkpoint is not None:
                 checkpoint_progress = float((self.iter - 1) % self.iter_per_checkpoint + 1) / self.iter_per_checkpoint
-                eta, _ = log_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
-                log += "\tETA(checkpoint) in %s (%.2f%%)" % (eta, checkpoint_progress * 100)
+                eta, _ = get_eta(checkpoint_progress, self.start_checkpoint, "checkpoint")
+                log += "\tETA(checkpoint): %s (%.2f%%)" % (eta, checkpoint_progress * 100)
 
             logger.info(log)
 
@@ -210,7 +210,7 @@ class ETAHook(TraceHook):
 
 
 class EvalHook(TraceHook):
-    def __init__(self, reader: JTReader, dataset: List[Tuple[Question, List[Answer]]], ports: List[TensorPort],
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None):
         super(EvalHook, self).__init__(reader, summary_writer)
@@ -285,7 +285,7 @@ class EvalHook(TraceHook):
 class XQAEvalHook(EvalHook):
     """This evaluation hook computes the following metrics: exact and per-answer f1 on token basis."""
 
-    def __init__(self, reader: JTReader, dataset: List[Tuple[Question, List[Answer]]],
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
         ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer2question]

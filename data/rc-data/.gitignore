@@ -1,0 +1,8 @@
+# Ignore everything in this directory
+*
+
+# ...except:
+!.gitignore
+!post_download.sh
+!README.md
+!cnn_snippet.jtr.json

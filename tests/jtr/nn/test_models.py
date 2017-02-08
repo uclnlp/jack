@@ -32,20 +32,19 @@ models = \
 # test_data/dataset-name/dataset_name-test.json
 # test_data/dataset-name/overfit.json
 
-dataset_epochs = \
-[
-    ('SNLI',5),
-    ('sentihood',3)
-]
+datasets = ['SNLI', 'sentihood']
+overfit_epochs = {'SNLI': 15, 'sentihood': 15}
+small_data_epochs = {'SNLI': 5, 'sentihood': 3}
 
 ids = []
 testdata = []
 
 def generate_test_data():
     '''Creates all permutations of models and datasets as tests.'''
-    for dataset, epochs in dataset_epochs:
+    for dataset in datasets:
         for useGPUID in [-1, 0]:
             for use_small_data in [False, True]:
+                epochs = small_data_epochs[dataset] if use_small_data else overfit_epochs[dataset]
                 for model in models:
                     testdata.append([model, useGPUID, epochs, use_small_data, \
                         dataset])
@@ -121,7 +120,7 @@ def test_model(model_name, useGPUID, epochs, use_small_data,
     cmd += ' --write_metrics_to={0}'.format(metric_filepath)
     cmd += ' --model={0}'.format(model_name)
     cmd += ' --epochs={0}'.format(epochs)
-
+    print('command: '+cmd)
     # Execute command and wait for results
     t0 = time.time()
     try:

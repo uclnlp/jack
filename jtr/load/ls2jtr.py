@@ -92,5 +92,5 @@ if __name__ == "__main__":
                     json.dump(jtr, outfile, indent=2)
 
 
-            save_debug("./jtr/data/LS/debug", "lexsub_debug_cleaned.jsonl")
-            save_debug("./jtr/data/LS", "snippet_jtrformat.json")
+            save_debug("./data/LS/debug", "lexsub_debug_cleaned.jsonl")
+            save_debug("./data/LS", "snippet.jtr.json")

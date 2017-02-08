@@ -3,6 +3,9 @@
 from setuptools import setup
 from setuptools import find_packages
 
+with open('requirements.txt', 'r') as f:
+      requirements = f.readlines()
+
 setup(name='jtr',
       version='0.1.0',
       description='Jack the Reader is a Python framework for Machine Reading',
@@ -11,8 +14,7 @@ setup(name='jtr',
       url='https://github.com/uclmr/jtr',
       test_suite='tests',
       license='MIT',
-      install_requires=[
-            'tensorflow>=0.8',
-            'pycorenlp>=0.3.0'
-      ],
+      install_requires=requirements,
+      setup_requires=['pytest-runner'] + requirements,
+      tests_require=requirements,
       packages=find_packages())

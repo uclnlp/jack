@@ -3,8 +3,9 @@ import re
 import numpy as np
 import pprint
 from jtr.preprocess.vocab import Vocab
-import random
+from jtr.util.rs import DefaultRandomState
 
+rs = DefaultRandomState(1337)#new seed ignored if set previously
 
 # sym (e.g. token, token id or class label)
 # seq (e.g. sequence of tokens)
@@ -287,7 +288,7 @@ def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
         return xss_mapped
 
 
-def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, seed=None):
+def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
     """Replaces candidates by a mix of answers and random candidates.
 
     Creates negative samples by combining the true answers and some random
@@ -302,7 +303,9 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, seed=None):
         candidate_key: the key of the candidate list
         answer_key: the key of the answer list
         how_many: how many samples from the candidate list should we take
-        seed: a random seed.
+        avoid: list of candidates to be avoided
+        (note: only those are avoided, any instances according to `answer_key` which are not
+        in `avoid`, may still be sampled!)
 
     Returns:
         a new dictionary identical to `xs` for all but the `candidate_key`. For that key the value
@@ -310,23 +313,25 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, seed=None):
 
     Example:
         >>> data = {'answers':[[1,2],[3,4]], 'candidates': [range(0,100), range(0,100)]}
-        >>> processed = dynamic_subsample(data, 'candidates', 'answers', 2, 0)
+        >>> processed = dynamic_subsample(data, 'candidates', 'answers', 2)
         >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['candidates']])
-        '1 2 49 97 | 3 4 53 5'
+        '1 2 89 39 | 3 4 90 82'
         >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['candidates']])
-        '1 2 33 65 | 3 4 62 51'
+        '1 2 84 72 | 3 4 9 6'
         >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['answers']])
         '1 2 | 3 4'
+        >>> processed = dynamic_subsample(data, 'candidates', 'answers', 5, avoid=range(91))
+        >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['candidates']])
+        '1 2 93 91 91 95 97 | 3 4 93 99 92 98 93'
     """
     candidate_dataset = xs[candidate_key]
     answer_dataset = xs[answer_key]
     new_candidates = []
-    rand = random.Random(seed)
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]]
-        new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, rand))
+        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
+        new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, avoid=avoid, rand=rs))
     result = {}
     result.update(xs)
     result[candidate_key] = new_candidates
@@ -339,30 +344,41 @@ class DynamicSubsampledList:
     """
     A container that produces different list subsamples on every call to `__iter__`.
 
-    >>> dlist = DynamicSubsampledList([1,2], range(0,100),2, random.Random(0))
+    >>> dlist = DynamicSubsampledList([1,2], range(0,100),2, rand=rs)
     >>> print(" ".join([str(e) for e in dlist]))
-    1 2 49 97
+    1 2 23 61
     >>> print(" ".join([str(e) for e in dlist]))
-    1 2 53 5
+    1 2 92 39
     """
 
-    def __init__(self, always_in, to_sample_from, how_many, rand):
+    def __init__(self, always_in, to_sample_from, how_many, avoid=[], rand=rs):
         self.always_in = always_in
         self.to_sample_from = to_sample_from
         self.how_many = how_many
+        self.avoid = set(avoid)
         self.random = rand
 
     def __iter__(self):
         result = []
         result += self.always_in
-        for _ in range(0, self.how_many):
-            result.append(self.random.choice(self.to_sample_from))#todo check we are adding negative examples?
+        if len(self.avoid) == 0:
+            result.extend(list(self.random.choice(self.to_sample_from, size=self.how_many, replace=True)))
+        else:
+            for _ in range(self.how_many):
+                avoided = False
+                trial, max_trial = 0, 50
+                while (not avoided and trial < max_trial):
+                    samp = self.random.choice(self.to_sample_from)
+                    trial += 1
+                    avoided = False if samp in self.avoid else True
+                result.append(samp)
         return result.__iter__()
 
     def __len__(self):
         return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
     
-    def __getitem__(self, key): 
+    def __getitem__(self, key):
+        #todo: verify
         return self.always_in[0]
 
 
