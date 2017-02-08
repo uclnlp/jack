@@ -5,6 +5,7 @@ from typing import List, Sequence
 from jtr.jack import QuestionWithDefaults, AnswerWithDefault, SharedVocabAndConfig, JTReader, SimpleModelModule, \
     TensorPort, Ports
 from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCOutputModule
+from jtr.preprocess.vocab import Vocab
 
 
 class SimpleKBPPorts:
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 100})
     example_reader = JTReader(resources,
                               SimpleMCInputModule(resources),
-                              SimpleMCModelModule(resources),
+                              SimpleKBPModelModule(resources),
                               SimpleMCOutputModule())
 
     # example_reader.setup_from_data(data_set)
