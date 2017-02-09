@@ -36,13 +36,14 @@ class SimpleMCInputModule(InputModule):
             corpus["support"].append(x.support)
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
+            assert len(y) == 1
             if not test_time:
-                corpus["answers"].append([y.text])
+                corpus["answers"].append([y[0].text])
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
                                    test_time=test_time)
         return corpus
 
-    def dataset_generator(self, dataset: List[Tuple[QASetting, Answer]],
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
@@ -98,7 +99,7 @@ class SimpleMCModelModule(SimpleModelModule):
                       multiple_support: tf.Tensor,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
-        emb_dim = shared_resources.config["emb_dim"]
+        emb_dim = shared_resources.config["repr_dim"]
         with tf.variable_scope("simplce_mcqa"):
             # varscope.reuse_variables()
             embeddings = tf.get_variable(
@@ -144,7 +145,7 @@ if __name__ == '__main__':
     ]
     questions = [q for q, _ in data_set]
 
-    resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 100})
+    resources = SharedVocabAndConfig(Vocab(), {"repr_dim": 100})
     example_reader = JTReader(resources,
                               SimpleMCInputModule(resources),
                               SimpleMCModelModule(resources),

@@ -22,16 +22,18 @@ def __xqa_reader(f):
 
 
 def __mcqa_reader(f):
+    from jtr.jack.train.hooks import XQAEvalHook
     __reader(f)
     mcqa_readers.setdefault(f.__name__, f)
-    #TODO eval hook
+    eval_hooks.setdefault(f.__name__, XQAEvalHook)
+    # TODO eval hook
     return f
 
 
 def __genqa_reader(f):
     __reader(f)
     genqa_readers.setdefault(f.__name__, f)
-    #TODO eval hook
+    # TODO eval hook
     return f
 
 
