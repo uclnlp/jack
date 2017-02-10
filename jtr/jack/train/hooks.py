@@ -341,7 +341,7 @@ class KBPEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Targets.target_index,Ports.Prediction.candidate_scores]
+        ports = [Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates]
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -352,6 +352,7 @@ class KBPEvalHook(EvalHook):
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_answers = tensors[Ports.Targets.target_index]
         candidate_scores = tensors[Ports.Prediction.candidate_scores]
+        candidate_ids = tensors[Ports.Input.atomic_candidates]
 
         acc_f1 = 0.0
         acc_exact = 0.0
@@ -365,7 +366,7 @@ class KBPEvalHook(EvalHook):
                 return v.shape[0]
         
         for i in range(len_np_or_list(winning_indices)):
-            if winning_indices[i]==correct_answers[i]:
+            if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
 
         acc_f1 = 0.0
