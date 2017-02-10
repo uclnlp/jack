@@ -11,7 +11,7 @@ from typing import List, Tuple, Mapping
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack import JTReader, TensorPort, Answer, QASetting, FlatPorts
+from jtr.jack import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
 
 logger = logging.getLogger(__name__)
 
@@ -331,5 +331,43 @@ class XQAEvalHook(EvalHook):
 
             acc_f1 += f1
             acc_exact += exact
+
+        return {"f1": acc_f1, "exact": acc_exact}
+
+
+class KBPEvalHook(EvalHook):
+    """This evaluation hook computes the following metrics: exact and per-answer f1 on token basis."""
+
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
+                 iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
+                 write_metrics_to=None, info="", side_effect=None, **kwargs):
+        ports = [Ports.Targets.target_index,Ports.Prediction.candidate_scores]
+        super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
+                         write_metrics_to, info, side_effect)
+
+    @property
+    def possible_metrics(self) -> List[str]:
+        return ["exact", "f1"]
+
+    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
+        correct_answers = tensors[Ports.Targets.target_index]
+        candidate_scores = tensors[Ports.Prediction.candidate_scores]
+
+        acc_f1 = 0.0
+        acc_exact = 0.0
+        
+        winning_indices = np.argmax(candidate_scores, axis=1)
+        
+        def len_np_or_list(v):
+            if isinstance(v, list):
+                return len(v)
+            else:
+                return v.shape[0]
+        
+        for i in range(len_np_or_list(winning_indices)):
+            if winning_indices[i]==correct_answers[i]:
+                acc_exact += 1.0
+
+        acc_f1 = 0.0
 
         return {"f1": acc_f1, "exact": acc_exact}

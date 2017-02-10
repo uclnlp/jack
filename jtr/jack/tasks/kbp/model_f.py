@@ -1,24 +1,94 @@
 import tensorflow as tf
+from jtr.jack import *
+from jtr.jack.data_structures import *
+from jtr.pipelines import pipeline
+from jtr.preprocess.batch import get_batches
+from jtr.preprocess.map import numpify
+from jtr.preprocess.vocab import Vocab
 
 from typing import List, Sequence
 
-from jtr.jack import AnswerWithDefault, SharedVocabAndConfig, JTReader, SimpleModelModule, \
-    TensorPort, Ports, QASettingWithDefaults
-from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCOutputModule
-from jtr.preprocess.vocab import Vocab
 
 
-class SimpleKBPPorts:
-    question_embedding = TensorPort(tf.float32, [None, None],
-                                    "question_embedding",
-                                    "embedding for a batch of questions",
-                                    "[num_questions, emb_dim]")
+
+#class SimpleKBPPorts:
+#    question_embedding = TensorPort(tf.float32, [None, None],
+#                                    "question_embedding",
+#                                    "embedding for a batch of questions",
+#                                    "[num_questions, emb_dim]")
 
 
-class SimpleKBPModelModule(SimpleModelModule):
+class ModelFInputModule(InputModule):
+    def __init__(self, shared_resources):
+        self.vocab = shared_resources.vocab
+        self.config = shared_resources.config
+        self.shared_resources = shared_resources
+
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        self.preprocess(data)
+        return self.shared_resources
+
+    def setup(self, shared_resources: SharedResources):
+        pass
+
+    @property
+    def training_ports(self) -> List[TensorPort]:
+        return [Ports.Targets.target_index]
+
+    def preprocess(self, data, test_time=False):
+        corpus = {"support": [], "question": [], "candidates": []}
+        if not test_time:
+            corpus["answers"] = []
+        for xy in data:
+            if test_time:
+                x = xy
+                y = None
+            else:
+                x, y = xy
+            corpus["support"].append(x.support)
+            corpus["question"].append(x.question)
+            corpus["candidates"].append(x.atomic_candidates)
+            assert len(y) == 1
+            if not test_time:
+                corpus["answers"].append(y[0].text)
+        if not test_time:
+            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
+                                   test_time=test_time, tokenization=False, negsamples=1, cache_fun=True, map_to_target=False)
+        else:
+            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
+                                   test_time=test_time, tokenization=False, cache_fun=True, map_to_target=False)
+        return corpus
+
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        corpus = self.preprocess(dataset)
+        xy_dict = {
+            Ports.Input.multiple_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Input.atomic_candidates: corpus["candidates"],
+            Ports.Targets.target_index: corpus["answers"]
+        }
+        return get_batches(xy_dict)
+
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        corpus = self.preprocess(qa_settings, test_time=True)
+        x_dict = {
+            Ports.Input.multiple_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Input.atomic_candidates: corpus["candidates"]
+        }
+        return numpify(x_dict)
+
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, SimpleKBPPorts.question_embedding]
+        return [Ports.Input.multiple_support,
+                Ports.Input.question, Ports.Input.atomic_candidates]
+
+
+class ModelFModelModule(SimpleModelModule):
+    @property
+    def output_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.candidate_scores, FlatPorts.Misc.embedded_question]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
@@ -26,61 +96,62 @@ class SimpleKBPModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.atomic_candidates, Ports.Targets.candidate_labels, SimpleKBPPorts.question_embedding]
+        return [Ports.Prediction.candidate_scores, Ports.Targets.target_index, FlatPorts.Misc.embedded_question]
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question]
+        return [Ports.Input.question, Ports.Input.atomic_candidates]
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
-                               atomic_candidates: tf.Tensor,
-                               candidate_labels: tf.Tensor,
+                               candidate_scores: tf.Tensor,
+                               target_index: tf.Tensor,
                                question_embedding: tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.constant(0.0)
+        with tf.variable_scope("modelf",reuse=True):
+            embeddings = tf.get_variable("embeddings")
+        embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),-1)  # [batch_size, repr_dim, 1]
+        answer_score = tf.squeeze(tf.batch_matmul(question_embedding,embedded_answer),axis=[1,2])  # [batch_size]
+        loss = tf.reduce_mean(tf.nn.softplus(tf.reduce_sum(candidate_scores,1)-2*answer_score))
         return loss,
 
     def create_output(self,
                       shared_resources: SharedVocabAndConfig,
-                      question: tf.Tensor) -> Sequence[tf.Tensor]:
-        emb_dim = shared_resources.config["emb_dim"]
-        with tf.variable_scope("simplce_kbp"):
-            # varscope.reuse_variables()
+                      question: tf.Tensor,
+                      atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
+        repr_dim = shared_resources.config["repr_dim"]
+        with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
-                "embeddings", [len(self.shared_resources.vocab), emb_dim],
+                "embeddings", [len(self.shared_resources.vocab), repr_dim],
                 trainable=True, dtype="float32")
 
-            # embedded_supports = tf.reduce_sum(tf.gather(embeddings, multiple_support), (1, 2))  # [batch_size, emb_dim]
-            # embedded_question = tf.reduce_sum(tf.gather(embeddings, question), (1,))  # [batch_size, emb_dim]
-            # embedded_supports_and_question = embedded_supports + embedded_question
-            # embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, emb_dim]
-            #
-            # scores = tf.batch_matmul(embedded_candidates,
-            #                          tf.expand_dims(embedded_supports_and_question, -1))
-            #
-            # squeezed = tf.squeeze(scores, 2)
-            return embeddings,
+            embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
+            embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
+            
+            scores = tf.batch_matmul(embedded_candidates,embedded_question,adj_y=True)
+            
+            squeezed = tf.squeeze(scores, 2)
+            return squeezed, embedded_question
 
 
-if __name__ == '__main__':
-    global_candidates = ["(a,b)", "(b,c)", "(c,a)"]
-    data_set = [
-        (QASettingWithDefaults("worksFor", atomic_candidates=global_candidates),
-         AnswerWithDefault("(a,b)", score=1.0))
-    ]
-    questions = [q for q, _ in data_set]
 
-    resources = SharedVocabAndConfig(Vocab(), {"emb_dim": 100})
-    example_reader = JTReader(resources,
-                              SimpleMCInputModule(resources),
-                              SimpleKBPModelModule(resources),
-                              SimpleMCOutputModule())
+class ModelFOutputModule(OutputModule):
+    def setup(self):
+        pass
 
-    # example_reader.setup_from_data(data_set)
+    @property
+    def input_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.candidate_scores]
 
-    # todo: chose optimizer based on config
-    example_reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=10)
+    def __call__(self, inputs: List[QASetting], candidate_scores: np.ndarray) -> List[Answer]:
+        # len(inputs) == batch size
+        # candidate_scores: [batch_size, max_num_candidates]
+        winning_indices = np.argmax(candidate_scores, axis=1)
+        result = []
+        for index_in_batch, question in enumerate(inputs):
+            winning_index = winning_indices[index_in_batch]
+            score = candidate_scores[index_in_batch, winning_index]
+            result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
+        return result
 
-    answers = example_reader(questions)
 
-    print(answers)
+

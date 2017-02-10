@@ -30,6 +30,14 @@ def __mcqa_reader(f):
     return f
 
 
+def __kbp_reader(f):
+    from jtr.jack.train.hooks import KBPEvalHook
+    __reader(f)
+    mcqa_readers.setdefault(f.__name__, f)
+    eval_hooks.setdefault(f.__name__, KBPEvalHook)
+    return f
+
+
 def __genqa_reader(f):
     __reader(f)
     genqa_readers.setdefault(f.__name__, f)
@@ -47,6 +55,20 @@ def example_reader(vocab, config):
     output_module = SimpleMCOutputModule()
     jtreader = JTReader(shared_resources, input_module, model_module, output_module)
     return jtreader
+
+
+
+@__kbp_reader
+def modelf_reader(vocab, config):
+    """ Creates a simple kbp reader. """
+    from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    input_module = ModelFInputModule(shared_resources)
+    model_module = ModelFModelModule(shared_resources)
+    output_module = ModelFOutputModule()
+    jtreader = JTReader(shared_resources, input_module, model_module, output_module)
+    return jtreader
+
 
 
 @__xqa_reader
