@@ -279,6 +279,25 @@ class InputModule:
     """
     An input module processes inputs and turns them into tensors to be processed by the model module.
     """
+    self.shared_vocab_config = None
+    self.default_vec = None
+
+    @property
+    def emb_shapes(self):
+        return self.shared_vocab_config.vocab.emb.lookup.shape
+
+    def get_default_vec():
+        if self.shared_vocab_conig.vocab != None and
+           self.default_vec == None:
+               self.default_vec =  np.zeros(
+                       [self.shared_vocab_config.vocab.emb_length])
+        return self.default_vec
+
+    def get_emb(self, idx):
+        if idx < self.emb_shapes[0]:
+            return self.shared_vocab_config.vocab.emb.lookup[idx]
+        else:
+            return self.get_default_vec()
 
     @abstractproperty
     def output_ports(self) -> List[TensorPort]:
