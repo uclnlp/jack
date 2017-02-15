@@ -1,3 +1,7 @@
+from jtr.pipelines import pipeline
+from jtr.preprocess.batch import get_batches
+from jtr.preprocess.map import numpify
+from jtr.preprocess.vocab import Vocab
 import re
 
 __pattern = re.compile('\w+|[^\w\s]')
@@ -70,4 +74,32 @@ def prepare_data(self, dataset, vocab, with_answers=False,
     return corpus_tokenized["question"], corpus_ids["question"], question_lengths, \
            corpus_tokenized["support"], corpus_ids["support"], support_lengths, \
            word_in_question, token_offsets, answer_spans
+
+
+def preprocess_with_pipeline(data, test_time, negsamples=0):
+        corpus = {"support": [], "question": [], "candidates": []}
+        if not test_time:
+            corpus["answers"] = []
+        for xy in data:
+            if test_time:
+                x = xy
+                y = None
+            else:
+                x, y = xy
+            corpus["support"].append(x.support)
+            corpus["question"].append(x.question)
+            corpus["candidates"].append(x.atomic_candidates)
+            assert len(y) == 1
+            if not test_time:
+                corpus["answers"].append(y[0].text)
+        if not test_time:
+            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
+                                   test_time=test_time, tokenization=False,
+                                   negsamples=negsamples, cache_fun=True,
+                                   map_to_target=False)
+        else:
+            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
+                                   test_time=test_time, tokenization=False,
+                                   cache_fun=True, map_to_target=False)
+        return corpus
 

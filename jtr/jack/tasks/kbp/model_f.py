@@ -5,6 +5,7 @@ from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify, deep_map, dynamic_subsample, notokenize
 from jtr.preprocess.vocab import Vocab
+from jtr.jack.preprocessing import preprocess_with_pipeline
 
 from typing import List, Sequence
 
@@ -25,7 +26,7 @@ class ModelFInputModule(InputModule):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        self.preprocess(data)
+        corpus = preprocess_with_pipeline(data, test_time, negsamples=1)
         return self.shared_resources
 
     def setup(self, shared_resources: SharedResources):
@@ -114,7 +115,7 @@ class ModelFModelModule(SimpleModelModule):
             candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
             loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score))
-            
+
             return candidate_scores, loss
 
 

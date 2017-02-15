@@ -39,6 +39,7 @@ class TensorPort:
         self.dtype = dtype
         self.shape = shape
         self.__doc__ = doc_string
+        self.placeholder = None
 
     def create_placeholder(self):
         """
@@ -300,7 +301,7 @@ class InputModule:
             return self.get_default_vec()
 
     @abstractproperty
-    def output_ports(self) -> List[TensorPort]:
+    def output_ports(self) -> Dict[TensorPort]:
         """
         Defines what types of tensors the output module produces in each batch.
         Returns: a list of tensor ports that correspond to the tensor ports in the mapping
@@ -310,7 +311,7 @@ class InputModule:
         pass
 
     @abstractproperty
-    def training_ports(self) -> List[TensorPort]:
+    def training_ports(self) -> Dict[TensorPort]:
         """
         Defines what types of tensor are provided in addition to `output_ports` during training
         in the `dataset_generator` function. Typically these will be ports that describe
@@ -545,9 +546,11 @@ class SimpleModelModule(ModelModule):
         """
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
-        self._tensors = {d: d.create_placeholder() for d in self.input_ports}
+        self._tensors = {d.name : d.create_placeholder() for d in
+                            self.input_ports.values()}
         self._placeholders = dict(self._tensors)
-        output_tensors = self.create_output(self.shared_resources, *[self._tensors[port] for port in self.input_ports])
+        output_tensors = self.create_output(self.shared_resources, self._tensors)
+
         self._tensors.update(zip(self.output_ports, output_tensors))
         if is_training:
             self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
