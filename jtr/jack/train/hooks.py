@@ -369,6 +369,6 @@ class KBPEvalHook(EvalHook):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
 
-        acc_f1 = 0.0
+        acc_f1 = acc_exact
 
         return {"f1": acc_f1, "exact": acc_exact}

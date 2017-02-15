@@ -16,7 +16,7 @@ from tensorflow.python.client import device_lib
 import jtr.jack.readers as readers
 from jtr.jack import load_labelled_data
 from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
-from jtr.load.embeddings.embeddings import load_embeddings
+from jtr.load.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.preprocess.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
@@ -150,6 +150,8 @@ def main():
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
+        else:
+            embeddings=Embeddings(None,None)
     else:
         train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
         test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
@@ -158,8 +160,10 @@ def main():
             embeddings = load_embeddings(args.embedding_file, args.embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(args.embedding_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
+        else:
+            embeddings=Embeddings(None,None)
 
-    emb = embeddings if args.pretrain else None
+    emb = embeddings #if args.pretrain else None
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 

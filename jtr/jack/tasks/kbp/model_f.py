@@ -3,7 +3,7 @@ from jtr.jack import *
 from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify
+from jtr.preprocess.map import numpify, deep_map, dynamic_subsample, notokenize
 from jtr.preprocess.vocab import Vocab
 
 from typing import List, Sequence
@@ -51,12 +51,12 @@ class ModelFInputModule(InputModule):
             assert len(y) == 1
             if not test_time:
                 corpus["answers"].append(y[0].text)
+        corpus =deep_map(corpus, notokenize, ['question'])
+        corpus = deep_map(corpus, self.vocab, ['question'])
+        corpus = deep_map(corpus, self.vocab, ['candidates'], cache_fun=True)
         if not test_time:
-            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=test_time, tokenization=False, negsamples=1, cache_fun=True, map_to_target=False)
-        else:
-            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=test_time, tokenization=False, cache_fun=True, map_to_target=False)
+            corpus = deep_map(corpus, self.vocab, ['answers'])
+            corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],

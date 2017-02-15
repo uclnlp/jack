@@ -6,6 +6,7 @@ eval_hooks = {}
 xqa_readers = {}
 genqa_readers = {}
 mcqa_readers = {}
+kbp_readers = {}
 
 
 def __reader(f):
@@ -33,7 +34,7 @@ def __mcqa_reader(f):
 def __kbp_reader(f):
     from jtr.jack.train.hooks import KBPEvalHook
     __reader(f)
-    mcqa_readers.setdefault(f.__name__, f)
+    kbp_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, KBPEvalHook)
     return f
 

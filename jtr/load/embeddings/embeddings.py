@@ -10,7 +10,10 @@ class Embeddings:
         self.lookup = lookup
 
     def get(self, word):
-        id = self.vocabulary.get_idx_by_word(word)
+        if self.vocabulary is None:
+            id = None
+        else:
+            id = self.vocabulary.get_idx_by_word(word)
         #out-of-vocab word
         if id is None:
             return None  #lookup[None] would return entire lookup table
