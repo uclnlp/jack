@@ -3,18 +3,40 @@ from collections import defaultdict
 from typing import NamedTuple, Sequence, Mapping
 
 # load training, dev and test data
+from jtr.preprocess.batch import get_batches
+from jtr.preprocess.map import deep_map
+from jtr.preprocess.vocab import Vocab
+
 train_dir = "/Users/riedel/corpora/scienceie/train2"
 dev_dir = "/Users/riedel/corpora/scienceie/dev/"
 
 Token = NamedTuple("Token", [("token_start", int),
                              ("token_end", int),
-                             ("word", str)])
+                             ("word", str),
+                             ("index", int)])
 
 Sentence = NamedTuple("Sentence", [("tokens", Sequence[Token])])
 
 Keyphrase = NamedTuple("KeyPhrase", [("start", int), ("end", int), ("type", str)])
 
 Instance = NamedTuple("Instance", [("doc", Sequence[Sentence]), ("labels", Mapping[Keyphrase, Token])])
+
+bio_vocab = Vocab()
+bio_vocab("B")
+bio_vocab("I")
+bio_vocab("O")
+bio_vocab.freeze()
+
+label_vocab = Vocab()
+label_vocab("Material")
+label_vocab("Process")
+label_vocab("Task")
+label_vocab.freeze()
+
+rel_type_vocab = Vocab()
+rel_type_vocab("HYPONYM_OF")
+rel_type_vocab("SYNONYM_OF")
+rel_type_vocab.freeze()
 
 
 def read_ann(textfolder=dev_dir):
@@ -23,6 +45,7 @@ def read_ann(textfolder=dev_dir):
     :param textfolder:
     :return: tokens with character offsets
     '''
+    word_types = set()
     from nltk import sent_tokenize, word_tokenize
     flist = os.listdir(textfolder)
     instances = []
@@ -41,6 +64,7 @@ def read_ann(textfolder=dev_dir):
         doc = []
         for s in sents:
             tokens = word_tokenize(s)
+            word_types.update(tokens)
             # recover spans for each token
             current_token_index = 0
             char_index = 0
@@ -54,7 +78,7 @@ def read_ann(textfolder=dev_dir):
                     char_index += 1
                     within_token_index += 1
                 if within_token_index == len(token):
-                    rich_token = Token(start_offset, char_index, token)
+                    rich_token = Token(start_offset, char_index, token, len(result_tokens))
                     result_tokens.append(rich_token)
                     for offset in range(start_offset, char_index):
                         offset_to_token[offset] = rich_token
@@ -98,9 +122,63 @@ def read_ann(textfolder=dev_dir):
                             labels_to_tokens[Keyphrase(int(start), int(end), keytype)].add(token)
         instances.append(Instance(doc, labels_to_tokens))
         # print(Instance(doc, labels_to_tokens))
+    print("Collected {} word types".format(len(word_types)))
     return instances
 
 
-instances = read_ann(dev_dir)
+def convert_to_batchable_format(instances, vocab,
+                                sentences_as_ints_ph="sentences_as_ints",
+                                document_indices_ph="document_indices",
+                                bio_labels_as_ints_ph="bio_labels_as_ints",
+                                type_labels_as_ints_ph="type_labels_as_ints"):
+    # convert
+    sentences_as_ints = []
+    bio_labels_as_ints = []
+    type_labels_as_ints = []
+    document_indices = []
+    for doc_index, instance in enumerate(instances):
+        for sentence in instance.doc:
+            sentences_as_ints.append([vocab(token.word) for token in sentence.tokens])
+            document_indices.append(doc_index)
+            bio_labels = [bio_vocab("O")] * len(sentence.tokens)
+            type_labels = [label_vocab("O")] * len(sentence.tokens)
 
-print(instances[0].labels)
+            for kp, kp_tokens in instance.labels.items():
+                started = False
+                for token in sentence.tokens:
+                    if token in kp_tokens:
+                        type_labels[token.index] = label_vocab(kp.type)
+                        if not started:
+                            bio_labels[token.index] = bio_vocab("B")
+                            started = True
+                        else:
+                            bio_labels[token.index] = bio_vocab("I")
+            bio_labels_as_ints.append(bio_labels)
+            type_labels_as_ints.append(type_labels)
+
+    return {
+        sentences_as_ints_ph: sentences_as_ints,
+        document_indices_ph: document_indices,
+        bio_labels_as_ints_ph: bio_labels_as_ints,
+        type_labels_as_ints_ph: type_labels_as_ints
+    }
+
+
+def fill_vocab(instances, vocab):
+    for instance in instances:
+        for sent in instance.doc:
+            for token in sent.tokens:
+                vocab(token.word)
+
+
+if __name__ == "__main__":
+    vocab = Vocab()
+    instances = read_ann(dev_dir)
+    fill_vocab(instances, vocab)
+    batchable = convert_to_batchable_format(instances[:1], vocab)
+    print(batchable)
+    batches = get_batches(batchable)
+    for batch in batches:
+        print(batch)
+
+# print(instances[0].labels)

@@ -13,12 +13,7 @@ sentence_lengths = tf.placeholder(tf.int32, [None])
 target_start_end_labels = tf.placeholder(tf.int32, [None, None])  # [batch_size, max_num_tokens]
 target_relations = tf.placeholder(tf.int32, [None, None, None])  # [batch_size, max_num_tokens, max_num_tokens]]
 
-START = 0
-END = 1
-OUTSIDE = 2
 
-HYPONYM_OF = 0
-SYNONYM_OF = 1
 
 
 def create_model(output_size, layers, dropout, num_words, emb_dim):
