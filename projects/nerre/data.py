@@ -219,7 +219,7 @@ def fill_vocab(instances, vocab):
                 vocab(token.word)
 
 
-def convert_batch_to_ann(batch, instances,
+def convert_batch_to_ann(batch, instances, out_dir="/tmp",
                          sentences_as_ints_key="sentences_as_ints",
                          document_indices_key="document_indices",
                          bio_labels_key="bio_labels_as_ints",
@@ -283,7 +283,7 @@ def convert_batch_to_ann(batch, instances,
         doc_id_to_doc_info[instance.file_name] = current_kps
 
     for file_name, keyphrases in doc_id_to_doc_info.items():
-        with open("/tmp/" + file_name, "w") as ann:
+        with open(out_dir + "/" + file_name, "w") as ann:
             for key, kp in keyphrases.items():
                 ann.write("{key}\t{label} {start} {end}\t{text}\n".format(key=key,
                                                                           label=kp.type,
@@ -300,6 +300,6 @@ if __name__ == "__main__":
     print(batchable)
     batches = list(get_batches(batchable))[:2]
     for batch in batches:
-        print(convert_batch_to_ann(batch, instances))
+        print(convert_batch_to_ann(batch, instances, "/tmp"))
 
 # print(instances[0].labels)
