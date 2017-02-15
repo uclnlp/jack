@@ -130,15 +130,18 @@ def convert_to_batchable_format(instances, vocab,
                                 sentences_as_ints_ph="sentences_as_ints",
                                 document_indices_ph="document_indices",
                                 bio_labels_as_ints_ph="bio_labels_as_ints",
-                                type_labels_as_ints_ph="type_labels_as_ints"):
+                                type_labels_as_ints_ph="type_labels_as_ints",
+                                token_char_offsets_ph="token_char_offsets"):
     # convert
     sentences_as_ints = []
     bio_labels_as_ints = []
     type_labels_as_ints = []
     document_indices = []
+    token_char_offsets = []
     for doc_index, instance in enumerate(instances):
         for sentence in instance.doc:
             sentences_as_ints.append([vocab(token.word) for token in sentence.tokens])
+            token_char_offsets.append([[token.token_start, token.token_end] for token in sentence.tokens])
             document_indices.append(doc_index)
             bio_labels = [bio_vocab("O")] * len(sentence.tokens)
             type_labels = [label_vocab("O")] * len(sentence.tokens)
@@ -160,7 +163,8 @@ def convert_to_batchable_format(instances, vocab,
         sentences_as_ints_ph: sentences_as_ints,
         document_indices_ph: document_indices,
         bio_labels_as_ints_ph: bio_labels_as_ints,
-        type_labels_as_ints_ph: type_labels_as_ints
+        type_labels_as_ints_ph: type_labels_as_ints,
+        token_char_offsets_ph: token_char_offsets
     }
 
 
