@@ -48,6 +48,7 @@ def read_ann(textfolder=dev_dir):
             token = tokens[current_token_index]
             result_tokens = []
             start_offset = 0
+            # print(tokens)
             while char_index < len(text):
                 while within_token_index < len(token) and text[char_index] == token[within_token_index]:
                     char_index += 1
@@ -60,10 +61,15 @@ def read_ann(textfolder=dev_dir):
                     if current_token_index < len(tokens) - 1:
                         current_token_index += 1
                         token = tokens[current_token_index]
+                    else:
+                        char_index = len(text)
+                else:
+                    char_index += 1
 
                 within_token_index = 0
-                char_index += 1
                 start_offset = char_index
+            assert len(tokens) == len(result_tokens)
+            assert [t.word for t in result_tokens] == tokens
             doc.append(Sentence(result_tokens))
 
         # mapping from tokens to their labels
@@ -94,6 +100,7 @@ def read_ann(textfolder=dev_dir):
         # print(Instance(doc, labels_to_tokens))
     return instances
 
-instances = read_ann()
+
+instances = read_ann(dev_dir)
 
 print(instances[0].labels)
