@@ -5,7 +5,7 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops.math_ops import sigmoid
 from tensorflow.python.ops.math_ops import tanh
 from tensorflow.python.ops import variable_scope as vs
-from tensorflow.python.ops.rnn_cell import RNNCell, LSTMStateTuple, _linear
+from tensorflow.contrib.rnn.core_rnn_cell import RNNCell, LSTMStateTuple, _linear
 
 
 class ConditionalLSTMCell(RNNCell):
