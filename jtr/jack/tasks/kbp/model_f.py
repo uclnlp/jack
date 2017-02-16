@@ -36,34 +36,25 @@ class ModelFInputModule(InputModule):
         return [Ports.Targets.target_index]
 
     def preprocess(self, data, test_time=False):
-        corpus = {"support": [], "question": [], "candidates": []}
-        if not test_time:
-            corpus["answers"] = []
+        corpus = { "question": [], "candidates": [], "answers":[]}
         for xy in data:
-            if test_time:
-                x = xy
-                y = None
-            else:
-                x, y = xy
-            corpus["support"].append(x.support)
+            x, y = xy
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
             assert len(y) == 1
-            if not test_time:
-                corpus["answers"].append(y[0].text)
+            corpus["answers"].append(y[0].text)
         corpus =deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.vocab, ['question'])
         corpus = deep_map(corpus, self.vocab, ['candidates'], cache_fun=True)
+        corpus = deep_map(corpus, self.vocab, ['answers'])
         if not test_time:
-            corpus = deep_map(corpus, self.vocab, ['answers'])
             corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset)
+        corpus = self.preprocess(dataset, test_time=is_eval)
         xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
             Ports.Targets.target_index: corpus["answers"]
@@ -73,7 +64,6 @@ class ModelFInputModule(InputModule):
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
         x_dict = {
-            Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"]
         }
