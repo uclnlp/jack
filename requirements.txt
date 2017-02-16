@@ -5,5 +5,5 @@ jsonschema
 parse
 scipy
 sklearn
-tensorflow>=0.12
+tensorflow>=1.0
 pycorenlp
