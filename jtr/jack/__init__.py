@@ -513,6 +513,17 @@ class SimpleModelModule(ModelModule):
         pass
 
     def setup(self, is_training=True):
+        """
+        This method creates the tensorflow graph(s?) that this model module defines. It does so by
+        first creating placeholders for all input ports of the module. Then the `create_output` method
+        is called (which is to be implemented by subclasses) with the placeholders as arguments, which in turn
+        produces the output tensors (corresponding to the module's output ports).
+        Args:
+            is_training: is this for the graph to be used at training time.
+
+        Returns:
+
+        """
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
         self._tensors = {d: d.create_placeholder() for d in self.input_ports}
