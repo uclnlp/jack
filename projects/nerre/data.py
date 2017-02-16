@@ -18,7 +18,7 @@ Token = NamedTuple("Token", [("token_start", int),
 
 Sentence = NamedTuple("Sentence", [("tokens", Sequence[Token])])
 
-Keyphrase = NamedTuple("KeyPhrase", [("start", int), ("end", int), ("type", str), ("text", str)])
+Keyphrase = NamedTuple("KeyPhrase", [("start", int), ("end", int), ("type", str), ("text", str), ("id", str)])
 
 Instance = NamedTuple("Instance", [("text", str),
                                    ("doc", Sequence[Sentence]),
@@ -39,8 +39,8 @@ label_vocab("Task")
 label_vocab.freeze()
 
 rel_type_vocab = Vocab()
-rel_type_vocab("HYPONYM_OF")
-rel_type_vocab("SYNONYM_OF")
+rel_type_vocab("Hyponym-of")
+rel_type_vocab("Synonym-of")
 rel_type_vocab("O")
 rel_type_vocab.freeze()
 
@@ -124,7 +124,7 @@ def read_ann(textfolder=dev_dir):
                     # look up span in text and print error message if it doesn't match the .ann span text
                     keyphr_text_lookup = text[int(start):int(end)]
                     keyphr_ann = anno_inst[2]
-                    keyphrase = Keyphrase(int(start), int(end), keytype, keyphr_text_lookup)
+                    keyphrase = Keyphrase(int(start), int(end), keytype, keyphr_text_lookup, annotation_id)
                     id_to_keyphrase[annotation_id] = keyphrase
                     assert keyphr_text_lookup == keyphr_ann
                     for offset in range(int(start), int(end)):
@@ -225,18 +225,21 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
                          bio_labels_key="bio_labels_as_ints",
                          type_labels_as_ints_key="type_labels_as_ints",
                          token_char_offsets_key="token_char_offsets",
+                         relation_matrices_key="relation_matrices",
                          sentence_lengths_key="sentence_length"):
     doc_id_to_doc_info = {}
     doc_ids = batch[document_indices_key]
     bio_labels = batch[bio_labels_key]
     type_labels = batch[type_labels_as_ints_key]
-    sentences = batch[sentences_as_ints_key]
+    relation_matrices = batch[relation_matrices_key]
     token_char_offsets = batch[token_char_offsets_key]
     sentence_lengths = batch[sentence_lengths_key]
 
     for elem_index, doc_id in enumerate(doc_ids):
         instance = instances[doc_id]
-        current_kps = doc_id_to_doc_info.get(instance.file_name, {})
+        doc_info = doc_id_to_doc_info.get(instance.file_name, {"kps": {}, "rels": []})
+        current_kps = doc_info["kps"]
+        current_relations = doc_info["rels"]
         current_kp_start = 0
         current_kp_end = -1
         in_kp = False
@@ -245,21 +248,29 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
         sentence_length = sentence_lengths[elem_index]
         print(instance.file_name)
         print(instance)
+        kps_in_sentence = []
+        relation_matrix = relation_matrices[elem_index]
+
+        char_offset_to_token_index = {}
 
         def create_kp():
             text = instance.text[current_kp_start:current_kp_end]
             kp_id = "T" + str(len(current_kps) + 1)
-            kp = Keyphrase(current_kp_start, current_kp_end, kp_type, text)
+            kp = Keyphrase(current_kp_start, current_kp_end, kp_type, text, kp_id)
             current_kps[kp_id] = kp
+            kps_in_sentence.append(kp)
 
         bio_label_sequence = bio_labels[elem_index]
         type_label_sequence = type_labels[elem_index]
         token_char_offset_sequence = token_char_offsets[elem_index]
-        for bio_label, type_label, (start, end) in zip(bio_label_sequence[:sentence_length],
-                                                       type_label_sequence[:sentence_length],
-                                                       token_char_offset_sequence[:sentence_length]):
+        for token_index, (bio_label, type_label, (start, end)) in enumerate(
+                zip(bio_label_sequence[:sentence_length],
+                    type_label_sequence[:sentence_length],
+                    token_char_offset_sequence[:sentence_length])):
             bio_label_symbol = bio_vocab.get_sym(bio_label)
             type_label_symbol = label_vocab.get_sym(type_label)
+            for i in range(start, end):
+                char_offset_to_token_index[i] = token_index
 
             if bio_label_symbol == "B":
                 if in_kp:
@@ -279,17 +290,29 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
             create_kp()
 
         print(current_kps)
+        # now find relations
+        for kp1 in kps_in_sentence:
+            for kp2 in kps_in_sentence:
+                if kp1 != kp2:
+                    # find the first token of both key phrases
+                    tok1 = char_offset_to_token_index[kp1.start]
+                    tok2 = char_offset_to_token_index[kp2.start]
+                    relation = rel_type_vocab.get_sym(relation_matrix[tok1, tok2])
+                    if relation != "O":
+                        current_relations.append((relation, kp1.id, kp2.id))
 
-        doc_id_to_doc_info[instance.file_name] = current_kps
+        doc_id_to_doc_info[instance.file_name] = doc_info
 
-    for file_name, keyphrases in doc_id_to_doc_info.items():
+    for file_name, doc_info in doc_id_to_doc_info.items():
         with open(out_dir + "/" + file_name, "w") as ann:
-            for key, kp in keyphrases.items():
+            for key, kp in doc_info["kps"].items():
                 ann.write("{key}\t{label} {start} {end}\t{text}\n".format(key=key,
                                                                           label=kp.type,
                                                                           start=kp.start,
                                                                           end=kp.end,
                                                                           text=kp.text))
+            for rel, arg1, arg2 in doc_info["rels"]:
+                ann.write("*\t{label} {arg1} {arg2}".format(label=rel, arg1=arg1, arg2=arg2))
 
 
 if __name__ == "__main__":
