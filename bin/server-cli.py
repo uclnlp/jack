@@ -43,19 +43,16 @@ def handle_invalid_usage(error):
     return response
 
 
-class SentimentService(View):
+class JackService(View):
     """
-    Class handling the 'Sentiment Polarity Classification' requests to the REST Service.
+    Class handling the requests to the jack-the-service REST Service.
     Each request is processed by the dispatch_request() method.
     """
     methods = ['GET', 'POST']
-    positive_class_idx, negative_class_idx, neutral_class_idx = 1, 0, 2
-    idx_class = {positive_class_idx: 'positive', negative_class_idx: 'negative', neutral_class_idx: 'neutral'}
 
     def dispatch_request(self):
         """
-        This method forwards sentiment polarity classification requests to utils.sentiment(),
-        for predicting the sentiment of the text in the 'text' field.
+        This method forwards requests to jack-the-reader.
         The output (a dictionary) is then serialized in JSON, and returned to the client.
         """
 
@@ -86,7 +83,7 @@ class SentimentService(View):
         return jsonify(answer)
 
 
-class ListSentimentModelsService(View):
+class ListAvailableModelsService(View):
     """
     Class handling the 'List Available Models' requests to the REST Service.
     Each request is processed by the dispatch_request() method.
@@ -172,6 +169,32 @@ def main(argv):
     models_path = configuration['models_path']
     default_model = configuration['default_model']
     models_configuration = configuration['models']
+
+    def join(x, y):
+        return os.path.join(x, y)
+
+    def expand(x):
+        return os.path.expanduser(x)
+
+    models = {}
+    for model_name, model_data in models_configuration.items():
+        #architecture_path = expand(join(models_path, model_data['architecture']))
+        #tokenizer_path = expand(join(models_path, model_data['tokenizer']))
+        #weights_path = expand(join(models_path, model_data['weights']))
+        #model = utils.get_model(tokenizer_path, architecture_path, weights_path)
+
+        model = None
+        models[model_name] = model
+
+    app.config.update(dict(
+        DEFAULT_MODEL=default_model,
+        MODELS=models
+    ))
+
+    app.add_url_rule('/v1/jack', view_func=JackService.as_view('request'))
+    app.add_url_rule('/v1/jack/list', view_func=ListAvailableModelsService.as_view('list'))
+
+    app.run(host=configuration['bind_address'], port=configuration['port'], debug=debug)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
