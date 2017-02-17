@@ -20,29 +20,18 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
         4. Max timestep length of mini-batches for question tensor
         5. Labels
         """
-        S = Ports.Input.single_support
-        Q = Ports.Input.question
-        S_len = Ports.Input. support_length
-        Q_len = Ports.Input.question_length
-        y = Port.Input.atomic_candidates
+        return [Ports.Input.single_support.name : Ports.Input.single_support,
+                Ports.Input.question, Ports.Input.support_length,
+                Ports.Input.question_length]
 
-        return {S.name : S,
-                Q.name : Q,
-                S_len.name : S_len
-                Q_len.name : Q_len.name,
-                y.name : y}
-
-
-    def training_ports(self) -> List[TensorPort]:
-        return [Ports.Targets.target_index]
 
     def __call__(self, qa_settings: List[QASetting])
                     -> Mapping[TensorPort, np.ndarray]:
         corpus = preprocess_with_pipeline(data, test_time)
 
         x_dict = {
-            Ports.Input.single_support : corpus["support"],
-            Ports.Input.question : corpus["question"],
+            Ports.Input.single_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
             Ports.Input.question_length : corpus['question_lengths'],
             Ports.Input.support_length : corpus['support_lengths'],
             Ports.Input.atomic_candiates : corpus['candidates']
@@ -51,11 +40,9 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
         return numpify(x_dict)
 
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]])
-                            -> SharedResources:
-        corpus = preprocess_with_pipeline(data, test_time)
-        self.shared_vocab_config
-                    .config['num_candiates'] = len(corpus['candidates'])
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        preprocess_with_pipeline(data, test_time)
+        len(corpus['candidates'])
         pass
 
 

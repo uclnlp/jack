@@ -80,7 +80,7 @@ def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
 
     #outputs, states
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-    output = tf.concat(1, [seq1_states[0][1], seq1_states[1][1]])
+    output = tf.concat([seq1_states[0][1], seq1_states[1][1]], 1)
 
     scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
 
@@ -132,7 +132,8 @@ def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
 
     #outputs, states
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-    output = tf.concat(1, [seq1_states[0][1], seq1_states[1][1], seq2_states[0][1], seq2_states[1][1]])
+    output = tf.concat([seq1_states[0][1], seq1_states[1][1],
+        seq2_states[0][1], seq2_states[1][1]], 1)
 
     scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
 
@@ -220,7 +221,7 @@ def boe_multisupport_lossavg_reader_with_cands(placeholders, nvocab, **options):
 
     print('TRAINABLE VARIABLES (only embeddings): %d' % get_total_trainable_variables())
 
-    dim1s, dim2s, dim3s, dim4s = tf.unpack(tf.shape(support_embedded))  # [batch_size, num_supports, max_seq2_length, emb_dim]
+    dim1s, dim2s, dim3s, dim4s = tf.unstack(tf.shape(support_embedded))  # [batch_size, num_supports, max_seq2_length, emb_dim]
 
     # iterate through all supports
     num_steps = dim2s
@@ -312,7 +313,7 @@ def conditional_reader_model_with_cands(placeholders, nvocab, **options):
                                          question_embedded, question_lengths,
                                          options["repr_dim_output"]/2, drop_keep_prob=options["drop_keep_prob"])   #making output half as big so that it matches with candidates
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-    output = tf.concat(1, [states[0][1], states[1][1]])
+    output = tf.concat([states[0][1], states[1][1]], 1)
 
     scores = logits = tf.reduce_sum(tf.mul(tf.expand_dims(output, 1), candidates_embedded), 2)
 
@@ -479,7 +480,7 @@ def conditional_reader_model(placeholders, nvocab, **options):
                                          question_embedded, question_lengths,
                                          options["repr_dim_output"], drop_keep_prob=options["drop_keep_prob"])
     # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-    output = tf.concat(1, [states[0][1], states[1][1]])
+    output = tf.concat([states[0][1], states[1][1]], 1)
     # todo: extend
 
     logits, loss, predict = predictor(output, targets, options["answer_size"])
@@ -637,7 +638,7 @@ def boe_reader(seq1, seq1_lengths, seq2, seq2_lengths):
     output1 = bag_reader(seq1, seq1_lengths)
     output2 = bag_reader(seq2, seq2_lengths)
     # each [batch_size x max_seq_length x output_size]
-    return tf.concat(1,[output1,output2])
+    return tf.concat([output1,output2], 1)
 
 
 def predictor(inputs, targets, target_size):
@@ -655,7 +656,8 @@ def predictor(inputs, targets, target_size):
     #note: standard relu applied; switch off at last layer with activation_fn=None!
 
     loss = tf.reduce_mean(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(logits, targets), name='predictor_loss')
+        tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+            labels=targets), name='predictor_loss')
     predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
     return logits, loss, predict
 
@@ -725,7 +727,7 @@ def attentive_reader_model(output_size, target_size, nvocab, attentive=False):
         output = states.h
     elif isinstance(states, tuple):
         # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )
-        output = tf.concat(1, [states[0][1], states[1][1]])
+        output = tf.concat([states[0][1], states[1][1]], 1)
     else:
         raise AttributeError
 
@@ -790,7 +792,7 @@ def conditional_attentive_reader(seq1, seq1_lengths, seq2, seq2_lengths,
 
         cell = tf.nn.rnn_cell.LSTMCell(num_units)
 
-        attention_states_fw, attention_states_bw = tf.split(0, 2, attention_states)
+        attention_states_fw, attention_states_bw = tf.split(attention_states, 2, 0)
         attention_states = tf.concat(3, [attention_states_fw, attention_states_bw])
         attention_states = tf.squeeze(attention_states, [0])
         # transforming attention states time major
@@ -892,8 +894,8 @@ def model_f_reader_model(placeholders, nvocab, candvocab=None, **options):
 
 
 def model_f_predictor(relation, candidate_tuples, candidate_ids, answer_tuple):
-    logits = tf.squeeze(tf.batch_matmul(relation, candidate_tuples, adj_y=True),squeeze_dims=1)
-    answer_logit=tf.squeeze(tf.batch_matmul(relation, answer_tuple, adj_y=True),squeeze_dims=1)
+    logits = tf.squeeze(tf.matmul(relation, candidate_tuples, adj_y=True),squeeze_dims=1)
+    answer_logit=tf.squeeze(tf.matmul(relation, answer_tuple, adj_y=True),squeeze_dims=1)
     objective = tf.nn.softplus(tf.reduce_sum(logits,1,keep_dims=True)-2*answer_logit)
     loss = tf.reduce_mean(objective, name='predictor_loss')
     batchindex= tf.expand_dims(tf.to_int64(tf.range(tf.shape(candidate_ids)[0])),-1)

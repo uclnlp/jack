@@ -1,7 +1,7 @@
 import numpy as np
 
 import jtr.jack.readers as readers
-from jtr.jack import load_labelled_data
+from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.tasks.xqa.fastqa import FastQAInputModule
 from jtr.load.embeddings.embeddings import Embeddings
 from jtr.load.embeddings.vocabulary import Vocabulary

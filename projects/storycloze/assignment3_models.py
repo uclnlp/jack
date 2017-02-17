@@ -57,7 +57,8 @@ def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1
         predict = tf.arg_max(tf.nn.softmax(logits), 1)
 
         loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+                labels=order))
 
         return loss, placeholders, predict
 
@@ -114,7 +115,7 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
         fw = states[0][1]
         bw = states[1][1]
 
-        h = tf.concat(1, [fw, bw])
+        h = tf.concat([fw, bw], 1)
 
         # [batch_size x 5*target_size]
         logits_flat = tf.contrib.layers.linear(h, 5*target_size)
@@ -122,7 +123,8 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
         logits = tf.reshape(logits_flat, [-1, 5, target_size])
 
         loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+                labels=order))
 
         predict = tf.arg_max(tf.nn.softmax(logits), 2)
 
@@ -144,11 +146,11 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
     batch_size = tf.shape(story)[0]
 
     # 5 times [batch_size x max_length]
-    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(1, 5, story)]
+    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(story, 5, 1)]
 
     # 5 times [batch_size]
     lengths = [tf.reshape(x, [batch_size])
-               for x in tf.split(1, 5, story_length)]
+               for x in tf.split(story_length, 5, 1)]
 
     # Word embeddings
     if nvocab is None:
@@ -201,10 +203,10 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
         bws = [states[1][1][1] for states in rnn_result]
 
         # 5 times [batch_size x 2*output_size]
-        hs = [tf.concat(1, [fw, bw]) for fw, bw in zip(fws, bws)]
+        hs = [tf.concat([fw, bw], 1) for fw, bw in zip(fws, bws)]
 
         # [batch_size x 5*2*output_size]
-        h = tf.concat(1, hs)
+        h = tf.concat(hs, 1)
 
         # [batch_size x 5*target_size]
         logits_flat = tf.contrib.layers.linear(h, 5*target_size)
@@ -212,7 +214,8 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
         logits = tf.reshape(logits_flat, [-1, 5, target_size])
 
         loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+                labels=order))
 
         predict = tf.arg_max(tf.nn.softmax(logits), 2)
 
@@ -234,11 +237,11 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
     batch_size = tf.shape(story)[0]
 
     # 5 times [batch_size x max_length]
-    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(1, 5, story)]
+    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(story, 5, 1)]
 
     # 5 times [batch_size]
     lengths = [tf.reshape(x, [batch_size])
-               for x in tf.split(1, 5, story_length)]
+               for x in tf.split(story_length, 5, 1)]
 
     # Word embeddings
     if nvocab is None:
@@ -258,7 +261,7 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
     hs = [tf.reduce_sum(sentence, 1) for sentence in sentences_embedded]
 
     # [batch_size x 5*input_size]
-    h = tf.concat(1, hs)
+    h = tf.concat(hs, 1)
 
     h = tf.reshape(h, [batch_size, 5*input_size])
 
@@ -268,7 +271,8 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
     logits = tf.reshape(logits_flat, [-1, 5, target_size])
 
     loss = tf.reduce_sum(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(logits, order))
+        tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+            labels=order))
 
     predict = tf.arg_max(tf.nn.softmax(logits), 2)
 

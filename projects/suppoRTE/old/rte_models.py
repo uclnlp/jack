@@ -25,7 +25,7 @@ def basic_rnn(max_length, lengths, ids, cell, E=None, additional_inputs=None, re
         #with tf.device("/cpu:0"):
         inp = tf.nn.embedding_lookup(E, ids) # inp = input tensor (max seq length x batch size x embedding length)
         if additional_inputs is not None:#extend already given embeddings with the additional inputs (along dim 2 = embedding length)
-            inp = tf.concat(2, [inp, additional_inputs]) 
+            inp = tf.concat([inp, additional_inputs], 2) 
     else:
         inp = additional_inputs
 
@@ -51,7 +51,7 @@ def basic_rnn(max_length, lengths, ids, cell, E=None, additional_inputs=None, re
     """
 
     mask = tf.expand_dims(tf.one_hot(lengths,max_length,axis=0,dtype=tf.int32),2) #seqlength x batch_size x 1
-    mask = tf.cast(tf.tile(mask,tf.pack([1,1,cell.output_size])),tf.float32) #seqlength x batch_size x cell.output_size
+    mask = tf.cast(tf.tile(mask,tf.stack([1,1,cell.output_size])),tf.float32) #seqlength x batch_size x cell.output_size
     final_output = tf.reduce_sum(tf.mul(outputs,mask),0)
     
     return final_output, final_state, outputs
@@ -67,7 +67,7 @@ def create_embeddings(tunable_embeddings,fixed_embeddings):
     if tunable_embeddings is not None and tunable_embeddings.shape[0] > 0:
         E_tune = tf.get_variable("E_tune", initializer=tf.identity(tunable_embeddings), trainable=True)
         if E is not None:
-            E = tf.concat(0, [E_tune, E])
+            E = tf.concat([E_tune, E], 0)
         else:
             E = E_tune
     return E #
@@ -115,24 +115,26 @@ def rte_model(max_length, l2_lambda, learning_rate, h_size, cellA, cellB, tunabl
 #            if cellB.state_size > cellA.state_size:
 #                rest_state = tf.zeros([cellB.state_size - cellA.state_size], tf.float32)
 #                rest_state = tf.reshape(tf.tile(rest_state, batch_size), [-1, cellB.state_size - cellA.state_size])
-#                s = tf.concat(1, [rest_state, s])
+#                s = tf.concat([rest_state, s], 1)
             #initial state: conditioned on premise state
             hypothesis_out, _, hypothesis_outs = basic_rnn(max_length, lengthsB, idsB, cellB, E, init_state=premise_state)
 
-        h = tf.concat(1, [premise_out, hypothesis_out])
+        h = tf.concat([premise_out, hypothesis_out], 1)
         h = tf.contrib.layers.fully_connected(h, h_size, activation_fn=tf.nn.relu)                
 
-        #h = tf.concat(1, [p, h, tf.abs(p-h)])
+        #h = tf.concat([p, h, tf.abs(p-h)], 1)
         #h = tf.contrib.layers.fully_connected(h, h_size, activation_fn=lambda x: tf.maximum(0.0, x), weight_init=None)
 
         #calculate loss
         y = tf.placeholder(tf.int64, [None]) #return placeholder
         scores = tf.contrib.layers.fully_connected(h, 3) #return op
-        loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(scores, y)) / tf.cast(batch_size, tf.float32)
+        loss =
+        tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=scores,
+            labels=labels)) / tf.cast(batch_size, tf.float32)
 
         train_params = tf.trainable_variables()#returns list of all variables with trainable=True
         if l2_lambda > 0.0:
-            l2_loss = l2_lambda * tf.reduce_sum(tf.pack([tf.nn.l2_loss(t) for t in train_params]))
+            l2_loss = l2_lambda * tf.reduce_sum(tf.stack([tf.nn.l2_loss(t) for t in train_params]))
             loss = loss+l2_loss #return op
 
         probs = tf.nn.softmax(scores) #return op

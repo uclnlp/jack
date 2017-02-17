@@ -1,5 +1,5 @@
 import tensorflow as tf
-from jtr.jack import *
+from jtr.jack.core import *
 from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
@@ -95,7 +95,14 @@ class ModelFModelModule(SimpleModelModule):
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
-                               loss: tf.Tensor) -> Sequence[tf.Tensor]:
+                               candidate_scores: tf.Tensor,
+                               target_index: tf.Tensor,
+                               question_embedding: tf.Tensor) -> Sequence[tf.Tensor]:
+        with tf.variable_scope("modelf",reuse=True):
+            embeddings = tf.get_variable("embeddings")
+        embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),-1)  # [batch_size, repr_dim, 1]
+        answer_score = tf.squeeze(tf.matmul(question_embedding,embedded_answer),axis=[1,2])  # [batch_size]
+        loss = tf.reduce_mean(tf.nn.softplus(tf.reduce_sum(candidate_scores,1)-2*answer_score))
         return loss,
 
     def create_output(self,

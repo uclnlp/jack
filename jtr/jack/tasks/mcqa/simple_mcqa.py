@@ -1,4 +1,4 @@
-from jtr.jack import *
+from jtr.jack.core import *
 from jtr.jack.data_structures import *
 from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
@@ -111,7 +111,7 @@ class SimpleMCModelModule(SimpleModelModule):
             embedded_supports_and_question = embedded_supports + embedded_question
             embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, emb_dim]
 
-            scores = tf.batch_matmul(embedded_candidates,
+            scores = tf.matmul(embedded_candidates,
                                      tf.expand_dims(embedded_supports_and_question, -1))
 
             squeezed = tf.squeeze(scores, 2)

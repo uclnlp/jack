@@ -51,7 +51,7 @@ def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
             wl = tf.nn.embedding_lookup(word_lengths, unique_words)
             wl = tf.cast(wl, tf.int32)
             max_word_length = tf.reduce_max(wl)
-            chars = tf.slice(chars, [0, 0], tf.pack([-1, max_word_length]))
+            chars = tf.slice(chars, [0, 0], tf.stack([-1, max_word_length]))
 
             embedded_chars = tf.nn.embedding_lookup(char_embedding_matrix, tf.cast(chars, tf.int32))
 
@@ -66,7 +66,7 @@ def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
             unique_embedded_words = tf.reduce_max(conv_out, [1])
 
             embedded_words = tf.gather(unique_embedded_words, word_idx)
-            embedded_words = tf.reshape(embedded_words, tf.pack([-1, tf.unpack(tf.shape(ids))[1], size]))
+            embedded_words = tf.reshape(embedded_words, tf.stack([-1, tf.unstack(tf.shape(ids))[1], size]))
             all_embedded.append(embedded_words)
 
     return all_embedded
@@ -75,8 +75,8 @@ def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
 def conv_char_embedding_alt(char_vocab, size, unique_word_chars, unique_word_lengths, word_to_uniqs,
                             conv_width=5, emb_initializer=tf.random_normal_initializer(0.0, 0.1), scope=None):
     # "fixed PADDING on character level"
-    pad = tf.zeros(tf.pack([tf.shape(unique_word_lengths)[0], math.floor(conv_width / 2)]), tf.int32)
-    unique_word_chars = tf.concat(1, [pad, unique_word_chars, pad])
+    pad = tf.zeros(tf.stack([tf.shape(unique_word_lengths)[0], math.floor(conv_width / 2)]), tf.int32)
+    unique_word_chars = tf.concat([pad, unique_word_chars, pad], 1)
 
     if not isinstance(word_to_uniqs, list):
         word_to_uniqs = [word_to_uniqs]
@@ -104,7 +104,7 @@ def conv_char_embedding_alt(char_vocab, size, unique_word_chars, unique_word_len
         for word_idx in word_to_uniqs:
             flat_word_idx = tf.reshape(word_idx, [-1])
             embedded_words = tf.gather(unique_embedded_words, flat_word_idx)
-            embedded_words = tf.reshape(embedded_words, tf.pack([-1, tf.unpack(tf.shape(word_idx))[1], size]))
+            embedded_words = tf.reshape(embedded_words, tf.stack([-1, tf.unstack(tf.shape(word_idx))[1], size]))
             all_embedded.append(embedded_words)
 
     return all_embedded

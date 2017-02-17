@@ -7,7 +7,7 @@ def birnn_with_projection(size, fused_rnn_constructor, inputs, length, share_rnn
     fused_rnn = fused_rnn_constructor(size)
     with tf.variable_scope("RNN", reuse=share_rnn):
         encoded = fused_birnn(fused_rnn, inputs, sequence_length=length, dtype=tf.float32, time_major=False)[0]
-        encoded = tf.concat(2, encoded)
+        encoded = tf.concat(encoded, 2)
 
     projected = tf.contrib.layers.fully_connected(encoded, size, activation_fn=None,
                                                   weights_initializer=projection_initializer,

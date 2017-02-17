@@ -45,7 +45,8 @@ class CompactifyCell(tf.nn.rnn_cell.RNNCell):
         zero_result = tf.zeros((batch_size, self._input_dim * self._max_compact_length)) \
             if self._zero_result is None else tf.reshape(self._zero_result,
                                                          (batch_size, self._input_dim * self._max_compact_length))
-        zero_counter = tf.concat(1, [tf.ones((batch_size, 1)), tf.zeros((batch_size, self._max_compact_length - 1))])
+        zero_counter = tf.concat([tf.ones((batch_size, 1)),
+            tf.zeros((batch_size, self._max_compact_length - 1))], 1)
         return (zero_result, zero_counter)
 
     @property
@@ -61,4 +62,4 @@ def to_inputs(inputs, masks):
     # inputs [batch_size, length, input_dim]
     # mask [batch_size, length]
     expanded_mask = tf.expand_dims(masks, 2)  # [batch,size, max_length]
-    return tf.concat(2, [expanded_mask, inputs])
+    return tf.concat([expanded_mask, inputs], 2)

@@ -105,7 +105,7 @@ class Model1:
         padding = tf.zeros(tf.shape(statements) - [0, 1, 0])
         padding_ws = tf.tile(tf.expand_dims(tf.expand_dims(self.whitespace_repr, 0), 0),
                              tf.shape(statements) * [1, 1, 0] + [0, -1, 1])
-        answer = tf.concat(1, [tf.expand_dims(answer_token, 1), padding_ws])
+        answer = tf.concat([tf.expand_dims(answer_token, 1), padding_ws], 1)
 
         # check for TR token at index 1
         tr_match_score = tf.reduce_sum(statements[:, 1, :] * self.translate_token, 1)  # [batch_size]
@@ -153,7 +153,7 @@ class Model1:
 
         # now flatten
         new_dim = tf.shape(kb)[0:1] * tf.shape(questions)[0:1]
-        new_shape = tf.concat(0, [new_dim, tf.shape(kb)[1:]])
+        new_shape = tf.concat([new_dim, tf.shape(kb)[1:]], 0)
         batch_kb_shape = tf.shape(tiled_kb)[0:2]
         flat_kb = tf.reshape(tiled_kb, new_shape)
         flat_questions = tf.reshape(tiled_questions, new_shape)

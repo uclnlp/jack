@@ -1,4 +1,4 @@
-from jtr.jack import *
+from jtr.jack.core import *
 
 readers = {}
 eval_hooks = {}
@@ -19,6 +19,11 @@ def __xqa_reader(f):
     __reader(f)
     xqa_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
+    return f
+
+def __snli_reader(f):
+    __reader(f)
+    xqa_readers.setdefault(f.__name__, f)
     return f
 
 
@@ -74,6 +79,19 @@ def modelf_reader(vocab, config):
 
 @__xqa_reader
 def fastqa_reader(vocab, config):
+    """ Creates a FastQA reader instance (extractive qa model). """
+    from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
+    from jtr.jack.tasks.xqa.shared import XQAOutputModule
+
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    return JTReader(shared_resources,
+                    FastQAInputModule(shared_resources),
+                    fatqa_model_module(shared_resources),
+                    XQAOutputModule(shared_resources))
+
+
+@__snli_reader
+def snli_reader(vocab, config):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.jack.tasks.xqa.shared import XQAOutputModule

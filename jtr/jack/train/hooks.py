@@ -11,7 +11,7 @@ from typing import List, Tuple, Mapping
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
+from jtr.jack.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
 
 logger = logging.getLogger(__name__)
 
