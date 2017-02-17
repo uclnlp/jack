@@ -1,4 +1,5 @@
-from jtr.jack.core import OutputModule, Ports
+from jtr.jack.core import *
+from typing import List
 
 class ClassificationOutputModule(OutputModule):
 
@@ -19,3 +20,5 @@ class ClassificationOutputModule(OutputModule):
 
     def load(self, path):
         pass
+
+

@@ -288,7 +288,8 @@ class EvalHook(TraceHook):
     """
     def __init__(self, batches, logits, predict, target, at_every_epoch=1, placeholders=None,
                  metrics=[], summary_writer=None, print_details=False,
-                 write_metrics_to="", print_to="", info=""):
+                 write_metrics_to="", print_to="", info="", iter_interval=1,
+                 side_effect=None, epoch_interval=1):
         """
         Initialize EvalHook object.
         Calling the hook prints calculated metrics to stdout, and returns targets, predictions, and a metrics dict.

@@ -80,7 +80,8 @@ class MemN2N(object):
 
         # cross entropy
         logits = self._inference(self._stories, self._queries) # (batch_size, vocab_size)
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, tf.cast(self._answers, tf.float32), name="cross_entropy")
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                labels=tf.cast(self._answers, tf.float32), name="cross_entropy")
         cross_entropy_sum = tf.reduce_sum(cross_entropy, name="cross_entropy_sum")
 
         # loss op

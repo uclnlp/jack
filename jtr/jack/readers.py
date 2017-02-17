@@ -1,4 +1,9 @@
 from jtr.jack.core import *
+from jtr.jack.input_modules import QuestionOneSupportGlobalCandiatesInputModule
+from jtr.jack.models import PairOfBiLSTMOverSupportAndQuestionConditionalEncoding
+from jtr.jack.output_modules import ClassificationOutputModule
+from jtr.jack.train.hooks import XQAEvalHook
+from jtr.util.hooks import EvalHook
 
 readers = {}
 eval_hooks = {}
@@ -15,7 +20,6 @@ def __reader(f):
 
 
 def __xqa_reader(f):
-    from jtr.jack.train.hooks import XQAEvalHook
     __reader(f)
     xqa_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
@@ -23,7 +27,8 @@ def __xqa_reader(f):
 
 def __snli_reader(f):
     __reader(f)
-    xqa_readers.setdefault(f.__name__, f)
+    snli_readers.setdefault(f.__name__, f)
+    eval_hooks.setdefault(f.__name__, EvalHook)
     return f
 
 
@@ -50,6 +55,16 @@ def __genqa_reader(f):
     # TODO eval hook
     return f
 
+@__snli_reader
+def snli_reader(vocab, config):
+    """ Creates an example multiple choice reader. """
+    from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    input_module = SimpleMCInputModule(shared_resources)
+    model_module = SimpleMCModelModule(shared_resources)
+    output_module = SimpleMCOutputModule()
+    jtreader = JTReader(shared_resources, input_module, model_module, output_module)
+    return jtreader
 
 @__mcqa_reader
 def example_reader(vocab, config):
@@ -89,15 +104,11 @@ def fastqa_reader(vocab, config):
                     fatqa_model_module(shared_resources),
                     XQAOutputModule(shared_resources))
 
-
 @__snli_reader
 def snli_reader(vocab, config):
     """ Creates a FastQA reader instance (extractive qa model). """
-    from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
-    from jtr.jack.tasks.xqa.shared import XQAOutputModule
-
     shared_resources = SharedVocabAndConfig(vocab, config)
     return JTReader(shared_resources,
-                    FastQAInputModule(shared_resources),
-                    fatqa_model_module(shared_resources),
-                    XQAOutputModule(shared_resources))
+                    QuestionOneSupportGlobalCandiatesInputModule(shared_resources),
+                    PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(shared_resources),
+                    ClassificationOutputModule(shared_resources))

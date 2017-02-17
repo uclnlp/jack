@@ -91,7 +91,8 @@ class SimpleMCModelModule(SimpleModelModule):
                                shared_resources: SharedVocabAndConfig,
                                candidate_scores: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.nn.softmax_cross_entropy_with_logits(candidate_scores, candidate_labels)
+        loss = tf.nn.softmax_cross_entropy_with_logits(logits=candidate_scores,
+                labels=candidate_labels)
         return loss,
 
     def create_output(self,

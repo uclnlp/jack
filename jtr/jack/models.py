@@ -1,12 +1,13 @@
 import tensorflow as tf
 from jtr.jack import core_models
-from jtr.jack.core import SimpleModelModule, Ports
+from jtr.jack.core import *
+from typing import List
 
 class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.single_support.name : Ports.Input.single_support,
+        return [Ports.Input.single_support,
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length]
 
@@ -46,8 +47,7 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
                       support : tf.Tensor,
                       question : tf.Tensor,
                       support_length : tf.Tensor,
-                      question_length : tf.Tensor)
-    -> Sequence[tf.Tensor]:
+                      question_length : tf.Tensor) -> Sequence[tf.Tensor]:
         logits = forward_pass(question, support, question_length,
                 support_length, shared_resoures.config['num_candidates'])
         predictions = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
@@ -57,8 +57,7 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
 
     def create_training_output(self, shared_resources: SharedResources,
                                logits : tf.Tensor,
-                               labels : tf.Tensor)
-                            -> Sequence[tf.Tensor]:
+                               labels : tf.Tensor) -> Sequence[tf.Tensor]:
         predictions = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
         loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
