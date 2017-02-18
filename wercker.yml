@@ -19,7 +19,8 @@ box: python:3.5-slim
 # This is the build pipeline. Pipelines are the core of wercker
 # Read more about pipelines on our dev center
 # http://devcenter.wercker.com/docs/pipelines/index.html
-command-timeout: 60
+no-response-timeout: 30
+command-timeout: 30
 build:
   # The steps that will be executed on build
   # Steps make up the actions in your pipeline
