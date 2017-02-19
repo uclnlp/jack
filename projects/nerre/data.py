@@ -7,9 +7,10 @@ from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import deep_map
 from jtr.preprocess.vocab import Vocab
 import numpy as np
+from projects.nerre.eval import calculateMeasures
 
-train_dir = "/Users/riedel/corpora/scienceie/train2"
-dev_dir = "/Users/riedel/corpora/scienceie/dev/"
+train_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/train2"
+dev_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/dev/"
 
 Token = NamedTuple("Token", [("token_start", int),
                              ("token_end", int),
@@ -26,19 +27,19 @@ Instance = NamedTuple("Instance", [("text", str),
                                    ("file_name", str),
                                    ("relations", Sequence[Tuple[str, Keyphrase, Keyphrase]])])
 
-bio_vocab = Vocab()
+bio_vocab = Vocab(unk="O")
 bio_vocab("B")
 bio_vocab("I")
 bio_vocab("O")
 bio_vocab.freeze()
 
-label_vocab = Vocab()
+label_vocab = Vocab(unk="O")
 label_vocab("Material")
 label_vocab("Process")
 label_vocab("Task")
 label_vocab.freeze()
 
-rel_type_vocab = Vocab()
+rel_type_vocab = Vocab(unk="O")
 rel_type_vocab("Hyponym-of")
 rel_type_vocab("Synonym-of")
 rel_type_vocab("O")
@@ -58,6 +59,8 @@ def read_ann(textfolder=dev_dir):
     for f in flist:
         if not f.endswith(".ann"):
             continue
+        #if not f == "S0003491613001516.ann": #S0021999113005846.ann":  # good test example
+        #    continue
         f_anno = open(os.path.join(textfolder, f), "rU")
         f_text = open(os.path.join(textfolder, f.replace(".ann", ".txt")), "rU")
 
@@ -112,7 +115,8 @@ def read_ann(textfolder=dev_dir):
 
         for l in f_anno:
             anno_inst = l.strip("\n").split("\t")
-            if len(anno_inst) == 3:
+
+            if len(anno_inst) == 3 or len(anno_inst) == 2:
                 anno_inst1 = anno_inst[1].split(" ")
                 annotation_id = anno_inst[0].strip()
                 if len(anno_inst1) == 3:
@@ -126,17 +130,24 @@ def read_ann(textfolder=dev_dir):
                     keyphr_ann = anno_inst[2]
                     keyphrase = Keyphrase(int(start), int(end), keytype, keyphr_text_lookup, annotation_id)
                     id_to_keyphrase[annotation_id] = keyphrase
-                    assert keyphr_text_lookup == keyphr_ann
-                    for offset in range(int(start), int(end)):
-                        token = offset_to_token.get(offset, None)
-                        if token:
-                            token_to_labels[token].add(keytype)
-                            keyphrase_to_tokens[keyphrase].add(token)
+                    try:
+                        assert keyphr_text_lookup == keyphr_ann
+                        for offset in range(int(start), int(end)):
+                            token = offset_to_token.get(offset, None)
+                            if token:
+                                token_to_labels[token].add(keytype)
+                                keyphrase_to_tokens[keyphrase].add(token)
+                    except AssertionError:
+                        print("Span lookup doesn't match tokens:", keyphr_text_lookup, "    vs   " , keyphr_ann)
                 else:
                     relations.append((annotation_id, anno_inst1))
         for annotation_id, (rel, arg1, arg2) in relations:
-            arg1_id = arg1.split(":")[1]
-            arg2_id = arg2.split(":")[1]
+            if rel == "Hyponym-of":
+                arg1_id = arg1.split(":")[1]
+                arg2_id = arg2.split(":")[1]
+            else:
+                arg1_id = arg1
+                arg2_id = arg2
             arg1_kp = id_to_keyphrase[arg1_id]
             arg2_kp = id_to_keyphrase[arg2_id]
             resolved_relations.append((rel, arg1_kp, arg2_kp))
@@ -194,10 +205,16 @@ def convert_to_batchable_format(instances, vocab,
             relation_matrix.fill(rel_type_vocab("O"))
 
             for rel, arg1, arg2 in instance.relations:
-                if instance.labels[arg1][0] in sentence_tokens and instance.labels[arg2][0] in sentence_tokens:
-                    tok1 = instance.labels[arg1][0]
-                    tok2 = instance.labels[arg2][0]
-                    relation_matrix[tok1.index, tok2.index] = rel_type_vocab(rel)
+                try:
+                    if instance.labels[arg1][0] in sentence_tokens and instance.labels[arg2][0] in sentence_tokens:
+                        # for first token of ent1 and ent2, add corresponding rel type to matrix
+                        tok1 = instance.labels[arg1][0]
+                        tok2 = instance.labels[arg2][0]
+                        relation_matrix[tok1.index, tok2.index] = rel_type_vocab(rel)
+                except KeyError:
+                    print("No corresponding tokens found:", rel, arg1, arg2)
+                #else:
+                #    print("No corresponding tokens found:", rel, arg1, arg2)  # that's ok - they might be found in other sentences
             relation_matrices.append(relation_matrix.tolist())
 
     return {
@@ -235,21 +252,31 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
     token_char_offsets = batch[token_char_offsets_key]
     sentence_lengths = batch[sentence_lengths_key]
 
+    # reset current out_dir
+    for f in os.listdir(out_dir):
+        if os.path.isfile(f):
+            os.remove(os.path.join(out_dir, f))
+
+    prev_filename = ""
     for elem_index, doc_id in enumerate(doc_ids):
         instance = instances[doc_id]
-        doc_info = doc_id_to_doc_info.get(instance.file_name, {"kps": {}, "rels": []})
-        current_kps = doc_info["kps"]
-        current_relations = doc_info["rels"]
-        current_kp_start = 0
-        current_kp_end = -1
+        if instance.file_name != prev_filename:
+            doc_info = doc_id_to_doc_info.get(instance.file_name, {"kps": {}, "rels": []})
+            current_kps = doc_info["kps"]
+            current_relations = doc_info["rels"]
         in_kp = False
         last_symbol = "O"
         kp_type = None
         sentence_length = sentence_lengths[elem_index]
-        print(instance.file_name)
-        print(instance)
+        #print(instance.file_name)
+        #print(instance)
         kps_in_sentence = []
         relation_matrix = relation_matrices[elem_index]
+        bio_label_sequence = bio_labels[elem_index]
+        type_label_sequence = type_labels[elem_index]
+        token_char_offset_sequence = token_char_offsets[elem_index]
+        current_kp_start = token_char_offset_sequence[0][0]  # previously: O
+        current_kp_end = -1
 
         char_offset_to_token_index = {}
 
@@ -260,9 +287,7 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
             current_kps[kp_id] = kp
             kps_in_sentence.append(kp)
 
-        bio_label_sequence = bio_labels[elem_index]
-        type_label_sequence = type_labels[elem_index]
-        token_char_offset_sequence = token_char_offsets[elem_index]
+
         for token_index, (bio_label, type_label, (start, end)) in enumerate(
                 zip(bio_label_sequence[:sentence_length],
                     type_label_sequence[:sentence_length],
@@ -272,7 +297,13 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
             for i in range(start, end):
                 char_offset_to_token_index[i] = token_index
 
-            if bio_label_symbol == "B":
+            # !!! introduced this first conditioned new here, solves some problems
+            if bio_label_symbol == "B" and (last_symbol == "B" or last_symbol == "I") and type_label_symbol != "O":
+                create_kp()
+                current_kp_start = start
+                kp_type = type_label_symbol
+                in_kp = True
+            elif bio_label_symbol == "B" and type_label_symbol != "O":
                 if in_kp:
                     create_kp()
                 else:
@@ -289,22 +320,34 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
         if last_symbol != "O":
             create_kp()
 
-        print(current_kps)
+        #print(min(char_offset_to_token_index, key=char_offset_to_token_index.get), max(char_offset_to_token_index, key=char_offset_to_token_index.get))
+        if len(current_kps) > 0:
+            print(current_kps)
         # now find relations
         for kp1 in kps_in_sentence:
             for kp2 in kps_in_sentence:
                 if kp1 != kp2:
                     # find the first token of both key phrases
-                    tok1 = char_offset_to_token_index[kp1.start]
-                    tok2 = char_offset_to_token_index[kp2.start]
-                    relation = rel_type_vocab.get_sym(relation_matrix[tok1, tok2])
-                    if relation != "O":
-                        current_relations.append((relation, kp1.id, kp2.id))
+                    #try:
+                        tok1 = char_offset_to_token_index[kp1.start]
+                        tok2 = char_offset_to_token_index[kp2.start]
+                        relation = rel_type_vocab.get_sym(relation_matrix[tok1, tok2])
+                        if relation != "O" and tok1 != tok2:
+                            current_relations.append((relation, kp1.id, kp2.id))
+                    #except KeyError:
+                    #    print("Key Error!", kp1.start, kp1.end, kp2.start, kp2.end, max(char_offset_to_token_index, key=char_offset_to_token_index.get))
+                    #    continue
 
+        # !!! this was previously overwritten for every sentence
         doc_id_to_doc_info[instance.file_name] = doc_info
 
+        if len(current_relations) > 0:
+            print(current_relations)
+
+        prev_filename = instance.file_name
+
     for file_name, doc_info in doc_id_to_doc_info.items():
-        with open(out_dir + "/" + file_name, "w") as ann:
+        with open(out_dir + "/" + file_name, "a") as ann:  # !!! this was previously "w" -> not all sentences for each file are in the batch together, got overwritten
             for key, kp in doc_info["kps"].items():
                 ann.write("{key}\t{label} {start} {end}\t{text}\n".format(key=key,
                                                                           label=kp.type,
@@ -312,17 +355,19 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
                                                                           end=kp.end,
                                                                           text=kp.text))
             for rel, arg1, arg2 in doc_info["rels"]:
-                ann.write("*\t{label} {arg1} {arg2}".format(label=rel, arg1=arg1, arg2=arg2))
+                ann.write("*\t{label} {arg1} {arg2}\n".format(label=rel, arg1=arg1, arg2=arg2))  # !!! \n was missing
 
 
 if __name__ == "__main__":
     vocab = Vocab()
     instances = read_ann(dev_dir)
     fill_vocab(instances, vocab)
-    batchable = convert_to_batchable_format(instances[:2], vocab)
-    print(batchable)
-    batches = list(get_batches(batchable))[:2]
+    batchable = convert_to_batchable_format(instances, vocab)  #[:2]
+    #print(batchable)
+    batches = list(get_batches(batchable))#[:2]
     for batch in batches:
-        print(convert_batch_to_ann(batch, instances, "/tmp"))
+        convert_batch_to_ann(batch, instances, "/tmp")
+
+    calculateMeasures(dev_dir, "/tmp/")
 
 # print(instances[0].labels)
