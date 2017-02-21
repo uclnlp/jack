@@ -443,6 +443,7 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
                 dtype = dtypes[i]
             x_np = np.full(shape, pad, dtype)
             dims = len(shape)
+            print(dims)
             if dims == 0:
                 x_np=x
             elif dims == 1:

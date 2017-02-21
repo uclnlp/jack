@@ -26,7 +26,8 @@ class ModelFInputModule(InputModule):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        corpus = preprocess_with_pipeline(data, test_time, negsamples=1)
+        corpus, _, _, _ = preprocess_with_pipeline(data, self.vocab, test_time,
+                negsamples=1, tokenization=False)
         return self.shared_resources
 
     def setup(self, shared_resources: SharedResources):
@@ -118,12 +119,11 @@ class ModelFModelModule(SimpleModelModule):
 
             embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
             embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
-            embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
-            candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
-            answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score))
 
-            return candidate_scores, loss
+            scores = tf.matmul(embedded_candidates,embedded_question,adj_y=True)
+
+            squeezed = tf.squeeze(scores, 2)
+            return squeezed, embedded_question
 
 
 

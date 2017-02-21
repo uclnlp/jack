@@ -250,6 +250,7 @@ class EvalHook(TraceHook):
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
+            print(self.reader)
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
             m = self.apply_metrics(predictions)
             for k in self._metrics:
@@ -341,7 +342,10 @@ class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer2question]
+
+        ports = [Ports.Prediction.candidate_scores,
+                Ports.Targets.candidate_labels]
+
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -350,9 +354,12 @@ class ClassificationEvalHook(EvalHook):
         return ["exact", "f1"]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_spans = tensors[FlatPorts.Target.answer_span]
-        predicted_spans = tensors[FlatPorts.Prediction.answer_span]
-        correct2prediction = tensors[FlatPorts.Input.answer2question]
+        print(tensors.keys())
+        for a in tensors:
+            print(a)
+        labels = tensors[FlatPorts.Target.candidate_idx]
+        predictions = tensors[FlatPorts.Prediction.candidate_idx]
+        #correct2prediction = tensors[FlatPorts.Input.answer2question]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -362,28 +369,7 @@ class ClassificationEvalHook(EvalHook):
 
         acc_f1 = 0.0
         acc_exact = 0.0
-        k = 0
-        for i in range(len_np_or_list(predicted_spans)):
-            f1, exact = 0.0, 0.0
-            p_start, p_end = predicted_spans[i][0], predicted_spans[i][1]
-            while k < len_np_or_list(correct_spans) and correct2prediction[k] == i:
-                c_start, c_end = correct_spans[k][0], correct_spans[k][1]
-                if p_start == c_start and p_end == c_end:
-                    f1 = 1.0
-                    exact = 1.0
-                elif f1 < 1.0:
-                    total = float(c_end - c_start + 1)
-                    missed_from_start = float(p_start - c_start)
-                    missed_from_end = float(c_end - p_end)
-                    tp = total - min(total, max(0, missed_from_start) + max(0, missed_from_end))
-                    fp = max(0, -missed_from_start) + max(0, -missed_from_end)
-                    recall = tp / total
-                    precision = tp / (tp + fp + 1e-10)
-                    f1 = max(f1, 2.0 * precision * recall / (precision + recall + 1e-10))
-                k += 1
-
-            acc_f1 += f1
-            acc_exact += exact
+        acc_exact = np.sum(np.equal(labels, predictions), labels.shape[0])
 
         return {"f1": acc_f1, "exact": acc_exact}
 

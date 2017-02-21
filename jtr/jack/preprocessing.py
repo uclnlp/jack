@@ -5,7 +5,8 @@ from jtr.preprocess.vocab import Vocab
 import re
 
 
-def preprocess_with_pipeline(data, test_time, negsamples=0):
+def preprocess_with_pipeline(data, vocab, test_time=False, negsamples=0,
+        tokenization=True):
         corpus = {"support": [], "question": [], "candidates": []}
         if not test_time:
             corpus["answers"] = []
@@ -22,13 +23,14 @@ def preprocess_with_pipeline(data, test_time, negsamples=0):
             if not test_time:
                 corpus["answers"].append(y[0].text)
         if not test_time:
-            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=test_time, tokenization=False,
+            corpus, train_vocab, answer_vocab, train_candidates_vocab  = pipeline(corpus, vocab, sepvocab=False,
+                                   test_time=test_time,
+                                   tokenization=tokenization,
                                    negsamples=negsamples, cache_fun=True,
                                    map_to_target=False)
         else:
-            corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=test_time, tokenization=False,
+            corpus, train_vocab, answer_vocab, train_candidates_vocab = pipeline(corpus, vocab, sepvocab=False,
+                                   test_time=test_time,
+                                   tokenization=tokenization,
                                    cache_fun=True, map_to_target=False)
-        return corpus
-
+        return corpus, train_vocab, answer_vocab, train_candidates_vocab

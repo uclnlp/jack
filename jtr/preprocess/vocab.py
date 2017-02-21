@@ -413,6 +413,7 @@ class NeuralVocab(Vocab):
             # construct part oov
             n_oov = base_vocab.count_oov()
             n_pre = base_vocab.count_pretrained()
+            print(input_size)
             E_oov = tf.get_variable("embeddings_oov", [n_oov, input_size],
                                      initializer=tf.random_normal_initializer(0, 1./np.sqrt(input_size)),
                                      trainable=True, dtype="float32")

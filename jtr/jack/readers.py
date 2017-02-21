@@ -2,8 +2,7 @@ from jtr.jack.core import *
 from jtr.jack.input_modules import QuestionOneSupportGlobalCandiatesInputModule
 from jtr.jack.models import PairOfBiLSTMOverSupportAndQuestionConditionalEncoding
 from jtr.jack.output_modules import ClassificationOutputModule
-from jtr.jack.train.hooks import XQAEvalHook
-from jtr.util.hooks import EvalHook
+from jtr.jack.train.hooks import XQAEvalHook, ClassificationEvalHook
 
 readers = {}
 eval_hooks = {}
@@ -28,7 +27,7 @@ def __xqa_reader(f):
 def __snli_reader(f):
     __reader(f)
     snli_readers.setdefault(f.__name__, f)
-    eval_hooks.setdefault(f.__name__, EvalHook)
+    eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
     return f
 
 
@@ -54,17 +53,6 @@ def __genqa_reader(f):
     genqa_readers.setdefault(f.__name__, f)
     # TODO eval hook
     return f
-
-@__snli_reader
-def snli_reader(vocab, config):
-    """ Creates an example multiple choice reader. """
-    from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
-    shared_resources = SharedVocabAndConfig(vocab, config)
-    input_module = SimpleMCInputModule(shared_resources)
-    model_module = SimpleMCModelModule(shared_resources)
-    output_module = SimpleMCOutputModule()
-    jtreader = JTReader(shared_resources, input_module, model_module, output_module)
-    return jtreader
 
 @__mcqa_reader
 def example_reader(vocab, config):
@@ -111,4 +99,4 @@ def snli_reader(vocab, config):
     return JTReader(shared_resources,
                     QuestionOneSupportGlobalCandiatesInputModule(shared_resources),
                     PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(shared_resources),
-                    ClassificationOutputModule(shared_resources))
+                    ClassificationOutputModule())

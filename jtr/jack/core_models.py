@@ -33,7 +33,7 @@ def pair_of_bidirectional_LSTMs(seq1, seq1_lengths, seq2, seq2_lengths,
                                             seq1_final_states, scope=varscope2,
                                             drop_keep_prob=drop_keep_prob)
 
-    return all_states, final_states
+    return all_states_fw_bw, final_states_fw_bw
 
 
 def dynamic_bidirectional_lstm(inputs, lengths, output_size,
@@ -57,14 +57,17 @@ def dynamic_bidirectional_lstm(inputs, lengths, output_size,
     """
     with tf.variable_scope(scope or "reader") as varscope:
         varscope
-        cell = tf.nn.rnn_cell.LSTMCell(
+        cell = tf.contrib.rnn.LSTMCell(
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
+        print(inputs.get_shape())
+        print(lengths.get_shape())
+        print(output_size)
         if drop_keep_prob != 1.0:
-            cell = tf.nn.rnn_cell.DropoutWrapper(
+            cell = tf.contrib.rnn.DropoutWrapper(
                                     cell=cell,
                                     output_keep_prob=drop_keep_prob,
                                     input_keep_prob=drop_keep_prob, seed=1233)
@@ -92,5 +95,5 @@ def fully_connected_projection(inputs, output_size):
         output_size (int): Size of the targets (used in projection layer).
     """
     init = tf.contrib.layers.xavier_initializer(uniform=True) #uniform=False for truncated normal
-    logits = tf.contrib.layers.fully_connected(inputs, target_size, weights_initializer=init, activation_fn=None)
+    logits = tf.contrib.layers.fully_connected(inputs, output_size, weights_initializer=init, activation_fn=None)
     return logits

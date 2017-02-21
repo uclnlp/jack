@@ -4,14 +4,17 @@ from typing import List
 class ClassificationOutputModule(OutputModule):
 
 
+    @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_index, Ports.Input.atomic_candidates]
+        return [Ports.Prediction.candidate_index,
+                Ports.Targets.target_index]
 
-    @abstractmethod
-    def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
-        pass
+    def __call__(self, inputs: List[QASetting],
+                        candiate_index,
+                        atomic_candidates)-> List[Answer]:
 
-    @abstractmethod
+        return [candidate_index, atomic_candidates]
+
     def setup(self):
         pass
 

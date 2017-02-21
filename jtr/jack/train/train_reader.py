@@ -114,6 +114,8 @@ def main():
     parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
     parser.add_argument('--seed', default=63783, type=int, help="Seed for rngs.")
+    parser.add_argument('--answer_size', default=3, type=int, help=("How many ",
+            "answer does the output have. Used for classification."))
 
     args = parser.parse_args()
 
@@ -187,10 +189,10 @@ def main():
 
         # Hooks
         iter_interval = 1 if args.debug else args.log_interval
-        #hooks = [LossHook(reader, iter_interval, summary_writer=sw),
-        #         ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw),
-        #         ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
-        #                 args.checkpoint, sw)]
+        hooks = [LossHook(reader, iter_interval, summary_writer=sw),
+                 ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw),
+                 ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
+                         args.checkpoint, sw)]
 
         preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
         best_metric = [-1000000]
