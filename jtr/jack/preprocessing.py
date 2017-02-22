@@ -30,10 +30,12 @@ def preprocess_with_pipeline(data, vocab, test_time=False, negsamples=0,
                                    test_time=test_time,
                                    tokenization=tokenization,
                                    negsamples=negsamples, cache_fun=True,
-                                   map_to_target=False)
+                                   map_to_target=False,
+                                   normalize=True)
         else:
             corpus, train_vocab, answer_vocab, train_candidates_vocab = pipeline(corpus, vocab, sepvocab=sepvocab,
                                    test_time=test_time,
                                    tokenization=tokenization,
-                                   cache_fun=True, map_to_target=False)
+                                   cache_fun=True, map_to_target=False,
+                                   normalize=True)
         return corpus, train_vocab, answer_vocab, train_candidates_vocab

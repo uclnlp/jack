@@ -113,7 +113,7 @@ def main():
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
     parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
-    parser.add_argument('--seed', default=63783, type=int, help="Seed for rngs.")
+    parser.add_argument('--seed', default=325, type=int, help="Seed for rngs.")
     parser.add_argument('--answer_size', default=3, type=int, help=("How many ",
             "answer does the output have. Used for classification."))
 

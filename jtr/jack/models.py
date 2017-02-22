@@ -30,6 +30,8 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
         return [Ports.loss]
 
     def forward_pass(self, shared_resources, Q, S, Q_lengths, S_lengths, num_candidates):
+        # final states_fw_bw dimensions:
+        # [[[batch, output dim], [batch, output_dim]]
         if self.nvocab == None:
             self.nvocab = NeuralVocab(shared_resources.vocab,
                     input_size=shared_resources.config['repr_dim_input'])
@@ -63,7 +65,7 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
         print(shared_resources.config['answer_size'])
         logits = self.forward_pass(shared_resources, question, support, question_length,
                 support_length, shared_resources.config['answer_size'])
-        predictions = tf.arg_max(logits, 1, name='prediction')
+        predictions = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
 
         return [logits, predictions, labels]
 

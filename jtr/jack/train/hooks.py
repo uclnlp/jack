@@ -356,7 +356,7 @@ class ClassificationEvalHook(EvalHook):
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         labels = tensors[FlatPorts.Target.candidate_idx]
         predictions = tensors[FlatPorts.Prediction.candidate_idx]
-        #correct2prediction = tensors[FlatPorts.Input.answer2question]
+        #scores = tensors[Ports.Prediction.candidate_scores]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -367,6 +367,7 @@ class ClassificationEvalHook(EvalHook):
         acc_f1 = 0.0
         acc_exact = 0.0
         acc_exact = np.sum(np.equal(labels, predictions))
+        #print(labels, predictions, scores, np.equal(labels, predictions))
 
         return {"f1": acc_f1, "exact": acc_exact}
 
