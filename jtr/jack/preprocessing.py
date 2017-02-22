@@ -6,7 +6,7 @@ import re
 
 
 def preprocess_with_pipeline(data, vocab, test_time=False, negsamples=0,
-        tokenization=True):
+        tokenization=True, use_single_support=True):
         corpus = {"support": [], "question": [], "candidates": []}
         if not test_time:
             corpus["answers"] = []
@@ -16,7 +16,10 @@ def preprocess_with_pipeline(data, vocab, test_time=False, negsamples=0,
                 y = None
             else:
                 x, y = xy
-            corpus["support"].append(x.support)
+            if use_single_support:
+                corpus["support"].append((x.support)[0])
+            else:
+                corpus["support"].append(x.support)
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
             assert len(y) == 1

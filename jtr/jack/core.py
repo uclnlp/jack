@@ -194,11 +194,11 @@ class FlatPorts:
 
         generative_symbols = TensorPort(tf.int32, [None, None], "symbol_prediction",
                                         "Represents symbol sequence for each possible "
-                                        "answer predicted by the model",
+                                        "answer target_indexpredicted by the model",
                                         "[A, max_num_tokens]")
 
     class Target:
-        candidate_idx = TensorPort(tf.float32, [None], "candidate_targets_flat",
+        candidate_idx = TensorPort(tf.int32, [None], "candidate_targets_flat",
                                    "Represents groundtruth candidate labels, usually 1 or 0",
                                    "[C]")
 
@@ -391,9 +391,9 @@ class ModelModule:
         feed_dict = self.convert_to_feed_dict(batch)
         outputs = sess.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
         print([self.tensors[p] for p in goal_ports if p in self.output_ports])
-        print(outputs)
         print([t.name for t in self.tensors.keys()])
 
+        filtered = filter(lambda p: p in self.output_ports, goal_ports)
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
         for p in goal_ports:
             if p not in ret and p in batch:

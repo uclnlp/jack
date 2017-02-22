@@ -344,7 +344,8 @@ class ClassificationEvalHook(EvalHook):
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
 
         ports = [Ports.Prediction.candidate_scores,
-                Ports.Targets.candidate_labels]
+                 FlatPorts.Prediction.candidate_idx,
+                 FlatPorts.Target.candidate_idx]
 
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
@@ -356,7 +357,8 @@ class ClassificationEvalHook(EvalHook):
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         print(tensors.keys())
         for a in tensors:
-            print(a)
+            print(a.name)
+
         labels = tensors[FlatPorts.Target.candidate_idx]
         predictions = tensors[FlatPorts.Prediction.candidate_idx]
         #correct2prediction = tensors[FlatPorts.Input.answer2question]
@@ -369,7 +371,8 @@ class ClassificationEvalHook(EvalHook):
 
         acc_f1 = 0.0
         acc_exact = 0.0
-        acc_exact = np.sum(np.equal(labels, predictions), labels.shape[0])
+        acc_exact = np.sum(np.equal(labels, predictions))
+        print(labels, predictions)
 
         return {"f1": acc_f1, "exact": acc_exact}
 

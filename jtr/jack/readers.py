@@ -12,7 +12,6 @@ genqa_readers = {}
 mcqa_readers = {}
 kbp_readers = {}
 
-
 def __reader(f):
     readers.setdefault(f.__name__, f)
     return f
@@ -28,6 +27,7 @@ def __snli_reader(f):
     __reader(f)
     snli_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
+
     return f
 
 

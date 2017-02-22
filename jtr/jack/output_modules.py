@@ -6,14 +6,16 @@ class ClassificationOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_index,
-                Ports.Targets.target_index]
+        return [Ports.Prediction.candidate_scores,
+                FlatPorts.Prediction.candidate_idx,
+                FlatPorts.Target.candidate_idx]
 
     def __call__(self, inputs: List[QASetting],
-                        candiate_index,
-                        atomic_candidates)-> List[Answer]:
+                       logits,
+                        argmax_value,
+                        labels)-> List[Answer]:
 
-        return [candidate_index, atomic_candidates]
+        return [logits, argmax_value, labels]
 
     def setup(self):
         pass
