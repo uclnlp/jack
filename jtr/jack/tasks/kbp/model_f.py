@@ -27,7 +27,7 @@ class ModelFInputModule(InputModule):
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         corpus, _, _, _ = preprocess_with_pipeline(data, self.vocab, test_time,
-                negsamples=1, tokenization=False)
+                negsamples=1, tokenization=False, sepvocab=False)
         return self.shared_resources
 
     def setup(self, shared_resources: SharedResources):

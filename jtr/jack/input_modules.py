@@ -45,16 +45,15 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
         #    Ports.Input.atomic_candiates : corpus['candidates']
         #}
 
-        #return numpify(x_dict)
+        return numpify(x_dict)
 
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        pass
-        #corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-        #        preprocess_with_pipeline(data, self.shared_vocab_config.vocab)
-        #print(len(train_candidate_vocab))
-        #print(len(train_answer_vocab))
-        #self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
+        corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
+                preprocess_with_pipeline(data, self.shared_vocab_config.vocab)
+        print(len(train_candidate_vocab))
+        print(len(train_answer_vocab))
+        self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
 
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
@@ -76,6 +75,5 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
         keys = [t.name for t in xy_dict]
         return get_batches(xy_dict)
 
-    @abstractmethod
     def setup(self):
         pass

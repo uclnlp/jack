@@ -384,14 +384,10 @@ class ModelModule:
             A mapping from ports to tensors.
 
         """
-        print([t.name for t in goal_ports])
         goal_ports = goal_ports or self.output_ports
-        print([t.name for t in self.output_ports])
 
         feed_dict = self.convert_to_feed_dict(batch)
         outputs = sess.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
-        print([self.tensors[p] for p in goal_ports if p in self.output_ports])
-        print([t.name for t in self.tensors.keys()])
 
         filtered = filter(lambda p: p in self.output_ports, goal_ports)
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
@@ -647,10 +643,6 @@ class JTReader:
             "Input Module (training) outputs and model module outputs must include model module training inputs"
 
 
-        print([t.name for t in self.output_module.input_ports])
-        print('IN')
-        print([t.name for t in self.input_module.output_ports])
-        print([t.name for t in self.model_module.output_ports])
         assert all(port in self.model_module.output_ports or port in self.input_module.output_ports
                    for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
@@ -665,7 +657,6 @@ class JTReader:
         """
         batch = self.input_module(inputs)
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
-        print('OUT ' + self.output_module.input_ports.name)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 

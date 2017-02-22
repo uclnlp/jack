@@ -250,7 +250,6 @@ class EvalHook(TraceHook):
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
-            print(self.reader)
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
             m = self.apply_metrics(predictions)
             for k in self._metrics:
@@ -355,10 +354,6 @@ class ClassificationEvalHook(EvalHook):
         return ["exact", "f1"]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        print(tensors.keys())
-        for a in tensors:
-            print(a.name)
-
         labels = tensors[FlatPorts.Target.candidate_idx]
         predictions = tensors[FlatPorts.Prediction.candidate_idx]
         #correct2prediction = tensors[FlatPorts.Input.answer2question]
@@ -372,7 +367,6 @@ class ClassificationEvalHook(EvalHook):
         acc_f1 = 0.0
         acc_exact = 0.0
         acc_exact = np.sum(np.equal(labels, predictions))
-        print(labels, predictions)
 
         return {"f1": acc_f1, "exact": acc_exact}
 

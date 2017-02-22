@@ -30,8 +30,6 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
         return [Ports.loss]
 
     def forward_pass(self, shared_resources, Q, S, Q_lengths, S_lengths, num_candidates):
-        # final states_fw_bw dimensions: 
-        # [[[batch, output dim], [batch, output_dim]]
         if self.nvocab == None:
             self.nvocab = NeuralVocab(shared_resources.vocab,
                     input_size=shared_resources.config['repr_dim_input'])
@@ -51,7 +49,6 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
 
         # [batch, 2*output_dim] -> [batch, num_candidates]
         outputs = core_models.fully_connected_projection(final_states, num_candidates)
-        print('outputs', outputs.get_shape())
 
         return outputs
 
