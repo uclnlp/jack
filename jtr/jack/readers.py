@@ -62,12 +62,12 @@ def example_reader(vocab, config):
 @__kbp_reader
 def modelf_reader(vocab, config):
     """ Creates a simple kbp reader. """
-    from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
+    from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
     shared_resources = SharedVocabAndConfig(vocab, config)
     input_module = ModelFInputModule(shared_resources)
     model_module = ModelFModelModule(shared_resources)
     output_module = ModelFOutputModule()
-    jtreader = JTReader(shared_resources, input_module, model_module, output_module)
+    jtreader = KBPReader(shared_resources, input_module, model_module, output_module)
     return jtreader
 
 

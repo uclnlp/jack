@@ -275,6 +275,9 @@ class EvalHook(TraceHook):
     def at_epoch_end(self, epoch: int, **kwargs):
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
+    
+    def at_test_time(self, epoch):
+        self.__call__(epoch)
 
     def at_iteration_end(self, epoch: int, loss: float, **kwargs):
         self._iter += 1
@@ -372,3 +375,34 @@ class KBPEvalHook(EvalHook):
         acc_f1 = acc_exact
 
         return {"f1": acc_f1, "exact": acc_exact}
+    
+    
+    def at_test_time(self, epoch):
+        logger.info("Started evaluation %s" % self._info)
+
+        if self._batches is None:
+            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, test_time=True)
+
+        metrics = defaultdict(lambda: list())
+        for i, batch in enumerate(self._batches):
+            predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
+            m = self.apply_metrics(predictions)
+            for k in self._metrics:
+                metrics[k].append(m[k])
+
+        metrics = self.combine_metrics(metrics)
+
+        printmetrics = sorted(metrics.keys())
+        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        for m in printmetrics:
+            res += '\t%s: %.3f' % (m, metrics[m])
+            self.update_summary(self.reader.sess, self._iter, self._info + '_' + m, metrics[m])
+            if self._write_metrics_to is not None:
+                with open(self._write_metrics_to, 'a') as f:
+                    f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
+                                                      np.round(metrics[m], 5)))
+        res += '\t' + self._info
+        logger.info(res)
+
+        if self._side_effect is not None:
+            self._side_effect_state = self._side_effect(metrics, self._side_effect_state)

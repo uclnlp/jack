@@ -227,7 +227,7 @@ def main():
             test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
 
             reader.load(args.model_dir)
-            test_eval_hook(1)
+            test_eval_hook.at_test_time(1)
 
 
 if __name__ == "__main__":

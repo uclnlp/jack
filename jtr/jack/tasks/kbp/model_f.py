@@ -52,8 +52,8 @@ class ModelFInputModule(InputModule):
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset, test_time=is_eval)
+                          is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        corpus = self.preprocess(dataset, test_time=test_time)
         xy_dict = {
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
@@ -142,6 +142,75 @@ class ModelFOutputModule(OutputModule):
             score = candidate_scores[index_in_batch, winning_index]
             result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
+
+
+
+class KBPReader(JTReader):
+    """
+    A Reader reads inputs consisting of questions, supports and possibly candidates, and produces answers.
+    It consists of three layers: input to tensor (input_module), tensor to tensor (model_module), and tensor to answer
+    (output_model). These layers are called in-turn on a given input (list).
+    """
+
+    def train(self, optim,
+              training_set: List[Tuple[QASetting, Answer]],
+              max_epochs=10, hooks=[],
+              l2=0.0, clip=None, clip_op=tf.clip_by_value,
+              device="/cpu:0"):
+        """
+        This method trains the reader (and changes its state).
+        Args:
+            test_set: test set
+            dev_set: dev set
+            training_set: the training instances.
+            **train_params: parameters to be sent to the training function `jtr.train.train`.
+
+        Returns: None
+
+        """
+        assert self.is_train, "Reader has to be created for with is_train=True for training."
+
+        logging.info("Setting up data and model...")
+        with tf.device(device):
+            # First setup shared resources, e.g., vocabulary. This depends on the input module.
+            self.setup_from_data(training_set)
+
+        #batches = self.input_module.dataset_generator(training_set, is_eval=False)
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        loss = self.model_module.tensors[Ports.loss]
+
+        if l2 != 0.0:
+            loss += \
+                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+
+        if clip is not None:
+            gradients = optim.compute_gradients(loss)
+            if clip_op == tf.clip_by_value:
+                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
+                             for grad, var in gradients]
+            elif clip_op == tf.clip_by_norm:
+                gradients = [(tf.clip_by_norm(grad, clip), var)
+                             for grad, var in gradients]
+            min_op = optim.apply_gradients(gradients)
+        else:
+            min_op = optim.minimize(loss)
+
+        # initialize non model variables like learning rate, optim vars ...
+        self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
+
+        logging.info("Start training...")
+        for i in range(1, max_epochs + 1):
+            batches = self.input_module.dataset_generator(training_set, is_eval=False)
+            for j, batch in enumerate(batches):
+                feed_dict = self.model_module.convert_to_feed_dict(batch)
+                _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
+
+                for hook in hooks:
+                    hook.at_iteration_end(i, current_loss)
+
+            # calling post-epoch hooks
+            for hook in hooks:
+                hook.at_epoch_end(i)
 
 
 
