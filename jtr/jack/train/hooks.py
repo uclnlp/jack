@@ -378,31 +378,59 @@ class KBPEvalHook(EvalHook):
     
     
     def at_test_time(self, epoch):
+        from scipy.stats import rankdata
+        
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
             self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, test_time=True)
 
-        metrics = defaultdict(lambda: list())
+        def len_np_or_list(v):
+            if isinstance(v, list):
+                return len(v)
+            else:
+                return v.shape[0]
+
+        q_cand_scores={}
+        q_cand_ids={}
+        q_answers={}
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
-            m = self.apply_metrics(predictions)
-            for k in self._metrics:
-                metrics[k].append(m[k])
-
-        metrics = self.combine_metrics(metrics)
-
-        printmetrics = sorted(metrics.keys())
+            correct_answers =  predictions[Ports.Targets.target_index]
+            candidate_scores = predictions[Ports.Prediction.candidate_scores]
+            candidate_ids =    predictions[Ports.Input.atomic_candidates]
+            questions        = predictions[Ports.Targets.target_index]
+            for j in range(len_np_or_list(questions)):
+                q=questions[j]
+                q_cand_scores[q]=candidate_scores[j]
+                q_cand_ids[q]=candidate_ids[j]
+                q_answers[q]=q_answers.get(q,[])
+                q_answers[q].append(correct_answers[j])
+        
+        mean_ap=0
+        for q in q_answers:
+            cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
+            ans_ranks=[]
+            for a in q_answers[q]:
+                for c, cand in enumerate(q_cand_ids[q]):
+                    if a==cand and cand_ranks[c]<100:
+                        ans_ranks.append(cand_ranks[c])
+            av_p=0
+            answers=1
+            for r in sorted(ans_ranks):
+                p=answers/r
+                av_p=av_p+p
+            av_p=av_p/len(ans_ranks)
+            mean_ap=mean_ap+av_p
+        mean_ap=mean_ap/len(q_answers)
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
-        for m in printmetrics:
-            res += '\t%s: %.3f' % (m, metrics[m])
-            self.update_summary(self.reader.sess, self._iter, self._info + '_' + m, metrics[m])
-            if self._write_metrics_to is not None:
-                with open(self._write_metrics_to, 'a') as f:
-                    f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
-                                                      np.round(metrics[m], 5)))
+        res += '\t%s: %.3f' % ("Mean Average Precision", mean_ap)
+        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Mean Average Precision", mean_ap)
+        if self._write_metrics_to is not None:
+            with open(self._write_metrics_to, 'a') as f:
+                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Mean Average Precision",
+                                                  np.round(mean_ap, 5)))
         res += '\t' + self._info
-        logger.info(res)
+        logger.info(res)      
 
-        if self._side_effect is not None:
-            self._side_effect_state = self._side_effect(metrics, self._side_effect_state)
+        

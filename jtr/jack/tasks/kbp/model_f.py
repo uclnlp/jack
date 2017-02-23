@@ -63,11 +63,12 @@ class ModelFInputModule(InputModule):
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
-        x_dict = {
+        xy_dict = {
             Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"]
+            Ports.Input.atomic_candidates: corpus["candidates"],
+            Ports.Targets.target_index: corpus["answers"]
         }
-        return numpify(x_dict)
+        return numpify(xy_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -86,7 +87,7 @@ class ModelFModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, Ports.Targets.target_index, FlatPorts.Misc.embedded_question]
+        return [Ports.Prediction.candidate_scores, Ports.Targets.target_index, FlatPorts.Misc.embedded_question, Ports.Input.atomic_candidates]
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -96,12 +97,14 @@ class ModelFModelModule(SimpleModelModule):
                                shared_resources: SharedVocabAndConfig,
                                candidate_scores: tf.Tensor,
                                target_index: tf.Tensor,
-                               question_embedding: tf.Tensor) -> Sequence[tf.Tensor]:
+                               question_embedding: tf.Tensor,
+                               atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
         with tf.variable_scope("modelf",reuse=True):
             embeddings = tf.get_variable("embeddings")
-        embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),-1)  # [batch_size, repr_dim, 1]
-        answer_score = tf.squeeze(tf.batch_matmul(question_embedding,embedded_answer),axis=[1,2])  # [batch_size]
-        loss = tf.reduce_mean(tf.nn.softplus(tf.reduce_sum(candidate_scores,1)-2*answer_score))
+        embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
+        embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
+        answer_score = tf.reduce_sum(tf.multiply(question_embedding,embedded_answer),2)  # [batch_size, 1]
+        loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score))
         return loss,
 
     def create_output(self,
@@ -117,10 +120,10 @@ class ModelFModelModule(SimpleModelModule):
             embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
             embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
             
-            scores = tf.batch_matmul(embedded_candidates,embedded_question,adj_y=True)
+            scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             
-            squeezed = tf.squeeze(scores, 2)
-            return squeezed, embedded_question
+            
+            return scores, embedded_question
 
 
 
