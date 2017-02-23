@@ -72,14 +72,13 @@ class ModelFInputModule(InputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Input.multiple_support,
-                Ports.Input.question, Ports.Input.atomic_candidates]
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Targets.target_index]
 
 
 class ModelFModelModule(SimpleModelModule):
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, FlatPorts.Misc.embedded_question]
+        return [Ports.Prediction.candidate_scores, Ports.loss]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
@@ -87,30 +86,22 @@ class ModelFModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, Ports.Targets.target_index, FlatPorts.Misc.embedded_question, Ports.Input.atomic_candidates]
+        return [Ports.loss]
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates]
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Targets.target_index]
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
-                               candidate_scores: tf.Tensor,
-                               target_index: tf.Tensor,
-                               question_embedding: tf.Tensor,
-                               atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
-        with tf.variable_scope("modelf",reuse=True):
-            embeddings = tf.get_variable("embeddings")
-        embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
-        embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
-        answer_score = tf.reduce_sum(tf.multiply(question_embedding,embedded_answer),2)  # [batch_size, 1]
-        loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score))
+                               loss: tf.Tensor) -> Sequence[tf.Tensor]:
         return loss,
 
     def create_output(self,
                       shared_resources: SharedVocabAndConfig,
                       question: tf.Tensor,
-                      atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
+                      atomic_candidates: tf.Tensor,
+                      target_index: tf.Tensor) -> Sequence[tf.Tensor]:
         repr_dim = shared_resources.config["repr_dim"]
         with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
@@ -119,11 +110,12 @@ class ModelFModelModule(SimpleModelModule):
 
             embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
             embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
+            embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
+            candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
+            answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
+            loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score))
             
-            scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
-            
-            
-            return scores, embedded_question
+            return candidate_scores, loss
 
 
 

@@ -193,7 +193,7 @@ def main():
                          args.checkpoint, sw)]
 
         preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
-        best_metric = [0.0]
+        best_metric = [-1000000]
 
         def side_effect(metrics, prev_metric):
             """Returns: a state (in this case a metric) that is used as input for the next call"""

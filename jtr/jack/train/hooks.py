@@ -344,7 +344,7 @@ class KBPEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates]
+        ports = [Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -353,9 +353,10 @@ class KBPEvalHook(EvalHook):
         return ["exact", "f1"]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_answers = tensors[Ports.Targets.target_index]
+        correct_answers  = tensors[Ports.Targets.target_index]
         candidate_scores = tensors[Ports.Prediction.candidate_scores]
-        candidate_ids = tensors[Ports.Input.atomic_candidates]
+        candidate_ids    = tensors[Ports.Input.atomic_candidates]
+        loss             = tensors[Ports.loss]
 
         acc_f1 = 0.0
         acc_exact = 0.0
@@ -372,7 +373,7 @@ class KBPEvalHook(EvalHook):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
 
-        acc_f1 = acc_exact
+        acc_f1 = -1*len_np_or_list(winning_indices)*loss
 
         return {"f1": acc_f1, "exact": acc_exact}
     
@@ -413,14 +414,17 @@ class KBPEvalHook(EvalHook):
             ans_ranks=[]
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
-                    if a==cand and cand_ranks[c]<100:
+                    if a==cand:
                         ans_ranks.append(cand_ranks[c])
             av_p=0
             answers=1
             for r in sorted(ans_ranks):
                 p=answers/r
                 av_p=av_p+p
-            av_p=av_p/len(ans_ranks)
+            if len(ans_ranks)>0:
+                av_p=av_p/len(ans_ranks)
+            else:
+                print(q)
             mean_ap=mean_ap+av_p
         mean_ap=mean_ap/len(q_answers)
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
