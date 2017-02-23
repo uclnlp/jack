@@ -234,6 +234,7 @@ class FastQAInputModule(InputModule):
 
         emb_supports = np.zeros([self.batch_size, max(s_lengths), self.emb_matrix.shape[1]])
         emb_questions = np.zeros([self.batch_size, max(q_lengths), self.emb_matrix.shape[1]])
+
         def batch_generator():
             todo = list(range(len(q_ids)))
             self._rng.shuffle(todo)
@@ -294,8 +295,8 @@ class FastQAInputModule(InputModule):
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = self.prepare_data(qa_settings, self.shared_vocab_config.vocab, with_answers=False)
         word_in_question, token_offsets, answer_spans = self.prepare_data(qa_settings, with_answers=False)
+
         unique_words, unique_word_lengths, question2unique, support2unique = self.unique_words(q_tokenized, s_tokenized)
 
         batch_size = len(qa_settings)
