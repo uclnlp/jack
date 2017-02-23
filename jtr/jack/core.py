@@ -101,6 +101,10 @@ class Ports:
                                        "Represents candidate choices using single symbols",
                                        "[batch_size, num_candidates]")
 
+        candidates1d = TensorPort(tf.int32, [None], "candidates_idx",
+                                       "Represents candidate choices using single symbols",
+                                       "[batch_size]")
+
         keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
                                           "scalar representing keep probability when using dropout",
                                           "[]")
@@ -108,6 +112,14 @@ class Ports:
         is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
                                         "boolean that determines whether input is eval or training.",
                                         "[]")
+
+        support_length = TensorPort(tf.int32, [None], "support_length_flat",
+                                    "Represents length of support in batch",
+                                    "[S]")
+
+        question_length = TensorPort(tf.int32, [None], "question_length_flat",
+                                     "Represents length of questions in batch",
+                                     "[Q]")
 
     class Prediction:
         candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
@@ -118,6 +130,11 @@ class Ports:
                                      "Represents answer as a single index",
                                      "[batch_size]")
 
+        candidate_idx = TensorPort(tf.float32, [None], "candidate_predictions_flat",
+                                   "Represents groundtruth candidate labels, usually 1 or 0",
+                                   "[C]")
+
+
     class Targets:
         candidate_labels = TensorPort(tf.float32, [None, None], "candidate_targets",
                                       "Represents target (0/1) values for each candidate",
@@ -125,6 +142,10 @@ class Ports:
         target_index = TensorPort(tf.int32, [None], "target_index",
                                   "Represents symbol id of target candidate",
                                   "[batch_size]")
+
+        candidate_idx = TensorPort(tf.int32, [None], "candidate_targets",
+                                   "Represents groundtruth candidate labels, usually 1 or 0",
+                                   "[C]")
 
 
 class FlatPorts:

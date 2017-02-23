@@ -13,7 +13,7 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Input.atomic_candidates]
+        return [Ports.Input.candidates1d]
 
 
     @property
@@ -27,8 +27,8 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
         5. Labels
         """
         return [Ports.Input.single_support,
-                Ports.Input.question, FlatPorts.Input.support_length,
-                FlatPorts.Input.question_length, FlatPorts.Target.candidate_idx]
+                Ports.Input.question, Ports.Input.support_length,
+                Ports.Input.question_length, Ports.Targets.candidate_idx]
 
 
     def __call__(self, qa_settings : List[QASetting]) \
@@ -40,8 +40,8 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
         #x_dict = {
         #    Ports.Input.single_support: corpus["support"],
         #    Ports.Input.question: corpus["question"],
-        #    FlatPorts.Input.question_length : corpus['question_lengths'],
-        #    FlatPorts.Input.support_length : corpus['support_lengths'],
+        #    Ports.Input.question_length : corpus['question_lengths'],
+        #    Ports.Input.support_length : corpus['support_lengths'],
         #    Ports.Input.atomic_candiates : corpus['candidates']
         #}
 
@@ -50,22 +50,29 @@ class QuestionOneSupportGlobalCandiatesInputModule(InputModule):
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_vocab_config.vocab, sepvocab=True)
-        print(len(train_candidate_vocab))
-        print(len(train_answer_vocab))
+                preprocess_with_pipeline(data, self.shared_vocab_config.vocab,
+                        None, sepvocab=True)
+        train_vocab.freeze()
+        train_answer_vocab.freeze()
+        train_candidate_vocab.freeze()
         self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
+        self.shared_vocab_config.vocab = train_vocab
+        self.shared_vocab_config.config['answer_vocab'] = train_answer_vocab
 
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(dataset, self.shared_vocab_config.vocab, use_single_support=True, sepvocab=True)
+        answer_vocab = self.shared_vocab_config.config['answer_vocab']
+        corpus, _, _, _ = \
+                preprocess_with_pipeline(dataset,
+                        self.shared_vocab_config.vocab, answer_vocab, use_single_support=True, sepvocab=True)
+
         xy_dict = {
             Ports.Input.single_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            FlatPorts.Target.candidate_idx:  corpus["answers"],
-            FlatPorts.Input.question_length : corpus['question_lengths'],
-            FlatPorts.Input.support_length : corpus['support_lengths']
+            Ports.Targets.candidate_idx:  corpus["answers"],
+            Ports.Input.question_length : corpus['question_lengths'],
+            Ports.Input.support_length : corpus['support_lengths']
         }
 
         return get_batches(xy_dict)

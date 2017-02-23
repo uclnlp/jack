@@ -12,18 +12,18 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.single_support,
-                Ports.Input.question, FlatPorts.Input.support_length,
-                FlatPorts.Input.question_length, FlatPorts.Target.candidate_idx]
+                Ports.Input.question, Ports.Input.support_length,
+                Ports.Input.question_length, Ports.Targets.candidate_idx]
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, FlatPorts.Prediction.candidate_idx,
-                FlatPorts.Target.candidate_idx]
+        return [Ports.Prediction.candidate_scores, Ports.Prediction.candidate_idx,
+                Ports.Targets.candidate_idx]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.candidate_scores,
-                FlatPorts.Target.candidate_idx]
+                Ports.Targets.candidate_idx]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
@@ -62,7 +62,6 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
                       question_length : tf.Tensor,
                       labels : tf.Tensor) -> Sequence[tf.Tensor]:
 
-        print(shared_resources.config['answer_size'])
         logits = self.forward_pass(shared_resources, question, support, question_length,
                 support_length, shared_resources.config['answer_size'])
         predictions = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
@@ -74,7 +73,6 @@ class PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(SimpleModelModule):
                                logits : tf.Tensor,
                                labels : tf.Tensor) -> Sequence[tf.Tensor]:
 
-        print(labels.get_shape())
         loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
             labels=labels), name='predictor_loss')

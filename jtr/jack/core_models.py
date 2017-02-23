@@ -63,9 +63,6 @@ def dynamic_bidirectional_lstm(inputs, lengths, output_size,
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
-        print(inputs.get_shape())
-        print(lengths.get_shape())
-        print(output_size)
         if drop_keep_prob != 1.0:
             cell = tf.contrib.rnn.DropoutWrapper(
                                     cell=cell,
