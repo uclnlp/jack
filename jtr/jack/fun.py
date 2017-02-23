@@ -53,24 +53,3 @@ def no_shared_resources(f):
         return f(*tensors)
 
     return g
-
-#
-# @model_module([Ports.single_support,
-#                Ports.question,
-#                Ports.atomic_candidates], [Ports.candidate_scores])
-# def average_model_multi_choice(supports: tf.Tensor,
-#                                question: tf.Tensor,
-#                                candidates: tf.Tensor) -> List[tf.Tensor]:
-#     return None, None
-#
-#
-# @model_module_factory([Ports.single_support,
-#                        Ports.question,
-#                        Ports.atomic_candidates], [Ports.candidate_scores, Ports.loss])
-# def model_multi_choice(pooling_op):
-#     def model(supports: tf.Tensor,
-#               question: tf.Tensor,
-#               candidates: tf.Tensor) -> List[tf.Tensor]:
-#         return None
-#
-#     return model

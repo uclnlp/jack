@@ -1,7 +1,4 @@
 from jtr.jack.core import *
-from jtr.jack.input_modules import QuestionOneSupportGlobalCandiatesInputModule
-from jtr.jack.models import PairOfBiLSTMOverSupportAndQuestionConditionalEncoding
-from jtr.jack.output_modules import ClassificationOutputModule
 from jtr.jack.train.hooks import XQAEvalHook, ClassificationEvalHook
 
 readers = {}
@@ -23,19 +20,12 @@ def __xqa_reader(f):
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
     return f
 
-def __snli_reader(f):
-    __reader(f)
-    snli_readers.setdefault(f.__name__, f)
-    eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
-
-    return f
-
 
 def __mcqa_reader(f):
     from jtr.jack.train.hooks import XQAEvalHook
     __reader(f)
     mcqa_readers.setdefault(f.__name__, f)
-    eval_hooks.setdefault(f.__name__, XQAEvalHook)
+    eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
     # TODO eval hook
     return f
 
@@ -92,11 +82,12 @@ def fastqa_reader(vocab, config):
                     fatqa_model_module(shared_resources),
                     XQAOutputModule(shared_resources))
 
-@__snli_reader
+@__mcqa_reader
 def snli_reader(vocab, config):
-    """ Creates a FastQA reader instance (extractive qa model). """
+    """ Creates a SNLI reader instance (multiple choice qa model). """
+    from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
     shared_resources = SharedVocabAndConfig(vocab, config)
     return JTReader(shared_resources,
-                    QuestionOneSupportGlobalCandiatesInputModule(shared_resources),
-                    PairOfBiLSTMOverSupportAndQuestionConditionalEncoding(shared_resources),
-                    ClassificationOutputModule())
+                    SingleSupportFixedClassInputs(shared_resources),
+                    PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
+                    EmptyOutputModule())

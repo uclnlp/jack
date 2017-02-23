@@ -1,9 +1,18 @@
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
+from jtr.jack.tf_fun import rnn, simple
+
+
+
 from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify
 from jtr.preprocess.vocab import Vocab
+from jtr.jack.preprocessing import preprocess_with_pipeline
+from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel, SingleSupportFixedClassForward
+
+from typing import List, Tuple, Dict, Mapping
+import tensorflow as tf
 
 
 class SimpleMCInputModule(InputModule):
@@ -67,6 +76,78 @@ class SimpleMCInputModule(InputModule):
     def output_ports(self) -> List[TensorPort]:
         return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.atomic_candidates]
+
+class SingleSupportFixedClassInputs(InputModule):
+    def __init__(self, shared_vocab_config):
+        self.shared_vocab_config = shared_vocab_config
+
+    @property
+    def training_ports(self) -> List[TensorPort]:
+        return [Ports.Input.candidates1d]
+
+    @property
+    def output_ports(self) -> List[TensorPort]:
+        """Defines the outputs of the InputModule
+
+        1. Word embedding index tensor of questions of mini-batchs
+        2. Word embedding index tensor of support of mini-batchs
+        3. Max timestep length of mini-batches for support tensor
+        4. Max timestep length of mini-batches for question tensor
+        5. Labels
+        """
+        return [Ports.Input.single_support,
+                Ports.Input.question, Ports.Input.support_length,
+                Ports.Input.question_length, Ports.Targets.candidate_idx]
+
+
+    def __call__(self, qa_settings : List[QASetting]) \
+                    -> Mapping[TensorPort, np.ndarray]:
+        pass
+        #corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
+        #        preprocess_with_pipeline(data, self.shared_vocab_config.vocab)
+
+        #x_dict = {
+        #    Ports.Input.single_support: corpus["support"],
+        #    Ports.Input.question: corpus["question"],
+        #    Ports.Input.question_length : corpus['question_lengths'],
+        #    Ports.Input.support_length : corpus['support_lengths'],
+        #    Ports.Input.atomic_candiates : corpus['candidates']
+        #}
+
+        #return numpify(x_dict)
+
+
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
+                preprocess_with_pipeline(data, self.shared_vocab_config.vocab,
+                        None, sepvocab=True)
+        train_vocab.freeze()
+        train_answer_vocab.freeze()
+        train_candidate_vocab.freeze()
+        self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
+        self.shared_vocab_config.vocab = train_vocab
+        self.shared_vocab_config.config['answer_vocab'] = train_answer_vocab
+
+
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        answer_vocab = self.shared_vocab_config.config['answer_vocab']
+        corpus, _, _, _ = \
+                preprocess_with_pipeline(dataset,
+                        self.shared_vocab_config.vocab, answer_vocab, use_single_support=True, sepvocab=True)
+
+        xy_dict = {
+            Ports.Input.single_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Targets.candidate_idx:  corpus["answers"],
+            Ports.Input.question_length : corpus['question_lengths'],
+            Ports.Input.support_length : corpus['support_lengths']
+        }
+
+        return get_batches(xy_dict)
+
+    def setup(self):
+        pass
 
 
 class SimpleMCModelModule(SimpleModelModule):
@@ -160,3 +241,54 @@ if __name__ == '__main__':
     answers = example_reader(questions)
 
     print(answers)
+
+
+
+class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
+    def forward_pass(self, shared_resources, nvocab,
+                     Q, S, Q_lengths, S_lengths,
+                     num_classes):
+        # final states_fw_bw dimensions:
+        # [[[batch, output dim], [batch, output_dim]]
+
+        Q_seq = nvocab(Q)
+        S_seq = nvocab(S)
+
+        all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
+                Q_seq, Q_lengths, S_seq, S_lengths,
+                shared_resources.config['repr_dim'], drop_keep_prob =
+                1.0-shared_resources.config['dropout'],
+                conditional_encoding=True)
+
+        # ->  [batch, 2*output_dim]
+        final_states = tf.concat([final_states_fw_bw[0][1],
+                                 final_states_fw_bw[1][1]],axis=1)
+
+        # [batch, 2*output_dim] -> [batch, num_classes]
+        outputs = simple.fully_connected_projection(final_states,
+                                                         num_classes)
+
+        return outputs
+
+
+class EmptyOutputModule(OutputModule):
+
+    @property
+    def input_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.candidate_scores,
+                Ports.Prediction.candidate_idx,
+                Ports.Targets.candidate_idx]
+
+    def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
+        return tensor_inputs
+
+    def setup(self):
+        pass
+
+    def store(self, path):
+        pass
+
+    def load(self, path):
+        pass
+
+
