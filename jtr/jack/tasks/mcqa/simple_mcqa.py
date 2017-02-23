@@ -240,9 +240,6 @@ if __name__ == '__main__':
 
     answers = example_reader(questions)
 
-    print(answers)
-
-
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources, nvocab,

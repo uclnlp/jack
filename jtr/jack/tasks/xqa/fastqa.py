@@ -365,7 +365,7 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
     """
     fast_qa model
     Args:
-        shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_input_dim"
+        shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
         emb_question: [Q, L_q, N]
         question_length: [Q]
         emb_support: [Q, L_s, N]
@@ -390,7 +390,7 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
         support_mask = tfutil.mask_for_lengths(support_length, batch_size)
         question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
 
-        input_size = shared_vocab_config.config["repr_input_dim"]
+        input_size = shared_vocab_config.config["repr_dim_input"]
         size = shared_vocab_config.config["repr_dim"]
         with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
 

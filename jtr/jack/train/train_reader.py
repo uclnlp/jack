@@ -36,13 +36,13 @@ checkpoint = Duration()
 
 
 def main():
-    # Please add new models to readers when they work
-
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
-    train_default = dev_default = test_default = 'tests/test_data/sentihood/overfit.json'
+    train_default = 'tests/test_data/SNLI/SNLI-train.json'
+    dev_default = 'tests/test_data/SNLI/SNLI-dev.json'
+    test_default = 'tests/test_data/SNLI/SNLI-test.json'
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader')
     parser.add_argument('--debug', action='store_true',
@@ -52,7 +52,7 @@ def main():
                         help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=str, help="jtr training file")
     parser.add_argument('--dev', default=dev_default, type=str, help="jtr dev file")
-    parser.add_argument('--test', default='', type=str, help="jtr test file")
+    parser.add_argument('--test', default=test_default, type=str, help="jtr test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts),
                         help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts),
@@ -65,10 +65,12 @@ def main():
                         type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
                         type=int, help="Batch size for development data, default 128")
-    parser.add_argument('--repr_dim_input', default=100, type=int,
-                        help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
-    parser.add_argument('--repr_dim', default=100, type=int,
-                        help="Size of the hidden representations, default 100")
+    parser.add_argument('--repr_dim_input', default=128, type=int,
+                        help=("Size of the input representation (embeddings),",
+                        "default 128 (embeddings cut off or extended if not",
+                        "matched with pretrained embeddings)"))
+    parser.add_argument('--repr_dim', default=128, type=int,
+                        help="Size of the hidden representations, default 128")
 
     parser.add_argument('--pretrain', action='store_true',
                         help="Use pretrained embeddings, by default the initialisation is random")
@@ -90,7 +92,7 @@ def main():
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--vocab_sep', default=True, type=bool,
                         help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
-    parser.add_argument('--model', default='fastqa_reader', choices=sorted(readers.readers.keys()),
+    parser.add_argument('--model', default='snli_reader', choices=sorted(readers.readers.keys()),
                         help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--learning_rate_decay', default=0.5, type=float, help="Learning rate decay, default 0.5")

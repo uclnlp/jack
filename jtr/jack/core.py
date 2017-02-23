@@ -8,6 +8,7 @@ import os
 import pickle
 import shutil
 import sys
+import json
 from abc import abstractmethod, abstractproperty
 from typing import Mapping, Iterable, Sequence
 
@@ -16,6 +17,22 @@ import tensorflow as tf
 
 from jtr.jack.data_structures import *
 from jtr.preprocess.vocab import Vocab
+
+class TestDatasets(object):
+
+    @staticmethod
+    def generate_SNLI():
+        snli_path = 'tests/test_data/SNLI/'
+        splits = ['SNLI-train.json', 'SNLI-dev.json', 'SNLI-test.json']
+        snli_data = []
+        for split in splits:
+            path = os.path.join(snli_path, split)
+            snli_data.append(load_labelled_data(path))
+
+        return snli_data
+
+
+
 
 
 class TensorPort:

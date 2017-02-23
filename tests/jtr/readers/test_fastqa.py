@@ -25,7 +25,7 @@ def test_fastqa():
     vocab = Vocab(emb=embeddings, init_from_embeddings=True)
 
     # ... and a config
-    config = {"batch_size": 1, "repr_dim": 10, "repr_input_dim": embeddings.lookup.shape[1],
+    config = {"batch_size": 1, "repr_dim": 10, "repr_dim_input": embeddings.lookup.shape[1],
               "with_char_embeddings": True}
 
     # create/setup reader
