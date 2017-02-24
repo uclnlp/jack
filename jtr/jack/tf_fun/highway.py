@@ -6,7 +6,7 @@ def highway_layer(arg, scope=None):
         d = arg.get_shape()[-1].value
         trans_gate = tf.contrib.layers.fully_connected(arg, 2*d, activation_fn=None, weights_initializer=None,
                                                        scope='trans_gate')
-        trans, gate = tf.split(len(arg.get_shape())-1, 2, trans_gate)
+        trans, gate = tf.split(trans_gate, 2, len(arg.get_shape())-1)
         trans, gate = tf.tanh(trans), tf.sigmoid(gate)
         gate = tf.contrib.layers.fully_connected(arg, d, activation_fn=tf.sigmoid, weights_initializer=None,
                                                  scope='gate')

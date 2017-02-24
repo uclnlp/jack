@@ -16,7 +16,7 @@ def get_by_index(tensor, index):
     :param index: [dim1] tensor of indices for dim2
     :return: [dim1 x dim3] tensor
     """
-    dim1, dim2, dim3 = tf.unpack(tf.shape(tensor))
+    dim1, dim2, dim3 = tf.unstack(tf.shape(tensor))
     flat_index = tf.range(0, dim1) * dim2 + (index - 1)
     return tf.gather(tf.reshape(tensor, [-1, dim3]), flat_index)
 
@@ -49,7 +49,7 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
     if batch_size is None:
         batch_size = tf.shape(lengths)[0]
     # [batch_size x max_length]
-    mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.pack([batch_size, -1]))
+    mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.stack([batch_size, -1]))
     if mask_right:
         mask = tf.greater_equal(mask, tf.expand_dims(lengths, 1))
     else:

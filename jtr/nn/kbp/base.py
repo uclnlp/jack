@@ -84,7 +84,7 @@ class BilinearModel(BaseModel):
         es = tf.expand_dims(self.subject_embeddings, 1)
         emb_size = tf.shape(self.subject_embeddings)[1]
         W = tf.reshape(self.predicate_embeddings, (-1, emb_size, emb_size))
-        sW = tf.batch_matmul(es, W)[:, 0, :]
+        sW = tf.matmul(es, W)[:, 0, :]
 
         return self.similarity_function(sW, self.object_embeddings)
 
@@ -143,7 +143,8 @@ class ERMLP(BaseModel):
         """
         :return: (batch_size) Tensor containing the scores associated by the models to the walks.
         """
-        e_ijk = tf.concat(1, [self.subject_embeddings, self.object_embeddings, self.predicate_embeddings])
+        e_ijk = tf.concat([self.subject_embeddings, self.object_embeddings,
+            self.predicate_embeddings], 1)
         h_ijk = tf.matmul(e_ijk, self.C)
         f_ijk = tf.squeeze(tf.matmul(self.f(h_ijk), self.w), axis=1)
 
