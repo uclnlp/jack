@@ -301,14 +301,17 @@ class SharedVocabAndConfig(SharedResources):
     def store(self, path):
         if not os.path.exists(path):
             os.mkdir(path)
-        with open(os.path.join(path, "vocab"), 'wb') as f:
-            pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
+
+        if not isinstance(self.vocab, Vocab):
+            with open(os.path.join(path, "vocab"), 'wb') as f:
+                pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
         with open(os.path.join(path, "config"), 'wb') as f:
             pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
-        with open(os.path.join(path, "vocab"), 'rb') as f:
-            self.vocab = pickle.load(f)
+        if os.path.exists(os.path.join(path, 'vocab')):
+            with open(os.path.join(path, "vocab"), 'rb') as f:
+                self.vocab = pickle.load(f)
         with open(os.path.join(path, "config"), 'rb') as f:
             self.config = pickle.load(f)
 

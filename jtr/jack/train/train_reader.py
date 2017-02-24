@@ -120,6 +120,7 @@ def main():
             "answer does the output have. Used for classification."))
 
     args = parser.parse_args()
+    print(args.write_metrics_to)
 
     # make everything deterministic
     random.seed(args.seed)
@@ -196,8 +197,7 @@ def main():
                  ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
                          args.checkpoint, sw)]
 
-        preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
-        best_metric = [-1000000]
+        preferred_metric, best_metric = readers.eval_hooks[args.model].preferred_metric_and_best_score()
 
         def side_effect(metrics, prev_metric):
             """Returns: a state (in this case a metric) that is used as input for the next call"""
@@ -214,9 +214,13 @@ def main():
                 logger.info("Saving model to: %s" % args.model_dir)
             return m
 
-        hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                                    iter_interval=args.checkpoint,
-                                                    epoch_interval=1 if args.checkpoint is None else None))
+        # this is the standard hook for the model
+        hooks.append(readers.eval_hooks[args.model](
+            reader, dev_data, summary_writer=sw, side_effect=side_effect,
+            iter_interval=args.checkpoint,
+            epoch_interval=(1 if args.checkpoint is None else None),
+            write_metrics_to=args.write_metrics_to))
+
 
         # Train
         reader.train(optim, training_set=train_data,
@@ -226,9 +230,9 @@ def main():
 
         # Test final model
         if test_data is not None:
-            logger.info(
-                "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
-            test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
+            test_eval_hook = readers.eval_hooks[args.model](reader, test_data,
+                    summary_writer=sw, epoch_interval=1,
+                    write_metrics_to=args.write_metrics_to)
 
             reader.load(args.model_dir)
             test_eval_hook.at_test_time(1)

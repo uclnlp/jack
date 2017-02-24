@@ -262,6 +262,7 @@ class EvalHook(TraceHook):
         self._metrics = metrics or self.possible_metrics
         self._side_effect = side_effect
         self._side_effect_state = None
+        print(self._write_metrics_to)
 
     @abstractproperty
     def possible_metrics(self) -> List[str]:
@@ -300,6 +301,7 @@ class EvalHook(TraceHook):
         for m in printmetrics:
             res += '\t%s: %.3f' % (m, metrics[m])
             self.update_summary(self.reader.sess, self._iter, self._info + '_' + m, metrics[m])
+            print(self._write_metrics_to)
             if self._write_metrics_to is not None:
                 with open(self._write_metrics_to, 'a') as f:
                     f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
@@ -336,6 +338,12 @@ class XQAEvalHook(EvalHook):
     @property
     def possible_metrics(self) -> List[str]:
         return ["exact", "f1"]
+
+
+    @staticmethod
+    def preferred_metric_and_best_score():
+        return 'f1', [0.0]
+
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[FlatPorts.Target.answer_span]
@@ -379,6 +387,7 @@ class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
+        print(write_metrics_to)
 
         ports = [Ports.Prediction.candidate_scores,
                  Ports.Prediction.candidate_idx,
@@ -390,6 +399,11 @@ class ClassificationEvalHook(EvalHook):
     @property
     def possible_metrics(self) -> List[str]:
         return ["Accuracy", "F1_macro"]
+
+    @staticmethod
+    def preferred_metric_and_best_score():
+        return 'Accuracy', [0.0]
+
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         labels = tensors[Ports.Targets.candidate_idx]
@@ -423,6 +437,10 @@ class KBPEvalHook(EvalHook):
     @property
     def possible_metrics(self) -> List[str]:
         return ["exact", "f1"]
+
+    @staticmethod
+    def preferred_metric_and_best_score():
+            return 'exact', [0.0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_answers  = tensors[Ports.Targets.target_index]

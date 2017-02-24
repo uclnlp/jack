@@ -36,6 +36,7 @@ def simple_model_module(input_ports: List[TensorPort],
             def training_output_ports(self) -> List[TensorPort]:
                 return training_output_ports
 
+
             def create_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[TensorPort]:
                 return f(shared_resources, *tensors)
 

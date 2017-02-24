@@ -126,15 +126,14 @@ class SingleSupportFixedClassInputs(InputModule):
         train_candidate_vocab.freeze()
         self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
         self.shared_vocab_config.vocab = train_vocab
-        self.shared_vocab_config.config['answer_vocab'] = train_answer_vocab
+        self.answer_vocab = train_answer_vocab
 
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        answer_vocab = self.shared_vocab_config.config['answer_vocab']
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
-                        self.shared_vocab_config.vocab, answer_vocab, use_single_support=True, sepvocab=True)
+                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
 
         xy_dict = {
             Ports.Input.single_support: corpus["support"],
