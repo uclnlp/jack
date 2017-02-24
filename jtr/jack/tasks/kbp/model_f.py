@@ -7,6 +7,7 @@ from jtr.preprocess.map import numpify, deep_map, dynamic_subsample, notokenize
 from jtr.preprocess.vocab import Vocab
 
 from typing import List, Sequence
+from random import shuffle
 
 
 
@@ -18,6 +19,44 @@ from typing import List, Sequence
 #                                    "[num_questions, emb_dim]")
 
 
+
+class ShuffleList:
+    def __init__(self,drawlist):
+        assert len(drawlist)>0
+        self.drawlist = drawlist
+        shuffle(drawlist)
+        self.iter = drawlist.__iter__()
+    def next(self):
+        try:
+            return next(self.iter)
+        except:
+            shuffle(self.drawlist)
+            self.iter = self.drawlist.__iter__()
+            return next(self.iter)
+
+def posnegsample(corpus, answer_key, candidate_key,sl):
+    candidate_dataset = corpus[candidate_key]
+    answer_dataset = corpus[answer_key]
+    new_candidates = []
+    assert (len(candidate_dataset) == len(answer_dataset))
+    for i in range(0, len(candidate_dataset)):
+        candidates = candidate_dataset[i]
+        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
+        posneg = answers
+        avoided = False
+        trial, max_trial = 0, 50
+        while (not avoided and trial < max_trial):
+            samp = sl.next()
+            trial += 1
+            avoided = False if samp in answers else True
+        posneg.append(samp)
+        new_candidates.append(posneg)
+    result = {}
+    result.update(corpus)
+    result[candidate_key] = new_candidates
+    return result
+
+
 class ModelFInputModule(InputModule):
     def __init__(self, shared_resources):
         self.vocab = shared_resources.vocab
@@ -26,6 +65,7 @@ class ModelFInputModule(InputModule):
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
+        self.vocab.freeze()
         return self.shared_resources
 
     def setup(self, shared_resources: SharedResources):
@@ -48,7 +88,9 @@ class ModelFInputModule(InputModule):
         corpus = deep_map(corpus, self.vocab, ['candidates'], cache_fun=True)
         corpus = deep_map(corpus, self.vocab, ['answers'])
         if not test_time:
-            corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
+            sl=ShuffleList(corpus["candidates"][0])
+            corpus=posnegsample(corpus,'answers','candidates',sl)
+            #corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
@@ -106,14 +148,16 @@ class ModelFModelModule(SimpleModelModule):
         with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
                 "embeddings", [len(self.shared_resources.vocab), repr_dim],
-                trainable=True, dtype="float32")
+                trainable=True, dtype="float32",
+                initializer=tf.contrib.layers.xavier_initializer())
 
             embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
             embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
             embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
             candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score))
+            loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score)) + \
+                   tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * 0.0000001 / len(tf.trainable_variables())
             
             return candidate_scores, loss
 
@@ -176,7 +220,7 @@ class KBPReader(JTReader):
 
         if l2 != 0.0:
             loss += \
-                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2 / len(tf.trainable_variables())
 
         if clip is not None:
             gradients = optim.compute_gradients(loss)
