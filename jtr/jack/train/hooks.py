@@ -10,6 +10,12 @@ from typing import List, Tuple, Mapping
 
 import numpy as np
 import tensorflow as tf
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import pandas as pd
+from pylab import subplots_adjust, subplot
+from sklearn.metrics import f1_score
 
 from jtr.jack.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
 
@@ -39,6 +45,7 @@ class TraceHook(TrainingHook):
     def __init__(self, reader, summary_writer=None):
         self._summary_writer = summary_writer
         self._reader = reader
+        self.scores = {}
 
     @property
     def reader(self) -> JTReader:
@@ -57,6 +64,33 @@ class TraceHook(TrainingHook):
                 tf.Summary.Value(tag=title, simple_value=value),
             ])
             self._summary_writer.add_summary(summary, current_step)
+
+    def plot(self, ylim=None):
+        sns.set_style("darkgrid")
+        number_of_subplots=len(self.scores.keys())
+        colors = ['blue', 'green', 'orange']
+        for i, key in enumerate(self.scores):
+            data = self.scores[key][0]
+            time = self.scores[key][1]
+            patch = mpatches.Patch(color=colors[i], label=key)
+            ax1 = subplot(number_of_subplots,1,i+1)
+            ax1.legend(handles=[patch])
+            ax1.plot(time,data, label=key, color=colors[i])
+            if ylim != None:
+                plt.ylim(ymin=ylim[0])
+                plt.ylim(ymax=ylim[1])
+            plt.xlabel('iter')
+            plt.ylabel(key)
+
+        plt.show()
+
+    def add_to_history(self, score_dict, iter_value, epoch):
+        for metric in score_dict:
+            if metric not in self.scores:
+                self.scores[metric] = [[],[],[]]
+            self.scores[metric][0].append(score_dict[metric])
+            self.scores[metric][1].append(self._iter)
+            self.scores[metric][2].append(epoch)
 
 
 class LossHook(TraceHook):
@@ -81,6 +115,7 @@ class LossHook(TraceHook):
         self._acc_loss += loss
         if not self._iter == 0 and self._iter % self._iter_interval == 0:
             loss = self._acc_loss / self._iter_interval
+            super().add_to_history({'Loss' : loss}, self._iter, epoch)
             logger.info("Epoch {}\tIter {}\tLoss {}".format(str(epoch), str(self._iter), str(loss)))
             self.update_summary(self.reader.sess, self._iter, "Loss", loss)
             self._acc_loss = 0
@@ -242,6 +277,8 @@ class EvalHook(TraceHook):
                total number of examples"""
         return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
+
+
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
 
@@ -256,6 +293,7 @@ class EvalHook(TraceHook):
                 metrics[k].append(m[k])
 
         metrics = self.combine_metrics(metrics)
+        super().add_to_history(metrics, self._iter, epoch)
 
         printmetrics = sorted(metrics.keys())
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
@@ -351,7 +389,7 @@ class ClassificationEvalHook(EvalHook):
 
     @property
     def possible_metrics(self) -> List[str]:
-        return ["exact", "f1"]
+        return ["Accuracy", "F1_macro"]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         labels = tensors[Ports.Targets.candidate_idx]
@@ -364,11 +402,10 @@ class ClassificationEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
-        acc_f1 = 0.0
-        acc_exact = 0.0
         acc_exact = np.sum(np.equal(labels, predictions))
+        acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
-        return {"f1": acc_f1, "exact": acc_exact}
+        return {"F1_macro": acc_f1, "Accuracy": acc_exact}
 
 
 
@@ -395,15 +432,15 @@ class KBPEvalHook(EvalHook):
 
         acc_f1 = 0.0
         acc_exact = 0.0
-        
+
         winning_indices = np.argmax(candidate_scores, axis=1)
-        
+
         def len_np_or_list(v):
             if isinstance(v, list):
                 return len(v)
             else:
                 return v.shape[0]
-        
+
         for i in range(len_np_or_list(winning_indices)):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
