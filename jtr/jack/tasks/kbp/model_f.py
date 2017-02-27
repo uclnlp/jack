@@ -1,24 +1,12 @@
-import tensorflow as tf
+# -*- coding: utf-8 -*-
+
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
-from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify, deep_map, dynamic_subsample, notokenize
-from jtr.preprocess.vocab import Vocab
-from jtr.jack.preprocessing import preprocess_with_pipeline
+from jtr.preprocess.map import numpify, deep_map, notokenize
 
 from typing import List, Sequence
 from random import shuffle, choice
-
-
-
-
-#class SimpleKBPPorts:
-#    question_embedding = TensorPort(tf.float32, [None, None],
-#                                    "question_embedding",
-#                                    "embedding for a batch of questions",
-#                                    "[num_questions, emb_dim]")
-
 
 
 class ShuffleList:
@@ -42,6 +30,7 @@ class ShuffleList:
             self.iter = self.drawlist.__iter__()
             return next(self.iter)
 
+
 def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
     question_dataset = corpus[question_key]
     candidate_dataset = corpus[candidate_key]
@@ -55,6 +44,7 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
         posneg = [] + answers
         avoided = False
         trial, max_trial = 0, 50
+        samp = None
         while (not avoided and trial < max_trial):
             samp = sl.next(question)
             trial += 1
@@ -179,7 +169,6 @@ class ModelFModelModule(SimpleModelModule):
             return candidate_scores, loss
 
 
-
 class ModelFOutputModule(OutputModule):
     def setup(self):
         pass
@@ -198,7 +187,6 @@ class ModelFOutputModule(OutputModule):
             score = candidate_scores[index_in_batch, winning_index]
             result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
-
 
 
 class KBPReader(JTReader):
@@ -269,6 +257,3 @@ class KBPReader(JTReader):
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
-
-
-

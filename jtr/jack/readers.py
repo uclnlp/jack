@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from jtr.jack.core import *
 from jtr.jack.train.hooks import XQAEvalHook, ClassificationEvalHook
 
