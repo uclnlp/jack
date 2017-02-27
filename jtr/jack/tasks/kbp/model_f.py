@@ -1,11 +1,9 @@
-import tensorflow as tf
+# -*- coding: utf-8 -*-
+
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
-from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify, deep_map, dynamic_subsample, notokenize
-from jtr.preprocess.vocab import Vocab
-from jtr.jack.preprocessing import preprocess_with_pipeline
+from jtr.preprocess.map import numpify, deep_map, notokenize
 
 from typing import List, Sequence
 from random import shuffle
