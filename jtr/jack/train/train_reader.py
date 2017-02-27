@@ -107,7 +107,7 @@ def main():
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default=None, help='Folder for tensorboard logs')
-    parser.add_argument('--write_metrics_to', default=None,
+    parser.add_argument('--write_metrics_to', default=None, type=str,
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
