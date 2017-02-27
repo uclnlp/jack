@@ -69,10 +69,10 @@ build:
     - script:
         name: Run CPU overfit integration tests
         code: |
-          pytest tests -v -m "(CPU and overfit)"
+          pytest tests -v -m "(overfit)"
 
     - script:
         name: Run CPU small data integration tests
         code: |
-          pytest tests -v -m "(CPU and smalldata)"
+          pytest tests -v -m "(smalldata)"
 
