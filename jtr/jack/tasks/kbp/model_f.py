@@ -8,7 +8,7 @@ from jtr.preprocess.vocab import Vocab
 from jtr.jack.preprocessing import preprocess_with_pipeline
 
 from typing import List, Sequence
-from random import shuffle
+from random import shuffle, choice
 
 
 
@@ -22,32 +22,41 @@ from random import shuffle
 
 
 class ShuffleList:
-    def __init__(self,drawlist):
+    def __init__(self,drawlist,qa):
         assert len(drawlist)>0
+        self.qa = qa
         self.drawlist = drawlist
-        shuffle(drawlist)
-        self.iter = drawlist.__iter__()
-    def next(self):
+        shuffle(self.drawlist)
+        self.iter = self.drawlist.__iter__()
+    def next(self,q):
         try:
-            return next(self.iter)
+            avoided = False
+            trial, max_trial = 0, 50
+            while (not avoided and trial < max_trial):
+                samp = next(self.iter)
+                trial += 1
+                avoided = False if samp in self.qa[q] else True
+            return samp
         except:
             shuffle(self.drawlist)
             self.iter = self.drawlist.__iter__()
             return next(self.iter)
 
-def posnegsample(corpus, answer_key, candidate_key,sl):
+def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
+    question_dataset = corpus[question_key]
     candidate_dataset = corpus[candidate_key]
     answer_dataset = corpus[answer_key]
     new_candidates = []
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
+        question = question_dataset[i][0]
         candidates = candidate_dataset[i]
         answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
-        posneg = answers
+        posneg = [] + answers
         avoided = False
         trial, max_trial = 0, 50
         while (not avoided and trial < max_trial):
-            samp = sl.next()
+            samp = sl.next(question)
             trial += 1
             avoided = False if samp in answers else True
         posneg.append(samp)
@@ -88,9 +97,16 @@ class ModelFInputModule(InputModule):
         corpus = deep_map(corpus, self.vocab, ['question'])
         corpus = deep_map(corpus, self.vocab, ['candidates'], cache_fun=True)
         corpus = deep_map(corpus, self.vocab, ['answers'])
+        qanswers={}
+        for i,q in enumerate(corpus['question']):
+            q0=q[0]
+            if q0 not in qanswers:
+                qanswers[q0]=set()
+            a=corpus["answers"][i]
+            qanswers[q0].add(a)
         if not test_time:
-            sl=ShuffleList(corpus["candidates"][0])
-            corpus=posnegsample(corpus,'answers','candidates',sl)
+            sl=ShuffleList(corpus["candidates"][0],qanswers)
+            corpus=posnegsample(corpus,'question','answers','candidates',sl)
             #corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
@@ -102,7 +118,7 @@ class ModelFInputModule(InputModule):
             Ports.Input.atomic_candidates: corpus["candidates"],
             Ports.Targets.target_index: corpus["answers"]
         }
-        return get_batches(xy_dict)
+        return get_batches(xy_dict, batch_size=self.config['batch_size'])
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
@@ -157,8 +173,8 @@ class ModelFModelModule(SimpleModelModule):
             embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
             candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_mean(tf.nn.softplus(candidate_scores-answer_score)) + \
-                   tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * 0.0000001 / len(tf.trainable_variables())
+            loss = tf.reduce_sum(tf.nn.softplus(candidate_scores-answer_score)) #+ \
+                   #tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * 0.0001 #/ len(tf.trainable_variables())
             
             return candidate_scores, loss
 
@@ -221,7 +237,7 @@ class KBPReader(JTReader):
 
         if l2 != 0.0:
             loss += \
-                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2 / len(tf.trainable_variables())
+                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2 
 
         if clip is not None:
             gradients = optim.compute_gradients(loss)
@@ -234,6 +250,8 @@ class KBPReader(JTReader):
             min_op = optim.apply_gradients(gradients)
         else:
             min_op = optim.minimize(loss)
+        
+        #min_op=tf.train.GradientDescentOptimizer(self.shared_resources.config['learning_rate']).minimize(loss)
 
         # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
