@@ -430,17 +430,17 @@ class KBPEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
+        ports = [Ports.Input.question, Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
     @property
     def possible_metrics(self) -> List[str]:
-        return ["exact", "f1"]
+        return ["exact", "neg_loss"]
 
     @staticmethod
     def preferred_metric_and_best_score():
-            return 'exact', [0.0]
+            return 'neg_loss', [-1000000]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_answers  = tensors[Ports.Targets.target_index]
@@ -448,7 +448,7 @@ class KBPEvalHook(EvalHook):
         candidate_ids    = tensors[Ports.Input.atomic_candidates]
         loss             = tensors[Ports.loss]
 
-        acc_f1 = 0.0
+        neg_loss = 0.0
         acc_exact = 0.0
 
         winning_indices = np.argmax(candidate_scores, axis=1)
@@ -463,9 +463,9 @@ class KBPEvalHook(EvalHook):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
 
-        acc_f1 = -1*len_np_or_list(winning_indices)*loss
+        neg_loss = -100*len_np_or_list(winning_indices)*loss
 
-        return {"f1": acc_f1, "exact": acc_exact}
+        return {"neg_loss": neg_loss, "exact": acc_exact}
     
     
     def at_test_time(self, epoch):
@@ -490,12 +490,13 @@ class KBPEvalHook(EvalHook):
             correct_answers =  predictions[Ports.Targets.target_index]
             candidate_scores = predictions[Ports.Prediction.candidate_scores]
             candidate_ids =    predictions[Ports.Input.atomic_candidates]
-            questions        = predictions[Ports.Targets.target_index]
+            questions        = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
-                q=questions[j]
+                q=questions[j][0]
                 q_cand_scores[q]=candidate_scores[j]
                 q_cand_ids[q]=candidate_ids[j]
-                q_answers[q]=q_answers.get(q,[])
+                if q not in q_answers:
+                    q_answers[q]=[]
                 q_answers[q].append(correct_answers[j])
         
         mean_ap=0
@@ -511,6 +512,7 @@ class KBPEvalHook(EvalHook):
             for r in sorted(ans_ranks):
                 p=answers/r
                 av_p=av_p+p
+                answers+=1
             if len(ans_ranks)>0:
                 av_p=av_p/len(ans_ranks)
             else:
@@ -525,6 +527,10 @@ class KBPEvalHook(EvalHook):
                 f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Mean Average Precision",
                                                   np.round(mean_ap, 5)))
         res += '\t' + self._info
-        logger.info(res)      
-
+        logger.info(res)
+    
+    
+#    def at_epoch_end(self, epoch: int, **kwargs):
+#        if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
+#            self.at_test_time(epoch)
         

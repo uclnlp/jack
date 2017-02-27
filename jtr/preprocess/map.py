@@ -331,7 +331,7 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
     for i in range(0, len(candidate_dataset)):
         candidates = candidate_dataset[i]
         answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
-        new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, avoid=answers, rand=rs))
+        new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, avoid=[], rand=rs))
     result = {}
     result.update(xs)
     result[candidate_key] = new_candidates
