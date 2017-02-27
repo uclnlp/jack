@@ -50,7 +50,7 @@ build:
         name: install
         code: |
           sudo apt-get update
-          sudo apt-get install libtk8.6
+          sudo apt-get -y install libtk8.6
           pip3 install --upgrade tensorflow
           python3 setup.py install
 
