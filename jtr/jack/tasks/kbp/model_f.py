@@ -9,16 +9,6 @@ from typing import List, Sequence
 from random import shuffle
 
 
-
-
-#class SimpleKBPPorts:
-#    question_embedding = TensorPort(tf.float32, [None, None],
-#                                    "question_embedding",
-#                                    "embedding for a batch of questions",
-#                                    "[num_questions, emb_dim]")
-
-
-
 class ShuffleList:
     def __init__(self,drawlist):
         assert len(drawlist)>0
@@ -33,17 +23,19 @@ class ShuffleList:
             self.iter = self.drawlist.__iter__()
             return next(self.iter)
 
+
 def posnegsample(corpus, answer_key, candidate_key,sl):
     candidate_dataset = corpus[candidate_key]
     answer_dataset = corpus[answer_key]
     new_candidates = []
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
-        candidates = candidate_dataset[i]
+        # candidates = candidate_dataset[i]
         answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
         posneg = answers
         avoided = False
         trial, max_trial = 0, 50
+        samp = None
         while (not avoided and trial < max_trial):
             samp = sl.next()
             trial += 1
@@ -87,8 +79,8 @@ class ModelFInputModule(InputModule):
         corpus = deep_map(corpus, self.vocab, ['candidates'], cache_fun=True)
         corpus = deep_map(corpus, self.vocab, ['answers'])
         if not test_time:
-            sl=ShuffleList(corpus["candidates"][0])
-            corpus=posnegsample(corpus,'answers','candidates',sl)
+            sl = ShuffleList(corpus["candidates"][0])
+            corpus = posnegsample(corpus,'answers','candidates',sl)
             #corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
@@ -161,7 +153,6 @@ class ModelFModelModule(SimpleModelModule):
             return candidate_scores, loss
 
 
-
 class ModelFOutputModule(OutputModule):
     def setup(self):
         pass
@@ -180,7 +171,6 @@ class ModelFOutputModule(OutputModule):
             score = candidate_scores[index_in_batch, winning_index]
             result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
-
 
 
 class KBPReader(JTReader):
@@ -249,6 +239,3 @@ class KBPReader(JTReader):
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
-
-
-
