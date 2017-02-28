@@ -543,37 +543,7 @@ class KBPEvalHook(EvalHook):
                                                   np.round(mean_ap, 5)))
         res += '\t' + self._info
         logger.info(res)
-        mean_ap=0
-        qd=0
-        for q in q_answers:
-            cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
-            ans_ranks=[]
-            for a in q_answers[q]:
-                for c, cand in enumerate(q_cand_ids[q]):
-                    if a==cand and cand_ranks[c]<=100 and qa_rank[str(q)+"\t"+str(a)]<=1000: 
-                        ans_ranks.append(cand_ranks[c])
-            av_p=0
-            answers=1
-            for r in sorted(ans_ranks):
-                p=answers/r
-                av_p=av_p+p
-                answers+=1
-            if len(ans_ranks)>0:
-                av_p=av_p/len(ans_ranks)
-                qd=qd+1
-            else:
-                pass
-            mean_ap=mean_ap+av_p
-        mean_ap=mean_ap/qd
-        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
-        res += '\t%s: %.3f' % ("Fudged Mean Average Precision", mean_ap)
-        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Fudged Mean Average Precision", mean_ap)
-        if self._write_metrics_to is not None:
-            with open(self._write_metrics_to, 'a') as f:
-                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Fudged Mean Average Precision",
-                                                  np.round(mean_ap, 5)))
-        res += '\t' + self._info
-        logger.info(res)
+        
 
     def at_epoch_end(self, epoch: int, **kwargs):
         self.epoch += 1

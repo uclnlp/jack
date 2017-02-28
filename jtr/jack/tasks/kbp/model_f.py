@@ -154,17 +154,18 @@ class ModelFModelModule(SimpleModelModule):
         repr_dim = shared_resources.config["repr_dim"]
         with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
-                "embeddings", [len(self.shared_resources.vocab), repr_dim],
+                "embeddings",
                 trainable=True, dtype="float32",
-                initializer=tf.contrib.layers.xavier_initializer())
+                initializer=tf.random_uniform([len(shared_resources.vocab), repr_dim],-.1,.1))
 
             embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
-            embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
-            embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
+            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, atomic_candidates))  # [batch_size, num_candidates, repr_dim]
+            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),1)  # [batch_size, 1, repr_dim]
+            #embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
+            #embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
             candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(candidate_scores-answer_score)) #+ \
-                   #tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * 0.0001 #/ len(tf.trainable_variables())
+            loss = tf.reduce_sum(tf.nn.softplus(candidate_scores-answer_score))
             
             return candidate_scores, loss
 
