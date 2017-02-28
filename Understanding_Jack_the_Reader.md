@@ -61,7 +61,7 @@ We have the following modules with the following functionality:
 ##### Implementing the Input module
 
 1. Implement the `setup_from_data()` method. 
-  - To make things easier you can use the predefined `pipeline()` methods that do tokenization, and vocabulary creating etc
+  - To make things easier you can use the predefined `pipeline()` methods that do tokenization, and vocabulary creating etc. For a more detailed overview of the components of this preprocessing pipeline see the section **Low-level Preprocessing Component Description** at the end of this file
   - Save your vocabulary to a member variable so that it can be accessed during `dataset_generator()`. 
   - Make sure your method has the correct preprocessing behavior for both training set and development set, that is save the relevant vocabularies relevant for both training and test set. Note that order of labels can be different from train and dev set, thus save the word2index mappings for your labels. This is a common error during this step.
 2. Implement the `dataset_generator()` method:
@@ -119,49 +119,79 @@ We have the following modules with the following functionality:
    as setting the default evaluation metric (or rather default evaluation hook) and setting the default reader that is instantiated. Your implementation of your reader should look like the `example_reader()` method
 
 
-# Missing:
-### How to test
-### How to run models (with and without pipeline)
-### Description of sub-components
+### How to Test Jack
+
+Jack has unit tests and integration test. You can run them by running make commands in the main directory. Run `make test` to run the unit tests, and `make overfit` to run some overfit integration test. There are also more thorough integration tests which you can run with `make smalldata` but they will take much more time to run. For more information see (How to test)[./How_to_test.md].
+
+### How to Run Models
+
+You can run models in two different ways: (1) Run the general (/jtr/jack/train/train_reader.py)[./jtr/jack/train/train_reader.py] script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[./notebooks/SNLI.ipynb].
+
+In general you can use (1) for quick experiments and running different kind of models quickly on the same data, that is if you need a pipeline that works in general for a dataset you want the general pipeline (1). If you want to work on a specific dataset with a specific models, or if you want to include some special preprocessing steps then (2) is the best solution. If you are working on a project, it often makes sense to use (2) just for the sake for clarity, that is having more succinct, clear code.
+
+##### How to Use the General Pipeline
+
+1. Specify your model with the `--model`` parameter; you can see a list of models, run `python3 jtr/jack/train/train_reader.py --help`
+2. Specify your data with the `--train`, `--dev` and `--test` parameters.
+3. Add training parameters such as the representation size of your model (`--repr_dim`), and the input representation (embedding size) of your model (`--repr_dim_input`)
+
+##### How to Create Your Own Pipeline
+
+This repeats the steps of (the SNLI example notebook)[./notebooks/SNLI.ipynb], with some intermediate more general steps:
+
+1. Load your data which is in Jack format by loading it with `jtr.jack.core.load_labelled_data()`. This will convert it to the format the your reader class expects
+2. Create a config dictionary with basic parameters (or special parameters for your model): 
+```
+config = {"batch_size": 128, "repr_dim": hidden_dim,
+          "repr_dim_input": embedding_dim, 'dropout' : 0.1}
+``` 
+3. Use the dictionary in (2) to create your reader. If you do not have a pretrained vocabulary, you can just pass in a new, empty Vocab class:
+```
+reader = readers.readers["name_of_your_reader"](Vocab(), config)
+```
+4. Add the loss hook and the standard reader hook:
+```
+hooks = []
+hooks.append(LossHook(reader, iter_interval=10)) # this is the standard loss hook
+hooks.append(readers.eval_hooks['name_of_your_reader'](reader, dev_set, iter_interval=25)) # this is the standard metric hook, defined for your model
+```
+
+5. Add a TensorFlow optimizer
+```
+import tensorflow as tf
+learning_rate = 0.001
+optim = tf.train.AdamOptimizer(learning_rate)
+```
+6. Train the reader:
+```
+# Lets train the reader on the CPU for 2 epochs
+reader.train(optim, train_set,
+             hooks=hooks, max_epochs=2,
+             device='/cpu:0')
+```
+7. We can now plot the training results:
+```
+
+# This plots the loss
+hooks[0].plot()
+# This plots the F1 (macro) score and accuracy between 0 and 1
+hooks[1].plot(ylim=[0.0, 1.0])
+```
 
 
-## A High Level Overview of jtr
-jtr is best understood by going from the high-level function and classes to low-level function and classes. The highest level entry point of jtr is the [training_pipeline.py](./jtr/training_pipeline.py). The training pipeline calls other high-level functions step-by-step, from input data, over preprocessing and data wrangling, to training the selected model. Although the [training_pipeline.py](./jtr/training_pipeline.py) script is more complex, here are some other high level functions and classes which are traversed while going along the pipeline from data to model.
-   The script does step-by-step:
-### 1. Define jtr models
-- [Predefined models](../jtr/nn/models.py) found in jtr.nn.models such as:
-  - Conditional reader: Two bidirectional LSTM over two sequences where the second is conditioned on the final state of the other
-  - Attentive reader: Like conditional reader, but all states are processed with attention so that the most important bits of each of the two sequences are filtered from the unimportant bits. Finally these two streams of filtered information are combined
+### Low-level Component Description
 
-### 2. Parse the input arguments
-- Standard [argparse](https://docs.python.org/3/library/argparse.html). Arguments include: Batchsize, pretrain embeddings, learning rate, l2 penalty, clip value (gradients), dropout, epochs, negative sampling (amount)
-
-### 3. Read the train, dev, and test data
-- Uses [jtr.load.read_jtr.jtr_load](./jtr/load/read_jtr.py) which loads a JSON file in a specific jtr format. To transform your data into this jtr JSON format there exist scripts which wrangle certain data sets into the required format. You can find these data wrangling scripts under the path [jtr/jtr/load/](./jtr/load). The JSON format can be seen as a python dictionary which contains high level names for different kind of data:
-  - Question (Q): Question text or binary relation like (Donald Trump, presidentOf, X)
-  - Support (S): Supportive text passage for the question.
-  - Candidates (C): A corpus may have 10000 entities, but for a question only 10 candidates might be relevant of which 2 are correct, for example all entities in the supporting passage are candidates. Candidates might also refer to all words in the vocabulary (no restrictions).
-  - Answers: The answer or answers to the question or binary relation. This may also be a span like (17, 83) indicating the answer is located between character position 17 and 83 (Stanford SQuAD)
-- At this point in the pipeline one can also load pretrained embeddings and merge them with the vocabulary of the loaded datasets
-
-### 4. Preprocesses the data (tokenize, normalize, add  start and end of sentence tags) via the jtr.pipeline method
-- This is the heaviest and most detailed processing step. In the script this data wrangling and preprocessing pipeline is called with a simple call [jtr.pipelines.pipeline(..)](../jtr/pipelines.py) but behind this method there are several preprocessing steps:
+##### Preprocesses Methods (tokenize, normalize, add sequence length)
+- The pipeline method is the heaviest and most detailed processing step. This method is wrangling and preprocessing data with simple call [jtr.pipelines.pipeline(..)](../jtr/pipelines.py#L115) but behind this method there are several preprocessing steps:
   - [jtr.preprocess.map.deep_map](../jtr/preprocess/map.py): This is a clever method which traverses a dictionary for certain keys and transforms the values of given keys in-place in a very efficient manner. It does this by using a map function to the list of value under the given dictionary keys. It is usually used to transform a list of question strings, into a tokenized version, that is transform it into a list of question word-lists
   - [jtr.preprocess.map.deep_seq_map](../jtr/preprocess/map.py): The sister of deep_map. Also applies a function and transforms the given values under a dictionary keys in-place. The difference is that it applies this functionality on lists of lists (for example tokenized questions). With that we can use this function to do many things:
     - Words -> lower case words
     - Words -> ids (and then use these ids for indices of word embeddings; this is done with the Vocab class below)
+    - Words -> get length of each sentence / sequence, that is a list of sequence lengths for the entire dataset
     - Words -> Pad words with beginning and end of sentence tag, that is
 [Word1, word2, word3] -> [SOS, word1, word2, word3, EOS] would be done with deep map in this way:
 `deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question'])`
   - [Class jtr.preprocess.vocab.Vocab](../jtr/preprocess/vocab.py): This class builds a vocabulary from tokens (usually words) assigns an identifier to each word and maintains this map from id to word and from word to id. This class also works together with pretrained vocabularies which are then extended through more data
 
-### 5. Create NeuralVocab
-- A word to embedding class which manages the training of embedding which optionally may be enriched with some pretrained embeddings. Parameters may be frozen and there are options for a projection layer to reduce the size of the inputs into the next layer and to normalize embeddings to unit norm.
-
-### 6. Create TensorFlow placeholders and initialize model
-### 7. Batch the data via jtr.preprocess.batch.get_feed_dicts
-### 8. Add hooks
-- [Hooks](../jtr/util/hooks.py) are functions which are invoked after either the end of an iteration or the end of an epoch. They usually print some information (loss value, time taken this epoch, ETA until the model is fully trained, statistics of certain tensors like weights) and save this information to the TensorFlow summary writer so that these data can be visualized via TensorBoard.
-
-### 9. Train the model
-- Calls [jtr.train.train(..)](../jtr/train.py) with everything which was constructed in the previous steps such as the batched data, the model, the hooks, and the parameters.
+##### Vocab and NeuralVocab
+The (Vocab)[.jtr/preprocess/vocab.py#12] and (NeuralVocab)[.jtr/preprocess/vocab.py#327] classes deal with vocabulary and word embedding processing and management. Vocab saves vocabulary, manages new vocabulary with pretrained vocabulary (so that you can train new words not contained in pretrained embeddings). The NeuralVocab class is a class that holds the embedding matrix and handles index-to-embedding-tensor-conversion and out-of-vocabulary (OOV) words. There is also an option for projection layer to reduce the size of the inputs into the next layer and to normalize embeddings to unit norm.

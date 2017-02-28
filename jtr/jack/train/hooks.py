@@ -262,7 +262,6 @@ class EvalHook(TraceHook):
         self._metrics = metrics or self.possible_metrics
         self._side_effect = side_effect
         self._side_effect_state = None
-        print(self._write_metrics_to)
 
     @abstractproperty
     def possible_metrics(self) -> List[str]:
