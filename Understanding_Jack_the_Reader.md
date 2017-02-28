@@ -26,7 +26,7 @@ This design introduces more boilerplate in each of the modules and can make exte
 
 ### 3+1: The Three Types of Modules (Plus One)
 We have the following modules with the following functionality:
-- InputModule: Takes some file in Jack-format (JSON file containing (1) question, (2) support (optional), (3) answer) and preprocesses the data to TensorFlow CPU tensors. This step may involve tokenizing, negative sampling (creating corrupted examples), creating vocabularies, creating word embeddings (optional: using pretraining embeddings for part of the data)
+- InputModule: Takes some file in Jack-format (JSON file containing (1) question, (2) support (optional), (3) candidates (optional), (4) answer and preprocesses the data to TensorFlow CPU tensors. This step may involve tokenizing, negative sampling (creating corrupted examples), creating vocabularies, creating word embeddings (optional: using pretraining embeddings for part of the data)
 - ModelModule: Takes TensorFlow inputs (usually word indices for word embeddings), transfers it to the GPU, runs a more or less complex model (from logistic regression to dual bidirectional LSTMs over question and support with word by word attention) to then produce some outputs
 - OutputModule: This takes numpy arrays as input as generated from the ModelModule to perform complex output, such as beam search for text generation, computing top 10/100/1000 retrieval scores and more
 - Hooks: These take any input from the previous Modules and compute a metric on the dataset that is passed to them. For example to compute the F1 score for the development or validation set. Hooks can also be used to generated plots from these data, or to save a model based on its validation score.
@@ -125,7 +125,7 @@ Jack has unit tests and integration test. You can run them by running make comma
 
 ### How to Run Models
 
-You can run models in two different ways: (1) Run the general (/jtr/jack/train/train_reader.py)[./jtr/jack/train/train_reader.py] script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[./notebooks/SNLI.ipynb].
+You can run models in two different ways: (1) Run the general [/jtr/jack/train/train_reader.py](./jtr/jack/train/train_reader.py) script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[./notebooks/SNLI.ipynb].
 
 In general you can use (1) for quick experiments and running different kind of models quickly on the same data, that is if you need a pipeline that works in general for a dataset you want the general pipeline (1). If you want to work on a specific dataset with a specific models, or if you want to include some special preprocessing steps then (2) is the best solution. If you are working on a project, it often makes sense to use (2) just for the sake for clarity, that is having more succinct, clear code.
 
