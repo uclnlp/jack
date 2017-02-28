@@ -11,7 +11,7 @@ from random import shuffle, choice
 
 class ShuffleList:
     def __init__(self,drawlist,qa):
-        assert len(drawlist)>0
+        assert len(drawlist) > 0
         self.qa = qa
         self.drawlist = drawlist
         shuffle(self.drawlist)
@@ -20,7 +20,8 @@ class ShuffleList:
         try:
             avoided = False
             trial, max_trial = 0, 50
-            while (not avoided and trial < max_trial):
+            samp = None
+            while not avoided and trial < max_trial:
                 samp = next(self.iter)
                 trial += 1
                 avoided = False if samp in self.qa[q] else True
@@ -83,21 +84,21 @@ class ModelFInputModule(InputModule):
             corpus["candidates"].append(x.atomic_candidates)
             assert len(y) == 1
             corpus["answers"].append(y[0].text)
-        corpus =deep_map(corpus, notokenize, ['question'])
+        corpus = deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.vocab, ['question'])
         corpus = deep_map(corpus, self.vocab, ['candidates'], cache_fun=True)
         corpus = deep_map(corpus, self.vocab, ['answers'])
-        qanswers={}
+        qanswers = {}
         for i,q in enumerate(corpus['question']):
             q0=q[0]
             if q0 not in qanswers:
-                qanswers[q0]=set()
-            a=corpus["answers"][i]
+                qanswers[q0] = set()
+            a = corpus["answers"][i]
             qanswers[q0].add(a)
         if not test_time:
-            sl=ShuffleList(corpus["candidates"][0],qanswers)
-            corpus=posnegsample(corpus,'question','answers','candidates',sl)
-            #corpus=dynamic_subsample(corpus,'candidates','answers',how_many=1)
+            sl = ShuffleList(corpus["candidates"][0], qanswers)
+            corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
+            #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
@@ -163,9 +164,9 @@ class ModelFModelModule(SimpleModelModule):
             embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
             candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(candidate_scores-answer_score)) #+ \
-                   #tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * 0.0001 #/ len(tf.trainable_variables())
-            
+            loss = tf.reduce_sum(tf.nn.softplus(candidate_scores-answer_score))
+            # loss += tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * 0.0001
+
             return candidate_scores, loss
 
 
@@ -219,8 +220,6 @@ class KBPReader(JTReader):
             # First setup shared resources, e.g., vocabulary. This depends on the input module.
             self.setup_from_data(training_set)
 
-        #batches = self.input_module.dataset_generator(training_set, is_eval=False)
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
         if l2 != 0.0:
@@ -238,8 +237,6 @@ class KBPReader(JTReader):
             min_op = optim.apply_gradients(gradients)
         else:
             min_op = optim.minimize(loss)
-        
-        #min_op=tf.train.GradientDescentOptimizer(self.shared_resources.config['learning_rate']).minimize(loss)
 
         # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
