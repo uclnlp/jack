@@ -469,7 +469,7 @@ class KBPEvalHook(EvalHook):
         return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
     
     
-    def at_test_time(self, epoch):
+    def at_test_time(self, epoch, vocab=None):
         from scipy.stats import rankdata
         from numpy import asarray
         
@@ -513,7 +513,9 @@ class KBPEvalHook(EvalHook):
         for i,qa_id in enumerate(qa_ids):
             qa_rank[qa_id]=qa_ranks[i]
         mean_ap=0
+        wmap=0
         qd=0
+        md=0
         for q in q_answers:
             cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
             ans_ranks=[]
@@ -528,12 +530,15 @@ class KBPEvalHook(EvalHook):
                 av_p=av_p+p
                 answers+=1
             if len(ans_ranks)>0:
+                wmap=wmap+av_p
+                md=md+len(ans_ranks)
                 av_p=av_p/len(ans_ranks)
                 qd=qd+1
             else:
                 pass
             mean_ap=mean_ap+av_p
         mean_ap=mean_ap/len(q_answers)
+        wmap=wmap/md
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
         res += '\t%s: %.3f' % ("Mean Average Precision", mean_ap)
         self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Mean Average Precision", mean_ap)
@@ -543,6 +548,30 @@ class KBPEvalHook(EvalHook):
                                                   np.round(mean_ap, 5)))
         res += '\t' + self._info
         logger.info(res)
+        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        res += '\t%s: %.3f' % ("Weighted Mean Average Precision", wmap)
+        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Weighted Mean Average Precision", wmap)
+        if self._write_metrics_to is not None:
+            with open(self._write_metrics_to, 'a') as f:
+                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Weighted Mean Average Precision",
+                                                  np.round(wmap, 5)))
+        res += '\t' + self._info
+        logger.info(res)
+        #lost=set()
+        #with open("data/NYT/predict.txt","w") as w:
+        #    for qa_id, qa_score in qa_sorted:
+        #        q,a=qa_id.split("\t")
+        #        r=vocab.get_sym(int(q))
+        #        try:
+        #            e1,e2=vocab.get_sym(int(a)).lstrip("(").rstrip(")").split("|||")
+        #        except:
+        #            lost.add(r)
+        #        lost.add(r)
+        #        line="\t".join([str(qa_score),e1,e2,"REL$NA",r])+"\n"
+        #        w.write(line)
+        #    for r in lost:
+        #        print(r)
+       
         
 
     def at_epoch_end(self, epoch: int, **kwargs):
