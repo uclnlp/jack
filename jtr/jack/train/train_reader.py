@@ -18,8 +18,25 @@ from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.load.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.preprocess.vocab import Vocab
+import jtr.jack.readers as readers
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
+
+if len(sys.argv) > 1:
+    print_help = sys.argv[1] == '--help'
+
+help_message = '''1. Specify your model with the `--model`` parameter; you can see a list of models in
+2. Specify your data with the `--train`, `--dev` and `--test` parameters.
+3. Add training parameters such as the representation size of your model (`--repr_dim`),
+   and the input representation (embedding size) of your
+   model(`--repr_dim_input`)\n\n'''
+help_message += 'Existing models:\n\n'
+for reader in readers.readers.keys():
+    help_message += '\t' + reader + '\n'
+
+if print_help:
+    print(help_message)
+    sys.exit()
 
 
 class Duration(object):
@@ -40,11 +57,12 @@ def main():
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
-    train_default = 'tests/test_data/SNLI/SNLI-train.json'
-    dev_default = 'tests/test_data/SNLI/SNLI-dev.json'
-    test_default = 'tests/test_data/SNLI/SNLI-test.json'
+    train_default = 'tests/test_data/SNLI/train.json'
+    dev_default = 'tests/test_data/SNLI/dev.json'
+    test_default = 'tests/test_data/SNLI/test.json'
 
-    parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader')
+    parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader',
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--debug', action='store_true',
                         help="Run in debug mode, in which case the training file is also used for testing")
 
@@ -120,7 +138,6 @@ def main():
             "answer does the output have. Used for classification."))
 
     args = parser.parse_args()
-    print(args.write_metrics_to)
 
     # make everything deterministic
     random.seed(args.seed)
@@ -168,7 +185,7 @@ def main():
         else:
             embeddings=Embeddings(None,None)
 
-    emb = embeddings #if args.pretrain else None
+    emb = embeddings
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
