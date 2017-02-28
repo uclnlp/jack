@@ -430,16 +430,17 @@ class KBPEvalHook(EvalHook):
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
         ports = [Ports.Input.question, Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
+        self.epoch = 0
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
     @property
     def possible_metrics(self) -> List[str]:
-        return ["exact", "neg_loss"]
+        return ["exact", "epoch"]
 
     @staticmethod
     def preferred_metric_and_best_score():
-            return 'neg_loss', [-1000000]
+            return 'epoch', [0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_answers  = tensors[Ports.Targets.target_index]
@@ -462,13 +463,14 @@ class KBPEvalHook(EvalHook):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
 
-        neg_loss = -100*len_np_or_list(winning_indices)*loss
+        neg_loss = -1*len_np_or_list(winning_indices)*loss
 
-        return {"neg_loss": neg_loss, "exact": acc_exact}
+        return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
     
     
     def at_test_time(self, epoch):
         from scipy.stats import rankdata
+        from numpy import asarray
         
         logger.info("Started evaluation %s" % self._info)
 
@@ -484,6 +486,8 @@ class KBPEvalHook(EvalHook):
         q_cand_scores={}
         q_cand_ids={}
         q_answers={}
+        qa_scores=[]
+        qa_ids=[]
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
             correct_answers =  predictions[Ports.Targets.target_index]
@@ -495,16 +499,26 @@ class KBPEvalHook(EvalHook):
                 q_cand_scores[q]=candidate_scores[j]
                 q_cand_ids[q]=candidate_ids[j]
                 if q not in q_answers:
-                    q_answers[q]=[]
-                q_answers[q].append(correct_answers[j])
-        
+                    q_answers[q]=set()
+                q_answers[q].add(correct_answers[j])
+        for q in q_cand_ids:
+            for k,c in enumerate(q_cand_ids[q]):
+                qa=str(q)+"\t"+str(c)
+                qa_ids.append(qa)
+                qa_scores.append(q_cand_scores[q][k])
+        qa_ranks=rankdata(-1*asarray(qa_scores),method="min")
+        qa_rank={}
+        qa_sorted=sorted(zip(qa_ids,qa_scores),key=lambda x: x[1]*-1)
+        for i,qa_id in enumerate(qa_ids):
+            qa_rank[qa_id]=qa_ranks[i]
         mean_ap=0
+        qd=0
         for q in q_answers:
             cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
             ans_ranks=[]
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
-                    if a==cand:
+                    if a==cand and cand_ranks[c]<=100:# and qa_rank[str(q)+"\t"+str(a)]<=1000: 
                         ans_ranks.append(cand_ranks[c])
             av_p=0
             answers=1
@@ -514,8 +528,9 @@ class KBPEvalHook(EvalHook):
                 answers+=1
             if len(ans_ranks)>0:
                 av_p=av_p/len(ans_ranks)
+                qd=qd+1
             else:
-                print(q)
+                pass
             mean_ap=mean_ap+av_p
         mean_ap=mean_ap/len(q_answers)
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
@@ -527,6 +542,42 @@ class KBPEvalHook(EvalHook):
                                                   np.round(mean_ap, 5)))
         res += '\t' + self._info
         logger.info(res)
+        mean_ap=0
+        qd=0
+        for q in q_answers:
+            cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
+            ans_ranks=[]
+            for a in q_answers[q]:
+                for c, cand in enumerate(q_cand_ids[q]):
+                    if a==cand and cand_ranks[c]<=100 and qa_rank[str(q)+"\t"+str(a)]<=1000: 
+                        ans_ranks.append(cand_ranks[c])
+            av_p=0
+            answers=1
+            for r in sorted(ans_ranks):
+                p=answers/r
+                av_p=av_p+p
+                answers+=1
+            if len(ans_ranks)>0:
+                av_p=av_p/len(ans_ranks)
+                qd=qd+1
+            else:
+                pass
+            mean_ap=mean_ap+av_p
+        mean_ap=mean_ap/qd
+        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        res += '\t%s: %.3f' % ("Fudged Mean Average Precision", mean_ap)
+        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Fudged Mean Average Precision", mean_ap)
+        if self._write_metrics_to is not None:
+            with open(self._write_metrics_to, 'a') as f:
+                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Fudged Mean Average Precision",
+                                                  np.round(mean_ap, 5)))
+        res += '\t' + self._info
+        logger.info(res)
+
+    def at_epoch_end(self, epoch: int, **kwargs):
+        self.epoch += 1
+        if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
+            self.__call__(epoch)
     
     
 #    def at_epoch_end(self, epoch: int, **kwargs):

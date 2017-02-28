@@ -185,7 +185,7 @@ def main():
         else:
             embeddings=Embeddings(None,None)
 
-    emb = embeddings #if args.pretrain else None
+    emb = embeddings
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
