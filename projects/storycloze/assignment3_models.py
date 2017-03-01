@@ -6,11 +6,11 @@ import tensorflow as tf
 def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1, dropout=0.0):
     # Placeholders
     # [batch_size x max_length]
-    story = tf.placeholder(tf.int64, [None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None], "story")
     # [batch_size]
-    story_length = tf.placeholder(tf.int64, [None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None], "story_length")
     # [batch_size]
-    order = tf.placeholder(tf.int64, [None], "order")
+    order = tf.placeholder(tf.int32, [None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -66,11 +66,11 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
                     dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x max_length]
-    story = tf.placeholder(tf.int64, [None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None], "story")
     # [batch_size]
-    story_length = tf.placeholder(tf.int64, [None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None], "story_length")
     # [batch_size x 5]
-    order = tf.placeholder(tf.int64, [None, None], "order")
+    order = tf.placeholder(tf.int32, [None, None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -136,11 +136,11 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
                         layers=1, dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x 5 x max_length]
-    story = tf.placeholder(tf.int64, [None, None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None, None], "story")
     # [batch_size x 5]
-    story_length = tf.placeholder(tf.int64, [None, None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None, None], "story_length")
     # [batch_size x 5]
-    order = tf.placeholder(tf.int64, [None, None], "order")
+    order = tf.placeholder(tf.int32, [None, None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -226,11 +226,11 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
                    layers=1, dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x 5 x max_length]
-    story = tf.placeholder(tf.int64, [None, None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None, None], "story")
     # [batch_size x 5]
-    story_length = tf.placeholder(tf.int64, [None, None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None, None], "story_length")
     # [batch_size x 5]
-    order = tf.placeholder(tf.int64, [None, None], "order")
+    order = tf.placeholder(tf.int32, [None, None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
