@@ -23,7 +23,7 @@ class TestDatasets(object):
     @staticmethod
     def generate_SNLI():
         snli_path = 'tests/test_data/SNLI/'
-        splits = ['SNLI-train.json', 'SNLI-dev.json', 'SNLI-test.json']
+        splits = ['train.json', 'dev.json', 'test.json']
         snli_data = []
         for split in splits:
             path = os.path.join(snli_path, split)
@@ -700,6 +700,15 @@ class JTReader:
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
+
+    def process_outputs(self, dataset : List[Tuple[QASetting, Answer]]):
+        batches = self.input_module.dataset_generator(dataset, is_eval=False)
+        for j, batch in enumerate(batches):
+            output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
+            answers = self.output_module(dataset, *[output_module_input[p] for p in self.output_module.input_ports])
+
+        return answers
+
 
     def train(self, optim,
               training_set: List[Tuple[QASetting, Answer]],

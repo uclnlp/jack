@@ -13,6 +13,7 @@ from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFix
 
 from typing import List, Tuple, Dict, Mapping
 import tensorflow as tf
+import numpy as np
 
 
 class SimpleMCInputModule(InputModule):
@@ -287,4 +288,67 @@ class EmptyOutputModule(OutputModule):
     def load(self, path):
         pass
 
+def softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x, 1).reshape(-1,1))
+    return e_x / e_x.sum(1).reshape(-1,1)
+
+class MisclassificationOutputModule(OutputModule):
+
+    def __init__(self, interval, limit=100):
+        self.lower, self.upper = interval
+        self.limit = limit
+        self.i = 0
+
+    @property
+    def input_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.candidate_scores,
+                Ports.Prediction.candidate_idx,
+                Ports.Targets.candidate_idx]
+
+    def __call__(self, inputs: List[QASetting],
+            candidate_scores,
+            candidate_idx,
+            labels) -> List[Answer]:
+        if self.i >= self.limit: return
+
+
+        class2idx = {}
+        idx2class = {}
+
+        candidate_scores = softmax(candidate_scores)
+        num_classes = candidate_scores.shape[1]
+        for i, (right_idx, predicted_idx) in enumerate(zip(labels, candidate_idx)):
+            qa, answer = inputs[i]
+            answer = answer[0]
+            #if answer.text not in class2idx:
+            #    class2idx[answer.text] = right_idx
+            #    idx2class[right_idx] = answer.text
+            #print(len(class2idx), num_classes, idx2class)
+            #if len(class2idx) < num_classes: continue
+            #if self.i >= self.limit: continue
+            #if right_idx == predicted_idx: continue
+            #score = candidate_scores[i][right_idx]
+            #if score < self.upper and score > self.lower:
+            #    self.i += 1
+            #    print('#'*75)
+            #    print('Question: {0}'.format(qa.question))
+            #    print('Support: {0}'.format(qa.support))
+            #    print('Answer: {0}'.format(answer.text))
+            #    print('-'*75)
+            #    print('Predicted class: {0}'.format(
+            #        idx2class[predicted_idx]))
+            #    print('Predictions: {0}'.format(
+            #        [(idx2class[b], a) for a,b in
+            #            zip(candidate_scores[i],candidate_idx[i])]))
+            #    print('#'*75 + '\n')
+
+    def setup(self):
+        pass
+
+    def store(self, path):
+        pass
+
+    def load(self, path):
+        pass
 

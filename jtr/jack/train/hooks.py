@@ -301,7 +301,6 @@ class EvalHook(TraceHook):
         for m in printmetrics:
             res += '\t%s: %.3f' % (m, metrics[m])
             self.update_summary(self.reader.sess, self._iter, self._info + '_' + m, metrics[m])
-            print(self._write_metrics_to)
             if self._write_metrics_to is not None:
                 with open(self._write_metrics_to, 'a') as f:
                     f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
@@ -387,7 +386,6 @@ class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        print(write_metrics_to)
 
         ports = [Ports.Prediction.candidate_scores,
                  Ports.Prediction.candidate_idx,
