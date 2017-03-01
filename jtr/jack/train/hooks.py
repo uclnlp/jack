@@ -69,30 +69,30 @@ class TraceHook(TrainingHook):
         sns.set_style("darkgrid")
         number_of_subplots=len(self.scores.keys())
         colors = ['blue', 'green', 'orange']
-        for i, key in enumerate(self.scores):
-            data = self.scores[key][0]
-            time = self.scores[key][1]
-            if isinstance(data, dict):
-                # TODO add more plots here for train and def set
-            patch = mpatches.Patch(color=colors[i], label=key)
-            ax1 = subplot(number_of_subplots,1,i+1)
-            ax1.legend(handles=[patch])
-            ax1.plot(time,data, label=key, color=colors[i])
-            if ylim != None:
-                plt.ylim(ymin=ylim[0])
-                plt.ylim(ymax=ylim[1])
-            plt.xlabel('iter')
-            plt.ylabel(key)
+        patches = []
+        for plot_idx, metric in enumerate(self.scores):
+            for i, set_name in enumerate(self.scores[metric].keys()):
+                data = self.scores[metric][set_name][0]
+                time = self.scores[metric][set_name][1]
+                patches.append(mpatches.Patch(color=colors[i], label='{0} {1}'.format(set_name, metric)))
+                ax1 = subplot(number_of_subplots,1,plot_idx+1)
+                ax1.plot(time,data, label='{0}'.format(metric), color=colors[i])
+                if ylim != None:
+                    plt.ylim(ymin=ylim[0])
+                    plt.ylim(ymax=ylim[1])
+                plt.xlabel('iter')
+                plt.ylabel('{0} {1}'.format(set_name, metric))
+        ax1.legend(handles=patches)
 
         plt.show()
 
-    def add_to_history(self, score_dict, iter_value, epoch):
+    def add_to_history(self, score_dict, iter_value, epoch, set_name='train'):
         for metric in score_dict:
-            if metric not in self.scores:
-                self.scores[metric] = [[],[],[]]
-            self.scores[metric][0].append(score_dict[metric])
-            self.scores[metric][1].append(self._iter)
-            self.scores[metric][2].append(epoch)
+            if metric not in self.scores: self.scores[metric] = {}
+            if set_name not in self.scores[metric]: self.scores[metric][set_name] = [[],[],[]]
+            self.scores[metric][set_name][0].append(score_dict[metric])
+            self.scores[metric][set_name][1].append(iter_value)
+            self.scores[metric][set_name][2].append(epoch)
 
 
 class LossHook(TraceHook):
@@ -108,7 +108,7 @@ class LossHook(TraceHook):
 
     def at_iteration_end(self, epoch, loss, set_name = 'train', **kwargs):
         """Prints the loss, epoch, and #calls; adds it to the summary. Loss should be batch normalized."""
-        print(set_name)
+        print(loss, set_name)
         if self._iter_interval is None: return loss
         if set_name not in self._acc_loss:
             self._acc_loss[set_name] = 0.0
@@ -123,8 +123,8 @@ class LossHook(TraceHook):
 
         if not self._iter[set_name] == 0 and self._iter[set_name] % self._iter_interval == 0:
             loss = self._acc_loss[set_name] / self._iter_interval
-            super().add_to_history({'{0} loss'.format(set_name) : loss},
-                    self._iter[set_name], epoch)
+            super().add_to_history({'loss' : loss,},
+                    self._iter[set_name], epoch, set_name)
             logger.info("Epoch {0}\tIter {1}\t{3} loss {2}".format(epoch,
                 self._iter[set_name], loss, set_name))
             self.update_summary(self.reader.sess, self._iter[set_name], "{0} loss".format(set_name), loss)

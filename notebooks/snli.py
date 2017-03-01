@@ -6,7 +6,6 @@ from jtr.jack.tasks.mcqa.simple_mcqa import MisclassificationOutputModule
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 os.chdir('..')
-print(os.getcwd())
 
 import jtr.jack.readers as readers
 print("Existing models:\n%s" % ", ".join(readers.readers.keys()))
@@ -15,7 +14,7 @@ from jtr.preprocess.vocab import Vocab
 # Create example reader with a basic config
 embedding_dim = 128
 config = {"batch_size": 128, "repr_dim": 128, "repr_dim_input": embedding_dim,
-        'dropout' : 0.1}
+        'dropout' : 0.0}
 reader = readers.readers["snli_reader"](Vocab(), config)
 
 # Loaded some test data to work on
@@ -38,7 +37,7 @@ optim = tf.train.AdamOptimizer(learning_rate)
 
 # Lets train the reader on the CPU for 2 epochs
 reader.train(optim, train,
-             hooks=hooks, max_epochs=5,
+             hooks=hooks, max_epochs=30,
              device='/cpu:0', dev_set = dev)
 
 #hooks[0].plot()
