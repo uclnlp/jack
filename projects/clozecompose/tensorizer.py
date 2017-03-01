@@ -450,7 +450,7 @@ def create_softmax_loss(scores, target_values):
     :param target_values: [batch_size, num_candidates] vector of 0/1 target values.
     :return: [batch_size] vector of losses (or single number of total loss).
     """
-    return tf.nn.softmax_cross_entropy_with_logits(scores, target_values)
+    return tf.nn.softmax_cross_entropy_with_logits(logits=scores, labels=target_values)
 
 
 def accuracy_multi(gold, guess):

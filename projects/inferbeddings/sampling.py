@@ -17,7 +17,7 @@ def random_truncated_exponential(w, num_samples):
     # w: [num_rows, dim]
     # returns: [num_samples, num_rows, dim] batch of samples drawn from a truncated exponential over [0,1] using w
     # as parameter
-    shape = tf.concat(0, ((num_samples,), tf.shape(w)))  # [num_samples, num_rows, dim]
+    shape = tf.concat(((num_samples,), tf.shape(w)), 0)  # [num_samples, num_rows, dim]
     f1 = tf.minimum(w, -eps)
     f2 = tf.maximum(w, eps)
     is_neg = tf.to_float(tf.less(w, 0.0))

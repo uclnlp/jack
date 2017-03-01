@@ -1,6 +1,6 @@
 from typing import List
 
-from jtr.jack import *
+from jtr.jack.core import *
 
 
 def simple_model_module(input_ports: List[TensorPort],
@@ -36,6 +36,7 @@ def simple_model_module(input_ports: List[TensorPort],
             def training_output_ports(self) -> List[TensorPort]:
                 return training_output_ports
 
+
             def create_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> List[TensorPort]:
                 return f(shared_resources, *tensors)
 
@@ -53,24 +54,3 @@ def no_shared_resources(f):
         return f(*tensors)
 
     return g
-
-#
-# @model_module([Ports.single_support,
-#                Ports.question,
-#                Ports.atomic_candidates], [Ports.candidate_scores])
-# def average_model_multi_choice(supports: tf.Tensor,
-#                                question: tf.Tensor,
-#                                candidates: tf.Tensor) -> List[tf.Tensor]:
-#     return None, None
-#
-#
-# @model_module_factory([Ports.single_support,
-#                        Ports.question,
-#                        Ports.atomic_candidates], [Ports.candidate_scores, Ports.loss])
-# def model_multi_choice(pooling_op):
-#     def model(supports: tf.Tensor,
-#               question: tf.Tensor,
-#               candidates: tf.Tensor) -> List[tf.Tensor]:
-#         return None
-#
-#     return model

@@ -237,11 +237,11 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
     batch_size = tf.shape(story)[0]
 
     # 5 times [batch_size x max_length]
-    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(1, 5, story)]
+    sentences = [tf.reshape(x, [batch_size, -1]) for x in tf.split(story, 5, 1)]
 
     # 5 times [batch_size]
     lengths = [tf.reshape(x, [batch_size])
-               for x in tf.split(1, 5, story_length)]
+               for x in tf.split(story_length, 5, 1)]
 
     # Word embeddings
     if nvocab is None:

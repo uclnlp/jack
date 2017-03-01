@@ -141,7 +141,7 @@ class LowRankLog:
 
         # def dot3(arg1, rel, arg2):
         #     return tf.matmul(arg1 * arg2, rel, transpose_b=True)  # [num_samples, num_preds]
-        tf.batch_matmul
+        tf.matmul
         def dot3(arg1, rel, arg2):
             return tf.reduce_sum(arg1 * rel * arg2, 2)
 

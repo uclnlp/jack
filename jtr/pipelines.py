@@ -114,7 +114,7 @@ def _create_vocab(corpus, keys, vocab=None, emb=None, unk=Vocab.DEFAULT_UNK, low
 # this is the general jtr pipeline
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
              emb=None, freeze=False, normalize=False, tokenization=True, lowercase=True,
-             negsamples=0, sepvocab=True, test_time=False):
+             negsamples=0, sepvocab=True, test_time=False, cache_fun=False, map_to_target=True):
     vocab = vocab or Vocab(emb=emb)
     if sepvocab == True:
         target_vocab = target_vocab or Vocab(unk=None)
@@ -142,8 +142,8 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     if not test_time:
         corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
-    corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'])
-    if not test_time:
+    corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'], cache_fun=cache_fun)
+    if map_to_target and not test_time:
         corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
     #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
     #todo: there is no guarantee that these are the same)

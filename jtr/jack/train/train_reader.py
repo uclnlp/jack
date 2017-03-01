@@ -14,12 +14,29 @@ import tensorflow as tf
 from tensorflow.python.client import device_lib
 
 import jtr.jack.readers as readers
-from jtr.jack import load_labelled_data
+from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
-from jtr.load.embeddings.embeddings import load_embeddings
+from jtr.load.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.preprocess.vocab import Vocab
+import jtr.jack.readers as readers
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
+
+if len(sys.argv) > 1:
+    print_help = sys.argv[1] == '--help'
+
+help_message = '''1. Specify your model with the `--model`` parameter; you can see a list of models in
+2. Specify your data with the `--train`, `--dev` and `--test` parameters.
+3. Add training parameters such as the representation size of your model (`--repr_dim`),
+   and the input representation (embedding size) of your
+   model(`--repr_dim_input`)\n\n'''
+help_message += 'Existing models:\n\n'
+for reader in readers.readers.keys():
+    help_message += '\t' + reader + '\n'
+
+if print_help:
+    print(help_message)
+    sys.exit()
 
 
 class Duration(object):
@@ -36,15 +53,16 @@ checkpoint = Duration()
 
 
 def main():
-    # Please add new models to readers when they work
-
     support_alts = {'none', 'single', 'multiple'}
     question_alts = answer_alts = {'single', 'multiple'}
     candidate_alts = {'open', 'per-instance', 'fixed'}
 
-    train_default = dev_default = test_default = 'tests/test_data/sentihood/overfit.json'
+    train_default = 'tests/test_data/SNLI/train.json'
+    dev_default = 'tests/test_data/SNLI/dev.json'
+    test_default = 'tests/test_data/SNLI/test.json'
 
-    parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader')
+    parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader',
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--debug', action='store_true',
                         help="Run in debug mode, in which case the training file is also used for testing")
 
@@ -52,7 +70,7 @@ def main():
                         help="If in debug mode, how many examples should be used (default 2000)")
     parser.add_argument('--train', default=train_default, type=str, help="jtr training file")
     parser.add_argument('--dev', default=dev_default, type=str, help="jtr dev file")
-    parser.add_argument('--test', default='', type=str, help="jtr test file")
+    parser.add_argument('--test', default=test_default, type=str, help="jtr test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts),
                         help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts),
@@ -65,10 +83,12 @@ def main():
                         type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
                         type=int, help="Batch size for development data, default 128")
-    parser.add_argument('--repr_dim_input', default=100, type=int,
-                        help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
-    parser.add_argument('--repr_dim', default=100, type=int,
-                        help="Size of the hidden representations, default 100")
+    parser.add_argument('--repr_dim_input', default=128, type=int,
+                        help=("Size of the input representation (embeddings),",
+                        "default 128 (embeddings cut off or extended if not",
+                        "matched with pretrained embeddings)"))
+    parser.add_argument('--repr_dim', default=128, type=int,
+                        help="Size of the hidden representations, default 128")
 
     parser.add_argument('--pretrain', action='store_true',
                         help="Use pretrained embeddings, by default the initialisation is random")
@@ -90,7 +110,7 @@ def main():
     parser.add_argument('--vocab_minfreq', default=2, type=int)
     parser.add_argument('--vocab_sep', default=True, type=bool,
                         help='Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods.')
-    parser.add_argument('--model', default='fastqa_reader', choices=sorted(readers.readers.keys()),
+    parser.add_argument('--model', default='snli_reader', choices=sorted(readers.readers.keys()),
                         help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--learning_rate_decay', default=0.5, type=float, help="Learning rate decay, default 0.5")
@@ -105,7 +125,7 @@ def main():
     parser.add_argument('--negsamples', default=0, type=int,
                         help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default=None, help='Folder for tensorboard logs')
-    parser.add_argument('--write_metrics_to', default='',
+    parser.add_argument('--write_metrics_to', default=None, type=str,
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
@@ -113,7 +133,9 @@ def main():
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
     parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
-    parser.add_argument('--seed', default=63783, type=int, help="Seed for rngs.")
+    parser.add_argument('--seed', default=325, type=int, help="Seed for rngs.")
+    parser.add_argument('--answer_size', default=3, type=int, help=("How many ",
+            "answer does the output have. Used for classification."))
 
     args = parser.parse_args()
 
@@ -150,6 +172,8 @@ def main():
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
+        else:
+            embeddings=Embeddings(None,None)
     else:
         train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
         test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
@@ -158,8 +182,10 @@ def main():
             embeddings = load_embeddings(args.embedding_file, args.embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(args.embedding_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
+        else:
+            embeddings=Embeddings(None,None)
 
-    emb = embeddings if args.pretrain else None
+    emb = embeddings
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
@@ -188,8 +214,7 @@ def main():
                  ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
                          args.checkpoint, sw)]
 
-        preferred_metric = "f1"  # TODO: this should depend on the task, for now I set it to 1
-        best_metric = [0.0]
+        preferred_metric, best_metric = readers.eval_hooks[args.model].preferred_metric_and_best_score()
 
         def side_effect(metrics, prev_metric):
             """Returns: a state (in this case a metric) that is used as input for the next call"""
@@ -206,9 +231,13 @@ def main():
                 logger.info("Saving model to: %s" % args.model_dir)
             return m
 
-        hooks.append(readers.eval_hooks[args.model](reader, dev_data, summary_writer=sw, side_effect=side_effect,
-                                                    iter_interval=args.checkpoint,
-                                                    epoch_interval=1 if args.checkpoint is None else None))
+        # this is the standard hook for the model
+        hooks.append(readers.eval_hooks[args.model](
+            reader, dev_data, summary_writer=sw, side_effect=side_effect,
+            iter_interval=args.checkpoint,
+            epoch_interval=(1 if args.checkpoint is None else None),
+            write_metrics_to=args.write_metrics_to))
+
 
         # Train
         reader.train(optim, training_set=train_data,
@@ -218,12 +247,12 @@ def main():
 
         # Test final model
         if test_data is not None:
-            logger.info(
-                "Run evaluation on test set with best model on dev set: %s %.3f" % (preferred_metric, best_metric[0]))
-            test_eval_hook = readers.eval_hooks[args.model](reader, test_data, summary_writer=sw, epoch_interval=1)
+            test_eval_hook = readers.eval_hooks[args.model](reader, test_data,
+                    summary_writer=sw, epoch_interval=1,
+                    write_metrics_to=args.write_metrics_to)
 
             reader.load(args.model_dir)
-            test_eval_hook(1)
+            test_eval_hook.at_test_time(1)
 
 
 if __name__ == "__main__":

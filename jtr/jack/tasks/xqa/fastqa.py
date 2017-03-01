@@ -5,7 +5,7 @@ This file contains FastQA specific modules and ports
 import random
 import re
 
-from jtr.jack import *
+from jtr.jack.core import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
 from jtr.jack.tasks.xqa.shared import XQAPorts
 from jtr.jack.tasks.xqa.util import token_to_char_offsets
@@ -365,7 +365,7 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
     """
     fast_qa model
     Args:
-        shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_input_dim"
+        shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
         emb_question: [Q, L_q, N]
         question_length: [Q]
         emb_support: [Q, L_s, N]
@@ -390,7 +390,7 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
         support_mask = tfutil.mask_for_lengths(support_length, batch_size)
         question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
 
-        input_size = shared_vocab_config.config["repr_input_dim"]
+        input_size = shared_vocab_config.config["repr_dim_input"]
         size = shared_vocab_config.config["repr_dim"]
         with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
 
@@ -406,8 +406,8 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
                                                                             [question_words2unique,
                                                                              support_words2unique])
 
-            emb_question = tf.concat(2, [emb_question, char_emb_question])
-            emb_support = tf.concat(2, [emb_support, char_emb_support])
+            emb_question = tf.concat([emb_question, char_emb_question], 2)
+            emb_support = tf.concat([emb_support, char_emb_support], 2)
             input_size += size
 
             # set shapes for inputs
@@ -415,22 +415,23 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
             emb_support.set_shape([None, None, input_size])
 
         # compute encoder features
-        question_features = tf.ones(tf.pack([batch_size, max_question_length, 2]))
+        question_features = tf.ones(tf.stack([batch_size, max_question_length, 2]))
 
         v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
                                  initializer=tf.constant_initializer(1.0))
 
-        wiq_w = tf.batch_matmul(emb_question * v_wiqw, emb_support, adj_y=True)
+        wiq_w = tf.matmul(emb_question * v_wiqw, emb_support, adjoint_b=True)
         wiq_w = wiq_w + tf.expand_dims(support_mask, 1)
 
         wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
 
         # [B, L , 2]
-        support_features = tf.concat(2, [tf.expand_dims(word_in_question, 2), tf.expand_dims(wiq_w, 2)])
+        support_features = tf.concat([tf.expand_dims(word_in_question, 2),
+            tf.expand_dims(wiq_w, 2)], 2)
 
         # highway layer to allow for interaction between concatenated embeddings
         if with_char_embeddings:
-            all_embedded = tf.concat(1, [emb_question, emb_support])
+            all_embedded = tf.concat([emb_question, emb_support], 1)
             all_embedded = tf.contrib.layers.fully_connected(all_embedded, size,
                                                              activation_fn=None,
                                                              weights_initializer=None,
@@ -439,14 +440,14 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
 
             all_embedded_hw = highway_network(all_embedded, 1)
 
-            emb_question = tf.slice(all_embedded_hw, [0, 0, 0], tf.pack([-1, max_question_length, -1]))
-            emb_support = tf.slice(all_embedded_hw, tf.pack([0, max_question_length, 0]), [-1, -1, -1])
+            emb_question = tf.slice(all_embedded_hw, [0, 0, 0], tf.stack([-1, max_question_length, -1]))
+            emb_support = tf.slice(all_embedded_hw, tf.stack([0, max_question_length, 0]), [-1, -1, -1])
 
             emb_question.set_shape([None, None, size])
             emb_support.set_shape([None, None, size])
 
         # variational dropout
-        dropout_shape = tf.unpack(tf.shape(emb_question))
+        dropout_shape = tf.unstack(tf.shape(emb_question))
         dropout_shape[1] = 1
 
         [emb_question, emb_support] = tf.cond(is_eval,
@@ -455,8 +456,8 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
                                                                     keep_prob, dropout_shape))
 
         # extend embeddings with features
-        emb_question_ext = tf.concat(2, [emb_question, question_features])
-        emb_support_ext = tf.concat(2, [emb_support, support_features])
+        emb_question_ext = tf.concat([emb_question, question_features], 2)
+        emb_support_ext = tf.concat([emb_support, support_features], 2)
 
         # encode question and support
         rnn = tf.contrib.rnn.LSTMBlockFusedCell
@@ -470,8 +471,8 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
             fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                                 correct_start, answer2question, is_eval)
 
-        span = tf.concat(1, [tf.expand_dims(predicted_start_pointer, 1),
-                             tf.expand_dims(predicted_end_pointer, 1)])
+        span = tf.concat([tf.expand_dims(predicted_start_pointer, 1),
+                             tf.expand_dims(predicted_end_pointer, 1)], 1)
 
         return start_scores, end_scores, span
 
@@ -496,8 +497,8 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     # Prediction
     # start
-    start_input = tf.concat(2, [tf.expand_dims(question_state, 1) * encoded_support,
-                                encoded_support])
+    start_input = tf.concat([tf.expand_dims(question_state, 1) * encoded_support,
+                                encoded_support], 2)
 
     q_start_inter = tf.contrib.layers.fully_connected(question_state, size,
                                                       activation_fn=None,
@@ -541,9 +542,11 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     support_mask = align_tensor_with_answers_per_question(support_mask)
 
     # end
-    end_input = tf.concat(2, [tf.expand_dims(u_s, 1) * encoded_support, start_input])
+    end_input = tf.concat([tf.expand_dims(u_s, 1) * encoded_support,
+        start_input], 2)
 
-    q_end_inter = tf.contrib.layers.fully_connected(tf.concat(1, [question_state, u_s]), size,
+    q_end_inter = tf.contrib.layers.fully_connected(tf.concat([question_state,
+        u_s], 1), size,
                                                     activation_fn=None,
                                                     weights_initializer=None,
                                                     scope="q_end_inter")

@@ -190,16 +190,16 @@ def create_bi_sequence_embedding_initialise(inputs_cond, seq_lengths_cond, repr_
     # input, seq_lengths, seq_dim, batch_dim=None, name=None
     # might be more efficient or not, but at least memory warning disappears
     outputs_fw = tf.reverse_sequence(outputs_fw_cond, seq_lengths_cond, seq_dim=1, batch_dim=0)  # slices of input are reversed on seq_dim, but only up to seq_lengths
-    dim1fw, dim2fw, dim3fw = tf.unpack(tf.shape(outputs_fw)) #[batch_size, max_time, cell.output_size]
+    dim1fw, dim2fw, dim3fw = tf.unstack(tf.shape(outputs_fw)) #[batch_size, max_time, cell.output_size]
     last_output_fw = tf.reshape(tf.slice(outputs_fw, [0, 0, 0], [dim1fw, 1, dim3fw]), [dim1fw, dim3fw])
 
     outputs_bw = tf.reverse_sequence(outputs_bw_cond, seq_lengths_cond, seq_dim=1, batch_dim=0)  # slices of input are reversed on seq_dim, but only up to seq_lengths
-    dim1bw, dim2bw, dim3bw = tf.unpack(tf.shape(outputs_bw)) #[batch_size, max_time, cell.output_size]
+    dim1bw, dim2bw, dim3bw = tf.unstack(tf.shape(outputs_bw)) #[batch_size, max_time, cell.output_size]
     last_output_bw = tf.reshape(tf.slice(outputs_bw, [0, 0, 0], [dim1bw, 1, dim3bw]), [dim1bw, dim3bw])
 
 
 
-    outputs_fin = tf.concat(1, [last_output_fw, last_output_bw])
+    outputs_fin = tf.concat([last_output_fw, last_output_bw], 1)
 
     #print(tf.shape(last_output_bw))
     #print(tf.shape(outputs_fin))
@@ -301,7 +301,7 @@ def create_bicond_sequence_embedding(inputs, seq_lengths, inputs_cond, seq_lengt
     last_output_fw = tfutil.get_by_index(outputs_fw_cond, seq_lengths_cond)
     last_output_bw = tfutil.get_by_index(outputs_bw_cond, seq_lengths_cond)
 
-    outputs_fin = tf.concat(1, [last_output_fw, last_output_bw])
+    outputs_fin = tf.concat([last_output_fw, last_output_bw], 1)
 
     return outputs_fin
 
@@ -324,7 +324,7 @@ def create_softmax_loss(scores, target_values):
     :param target_values: [batch_size, num_candidates] vector of 0/1 target values.
     :return: [batch_size] vector of losses (or single number of total loss).
     """
-    return tf.nn.softmax_cross_entropy_with_logits(scores, target_values)
+    return tf.nn.softmax_cross_entropy_with_logits(logits=scores, labels=target_values)
 
 
 
@@ -365,13 +365,13 @@ def create_sequence_embeddings_reader(reference_data, **options):
     #tensorizer = SequenceTensorizer(reference_data)
     tensorizer = SequenceTensorizer(reference_data)
 
-    dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
+    dim1ql, dim2ql = tf.unstack(tf.shape(tensorizer.question_lengths))
     question_lengths_true = tf.reshape(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [-1])
 
-    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    dim1q, dim2q, dim3q = tf.unstack(tf.shape(tensorizer.questions))
     questions_true = tf.reshape(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [dim1q, -1])
 
-    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    dim1t, dim2t, dim3t = tf.unstack(tf.shape(tensorizer.target_values))
     targets_true = tf.reshape(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [dim1t, -1])
 
     question_lengths_false = tf.reshape(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [-1])
@@ -392,7 +392,7 @@ def create_sequence_embeddings_reader(reference_data, **options):
     #cand_dim = options['repr_dim']
 
     # 3) all candidate unidirectional lstm encoding
-    #dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    #dim1s, dim2s, dim3s = tf.unstack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
     #sup = tf.reshape(tensorizer.support, [-1, dim3s])  # [batch_size * num_supports, num_tokens]
     #sup_l = tf.reshape(tensorizer.support_lengths, [-1])   # [support_lengths * num_supports]
 
@@ -408,7 +408,7 @@ def create_sequence_embeddings_reader(reference_data, **options):
     cand_dim = options['repr_dim'] * 2
 
 
-    dim1c, dim2c, dim3c = tf.unpack(tf.shape(tensorizer.candidates))  # [batch_size, num_candidates, num_tokens]
+    dim1c, dim2c, dim3c = tf.unstack(tf.shape(tensorizer.candidates))  # [batch_size, num_candidates, num_tokens]
     candidates = tf.reshape(tensorizer.candidates, [-1])  # take the first support, this is the middle dimension
 
     #candidate_embeddings = create_dense_embedding(tensorizer.candidates, cand_dim, tensorizer.num_symbols)
@@ -448,10 +448,10 @@ def create_bowv_embeddings_reader(reference_data, **options):
     """
     tensorizer = SequenceTensorizer(reference_data)
 
-    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    dim1q, dim2q, dim3q = tf.unstack(tf.shape(tensorizer.questions))
     questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
 
-    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    dim1t, dim2t, dim3t = tf.unstack(tf.shape(tensorizer.target_values))
     targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
 
     questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])
@@ -495,13 +495,13 @@ def create_bowv_nosupport_embeddings_reader(reference_data, **options):
     """
     tensorizer = SequenceTensorizer(reference_data)
 
-    dim1ql, dim2ql = tf.unpack(tf.shape(tensorizer.question_lengths))
+    dim1ql, dim2ql = tf.unstack(tf.shape(tensorizer.question_lengths))
     #question_lengths_true = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 0], [dim1ql, 1]), [1])
 
-    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    dim1q, dim2q, dim3q = tf.unstack(tf.shape(tensorizer.questions))
     questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
 
-    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    dim1t, dim2t, dim3t = tf.unstack(tf.shape(tensorizer.target_values))
     targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
 
     #question_lengths_false = tf.squeeze(tf.slice(tensorizer.question_lengths, [0, 1], [dim1ql, 1]), [1])
@@ -540,7 +540,7 @@ def create_bowv_nosupport_embeddings_reader(reference_data, **options):
 
 
 def create_bicond_question_encoding(tensorizer, questions_true, question_lengths_true, options, reuse_scope=False):
-    dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    dim1s, dim2s, dim3s = tf.unstack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
 
     #sup = tf.squeeze(tf.slice(tensorizer.support, [0, 0, 0], [dim1s, 1, dim3s]), [1])  # take the first support, this is the middle dimension
     #sup_l = tf.squeeze(tf.slice(tensorizer.support_lengths, [0, 0], [dim1s, 1]), [1])
@@ -579,7 +579,7 @@ def get_bowv_multisupport_question_encoding(tensorizer, questions, options):
     cand_dim = options['repr_dim']
 
     # 1) reshape the support tensors to remove batch_size dimension
-    dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    dim1s, dim2s, dim3s = tf.unstack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
     sup = tf.reshape(tensorizer.support, [dim1s * dim2s, dim3s])  # [batch_size * num_supports, num_tokens]
 
     # 2) run first rnn to encode the supports
@@ -604,7 +604,7 @@ def get_bowv_multisupport_concat_question_encoding(tensorizer, questions, option
     cand_dim = options['repr_dim']
 
     # 1) reshape the support tensors to remove batch_size dimension
-    dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    dim1s, dim2s, dim3s = tf.unstack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
     sup = tf.reshape(tensorizer.support, [dim1s * dim2s, dim3s])  # [batch_size * num_supports, num_tokens]  dim1s * dim2s
 
     # 2) run first rnn to encode the supports
@@ -619,7 +619,7 @@ def get_bowv_multisupport_concat_question_encoding(tensorizer, questions, option
 
     # 5) combine and return
     #repr = outputs_que * outputs_sup
-    repr = tf.concat(1, [outputs_que, outputs_sup])  # concat. Note that for dot product later the this either needs to be squeezed or cand dim needs to be increased
+    repr = tf.concat([outputs_que, outputs_sup], 1)  # concat. Note that for dot product later the this either needs to be squeezed or cand dim needs to be increased
 
     return repr
 
@@ -632,7 +632,7 @@ def get_bicond_multisupport_question_encoding(tensorizer, questions_true, questi
 
     # 1) reshape the support tensors to remove batch_size dimension
 
-    dim1s, dim2s, dim3s = tf.unpack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
+    dim1s, dim2s, dim3s = tf.unstack(tf.shape(tensorizer.support))  # [batch_size, num_supports, num_tokens]
     sup = tf.reshape(tensorizer.support, [-1, dim3s])  # [batch_size * num_supports, num_tokens]
     sup_l = tf.reshape(tensorizer.support_lengths, [-1])  # [support_lengths * num_supports]
 
@@ -733,10 +733,10 @@ def create_bowv_concat_embeddings_reader(reference_data, **options):
     """
     tensorizer = SequenceTensorizer(reference_data)
 
-    dim1q, dim2q, dim3q = tf.unpack(tf.shape(tensorizer.questions))
+    dim1q, dim2q, dim3q = tf.unstack(tf.shape(tensorizer.questions))
     questions_true = tf.squeeze(tf.slice(tensorizer.questions, [0, 0, 0], [dim1q, 1, dim3q]), [1])
 
-    dim1t, dim2t, dim3t = tf.unpack(tf.shape(tensorizer.target_values))
+    dim1t, dim2t, dim3t = tf.unstack(tf.shape(tensorizer.target_values))
     targets_true = tf.squeeze(tf.slice(tensorizer.target_values, [0, 0, 0], [dim1t, 1, dim3t]), [1])
 
     questions_false = tf.squeeze(tf.slice(tensorizer.questions, [0, 1, 0], [dim1q, 1, dim3q]), [1])

@@ -10,8 +10,14 @@ from typing import List, Tuple, Mapping
 
 import numpy as np
 import tensorflow as tf
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import pandas as pd
+from pylab import subplots_adjust, subplot
+from sklearn.metrics import f1_score
 
-from jtr.jack import JTReader, TensorPort, Answer, QASetting, FlatPorts
+from jtr.jack.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +45,7 @@ class TraceHook(TrainingHook):
     def __init__(self, reader, summary_writer=None):
         self._summary_writer = summary_writer
         self._reader = reader
+        self.scores = {}
 
     @property
     def reader(self) -> JTReader:
@@ -57,6 +64,33 @@ class TraceHook(TrainingHook):
                 tf.Summary.Value(tag=title, simple_value=value),
             ])
             self._summary_writer.add_summary(summary, current_step)
+
+    def plot(self, ylim=None):
+        sns.set_style("darkgrid")
+        number_of_subplots=len(self.scores.keys())
+        colors = ['blue', 'green', 'orange']
+        for i, key in enumerate(self.scores):
+            data = self.scores[key][0]
+            time = self.scores[key][1]
+            patch = mpatches.Patch(color=colors[i], label=key)
+            ax1 = subplot(number_of_subplots,1,i+1)
+            ax1.legend(handles=[patch])
+            ax1.plot(time,data, label=key, color=colors[i])
+            if ylim != None:
+                plt.ylim(ymin=ylim[0])
+                plt.ylim(ymax=ylim[1])
+            plt.xlabel('iter')
+            plt.ylabel(key)
+
+        plt.show()
+
+    def add_to_history(self, score_dict, iter_value, epoch):
+        for metric in score_dict:
+            if metric not in self.scores:
+                self.scores[metric] = [[],[],[]]
+            self.scores[metric][0].append(score_dict[metric])
+            self.scores[metric][1].append(self._iter)
+            self.scores[metric][2].append(epoch)
 
 
 class LossHook(TraceHook):
@@ -81,6 +115,7 @@ class LossHook(TraceHook):
         self._acc_loss += loss
         if not self._iter == 0 and self._iter % self._iter_interval == 0:
             loss = self._acc_loss / self._iter_interval
+            super().add_to_history({'Loss' : loss}, self._iter, epoch)
             logger.info("Epoch {}\tIter {}\tLoss {}".format(str(epoch), str(self._iter), str(loss)))
             self.update_summary(self.reader.sess, self._iter, "Loss", loss)
             self._acc_loss = 0
@@ -227,6 +262,7 @@ class EvalHook(TraceHook):
         self._metrics = metrics or self.possible_metrics
         self._side_effect = side_effect
         self._side_effect_state = None
+        print(self._write_metrics_to)
 
     @abstractproperty
     def possible_metrics(self) -> List[str]:
@@ -242,6 +278,8 @@ class EvalHook(TraceHook):
                total number of examples"""
         return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
+
+
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
 
@@ -256,6 +294,7 @@ class EvalHook(TraceHook):
                 metrics[k].append(m[k])
 
         metrics = self.combine_metrics(metrics)
+        super().add_to_history(metrics, self._iter, epoch)
 
         printmetrics = sorted(metrics.keys())
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
@@ -275,6 +314,9 @@ class EvalHook(TraceHook):
     def at_epoch_end(self, epoch: int, **kwargs):
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
+    
+    def at_test_time(self, epoch):
+        self.__call__(epoch)
 
     def at_iteration_end(self, epoch: int, loss: float, **kwargs):
         self._iter += 1
@@ -295,6 +337,12 @@ class XQAEvalHook(EvalHook):
     @property
     def possible_metrics(self) -> List[str]:
         return ["exact", "f1"]
+
+
+    @staticmethod
+    def preferred_metric_and_best_score():
+        return 'f1', [0.0]
+
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[FlatPorts.Target.answer_span]
@@ -333,3 +381,204 @@ class XQAEvalHook(EvalHook):
             acc_exact += exact
 
         return {"f1": acc_f1, "exact": acc_exact}
+
+class ClassificationEvalHook(EvalHook):
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
+                 iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
+                 write_metrics_to=None, info="", side_effect=None, **kwargs):
+
+        ports = [Ports.Prediction.candidate_scores,
+                 Ports.Prediction.candidate_idx,
+                 Ports.Targets.candidate_idx]
+
+        super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
+                         write_metrics_to, info, side_effect)
+
+    @property
+    def possible_metrics(self) -> List[str]:
+        return ["Accuracy", "F1_macro"]
+
+    @staticmethod
+    def preferred_metric_and_best_score():
+        return 'Accuracy', [0.0]
+
+
+    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
+        labels = tensors[Ports.Targets.candidate_idx]
+        predictions = tensors[Ports.Prediction.candidate_idx]
+        #scores = tensors[Ports.Prediction.candidate_scores]
+
+        def len_np_or_list(v):
+            if isinstance(v, list):
+                return len(v)
+            else:
+                return v.shape[0]
+
+        acc_exact = np.sum(np.equal(labels, predictions))
+        acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
+
+        return {"F1_macro": acc_f1, "Accuracy": acc_exact}
+
+
+
+
+class KBPEvalHook(EvalHook):
+    """This evaluation hook computes the following metrics: exact and per-answer f1 on token basis."""
+
+    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
+                 iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
+                 write_metrics_to=None, info="", side_effect=None, **kwargs):
+        ports = [Ports.Input.question, Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
+        self.epoch = 0
+        super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
+                         write_metrics_to, info, side_effect)
+
+    @property
+    def possible_metrics(self) -> List[str]:
+        return ["exact", "epoch"]
+
+    @staticmethod
+    def preferred_metric_and_best_score():
+            return 'epoch', [0]
+
+    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
+        correct_answers  = tensors[Ports.Targets.target_index]
+        candidate_scores = tensors[Ports.Prediction.candidate_scores]
+        candidate_ids    = tensors[Ports.Input.atomic_candidates]
+        loss             = tensors[Ports.loss]
+
+        neg_loss = 0.0
+        acc_exact = 0.0
+
+        winning_indices = np.argmax(candidate_scores, axis=1)
+
+        def len_np_or_list(v):
+            if isinstance(v, list):
+                return len(v)
+            else:
+                return v.shape[0]
+
+        for i in range(len_np_or_list(winning_indices)):
+            if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
+                acc_exact += 1.0
+
+        neg_loss = -1*len_np_or_list(winning_indices)*loss
+
+        return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
+    
+    
+    def at_test_time(self, epoch, vocab=None):
+        from scipy.stats import rankdata
+        from numpy import asarray
+        
+        logger.info("Started evaluation %s" % self._info)
+
+        if self._batches is None:
+            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, test_time=True)
+
+        def len_np_or_list(v):
+            if isinstance(v, list):
+                return len(v)
+            else:
+                return v.shape[0]
+
+        q_cand_scores={}
+        q_cand_ids={}
+        q_answers={}
+        qa_scores=[]
+        qa_ids=[]
+        for i, batch in enumerate(self._batches):
+            predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
+            correct_answers =  predictions[Ports.Targets.target_index]
+            candidate_scores = predictions[Ports.Prediction.candidate_scores]
+            candidate_ids =    predictions[Ports.Input.atomic_candidates]
+            questions        = predictions[Ports.Input.question]
+            for j in range(len_np_or_list(questions)):
+                q=questions[j][0]
+                q_cand_scores[q]=candidate_scores[j]
+                q_cand_ids[q]=candidate_ids[j]
+                if q not in q_answers:
+                    q_answers[q]=set()
+                q_answers[q].add(correct_answers[j])
+        for q in q_cand_ids:
+            for k,c in enumerate(q_cand_ids[q]):
+                qa=str(q)+"\t"+str(c)
+                qa_ids.append(qa)
+                qa_scores.append(q_cand_scores[q][k])
+        qa_ranks=rankdata(-1*asarray(qa_scores),method="min")
+        qa_rank={}
+        qa_sorted=sorted(zip(qa_ids,qa_scores),key=lambda x: x[1]*-1)
+        for i,qa_id in enumerate(qa_ids):
+            qa_rank[qa_id]=qa_ranks[i]
+        mean_ap=0
+        wmap=0
+        qd=0
+        md=0
+        for q in q_answers:
+            cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
+            ans_ranks=[]
+            for a in q_answers[q]:
+                for c, cand in enumerate(q_cand_ids[q]):
+                    if a==cand and cand_ranks[c]<=100:# and qa_rank[str(q)+"\t"+str(a)]<=1000: 
+                        ans_ranks.append(cand_ranks[c])
+            av_p=0
+            answers=1
+            for r in sorted(ans_ranks):
+                p=answers/r
+                av_p=av_p+p
+                answers+=1
+            if len(ans_ranks)>0:
+                wmap=wmap+av_p
+                md=md+len(ans_ranks)
+                av_p=av_p/len(ans_ranks)
+                qd=qd+1
+            else:
+                pass
+            mean_ap=mean_ap+av_p
+        mean_ap=mean_ap/len(q_answers)
+        wmap=wmap/md
+        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        res += '\t%s: %.3f' % ("Mean Average Precision", mean_ap)
+        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Mean Average Precision", mean_ap)
+        if self._write_metrics_to is not None:
+            with open(self._write_metrics_to, 'a') as f:
+                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Mean Average Precision",
+                                                  np.round(mean_ap, 5)))
+        res += '\t' + self._info
+        logger.info(res)
+        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        res += '\t%s: %.3f' % ("Weighted Mean Average Precision", wmap)
+        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Weighted Mean Average Precision", wmap)
+        if self._write_metrics_to is not None:
+            with open(self._write_metrics_to, 'a') as f:
+                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Weighted Mean Average Precision",
+                                                  np.round(wmap, 5)))
+        res += '\t' + self._info
+        logger.info(res)
+        #lost=set()
+        #with open("data/NYT/predict.txt","w") as w:
+        #    for qa_id, qa_score in qa_sorted:
+        #        q,a=qa_id.split("\t")
+        #        r=vocab.get_sym(int(q))
+        #        try:
+        #            e1,e2=vocab.get_sym(int(a)).lstrip("(").rstrip(")").split("|||")
+        #        except:
+        #            lost.add(r)
+        #        lost.add(r)
+        #        line="\t".join([str(qa_score),e1,e2,"REL$NA",r])+"\n"
+        #        w.write(line)
+        #    for r in lost:
+        #        print(r)
+       
+        
+
+    def at_epoch_end(self, epoch: int, **kwargs):
+        self.epoch += 1
+        if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
+            self.__call__(epoch)
+    
+    
+#    def at_epoch_end(self, epoch: int, **kwargs):
+#        if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
+#            self.at_test_time(epoch)
+        

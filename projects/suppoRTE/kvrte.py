@@ -33,10 +33,10 @@ def key_value_reader(inputs, lengths, output_size, contexts=(None, None),
 
         outputs_fw, outputs_bw = outputs
 
-        outputs_fw_key, outputs_fw_val = tf.split(2, 2, outputs_fw)
-        outputs_bw_key, outputs_bw_val = tf.split(2, 2, outputs_bw)
-        outputs_key = tf.concat(2, [outputs_fw_key, outputs_bw_key])
-        outputs_val = tf.concat(2, [outputs_fw_val, outputs_bw_val])
+        outputs_fw_key, outputs_fw_val = tf.split(outputs_fw, 2, 2)
+        outputs_bw_key, outputs_bw_val = tf.split(outputs_bw, 2, 2)
+        outputs_key = tf.concat([outputs_fw_key, outputs_bw_key], 2)
+        outputs_val = tf.concat([outputs_fw_val, outputs_bw_val], 2)
 
         if project_fw_bw:
             outputs_key = tf.contrib.layers.fully_connected(
@@ -67,8 +67,9 @@ def mutable_attention(memory_states, input, input_lengths,
         # attention controller
         cell = tf.nn.rnn_cell.LSTMCell(num_units)
 
-        #attention_states_fw, attention_states_bw = tf.split(0, 2, memory_states)
-        #attention_states = tf.concat(3, [attention_states_fw, attention_states_bw])
+        #attention_states_fw, attention_states_bw = tf.split(memory_states, 2, 0)
+        #attention_states = tf.concat([attention_states_fw,
+        attention_states_bw], 3)
         #attention_states = tf.squeeze(attention_states, [0])
 
         memory_key, memory_val = memory_states
@@ -124,7 +125,7 @@ def mutable_attention(memory_states, input, input_lengths,
 
             # [batch_size x num_units]
             h = tf.tanh(tf.contrib.layers.linear(
-                tf.concat(1, [query, r_reshaped]), num_units))
+                tf.concat([query, r_reshaped], 1), num_units))
 
             next_cell_state = tf.nn.rnn_cell.LSTMStateTuple(c, h)
 

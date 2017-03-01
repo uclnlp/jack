@@ -18,22 +18,11 @@ test:
 
 # FIXME: this should probably be test-overfit rather than overfit
 overfit:
-	$(PYTEST) tests -v -m "(overfit and CPU)"
+	$(PYTEST) tests -v -m "overfit"
 smalldata:
-	$(PYTEST) tests -v -m "(smalldata and CPU)"
-overfitgpu:
-	$(PYTEST) tests -v -m "(overfit and GPU)"
-smalldatagpu:
-	$(PYTEST) tests -v -m "(smalldata and GPU)"
+	$(PYTEST) tests -v -m "smalldata"
 
-sentihood:
-	$(PYTEST) tests -v -m sentihood
 SNLI:
 	$(PYTEST) tests -v -m SNLI
 doctests:
 	$(PYTEST) --doctest-modules jtr/preprocess/vocab.py
-
-gpu:
-	$(PYTEST) tests -v -m GPU
-cpu:
-	$(PYTEST) tests -v -m CPU

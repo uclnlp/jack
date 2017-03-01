@@ -1,4 +1,7 @@
-from jtr.jack import *
+# -*- coding: utf-8 -*-
+
+from jtr.jack.core import *
+from jtr.jack.train.hooks import XQAEvalHook, ClassificationEvalHook
 
 readers = {}
 eval_hooks = {}
@@ -6,7 +9,7 @@ eval_hooks = {}
 xqa_readers = {}
 genqa_readers = {}
 mcqa_readers = {}
-
+kbp_readers = {}
 
 def __reader(f):
     readers.setdefault(f.__name__, f)
@@ -14,7 +17,6 @@ def __reader(f):
 
 
 def __xqa_reader(f):
-    from jtr.jack.train.hooks import XQAEvalHook
     __reader(f)
     xqa_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
@@ -22,18 +24,27 @@ def __xqa_reader(f):
 
 
 def __mcqa_reader(f):
+    from jtr.jack.train.hooks import XQAEvalHook
     __reader(f)
     mcqa_readers.setdefault(f.__name__, f)
-    #TODO eval hook
+    eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
+    # TODO eval hook
+    return f
+
+
+def __kbp_reader(f):
+    from jtr.jack.train.hooks import KBPEvalHook
+    __reader(f)
+    kbp_readers.setdefault(f.__name__, f)
+    eval_hooks.setdefault(f.__name__, KBPEvalHook)
     return f
 
 
 def __genqa_reader(f):
     __reader(f)
     genqa_readers.setdefault(f.__name__, f)
-    #TODO eval hook
+    # TODO eval hook
     return f
-
 
 @__mcqa_reader
 def example_reader(vocab, config):
@@ -47,6 +58,20 @@ def example_reader(vocab, config):
     return jtreader
 
 
+
+@__kbp_reader
+def modelf_reader(vocab, config):
+    """ Creates a simple kbp reader. """
+    from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    input_module = ModelFInputModule(shared_resources)
+    model_module = ModelFModelModule(shared_resources)
+    output_module = ModelFOutputModule()
+    jtreader = KBPReader(shared_resources, input_module, model_module, output_module)
+    return jtreader
+
+
+
 @__xqa_reader
 def fastqa_reader(vocab, config):
     """ Creates a FastQA reader instance (extractive qa model). """
@@ -58,3 +83,13 @@ def fastqa_reader(vocab, config):
                     FastQAInputModule(shared_resources),
                     fatqa_model_module(shared_resources),
                     XQAOutputModule(shared_resources))
+
+@__mcqa_reader
+def snli_reader(vocab, config):
+    """ Creates a SNLI reader instance (multiple choice qa model). """
+    from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    return JTReader(shared_resources,
+                    SingleSupportFixedClassInputs(shared_resources),
+                    PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
+                    EmptyOutputModule())

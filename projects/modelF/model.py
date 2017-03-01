@@ -21,7 +21,7 @@ def define_model_F_score(tuples, entity_pair_embeddings, relation_embeddings):
 
     '''
     # each [batchsize x 1]
-    relation_indices, ent_pair_indices = tf.split (1, 2, tuples)
+    relation_indices, ent_pair_indices = tf.split (tuples, 2, 1)
 
     # each [batchsize x 1 x k]
     selected_embeddings_rel = tf.gather(relation_embeddings, relation_indices)

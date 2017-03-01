@@ -226,7 +226,10 @@ class ETAHook(TraceHook):
 
                     return "{}:{}:{}".format(hours, minutes, seconds)
 
-            logger.info("Epoch {}\tIter {}\tETA in {} {0:.2g}".format(epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
+            logger.info("Epoch %d\tIter %d\tETA in %s [%2.2f" %
+                        (epoch, self.iter, format_eta(eta), progress * 100) +
+                        "%] " + eta_date)
+            # logger.info("Epoch {}\tIter {}\tETA in {} {0:.2g}".format(epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
 
             self.update_summary(sess, self.iter, self.__tag__(), float(eta))
 
@@ -288,7 +291,8 @@ class EvalHook(TraceHook):
     """
     def __init__(self, batches, logits, predict, target, at_every_epoch=1, placeholders=None,
                  metrics=[], summary_writer=None, print_details=False,
-                 write_metrics_to="", print_to="", info=""):
+                 write_metrics_to="", print_to="", info="", iter_interval=1,
+                 side_effect=None, epoch_interval=1):
         """
         Initialize EvalHook object.
         Calling the hook prints calculated metrics to stdout, and returns targets, predictions, and a metrics dict.

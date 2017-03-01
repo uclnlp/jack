@@ -1,7 +1,7 @@
 import numpy as np
 
 import jtr.jack.readers as readers
-from jtr.jack import load_labelled_data
+from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.tasks.xqa.fastqa import FastQAInputModule
 from jtr.load.embeddings.embeddings import Embeddings
 from jtr.load.embeddings.vocabulary import Vocabulary
@@ -25,7 +25,7 @@ def test_fastqa():
     vocab = Vocab(emb=embeddings, init_from_embeddings=True)
 
     # ... and a config
-    config = {"batch_size": 1, "repr_dim": 10, "repr_input_dim": embeddings.lookup.shape[1],
+    config = {"batch_size": 1, "repr_dim": 10, "repr_dim_input": embeddings.lookup.shape[1],
               "with_char_embeddings": True}
 
     # create/setup reader

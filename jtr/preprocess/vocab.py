@@ -436,7 +436,8 @@ class NeuralVocab(Vocab):
                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
                                                 initializer=tf.random_normal_initializer(0.0, 1. / np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
                     # note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
-                    E_pre = tf.concat(1, [E_pre, E_pre_ext], name="embeddings_pretrained_extended")
+                    E_pre = tf.concat([E_pre, E_pre_ext],
+                            1, name="embeddings_pretrained_extended")
             else:
                 # initialize all randomly anyway
                 E_pre = tf.get_variable("embeddings_not_pretrained", [n_pre, input_size],
@@ -446,7 +447,8 @@ class NeuralVocab(Vocab):
 
             # must be provided is embedding_matrix is None
             self.input_size = input_size
-            self.embedding_matrix = tf.concat(0, [E_oov, E_pre], name="embeddings")
+            self.embedding_matrix = tf.concat([E_oov, E_pre],
+                    0, name="embeddings")
 
         else:
             # ignore input argument input_size
