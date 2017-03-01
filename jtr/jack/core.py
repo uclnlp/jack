@@ -118,6 +118,10 @@ class Ports:
                                        "Represents candidate choices using single symbols",
                                        "[batch_size, num_candidates]")
 
+        sample_id = TensorPort(tf.int32, [None], "sample_id",
+                                       "Maps this sample to the index in the input text data",
+                                       "[batch_size]")
+
         candidates1d = TensorPort(tf.int32, [None], "candidates_idx",
                                        "Represents candidate choices using single symbols",
                                        "[batch_size]")

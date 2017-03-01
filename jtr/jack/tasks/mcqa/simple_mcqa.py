@@ -98,7 +98,7 @@ class SingleSupportFixedClassInputs(InputModule):
         """
         return [Ports.Input.single_support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Targets.candidate_idx]
+                Ports.Input.question_length, Ports.Targets.candidate_idx, Ports.Input.sample_id]
 
 
     def __call__(self, qa_settings : List[QASetting]) \
@@ -141,7 +141,8 @@ class SingleSupportFixedClassInputs(InputModule):
             Ports.Input.question: corpus["question"],
             Ports.Targets.candidate_idx:  corpus["answers"],
             Ports.Input.question_length : corpus['question_lengths'],
-            Ports.Input.support_length : corpus['support_lengths']
+            Ports.Input.support_length : corpus['support_lengths'],
+            Ports.Input.sample_id : corpus['ids']
         }
 
         return get_batches(xy_dict)
@@ -304,12 +305,14 @@ class MisclassificationOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.candidate_scores,
                 Ports.Prediction.candidate_idx,
-                Ports.Targets.candidate_idx]
+                Ports.Targets.candidate_idx,
+                Ports.Input.sample_id]
 
     def __call__(self, inputs: List[QASetting],
             candidate_scores,
             candidate_idx,
-            labels) -> List[Answer]:
+            labels,
+            sample_ids) -> List[Answer]:
         if self.i >= self.limit: return
 
 
@@ -319,29 +322,28 @@ class MisclassificationOutputModule(OutputModule):
         candidate_scores = softmax(candidate_scores)
         num_classes = candidate_scores.shape[1]
         for i, (right_idx, predicted_idx) in enumerate(zip(labels, candidate_idx)):
-            qa, answer = inputs[i]
+            data_idx = sample_ids[i]
+            qa, answer = inputs[data_idx]
             answer = answer[0]
-            #if answer.text not in class2idx:
-            #    class2idx[answer.text] = right_idx
-            #    idx2class[right_idx] = answer.text
-            #print(len(class2idx), num_classes, idx2class)
-            #if len(class2idx) < num_classes: continue
-            #if self.i >= self.limit: continue
-            #if right_idx == predicted_idx: continue
-            #score = candidate_scores[i][right_idx]
-            #if score < self.upper and score > self.lower:
-            #    self.i += 1
-            #    print('#'*75)
-            #    print('Question: {0}'.format(qa.question))
-            #    print('Support: {0}'.format(qa.support))
-            #    print('Answer: {0}'.format(answer.text))
-            #    print('-'*75)
-            #    print('Predicted class: {0}'.format(
-            #        idx2class[predicted_idx]))
-            #    print('Predictions: {0}'.format(
-            #        [(idx2class[b], a) for a,b in
-            #            zip(candidate_scores[i],candidate_idx[i])]))
-            #    print('#'*75 + '\n')
+            if answer.text not in class2idx:
+                class2idx[answer.text] = right_idx
+                idx2class[right_idx] = answer.text
+            if len(class2idx) < num_classes: continue
+            if self.i >= self.limit: continue
+            if right_idx == predicted_idx: continue
+            score = candidate_scores[i][right_idx]
+            if score < self.upper and score > self.lower:
+                self.i += 1
+                print('#'*75)
+                print('Question: {0}'.format(qa.question))
+                print('Support: {0}'.format(qa.support[0]))
+                print('Answer: {0}'.format(answer.text))
+                print('-'*75)
+                print('Predicted class: {0}'.format(
+                    idx2class[predicted_idx]))
+                print('Predictions: {0}'.format(
+                    [(idx2class[b], a) for a,b in zip(candidate_scores[i],range(num_classes))]))
+                print('#'*75 + '\n')
 
     def setup(self):
         pass
