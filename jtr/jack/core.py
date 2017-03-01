@@ -760,12 +760,12 @@ class JTReader:
                 current_loss, _ = self.sess.run([loss, min_op], feed_dict=feed_dict)
 
                 for hook in hooks:
-                    hook.at_iteration_end(i, current_loss)
+                    hook.at_iteration_end(i, current_loss, set_name='dev')
 
                 feed_dict = self.model_module.convert_to_feed_dict(batch_dev)
                 current_loss = self.sess.run([loss], feed_dict=feed_dict)[0]
                 for hook in hooks:
-                    hook.at_iteration_end(i, current_loss, set_name='dev')
+                    hook.at_iteration_end(i, current_loss, set_name='train')
 
 
             # calling post-epoch hooks

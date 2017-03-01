@@ -108,7 +108,6 @@ class LossHook(TraceHook):
 
     def at_iteration_end(self, epoch, loss, set_name = 'train', **kwargs):
         """Prints the loss, epoch, and #calls; adds it to the summary. Loss should be batch normalized."""
-        print(loss, set_name)
         if self._iter_interval is None: return loss
         if set_name not in self._acc_loss:
             self._acc_loss[set_name] = 0.0

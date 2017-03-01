@@ -25,8 +25,8 @@ train, dev, test = TestDatasets.generate_SNLI()
 # We creates hooks which keep track of the loss
 # We also create 'the standard hook' for our model
 from jtr.jack.train.hooks import LossHook, ClassificationEvalHook
-hooks = [LossHook(reader, iter_interval=10),
-         readers.eval_hooks['snli_reader'](reader, dev, iter_interval=25)]
+hooks = [LossHook(reader, iter_interval=25)]
+         #readers.eval_hooks['snli_reader'](reader, dev, iter_interval=25)]
 
 
 # Here we initialize our optimizer
