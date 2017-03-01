@@ -272,7 +272,8 @@ class AccuracyHook(TraceHook):
                     overlap = gold == predicted
                     # todo: extend further, because does not cover all likely cases yet
                     #overlap = np.argmax(feed_dict[self.target]) == predicted
-                    correct += np.sum(overlap, axis=0)
+                    # correct += np.sum(overlap, axis=0)
+                    correct += np.sum(overlap)
                     total += predicted.size
 
                 acc = float(correct) / total * 100
@@ -282,6 +283,12 @@ class AccuracyHook(TraceHook):
                 self.done_for_epoch = True
         else:
             self.done_for_epoch = False
+
+    def at_epoch_end(self, sess, epoch, model, loss):
+        if epoch % self.at_every_epoch == 0:
+            self.__call__(sess, epoch, model, loss)
+        else:
+            return
 
 
 class EvalHook(TraceHook):
