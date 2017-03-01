@@ -710,7 +710,7 @@ class JTReader:
               training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              device="/cpu:0"):
+              device="/cpu:0", dev_set=None):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -730,6 +730,8 @@ class JTReader:
             self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
+        batches_dev = self.input_module.dataset_generator(training_set, is_eval=True)
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
         if l2:
@@ -753,12 +755,18 @@ class JTReader:
 
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
-            for j, batch in enumerate(batches):
+            for j, (batch, batch_dev) in enumerate(zip(batches, batches_dev)):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss)
+
+                feed_dict = self.model_module.convert_to_feed_dict(batch_dev)
+                current_loss = self.sess.run([loss], feed_dict=feed_dict)[0]
+                for hook in hooks:
+                    hook.at_iteration_end(i, current_loss, set_name='dev')
+
 
             # calling post-epoch hooks
             for hook in hooks:

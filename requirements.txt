@@ -5,7 +5,8 @@ jsonschema
 parse
 scipy
 sklearn
-tensorflow>=1.0
 pycorenlp
 matplotlib
 seaborn
+typing
+tensorflow>=1.0

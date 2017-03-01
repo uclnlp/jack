@@ -35,7 +35,7 @@ class TrainingHook(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def at_iteration_end(self, epoch: int, loss: float, **kwargs):
+    def at_iteration_end(self, epoch: int, loss: float, set_name = 'train', **kwargs):
         pass
 
 
@@ -72,6 +72,8 @@ class TraceHook(TrainingHook):
         for i, key in enumerate(self.scores):
             data = self.scores[key][0]
             time = self.scores[key][1]
+            if isinstance(data, dict):
+                # TODO add more plots here for train and def set
             patch = mpatches.Patch(color=colors[i], label=key)
             ax1 = subplot(number_of_subplots,1,i+1)
             ax1.legend(handles=[patch])
@@ -99,38 +101,51 @@ class LossHook(TraceHook):
     def __init__(self, reader, iter_interval=None, summary_writer=None):
         super(LossHook, self).__init__(reader, summary_writer)
         self._iter_interval = iter_interval
-        self._acc_loss = 0
-        self._iter = 0
-        self._epoch_loss = 0
-        self._iter_epoch = 0
+        self._acc_loss = { 'train' : 0.0 }
+        self._iter = { 'train' : 0 }
+        self._epoch_loss = { 'train' : 0.0 }
+        self._iter_epoch = { 'train' : 0 }
 
-    def at_iteration_end(self, epoch, loss, **kwargs):
+    def at_iteration_end(self, epoch, loss, set_name = 'train', **kwargs):
         """Prints the loss, epoch, and #calls; adds it to the summary. Loss should be batch normalized."""
-        self._iter_epoch += 1
-        self._epoch_loss += 1
+        print(set_name)
+        if self._iter_interval is None: return loss
+        if set_name not in self._acc_loss:
+            self._acc_loss[set_name] = 0.0
+            self._iter[set_name] = 0
+            self._epoch_loss[set_name] = 0.0
+            self._iter_epoch[set_name] = 0
+
+        self._iter_epoch[set_name] += 1
+        self._epoch_loss[set_name] += 1
+        self._iter[set_name] += 1
+        self._acc_loss[set_name] += loss
+
+        if not self._iter[set_name] == 0 and self._iter[set_name] % self._iter_interval == 0:
+            loss = self._acc_loss[set_name] / self._iter_interval
+            super().add_to_history({'{0} loss'.format(set_name) : loss},
+                    self._iter[set_name], epoch)
+            logger.info("Epoch {0}\tIter {1}\t{3} loss {2}".format(epoch,
+                self._iter[set_name], loss, set_name))
+            self.update_summary(self.reader.sess, self._iter[set_name], "{0} loss".format(set_name), loss)
+            self._acc_loss[set_name] = 0
+
+        ret = (0.0 if self._iter[set_name] == 0 else self._acc_loss[set_name] / self._iter[set_name])
+
+        return ret
+
+    def at_epoch_end(self, epoch, set_name= 'train', **kwargs):
         if self._iter_interval is None:
-            return loss
+            loss = self._acc_loss[set_name] / self._iter_interval[set_name]
+            logger.info("Epoch {}\tIter {}\t{3} Loss {}".format(epoch,
+                self._iter, loss, set_name))
+            self.update_summary(self.reader.sess, self._iter[set_name], "Loss", loss)
+            self._epoch_loss[set_name] = 0
+            self._iter_epoch[set_name] = 0
 
-        self._iter += 1
-        self._acc_loss += loss
-        if not self._iter == 0 and self._iter % self._iter_interval == 0:
-            loss = self._acc_loss / self._iter_interval
-            super().add_to_history({'Loss' : loss}, self._iter, epoch)
-            logger.info("Epoch {}\tIter {}\tLoss {}".format(str(epoch), str(self._iter), str(loss)))
-            self.update_summary(self.reader.sess, self._iter, "Loss", loss)
-            self._acc_loss = 0
+        ret = (0.0 if self._iter_epoch[set_name] == 0 else self._epoch_loss[set_name] / self._iter_epoch[set_name])
 
-        return self._acc_loss / self._iter
-
-    def at_epoch_end(self, epoch, **kwargs):
-        if self._iter_interval is None:
-            loss = self._acc_loss / self._iter_interval
-            logger.info("Epoch {}\tIter {}\tLoss {}".format(str(epoch), str(self._iter), str(loss)))
-            self.update_summary(self.reader.sess, self._iter, "Loss", loss)
-            self._epoch_loss = 0
-            self._iter_epoch = 0
-
-        return self._epoch_loss / self._iter_epoch
+        return ret
 
 
 class ExamplesPerSecHook(TraceHook):
