@@ -226,7 +226,10 @@ class ETAHook(TraceHook):
 
                     return "{}:{}:{}".format(hours, minutes, seconds)
 
-            logger.info("Epoch {}\tIter {}\tETA in {} {0:.2g}".format(epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
+            logger.info("Epoch %d\tIter %d\tETA in %s [%2.2f" %
+                        (epoch, self.iter, format_eta(eta), progress * 100) +
+                        "%] " + eta_date)
+            # logger.info("Epoch {}\tIter {}\tETA in {} {0:.2g}".format(epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
 
             self.update_summary(sess, self.iter, self.__tag__(), float(eta))
 
