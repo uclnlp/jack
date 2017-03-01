@@ -11,6 +11,9 @@ from jtr.train import train
 from jtr.util.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, ETAHook
 from assignment3_models import get_selective_model, get_bowv_model
 
+import sys
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 def load_corpus(name, use_permutation_index=True):
     story = []
