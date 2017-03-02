@@ -6,11 +6,11 @@ import tensorflow as tf
 def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1, dropout=0.0):
     # Placeholders
     # [batch_size x max_length]
-    story = tf.placeholder(tf.int64, [None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None], "story")
     # [batch_size]
-    story_length = tf.placeholder(tf.int64, [None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None], "story_length")
     # [batch_size]
-    order = tf.placeholder(tf.int64, [None], "order")
+    order = tf.placeholder(tf.int32, [None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -57,8 +57,7 @@ def get_permute_model(vocab_size, input_size, output_size, target_size, layers=1
         predict = tf.arg_max(tf.nn.softmax(logits), 1)
 
         loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                labels=order))
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=order))
 
         return loss, placeholders, predict
 
@@ -67,11 +66,11 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
                     dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x max_length]
-    story = tf.placeholder(tf.int64, [None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None], "story")
     # [batch_size]
-    story_length = tf.placeholder(tf.int64, [None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None], "story_length")
     # [batch_size x 5]
-    order = tf.placeholder(tf.int64, [None, None], "order")
+    order = tf.placeholder(tf.int32, [None, None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -89,18 +88,21 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
     story_embedded = tf.nn.embedding_lookup(embeddings, story)
 
     with tf.variable_scope("reader") as varscope:
-        cell = tf.nn.rnn_cell.LSTMCell(
+
+        cell = tf.contrib.rnn.LSTMCell( #tf.nn.rnn_cell.LSTMCell
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
         if layers > 1:
-            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * layers)
+            cell = tf.contrib.rnn.MultiRNNCell([cell] * layers)
+            #tf.nn.rnn_cell.MultiRNNCell([cell] * layers)
 
         if dropout != 0.0:
             cell_dropout = \
-                tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
+                tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
+                # tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
         else:
             cell_dropout = cell
 
@@ -123,8 +125,7 @@ def get_basic_model(vocab_size, input_size, output_size, target_size, layers=1,
         logits = tf.reshape(logits_flat, [-1, 5, target_size])
 
         loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                labels=order))
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=order))
 
         predict = tf.arg_max(tf.nn.softmax(logits), 2)
 
@@ -135,11 +136,11 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
                         layers=1, dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x 5 x max_length]
-    story = tf.placeholder(tf.int64, [None, None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None, None], "story")
     # [batch_size x 5]
-    story_length = tf.placeholder(tf.int64, [None, None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None, None], "story_length")
     # [batch_size x 5]
-    order = tf.placeholder(tf.int64, [None, None], "order")
+    order = tf.placeholder(tf.int32, [None, None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -166,18 +167,18 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
                           for sentence in sentences]
 
     with tf.variable_scope("reader") as varscope:
-        cell = tf.nn.rnn_cell.LSTMCell(
+        cell = tf.contrib.rnn.LSTMCell( #tf.nn.rnn_cell.LSTMCell(
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
         if layers > 1:
-            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * layers)
+            cell = tf.contrib.rnn.MultiRNNCell([cell] * layers)
 
         if dropout != 0.0:
             cell_dropout = \
-                tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
+                tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=1.0-dropout)
         else:
             cell_dropout = cell
 
@@ -214,8 +215,7 @@ def get_selective_model(vocab_size, input_size, output_size, target_size,
         logits = tf.reshape(logits_flat, [-1, 5, target_size])
 
         loss = tf.reduce_sum(
-            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                labels=order))
+            tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=order))
 
         predict = tf.arg_max(tf.nn.softmax(logits), 2)
 
@@ -226,11 +226,11 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
                    layers=1, dropout=0.0, nvocab=None):
     # Placeholders
     # [batch_size x 5 x max_length]
-    story = tf.placeholder(tf.int64, [None, None, None], "story")
+    story = tf.placeholder(tf.int32, [None, None, None], "story")
     # [batch_size x 5]
-    story_length = tf.placeholder(tf.int64, [None, None], "story_length")
+    story_length = tf.placeholder(tf.int32, [None, None], "story_length")
     # [batch_size x 5]
-    order = tf.placeholder(tf.int64, [None, None], "order")
+    order = tf.placeholder(tf.int32, [None, None], "order")
     placeholders = {"story": story, "story_length": story_length,
                     "order": order}
 
@@ -271,8 +271,7 @@ def get_bowv_model(vocab_size, input_size, output_size, target_size,
     logits = tf.reshape(logits_flat, [-1, 5, target_size])
 
     loss = tf.reduce_sum(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-            labels=order))
+        tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=order))
 
     predict = tf.arg_max(tf.nn.softmax(logits), 2)
 

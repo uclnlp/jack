@@ -2,6 +2,7 @@
 import os
 import sys
 import logging
+from jtr.jack.tasks.mcqa.simple_mcqa import MisclassificationOutputModule
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 os.chdir('..')
@@ -28,6 +29,7 @@ from jtr.jack.train.hooks import LossHook, ClassificationEvalHook
 hooks = [LossHook(reader, iter_interval=10),
          readers.eval_hooks['snli_reader'](reader, dev, iter_interval=25)]
 
+
 # Here we initialize our optimizer
 # we choose Adam with standard momentum values and learning rate 0.001
 import tensorflow as tf
@@ -36,10 +38,14 @@ optim = tf.train.AdamOptimizer(learning_rate)
 
 # Lets train the reader on the CPU for 2 epochs
 reader.train(optim, train,
-             hooks=hooks, max_epochs=5,
+             hooks=hooks, max_epochs=2,
              device='/cpu:0')
 
-hooks[0].plot()
-hooks[1].plot(ylim=[0.0, 1.0])
+#hooks[0].plot()
+#hooks[1].plot(ylim=[0.0, 1.0])
+
+reader.output_module = MisclassificationOutputModule(interval=[0.0, 0.20], limit=10)
+reader.process_outputs(test)
+
 
 

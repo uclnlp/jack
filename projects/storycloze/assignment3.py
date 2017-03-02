@@ -9,14 +9,17 @@ from jtr.preprocess.map import tokenize, deep_map, deep_seq_map
 from jtr.train import train
 
 from jtr.util.hooks import ExamplesPerSecHook, AccuracyHook, LossHook, ETAHook
-from .assignment3_models import get_selective_model, get_bowv_model
+from assignment3_models import get_selective_model, get_bowv_model
 
+import sys
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 def load_corpus(name, use_permutation_index=True):
     story = []
     order = []
 
-    with open("./jtr/data/StoryCloze/%s_shuffled.tsv" % name, "r") as f:
+    with open("./data/TBD/StoryCloze/%s_shuffled.tsv" % name, "r") as f:
         for line in f.readlines():
             splits = [x.strip() for x in line.split("\t")]
             current_story = splits[0:5]
@@ -102,11 +105,11 @@ if __name__ == '__main__':
     if get_model == get_selective_model or get_model == get_bowv_model:
         CONCAT_SENTENCES = False
 
-    from jtr.sisyphos.vocab import NeuralVocab
-    from jtr.io.embeddings.embeddings import load_embeddings
+    from jtr.preprocess.vocab import NeuralVocab
+    from jtr.load.embeddings.embeddings import load_embeddings
 
     if USE_PRETRAINED_EMBEDDINGS:
-        embeddings = load_embeddings('./jtr/data/GloVe/glove.6B.100d.txt', 'glove')
+        embeddings = load_embeddings('./data/TBD/GloVe/glove.6B.100d.txt', 'glove')
         #embeddings = load_embeddings('./jtr/data/word2vec/GoogleNews-vectors-negative300.bin.gz', 'glove')
         emb = embeddings.get
     else:
@@ -192,7 +195,7 @@ test:         %d
         AccuracyHook(dev_feed_dicts, predict, placeholders['order'], 2),
         AccuracyHook(test_feed_dicts, predict, placeholders['order'], 2)
     ]
-    summary_writer = tf.train.SummaryWriter("./tmp/summaries", tf.get_default_graph())
+    # summary_writer = tf.SummaryWriter("./tmp/summaries", tf.get_default_graph())
     print('training..')
     train(loss, optim, train_feed_dicts, max_epochs=MAX_EPOCHS, hooks=hooks,
           l2=L2, clip=CLIP_NORM, clip_op=tf.clip_by_norm)
