@@ -14,7 +14,7 @@ import tensorflow as tf
 from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import NeuralVocab
 from jtr.train import train
-from jtr.util.hooks import ExamplesPerSecHook, LossHook, TensorHook, EvalHook
+from jtr.util.hooks import ExamplesPerSecHook, LossHook, EvalHook
 import jtr.nn.models as models
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
@@ -104,7 +104,8 @@ def main():
     parser.add_argument('--train_pretrain', action='store_true',
                         help="Continue training pretrained embeddings together with model parameters")
     parser.add_argument('--normalize_pretrain', action='store_true',
-                        help="Normalize pretrained embeddings, default False (randomly initialized embeddings have expected unit norm too)")
+                        help="Normalize pretrained embeddings, default False "
+                             "(randomly initialized embeddings have expected unit norm too)")
 
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
@@ -112,7 +113,7 @@ def main():
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
-    parser.add_argument('--clip_value', default=0.0, type=float,
+    parser.add_argument('--clip_value', default=None, type=float,
                         help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
     parser.add_argument('--drop_keep_prob', default=1.0, type=float,
                         help="Keep probability for dropout on output (set to 1.0 for no dropout)")
@@ -134,18 +135,14 @@ def main():
     parser.add_argument('--seed', default=1337, type=int, help='random seed')
     parser.add_argument('--logfile', default=None, type=str, help='log file')
 
-
     args = parser.parse_args()
 
-    clip_value = None
-    if args.clip_value != 0.0:
-        clip_value = - abs(args.clip_value), abs(args.clip_value)
+    clip_value = - abs(args.clip_value), abs(args.clip_value) if args.clip_value else None
 
     if args.logfile:
         fh = logging.FileHandler(args.logfile)
         fh.setLevel(logging.INFO)
-        fo = logging.Formatter('%(levelname)s:%(name)s:\t%(message)s')
-        fh.setFormatter(fo)
+        fh.setFormatter(logging.Formatter('%(levelname)s:%(name)s:\t%(message)s'))
         logger.addHandler(fh)
 
     logger.info('Configuration:')
@@ -164,21 +161,27 @@ def main():
     for l in device_lib.list_local_devices():
         logger.info('device info: ' + str(l).replace("\n", " "))
 
-    # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings
+    # (3) Read the train, dev, and test data (with optionally loading pre-trained embeddings
     embeddings = None
     if args.debug:
         train_data = jtr_load(args.train, args.debug_examples, **vars(args))
+        dev_data, test_data = train_data, train_data
 
-        logger.info('loaded {} samples as debug train/dev/test dataset '.format(args.debug_examples))
+        logger.info('Loaded {} samples as debug train/dev/test dataset '.format(args.debug_examples))
 
-        dev_data = train_data
-        test_data = train_data
         if args.pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
     else:
-        train_data, dev_data, test_data = [jtr_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
+        train_data = jtr_load(args.train, **vars(args))
+
+        if args.dev:
+            dev_data = jtr_load(args.dev, **vars(args))
+
+        if args.test:
+            test_data = jtr_load(args.test, **vars(args))
+
         logger.info('loaded train/dev/test data')
         if args.pretrain:
             emb_file = 'GoogleNews-vectors-negative300.bin.gz'
