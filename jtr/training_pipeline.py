@@ -127,12 +127,12 @@ def main():
                         help="Number of negative samples, default 0 (= use full candidate list)")
     parser.add_argument('--tensorboard_folder', default='./.tb/',
                         help='Folder for tensorboard logs')
-    parser.add_argument('--write_metrics_to', default='',
+    parser.add_argument('--write_metrics_to', default=None, type=str,
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
     parser.add_argument('--seed', default=1337, type=int, help='random seed')
-    parser.add_argument('--logfile', default='', help='log file')
+    parser.add_argument('--logfile', default=None, type=str, help='log file')
 
 
     args = parser.parse_args()
@@ -141,14 +141,14 @@ def main():
     if args.clip_value != 0.0:
         clip_value = - abs(args.clip_value), abs(args.clip_value)
 
-    if len(args.logfile) > 0:
+    if args.logfile:
         fh = logging.FileHandler(args.logfile)
         fh.setLevel(logging.INFO)
         fo = logging.Formatter('%(levelname)s:%(name)s:\t%(message)s')
         fh.setFormatter(fo)
         logger.addHandler(fh)
 
-    logger.info('configuration:')
+    logger.info('Configuration:')
     for arg in vars(args):
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
 
