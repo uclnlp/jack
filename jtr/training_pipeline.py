@@ -152,7 +152,7 @@ def main():
     for arg in vars(args):
         logger.info('\t{} : {}'.format(str(arg), str(getattr(args, arg))))
 
-    #set random seed
+    # set random seed
     tf.set_random_seed(args.seed)
     DefaultRandomState(args.seed)
 
@@ -164,8 +164,7 @@ def main():
     for l in device_lib.list_local_devices():
         logger.info('device info: ' + str(l).replace("\n", " "))
 
-    # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings)
-
+    # (3) Read the train, dev, and test data (with optionally loading pretrained embeddings
     embeddings = None
     if args.debug:
         train_data = jtr_load(args.train, args.debug_examples, **vars(args))
@@ -243,7 +242,8 @@ def main():
     nvocab = NeuralVocab(train_vocab, input_size=args.repr_dim_input, reduced_input_size=args.repr_dim_input_trf,
                          use_pretrained=args.pretrain,
                          train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
-    with tf.variable_scope("candvocab") as varscope:
+
+    with tf.variable_scope("candvocab"):
         candvocab = NeuralVocab(train_candidate_vocab, input_size=args.repr_dim_input,
                                 reduced_input_size=args.repr_dim_input_trf, use_pretrained=args.pretrain,
                                 train_pretrained=args.train_pretrain, unit_normalize=args.normalize_pretrain)
@@ -254,36 +254,39 @@ def main():
     placeholders = create_placeholders(train_data)
     logger.info('build model {}'.format(args.model))
 
-    #add dropout on the model level
-    #todo: more general solution
+    # add dropout on the model level
+    # todo: more general solution
     options_train = vars(args)
     with tf.name_scope("Train"):
         with tf.variable_scope("Model", reuse=None):
-            (logits_train, loss_train, predict_train) = reader_models[args.model](placeholders, nvocab, candvocab=candvocab, **options_train)
+            (logits_train, loss_train, predict_train) = reader_models[args.model](placeholders,
+                                                                                  nvocab,
+                                                                                  candvocab=candvocab,
+                                                                                  **options_train)
 
     options_valid = {k: v for k, v in options_train.items()}
     options_valid["drop_keep_prob"] = 1.0
     with tf.name_scope("Valid_Test"):
         with tf.variable_scope("Model", reuse=True):
-            (logits_valid, loss_valid, predict_valid) = reader_models[args.model](placeholders, nvocab,
-                                                                                          candvocab=candvocab,
-                                                                                          **options_valid)
+            (logits_valid, loss_valid, predict_valid) = reader_models[args.model](placeholders,
+                                                                                  nvocab,
+                                                                                  candvocab=candvocab,
+                                                                                  **options_valid)
 
     # (7) Batch the data via jtr.batch.get_feed_dicts
     if args.supports != "none":
         # composite buckets; first over question, then over support
         bucket_order = ('question', 'support')
         # will result in 16 composite buckets, evenly spaced over questions and supports
-        bucket_structure = (1, 1) #(4, 4)
+        bucket_structure = (1, 1)  # (4, 4)
     else:
         # question buckets
         bucket_order = ('question',)
         # 4 buckets, evenly spaced over questions
-        bucket_structure = (1,) #(4,)
+        bucket_structure = (1,)  # (4,)
 
-    train_feed_dicts = \
-        get_feed_dicts(train_data, placeholders, args.batch_size,
-                       bucket_order=bucket_order, bucket_structure=bucket_structure, exact_epoch=False)
+    train_feed_dicts = get_feed_dicts(train_data, placeholders, args.batch_size,
+                                      bucket_order=bucket_order, bucket_structure=bucket_structure, exact_epoch=False)
     dev_feed_dicts = get_feed_dicts(dev_data, placeholders, args.dev_batch_size, exact_epoch=True)
 
     test_feed_dicts = get_feed_dicts(test_data, placeholders, args.dev_batch_size, exact_epoch=True)
@@ -294,24 +297,22 @@ def main():
 
     answname = "targets" if "cands" in args.model else "answers"
 
-
-
-
     # (8) Add hooks
     hooks = [
-        #TensorHook(20, [loss, nvocab.get_embedding_matrix()],
-        #           feed_dicts=dev_feed_dicts, summary_writer=sw, modes=['min', 'max', 'mean_abs']),
         # report_loss
         LossHook(1, args.batch_size, summary_writer=sw),
         ExamplesPerSecHook(100, args.batch_size, summary_writer=sw),
+
         # evaluate on train data after each epoch
         EvalHook(train_feed_dicts, logits_valid, predict_valid, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc', 'macroF1'],
                  print_details=False, write_metrics_to=args.write_metrics_to, info="training", summary_writer=sw),
+
         # evaluate on dev data after each epoch
         EvalHook(dev_feed_dicts, logits_valid, predict_valid, placeholders[answname],
                  at_every_epoch=1, metrics=['Acc', 'macroF1'], print_details=False,
                  write_metrics_to=args.write_metrics_to, info="development", summary_writer=sw),
+
         # evaluate on test data after training
         EvalHook(test_feed_dicts, logits_valid, predict_valid, placeholders[answname],
                  at_every_epoch=args.epochs, metrics=['Acc', 'macroP', 'macroR', 'macroF1'],
