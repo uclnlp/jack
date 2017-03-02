@@ -77,6 +77,7 @@ def pair_of_bidirectional_LSTMs(seq1, seq1_lengths, seq2, seq2_lengths,
                         seq1, seq1_lengths, output_size, scope=varscope1,
                         drop_keep_prob=drop_keep_prob)
 
+
     with tf.variable_scope(scope or "paired_LSTM_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]

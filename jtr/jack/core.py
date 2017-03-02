@@ -802,6 +802,7 @@ class JTReader:
             for j, (batch, batch_dev) in enumerate(zip(batches, batches_dev)):
                 self.timer.tick('convert batch')
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
+
                 self.timer.tick('convert batch')
                 self.timer.tick('full pass')
                 current_loss, _ = self.sess.run([loss, min_op], feed_dict=feed_dict)
