@@ -156,10 +156,9 @@ def main():
     # $ CUDA_VISIBLE_DEVICES=0 ./jtr_script.py
 
     logger.info('available devices:')
-    for l in device_lib.list_local_devices():
-        logger.info('device info: ' + str(l).replace("\n", " "))
+    for device in device_lib.list_local_devices():
+        logger.info('device info: ' + str(device).replace("\n", " "))
 
-    embeddings = None
     if args.debug:
         train_data = load_labelled_data(args.train, args.debug_examples, **vars(args))
 
@@ -173,7 +172,7 @@ def main():
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
         else:
-            embeddings=Embeddings(None,None)
+            embeddings = Embeddings(None,None)
     else:
         train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
         test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
@@ -183,7 +182,7 @@ def main():
             logger.info('loaded pre-trained embeddings ({})'.format(args.embedding_file))
             args.repr_input_dim = embeddings.lookup.shape[1]
         else:
-            embeddings=Embeddings(None,None)
+            embeddings = Embeddings(None, None)
 
     emb = embeddings
 
