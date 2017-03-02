@@ -163,7 +163,7 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
 
     
     
-def train(train_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value):
+def train(train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value, pred_on_train=False):
     
     loss, predicted_tags, predicted_labels, predicted_rels = create_model(max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim)
 
@@ -195,7 +195,7 @@ def train(train_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_r
 
     tf.global_variables_initializer().run(session=sess)
 
-    train_pred_batches = []
+    pred_batches = []
     
     for i in range(1, max_epochs + 1):
         #print('iteration', str(i))
@@ -205,7 +205,7 @@ def train(train_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_r
             loss_all.append(current_loss)
 
             # in last epoch, get predictions on training data
-            if i == max_epochs:
+            if i == max_epochs and pred_on_train == True:
                 train_pred_batches_i = {}
 
                 curr_predicted_tags, curr_predicted_labels, curr_predicted_rels \
@@ -217,11 +217,29 @@ def train(train_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_r
                 train_pred_batches_i["sentences_as_ints"], train_pred_batches_i["sentence_length"], train_pred_batches_i["document_indices"], train_pred_batches_i["token_char_offsets"]\
                     = batch[placeholders["sentences_as_ints"]], batch[placeholders["sentence_length"]], batch[placeholders["document_indices"]], batch[placeholders["token_char_offsets"]]
 
-                train_pred_batches.append(train_pred_batches_i)
+                pred_batches.append(train_pred_batches_i)
 
         print("Epoch:", i, "\tAverage loss:", np.average(loss_all))
 
-    return train_pred_batches
+        if pred_on_train == False:
+            for j, dev_batch in enumerate(dev_batches):
+                dev_pred_batches_i = {}
+
+                curr_predicted_tags, curr_predicted_labels, curr_predicted_rels \
+                    = sess.run([predicted_tags, predicted_labels, predicted_rels], feed_dict=dev_batch)
+
+                dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
+                dev_pred_batches_i["relation_matrices"] \
+                    = curr_predicted_tags, curr_predicted_labels, curr_predicted_rels
+
+                dev_pred_batches_i["sentences_as_ints"], dev_pred_batches_i["sentence_length"], \
+                dev_pred_batches_i["document_indices"], dev_pred_batches_i["token_char_offsets"] \
+                    = dev_batch[placeholders["sentences_as_ints"]], dev_batch[placeholders["sentence_length"]], dev_batch[
+                    placeholders["document_indices"]], dev_batch[placeholders["token_char_offsets"]]
+
+                pred_batches.append(dev_pred_batches_i)
+
+    return pred_batches
 
 
 
@@ -303,7 +321,7 @@ if __name__ == "__main__":
     train_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/train2"
     dev_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/dev/"
     
-    #train_instances = read_ann(train_dir)
+    train_instances = read_ann(train_dir)
     dev_instances = read_ann(dev_dir)
     
     print("Loaded {} dev instances".format(len(dev_instances)))
@@ -321,18 +339,41 @@ if __name__ == "__main__":
     
     print("Collected {} word types".format(len(vocab)))
 
-    train_batchable = convert_to_batchable_format(dev_instances, vocab)
+    train_batchable = convert_to_batchable_format(train_instances, vocab)
+    dev_batchable = convert_to_batchable_format(dev_instances, vocab)
 
     batch_size = 16
-    data_np = numpify(train_batchable, pad=0)
-    max_sent_len = len(data_np["relation_matrices"][0][0])
+    #data_train_np = numpify(train_batchable, pad=0)
+    #data_dev_np = numpify(dev_batchable, pad=0)
 
-    train_feed_dicts = get_feed_dicts(data_np, placeholders, batch_size,
+    data_all = {}
+    for key, value in train_batchable.items():
+        data_all[key] = train_batchable[key] + dev_batchable[key]
+
+    data_np = numpify(data_all, pad=0)
+    data_train_np = {}
+    data_dev_np = {}
+    for key, value in data_np.items():
+        data_train_np[key] = data_np[key][0:len(train_batchable[key])]
+        data_dev_np[key] = data_np[key][len(train_batchable[key]):len(train_batchable[key])+len(dev_batchable[key])]
+
+    max_sent_len = len(data_train_np["relation_matrices"][0][0])
+
+    train_feed_dicts = get_feed_dicts(data_train_np, placeholders, batch_size,
                        bucket_order=None, bucket_structure=None)
 
-    train_preds = train(train_feed_dicts, vocab, max_sent_len, max_epochs=100, emb_dim=100, output_size=100)
+    dev_feed_dicts = get_feed_dicts(data_dev_np, placeholders, batch_size,
+                                      bucket_order=None, bucket_structure=None)
 
-    for batch in train_preds:
-        convert_batch_to_ann(batch, dev_instances, "/tmp")
+    dev_preds = train(train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=100, emb_dim=300, output_size=300)
+
+    # reset current out_dir
+    out_dir = "/tmp/"
+    for f in os.listdir(out_dir):
+        if os.path.isfile(os.path.join(out_dir, f)) and f.endswith(".ann"):
+            os.remove(os.path.join(out_dir, f))
+
+    for dev_batch in dev_preds:
+        convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
 
     calculateMeasures(dev_dir, "/tmp/")
