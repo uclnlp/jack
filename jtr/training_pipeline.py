@@ -133,7 +133,7 @@ def main():
 
     args = parser.parse_args()
 
-    clip_value = - abs(args.clip_value), abs(args.clip_value) if args.clip_value else None
+    clip_range = (- abs(args.clip_value), abs(args.clip_value)) if args.clip_value else None
 
     if args.logfile:
         fh = logging.FileHandler(args.logfile)
@@ -322,7 +322,7 @@ def main():
     ]
 
     # (9) Train the model
-    train(loss_train, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=clip_value, hooks=hooks)
+    train(loss_train, optim, train_feed_dicts, max_epochs=args.epochs, l2=args.l2, clip=clip_range, hooks=hooks)
     logger.info('finished in {0:.3g}'.format((time() - t0) / 3600.))
 
 
