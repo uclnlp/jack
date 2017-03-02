@@ -11,7 +11,10 @@ import os
 import pickle
 import shutil
 import sys
-from abc import abstractmethod
+import json
+import time
+
+from abc import abstractmethod, abstractproperty
 from typing import Mapping, Iterable, Sequence
 import numpy as np
 import tensorflow as tf
@@ -20,6 +23,46 @@ from jtr.preprocess.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 
+class TestDatasets(object):
+
+    @staticmethod
+    def generate_SNLI():
+        snli_path = 'tests/test_data/SNLI/'
+        splits = ['train.json', 'dev.json', 'test.json']
+        snli_data = []
+        for split in splits:
+            path = os.path.join(snli_path, split)
+            snli_data.append(load_labelled_data(path))
+
+        return snli_data
+
+
+
+class CPUTimer(object):
+    def __init__(self):
+        self.cumulative_secs = {}
+        self.current_ticks = {}
+        pass
+
+    def tick(self, name='default'):
+        if name not in self.current_ticks:
+            self.current_ticks[name] = time.time()
+        else:
+            if name not in self.cumulative_secs:
+                self.cumulative_secs[name] = 0
+            t = time.time()
+            self.cumulative_secs[name] += t - self.current_ticks[name]
+            self.current_ticks.pop(name)
+
+    def tock(self, name='default'):
+        self.tick(name)
+        print('Time taken for {0}: {1:.1f}s'.format(name, self.cumulative_secs[name]))
+        self.cumulative_secs.pop(name)
+        self.current_ticks.pop(name, None)
+
+
+>>>>>>> Added timer class.
+>>>>>>> Added timer class.
 
 class TensorPort:
     """
@@ -647,6 +690,7 @@ class JTReader:
         self.model_module = model_module
         self.input_module = input_module
         self.is_train = is_train
+        self.timer = CPUTimer()
 
         if self.sess is None:
             sess_config = tf.ConfigProto(allow_soft_placement=True)
@@ -756,21 +800,45 @@ class JTReader:
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, (batch, batch_dev) in enumerate(zip(batches, batches_dev)):
+                self.timer.tick('convert batch')
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
+                self.timer.tick('convert batch')
+                self.timer.tick('full pass')
                 current_loss, _ = self.sess.run([loss, min_op], feed_dict=feed_dict)
+                self.timer.tick('full pass')
 
-                for hook in hooks:
-                    hook.at_iteration_end(i, current_loss, set_name='dev')
-
-                feed_dict = self.model_module.convert_to_feed_dict(batch_dev)
-                current_loss = self.sess.run([loss], feed_dict=feed_dict)[0]
+                self.timer.tick('train iter hook')
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
+                self.timer.tick('train iter hook')
+
+                self.timer.tick('dev convert batch')
+                feed_dict = self.model_module.convert_to_feed_dict(batch_dev)
+                self.timer.tick('dev convert batch')
+                self.timer.tick('dev forward pass')
+                current_loss = self.sess.run([loss], feed_dict=feed_dict)[0]
+                self.timer.tick('dev forward pass')
+
+                self.timer.tick('dev iter hook')
+                for hook in hooks:
+                    hook.at_iteration_end(i, current_loss, set_name='dev')
+                self.timer.tick('dev iter hook')
 
 
             # calling post-epoch hooks
+            self.timer.tick('epoch hook')
             for hook in hooks:
                 hook.at_epoch_end(i)
+            self.timer.tick('epoch hook')
+
+        self.timer.tock('training')
+        self.timer.tock('convert batch')
+        self.timer.tock('full pass')
+        self.timer.tock('train iter hook')
+        self.timer.tock('dev convert batch')
+        self.timer.tock('dev forward pass')
+        self.timer.tock('dev iter hook')
+        self.timer.tock('epoch hook')
 
     def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
         """
