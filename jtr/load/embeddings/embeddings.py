@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from jtr.load.embeddings.word_to_vec import load_word2vec
 from jtr.load.embeddings.glove import load_glove
 import zipfile
@@ -10,16 +12,11 @@ class Embeddings:
         self.lookup = lookup
 
     def get(self, word):
-        if self.vocabulary is None:
-            id = None
-        else:
-            id = self.vocabulary.get_idx_by_word(word)
-        #out-of-vocab word
-        if id is None:
-            return None  #lookup[None] would return entire lookup table
-        #known embedding
-        else:
-            return self.lookup[id]
+        _id = None
+        if self.vocabulary is not None:
+            _id = self.vocabulary.get_idx_by_word(word)
+        # Handling OOV words - Note: lookup[None] would return entire lookup table
+        return self.lookup[_id] if _id is not None else None
 
     def __call__(self, word):
         return self.get(word)
