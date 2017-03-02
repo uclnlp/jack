@@ -8,6 +8,11 @@ import zipfile
 class Embeddings:
     """Wraps Vocabulary and embedding matrix to do lookups"""
     def __init__(self, vocabulary, lookup):
+        """
+
+        :param vocabulary:
+        :param lookup:
+        """
         self.vocabulary = vocabulary
         self.lookup = lookup
 
