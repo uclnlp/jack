@@ -86,9 +86,9 @@ def main():
     parser.add_argument('--answers', default='single', choices=sorted(answer_alts),
                         help="Single or multiple")
     parser.add_argument('--batch_size', default=128,
-        type=int, help="Batch size for training data, default 128")
+                        type=int, help="Batch size for training data, default 128")
     parser.add_argument('--dev_batch_size', default=128,
-        type=int, help="Batch size for development data, default 128")
+                        type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=300, type=int,
                         help="Size of the input representation (embeddings),"
                              "default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
