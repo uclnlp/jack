@@ -1,6 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import gzip
 import numpy as np
 from jtr.load.embeddings.vocabulary import Vocabulary
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_word2vec(filename, vocab=None, normalise=True):
@@ -9,25 +15,20 @@ def load_word2vec(filename, vocab=None, normalise=True):
     Args:
         filename (string): Path to the word2vec file.
         vocab (Vocabulary=None): Existing vocabulary to be merged.
-        normalize (bool=True): If the word embeddings should be unit
+        normalise (bool=True): If the word embeddings should be unit
                   normalized or not.
     Returns:
         return_vocab (dict), lookup (matrix): The dict is a word2idx dict and
         the lookup matrix is the matrix of embedding vectors.
     """
-    print("[Loading word2vec]")
+    logger.info("Loading word2vec vectors ..")
     with gzip.open(filename, 'rb') as f:
         vec_n, vec_size = map(int, f.readline().split())
         byte_size = vec_size * 4
-        if vocab is not None:
-            lookup = np.empty([vocab.get_size(), vec_size], dtype=np.float32)
-        else:
-            lookup = np.empty([vec_n, vec_size], dtype=np.float32)
+        lookup = np.empty([vocab.get_size() if vocab is not None else vec_n, vec_size], dtype=np.float32)
         word2idx = {}
         idx = 0
         for n in range(vec_n):
-            if n % 100000 == 0 and n != 0:
-                print('  ' + str(n // 1000) + 'k vectors processed...\r')
             word = b''
             while True:
                 c = f.read(1)
@@ -40,31 +41,18 @@ def load_word2vec(filename, vocab=None, normalise=True):
             vector = np.fromstring(f.read(byte_size), dtype=np.float32)
             if vocab is None or vocab.contains_word(word):
                 word2idx[word] = idx
-                if normalise:
-                    lookup[idx] = normalize(vector)
-                else:
-                    lookup[idx] = vector
+                lookup[idx] = _normalise(vector) if normalise else vector
                 idx += 1
 
     lookup.resize([idx, vec_size])
     return_vocab = Vocabulary(vocab=word2idx)
+    logger.info('Loading word2vec vectors completed.')
     return return_vocab, lookup
 
 
-def normalize(x):
+def _normalise(x):
     """Unit normalize x with L2 norm."""
     return (1.0 / np.linalg.norm(x, ord=2)) * x
-
-
-# def pickle_word2vec(vocab, lookup):
-#     pickle.dump(vocab, open("word2vec_vocab.p", 'wb'))
-#     pickle.dump(lookup, open("word2vec_lookup.p", 'wb'))
-#
-#
-# def load_pickled_word2vec():
-#     vocab = pickle.load(open('word2vec_vocab.p', 'rb'))
-#     lookup = pickle.load(open('word2vec_lookup.p', 'rb'))
-#     return vocab, lookup
 
 
 def get_word2vec_vocabulary(fname):
