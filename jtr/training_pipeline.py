@@ -20,7 +20,7 @@ from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.pipelines import create_placeholders, pipeline
 from jtr.util.rs import DefaultRandomState
 
-from jtr.load.read_jtr import jtr_load as _jtr_load
+from jtr.load.read_jtr import jtr_load
 from tensorflow.python.client import device_lib
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
@@ -51,10 +51,6 @@ checkpoint = Duration()
       (8) Add hooks
       (9) Train the model
 """
-
-
-def jtr_load(_path, max_count=None, **options):
-    return _jtr_load(_path, max_count, **options)
 
 
 def main():
@@ -163,6 +159,8 @@ def main():
 
     # (3) Read the train, dev, and test data (with optionally loading pre-trained embeddings
     embeddings = None
+    train_data, dev_data, test_data = None, None, None
+
     if args.debug:
         train_data = jtr_load(args.train, args.debug_examples, **vars(args))
         dev_data, test_data = train_data, train_data
@@ -174,7 +172,8 @@ def main():
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
     else:
-        train_data = jtr_load(args.train, **vars(args))
+        if args.train:
+            train_data = jtr_load(args.train, **vars(args))
 
         if args.dev:
             dev_data = jtr_load(args.dev, **vars(args))
