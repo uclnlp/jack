@@ -28,7 +28,8 @@ placeholders = {"sentences_as_ints": tokens, "sentence_length": sentence_lengths
                 "document_indices": document_indices, "token_char_offsets": token_char_offsets}
 
 
-def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len, tag_size=3, type_size=4, rel_size=3):
+def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len, tag_size=3, type_size=4, rel_size=3, relations=True, tieOutputLayer=True):
+    # sequence-to-sequence bi-LSTM with hierarchical softmax for keyphrase identification, classification and relation classification
     with tf.variable_scope("embeddings"):
         embeddings = tf.get_variable("embeddings", shape=[num_words, emb_dim], dtype=tf.float32)
 
@@ -64,36 +65,107 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
 
         dim1, dim2, dim3 = tf.unpack(tf.shape(target_relations))
 
-        # masking or sentence lengths  -- doesn't seem to help
+        # masking output for sentence lengths  -- doesn't seem to help
         #output_mask = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, dim2=emb_dim*2, value=-1000)
         #output = output + output_mask
+
+        output_mask_keys = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, value=0, mask_right=False)
+        output_mask_rels = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, dim2=dim3, value=0, mask_right=False)
 
         output_with_tags = tf.contrib.layers.linear(output, tag_size)
 
         output_with_tags_softm = tf.nn.softmax(output_with_tags)
         predicted_tags = tf.arg_max(output_with_tags_softm, 2)
-        loss_tags = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_tags, tag_labels))
+        l_tags = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_tags, tag_labels)
+
+        # applying sentence length mask
+        #l_tags = l_tags + output_mask_keys
+        l_tags = tf.select(output_mask_keys, l_tags, tf.zeros(tf.shape(l_tags)))
+
+        loss_tags = tf.reduce_sum(l_tags)
 
         output_with_labels = tf.contrib.layers.linear(output, type_size)
+
+        # set output_with_labels [batch_size, max_num_tokens, 0] to output_with_tags [batch_size, max_num_tokens, 0]  -- i.e. the params for O should be the same for tags and labels
+        if tieOutputLayer == True:
+            output_with_tags_slice = tf.slice(output_with_tags, [0, 0, 0], [dim1, dim2, 1])
+            output_with_labels_slice = tf.slice(output_with_labels, [0, 0, 1], [dim1, dim2, type_size-1])
+            output_with_labels = tf.concat(values=[output_with_tags_slice, output_with_labels_slice], concat_dim=2)
+
         output_with_labels_softm = tf.nn.softmax(output_with_labels)
+
         predicted_labels = tf.arg_max(output_with_labels_softm, 2)
-        loss_labels = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_labels, type_labels))
+        l_labels = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_labels, type_labels)
 
-        output_with_rels = tf.contrib.layers.linear(output, max_sent_len * rel_size)
-        output_with_rels_reshaped = tf.reshape(output_with_rels, [dim1, dim2, dim3, -1])
-        output_with_labels_softm = tf.nn.softmax(output_with_rels_reshaped)
-        predicted_rels = tf.arg_max(output_with_labels_softm, 3)
-        predicted_rels = tf.reshape(predicted_rels, [dim1, dim2, dim3])
-        loss_rels = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_rels_reshaped, target_relations))
+        # applying sentence length mask
+        l_labels = tf.select(output_mask_keys, l_labels, tf.zeros(tf.shape(l_labels)))
 
-        loss_all = loss_tags + loss_labels + loss_rels
+        loss_labels = tf.reduce_sum(l_labels)
+
+        if relations == True:
+            output_with_rels = tf.contrib.layers.linear(output, max_sent_len * rel_size)
+            output_with_rels = tf.reshape(output_with_rels, [dim1, dim2, dim3, -1])  # batch_size, seq_len, seq_len, num_rels
+
+            # the params for [O, O] relation weights should be same as those for O tags and labels
+            # do this separately for the rows and columns in the rel label matrix
+            if tieOutputLayer == True:
+                output_rels_unpacked1 = tf.unpack(output_with_rels, num=max_sent_len, axis=1)  # produces dim2 number of [dim1, dim3, dim4] slices
+                #output_with_rels = tf.pack(output_rels_unpacked1, axis=1)
+
+                outputs1 = tf.TensorArray(size=max_sent_len, dtype='float32', infer_shape=False)
+                i = 0
+                for rel_sl in output_rels_unpacked1:  # this is of len max_sent_len
+                    output_with_rels_slice = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, rel_size - 1])  # these are all the non-O weights
+                    output_with_labels_slice = tf.slice(output_with_tags, [0, 0, 0], [dim1, dim2, 1])  # these are the O weights
+                    output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], concat_dim=2)
+                    outputs1 = outputs1.write(i, output_with_rels)
+                    i += 1
+
+                # packs along axis 0, there doesn't seem to be a way to change that (?)
+                output_with_rels = outputs1.pack()
+                output_with_rels = tf.transpose(output_with_rels, perm=[1, 0, 2, 3])
+
+
+                output_rels_unpacked2 = tf.unpack(output_with_rels, num=max_sent_len, axis=2)  # produces dim1 number of [dim1, dim2, dim4] slices
+
+                outputs2 = tf.TensorArray(size=max_sent_len, dtype='float32', infer_shape=False)
+                i = 0
+                for rel_sl in output_rels_unpacked2:  # this is of len max_sent_len
+                    output_with_rels_slice = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, rel_size - 1])  # these are all the non-O weights
+                    output_with_labels_slice = tf.slice(output_with_tags, [0, 0, 0], [dim1, dim2, 1])  # these are the O weights
+                    output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], concat_dim=2)
+                    outputs2 = outputs2.write(i, output_with_rels)
+                    i += 1
+
+                # packs along axis 0, there doesn't seem to be a way to change that (?)
+                output_with_rels = outputs2.pack()
+                output_with_rels = tf.transpose(output_with_rels, perm=[1, 0, 2, 3])
+
+
+            output_with_labels_softm = tf.nn.softmax(output_with_rels)
+            predicted_rels = tf.arg_max(output_with_labels_softm, 3)
+            predicted_rels = tf.reshape(predicted_rels, [dim1, dim2, dim3])
+
+            l_relations = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_rels, target_relations)
+
+            # applying sentence length mask
+            l_relations = tf.select(output_mask_rels, l_relations, tf.zeros(tf.shape(l_relations)))
+
+            loss_rels = tf.reduce_sum(l_relations)
+
+            loss_all = loss_tags + loss_labels + loss_rels
+
+        else:
+            predicted_rels = target_relations
+            loss_all = loss_tags + loss_labels
         
         return loss_all, predicted_tags, predicted_labels, predicted_rels
+
     
     
 def train(train_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value):
     
-    loss, predicted_tags, predicted_labels, predicted_rels = create_model(max_sent_len=max_sent_len, output_size=10, layers=1, dropout=0.0, num_words=len(vocab), emb_dim=10)
+    loss, predicted_tags, predicted_labels, predicted_rels = create_model(max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim)
 
     optim = tf.train.AdamOptimizer(learning_rate)
     
@@ -206,13 +278,24 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, dim2=None, mask_
         max_length = tf.reduce_max(lengths)
     if batch_size is None:
         batch_size = tf.shape(lengths)[0]
-    # [batch_size x max_length x dim2]
-    mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size * dim2]), tf.pack([batch_size, max_length, dim2]))
-    if mask_right:
-        mask = tf.greater_equal(mask, tf.expand_dims(tf.expand_dims(lengths, 1), 1))
+
+    if dim2 != None:
+        # [batch_size x max_length x dim2]
+        mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size * dim2]), tf.pack([batch_size, max_length, dim2]))
+        if mask_right:
+            mask = tf.greater_equal(mask, tf.expand_dims(tf.expand_dims(lengths, 1), 1))
+        else:
+            mask = tf.less(mask, tf.expand_dims(tf.expand_dims(lengths, 1), 1))
     else:
-        mask = tf.less(mask, tf.expand_dims(tf.expand_dims(lengths, 1), 1))
-    mask = tf.cast(mask, tf.float32) * value
+        # [batch_size x max_length]
+        mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.pack([batch_size, -1]))
+        if mask_right:
+            mask = tf.greater_equal(mask, tf.expand_dims(lengths, 1))
+        else:
+            mask = tf.less(mask, tf.expand_dims(lengths, 1))
+    # otherwise we return a boolean mask
+    if value != 0:
+        mask = tf.cast(mask, tf.float32) * value
     return mask
 
 
@@ -247,7 +330,7 @@ if __name__ == "__main__":
     train_feed_dicts = get_feed_dicts(data_np, placeholders, batch_size,
                        bucket_order=None, bucket_structure=None)
 
-    train_preds = train(train_feed_dicts, vocab, max_sent_len, max_epochs=200, emb_dim=50, output_size=50)
+    train_preds = train(train_feed_dicts, vocab, max_sent_len, max_epochs=100, emb_dim=100, output_size=100)
 
     for batch in train_preds:
         convert_batch_to_ann(batch, dev_instances, "/tmp")
