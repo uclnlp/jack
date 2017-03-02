@@ -77,7 +77,8 @@ def main():
     parser.add_argument('--dev', default=dev_default, type=argparse.FileType('r'), help="jtr dev file")
     parser.add_argument('--test', default=test_default, type=argparse.FileType('r'), help="jtr test file")
     parser.add_argument('--supports', default='single', choices=sorted(support_alts),
-                        help="None, single (default) or multiple supporting statements per instance; multiple_flat reads multiple instances creates a separate instance for every support")
+                        help="None, single (default) or multiple supporting statements per instance; "
+                             "multiple_flat reads multiple instances creates a separate instance for every support")
     parser.add_argument('--questions', default='single', choices=sorted(question_alts),
                         help="None, single (default), or multiple questions per instance")
     parser.add_argument('--candidates', default='fixed', choices=sorted(candidate_alts),
@@ -89,7 +90,8 @@ def main():
     parser.add_argument('--dev_batch_size', default=128,
         type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=300, type=int,
-                        help="Size of the input representation (embeddings), default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
+                        help="Size of the input representation (embeddings),"
+                             "default 100 (embeddings cut off or extended if not matched with pretrained embeddings)")
     parser.add_argument('--repr_dim_input_trf', default=100, type=int,
                         help="Size of the input embeddings after reducing with fully_connected layer (default 100)")
     parser.add_argument('--repr_dim_output', default=100, type=int,
@@ -105,12 +107,14 @@ def main():
 
     parser.add_argument('--vocab_maxsize', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_minfreq', default=2, type=int)
-    parser.add_argument('--vocab_sep', default=True, type=bool, help='Should there be separate vocabularies for questions and supports, vs. candidates and answers. This needs to be set to True for candidate-based methods.')
+    parser.add_argument('--vocab_sep', default=True, type=bool,
+                        help='Should there be separate vocabularies for questions and supports, '
+                             'vs. candidates and answers. This needs to be set to True for candidate-based methods.')
     parser.add_argument('--model', default='bicond_singlesupport_reader', choices=sorted(reader_models.keys()), help="Reading model to use")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
     parser.add_argument('--clip_value', default=None, type=float,
-                        help="Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)")
+                        help="Gradients clipped between [-clip_value, clip_value] (default: no clipping)")
     parser.add_argument('--drop_keep_prob', default=1.0, type=float,
                         help="Keep probability for dropout on output (set to 1.0 for no dropout)")
     parser.add_argument('--epochs', default=5, type=int, help="Number of epochs to train for, default 5")
