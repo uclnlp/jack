@@ -80,6 +80,25 @@ def save_conf(path, conf):
         f_out.close()
 
 
+def deep_merge(dict1, dict2):
+    """
+    overrides entries in dict1 with entries in dict2!
+    """
+    if isinstance(dict1, dict) and isinstance(dict2, dict):
+        tmp = {}
+        for key in dict1:
+            if key not in dict2:
+                tmp[key] = dict1[key]
+            else:
+                tmp[key] = deep_merge(dict1[key], dict2[key])
+        for key in dict2:
+            if key not in dict1:
+                tmp[key] = dict2[key]
+        return tmp
+    else:
+        return dict2
+
+
 def load_conf(path, experiment_dir=None):
     file_name = path.split("/")[-1]
 
@@ -93,9 +112,9 @@ def load_conf(path, experiment_dir=None):
         conf["meta"]["name"] = file_name.split(".")[0]
         conf["meta"]["file_name"] = file_name
 
-        if "parent" in conf["meta"]:
+        if "parent" in conf["meta"] and conf["meta"]["parent"] is not None:
             parent = load_conf(conf["meta"]["parent"])
-            conf = {**parent, **conf}
+            conf = deep_merge(parent, conf)  # {**parent, **conf}
 
         if experiment_dir is not None:
             save_conf(experiment_dir+file_name, conf)

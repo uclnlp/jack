@@ -178,9 +178,6 @@ def main():
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
-
-
-
     else:
         train_data, dev_data, test_data = [jtr_load(name,**vars(args)) for name in [args.train, args.dev, args.test]]
         logger.info('loaded train/dev/test data')

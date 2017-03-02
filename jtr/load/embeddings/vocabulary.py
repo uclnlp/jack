@@ -1,4 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import itertools
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Vocabulary:
     """Manages word2idx and idx2word functionality; manages of word stats."""

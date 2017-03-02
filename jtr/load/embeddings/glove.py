@@ -1,6 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 
 from jtr.load.embeddings.vocabulary import Vocabulary
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_glove(stream, vocab=None):
@@ -12,7 +18,8 @@ def load_glove(stream, vocab=None):
         return_vocab (Vocabulary), lookup (matrix); Vocabulary contains the
                      word2idx and the matrix contains the embedded words.
     """
-    print('[Loading GloVe]')
+    logger.info('Loading GloVe vectors ..')
+
     word2idx = {}
     first_line = stream.readline()
     dim = len(first_line.split()) - 1
@@ -30,11 +37,9 @@ def load_glove(stream, vocab=None):
                 lookup.resize([lookup.shape[0] + 500000, lookup.shape[1]])
             lookup[idx] = np.fromstring(vec, sep=' ')
         n += 1
-        if n % 100000 == 0:
-            print('  ' + str(n // 1000) + 'k vectors processed...\r')
     lookup.resize([len(word2idx), dim])
     return_vocab = Vocabulary(word2idx)
-    print('[Loading GloVe DONE]')
+    logger.info('Loading GloVe vectors completed.')
     return return_vocab, lookup
 
 if __name__ == "__main__":
