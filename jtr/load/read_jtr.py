@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 import re
 token_pattern = re.compile('[^ ]+')
@@ -9,16 +11,17 @@ logger = logging.getLogger(__name__)
 """Loads jtr JSON files and manages the transformation into components."""
 
 
-
 def read_data(data_filename):
     """Reads jtr JSON and returns the dictionary."""
     with open(data_filename) as data_file:
         data = json.load(data_file)
         return data
 
+
 def read_rich_data(data_filename):
     """Transforms a jtr JSON file into a list of RichInstances (S,Q(A))."""
     return [RichInstance(x) for x in read_data(data_filename)]
+
 
 class RichInstance(object):
     """Holds lists of supports and questions and manages their iteration."""
@@ -42,7 +45,8 @@ class RichInstance(object):
         """Yields nested pairs of question and support objects."""
         for q in self.questions:
             for s in self.supports:
-                yield q,s
+                yield q, s
+
 
 class Question(object):
     """Class which holds answers and question as text."""
@@ -52,12 +56,14 @@ class Question(object):
         self.answers = [Answer(x) for x in qdict['answers']]
         self.tokens = self.text.split(' ')
 
+
 class Answer(object):
     """Class which holds the text or span of the answer."""
     def __init__(self, adict):
         self.adict = adict
         self.text = adict['text']
         self.span = adict['span']
+
 
 class Support(object):
     """Holds a support which is a text or an interval between tokens (span)."""
@@ -76,8 +82,6 @@ class Support(object):
             if char_offset <= t[1]:
                 return i
         return -1
-
-
 
 
 def jtr_load(path, max_count=None, **options):
@@ -166,4 +170,4 @@ def jtr_load(path, max_count=None, **options):
     if options["supports"] != "none":
         return {'question': questions, 'support': supports, 'answers': answers, 'candidates': candidates}
     else:
-       return {'question': questions, 'answers': answers, 'candidates': candidates} 
+        return {'question': questions, 'answers': answers, 'candidates': candidates}

@@ -132,6 +132,8 @@ def normaliseAnnotations(file_anno, remove_anno):
 
     for l in file_anno:
         r_g = l.strip().split("\t")
+        if len(r_g) != 3:
+            continue
         r_g_offs = r_g[1].split(" ")
 
         # remove relation instances if specified

@@ -56,9 +56,13 @@ def read_ann(textfolder=dev_dir):
     from nltk import sent_tokenize, word_tokenize
     flist = os.listdir(textfolder)
     instances = []
+    #i = 0
     for f in flist:
         if not f.endswith(".ann"):
             continue
+        #i += 1
+        #if i == 20:
+        #    break
         #if not f == "S0003491613001516.ann": #S0021999113005846.ann":  # good test example
         #    continue
         f_anno = open(os.path.join(textfolder, f), "rU")
@@ -121,8 +125,14 @@ def read_ann(textfolder=dev_dir):
                 annotation_id = anno_inst[0].strip()
                 if len(anno_inst1) == 3:
                     keytype, start, end = anno_inst1
+                elif len(anno_inst1) > 3 and anno_inst1[0] == "Synonym-of":
+                    for i in range(1, len(anno_inst1)-1):
+                        relations.append((annotation_id, (keytype, anno_inst1[1], anno_inst1[1+i])))
+                    keytype = anno_inst1[0]
                 else:
-                    keytype, start, _, end = anno_inst1
+                    keytype = anno_inst1[0]
+                    start = anno_inst1[1]
+                    end = anno_inst1[len(anno_inst1)-1]
                 if not keytype.endswith("-of"):
 
                     # look up span in text and print error message if it doesn't match the .ann span text
@@ -139,8 +149,9 @@ def read_ann(textfolder=dev_dir):
                                 keyphrase_to_tokens[keyphrase].add(token)
                     except AssertionError:
                         print("Span lookup doesn't match tokens:", keyphr_text_lookup, "    vs   " , keyphr_ann)
-                else:
-                    relations.append((annotation_id, anno_inst1))
+                elif keytype.endswith("-of") and len(anno_inst1) == 3:  # otherwise we already took care of that
+                    #anno_inst1 = (keytype, start, end)
+                    relations.append((annotation_id, (keytype, start, end))) #anno_inst1))
         for annotation_id, (rel, arg1, arg2) in relations:
             if rel == "Hyponym-of":
                 arg1_id = arg1.split(":")[1]
@@ -251,11 +262,6 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
     relation_matrices = batch[relation_matrices_key]
     token_char_offsets = batch[token_char_offsets_key]
     sentence_lengths = batch[sentence_lengths_key]
-
-    # reset current out_dir
-    for f in os.listdir(out_dir):
-        if os.path.isfile(f):
-            os.remove(os.path.join(out_dir, f))
 
     prev_filename = ""
     for elem_index, doc_id in enumerate(doc_ids):
