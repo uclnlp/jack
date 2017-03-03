@@ -211,13 +211,6 @@ class ETAHook(TraceHook):
         """Estimates ETA from max_iter vs current_iter."""
         self.iter += 1
 
-        if self.reestimate and self.iter >= self.max_iters / self.max_epochs:
-            self.max_iters *= self.max_epochs
-
-        if self.reestimate and self.epoch != epoch:
-            self.max_iters = self.iter * self.max_epochs
-            self.reestimate = False
-
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             progress = float(self.iter) / self.max_iters
             current_time = time.time()
@@ -251,6 +244,12 @@ class ETAHook(TraceHook):
             # logger.info("Epoch {}\tIter {}\tETA in {} {0:.2g}".format(epoch, self.iter, format_eta(eta), progress * 100) + "%] " + eta_date)
 
             self.update_summary(sess, self.iter, self.__tag__(), float(eta))
+            self.update_summary(sess, self.iter, self.__tag__() + "_progress", progress)
+
+    def at_epoch_end(self, *args, **kwargs):
+        if self.reestimate:
+            self.max_iters = self.max_epochs * self.iter
+            self.reestimate = False
 
 
 class AccuracyHook(TraceHook):
