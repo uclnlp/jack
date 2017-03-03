@@ -3,7 +3,7 @@ import tensorflow as tf
 
 def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
           hooks=[], pre_run=None, post_run=None, sess=None, l2=0.0, clip=None,
-          clip_op=tf.clip_by_value):
+          clip_op=tf.clip_by_value, check_numerics=False):
     """Trains a model which can be decorated with various options.
 
        Args:
@@ -55,6 +55,10 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
 
     tf.global_variables_initializer().run(session=sess)
 
+    nodes = [min_op, loss]
+    if check_numerics:
+        nodes.append(tf.add_check_numerics_ops())
+
     for i in range(1, max_epochs + 1):
         for j, batch in enumerate(batches):
             if placeholders is not None:
@@ -65,13 +69,14 @@ def train(loss, optim, batches, placeholders=None, predict=None, max_epochs=10,
             if pre_run is not None:
                 pre_run(sess, i, feed_dict, loss, predict)
 
-            _, current_loss = sess.run([min_op, loss], feed_dict=feed_dict)
+            result = sess.run(nodes, feed_dict=feed_dict)
+            current_loss = result[1]
 
             if post_run is not None:
                 post_run(sess, i, feed_dict, loss, predict)
 
             for hook in hooks:
-                hook.at_iteration_end(sess, i, predict, current_loss)
+                hook.at_iteration_end(sess, i, predict, current_loss, feed_dict)
 
         # calling post-epoch hooks
         for hook in hooks:

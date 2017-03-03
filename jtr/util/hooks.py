@@ -19,7 +19,7 @@ class Hook(object):
     def __init__(self):
         raise NotImplementedError
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         raise NotImplementedError
 
 
@@ -31,7 +31,7 @@ class TraceHook(object):
     def __tag__(self):
         raise NotImplementedError
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         raise NotImplementedError
 
     def at_epoch_end(self, *args, **kwargs):
@@ -70,7 +70,7 @@ class LossHook(TraceHook):
     def __tag__(self):
         return "Loss"
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         """Prints the loss, epoch, and #calls; adds it to the summary."""
         self.iter += 1
         self.acc_loss += loss / self.batch_size
@@ -83,7 +83,8 @@ class LossHook(TraceHook):
 
 class TensorHook(TraceHook):
     def __init__(self, iter_interval, tensorlist, feed_dicts=None,
-                 summary_writer=None, modes=['mean_abs']):
+                 summary_writer=None, modes=['mean_abs'], prefix="",
+                 global_statistics=False):
         """
         Evaluate the tf.Tensor objects in `tensorlist` during training (every `iter_interval` iterations),
         and calculate statistics on them (in `modes`):  'mean_abs', 'std', 'min', and/or 'max'.
@@ -101,38 +102,56 @@ class TensorHook(TraceHook):
         self.feed_dicts = {} if feed_dicts is None else feed_dicts
         self.modes = modes
         self.iter = 0
+        self.prefix = prefix
+        self.global_statastics = global_statistics
+        if self.global_statastics:
+            self.tensor = tf.stack([tf.reshape(t, [-1]) for t in self.tensorlist])
 
     def __tag__(self):
-        return "Tensor"
+        return self.prefix + "Tensor"
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
-
-            for tensor in self.tensorlist:
-                tag = tensor.name
-                if isinstance(self.feed_dicts, dict):
-                    t = sess.run(tensor, feed_dict=self.feed_dicts)
-                else:
-                    for i, feed_dict in enumerate(self.feed_dicts):
-                        t_i = sess.run(tensor, feed_dict=feed_dict)
-                        if not hasattr(t_i,'__len__'):
-                            t_i = [t_i]
-                        t = t_i if i == 0 else np.concatenate([t, t_i], axis=0)
-                if 'mean_abs' in self.modes:
-                    value_mean = float(np.mean(t))
-                    self.update_summary(sess, self.iter, tag+'_mean_abs', value_mean)
-                if 'std' in self.modes:
-                    value_std = float(np.std(t))
-                    self.update_summary(sess, self.iter, tag+'_std', value_std)
-                if 'min' in self.modes:
-                    value_min = float(np.min(t))
-                    self.update_summary(sess, self.iter, tag+'_min', value_min)
-                if 'max' in self.modes:
-                    value_max = float(np.max(t))
-                    self.update_summary(sess, self.iter, tag + '_max', value_max)
-                if 'print' in self.modes: #for debug purposes
-                    logger.info('\n{}\n{}\n'.format(tag, str(t)))
+            if self.global_statastics:
+                mean = tf.reduce_mean(self.tensor)
+                max = tf.reduce_max(self.tensor)
+                min = tf.reduce_min(self.tensor)
+                sum = tf.reduce_sum(self.tensor)
+                norm = tf.norm(self.tensor)
+                mean_val, max_val, min_val, sum_val, norm_val = \
+                    sess.run([mean, max, min, sum, norm],
+                             feed_dict=current_feed_dict)
+                self.update_summary(sess, self.iter, self.__tag__() + '_mean', mean_val)
+                self.update_summary(sess, self.iter, self.__tag__() + '_max', max_val)
+                self.update_summary(sess, self.iter, self.__tag__() + '_min', min_val)
+                self.update_summary(sess, self.iter, self.__tag__() + '_sum', sum_val)
+                self.update_summary(sess, self.iter, self.__tag__() + '_norm', norm_val)
+            else:
+                for tensor in self.tensorlist:
+                    tag = tensor.name
+                    if isinstance(self.feed_dicts, dict):
+                        t = sess.run(tensor, feed_dict=self.feed_dicts)
+                    else:
+                        for i, feed_dict in enumerate(self.feed_dicts):
+                            t_i = sess.run(tensor, feed_dict=feed_dict)
+                            if not hasattr(t_i,'__len__'):
+                                t_i = [t_i]
+                            t = t_i if i == 0 else np.concatenate([t, t_i], axis=0)
+                    if 'mean_abs' in self.modes:
+                        value_mean = float(np.mean(t))
+                        self.update_summary(sess, self.iter, tag+'_mean_abs', value_mean)
+                    if 'std' in self.modes:
+                        value_std = float(np.std(t))
+                        self.update_summary(sess, self.iter, tag+'_std', value_std)
+                    if 'min' in self.modes:
+                        value_min = float(np.min(t))
+                        self.update_summary(sess, self.iter, tag+'_min', value_min)
+                    if 'max' in self.modes:
+                        value_max = float(np.max(t))
+                        self.update_summary(sess, self.iter, tag + '_max', value_max)
+                    if 'print' in self.modes: #for debug purposes
+                        logger.info('\n{}\n{}\n'.format(tag, str(t)))
 
 
 class ExamplesPerSecHook(TraceHook):
@@ -149,7 +168,7 @@ class ExamplesPerSecHook(TraceHook):
     def __tag__(self):
         return "Speed"
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         """Prints the examples per sec and adds it to the summary writer."""
         self.iter += 1
         if self.reset:
@@ -168,8 +187,8 @@ class ExamplesPerSecHook(TraceHook):
         self.reset = True
         return
 
-    def at_iteration_end(self, sess, epoch, model, loss):
-        return self.__call__(sess, epoch, model, loss)
+    def at_iteration_end(self, sess, epoch, model, loss, current_feed_dict=None):
+        return self.__call__(sess, epoch, model, loss, current_feed_dict)
 
 
 class ETAHook(TraceHook):
@@ -188,7 +207,7 @@ class ETAHook(TraceHook):
     def __tag__(self):
         return "ETA"
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         """Estimates ETA from max_iter vs current_iter."""
         self.iter += 1
 
@@ -252,7 +271,7 @@ class AccuracyHook(TraceHook):
     def __tag__(self):
         return self.prefix + "Acc"
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         self.iter += 1
         if epoch % self.at_every_epoch == 0 and loss==0:  #hacky: force to be post-epoch
             if not self.done_for_epoch:
@@ -412,7 +431,7 @@ class EvalHook(TraceHook):
         macrof1 = np.mean(f1)
         return macrop, macror, macrof1
 
-    def __call__(self, sess, epoch, model, loss):
+    def __call__(self, sess, epoch, model, loss, current_feed_dict=None):
         """
         Call the EvalHook.
 
@@ -559,7 +578,7 @@ class PRF1Hook(Hook):
         self.placeholders = placeholders
         self.at_every_epoch = at_every_epoch
 
-    def __call__(self, sess, epoch, iter, model, loss):
+    def __call__(self, sess, epoch, iter, model, loss, current_feed_dict=None):
         if iter == 0 and epoch % self.at_every_epoch == 0:
             total = 0
             correct = 0
@@ -588,7 +607,7 @@ class SaveModelHook(Hook):
         # self.saver = tf.train.Saver(tf.global_variables())
         self.saver = tf.train.Saver(tf.trainable_variables())
 
-    def __call__(self, sess, epoch, iter, model, loss):
+    def __call__(self, sess, epoch, iter, model, loss, current_feed_dict=None):
         if epoch == self.at_epoch:
             logger.info("Saving model...")
             # todo
@@ -603,7 +622,7 @@ class LoadModelHook(Hook):
         self.at_every_epoch = at_every_epoch
         self.saver = tf.train.Saver(tf.global_variables())
 
-    def __call__(self, sess, epoch, iter, model, loss):
+    def __call__(self, sess, epoch, iter, model, loss, current_feed_dict=None):
         if epoch == self.at_epoch:
             logger.info("Loading model...")
             # todo
