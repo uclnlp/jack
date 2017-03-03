@@ -349,8 +349,8 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
         # !!! this was previously overwritten for every sentence
         doc_id_to_doc_info[instance.file_name] = doc_info
 
-        #if len(current_relations) > 0:
-            #print(current_relations)
+        if len(current_relations) > 0:
+            print(current_relations)
 
         prev_filename = instance.file_name
 
@@ -372,22 +372,20 @@ def reset_output_dir():
         if os.path.isfile(os.path.join(out_dir, f)) and f.endswith(".ann"):
             os.remove(os.path.join(out_dir, f))
 
-def randomBaseline(batches):
-
-        #dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
-        #dev_pred_batches_i["relation_matrices"]
-    for i, batch in enumerate(batches["bio_labels_as_ints"]):
-        for ii, tok in enumerate(batch):
-            batches["bio_labels_as_ints"][i][ii] = randint(0, len(bio_vocab)-1)
-    for j, batch in enumerate(batches["type_labels_as_ints"]):
-        for jj, tok in enumerate(batch):
-            batches["type_labels_as_ints"][j][jj] = randint(0, len(label_vocab) - 1)
-    for batch in batches["relation_matrices"]:
-        for k, seq in enumerate(batch):
-            if type(k) != list:
-                continue
-            for kk in seq:
-                batches["relation_matrices"][k][kk] = randint(0, len(rel_type_vocab) - 1)
+def randomBaseline(batches, a=True, b=True, c=True):
+    if a == True:
+        for i, batch in enumerate(batches):
+            for ii, tok in enumerate(batch["bio_labels_as_ints"]):
+                batches["bio_labels_as_ints"][i][ii] = randint(0, len(bio_vocab)-1)
+    if b == True:
+        for j, batch in enumerate(batches):
+            for jj, tok in enumerate(batch["type_labels_as_ints"]):
+                batches["type_labels_as_ints"][j][jj] = randint(0, len(label_vocab) - 1)
+    if c == True:
+        for k, batch in enumerate(batches):
+            for kk, seq in enumerate(batch["relation_matrices"]):
+                for kkk, tok in enumerate(seq):
+                    batches[k]["relation_matrices"][kk][kkk] = randint(0, len(rel_type_vocab) - 1)
     return batches
 
 
@@ -396,18 +394,18 @@ if __name__ == "__main__":
     reset_output_dir()
 
     vocab = Vocab()
-    instances = read_ann(test_dir)
+    instances = read_ann(dev_dir)
     fill_vocab(instances, vocab)
     batchable = convert_to_batchable_format(instances, vocab)  #[:2]
 
-    # random baseline
-    batchable = randomBaseline(batchable)
-
     #print(batchable)
     batches = list(get_batches(batchable))#[:2]
+    # random baseline
+    batches = randomBaseline(batches, a=False, b=False, c=True)
+
     for batch in batches:
         convert_batch_to_ann(batch, instances, "/tmp")
 
-    calculateMeasures(test_dir, "/tmp/")
+    calculateMeasures(dev_dir, "/tmp/", remove_anno = "", remove_from_macro=True)
 
 # print(instances[0].labels)
