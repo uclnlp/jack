@@ -12,7 +12,7 @@ from jtr.preprocess.vocab import Vocab
 #from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.batch import numpify, get_batches, GeneratorWithRestart
 from jtr.util import tfutil
-from projects.nerre.data import read_ann, convert_to_batchable_format, convert_batch_to_ann
+from projects.nerre.data import read_ann, convert_to_batchable_format, convert_batch_to_ann, reset_output_dir
 from projects.nerre.eval import calculateMeasures
 
 
@@ -412,11 +412,7 @@ if __name__ == "__main__":
 
                         dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=500, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=1, useGoldKeyphr=False)
 
-                        # reset current out_dir
-                        out_dir = "/tmp/"
-                        for f in os.listdir(out_dir):
-                            if os.path.isfile(os.path.join(out_dir, f)) and f.endswith(".ann"):
-                                os.remove(os.path.join(out_dir, f))
+                        reset_output_dir()
 
                         for dev_batch in dev_preds:
                             convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
