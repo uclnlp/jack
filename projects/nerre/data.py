@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict
 from typing import NamedTuple, Sequence, Mapping, Tuple
+from random import randint
 
 # load training, dev and test data
 from jtr.preprocess.batch import get_batches
@@ -11,6 +12,7 @@ from projects.nerre.eval import calculateMeasures
 
 train_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/train2"
 dev_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/dev/"
+test_dir = "/Users/Isabelle/Documents/UCLMR/semeval_articles/test_final2/"
 
 Token = NamedTuple("Token", [("token_start", int),
                              ("token_end", int),
@@ -61,7 +63,7 @@ def read_ann(textfolder=dev_dir):
         if not f.endswith(".ann"):
             continue
         #i += 1
-        #if i == 20:
+        #if i == 3:
         #    break
         #if not f == "S0003491613001516.ann": #S0021999113005846.ann":  # good test example
         #    continue
@@ -327,8 +329,8 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
             create_kp()
 
         #print(min(char_offset_to_token_index, key=char_offset_to_token_index.get), max(char_offset_to_token_index, key=char_offset_to_token_index.get))
-        if len(current_kps) > 0:
-            print(current_kps)
+        #if len(current_kps) > 0:
+            #print(current_kps)
         # now find relations
         for kp1 in kps_in_sentence:
             for kp2 in kps_in_sentence:
@@ -363,17 +365,47 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
             for rel, arg1, arg2 in doc_info["rels"]:
                 ann.write("*\t{label} {arg1} {arg2}\n".format(label=rel, arg1=arg1, arg2=arg2))  # !!! \n was missing
 
+def reset_output_dir():
+    # reset current out_dir
+    out_dir = "/tmp/"
+    for f in os.listdir(out_dir):
+        if os.path.isfile(os.path.join(out_dir, f)) and f.endswith(".ann"):
+            os.remove(os.path.join(out_dir, f))
+
+def randomBaseline(batches, a=True, b=True, c=True):
+    if a == True:
+        for i, batch in enumerate(batches):
+            for ii, tok in enumerate(batch["bio_labels_as_ints"]):
+                batches["bio_labels_as_ints"][i][ii] = randint(0, len(bio_vocab)-1)
+    if b == True:
+        for j, batch in enumerate(batches):
+            for jj, tok in enumerate(batch["type_labels_as_ints"]):
+                batches["type_labels_as_ints"][j][jj] = randint(0, len(label_vocab) - 1)
+    if c == True:
+        for k, batch in enumerate(batches):
+            for kk, seq in enumerate(batch["relation_matrices"]):
+                for kkk, tok in enumerate(seq):
+                    batches[k]["relation_matrices"][kk][kkk] = randint(0, len(rel_type_vocab) - 1)
+    return batches
+
 
 if __name__ == "__main__":
+
+    reset_output_dir()
+
     vocab = Vocab()
     instances = read_ann(dev_dir)
     fill_vocab(instances, vocab)
     batchable = convert_to_batchable_format(instances, vocab)  #[:2]
+
     #print(batchable)
     batches = list(get_batches(batchable))#[:2]
+    # random baseline
+    batches = randomBaseline(batches, a=False, b=False, c=True)
+
     for batch in batches:
         convert_batch_to_ann(batch, instances, "/tmp")
 
-    calculateMeasures(dev_dir, "/tmp/")
+    calculateMeasures(dev_dir, "/tmp/", remove_anno = "", remove_from_macro=True)
 
 # print(instances[0].labels)
