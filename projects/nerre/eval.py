@@ -6,7 +6,7 @@ from sklearn.metrics import precision_recall_fscore_support
 import sys
 import copy
 
-def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", remove_anno = "", remove_from_macro=False):
+def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", remove_anno = "", remove_from_macro=False, ignoremissing=False):
     '''
     Calculate P, R, F1, Macro F
     :param folder_gold: folder containing gold standard .ann files
@@ -33,6 +33,8 @@ def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", rem
             f_pred = open(os.path.join(folder_pred, f), "r")
             res_full_pred, res_pred, spans_pred, rels_pred = normaliseAnnotations(f_pred, remove_anno)
         except IOError:
+            if ignoremissing == True:
+                continue
             print(f + " file missing in " + folder_pred + ". Assuming no predictions are available for this file.")
             res_full_pred, res_pred, spans_pred, rels_pred = [], [], [], []
 
@@ -132,7 +134,7 @@ def normaliseAnnotations(file_anno, remove_anno):
 
     for l in file_anno:
         r_g = l.strip().split("\t")
-        if len(r_g) != 3:
+        if len(r_g) < 2:
             continue
         r_g_offs = r_g[1].split(" ")
 

@@ -61,7 +61,7 @@ def read_ann(textfolder=dev_dir):
         if not f.endswith(".ann"):
             continue
         #i += 1
-        #if i == 20:
+        #if i == 3:
         #    break
         #if not f == "S0003491613001516.ann": #S0021999113005846.ann":  # good test example
         #    continue
@@ -327,8 +327,8 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
             create_kp()
 
         #print(min(char_offset_to_token_index, key=char_offset_to_token_index.get), max(char_offset_to_token_index, key=char_offset_to_token_index.get))
-        if len(current_kps) > 0:
-            print(current_kps)
+        #if len(current_kps) > 0:
+            #print(current_kps)
         # now find relations
         for kp1 in kps_in_sentence:
             for kp2 in kps_in_sentence:
@@ -347,8 +347,8 @@ def convert_batch_to_ann(batch, instances, out_dir="/tmp",
         # !!! this was previously overwritten for every sentence
         doc_id_to_doc_info[instance.file_name] = doc_info
 
-        if len(current_relations) > 0:
-            print(current_relations)
+        #if len(current_relations) > 0:
+            #print(current_relations)
 
         prev_filename = instance.file_name
 

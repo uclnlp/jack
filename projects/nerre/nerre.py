@@ -5,6 +5,7 @@ from typing import NamedTuple, Sequence, Mapping
 import tensorflow as tf
 import numpy as np
 import copy
+import sys
 
 # tensorflow inputs
 from jtr.preprocess.vocab import Vocab
@@ -15,26 +16,30 @@ from projects.nerre.data import read_ann, convert_to_batchable_format, convert_b
 from projects.nerre.eval import calculateMeasures
 
 
-tokens = tf.placeholder(tf.int32, [None, None], name="sentences_as_ints")  # [batch_size, max_num_tokens]
-sentence_lengths = tf.placeholder(tf.int32, [None], name="sentence_length")
-tag_labels = tf.placeholder(tf.int32, [None, None], name="bio_labels_as_ints")  # [batch_size, max_num_tokens]
-type_labels = tf.placeholder(tf.int32, [None, None], name="type_labels_as_ints")  # [batch_size, max_num_tokens]
-target_relations = tf.placeholder(tf.int32, [None, None, None], "relation_matrices")  # [batch_size, max_num_tokens, max_num_tokens]]
-document_indices = tf.placeholder(tf.int32, [None], name="document_indices") # [batch_size]
-token_char_offsets = tf.placeholder(tf.int32, [None, None, None], name="token_char_offsets")
+def create_placeholders():
+    tokens = tf.placeholder(tf.int32, [None, None], name="sentences_as_ints")  # [batch_size, max_num_tokens]
+    sentence_lengths = tf.placeholder(tf.int32, [None], name="sentence_length")
+    tag_labels = tf.placeholder(tf.int32, [None, None], name="bio_labels_as_ints")  # [batch_size, max_num_tokens]
+    type_labels = tf.placeholder(tf.int32, [None, None], name="type_labels_as_ints")  # [batch_size, max_num_tokens]
+    target_relations = tf.placeholder(tf.int32, [None, None, None],
+                                      "relation_matrices")  # [batch_size, max_num_tokens, max_num_tokens]]
+    document_indices = tf.placeholder(tf.int32, [None], name="document_indices")  # [batch_size]
+    token_char_offsets = tf.placeholder(tf.int32, [None, None, None], name="token_char_offsets")
 
-placeholders = {"sentences_as_ints": tokens, "sentence_length": sentence_lengths, "bio_labels_as_ints": tag_labels,
+    placeholders = {"sentences_as_ints": tokens, "sentence_length": sentence_lengths, "bio_labels_as_ints": tag_labels,
                 "type_labels_as_ints": type_labels, "relation_matrices": target_relations,
                 "document_indices": document_indices, "token_char_offsets": token_char_offsets}
 
+    return placeholders
 
-def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len, tag_size=3, type_size=4, rel_size=3, relations=True, tieOutputLayer=True):
+
+def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim, max_sent_len, tag_size=3, type_size=4, rel_size=3, relations=True, tieOutputLayer=True, hierarchicalSoftm=True, a = 1, b = 1, c = 1):
     # sequence-to-sequence bi-LSTM with hierarchical softmax for keyphrase identification, classification and relation classification
     with tf.variable_scope("embeddings"):
         embeddings = tf.get_variable("embeddings", shape=[num_words, emb_dim], dtype=tf.float32)
 
     with tf.variable_scope("input"):
-        embedded_input = tf.gather(embeddings, tokens)  # embed sentence tokens
+        embedded_input = tf.gather(embeddings, placeholders["sentences_as_ints"])  # embed sentence tokens
 
     with tf.variable_scope("model"):
         cell = tf.nn.rnn_cell.LSTMCell(
@@ -56,27 +61,27 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
             cell_dropout,
             cell_dropout,
             embedded_input,
-            sequence_length=sentence_lengths,
+            sequence_length=placeholders["sentence_length"],
             dtype=tf.float32
         )
 
         # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )  [batch_size, max_time, cell_fw.output_size] for fw and bw each
         output = tf.concat(2, outputs)  # concatenate along output_size dimension -> [batch_size, max_time, cell_fw.output_size*2]
 
-        dim1, dim2, dim3 = tf.unpack(tf.shape(target_relations))
+        dim1, dim2, dim3 = tf.unpack(tf.shape(placeholders["relation_matrices"]))
 
         # masking output for sentence lengths  -- doesn't seem to help
         #output_mask = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, dim2=emb_dim*2, value=-1000)
         #output = output + output_mask
 
-        output_mask_keys = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, value=0, mask_right=False)
-        output_mask_rels = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, dim2=dim3, value=0, mask_right=False)
+        output_mask_keys = mask_for_lengths(placeholders["sentence_length"], dim1, max_length=max_sent_len, value=0, mask_right=False)
+        output_mask_rels = mask_for_lengths(placeholders["sentence_length"], dim1, max_length=max_sent_len, dim2=dim3, value=0, mask_right=False)
 
         output_with_tags = tf.contrib.layers.linear(output, tag_size)
 
         output_with_tags_softm = tf.nn.softmax(output_with_tags)
         predicted_tags = tf.arg_max(output_with_tags_softm, 2)
-        l_tags = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_tags, tag_labels)
+        l_tags = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_tags, placeholders["bio_labels_as_ints"])
 
         # applying sentence length mask
         #l_tags = l_tags + output_mask_keys
@@ -95,7 +100,7 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
         output_with_labels_softm = tf.nn.softmax(output_with_labels)
 
         predicted_labels = tf.arg_max(output_with_labels_softm, 2)
-        l_labels = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_labels, type_labels)
+        l_labels = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_labels, placeholders["type_labels_as_ints"])
 
         # applying sentence length mask
         l_labels = tf.select(output_mask_keys, l_labels, tf.zeros(tf.shape(l_labels)))
@@ -115,8 +120,14 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
                 outputs1 = tf.TensorArray(size=max_sent_len, dtype='float32', infer_shape=False)
                 i = 0
                 for rel_sl in output_rels_unpacked1:  # this is of len max_sent_len
-                    output_with_rels_slice = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, rel_size - 1])  # these are all the non-O weights
+                    output_with_rels_slice = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, rel_size - 1])  # these are all the non-O weights # bio_vocab("B")
                     output_with_labels_slice = tf.slice(output_with_tags, [0, 0, 0], [dim1, dim2, 1])  # these are the O weights
+
+                    # multiply the weights for the B labels of keyphrase identification with the weights for both relations in the rel matrix
+                    if hierarchicalSoftm == True:
+                        output_with_labels_slice_B = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, 2])
+                        output_with_rels_slice = tf.einsum('blr,blk->blr', output_with_rels_slice, output_with_labels_slice_B)
+
                     output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], concat_dim=2)
                     outputs1 = outputs1.write(i, output_with_rels)
                     i += 1
@@ -133,6 +144,13 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
                 for rel_sl in output_rels_unpacked2:  # this is of len max_sent_len
                     output_with_rels_slice = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, rel_size - 1])  # these are all the non-O weights
                     output_with_labels_slice = tf.slice(output_with_tags, [0, 0, 0], [dim1, dim2, 1])  # these are the O weights
+
+                    # multiply the weights for the B labels of keyphrase identification with the weights for both relations in the rel matrix
+                    if hierarchicalSoftm == True:
+                        output_with_labels_slice_B = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, 2])
+                        output_with_rels_slice = tf.einsum('blr,blk->blr', output_with_rels_slice,
+                                                           output_with_labels_slice_B)
+
                     output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], concat_dim=2)
                     outputs2 = outputs2.write(i, output_with_rels)
                     i += 1
@@ -146,26 +164,26 @@ def create_model(output_size, layers, dropout, num_words, emb_dim, max_sent_len,
             predicted_rels = tf.arg_max(output_with_labels_softm, 3)
             predicted_rels = tf.reshape(predicted_rels, [dim1, dim2, dim3])
 
-            l_relations = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_rels, target_relations)
+            l_relations = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_rels, placeholders["relation_matrices"])
 
             # applying sentence length mask
             l_relations = tf.select(output_mask_rels, l_relations, tf.zeros(tf.shape(l_relations)))
 
             loss_rels = tf.reduce_sum(l_relations)
 
-            loss_all = loss_tags + loss_labels + loss_rels
+            loss_all = a * loss_tags + b * loss_labels + c * loss_rels
 
         else:
-            predicted_rels = target_relations
+            predicted_rels = placeholders["relation_matrices"]
             loss_all = loss_tags + loss_labels
         
         return loss_all, predicted_tags, predicted_labels, predicted_rels
 
     
     
-def train(train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value, pred_on_train=False):
+def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value, pred_on_train=False, a=1, b=1, c=1, useGoldKeyphr=False):
     
-    loss, predicted_tags, predicted_labels, predicted_rels = create_model(max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim)
+    loss, predicted_tags, predicted_labels, predicted_rels = create_model(placeholders, max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim, a=a, b=b, c=c)
 
     optim = tf.train.AdamOptimizer(learning_rate)
     
@@ -196,9 +214,12 @@ def train(train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.
     tf.global_variables_initializer().run(session=sess)
 
     pred_batches = []
-    
-    for i in range(1, max_epochs + 1):
-        #print('iteration', str(i))
+
+    i = 0
+    j = 1
+    last_loss = sys.maxsize
+    fiveagoloss = sys.maxsize
+    while (i < max_epochs-1 or last_loss > 1.0):
         loss_all = []
         for j, batch in enumerate(train_batches):
             _, current_loss = sess.run([min_op, loss], feed_dict=batch)
@@ -219,7 +240,18 @@ def train(train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.
 
                 pred_batches.append(train_pred_batches_i)
 
-        print("Epoch:", i, "\tAverage loss:", np.average(loss_all))
+        average_loss = float(np.average(loss_all))
+        print("Epoch:", i, "\tAverage loss:", average_loss)
+
+        # early stopping
+        if (average_loss > last_loss and average_loss > fiveagoloss):
+            print("Stopping early", str(average_loss), str(last_loss), str(fiveagoloss))
+            break
+
+        last_loss = average_loss
+        if j ==5:
+            fiveagoloss = average_loss
+            j = 0
 
         if pred_on_train == False:
             for j, dev_batch in enumerate(dev_batches):
@@ -228,9 +260,14 @@ def train(train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.
                 curr_predicted_tags, curr_predicted_labels, curr_predicted_rels \
                     = sess.run([predicted_tags, predicted_labels, predicted_rels], feed_dict=dev_batch)
 
-                dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
-                dev_pred_batches_i["relation_matrices"] \
-                    = curr_predicted_tags, curr_predicted_labels, curr_predicted_rels
+                if useGoldKeyphr == False:
+                    dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"] = curr_predicted_tags, curr_predicted_labels
+                    dev_pred_batches_i["relation_matrices"] = dev_batch[placeholders["relation_matrices"]]
+                else:
+                    dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
+                    dev_pred_batches_i["relation_matrices"] \
+                        = dev_batch[placeholders["bio_labels_as_ints"]], dev_batch[placeholders["type_labels_as_ints"]], \
+                          dev_batch[placeholders["relation_matrices"]]
 
                 dev_pred_batches_i["sentences_as_ints"], dev_pred_batches_i["sentence_length"], \
                 dev_pred_batches_i["document_indices"], dev_pred_batches_i["token_char_offsets"] \
@@ -238,6 +275,9 @@ def train(train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.
                     placeholders["document_indices"]], dev_batch[placeholders["token_char_offsets"]]
 
                 pred_batches.append(dev_pred_batches_i)
+
+        i += 1
+        j -=1
 
     return pred_batches
 
@@ -329,10 +369,7 @@ if __name__ == "__main__":
     vocab = Vocab()
 
     numinst = 10
-    for instance in dev_instances: #+ dev_instances:
-        #numinst -= 1
-        #if numinst == 0:
-        #    break
+    for instance in dev_instances:
         for sent in instance.doc:
             for token in sent.tokens:
                 vocab(token.word)
@@ -342,9 +379,7 @@ if __name__ == "__main__":
     train_batchable = convert_to_batchable_format(train_instances, vocab)
     dev_batchable = convert_to_batchable_format(dev_instances, vocab)
 
-    batch_size = 16
-    #data_train_np = numpify(train_batchable, pad=0)
-    #data_dev_np = numpify(dev_batchable, pad=0)
+    batch_size = 1
 
     data_all = {}
     for key, value in train_batchable.items():
@@ -359,21 +394,33 @@ if __name__ == "__main__":
 
     max_sent_len = len(data_train_np["relation_matrices"][0][0])
 
-    train_feed_dicts = get_feed_dicts(data_train_np, placeholders, batch_size,
-                       bucket_order=None, bucket_structure=None)
 
-    dev_feed_dicts = get_feed_dicts(data_dev_np, placeholders, batch_size,
-                                      bucket_order=None, bucket_structure=None)
+    for dim in [300, 200, 100]:
+        for drop in [0.2, 0.5]:
+            for l2 in [0.2, 0.5]:
+                for a in [1, 2, 3]:
+                    for b in [1, 2, 3]:
+                        print("Training with dim", dim, "drop", drop, "l2", l2, "a", a, "b", b)
 
-    dev_preds = train(train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=100, emb_dim=300, output_size=300)
+                        placeholders = create_placeholders()
 
-    # reset current out_dir
-    out_dir = "/tmp/"
-    for f in os.listdir(out_dir):
-        if os.path.isfile(os.path.join(out_dir, f)) and f.endswith(".ann"):
-            os.remove(os.path.join(out_dir, f))
+                        train_feed_dicts = get_feed_dicts(data_train_np, placeholders, batch_size,
+                                                          bucket_order=None, bucket_structure=None)
 
-    for dev_batch in dev_preds:
-        convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
+                        dev_feed_dicts = get_feed_dicts(data_dev_np, placeholders, batch_size,
+                                                    bucket_order=None, bucket_structure=None)
 
-    calculateMeasures(dev_dir, "/tmp/")
+                        dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=500, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=1, useGoldKeyphr=False)
+
+                        # reset current out_dir
+                        out_dir = "/tmp/"
+                        for f in os.listdir(out_dir):
+                            if os.path.isfile(os.path.join(out_dir, f)) and f.endswith(".ann"):
+                                os.remove(os.path.join(out_dir, f))
+
+                        for dev_batch in dev_preds:
+                            convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
+
+                        calculateMeasures(dev_dir, "/tmp/", ignoremissing=False)
+
+                        tf.reset_default_graph()
