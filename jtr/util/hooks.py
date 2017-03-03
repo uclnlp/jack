@@ -114,18 +114,18 @@ class TensorHook(TraceHook):
         self.iter += 1
         if not self.iter == 0 and self.iter % self.iter_interval == 0:
             if self.global_statastics:
-                mean = tf.reduce_mean(self.tensor)
+                mean = tf.reduce_mean(tf.abs(self.tensor))
                 max = tf.reduce_max(self.tensor)
                 min = tf.reduce_min(self.tensor)
-                sum = tf.reduce_sum(self.tensor)
+                # sum = tf.reduce_sum(self.tensor)
                 norm = tf.norm(self.tensor)
-                mean_val, max_val, min_val, sum_val, norm_val = \
-                    sess.run([mean, max, min, sum, norm],
+                mean_val, max_val, min_val, norm_val = \
+                    sess.run([mean, max, min, norm],
                              feed_dict=current_feed_dict)
-                self.update_summary(sess, self.iter, self.__tag__() + '_mean', mean_val)
+                self.update_summary(sess, self.iter, self.__tag__() + '_mean_abs', mean_val)
                 self.update_summary(sess, self.iter, self.__tag__() + '_max', max_val)
                 self.update_summary(sess, self.iter, self.__tag__() + '_min', min_val)
-                self.update_summary(sess, self.iter, self.__tag__() + '_sum', sum_val)
+                # self.update_summary(sess, self.iter, self.__tag__() + '_sum', sum_val)
                 self.update_summary(sess, self.iter, self.__tag__() + '_norm', norm_val)
             else:
                 for tensor in self.tensorlist:

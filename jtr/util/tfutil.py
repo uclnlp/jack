@@ -155,10 +155,13 @@ def get_last(tensor):
 
 def unit_length_transform(x, dim=1):
     """Normalizes x with L2 norm to unit length."""
-    l2norm_sq = tf.reduce_sum(x * x, dim, keep_dims=True)
-    l2norm = tf.rsqrt(l2norm_sq)
-    #return x * tf.nn.l2_normalize(x, 0) #l2norm
-    return x * l2norm
+    # l2norm_sq = tf.reduce_sum(x * x, dim, keep_dims=True)
+    # # fixme: numerical instabilities?
+    # l2norm = tf.rsqrt(l2norm_sq)
+    # #return x * tf.nn.l2_normalize(x, 0) #l2norm
+    # return x * l2norm
+
+    return tf.nn.l2_normalize(x, dim)
 
 
 def segment_softmax(scores, partition):
