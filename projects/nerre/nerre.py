@@ -14,6 +14,7 @@ from jtr.preprocess.batch import numpify, get_batches, GeneratorWithRestart
 from jtr.util import tfutil
 from projects.nerre.data import read_ann, convert_to_batchable_format, convert_batch_to_ann, reset_output_dir
 from projects.nerre.eval import calculateMeasures
+from numpy.random import choice
 
 
 def create_placeholders():
@@ -301,8 +302,8 @@ def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, 
 
     Returns:
         GeneratorWithRestart: Generator that yields a feed_dict for each
-        iteration. A feed dict consists of '{ placeholder : data-batch }` key-value pairs.
-    """
+        iteration. A feed dict consists of '{ placeholder : data-batch }` key-value pairs."""
+
     assert isinstance(data, dict) and isinstance(placeholders, dict)
     assert set(placeholders.keys()).issubset(set(data.keys())), \
         'data keys %s \nnot compatible with placeholder keys %s' % (set(placeholders.keys()), set(data.keys()))
@@ -357,9 +358,38 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, dim2=None, mask_
     return mask
 
 
+def get_feed_dicts_new(data_train_np, placeholders, batch_size, inst_length):
+    # around 8 times faster as with generator as it doesn't need to go over the whole training data every time during training
+    data_train_batched = []
+    realsamp = int(inst_length/batch_size)
+    additionsamp = inst_length%batch_size
+    if additionsamp != 0:
+        realsamp += 1
+    ids1 = choice(range(0, inst_length), inst_length-additionsamp, replace=False)  # sample without replacement so we get every sample once
+    ids2 = choice(range(0, inst_length), additionsamp, replace=True)  # sample a few additional ones to fill up batch
+    ids = np.append(ids1, ids2)
+
+    start = 0
+    for i in range(0, realsamp):
+        batch_i = {}
+        if i != 0:
+            start = i * batch_size
+        if i != realsamp:
+            ids_sup = ids[start:((i+1)*batch_size)]
+        else:
+            ids_sup = ids[start:realsamp]
+        for key, value in data_train_np.items():
+            batch_i[placeholders[key]] = [data_train_np[key][ii] for ii in ids_sup]
+
+        data_train_batched.append(batch_i)
+
+    return data_train_batched
+
+
 if __name__ == "__main__":
     train_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/train2"
     dev_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/dev/"
+    out_dir = "/tmp/"
     
     train_instances = read_ann(train_dir)
     dev_instances = read_ann(dev_dir)
@@ -379,7 +409,7 @@ if __name__ == "__main__":
     train_batchable = convert_to_batchable_format(train_instances, vocab)
     dev_batchable = convert_to_batchable_format(dev_instances, vocab)
 
-    batch_size = 1
+    batch_size = 8
 
     data_all = {}
     for key, value in train_batchable.items():
@@ -404,11 +434,9 @@ if __name__ == "__main__":
 
                         placeholders = create_placeholders()
 
-                        train_feed_dicts = get_feed_dicts(data_train_np, placeholders, batch_size,
-                                                          bucket_order=None, bucket_structure=None)
+                        train_feed_dicts = get_feed_dicts_new(data_train_np, placeholders, batch_size, len(train_instances))
 
-                        dev_feed_dicts = get_feed_dicts(data_dev_np, placeholders, batch_size,
-                                                    bucket_order=None, bucket_structure=None)
+                        dev_feed_dicts = get_feed_dicts_new(data_dev_np, placeholders, batch_size, len(dev_instances))
 
                         dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=500, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=1, useGoldKeyphr=False)
 
@@ -417,6 +445,6 @@ if __name__ == "__main__":
                         for dev_batch in dev_preds:
                             convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
 
-                        calculateMeasures(dev_dir, "/tmp/", ignoremissing=False)
+                        calculateMeasures(dev_dir, out_dir, ignoremissing=False)
 
                         tf.reset_default_graph()

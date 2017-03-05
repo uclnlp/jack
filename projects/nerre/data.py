@@ -63,7 +63,7 @@ def read_ann(textfolder=dev_dir):
         if not f.endswith(".ann"):
             continue
         #i += 1
-        #if i == 3:
+        #if i == 20:
         #    break
         #if not f == "S0003491613001516.ann": #S0021999113005846.ann":  # good test example
         #    continue
@@ -394,7 +394,7 @@ if __name__ == "__main__":
     reset_output_dir()
 
     vocab = Vocab()
-    instances = read_ann(dev_dir)
+    instances = read_ann(test_dir)
     fill_vocab(instances, vocab)
     batchable = convert_to_batchable_format(instances, vocab)  #[:2]
 
@@ -406,6 +406,6 @@ if __name__ == "__main__":
     for batch in batches:
         convert_batch_to_ann(batch, instances, "/tmp")
 
-    calculateMeasures(dev_dir, "/tmp/", remove_anno = "", remove_from_macro=True)
+    calculateMeasures(test_dir, "/tmp/", remove_anno = "", remove_from_macro=True)
 
 # print(instances[0].labels)
