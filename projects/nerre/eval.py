@@ -6,14 +6,14 @@ from sklearn.metrics import precision_recall_fscore_support
 import sys
 import copy
 
-def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", remove_anno = "", remove_from_macro=False, ignoremissing=False):
+def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", remove_anno = ""):
     '''
     Calculate P, R, F1, Macro F
     :param folder_gold: folder containing gold standard .ann files
     :param folder_pred: folder containing prediction .ann files
     :param remove_anno: if set if "rel", relations will be ignored. Use this setting to only evaluate
     keyphrase boundary recognition and keyphrase classification. If set to "types", only keyphrase boundary recognition is evaluated.
-    Note that for the later, false positive
+    If set to "keys", only relations will be evaluated.
     :return:
     '''
 
@@ -22,19 +22,20 @@ def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", rem
     res_all_pred = []
     targets = []
 
+    if type(remove_anno) == str:
+        remove_anno = [remove_anno]
+    if "types" in remove_anno:
+        remove_anno.append("rel")
+
     for f in flist_gold:
         # ignoring non-.ann files, should there be any
         if not str(f).endswith(".ann"):
             continue
-        #if not str(f) == "S0003491613001516.ann":#S0021999113005846.ann":
-        #    continue
         f_gold = open(os.path.join(folder_gold, f), "r")
         try:
             f_pred = open(os.path.join(folder_pred, f), "r")
             res_full_pred, res_pred, spans_pred, rels_pred = normaliseAnnotations(f_pred, remove_anno)
         except IOError:
-            if ignoremissing == True:
-                continue
             print(f + " file missing in " + folder_pred + ". Assuming no predictions are available for this file.")
             res_full_pred, res_pred, spans_pred, rels_pred = [], [], [], []
 
@@ -59,7 +60,7 @@ def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", rem
                 # those are the false negatives, contained in gold but not pred
                 res_all_pred.append("NONE")
 
-    if remove_from_macro == True:
+    if "keys" in remove_anno:
         targets = ["Hyponym-of", "Synonym-of"]
     #y_true, y_pred, labels, targets
     prec, recall, f1, support = precision_recall_fscore_support(
@@ -75,7 +76,7 @@ def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", rem
         }
 
     # now micro-averaged
-    if remove_anno != 'types':
+    if not "types" in remove_anno:
         prec, recall, f1, s = precision_recall_fscore_support(
             res_all_gold, res_all_pred, labels=targets, average='micro')
         metrics['overall'] = {
@@ -134,18 +135,15 @@ def normaliseAnnotations(file_anno, remove_anno):
 
     for l in file_anno:
         r_g = l.strip().split("\t")
-        if len(r_g) < 2:
-            continue
         r_g_offs = r_g[1].split(" ")
 
         # remove relation instances if specified
-        if remove_anno != "" and r_g_offs[0].endswith("-of"):
+        if "rel" in remove_anno and r_g_offs[0].endswith("-of"):
             continue
 
         res_full_anno.append(l.strip())
         # normalise relation instances by looking up entity spans for relation IDs
         if r_g_offs[0].endswith("-of"):
-            #print(l)
             arg1 = r_g_offs[1].replace("Arg1:", "")
             arg2 = r_g_offs[2].replace("Arg2:", "")
             for l in res_full_anno:
@@ -170,7 +168,7 @@ def normaliseAnnotations(file_anno, remove_anno):
         else:
             spans_anno.append(" ".join([r_g_offs[1], r_g_offs[2]]))
             keytype = r_g[1]
-            if remove_anno == "types":
+            if "types" in remove_anno:
                 keytype = "KEYPHRASE-NOTYPES"
             res_anno.append(keytype)
 
@@ -188,15 +186,15 @@ def normaliseAnnotations(file_anno, remove_anno):
             for r2 in rels_anno:
                 r2_offs = r2.split(" ")
                 if r2_offs[0] == "Hyponym-of" and r_offs[1] == r2_offs[1]:
+                    r_new = " ".join([r2_offs[0], r_offs[2], r2_offs[2]])
                     try:
-                        r_new = " ".join([r2_offs[0], r_offs[2], r2_offs[2]])
                         rels_anno[rels_anno.index(r2)] = r_new
                     except ValueError:
                         continue
 
                 if r2_offs[0] == "Hyponym-of" and r_offs[1] == r2_offs[2]:
+                    r_new = " ".join([r2_offs[0], r2_offs[1], r_offs[2]])
                     try:
-                        r_new = " ".join([r2_offs[0], r2_offs[1], r_offs[2]])
                         rels_anno[rels_anno.index(r2)] = r_new
                     except ValueError:
                         continue

@@ -375,17 +375,20 @@ def reset_output_dir():
 def randomBaseline(batches, a=True, b=True, c=True):
     if a == True:
         for i, batch in enumerate(batches):
-            for ii, tok in enumerate(batch["bio_labels_as_ints"]):
-                batches["bio_labels_as_ints"][i][ii] = randint(0, len(bio_vocab)-1)
+            for ii, sent in enumerate(batch["bio_labels_as_ints"]):
+                for iii, tok in enumerate(sent):
+                    batches[i]["bio_labels_as_ints"][ii][iii] = randint(0, len(bio_vocab)-1)
     if b == True:
         for j, batch in enumerate(batches):
-            for jj, tok in enumerate(batch["type_labels_as_ints"]):
-                batches["type_labels_as_ints"][j][jj] = randint(0, len(label_vocab) - 1)
+            for jj, sent in enumerate(batch["type_labels_as_ints"]):
+                for jjj, tok in enumerate(sent):
+                    batches[j]["type_labels_as_ints"][jj][jjj] = randint(0, len(label_vocab) - 1)
     if c == True:
         for k, batch in enumerate(batches):
-            for kk, seq in enumerate(batch["relation_matrices"]):
-                for kkk, tok in enumerate(seq):
-                    batches[k]["relation_matrices"][kk][kkk] = randint(0, len(rel_type_vocab) - 1)
+            for kk, seq2 in enumerate(batch["relation_matrices"]):
+                for kkk, seq in enumerate(seq2):
+                    for kkkk, tok in enumerate(seq):
+                        batches[k]["relation_matrices"][kk][kkk][kkkk] = randint(0, len(rel_type_vocab) - 1)
     return batches
 
 
@@ -406,6 +409,7 @@ if __name__ == "__main__":
     for batch in batches:
         convert_batch_to_ann(batch, instances, "/tmp")
 
-    calculateMeasures(test_dir, "/tmp/", remove_anno = "", remove_from_macro=True)
+    remove_anno = "keys"  # "", "types", "rel" or "keys"
+    calculateMeasures(test_dir, "/tmp/", remove_anno = remove_anno)
 
 # print(instances[0].labels)
