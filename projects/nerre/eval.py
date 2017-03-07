@@ -2,11 +2,11 @@
 # by Mattew Peters, who spotted that sklearn does macro averaging not micro averaging correctly and changed it
 
 import os
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, cohen_kappa_score
 import sys
 import copy
 
-def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", remove_anno = ""):
+def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", remove_anno = "", ignoremissing=False):
     '''
     Calculate P, R, F1, Macro F
     :param folder_gold: folder containing gold standard .ann files
@@ -36,6 +36,8 @@ def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", rem
             f_pred = open(os.path.join(folder_pred, f), "r")
             res_full_pred, res_pred, spans_pred, rels_pred = normaliseAnnotations(f_pred, remove_anno)
         except IOError:
+            if ignoremissing == True:
+                continue
             print(f + " file missing in " + folder_pred + ". Assuming no predictions are available for this file.")
             res_full_pred, res_pred, spans_pred, rels_pred = [], [], [], []
 
@@ -91,6 +93,67 @@ def calculateMeasures(folder_gold="data/dev/", folder_pred="data_pred/dev/", rem
 
     print_report(metrics, targets)
     return metrics
+
+
+
+def calculateIAA(folder_gold="data/dev/", folder_pred="data_pred/dev/", ignoremissing=False):
+    '''
+    Calculate P, R, F1, Macro F
+    :param folder_gold: folder containing gold standard .ann files
+    :param folder_pred: folder containing prediction .ann files
+    :param remove_anno: if set if "rel", relations will be ignored. Use this setting to only evaluate
+    keyphrase boundary recognition and keyphrase classification. If set to "types", only keyphrase boundary recognition is evaluated.
+    If set to "keys", only relations will be evaluated.
+    :return:
+    '''
+
+    flist_gold = os.listdir(folder_gold)
+    res_all_gold = []
+    res_all_pred = []
+    targets = []
+
+    for f in flist_gold:
+        # ignoring non-.ann files, should there be any
+        if not str(f).endswith(".ann"):
+            continue
+        f_gold = open(os.path.join(folder_gold, f), "r")
+        try:
+            f_pred = open(os.path.join(folder_pred, f), "r")
+            res_full_pred, res_pred, spans_pred, rels_pred = normaliseAnnotations(f_pred, remove_anno)
+            # we don't want to measure empty documents, e.g. if participants gave up annotating
+            if len(res_full_pred) == 0:
+                print("Warning! Empty ones")
+                continue
+        except IOError:
+            if ignoremissing == True:
+                continue
+            print(f + " file missing in " + folder_pred + ". Assuming no predictions are available for this file.")
+            res_full_pred, res_pred, spans_pred, rels_pred = [], [], [], []
+
+        res_full_gold, res_gold, spans_gold, rels_gold = normaliseAnnotations(f_gold, remove_anno)
+
+        spans_all = set(spans_gold + spans_pred)
+
+        for i, r in enumerate(spans_all):
+            if r in spans_gold:
+                target = res_gold[spans_gold.index(r)].split(" ")[0]
+                res_all_gold.append(target)
+                if not target in targets:
+                    targets.append(target)
+            else:
+                # those are the false positives, contained in pred but not gold
+                res_all_gold.append("NONE")
+
+            if r in spans_pred:
+                target_pred = res_pred[spans_pred.index(r)].split(" ")[0]
+                res_all_pred.append(target_pred)
+            else:
+                # those are the false negatives, contained in gold but not pred
+                res_all_pred.append("NONE")
+
+    kappa = cohen_kappa_score(res_all_gold, res_all_pred)
+    print("Cohen's kappa:", kappa)
+
 
 
 
@@ -166,11 +229,14 @@ def normaliseAnnotations(file_anno, remove_anno):
             rels_anno.append(" ".join([r_g_offs[0], ent1, ent2]))
 
         else:
-            spans_anno.append(" ".join([r_g_offs[1], r_g_offs[2]]))
-            keytype = r_g[1]
-            if "types" in remove_anno:
-                keytype = "KEYPHRASE-NOTYPES"
-            res_anno.append(keytype)
+            try:
+                spans_anno.append(" ".join([r_g_offs[1], r_g_offs[2]]))
+                keytype = r_g[1]
+                if "types" in remove_anno:
+                    keytype = "KEYPHRASE-NOTYPES"
+                res_anno.append(keytype)
+            except IndexError:
+                print("IndexError! Faulty annotations")
 
 
 
@@ -206,13 +272,16 @@ def normaliseAnnotations(file_anno, remove_anno):
     spans_anno_new = []
 
     for r in res_full_anno:
-        r_g = r.strip().split("\t")
-        if r_g[0].startswith("R") or r_g[0] == "*":
-            continue
-        ind = res_full_anno.index(r)
-        res_full_anno_new.append(r)
-        res_anno_new.append(res_anno[ind])
-        spans_anno_new.append(spans_anno[ind])
+        try:
+            r_g = r.strip().split("\t")
+            if r_g[0].startswith("R") or r_g[0] == "*":
+                continue
+            ind = res_full_anno.index(r)
+            res_full_anno_new.append(r)
+            res_anno_new.append(res_anno[ind])
+            spans_anno_new.append(spans_anno[ind])
+        except IndexError:
+            print("IndexError! Faulty annotations")
 
     for r in rels_anno:
         res_full_anno_new.append("R\t" + r)
@@ -223,8 +292,8 @@ def normaliseAnnotations(file_anno, remove_anno):
 
 
 if __name__ == '__main__':
-    folder_gold = "data/semeval_articles_test/"
-    folder_pred = "data/submissions/ttsujimura_rel-2-input"
+    folder_gold = "/Users/Isabelle/Documents/UCLMR/semeval_articles/test_final2/"#train_final2/"
+    folder_pred = "/Users/Isabelle/Documents/UCLMR/semeval_articles/raw/anno21/"
     remove_anno = ""  # "", "rel" or "types"
     remove_from_macro = True
     if len(sys.argv) >= 2:
@@ -234,4 +303,6 @@ if __name__ == '__main__':
     if len(sys.argv) == 4:
         remove_anno = sys.argv[3]
 
-    calculateMeasures(folder_gold, folder_pred, remove_anno, remove_from_macro)
+    #calculateMeasures(folder_gold, folder_pred, remove_anno, remove_from_macro)
+
+    calculateIAA(folder_gold, folder_pred, ignoremissing=True)

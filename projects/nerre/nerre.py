@@ -222,7 +222,7 @@ def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epo
     j = 1
     last_loss = sys.maxsize
     fiveagoloss = sys.maxsize
-    while (i < max_epochs-1 or last_loss > 1.0):
+    while (i < max_epochs-1):# or last_loss > 1.0):
         loss_all = []
         for j, batch in enumerate(train_batches):
             _, current_loss = sess.run([min_op, loss], feed_dict=batch)
@@ -244,7 +244,9 @@ def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epo
                 pred_batches.append(train_pred_batches_i)
 
         average_loss = float(np.average(loss_all))
-        print("Epoch:", i, "\tAverage loss:", average_loss)
+        if i%10 == 0:
+            print("Epoch:", i, "\tAverage loss:", average_loss)
+            saver.save(sess, "/tmp/model.ckpt")
 
         # early stopping
         if (average_loss > last_loss and average_loss > fiveagoloss):
@@ -448,7 +450,7 @@ if __name__ == "__main__":
     dev_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/dev/"
     test_dir = "/Users/Isabelle/Documents/UCLMR/semeval_articles/test_final2/"
     out_dir = "/tmp/"
-    train_mode = True
+    train_mode = False
     final_test = True
 
     if final_test == True:
@@ -493,7 +495,7 @@ if __name__ == "__main__":
     if train_mode == False:
         placeholders = create_placeholders()
 
-        dim = 300
+        dim = 100
 
         reset_output_dir()
 
@@ -505,11 +507,11 @@ if __name__ == "__main__":
         for dev_batch in dev_preds:
             convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
 
-        calculateMeasures(dev_dir, out_dir, ignoremissing=False, remove_anno="rel")
+        calculateMeasures(dev_dir, out_dir, ignoremissing=False, remove_anno="types")
 
     else:
 
-        for dim in [300]:
+        for dim in [100]:
             for drop in [0.2]:#, 0.5]:
                 for l2 in [0.2]:#, 0.5]:
                     for a in [1]:#, 2, 3]:
@@ -524,7 +526,7 @@ if __name__ == "__main__":
 
                             reset_output_dir()
 
-                            dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=100, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=1, useGoldKeyphr=False, relations=False)
+                            dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=250, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=0, useGoldKeyphr=False, relations=False)
 
                             for dev_batch in dev_preds:
                                 convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
