@@ -13,6 +13,10 @@ import contextlib
 from time import gmtime, strftime
 import os
 import json
+import tensorflow as tf
+import logging
+logger = logging.getLogger("tfutil")
+
 
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
@@ -52,6 +56,35 @@ def nprint(x, prefix="", precision=3, surpress=True, max_list_len=5, show_shape=
         # todo: do the same for tensors
         else:
             print(x)
+        print()
+
+
+def tfprint(tensor, message="", precision=2, first_n=None, summarize=10000,
+            name=None, print_shape=True):
+    def print_tensor(x):
+        str_val = message
+        str_val += np.array2string(x, precision=precision)
+        if print_shape:
+            str_val += "\n" + str(x.shape)
+        logger.debug(str_val)
+        return x
+
+    log_op = tf.py_func(print_tensor, [tensor], [tensor.dtype])[0]
+    with tf.control_dependencies([log_op]):
+        res = tf.identity(tensor)
+        return res
+
+
+def tfprint_legacy(tensor, message=None, precision=5, first_n=None, summarize=10000,
+            name=None, print_shape=True):
+    def reduce_precision(a, precision=2):
+        return tf.floordiv(a * 100, 1) / 100
+    tmp = tf.Print(tensor, [reduce_precision(tensor, precision=precision)],
+                   message=message, first_n=first_n,
+                   summarize=summarize, name=name)
+    if print_shape:
+        tmp = tf.Print(tmp, [tf.shape(tmp)], message="shape_" + message)
+    return tmp
 
 
 def get_timestamped_dir(path, name=None, link_to_latest=False):
