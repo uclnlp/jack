@@ -14,6 +14,7 @@ from jtr.preprocess.batch import numpify, get_batches, GeneratorWithRestart
 from jtr.util import tfutil
 from projects.nerre.data import read_ann, convert_to_batchable_format, convert_batch_to_ann, reset_output_dir
 from projects.nerre.eval import calculateMeasures
+from numpy.random import choice
 
 
 def create_placeholders():
@@ -181,9 +182,9 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
 
     
     
-def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value, pred_on_train=False, a=1, b=1, c=1, useGoldKeyphr=False):
+def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epochs=200, l2=0.0, learning_rate=0.001, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, clip=None, clip_op=tf.clip_by_value, pred_on_train=False, a=1, b=1, c=1, useGoldKeyphr=False, relations=True):
     
-    loss, predicted_tags, predicted_labels, predicted_rels = create_model(placeholders, max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim, a=a, b=b, c=c)
+    loss, predicted_tags, predicted_labels, predicted_rels = create_model(placeholders, max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim, a=a, b=b, c=c, relations=relations)
 
     optim = tf.train.AdamOptimizer(learning_rate)
     
@@ -213,13 +214,15 @@ def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epo
 
     tf.global_variables_initializer().run(session=sess)
 
+    saver = tf.train.Saver()
+
     pred_batches = []
 
     i = 0
     j = 1
     last_loss = sys.maxsize
     fiveagoloss = sys.maxsize
-    while (i < max_epochs-1 or last_loss > 1.0):
+    while (i < max_epochs-1):# or last_loss > 1.0):
         loss_all = []
         for j, batch in enumerate(train_batches):
             _, current_loss = sess.run([min_op, loss], feed_dict=batch)
@@ -241,7 +244,9 @@ def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epo
                 pred_batches.append(train_pred_batches_i)
 
         average_loss = float(np.average(loss_all))
-        print("Epoch:", i, "\tAverage loss:", average_loss)
+        if i%10 == 0:
+            print("Epoch:", i, "\tAverage loss:", average_loss)
+            saver.save(sess, "/tmp/model.ckpt")
 
         # early stopping
         if (average_loss > last_loss and average_loss > fiveagoloss):
@@ -253,31 +258,86 @@ def train(placeholders, train_batches, dev_batches, vocab, max_sent_len, max_epo
             fiveagoloss = average_loss
             j = 0
 
-        if pred_on_train == False:
-            for j, dev_batch in enumerate(dev_batches):
-                dev_pred_batches_i = {}
-
-                curr_predicted_tags, curr_predicted_labels, curr_predicted_rels \
-                    = sess.run([predicted_tags, predicted_labels, predicted_rels], feed_dict=dev_batch)
-
-                if useGoldKeyphr == False:
-                    dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"] = curr_predicted_tags, curr_predicted_labels
-                    dev_pred_batches_i["relation_matrices"] = dev_batch[placeholders["relation_matrices"]]
-                else:
-                    dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
-                    dev_pred_batches_i["relation_matrices"] \
-                        = dev_batch[placeholders["bio_labels_as_ints"]], dev_batch[placeholders["type_labels_as_ints"]], \
-                          dev_batch[placeholders["relation_matrices"]]
-
-                dev_pred_batches_i["sentences_as_ints"], dev_pred_batches_i["sentence_length"], \
-                dev_pred_batches_i["document_indices"], dev_pred_batches_i["token_char_offsets"] \
-                    = dev_batch[placeholders["sentences_as_ints"]], dev_batch[placeholders["sentence_length"]], dev_batch[
-                    placeholders["document_indices"]], dev_batch[placeholders["token_char_offsets"]]
-
-                pred_batches.append(dev_pred_batches_i)
-
         i += 1
         j -=1
+
+    # Save the variables to disk.
+    save_path = saver.save(sess, "/tmp/model.ckpt")
+    print("Model saved in file: %s" % save_path)
+
+    if pred_on_train == False:
+        for j, dev_batch in enumerate(dev_batches):
+            dev_pred_batches_i = {}
+
+            curr_predicted_tags, curr_predicted_labels, curr_predicted_rels \
+                = sess.run([predicted_tags, predicted_labels, predicted_rels], feed_dict=dev_batch)
+
+            if useGoldKeyphr == False:
+                dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i[
+                    "type_labels_as_ints"] = curr_predicted_tags, curr_predicted_labels
+                dev_pred_batches_i["relation_matrices"] = dev_batch[placeholders["relation_matrices"]]
+            else:
+                dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
+                dev_pred_batches_i["relation_matrices"] \
+                    = dev_batch[placeholders["bio_labels_as_ints"]], dev_batch[placeholders["type_labels_as_ints"]], \
+                      dev_batch[placeholders["relation_matrices"]]
+
+            dev_pred_batches_i["sentences_as_ints"], dev_pred_batches_i["sentence_length"], \
+            dev_pred_batches_i["document_indices"], dev_pred_batches_i["token_char_offsets"] \
+                = dev_batch[placeholders["sentences_as_ints"]], dev_batch[placeholders["sentence_length"]], dev_batch[
+                placeholders["document_indices"]], dev_batch[placeholders["token_char_offsets"]]
+
+            pred_batches.append(dev_pred_batches_i)
+
+    return pred_batches
+
+
+
+def test_only(placeholders, dev_batches, vocab, max_sent_len, emb_dim=10, output_size=10, layers=1, dropout=0.0, sess=None, pred_on_train=False, a=1, b=1, c=1, useGoldKeyphr=False, relations=True):
+
+    loss, predicted_tags, predicted_labels, predicted_rels = create_model(placeholders, max_sent_len=max_sent_len, output_size=output_size, layers=layers, dropout=dropout, num_words=len(vocab), emb_dim=emb_dim, a=a, b=b, c=c, relations=relations)
+
+
+    # Do not take up all the GPU memory, all the time.
+    sess_config = tf.ConfigProto()
+    sess_config.gpu_options.allow_growth = True
+
+    if sess is None:
+        sess = tf.Session(config=sess_config)
+
+    tf.global_variables_initializer().run(session=sess)
+
+    saver = tf.train.Saver()
+
+    # Save the variables to disk.
+    save_path = saver.restore(sess, "/tmp/model.ckpt")
+    print("Model restored from %s" % save_path)
+
+    pred_batches = []
+
+    if pred_on_train == False:
+        for j, dev_batch in enumerate(dev_batches):
+            dev_pred_batches_i = {}
+
+            curr_predicted_tags, curr_predicted_labels, curr_predicted_rels \
+                = sess.run([predicted_tags, predicted_labels, predicted_rels], feed_dict=dev_batch)
+
+            if useGoldKeyphr == False:
+                dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i[
+                    "type_labels_as_ints"] = curr_predicted_tags, curr_predicted_labels
+                dev_pred_batches_i["relation_matrices"] = dev_batch[placeholders["relation_matrices"]]
+            else:
+                dev_pred_batches_i["bio_labels_as_ints"], dev_pred_batches_i["type_labels_as_ints"], \
+                dev_pred_batches_i["relation_matrices"] \
+                    = dev_batch[placeholders["bio_labels_as_ints"]], dev_batch[placeholders["type_labels_as_ints"]], \
+                      dev_batch[placeholders["relation_matrices"]]
+
+            dev_pred_batches_i["sentences_as_ints"], dev_pred_batches_i["sentence_length"], \
+            dev_pred_batches_i["document_indices"], dev_pred_batches_i["token_char_offsets"] \
+                = dev_batch[placeholders["sentences_as_ints"]], dev_batch[placeholders["sentence_length"]], dev_batch[
+                placeholders["document_indices"]], dev_batch[placeholders["token_char_offsets"]]
+
+            pred_batches.append(dev_pred_batches_i)
 
     return pred_batches
 
@@ -301,8 +361,8 @@ def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, 
 
     Returns:
         GeneratorWithRestart: Generator that yields a feed_dict for each
-        iteration. A feed dict consists of '{ placeholder : data-batch }` key-value pairs.
-    """
+        iteration. A feed dict consists of '{ placeholder : data-batch }` key-value pairs."""
+
     assert isinstance(data, dict) and isinstance(placeholders, dict)
     assert set(placeholders.keys()).issubset(set(data.keys())), \
         'data keys %s \nnot compatible with placeholder keys %s' % (set(placeholders.keys()), set(data.keys()))
@@ -357,19 +417,57 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, dim2=None, mask_
     return mask
 
 
+def get_feed_dicts_new(data_train_np, placeholders, batch_size, inst_length):
+    # around 8 times faster as with generator as it doesn't need to go over the whole training data every time during training
+    data_train_batched = []
+    realsamp = int(inst_length/batch_size)
+    additionsamp = inst_length%batch_size
+    if additionsamp != 0:
+        realsamp += 1
+    ids1 = choice(range(0, inst_length), inst_length-additionsamp, replace=False)  # sample without replacement so we get every sample once
+    ids2 = choice(range(0, inst_length), additionsamp, replace=True)  # sample a few additional ones to fill up batch
+    ids = np.append(ids1, ids2)
+
+    start = 0
+    for i in range(0, realsamp):
+        batch_i = {}
+        if i != 0:
+            start = i * batch_size
+        if i != realsamp:
+            ids_sup = ids[start:((i+1)*batch_size)]
+        else:
+            ids_sup = ids[start:realsamp]
+        for key, value in data_train_np.items():
+            batch_i[placeholders[key]] = [data_train_np[key][ii] for ii in ids_sup]
+
+        data_train_batched.append(batch_i)
+
+    return data_train_batched
+
+
 if __name__ == "__main__":
     train_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/train2"
     dev_dir = "/Users/Isabelle/Documents/UCLMR/semeval2017-orga/data/dev/"
-    
-    train_instances = read_ann(train_dir)
-    dev_instances = read_ann(dev_dir)
-    
+    test_dir = "/Users/Isabelle/Documents/UCLMR/semeval_articles/test_final2/"
+    out_dir = "/tmp/"
+    train_mode = False
+    final_test = True
+
+    if final_test == True:
+        train_instances = read_ann(train_dir) + read_ann(dev_dir)
+        dev_instances = read_ann(test_dir)
+        dev_dir = test_dir
+    else:
+        train_instances = read_ann(train_dir)
+        dev_instances = read_ann(dev_dir)
+
+    print("Loaded {} train instances".format(len(train_instances)))
     print("Loaded {} dev instances".format(len(dev_instances)))
-    
+
     vocab = Vocab()
 
     numinst = 10
-    for instance in dev_instances:
+    for instance in train_instances:
         for sent in instance.doc:
             for token in sent.tokens:
                 vocab(token.word)
@@ -379,7 +477,7 @@ if __name__ == "__main__":
     train_batchable = convert_to_batchable_format(train_instances, vocab)
     dev_batchable = convert_to_batchable_format(dev_instances, vocab)
 
-    batch_size = 1
+    batch_size = 1024 #128
 
     data_all = {}
     for key, value in train_batchable.items():
@@ -394,29 +492,45 @@ if __name__ == "__main__":
 
     max_sent_len = len(data_train_np["relation_matrices"][0][0])
 
+    if train_mode == False:
+        placeholders = create_placeholders()
 
-    for dim in [300, 200, 100]:
-        for drop in [0.2, 0.5]:
-            for l2 in [0.2, 0.5]:
-                for a in [1, 2, 3]:
-                    for b in [1, 2, 3]:
-                        print("Training with dim", dim, "drop", drop, "l2", l2, "a", a, "b", b)
+        dim = 100
 
-                        placeholders = create_placeholders()
+        reset_output_dir()
 
-                        train_feed_dicts = get_feed_dicts(data_train_np, placeholders, batch_size,
-                                                          bucket_order=None, bucket_structure=None)
+        dev_feed_dicts = get_feed_dicts_new(data_dev_np, placeholders, batch_size, len(dev_instances))
+        dev_preds = test_only(placeholders, dev_feed_dicts, vocab, max_sent_len,
+                          emb_dim=dim, output_size=dim, a=1, b=1, c=1, useGoldKeyphr=False,
+                          relations=False)
 
-                        dev_feed_dicts = get_feed_dicts(data_dev_np, placeholders, batch_size,
-                                                    bucket_order=None, bucket_structure=None)
+        for dev_batch in dev_preds:
+            convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
 
-                        dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=500, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=1, useGoldKeyphr=False)
+        calculateMeasures(dev_dir, out_dir, ignoremissing=False, remove_anno="types")
 
-                        reset_output_dir()
+    else:
 
-                        for dev_batch in dev_preds:
-                            convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
+        for dim in [100]:
+            for drop in [0.2]:#, 0.5]:
+                for l2 in [0.2]:#, 0.5]:
+                    for a in [1]:#, 2, 3]:
+                        for b in [1]:#, 2, 3]:
+                            print("Training with dim", dim, "drop", drop, "l2", l2, "a", a, "b", b)
 
-                        calculateMeasures(dev_dir, "/tmp/", ignoremissing=False)
+                            placeholders = create_placeholders()
 
-                        tf.reset_default_graph()
+                            train_feed_dicts = get_feed_dicts_new(data_train_np, placeholders, batch_size, len(train_instances))
+
+                            dev_feed_dicts = get_feed_dicts_new(data_dev_np, placeholders, batch_size, len(dev_instances))
+
+                            reset_output_dir()
+
+                            dev_preds = train(placeholders, train_feed_dicts, dev_feed_dicts, vocab, max_sent_len, max_epochs=250, emb_dim=dim, output_size=dim, l2=l2, dropout=drop, a=a, b=b, c=0, useGoldKeyphr=False, relations=False)
+
+                            for dev_batch in dev_preds:
+                                convert_batch_to_ann(dev_batch, dev_instances, out_dir=out_dir)
+
+                            calculateMeasures(dev_dir, out_dir, ignoremissing=False, remove_anno="rel")
+
+                            tf.reset_default_graph()
