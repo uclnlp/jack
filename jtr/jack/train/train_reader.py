@@ -168,9 +168,9 @@ def main():
         test_data = train_data
         if args.pretrain:
             emb_file = 'glove.6B.50d.txt'
-            embeddings = load_embeddings(path.join('jtr', 'data', 'GloVe', emb_file), 'glove')
+            embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
-            args.repr_input_dim = embeddings.lookup.shape[1]
+            args.repr_dim_input = embeddings.lookup.shape[1]
         else:
             embeddings = Embeddings(None,None)
     else:
@@ -180,7 +180,7 @@ def main():
         if args.pretrain:
             embeddings = load_embeddings(args.embedding_file, args.embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(args.embedding_file))
-            args.repr_input_dim = embeddings.lookup.shape[1]
+            args.repr_dim_input = embeddings.lookup.shape[1]
         else:
             embeddings = Embeddings(None, None)
 
