@@ -69,7 +69,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
         # states = (states_fw, states_bw) = ( (c_fw, h_fw), (c_bw, h_bw) )  [batch_size, max_time, cell_fw.output_size] for fw and bw each
         output = tf.concat(2, outputs)  # concatenate along output_size dimension -> [batch_size, max_time, cell_fw.output_size*2]
 
-        dim1, dim2, dim3 = tf.unpack(tf.shape(placeholders["relation_matrices"]))
+        dim1, dim2, dim3 = tf.unstack(tf.shape(placeholders["relation_matrices"]))
 
         # masking output for sentence lengths  -- doesn't seem to help
         #output_mask = mask_for_lengths(sentence_lengths, dim1, max_length=max_sent_len, dim2=emb_dim*2, value=-1000)
@@ -86,7 +86,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
 
         # applying sentence length mask
         #l_tags = l_tags + output_mask_keys
-        l_tags = tf.select(output_mask_keys, l_tags, tf.zeros(tf.shape(l_tags)))
+        l_tags = tf.where(output_mask_keys, l_tags, tf.zeros(tf.shape(l_tags)))
 
         loss_tags = tf.reduce_sum(l_tags)
 
@@ -96,7 +96,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
         if tieOutputLayer == True:
             output_with_tags_slice = tf.slice(output_with_tags, [0, 0, 0], [dim1, dim2, 1])
             output_with_labels_slice = tf.slice(output_with_labels, [0, 0, 1], [dim1, dim2, type_size-1])
-            output_with_labels = tf.concat(values=[output_with_tags_slice, output_with_labels_slice], concat_dim=2)
+            output_with_labels = tf.concat(values=[output_with_tags_slice, output_with_labels_slice], axis=2)
 
         output_with_labels_softm = tf.nn.softmax(output_with_labels)
 
@@ -104,7 +104,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
         l_labels = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_labels, placeholders["type_labels_as_ints"])
 
         # applying sentence length mask
-        l_labels = tf.select(output_mask_keys, l_labels, tf.zeros(tf.shape(l_labels)))
+        l_labels = tf.where(output_mask_keys, l_labels, tf.zeros(tf.shape(l_labels)))
 
         loss_labels = tf.reduce_sum(l_labels)
 
@@ -115,8 +115,8 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
             # the params for [O, O] relation weights should be same as those for O tags and labels
             # do this separately for the rows and columns in the rel label matrix
             if tieOutputLayer == True:
-                output_rels_unpacked1 = tf.unpack(output_with_rels, num=max_sent_len, axis=1)  # produces dim2 number of [dim1, dim3, dim4] slices
-                #output_with_rels = tf.pack(output_rels_unpacked1, axis=1)
+                output_rels_unpacked1 = tf.unstack(output_with_rels, num=max_sent_len, axis=1)  # produces dim2 number of [dim1, dim3, dim4] slices
+                #output_with_rels = tf.stack(output_rels_unpacked1, axis=1)
 
                 outputs1 = tf.TensorArray(size=max_sent_len, dtype='float32', infer_shape=False)
                 i = 0
@@ -129,7 +129,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
                         output_with_labels_slice_B = tf.slice(rel_sl, [0, 0, 1], [dim1, dim3, 2])
                         output_with_rels_slice = tf.einsum('blr,blk->blr', output_with_rels_slice, output_with_labels_slice_B)
 
-                    output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], concat_dim=2)
+                    output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], axis=2)
                     outputs1 = outputs1.write(i, output_with_rels)
                     i += 1
 
@@ -138,7 +138,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
                 output_with_rels = tf.transpose(output_with_rels, perm=[1, 0, 2, 3])
 
 
-                output_rels_unpacked2 = tf.unpack(output_with_rels, num=max_sent_len, axis=2)  # produces dim1 number of [dim1, dim2, dim4] slices
+                output_rels_unpacked2 = tf.unstack(output_with_rels, num=max_sent_len, axis=2)  # produces dim1 number of [dim1, dim2, dim4] slices
 
                 outputs2 = tf.TensorArray(size=max_sent_len, dtype='float32', infer_shape=False)
                 i = 0
@@ -152,7 +152,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
                         output_with_rels_slice = tf.einsum('blr,blk->blr', output_with_rels_slice,
                                                            output_with_labels_slice_B)
 
-                    output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], concat_dim=2)
+                    output_with_rels = tf.concat(values=[output_with_labels_slice, output_with_rels_slice], axis=2)
                     outputs2 = outputs2.write(i, output_with_rels)
                     i += 1
 
@@ -168,7 +168,7 @@ def create_model(placeholders, output_size, layers, dropout, num_words, emb_dim,
             l_relations = tf.nn.sparse_softmax_cross_entropy_with_logits(output_with_rels, placeholders["relation_matrices"])
 
             # applying sentence length mask
-            l_relations = tf.select(output_mask_rels, l_relations, tf.zeros(tf.shape(l_relations)))
+            l_relations = tf.where(output_mask_rels, l_relations, tf.zeros(tf.shape(l_relations)))
 
             loss_rels = tf.reduce_sum(l_relations)
 
@@ -399,14 +399,14 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, dim2=None, mask_
 
     if dim2 != None:
         # [batch_size x max_length x dim2]
-        mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size * dim2]), tf.pack([batch_size, max_length, dim2]))
+        mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size * dim2]), tf.stack([batch_size, max_length, dim2]))
         if mask_right:
             mask = tf.greater_equal(mask, tf.expand_dims(tf.expand_dims(lengths, 1), 1))
         else:
             mask = tf.less(mask, tf.expand_dims(tf.expand_dims(lengths, 1), 1))
     else:
         # [batch_size x max_length]
-        mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.pack([batch_size, -1]))
+        mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.stack([batch_size, -1]))
         if mask_right:
             mask = tf.greater_equal(mask, tf.expand_dims(lengths, 1))
         else:
