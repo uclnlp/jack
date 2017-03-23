@@ -64,15 +64,14 @@ build:
     - script:
         name: Run unit tests
         code: |
-          pytest tests -v -m "not (overfit or smalldata or smalldatagpu or overfitgpu)"
+          pytest tests -v -m "not (overfit or smalldata)"
 
     - script:
-        name: Run CPU overfit integration tests
+        name: Run overfit integration tests
         code: |
-          pytest tests -v -m "(CPU and overfit)"
+          pytest tests -v -m "overfit"
 
     - script:
-        name: Run CPU small data integration tests
+        name: Run small data integration tests
         code: |
-          pytest tests -v -m "(CPU and smalldata)"
-
+          pytest tests -v -m "smalldata"
