@@ -137,7 +137,7 @@ class FastQAInputModule(InputModule):
         self.default_vec = np.zeros([vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
 
-    def prepare_data(self, dataset, with_answers=False):
+    def prepare_data(self, dataset, with_answers=False, wiq_alnum=False):
         corpus = {"support": [], "question": []}
         for d in dataset:
             if isinstance(d, QASetting):
@@ -173,7 +173,7 @@ class FastQAInputModule(InputModule):
             # word in question feature
             wiq = []
             for token in s:
-                wiq.append(float(token in q))
+                wiq.append(float(token in q and (not wiq_alnum or token.isalnum())))
             word_in_question.append(wiq)
 
             if with_answers:

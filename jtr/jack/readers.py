@@ -84,6 +84,21 @@ def fastqa_reader(vocab, config):
                     fatqa_model_module(shared_resources),
                     XQAOutputModule(shared_resources))
 
+
+@__xqa_reader
+def cbow_xqa_reader(vocab, config):
+    """ Creates a FastQA reader instance (extractive qa model). """
+    from jtr.jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
+    from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
+    from jtr.jack.tasks.xqa.cbow_baseline import CBOWXqaInputModule
+
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    return JTReader(shared_resources,
+                    CBOWXqaInputModule(shared_resources),
+                    cbow_xqa_model_module(shared_resources),
+                    XQANoScoreOutputModule(shared_resources))
+
+
 @__mcqa_reader
 def snli_reader(vocab, config):
     """ Creates a SNLI reader instance (multiple choice qa model). """

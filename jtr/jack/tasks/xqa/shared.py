@@ -50,3 +50,35 @@ class XQAOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [FlatPorts.Prediction.answer_span, XQAPorts.token_char_offsets,
                 FlatPorts.Prediction.start_scores, FlatPorts.Prediction.end_scores]
+
+
+class XQANoScoreOutputModule(OutputModule):
+    def __init__(self, shared_vocab_confg: SharedVocabAndConfig):
+        self.vocab = shared_vocab_confg.vocab
+
+    def __call__(self, questions, span_prediction, token_char_offsets) -> List[Answer]:
+        answers = []
+        for i, q in enumerate(questions):
+            start, end = span_prediction[i, 0], span_prediction[i, 1]
+            print(start, end)
+            char_start = token_char_offsets[i, start]
+            if end + 1 < token_char_offsets.shape[1]:
+                char_end = token_char_offsets[i, end + 1]
+                if char_end == 0:
+                    char_end = len(q.support[0])
+            else:
+                char_end = len(q.support[0])
+            answer = q.support[0][char_start: char_end]
+
+            #strip answer
+            while answer[-1].isspace():
+                answer = answer[:-1]
+                char_end -= 1
+
+            answers.append(AnswerWithDefault(answer, (char_start, char_end), score=1.0))
+
+        return answers
+
+    @property
+    def input_ports(self) -> List[TensorPort]:
+        return [FlatPorts.Prediction.answer_span, XQAPorts.token_char_offsets]
