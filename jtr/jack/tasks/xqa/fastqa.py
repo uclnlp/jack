@@ -137,7 +137,14 @@ class FastQAInputModule(InputModule):
         self.default_vec = np.zeros([vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
 
-    def prepare_data(self, dataset, with_answers=False, wiq_alnum=False):
+    def prepare_data(self, dataset, with_answers=False, wiq_contentword=False, with_spacy=False):
+        if with_spacy:
+            import spacy
+            nlp = spacy.load("en", parser=False)
+            tokenize = lambda t: nlp(t)
+        else:
+            tokenize = self.tokenize
+
         corpus = {"support": [], "question": []}
         for d in dataset:
             if isinstance(d, QASetting):
@@ -152,8 +159,7 @@ class FastQAInputModule(InputModule):
                 corpus["support"].append(" ".join(qa_setting.support))
                 corpus["question"].append(qa_setting.question)
 
-        corpus_tokenized = deep_map(corpus, self.tokenize, ['question', 'support'])
-        corpus_ids = deep_map(corpus_tokenized, self.shared_vocab_config.vocab, ['question', 'support'])
+        corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
 
         word_in_question = []
         question_lengths = []
@@ -162,19 +168,32 @@ class FastQAInputModule(InputModule):
         answer_spans = []
 
         for i, (q, s) in enumerate(zip(corpus_tokenized["question"], corpus_tokenized["support"])):
-            support_lengths.append(len(s))
-            question_lengths.append(len(q))
-
-            # char to token offsets
-            support = corpus["support"][i]
-            offsets = token_to_char_offsets(support, s)
-            token_offsets.append(offsets)
-
             # word in question feature
             wiq = []
             for token in s:
-                wiq.append(float(token in q and (not wiq_alnum or token.isalnum())))
+                if with_spacy:
+                    wiq.append(float(any(token.lemma == t2.lemma for t2 in q) and
+                                     (not wiq_contentword or token.pos_.startswith("V") or token.pos_.startswith("N") or
+                                      token.pos_.startswith("R") or token.pos_.startswith("J"))))
+                else:
+                    wiq.append(float(token in q and (not wiq_contentword or token.isalnum())))
             word_in_question.append(wiq)
+
+            if with_spacy:
+                offsets = [t.idx for t in s]
+                s = [t.orth_ for t in s]
+                q = [t.orth_ for t in q]
+                corpus_tokenized["question"][i] = q
+                corpus_tokenized["support"][i] = s
+            else:
+                # char to token offsets
+                support = corpus["support"][i]
+                offsets = token_to_char_offsets(support, s)
+
+            token_offsets.append(offsets)
+
+            support_lengths.append(len(s))
+            question_lengths.append(len(q))
 
             if with_answers:
                 answers = dataset[i][1]
@@ -193,6 +212,8 @@ class FastQAInputModule(InputModule):
                     if (start, end) not in spans:
                         spans.append((start, end))
                 answer_spans.append(spans)
+
+        corpus_ids = deep_map(corpus_tokenized, self.shared_vocab_config.vocab, ['question', 'support'])
 
         return corpus_tokenized["question"], corpus_ids["question"], question_lengths, \
                corpus_tokenized["support"], corpus_ids["support"], support_lengths, \

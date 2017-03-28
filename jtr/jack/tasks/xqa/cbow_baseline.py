@@ -33,24 +33,35 @@ class CBOWXqaPorts:
 class CBOWXqaInputModule(FastQAInputModule):
     def __init__(self, shared_vocab_config):
         super().__init__(shared_vocab_config)
-        self.__nlp = spacy.load('en')
+        self.__nlp = spacy.load('en', parser=False)
 
-    def __extract_answer_span(self, tokens):
+    def __extract_answertype_span(self, tokens):
         question = " ".join(tokens)
         doc = self.__nlp(question)
-        start_id = 0
-        end_id = 0
+        start_id = -1
+        end_id = -1
         for t in doc:
-            if t.tag_.startswith("V"):
+            if t.orth_.startswith("wh") or t.orth_ == "how":
+                start_id = t.i
+            if start_id >= 0 and t.tag_.startswith("V"):
                 if doc[0].orth_.lower() == "what" and t.lemma_ == "be" and t.i == 1:
-                    for i, c in enumerate(doc.noun_chunks):
-                        if i == 1:
+                    for i in range(t.i + 1, len(doc)):
+                        if doc[i].pos_.startswith("N") == 1:
+                            j = i+1
+                            while j < len(doc) and doc[j].pos_.startswith("N"):
+                                j += 1
                             start_id = t.i + 1
-                            end_id = c[-1].i + 1
+                            end_id = j - 1
                             break
                 break
             else:
-                end_id += 1
+                end_id = t.i
+
+        if start_id < 0:
+            start_id = 0
+            end_id = len(doc) - 1
+        if end_id < start_id:
+            end_id = len(doc) - 1
 
         return [start_id, end_id]
 
@@ -61,14 +72,15 @@ class CBOWXqaInputModule(FastQAInputModule):
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = self.prepare_data(dataset, with_answers=True, wiq_alnum=True)
+        word_in_question, token_offsets, answer_spans = self.prepare_data(dataset, with_answers=True,
+                                                                          wiq_contentword=True, with_spacy=True)
 
         not_allowed = set(i for i, ss in enumerate(answer_spans)
                           if not is_eval and all(s[1] - s[0] > _max_span_size for s in ss))
 
         answertype_spans = []
         for qs in q_tokenized:
-            answertype_spans.append(self.__extract_answer_span(qs))
+            answertype_spans.append(self.__extract_answertype_span(qs))
 
         emb_supports = np.zeros([self.batch_size, max(s_lengths), self.emb_matrix.shape[1]])
         emb_questions = np.zeros([self.batch_size, max(q_lengths), self.emb_matrix.shape[1]])
@@ -141,7 +153,7 @@ class CBOWXqaInputModule(FastQAInputModule):
 
         answertype_spans = []
         for qs in q_tokenized:
-            answertype_spans.append(self.__extract_answer_span(qs))
+            answertype_spans.append(self.__extract_answertype_span(qs))
 
         unique_words, unique_word_lengths, question2unique, support2unique = self.unique_words(q_tokenized, s_tokenized)
 
@@ -235,7 +247,6 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
     """
     with tf.variable_scope("fast_qa", initializer=tf.contrib.layers.xavier_initializer()):
         # Some helpers
-        max_window_size = 10
         batch_size = tf.shape(question_length)[0]
         max_support_length = tf.reduce_max(support_length)
         max_question_length = tf.reduce_max(question_length)
@@ -277,14 +288,14 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]))
         answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]))
         answer_type_mask = tfutil.mask_for_lengths(answer_type_start, batch_size, max_question_length, value=1.0) * \
-                           tfutil.mask_for_lengths(answer_type_end, batch_size, max_question_length,
+                           tfutil.mask_for_lengths(answer_type_end + 1, batch_size, max_question_length,
                                                    mask_right=False, value=1.0)
         answer_type = tf.reduce_sum(emb_question * tf.expand_dims(answer_type_mask, 2), 1) / \
                       tf.maximum(1.0, tf.reduce_sum(answer_type_mask, 1, keep_dims=True))
 
         batch_size_range = tf.range(0, batch_size)
         answer_type_start_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_start], 1))
-        answer_type_end_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_end - 1], 1))
+        answer_type_end_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_end], 1))
 
         question_rep = tf.concat([answer_type, answer_type_start_state, answer_type_end_state], 1)
         question_rep.set_shape([None, input_size * 3])
