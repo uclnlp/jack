@@ -290,7 +290,6 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         question_rep.set_shape([None, input_size * 3])
 
         # support span encoding
-        span_rep = [tf.concat([emb_support, emb_support, emb_support], 2)]
         spans = [tf.stack([tf.range(0, max_support_length), tf.range(0, max_support_length)], 1)]
 
         wiq_exp = tf.expand_dims(word_in_question, 2)
@@ -302,12 +301,28 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         wiqs10 = [wiq_pooled10]
         wiqs20 = [wiq_pooled20]
 
+        context_window = 5
+        padded_support = tf.pad(emb_support, [[0, 0], [context_window, context_window], [0, 0]], "CONSTANT")
+        # [B, L + 10 - 4, S]
+        emb_support_windows = tf.layers.average_pooling1d(padded_support, 5, [1], "VALID", "channels_last")
+
+        left_context_windows = tf.slice(emb_support_windows, [0, 0, 0],
+                                            tf.stack([-1, max_support_length, -1]))
+        right_context_windows = tf.slice(emb_support_windows, [0,  context_window + 1, 0],
+                                         [-1, -1, -1])
+        span_rep = [tf.concat([emb_support, emb_support, emb_support, left_context_windows, right_context_windows], 2)]
+
         for window_size in range(2, _max_span_size + 1):
             start = tf.slice(emb_support, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1]))
             end = tf.slice(emb_support, [0, window_size - 1, 0], [-1, -1, -1])
             averagespan = tf.layers.average_pooling1d(emb_support, window_size, [1], "VALID", "channels_last")
 
-            span_rep.append(tf.concat([averagespan, start, end], 2))
+            left_context_windows = tf.slice(emb_support_windows, [0, 0, 0],
+                                            tf.stack([-1, max_support_length - (window_size - 1), -1]))
+            right_context_windows = tf.slice(emb_support_windows, [0,  window_size - 1 + context_window + 1, 0],
+                                             [-1, -1, -1])
+
+            span_rep.append(tf.concat([averagespan, start, end, left_context_windows, right_context_windows], 2))
 
             wiqs5.append(tf.slice(wiq_pooled5, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
             wiqs10.append(tf.slice(wiq_pooled10, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
@@ -317,7 +332,7 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
                                    tf.range(window_size - 1, max_support_length)], 1))
 
         span_rep = tf.concat(span_rep, 1)
-        span_rep.set_shape([None, None, input_size * 3])
+        span_rep.set_shape([None, None, input_size * 5])
         wiqs5 = tf.concat(wiqs5, 1)
         wiqs10 = tf.concat(wiqs10, 1)
         wiqs20 = tf.concat(wiqs20, 1)
