@@ -245,7 +245,7 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
     Returns:
         start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
     """
-    with tf.variable_scope("fast_qa", initializer=tf.contrib.layers.xavier_initializer()):
+    with tf.variable_scope("cbow_xqa", initializer=tf.contrib.layers.xavier_initializer()):
         # Some helpers
         batch_size = tf.shape(question_length)[0]
         max_support_length = tf.reduce_max(support_length)

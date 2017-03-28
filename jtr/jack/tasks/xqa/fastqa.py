@@ -173,8 +173,7 @@ class FastQAInputModule(InputModule):
             for token in s:
                 if with_spacy:
                     wiq.append(float(any(token.lemma == t2.lemma for t2 in q) and
-                                     (not wiq_contentword or token.pos_.startswith("V") or token.pos_.startswith("N") or
-                                      token.pos_.startswith("R") or token.pos_.startswith("J"))))
+                                     (not wiq_contentword or (token.orth_.isalnum() and not token.is_stop))))
                 else:
                     wiq.append(float(token in q and (not wiq_contentword or token.isalnum())))
             word_in_question.append(wiq)
