@@ -6,7 +6,8 @@ import random
 import re
 from jtr.jack.core import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
-from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, FastQAPorts
+from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, XQAPorts
+from jtr.jack.tasks.xqa.util import char_vocab_from_vocab, prepare_data, unique_words_with_chars
 from jtr.jack.tf_fun.dropout import fixed_dropout
 from jtr.jack.tf_fun.embedding import conv_char_embedding_alt
 from jtr.jack.tf_fun.xqa import xqa_min_crossentropy_span_loss
@@ -30,10 +31,34 @@ class CBOWXqaPorts:
                              "[Q, SP]")
 
 
-class CBOWXqaInputModule(FastQAInputModule):
+class CBOWXqaInputModule(InputModule):
     def __init__(self, shared_vocab_config):
-        super().__init__(shared_vocab_config)
+        assert isinstance(shared_vocab_config, SharedVocabAndConfig), \
+            "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
+        self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
+
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        # create character vocab + word lengths + char ids per word
+        self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        # Assumes that vocab and embeddings are given during creation
+        self.setup()
+
+    def setup(self):
+        self.vocab = self.shared_vocab_config.vocab
+        self.config = self.shared_vocab_config.config
+        self.batch_size = self.config.get("batch_size", 1)
+        self.dropout = self.config.get("dropout", 1)
+        self._rng = random.Random(self.config.get("seed", 123))
+        self.emb_matrix = self.vocab.emb.lookup
+        self.default_vec = np.zeros([self.vocab.emb_length])
+        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+
+    def _get_emb(self, idx):
+        if idx < self.emb_matrix.shape[0]:
+            return self.emb_matrix[idx]
+        else:
+            return self.default_vec
 
     def __extract_answertype_span(self, tokens):
         question = " ".join(tokens)
@@ -47,7 +72,7 @@ class CBOWXqaInputModule(FastQAInputModule):
                 if doc[0].orth_.lower() == "what" and t.lemma_ == "be" and t.i == 1:
                     for i in range(t.i + 1, len(doc)):
                         if doc[i].pos_.startswith("N") == 1:
-                            j = i+1
+                            j = i + 1
                             while j < len(doc) and doc[j].pos_.startswith("N"):
                                 j += 1
                             start_id = t.i + 1
@@ -67,13 +92,30 @@ class CBOWXqaInputModule(FastQAInputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return super().output_ports + [CBOWXqaPorts.answer_type_span]
+        return [XQAPorts.emb_question, XQAPorts.question_length,
+                XQAPorts.emb_support, XQAPorts.support_length,
+                # char
+                XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                # features
+                XQAPorts.word_in_question,
+                # optional, only during training
+                XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                XQAPorts.keep_prob, XQAPorts.is_eval,
+                # for output module
+                XQAPorts.token_char_offsets,
+                CBOWXqaPorts.answer_type_span]
+
+    @property
+    def training_ports(self) -> List[TensorPort]:
+        return [XQAPorts.answer_span, XQAPorts.answer2question]
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = self.prepare_data(dataset, with_answers=True,
-                                                                          wiq_contentword=True, with_spacy=True)
+        word_in_question, token_offsets, answer_spans = \
+            prepare_data(dataset, self.vocab, self.config.get("lowercase", False), with_answers=True,
+                         wiq_contentword=True, with_spacy=True)
 
         not_allowed = set(i for i, ss in enumerate(answer_spans)
                           if not is_eval and all(s[1] - s[0] > _max_span_size for s in ss))
@@ -98,7 +140,7 @@ class CBOWXqaInputModule(FastQAInputModule):
                 at_spans = []
 
                 unique_words, unique_word_lengths, question2unique, support2unique = \
-                    self.unique_words(q_tokenized, s_tokenized, todo[:self.batch_size])
+                    unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab, todo[:self.batch_size])
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
@@ -119,29 +161,29 @@ class CBOWXqaInputModule(FastQAInputModule):
 
                 batch_size = len(question_lengths)
                 output = {
-                    FastQAPorts.unique_word_chars: unique_words,
-                    FastQAPorts.unique_word_char_length: unique_word_lengths,
-                    FastQAPorts.question_words2unique: question2unique,
-                    FastQAPorts.support_words2unique: support2unique,
-                    FastQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
-                    FastQAPorts.support_length: support_lengths,
-                    FastQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
-                    FastQAPorts.question_length: question_lengths,
-                    FastQAPorts.word_in_question: wiq,
-                    FastQAPorts.answer_span: spans,
-                    FastQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
-                    FastQAPorts.answer2question: span2question,
-                    FastQAPorts.answer2question_training: [] if is_eval else span2question,
-                    FastQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
-                    FastQAPorts.is_eval: is_eval,
-                    FastQAPorts.token_char_offsets: offsets,
+                    XQAPorts.unique_word_chars: unique_words,
+                    XQAPorts.unique_word_char_length: unique_word_lengths,
+                    XQAPorts.question_words2unique: question2unique,
+                    XQAPorts.support_words2unique: support2unique,
+                    XQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
+                    XQAPorts.support_length: support_lengths,
+                    XQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
+                    XQAPorts.question_length: question_lengths,
+                    XQAPorts.word_in_question: wiq,
+                    XQAPorts.answer_span: spans,
+                    XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
+                    XQAPorts.answer2question: span2question,
+                    XQAPorts.answer2question_training: [] if is_eval else span2question,
+                    XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
+                    XQAPorts.is_eval: is_eval,
+                    XQAPorts.token_char_offsets: offsets,
                     CBOWXqaPorts.answer_type_span: at_spans
                 }
 
                 # we can only numpify in here, because bucketing is not possible prior
-                batch = numpify(output, keys=[FastQAPorts.unique_word_chars,
-                                              FastQAPorts.question_words2unique, FastQAPorts.support_words2unique,
-                                              FastQAPorts.word_in_question, FastQAPorts.token_char_offsets])
+                batch = numpify(output, keys=[XQAPorts.unique_word_chars,
+                                              XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                                              XQAPorts.word_in_question, XQAPorts.token_char_offsets])
                 todo = todo[self.batch_size:]
                 yield batch
 
@@ -149,13 +191,16 @@ class CBOWXqaInputModule(FastQAInputModule):
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = self.prepare_data(qa_settings, with_answers=False)
+        word_in_question, token_offsets, answer_spans = \
+            prepare_data(qa_settings, self.vocab, self.config.get("lowercase", False), with_answers=True,
+                         wiq_contentword=True, with_spacy=True)
 
         answertype_spans = []
         for qs in q_tokenized:
             answertype_spans.append(self.__extract_answertype_span(qs))
 
-        unique_words, unique_word_lengths, question2unique, support2unique = self.unique_words(q_tokenized, s_tokenized)
+        unique_words, unique_word_lengths, question2unique, support2unique = \
+            unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
 
         batch_size = len(qa_settings)
         emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
@@ -168,42 +213,42 @@ class CBOWXqaInputModule(FastQAInputModule):
                 emb_questions[i, k] = self._get_emb(v)
 
         output = {
-            FastQAPorts.unique_word_chars: unique_words,
-            FastQAPorts.unique_word_char_length: unique_word_lengths,
-            FastQAPorts.question_words2unique: question2unique,
-            FastQAPorts.support_words2unique: support2unique,
-            FastQAPorts.emb_support: emb_supports,
-            FastQAPorts.support_length: s_lengths,
-            FastQAPorts.emb_question: emb_questions,
-            FastQAPorts.question_length: q_lengths,
-            FastQAPorts.word_in_question: word_in_question,
-            FastQAPorts.token_char_offsets: token_offsets,
+            XQAPorts.unique_word_chars: unique_words,
+            XQAPorts.unique_word_char_length: unique_word_lengths,
+            XQAPorts.question_words2unique: question2unique,
+            XQAPorts.support_words2unique: support2unique,
+            XQAPorts.emb_support: emb_supports,
+            XQAPorts.support_length: s_lengths,
+            XQAPorts.emb_question: emb_questions,
+            XQAPorts.question_length: q_lengths,
+            XQAPorts.word_in_question: word_in_question,
+            XQAPorts.token_char_offsets: token_offsets,
             CBOWXqaPorts.answer_type_span: answertype_spans
         }
 
-        output = numpify(output, keys=[FastQAPorts.unique_word_chars, FastQAPorts.question_words2unique,
-                                       FastQAPorts.support_words2unique, FastQAPorts.word_in_question,
-                                       FastQAPorts.token_char_offsets])
+        output = numpify(output, keys=[XQAPorts.unique_word_chars, XQAPorts.question_words2unique,
+                                       XQAPorts.support_words2unique, XQAPorts.word_in_question,
+                                       XQAPorts.token_char_offsets])
 
-        return output  # FastQA model module factory method, like fastqa.model.fastqa_model
+        return output
 
 
 cbow_xqa_like_model_module_factory = simple_model_module(
-    input_ports=[FastQAPorts.emb_question, FastQAPorts.question_length,
-                 FastQAPorts.emb_support, FastQAPorts.support_length,
+    input_ports=[XQAPorts.emb_question, XQAPorts.question_length,
+                 XQAPorts.emb_support, XQAPorts.support_length,
                  # char embedding inputs
-                 FastQAPorts.unique_word_chars, FastQAPorts.unique_word_char_length,
-                 FastQAPorts.question_words2unique, FastQAPorts.support_words2unique,
+                 XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                 XQAPorts.question_words2unique, XQAPorts.support_words2unique,
                  # feature input
-                 FastQAPorts.word_in_question,
+                 XQAPorts.word_in_question,
                  # optional input, provided only during training
-                 FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
-                 FastQAPorts.keep_prob, FastQAPorts.is_eval,
+                 XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                 XQAPorts.keep_prob, XQAPorts.is_eval,
                  CBOWXqaPorts.answer_type_span],
     output_ports=[CBOWXqaPorts.span_scores, CBOWXqaPorts.span_candidates,
-                  FastQAPorts.span_prediction],
+                  XQAPorts.span_prediction],
     training_input_ports=[CBOWXqaPorts.span_scores, CBOWXqaPorts.span_candidates,
-                          FastQAPorts.answer_span, FastQAPorts.answer2question],
+                          XQAPorts.answer_span, XQAPorts.answer2question],
     training_output_ports=[Ports.loss])
 
 
@@ -392,7 +437,7 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         interaction = tf.concat([span_inter, tf.expand_dims(question_inter, 1) * span_inter,
                                  wiqs_left5, wiqs_left10, wiqs_left20,
                                  wiqs_right5, wiqs_right10, wiqs_right20], 2)
-        interaction.set_shape([None, None, 2 * size + 6*2])
+        interaction.set_shape([None, None, 2 * size + 6 * 2])
 
         with tf.variable_scope("hidden"):
             h = tf.tanh(tf.layers.dense(interaction, size, activation=None) + tf.expand_dims(question_inter2, 1))

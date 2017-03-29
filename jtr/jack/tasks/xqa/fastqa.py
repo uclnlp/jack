@@ -7,7 +7,7 @@ import re
 from jtr.jack.core import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
 from jtr.jack.tasks.xqa.shared import XQAPorts
-from jtr.jack.tasks.xqa.util import token_to_char_offsets
+from jtr.jack.tasks.xqa.util import token_to_char_offsets, unique_words_with_chars, prepare_data, char_vocab_from_vocab
 from jtr.jack.tf_fun.dropout import fixed_dropout
 from jtr.jack.tf_fun.embedding import conv_char_embedding_alt
 from jtr.jack.tf_fun.highway import highway_network
@@ -18,72 +18,27 @@ from jtr.preprocess.map import deep_map, numpify
 from jtr.util import tfutil
 
 
-class FastQAPorts:
-    """
-    It is good practice define all ports needed for a single model jointly, to get an overview
-    """
-
-    # We feed embeddings directly
-    emb_question = FlatPorts.Misc.embedded_question
-    question_length = FlatPorts.Input.question_length
-    emb_support = FlatPorts.Misc.embedded_support
-    support_length = FlatPorts.Input.support_length
-
-    # but also ids, for char-based embeddings
-    unique_word_chars = TensorPort(tf.int32, [None, None], "question_chars",
-                                   "Represents questions using symbol vectors",
-                                   "[U, max_num_chars]")
-    unique_word_char_length = TensorPort(tf.int32, [None], "question_char_length",
-                                         "Represents questions using symbol vectors",
-                                         "[U]")
-    question_words2unique = TensorPort(tf.int32, [None, None], "question_words2unique",
-                                       "Represents support using symbol vectors",
-                                       "[batch_size, max_num_question_tokens]")
-    support_words2unique = TensorPort(tf.int32, [None, None], "support_words2unique",
-                                      "Represents support using symbol vectors",
-                                      "[batch_size, max_num_support_tokens, max]")
-
-    keep_prob = Ports.Input.keep_prob
-    is_eval = Ports.Input.is_eval
-
-    # This feature is model specific and thus, not part of the conventional Ports
-    word_in_question = TensorPort(tf.float32, [None, None], "word_in_question_feature",
-                                  "Represents a 1/0 feature for all context tokens denoting"
-                                  " whether it is part of the question or not",
-                                  "[Q, support_length]")
-
-    correct_start_training = TensorPortWithDefault(np.array([0], np.int32), tf.int32, [None], "correct_start_training",
-                                                   "Represents the correct start of the span which is given to the"
-                                                   "model during training for use to predicting end.",
-                                                   "[A]")
-
-    answer2question_training = TensorPortWithDefault([0], tf.int32, [None], "answer2question_training",
-                                                     "Represents mapping to question idx per answer, which is used "
-                                                     "together with correct_start_training during training.",
-                                                     "[A]")
-
-    # output ports
-    start_scores = FlatPorts.Prediction.start_scores
-    end_scores = FlatPorts.Prediction.end_scores
-    span_prediction = FlatPorts.Prediction.answer_span
-    token_char_offsets = XQAPorts.token_char_offsets
-
-    # ports used during training
-    answer2question = FlatPorts.Input.answer2question
-    answer_span = FlatPorts.Target.answer_span
-
-
 class FastQAInputModule(InputModule):
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedVocabAndConfig), \
             "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
         self.shared_vocab_config = shared_vocab_config
 
-    __pattern = re.compile('\w+|[^\w\s]')
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        # create character vocab + word lengths + char ids per word
+        self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        # Assumes that vocab and embeddings are given during creation
+        self.setup()
 
-    @staticmethod
-    def tokenize(text):
-        return FastQAInputModule.__pattern.findall(text)
+    def setup(self):
+        self.vocab = self.shared_vocab_config.vocab
+        self.config = self.shared_vocab_config.config
+        self.batch_size = self.config.get("batch_size", 1)
+        self.dropout = self.config.get("dropout", 1)
+        self._rng = random.Random(self.config.get("seed", 123))
+        self.emb_matrix = self.vocab.emb.lookup
+        self.default_vec = np.zeros([self.vocab.emb_length])
+        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -93,163 +48,29 @@ class FastQAInputModule(InputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [FastQAPorts.emb_question, FastQAPorts.question_length,
-                FastQAPorts.emb_support, FastQAPorts.support_length,
+        return [XQAPorts.emb_question, XQAPorts.question_length,
+                XQAPorts.emb_support, XQAPorts.support_length,
                 # char
-                FastQAPorts.unique_word_chars, FastQAPorts.unique_word_char_length,
-                FastQAPorts.question_words2unique, FastQAPorts.support_words2unique,
+                XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                XQAPorts.question_words2unique, XQAPorts.support_words2unique,
                 # features
-                FastQAPorts.word_in_question,
+                XQAPorts.word_in_question,
                 # optional, only during training
-                FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
-                FastQAPorts.keep_prob, FastQAPorts.is_eval,
+                XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                XQAPorts.keep_prob, XQAPorts.is_eval,
                 # for output module
-                FastQAPorts.token_char_offsets]
+                XQAPorts.token_char_offsets]
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [FastQAPorts.answer_span, FastQAPorts.answer2question]
-
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        # create character vocab + word lengths + char ids per word
-        vocab = self.shared_vocab_config.vocab
-        char_vocab = dict()
-        char_vocab["PAD"] = 0
-        for i in range(max(vocab.id2sym.keys()) + 1):
-            w = vocab.id2sym.get(i)
-            if w is not None:
-                for c in w:
-                    if c not in char_vocab:
-                        char_vocab[c] = len(char_vocab)
-        self.shared_vocab_config.config["char_vocab"] = char_vocab
-        # Assumes that vocab and embeddings are given during creation
-        self.setup()
-        return self.shared_vocab_config
-
-    def setup(self):
-        vocab = self.shared_vocab_config.vocab
-        config = self.shared_vocab_config.config
-        self.batch_size = config.get("batch_size", 1)
-        self.dropout = config.get("dropout", 1)
-        self._rng = random.Random(config.get("seed", 123))
-        self.emb_matrix = vocab.emb.lookup
-        self.default_vec = np.zeros([vocab.emb_length])
-        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
-
-    def prepare_data(self, dataset, with_answers=False, wiq_contentword=False, with_spacy=False):
-        if with_spacy:
-            import spacy
-            nlp = spacy.load("en", parser=False)
-            tokenize = lambda t: nlp(t)
-        else:
-            tokenize = self.tokenize
-
-        corpus = {"support": [], "question": []}
-        for d in dataset:
-            if isinstance(d, QASetting):
-                qa_setting = d
-            else:
-                qa_setting, answer = d
-
-            if self.shared_vocab_config.config.get("lowercase", False):
-                corpus["support"].append(" ".join(qa_setting.support).lower())
-                corpus["question"].append(qa_setting.question.lower())
-            else:
-                corpus["support"].append(" ".join(qa_setting.support))
-                corpus["question"].append(qa_setting.question)
-
-        corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
-
-        word_in_question = []
-        question_lengths = []
-        support_lengths = []
-        token_offsets = []
-        answer_spans = []
-
-        for i, (q, s) in enumerate(zip(corpus_tokenized["question"], corpus_tokenized["support"])):
-            # word in question feature
-            wiq = []
-            for token in s:
-                if with_spacy:
-                    wiq.append(float(any(token.lemma == t2.lemma for t2 in q) and
-                                     (not wiq_contentword or (token.orth_.isalnum() and not token.is_stop))))
-                else:
-                    wiq.append(float(token in q and (not wiq_contentword or token.isalnum())))
-            word_in_question.append(wiq)
-
-            if with_spacy:
-                offsets = [t.idx for t in s]
-                s = [t.orth_ for t in s]
-                q = [t.orth_ for t in q]
-                corpus_tokenized["question"][i] = q
-                corpus_tokenized["support"][i] = s
-            else:
-                # char to token offsets
-                support = corpus["support"][i]
-                offsets = token_to_char_offsets(support, s)
-
-            token_offsets.append(offsets)
-
-            support_lengths.append(len(s))
-            question_lengths.append(len(q))
-
-            if with_answers:
-                answers = dataset[i][1]
-                spans = []
-                for a in answers:
-                    start = 0
-                    while start < len(offsets) and offsets[start] < a.span[0]:
-                        start += 1
-
-                    if start == len(offsets):
-                        continue
-
-                    end = start
-                    while end + 1 < len(offsets) and offsets[end + 1] < a.span[1]:
-                        end += 1
-                    if (start, end) not in spans:
-                        spans.append((start, end))
-                answer_spans.append(spans)
-
-        corpus_ids = deep_map(corpus_tokenized, self.shared_vocab_config.vocab, ['question', 'support'])
-
-        return corpus_tokenized["question"], corpus_ids["question"], question_lengths, \
-               corpus_tokenized["support"], corpus_ids["support"], support_lengths, \
-               word_in_question, token_offsets, answer_spans
-
-    def unique_words(self, q_tokenized, s_tokenized, indices=None):
-        indices = indices or range(len(q_tokenized))
-
-        unique_words_set = dict()
-        unique_words = list()
-        unique_word_lengths = list()
-        question2unique = list()
-        support2unique = list()
-
-        for j in indices:
-            q2u = list()
-            for w in q_tokenized[j]:
-                if w not in unique_words_set:
-                    unique_word_lengths.append(len(w))
-                    unique_words.append([self.char_vocab.get(c, 0) for c in w])
-                    unique_words_set[w] = len(unique_words_set)
-                q2u.append(unique_words_set[w])
-            question2unique.append(q2u)
-            s2u = list()
-            for w in s_tokenized[j]:
-                if w not in unique_words_set:
-                    unique_word_lengths.append(len(w))
-                    unique_words.append([self.char_vocab.get(c, 0) for c in w])
-                    unique_words_set[w] = len(unique_words_set)
-                s2u.append(unique_words_set[w])
-            support2unique.append(s2u)
-
-        return unique_words, unique_word_lengths, question2unique, support2unique
+        return [XQAPorts.answer_span, XQAPorts.answer2question]
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = self.prepare_data(dataset, with_answers=True)
+        word_in_question, token_offsets, answer_spans = prepare_data(dataset, self.vocab,
+                                                                     self.config.get("lowercase", False),
+                                                                     with_answers=True)
 
         emb_supports = np.zeros([self.batch_size, max(s_lengths), self.emb_matrix.shape[1]])
         emb_questions = np.zeros([self.batch_size, max(q_lengths), self.emb_matrix.shape[1]])
@@ -266,7 +87,7 @@ class FastQAInputModule(InputModule):
                 offsets = []
 
                 unique_words, unique_word_lengths, question2unique, support2unique = \
-                    self.unique_words(q_tokenized, s_tokenized, todo[:self.batch_size])
+                    unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab, todo[:self.batch_size])
 
                 # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
                 for i, j in enumerate(todo[:self.batch_size]):
@@ -285,28 +106,28 @@ class FastQAInputModule(InputModule):
 
                 batch_size = len(question_lengths)
                 output = {
-                    FastQAPorts.unique_word_chars: unique_words,
-                    FastQAPorts.unique_word_char_length: unique_word_lengths,
-                    FastQAPorts.question_words2unique: question2unique,
-                    FastQAPorts.support_words2unique: support2unique,
-                    FastQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
-                    FastQAPorts.support_length: support_lengths,
-                    FastQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
-                    FastQAPorts.question_length: question_lengths,
-                    FastQAPorts.word_in_question: wiq,
-                    FastQAPorts.answer_span: spans,
-                    FastQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
-                    FastQAPorts.answer2question: span2question,
-                    FastQAPorts.answer2question_training: [] if is_eval else span2question,
-                    FastQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
-                    FastQAPorts.is_eval: is_eval,
-                    FastQAPorts.token_char_offsets: offsets
+                    XQAPorts.unique_word_chars: unique_words,
+                    XQAPorts.unique_word_char_length: unique_word_lengths,
+                    XQAPorts.question_words2unique: question2unique,
+                    XQAPorts.support_words2unique: support2unique,
+                    XQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
+                    XQAPorts.support_length: support_lengths,
+                    XQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
+                    XQAPorts.question_length: question_lengths,
+                    XQAPorts.word_in_question: wiq,
+                    XQAPorts.answer_span: spans,
+                    XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
+                    XQAPorts.answer2question: span2question,
+                    XQAPorts.answer2question_training: [] if is_eval else span2question,
+                    XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
+                    XQAPorts.is_eval: is_eval,
+                    XQAPorts.token_char_offsets: offsets
                 }
 
                 # we can only numpify in here, because bucketing is not possible prior
-                batch = numpify(output, keys=[FastQAPorts.unique_word_chars,
-                                              FastQAPorts.question_words2unique, FastQAPorts.support_words2unique,
-                                              FastQAPorts.word_in_question, FastQAPorts.token_char_offsets])
+                batch = numpify(output, keys=[XQAPorts.unique_word_chars,
+                                              XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                                              XQAPorts.word_in_question, XQAPorts.token_char_offsets])
                 todo = todo[self.batch_size:]
                 yield batch
 
@@ -314,9 +135,12 @@ class FastQAInputModule(InputModule):
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = self.prepare_data(qa_settings, with_answers=False)
+        word_in_question, token_offsets, answer_spans = prepare_data(qa_settings, self.vocab,
+                                                                     self.config.get("lowercase", False),
+                                                                     with_answers=False)
 
-        unique_words, unique_word_lengths, question2unique, support2unique = self.unique_words(q_tokenized, s_tokenized)
+        unique_words, unique_word_lengths, question2unique, support2unique = \
+            unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
 
         batch_size = len(qa_settings)
         emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
@@ -329,40 +153,40 @@ class FastQAInputModule(InputModule):
                 emb_questions[i, k] = self._get_emb(v)
 
         output = {
-            FastQAPorts.unique_word_chars: unique_words,
-            FastQAPorts.unique_word_char_length: unique_word_lengths,
-            FastQAPorts.question_words2unique: question2unique,
-            FastQAPorts.support_words2unique: support2unique,
-            FastQAPorts.emb_support: emb_supports,
-            FastQAPorts.support_length: s_lengths,
-            FastQAPorts.emb_question: emb_questions,
-            FastQAPorts.question_length: q_lengths,
-            FastQAPorts.word_in_question: word_in_question,
-            FastQAPorts.token_char_offsets: token_offsets
+            XQAPorts.unique_word_chars: unique_words,
+            XQAPorts.unique_word_char_length: unique_word_lengths,
+            XQAPorts.question_words2unique: question2unique,
+            XQAPorts.support_words2unique: support2unique,
+            XQAPorts.emb_support: emb_supports,
+            XQAPorts.support_length: s_lengths,
+            XQAPorts.emb_question: emb_questions,
+            XQAPorts.question_length: q_lengths,
+            XQAPorts.word_in_question: word_in_question,
+            XQAPorts.token_char_offsets: token_offsets
         }
 
-        output = numpify(output, keys=[FastQAPorts.unique_word_chars, FastQAPorts.question_words2unique,
-                                       FastQAPorts.support_words2unique, FastQAPorts.word_in_question,
-                                       FastQAPorts.token_char_offsets])
+        output = numpify(output, keys=[XQAPorts.unique_word_chars, XQAPorts.question_words2unique,
+                                       XQAPorts.support_words2unique, XQAPorts.word_in_question,
+                                       XQAPorts.token_char_offsets])
 
-        return output  # FastQA model module factory method, like fastqa.model.fastqa_model
+        return output
 
 
 fastqa_like_model_module_factory = simple_model_module(
-    input_ports=[FastQAPorts.emb_question, FastQAPorts.question_length,
-                 FastQAPorts.emb_support, FastQAPorts.support_length,
+    input_ports=[XQAPorts.emb_question, XQAPorts.question_length,
+                 XQAPorts.emb_support, XQAPorts.support_length,
                  # char embedding inputs
-                 FastQAPorts.unique_word_chars, FastQAPorts.unique_word_char_length,
-                 FastQAPorts.question_words2unique, FastQAPorts.support_words2unique,
+                 XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                 XQAPorts.question_words2unique, XQAPorts.support_words2unique,
                  # feature input
-                 FastQAPorts.word_in_question,
+                 XQAPorts.word_in_question,
                  # optional input, provided only during training
-                 FastQAPorts.correct_start_training, FastQAPorts.answer2question_training,
-                 FastQAPorts.keep_prob, FastQAPorts.is_eval],
-    output_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores,
-                  FastQAPorts.span_prediction],
-    training_input_ports=[FastQAPorts.start_scores, FastQAPorts.end_scores,
-                          FastQAPorts.answer_span, FastQAPorts.answer2question],
+                 XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                 XQAPorts.keep_prob, XQAPorts.is_eval],
+    output_ports=[XQAPorts.start_scores, XQAPorts.end_scores,
+                  XQAPorts.span_prediction],
+    training_input_ports=[XQAPorts.start_scores, XQAPorts.end_scores,
+                          XQAPorts.answer_span, XQAPorts.answer2question],
     training_output_ports=[Ports.loss])
 
 
