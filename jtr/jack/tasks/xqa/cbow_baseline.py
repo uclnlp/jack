@@ -300,10 +300,24 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         question_rep = tf.concat([answer_type, answer_type_start_state, answer_type_end_state], 1)
         question_rep.set_shape([None, input_size * 3])
 
+        # wiq features
+        support_mask = tfutil.mask_for_lengths(support_length, batch_size)
+        question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
+
+        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
+                                 initializer=tf.constant_initializer(1.0))
+
+        wiq_w = tf.matmul(emb_question * v_wiqw, emb_support, adjoint_b=True)
+        wiq_w = wiq_w + tf.expand_dims(support_mask, 1)
+
+        wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
+
+        wiq_exp = tf.stack([word_in_question, wiq_w], 2)
+
         # support span encoding
         spans = [tf.stack([tf.range(0, max_support_length), tf.range(0, max_support_length)], 1)]
 
-        wiq_exp = tf.expand_dims(tf.pad(word_in_question, [[0, 0], [20, 20]]), 2)
+        wiq_exp = tf.pad(wiq_exp, [[0, 0], [20, 20], [0, 0]])
         wiq_pooled5 = tf.layers.average_pooling1d(
             tf.slice(wiq_exp, [0, 15, 0], tf.stack([-1, max_support_length + 10, -1])), 5, [1], 'valid')
         wiq_pooled10 = tf.layers.average_pooling1d(
@@ -378,7 +392,7 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         interaction = tf.concat([span_inter, tf.expand_dims(question_inter, 1) * span_inter,
                                  wiqs_left5, wiqs_left10, wiqs_left20,
                                  wiqs_right5, wiqs_right10, wiqs_right20], 2)
-        interaction.set_shape([None, None, 2 * size + 6])
+        interaction.set_shape([None, None, 2 * size + 6*2])
 
         with tf.variable_scope("hidden"):
             h = tf.tanh(tf.layers.dense(interaction, size, activation=None) + tf.expand_dims(question_inter2, 1))
