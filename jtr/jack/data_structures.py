@@ -40,25 +40,7 @@ def AnswerWithDefault(text: str, span: Tuple[int, int] = None, score: float = 1.
     return Answer(text, span, score)
 
 
-def load_labelled_data(path, max_count=None, **options) -> List[Tuple[QASetting, List[Answer]]]:
-    """
-    This function loads a jtr json file with labelled answers from a specific location.
-    Args:
-        path: the location to load from.
-        max_count: how many instances to load at most
-        **options: options to pass on to the loader. TODO: what are the options
-
-    Returns:
-        A list of input-answer pairs.
-
-    """
-    # TODO: we cannot use jtr_load, because it produces option specific output, whereas the jtr json schema is fixed
-    # dict_data = jtr_load(path, max_count, **options)
-
-    # We load json directly instead
-    with open(path) as f:
-        jtr_data = json.load(f)
-
+def convert2qasettings(jtr_data, max_count=None, **options):
     def value(c, key="text"):
         if isinstance(c, dict):
             return c.get(key, None)
@@ -85,5 +67,27 @@ def load_labelled_data(path, max_count=None, **options) -> List[Tuple[QASetting,
                        for c in question_instance['answers']] if "answers" in question_instance else None
             yield QASettingWithDefaults(question, support, atomic_candidates=candidates, id=idd), answers
 
-    result = [(inp, answer) for i in jtr_data["instances"] for inp, answer in convert_instance(i)]
-    return result
+    result = [(inp, answer) for i in jtr_data["instances"] for inp, answer in convert_instance(i)][:max_count]
+    if max_count is None:
+        return result
+    else:
+        return result[:max_count]
+
+
+def load_labelled_data(path, max_count=None, **options) -> List[Tuple[QASetting, List[Answer]]]:
+    """
+    This function loads a jtr json file with labelled answers from a specific location.
+    Args:
+        path: the location to load from.
+        max_count: how many instances to load at most
+        **options: options to pass on to the loader. TODO: what are the options
+
+    Returns:
+        A list of input-answer pairs.
+
+    """
+    # We load json directly instead
+    with open(path) as f:
+        jtr_data = json.load(f)
+
+    return convert2qasettings(jtr_data, max_count, **options)

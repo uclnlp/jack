@@ -152,6 +152,7 @@ class Vocab(object):
                 self.id2sym[len(self.id2sym)] = unk
             self.sym2freqs = {w: emb.vocabulary.get_word_count(w) for w in self.sym2id}
             self.frozen = True
+            self.next_pos = 0
         else:
             self.sym2id = {}
             # with pos and neg indices
