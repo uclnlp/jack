@@ -129,7 +129,8 @@ class CBOWXqaInputModule(InputModule):
 
         def batch_generator():
             todo = list(i for i in range(len(q_ids)) if is_eval or i not in not_allowed)
-            self._rng.shuffle(todo)
+            if not is_eval:
+                self._rng.shuffle(todo)
             while todo:
                 support_lengths = list()
                 question_lengths = list()

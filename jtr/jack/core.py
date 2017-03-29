@@ -359,9 +359,8 @@ class InputModule:
         pass
 
     @abstractmethod
-    def dataset_generator(self,
-                          dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) -> \
+            Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
@@ -434,7 +433,6 @@ class ModelModule:
         feed_dict = self.convert_to_feed_dict(batch)
         outputs = sess.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
 
-        filtered = filter(lambda p: p in self.output_ports, goal_ports)
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
         for p in goal_ports:
             if p not in ret and p in batch:
@@ -692,24 +690,47 @@ class JTReader:
 
     def __call__(self, inputs: List[QASetting]) -> List[Answer]:
         """
-        Reads all inputs (support and question), then returns an answer for each input.
+        Answers a list of question settings
         Args:
             inputs: a list of inputs.
 
-        Returns: a list of answers.
+        Returns:
+            predicted outputs/answers to a given (labeled) dataset
         """
         batch = self.input_module(inputs)
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset: List[Tuple[QASetting, Answer]]):
+    def process_outputs(self, dataset: List[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+        """
+        Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
+        that batches in input_module.dataset_generator are processed in order and do not get shuffled during with
+        flag is_eval set to true.
+        Args:
+            dataset:
+            batch_size: note this information is needed here, but does not set the batch_size the model is using.
+            This has to happen during setup/configuration.
+            debug: if true, logging counter
+
+        Returns:
+            predicted outputs/answers to a given (labeled) dataset
+        """
+        if debug:
+            print("Setting up batches...")
         batches = self.input_module.dataset_generator(dataset, is_eval=True)
         answers = list()
+        if debug:
+            print("Start answering...")
         for j, batch in enumerate(batches):
             output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
+            inputs = [x for x, _ in dataset[j*batch_size:(j+1)*batch_size]]
             answers.extend(
-                self.output_module(dataset, *[output_module_input[p] for p in self.output_module.input_ports]))
+                self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
+            if debug:
+                sys.stdout.write("\r%d/%d examples processed..." % (len(answers), len(dataset)))
+                sys.stdout.flush()
+        print()
 
         return answers
 
@@ -724,10 +745,12 @@ class JTReader:
             test_set: test set
             dev_set: dev set
             training_set: the training instances.
-            **train_params: parameters to be sent to the training function `jtr.train.train`.
-
-        Returns: None
-
+            max_epochs: maximum number of epochs
+            hooks: TrainingHook implementations that are called after epochs and batches
+            l2: whether to use l2 regularization
+            clip: whether to apply gradient clipping and at which value
+            clip_op: operation to perform for clipping
+            device: device that is used during training
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
@@ -774,12 +797,9 @@ class JTReader:
 
     def setup_from_data(self, data: List[Tuple[QASetting, Answer]]):
         """
-        Overrides shared-resources
+        Sets up modules given a training dataset if necessary.
         Args:
-            data: for instance the training dataset
-
-        Returns:
-
+            data: training dataset
         """
         self.input_module.setup_from_data(data)
         self.model_module.setup(self.is_train)
@@ -787,6 +807,11 @@ class JTReader:
         self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, dir):
+        """
+        Sets up already stored reader from model directory.
+        Args:
+            data: training dataset
+        """
         self.shared_resources.load(os.path.join(dir, "shared_resources"))
         self.input_module.setup()
         self.input_module.load(os.path.join(dir, "input_module"))
@@ -797,7 +822,12 @@ class JTReader:
         self.output_module.load(os.path.join(dir, "output_module"))
 
     def load(self, dir):
-        # assumes that everything is setup perfectly
+        """
+        (Re)loads module states on a setup reader (but not shared resources).
+        If reader is not setup yet use setup from file instead.
+        Args:
+            dir: model directory
+        """
         self.input_module.load(os.path.join(dir, "input_module"))
         self.model_module.load(self.sess, os.path.join(dir, "model_module"))
         self.output_module.load(os.path.join(dir, "output_module"))
@@ -805,6 +835,8 @@ class JTReader:
     def store(self, dir):
         """
         Store module states and shared resources.
+        Args:
+            dir: model directory
         """
         if os.path.exists(dir):
             shutil.rmtree(dir)

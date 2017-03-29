@@ -21,31 +21,20 @@ tf.app.flags.DEFINE_integer('beam_size', 1, 'beam size')
 
 FLAGS = tf.app.flags.FLAGS
 
-# vocab
 print("Loading embeddings from %s..." % FLAGS.embedding_path)
 emb = load_embeddings(FLAGS.embedding_path, FLAGS.embedding_format)
 vocab = Vocab(emb=emb, init_from_embeddings=True)
 
 print("Creating and loading reader from %s..." % FLAGS.model_dir)
-reader = readers[FLAGS.reader](vocab, {"beam_size": FLAGS.beam_size})
+reader = readers[FLAGS.reader](vocab, {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size})
 reader.setup_from_file(FLAGS.model_dir)
 
 squad_jtr = convert_squad(FLAGS.file)
 squad = convert2qasettings(squad_jtr)
 
-num_batches = math.ceil(len(squad) / FLAGS.batch_size)
-results = dict()
 print("Start!")
-counter = 0
-for b in range(num_batches):
-    i = b * FLAGS.batch_size
-    batch = [qa_setting for qa_setting, _ in squad[i: i + FLAGS.batch_size]]
-    for i, a in enumerate(reader(batch)):
-        results[batch[i].id] = a.text
-    counter += len(batch)
-    sys.stdout.write("\r%d" % counter)
-    sys.stdout.flush()
-
+answers = reader.process_outputs(squad, FLAGS.batch_size, debug=True)
+results = {squad[i][0].id: a.text for i, a in enumerate(answers)}
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)
 

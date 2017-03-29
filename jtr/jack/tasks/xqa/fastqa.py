@@ -77,7 +77,8 @@ class FastQAInputModule(InputModule):
 
         def batch_generator():
             todo = list(range(len(q_ids)))
-            self._rng.shuffle(todo)
+            if not is_eval:
+                self._rng.shuffle(todo)
             while todo:
                 support_lengths = list()
                 question_lengths = list()
