@@ -87,10 +87,8 @@ class XQAOutputModule(OutputModule):
             start_probs = _np_softmax(start_scores[i])
             end_probs = _np_softmax(end_scores[i])
 
-            #strip answer
-            while answer[-1].isspace():
-                answer = answer[:-1]
-                char_end -= 1
+            answer = answer.rstrip()
+            char_end = char_start + len(answer)
 
             answers.append(AnswerWithDefault(answer, (char_start, char_end), score=start_probs[start] * end_probs[end]))
 
@@ -119,10 +117,8 @@ class XQANoScoreOutputModule(OutputModule):
                 char_end = len(q.support[0])
             answer = q.support[0][char_start: char_end]
 
-            #strip answer
-            while answer[-1].isspace():
-                answer = answer[:-1]
-                char_end -= 1
+            answer = answer.rstrip()
+            char_end = char_start + len(answer)
 
             answers.append(AnswerWithDefault(answer, (char_start, char_end), score=1.0))
 
