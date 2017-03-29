@@ -4,7 +4,6 @@ This file contains FastQA specific modules and ports
 
 import random
 import re
-
 from jtr.jack.core import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
 from jtr.jack.tasks.xqa.shared import XQAPorts
@@ -53,7 +52,7 @@ class FastQAPorts:
                                   " whether it is part of the question or not",
                                   "[Q, support_length]")
 
-    correct_start_training = TensorPortWithDefault(np.array([0], np.int64), tf.int64, [None], "correct_start_training",
+    correct_start_training = TensorPortWithDefault(np.array([0], np.int32), tf.int32, [None], "correct_start_training",
                                                    "Represents the correct start of the span which is given to the"
                                                    "model during training for use to predicting end.",
                                                    "[A]")
@@ -446,8 +445,7 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
         wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
 
         # [B, L , 2]
-        support_features = tf.concat([tf.expand_dims(word_in_question, 2),
-            tf.expand_dims(wiq_w, 2)], 2)
+        support_features = tf.concat([tf.expand_dims(word_in_question, 2), tf.expand_dims(wiq_w, 2)], 2)
 
         # highway layer to allow for interaction between concatenated embeddings
         if with_char_embeddings:
@@ -489,18 +487,20 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
             fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                                correct_start, answer2question, is_eval)
+                                correct_start, answer2question, is_eval,
+                                beam_size=shared_vocab_config.config.get("beam_size", 1))
 
-        span = tf.concat([tf.expand_dims(predicted_start_pointer, 1),
-                             tf.expand_dims(predicted_end_pointer, 1)], 1)
+        span = tf.concat([tf.expand_dims(predicted_start_pointer, 1), tf.expand_dims(predicted_end_pointer, 1)], 1)
 
         return start_scores, end_scores, span
 
 
 # ANSWER LAYER
 def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                        correct_start, answer2question, is_eval):
+                        correct_start, answer2question, is_eval, beam_size=1):
+    beam_size = tf.cond(is_eval, lambda: tf.constant(beam_size, tf.int32), lambda: tf.constant(1, tf.int32))
     batch_size = tf.shape(question_length)[0]
+    answer2question = tf.cond(is_eval, lambda: tf.range(0, batch_size, dtype=tf.int32), lambda: answer2question)
     input_size = encoded_support.get_shape()[-1].value
     support_states_flat = tf.reshape(encoded_support, [-1, input_size])
 
@@ -518,7 +518,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     # Prediction
     # start
     start_input = tf.concat([tf.expand_dims(question_state, 1) * encoded_support,
-                                encoded_support], 2)
+                             encoded_support], 2)
 
     q_start_inter = tf.contrib.layers.fully_connected(question_state, size,
                                                       activation_fn=None,
@@ -541,32 +541,35 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     support_mask = tfutil.mask_for_lengths(support_length, batch_size)
     start_scores = start_scores + support_mask
 
-    predicted_start_pointer = tf.argmax(start_scores, 1)
+    # probs are needed during beam search
+    start_probs = tf.nn.softmax(start_scores)
 
-    # gather states for training, where spans should be predicted using multiple correct start per answer
-    def align_tensor_with_answers_per_question(t):
-        return tf.cond(is_eval, lambda: t, lambda: tf.gather(t, answer2question))
+    predicted_start_probs, predicted_start_pointer = tf.nn.top_k(start_probs, beam_size)
 
     # use correct start during training, because p(end|start) should be optimized
-    predicted_start_pointer = align_tensor_with_answers_per_question(predicted_start_pointer)
-    start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: correct_start)
+    predicted_start_pointer = tf.gather(predicted_start_pointer, answer2question)
+    predicted_start_probs = tf.gather(predicted_start_probs, answer2question)
 
-    offsets = tf.cast(tf.range(0, batch_size) * tf.reduce_max(support_length), dtype=tf.int64)
-    offsets = align_tensor_with_answers_per_question(offsets)
+    start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: tf.expand_dims(correct_start, 1))
+
+    # flatten again
+    start_pointer = tf.reshape(start_pointer, [-1])
+    answer2questionwithbeam = tf.reshape(tf.tile(tf.expand_dims(answer2question, 1), tf.stack([1, beam_size])), [-1])
+
+    offsets = tf.cast(tf.range(0, batch_size) * tf.reduce_max(support_length), dtype=tf.int32)
+    offsets = tf.gather(offsets, answer2questionwithbeam)
     u_s = tf.gather(support_states_flat, start_pointer + offsets)
 
-    start_scores = align_tensor_with_answers_per_question(start_scores)
-    start_input = align_tensor_with_answers_per_question(start_input)
-    encoded_support = align_tensor_with_answers_per_question(encoded_support)
-    question_state = align_tensor_with_answers_per_question(question_state)
-    support_mask = align_tensor_with_answers_per_question(support_mask)
+    start_scores = tf.gather(start_scores, answer2questionwithbeam)
+    start_input = tf.gather(start_input, answer2questionwithbeam)
+    encoded_support = tf.gather(encoded_support, answer2questionwithbeam)
+    question_state = tf.gather(question_state, answer2questionwithbeam)
+    support_mask = tf.gather(support_mask, answer2questionwithbeam)
 
     # end
-    end_input = tf.concat([tf.expand_dims(u_s, 1) * encoded_support,
-        start_input], 2)
+    end_input = tf.concat([tf.expand_dims(u_s, 1) * encoded_support, start_input], 2)
 
-    q_end_inter = tf.contrib.layers.fully_connected(tf.concat([question_state,
-        u_s], 1), size,
+    q_end_inter = tf.contrib.layers.fully_connected(tf.concat([question_state, u_s], 1), size,
                                                     activation_fn=None,
                                                     weights_initializer=None,
                                                     scope="q_end_inter")
@@ -584,12 +587,24 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                    scope="end_scores")
     end_scores = tf.squeeze(end_scores, [2])
     end_scores = end_scores + support_mask
-    end_scores = tf.cond(is_eval,
-                         lambda: end_scores + tfutil.mask_for_lengths(tf.cast(predicted_start_pointer, tf.int32),
-                                                                      batch_size, tf.reduce_max(support_length),
-                                                                      mask_right=False),
-                         lambda: end_scores)
 
-    predicted_end_pointer = tf.argmax(end_scores, 1)
+    def mask_with_start(scores):
+        return scores + tfutil.mask_for_lengths(tf.cast(start_pointer, tf.int32),
+                                                batch_size * beam_size, tf.reduce_max(support_length),
+                                                mask_right=False)
+
+    end_scores = tf.cond(is_eval, lambda: mask_with_start(end_scores), lambda: end_scores)
+
+    # probs are needed during beam search
+    end_probs = tf.nn.softmax(end_scores)
+    predicted_end_probs, predicted_end_pointer = tf.nn.top_k(end_probs, 1)
+    predicted_end_probs = tf.reshape(predicted_end_probs, tf.stack([-1, beam_size]))
+    predicted_end_pointer = tf.reshape(predicted_end_pointer, tf.stack([-1, beam_size]))
+
+    predicted_idx = tf.cast(tf.argmax(predicted_start_probs * predicted_end_probs, 1), tf.int32)
+    predicted_idx = tf.stack([tf.range(0, tf.shape(answer2question)[0], dtype=tf.int32), predicted_idx], 1)
+
+    predicted_start_pointer = tf.gather_nd(predicted_start_pointer, predicted_idx)
+    predicted_end_pointer = tf.gather_nd(predicted_end_pointer, predicted_idx)
 
     return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer

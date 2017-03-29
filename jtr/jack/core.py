@@ -317,7 +317,13 @@ class SharedVocabAndConfig(SharedResources):
             with open(os.path.join(path, "vocab"), 'rb') as f:
                 self.vocab = pickle.load(f)
         with open(os.path.join(path, "config"), 'rb') as f:
-            self.config = pickle.load(f)
+            config = pickle.load(f)
+            if self.config is None:
+                self.config = config
+            else:
+                for k, v in config.items():
+                    if k not in self.config:
+                        self.config[k] = v
 
 
 class InputModule:

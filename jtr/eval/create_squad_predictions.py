@@ -17,7 +17,7 @@ tf.app.flags.DEFINE_string('embedding_format', 'glove', 'embeddings format')
 tf.app.flags.DEFINE_string('device', "/cpu:0", 'device to use')
 tf.app.flags.DEFINE_string('out', "results.json", 'Result file path.')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
-# tf.app.flags.DEFINE_integer('beam_size', 1, 'beam size')
+tf.app.flags.DEFINE_integer('beam_size', 1, 'beam size')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -25,7 +25,7 @@ FLAGS = tf.app.flags.FLAGS
 emb = load_embeddings(FLAGS.embedding_path, FLAGS.embedding_format)
 vocab = Vocab(emb=emb, init_from_embeddings=True)
 
-reader = readers[FLAGS.reader](vocab, {})
+reader = readers[FLAGS.reader](vocab, {"beam_size": FLAGS.beam_size})
 reader.setup_from_file(FLAGS.model_dir)
 
 squad_jtr = convert_squad(FLAGS.file)
