@@ -22,9 +22,11 @@ tf.app.flags.DEFINE_integer('beam_size', 1, 'beam size')
 FLAGS = tf.app.flags.FLAGS
 
 # vocab
+print("Loading embeddings from %s..." % FLAGS.embedding_path)
 emb = load_embeddings(FLAGS.embedding_path, FLAGS.embedding_format)
 vocab = Vocab(emb=emb, init_from_embeddings=True)
 
+print("Creating and loading reader from %s..." % FLAGS.model_dir)
 reader = readers[FLAGS.reader](vocab, {"beam_size": FLAGS.beam_size})
 reader.setup_from_file(FLAGS.model_dir)
 
@@ -33,7 +35,7 @@ squad = convert2qasettings(squad_jtr)
 
 num_batches = math.ceil(len(squad) / FLAGS.batch_size)
 results = dict()
-
+print("Start!")
 counter = 0
 for b in range(num_batches):
     i = b * FLAGS.batch_size
@@ -46,3 +48,5 @@ for b in range(num_batches):
 
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)
+
+print("Done!")

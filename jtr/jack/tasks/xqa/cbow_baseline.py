@@ -192,7 +192,7 @@ class CBOWXqaInputModule(InputModule):
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
-            prepare_data(qa_settings, self.vocab, self.config.get("lowercase", False), with_answers=True,
+            prepare_data(qa_settings, self.vocab, self.config.get("lowercase", False), with_answers=False,
                          wiq_contentword=True, with_spacy=True)
 
         answertype_spans = []
