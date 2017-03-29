@@ -102,7 +102,7 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
            word_in_question, token_offsets, answer_spans
 
 
-def unique_words_with_chars(q_tokenized, s_tokenized, char_vocab, indices=None):
+def unique_words_with_chars(q_tokenized, s_tokenized, char_vocab, indices=None, char_limit=20):
     indices = indices or range(len(q_tokenized))
 
     unique_words_set = dict()
@@ -114,6 +114,7 @@ def unique_words_with_chars(q_tokenized, s_tokenized, char_vocab, indices=None):
     for j in indices:
         q2u = list()
         for w in q_tokenized[j]:
+            w = w[:char_limit]
             if w not in unique_words_set:
                 unique_word_lengths.append(len(w))
                 unique_words.append([char_vocab.get(c, 0) for c in w])
@@ -122,6 +123,7 @@ def unique_words_with_chars(q_tokenized, s_tokenized, char_vocab, indices=None):
         question2unique.append(q2u)
         s2u = list()
         for w in s_tokenized[j]:
+            w = w[:char_limit]
             if w not in unique_words_set:
                 unique_word_lengths.append(len(w))
                 unique_words.append([char_vocab.get(c, 0) for c in w])
