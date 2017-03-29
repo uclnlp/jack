@@ -11,15 +11,13 @@ import sys
 import json
 from abc import abstractmethod, abstractproperty
 from typing import Mapping, Iterable, Sequence
-
 import numpy as np
 import tensorflow as tf
-
 from jtr.jack.data_structures import *
 from jtr.preprocess.vocab import Vocab
 
-class TestDatasets(object):
 
+class TestDatasets(object):
     @staticmethod
     def generate_SNLI():
         snli_path = 'tests/test_data/SNLI/'
@@ -30,9 +28,6 @@ class TestDatasets(object):
             snli_data.append(load_labelled_data(path))
 
         return snli_data
-
-
-
 
 
 class TensorPort:
@@ -119,12 +114,12 @@ class Ports:
                                        "[batch_size, num_candidates]")
 
         sample_id = TensorPort(tf.int32, [None], "sample_id",
-                                       "Maps this sample to the index in the input text data",
-                                       "[batch_size]")
+                               "Maps this sample to the index in the input text data",
+                               "[batch_size]")
 
         candidates1d = TensorPort(tf.int32, [None], "candidates_idx",
-                                       "Represents candidate choices using single symbols",
-                                       "[batch_size]")
+                                  "Represents candidate choices using single symbols",
+                                  "[batch_size]")
 
         keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
                                           "scalar representing keep probability when using dropout",
@@ -154,7 +149,6 @@ class Ports:
         candidate_idx = TensorPort(tf.float32, [None], "candidate_predictions_flat",
                                    "Represents groundtruth candidate labels, usually 1 or 0",
                                    "[C]")
-
 
     class Targets:
         candidate_labels = TensorPort(tf.float32, [None, None], "candidate_targets",
@@ -446,7 +440,6 @@ class ModelModule:
             if p not in ret and p in batch:
                 ret[p] = batch[p]
 
-
         return ret
 
     @abstractproperty
@@ -693,7 +686,6 @@ class JTReader:
                    port in self.input_module.output_ports for port in self.model_module.training_input_ports), \
             "Input Module (training) outputs and model module outputs must include model module training inputs"
 
-
         assert all(port in self.model_module.output_ports or port in self.input_module.output_ports
                    for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
@@ -711,14 +703,15 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset : List[Tuple[QASetting, Answer]]):
-        batches = self.input_module.dataset_generator(dataset, is_eval=False)
+    def process_outputs(self, dataset: List[Tuple[QASetting, Answer]]):
+        batches = self.input_module.dataset_generator(dataset, is_eval=True)
+        answers = list()
         for j, batch in enumerate(batches):
             output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
-            answers = self.output_module(dataset, *[output_module_input[p] for p in self.output_module.input_ports])
+            answers.extend(
+                self.output_module(dataset, *[output_module_input[p] for p in self.output_module.input_ports]))
 
         return answers
-
 
     def train(self, optim,
               training_set: List[Tuple[QASetting, Answer]],
