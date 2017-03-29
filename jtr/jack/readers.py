@@ -73,7 +73,7 @@ def modelf_reader(vocab, config):
 
 
 @__xqa_reader
-def fastqa_reader(vocab, config):
+def fastqa_reader(vocab, config=dict()):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.jack.tasks.xqa.shared import XQAOutputModule
@@ -86,7 +86,7 @@ def fastqa_reader(vocab, config):
 
 
 @__xqa_reader
-def cbow_xqa_reader(vocab, config):
+def cbow_xqa_reader(vocab, config=dict()):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
     from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
