@@ -419,13 +419,15 @@ class ModelModule:
                  batch: Mapping[TensorPort, np.ndarray],
                  goal_ports: List[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
         """
-        Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
-        module.
+        Runs a batch represented by a mapping from tensorports to numpy arrays and returns value for specified
+        goal ports.
         Args:
-            inputs: a list of instances (question, support, optional candidates)
+            sess: the tf session to use
+            batch: mapping from ports to values
+            goal_ports: optional output ports, defaults to output_ports of this module will be returned
 
         Returns:
-            A mapping from ports to tensors.
+            A mapping from goal ports to tensors.
 
         """
         goal_ports = goal_ports or self.output_ports
@@ -441,31 +443,31 @@ class ModelModule:
         return ret
 
     @abstractproperty
-    def output_ports(self) -> List[TensorPort]:
+    def output_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the output ports of this module.
         """
         pass
 
     @abstractproperty
-    def input_ports(self) -> List[TensorPort]:
+    def input_ports(self) -> Sequence[TensorPort]:
         """
-        Returns: Definition of the input ports. The method `create` will receive arguments with shapes and types
-        defined by this list, in an order corresponding to the order of this list.
-        """
-        pass
-
-    @abstractproperty
-    def training_input_ports(self) -> List[TensorPort]:
-        """
-        Returns: A mapping from input target ports to the TF placeholders that correspond to them.
+        Returns: Definition of the input ports.
         """
         pass
 
     @abstractproperty
-    def training_output_ports(self) -> List[TensorPort]:
+    def training_input_ports(self) -> Sequence[TensorPort]:
         """
-        Returns: Definition of the training ports of this module.
+        Returns: Definition of the input ports necessary to create the training output ports, i.e., they do not have
+        to be provided during eval and they can include output ports of this module.
+        """
+        pass
+
+    @abstractproperty
+    def training_output_ports(self) -> Sequence[TensorPort]:
+        """
+        Returns: Definition of the output ports provided during training for this module.
         """
         pass
 
@@ -491,7 +493,7 @@ class ModelModule:
     def setup(self, is_training=True):
         """
         Sets up the module. This usually involves creating the actual tensorflow graph. It is expected
-        to be called after the input module is set up. This means that shared resources, such as the vocab,
+        to be called after the input module is set up and shared resources, such as the vocab, config, etc.,
         are prepared already at this point.
         """
         pass
@@ -509,19 +511,18 @@ class ModelModule:
         pass
 
     @abstractproperty
-    def train_variables(self) -> List[tf.Variable]:
+    def train_variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of training variables """
 
     @abstractproperty
-    def variables(self) -> List[tf.Variable]:
+    def variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of variables """
 
 
 class SimpleModelModule(ModelModule):
     """
-    This class simplifies the implementation of ModelModules by requiring
-    to implement a small set of methods that produce the TF graph, and define
-    the ports.
+    This class simplifies the implementation of ModelModules by requiring to implement a small set of methods that
+    produce the TF graphs to create predictions and the training outputs, and define the ports.
     """
 
     def __init__(self, shared_resources: SharedResources):
@@ -537,7 +538,7 @@ class SimpleModelModule(ModelModule):
             *input_tensors: a list of input tensors.
 
         Returns:
-            mapping from output ports to their tensors.
+            mapping from defined output ports to their tensors.
         """
         pass
 
@@ -552,7 +553,7 @@ class SimpleModelModule(ModelModule):
             *training_input_tensors: a list of input tensors.
 
         Returns:
-            mapping from output ports to their tensors.
+            mapping from defined training output ports to their tensors.
         """
         pass
 
@@ -594,12 +595,12 @@ class SimpleModelModule(ModelModule):
         self._saver.restore(sess, path)
 
     @property
-    def train_variables(self) -> List[tf.Tensor]:
+    def train_variables(self) -> Sequence[tf.Tensor]:
         """ Returns: A list of training variables """
         return self._training_variables
 
     @property
-    def variables(self) -> List[tf.Tensor]:
+    def variables(self) -> Sequence[tf.Tensor]:
         """ Returns: A list of variables """
         return self._variables
 
@@ -611,14 +612,14 @@ class OutputModule:
     """
 
     @abstractproperty
-    def input_ports(self) -> List[TensorPort]:
+    def input_ports(self) -> Sequence[TensorPort]:
         """
         Returns: correspond to a subset of output ports of model module.
         """
         pass
 
     @abstractmethod
-    def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: Sequence[QASetting], *tensor_inputs: np.ndarray) -> Sequence[Answer]:
         """
         Process the tensors corresponding to the defined `input_ports` for a batch to produce a list of answers.
         The module has access to the original inputs.
@@ -688,7 +689,7 @@ class JTReader:
                    for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
 
-    def __call__(self, inputs: List[QASetting]) -> List[Answer]:
+    def __call__(self, inputs: Sequence[QASetting]) -> Sequence[Answer]:
         """
         Answers a list of question settings
         Args:
@@ -702,7 +703,7 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset: List[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+    def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.dataset_generator are processed in order and do not get shuffled during with
@@ -735,7 +736,7 @@ class JTReader:
         return answers
 
     def train(self, optim,
-              training_set: List[Tuple[QASetting, Answer]],
+              training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value,
               device="/cpu:0"):
@@ -795,7 +796,7 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def setup_from_data(self, data: List[Tuple[QASetting, Answer]]):
+    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
         """
         Sets up modules given a training dataset if necessary.
         Args:
