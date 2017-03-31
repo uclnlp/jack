@@ -2,7 +2,7 @@ import numpy as np
 
 import jtr.jack.readers as readers
 from jtr.jack.data_structures import load_labelled_data
-from jtr.jack.tasks.xqa.fastqa import FastQAInputModule
+from jtr.jack.tasks.xqa.util import tokenize
 from jtr.load.embeddings.embeddings import Embeddings
 from jtr.load.embeddings.vocabulary import Vocabulary
 from jtr.preprocess.vocab import Vocab
@@ -15,7 +15,7 @@ def test_fastqa():
     vocab = dict()
     for question, _ in data:
         questions.append(question)
-        for t in FastQAInputModule.tokenize(question.question):
+        for t in tokenize(question.question):
             if t not in vocab:
                 vocab[t] = len(vocab)
     vocab = Vocabulary(vocab)
