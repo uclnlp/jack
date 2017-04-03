@@ -427,21 +427,21 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         spans = tf.concat(spans, 0)
 
         # scoring
+        with tf.variable_scope("question_rep"):
+            question_rep = tf.layers.dense(question_rep, size, activation=tf.tanh)
         with tf.variable_scope("question_inter"):
-            question_inter = tf.layers.dense(question_rep, size, activation=tf.tanh)
-        with tf.variable_scope("question_inter2"):
-            question_inter2 = tf.layers.dense(question_rep, size, activation=None)
+            question_inter = tf.layers.dense(question_rep, size, activation=None)
 
-        with tf.variable_scope("span_inter"):
-            span_inter = tf.layers.dense(span_rep, size, activation=tf.tanh)
+        with tf.variable_scope("span_rep"):
+            span_rep = tf.layers.dense(span_rep, size, activation=tf.tanh)
 
-        interaction = tf.concat([span_inter, tf.expand_dims(question_inter, 1) * span_inter,
-                                 wiqs_left5, wiqs_left10, wiqs_left20,
-                                 wiqs_right5, wiqs_right10, wiqs_right20], 2)
-        interaction.set_shape([None, None, 2 * size + 6 * 2])
+        span_question_rep = tf.concat([span_rep, tf.expand_dims(question_rep, 1) * span_rep,
+                                       wiqs_left5, wiqs_left10, wiqs_left20,
+                                       wiqs_right5, wiqs_right10, wiqs_right20], 2)
+        span_question_rep.set_shape([None, None, 2 * size + 6 * 2])
 
         with tf.variable_scope("hidden"):
-            h = tf.tanh(tf.layers.dense(interaction, size, activation=None) + tf.expand_dims(question_inter2, 1))
+            h = tf.tanh(tf.layers.dense(span_question_rep, size, activation=None) + tf.expand_dims(question_inter, 1))
 
         with tf.variable_scope("scoring"):
             span_scores = tf.squeeze(tf.layers.dense(h, 1, activation=None), 2)
