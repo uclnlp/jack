@@ -3,10 +3,12 @@ This file contains CBOW baseline specific modules and ports
 """
 
 import random
-import re
+
+import spacy
+
 from jtr.jack.core import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
-from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, XQAPorts
+from jtr.jack.tasks.xqa.fastqa import XQAPorts
 from jtr.jack.tasks.xqa.util import char_vocab_from_vocab, prepare_data, unique_words_with_chars
 from jtr.jack.tf_fun.dropout import fixed_dropout
 from jtr.jack.tf_fun.embedding import conv_char_embedding_alt
@@ -14,7 +16,6 @@ from jtr.jack.tf_fun.xqa import xqa_min_crossentropy_span_loss
 from jtr.preprocess.batch import GeneratorWithRestart
 from jtr.preprocess.map import numpify
 from jtr.util import tfutil
-import spacy
 
 _max_span_size = 10
 
@@ -115,7 +116,8 @@ class CBOWXqaInputModule(InputModule):
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(dataset, self.vocab, self.config.get("lowercase", False), with_answers=True,
-                         wiq_contentword=True, with_spacy=True)
+                         wiq_contentword=True, with_spacy=True,
+                         max_support_length=self.config.get("max_support_length", None))
 
         not_allowed = set(i for i, ss in enumerate(answer_spans)
                           if not is_eval and all(s[1] - s[0] > _max_span_size for s in ss))

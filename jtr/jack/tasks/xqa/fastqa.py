@@ -3,18 +3,18 @@ This file contains FastQA specific modules and ports
 """
 
 import random
-import re
+
 from jtr.jack.core import *
 from jtr.jack.fun import simple_model_module, no_shared_resources
 from jtr.jack.tasks.xqa.shared import XQAPorts
-from jtr.jack.tasks.xqa.util import token_to_char_offsets, unique_words_with_chars, prepare_data, char_vocab_from_vocab
+from jtr.jack.tasks.xqa.util import unique_words_with_chars, prepare_data, char_vocab_from_vocab
 from jtr.jack.tf_fun.dropout import fixed_dropout
 from jtr.jack.tf_fun.embedding import conv_char_embedding_alt
 from jtr.jack.tf_fun.highway import highway_network
 from jtr.jack.tf_fun.rnn import birnn_with_projection
 from jtr.jack.tf_fun.xqa import xqa_min_crossentropy_loss
 from jtr.preprocess.batch import GeneratorWithRestart
-from jtr.preprocess.map import deep_map, numpify
+from jtr.preprocess.map import numpify
 from jtr.util import tfutil
 
 
@@ -68,9 +68,9 @@ class FastQAInputModule(InputModule):
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = prepare_data(dataset, self.vocab,
-                                                                     self.config.get("lowercase", False),
-                                                                     with_answers=True)
+        word_in_question, token_offsets, answer_spans = \
+            prepare_data(dataset, self.vocab, self.config.get("lowercase", False), with_answers=True,
+                         max_support_length=self.config.get("max_support_length", None))
 
         emb_supports = np.zeros([self.batch_size, max(s_lengths), self.emb_matrix.shape[1]])
         emb_questions = np.zeros([self.batch_size, max(q_lengths), self.emb_matrix.shape[1]])

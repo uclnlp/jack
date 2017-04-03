@@ -1,3 +1,4 @@
+import random
 import re
 
 from jtr.jack.data_structures import QASetting
@@ -20,7 +21,8 @@ def token_to_char_offsets(text, tokenized_text):
     return offsets
 
 
-def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_contentword=False, with_spacy=False):
+def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_contentword=False,
+                 with_spacy=False, max_support_length=-1):
     if with_spacy:
         import spacy
         nlp = spacy.load("en", parser=False)
@@ -50,6 +52,8 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
     token_offsets = []
     answer_spans = []
 
+    rng = random.Random(12345)
+
     for i, (q, s) in enumerate(zip(corpus_tokenized["question"], corpus_tokenized["support"])):
         # word in question feature
         wiq = []
@@ -73,9 +77,10 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
             offsets = token_to_char_offsets(support, s)
 
         token_offsets.append(offsets)
-
-        support_lengths.append(len(s))
         question_lengths.append(len(q))
+
+        min_answer = len(s)
+        max_answer = 0
 
         if with_answers:
             answers = dataset[i][1]
@@ -93,7 +98,33 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
                     end += 1
                 if (start, end) not in spans:
                     spans.append((start, end))
+                    min_answer = min(min_answer, start)
+                    max_answer = max(max_answer, end)
+
+        # cut support whenever there is a maximum allowed length and recompute answer spans
+        if max_support_length is not None and max_support_length > 0 and len(s) > max_support_length:
+            if max_answer < max_support_length:
+                s = s[:max_support_length]
+                word_in_question[-1] = word_in_question[-1][:max_support_length]
+            else:
+                offset = rng.randint(0, 10)
+                new_end = max_answer + offset
+                new_start = max(0, min(min_answer - offset, new_end - max_support_length))
+                while new_end - new_start > max_support_length:
+                    spans = [(s, e) for s, e in spans if e < (new_end - offset)]
+                    new_end = max(spans, key=lambda span: span[1])[1] + offset
+                    new_start = max(0, min(min_answer - offset, new_end - max_support_length))
+                s = s[new_start:new_end]
+                spans = [(s - new_start, e - new_start) for s, e in spans]
+                word_in_question[-1] = word_in_question[-1][new_start:new_end]
+
+            corpus_tokenized["support"][i] = s
             answer_spans.append(spans)
+
+        else:
+            answer_spans.append(spans)
+
+        support_lengths.append(len(s))
 
     corpus_ids = deep_map(corpus_tokenized, vocab, ['question', 'support'])
 

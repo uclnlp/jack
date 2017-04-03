@@ -18,7 +18,6 @@ from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.load.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.preprocess.vocab import Vocab
-import jtr.jack.readers as readers
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -62,7 +61,7 @@ def main():
     test_default = 'tests/test_data/SNLI/test.json'
 
     parser = argparse.ArgumentParser(description='Train and Evaluate a Machine Reader',
-                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--debug', action='store_true',
                         help="Run in debug mode, in which case the training file is also used for testing")
 
@@ -85,8 +84,8 @@ def main():
                         type=int, help="Batch size for development data, default 128")
     parser.add_argument('--repr_dim_input', default=128, type=int,
                         help=("Size of the input representation (embeddings),",
-                        "default 128 (embeddings cut off or extended if not",
-                        "matched with pretrained embeddings)"))
+                              "default 128 (embeddings cut off or extended if not",
+                              "matched with pretrained embeddings)"))
     parser.add_argument('--repr_dim', default=128, type=int,
                         help="Size of the hidden representations, default 128")
 
@@ -134,8 +133,10 @@ def main():
     parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
     parser.add_argument('--seed', default=325, type=int, help="Seed for rngs.")
-    parser.add_argument('--answer_size', default=3, type=int, help=("How many ",
-            "answer does the output have. Used for classification."))
+    parser.add_argument('--answer_size', default=3, type=int, help=("How many answer does the output have. Used for "
+                                                                    "classification."))
+    parser.add_argument('--max_support_length', default=-1, type=int,
+                        help="How large the support should be. Can be used for cutting or filtering QA examples.")
 
     args = parser.parse_args()
 
@@ -172,7 +173,7 @@ def main():
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
             args.repr_dim_input = embeddings.lookup.shape[1]
         else:
-            embeddings = Embeddings(None,None)
+            embeddings = Embeddings(None, None)
     else:
         train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
         test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
@@ -237,7 +238,6 @@ def main():
             epoch_interval=(1 if args.checkpoint is None else None),
             write_metrics_to=args.write_metrics_to))
 
-
         # Train
         reader.train(optim, training_set=train_data,
                      max_epochs=args.epochs, hooks=hooks,
@@ -247,8 +247,8 @@ def main():
         # Test final model
         if test_data is not None:
             test_eval_hook = readers.eval_hooks[args.model](reader, test_data,
-                    summary_writer=sw, epoch_interval=1,
-                    write_metrics_to=args.write_metrics_to)
+                                                            summary_writer=sw, epoch_interval=1,
+                                                            write_metrics_to=args.write_metrics_to)
 
             reader.load(args.model_dir)
             test_eval_hook.at_test_time(1)
