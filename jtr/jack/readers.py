@@ -11,6 +11,7 @@ genqa_readers = {}
 mcqa_readers = {}
 kbp_readers = {}
 
+
 def __reader(f):
     readers.setdefault(f.__name__, f)
     return f

@@ -33,17 +33,16 @@ class TensorPort:
         :param shape_string: a string of the form [size_1,size_2,size_3] where size_i is a text describing the
         size of the tensor's dimension i (such as "number of batches").
         """
-        self.shape_string = shape_string
-        self.name = name
         self.dtype = dtype
         self.shape = shape
+        self.name = name
         self.__doc__ = doc_string
+        self.shape_string = shape_string
 
     def create_placeholder(self):
         """
         Convenience method that produces a placeholder of the type and shape defined by the port.
         Returns: a placeholder of same type, shape and name.
-
         """
         return tf.placeholder(self.dtype, self.shape, self.name)
 
@@ -58,7 +57,7 @@ class TensorPortWithDefault(TensorPort):
 
     def __init__(self, default_value, dtype, shape, name, doc_string=None, shape_string=None):
         self.default_value = default_value
-        super().__init__(dtype, shape, name, doc_string, shape_string)
+        super().__init__(dtype, shape, name, doc_string=doc_string, shape_string=shape_string)
 
     def create_placeholder(self):
         """
