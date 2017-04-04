@@ -1,33 +1,20 @@
 """
 Here we define the basic interfaces of jtr. jtr readers consist of 3 layers, one that transform
 jtr data structures into tensors, one that processes predicts the outputs and losses
-using a tensorflow model into other tensors, and one that converts these tensors back to jtr data structures.
-"""
+using a TensorFlow model into other tensors, and one that converts these tensors back to jtr data structures.
+re"""
+
 import logging
 import os
 import pickle
 import shutil
 import sys
-import json
 from abc import abstractmethod, abstractproperty
 from typing import Mapping, Iterable, Sequence
 import numpy as np
 import tensorflow as tf
 from jtr.jack.data_structures import *
 from jtr.preprocess.vocab import Vocab
-
-
-class TestDatasets(object):
-    @staticmethod
-    def generate_SNLI():
-        snli_path = 'tests/test_data/SNLI/'
-        splits = ['train.json', 'dev.json', 'test.json']
-        snli_data = []
-        for split in splits:
-            path = os.path.join(snli_path, split)
-            snli_data.append(load_labelled_data(path))
-
-        return snli_data
 
 
 class TensorPort:
