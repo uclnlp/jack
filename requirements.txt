@@ -10,3 +10,4 @@ matplotlib
 seaborn
 typing
 tensorflow>=1.0
+h5py
