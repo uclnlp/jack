@@ -37,7 +37,6 @@ class TestDatasets(object):
         return snli_data
 
 
-
 class CPUTimer(object):
     def __init__(self):
         self.cumulative_secs = {}
@@ -60,9 +59,6 @@ class CPUTimer(object):
         self.cumulative_secs.pop(name)
         self.current_ticks.pop(name, None)
 
-
->>>>>>> Added timer class.
->>>>>>> Added timer class.
 
 class TensorPort:
     """
