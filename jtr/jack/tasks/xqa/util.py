@@ -82,9 +82,9 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
         min_answer = len(s)
         max_answer = 0
 
+        spans = []
         if with_answers:
             answers = dataset[i][1]
-            spans = []
             for a in answers:
                 start = 0
                 while start < len(offsets) and offsets[start] < a.span[0]:
