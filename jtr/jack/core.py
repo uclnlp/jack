@@ -9,7 +9,7 @@ import os
 import pickle
 import shutil
 import sys
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 from typing import Mapping, Iterable, Sequence
 import numpy as np
 import tensorflow as tf
@@ -311,7 +311,7 @@ class InputModule:
     An input module processes inputs and turns them into tensors to be processed by the model module.
     """
 
-    @abstractproperty
+    @abstractmethod
     def output_ports(self) -> List[TensorPort]:
         """
         Defines what types of tensors the output module produces in each batch.
@@ -321,7 +321,7 @@ class InputModule:
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def training_ports(self) -> List[TensorPort]:
         """
         Defines what types of tensor are provided in addition to `output_ports` during training
@@ -428,21 +428,21 @@ class ModelModule:
 
         return ret
 
-    @abstractproperty
+    @abstractmethod
     def output_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the output ports of this module.
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the input ports.
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def training_input_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the input ports necessary to create the training output ports, i.e., they do not have
@@ -450,21 +450,21 @@ class ModelModule:
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def training_output_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the output ports provided during training for this module.
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
         """
         Returns: A mapping from ports to the TF placeholders that correspond to them.
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def tensors(self) -> Mapping[TensorPort, tf.Tensor]:
         """
         Returns: A mapping from ports to the TF tensors that correspond to them.
@@ -496,11 +496,11 @@ class ModelModule:
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def train_variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of training variables """
 
-    @abstractproperty
+    @abstractmethod
     def variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of variables """
 
@@ -597,7 +597,7 @@ class OutputModule:
     jack data structures.
     """
 
-    @abstractproperty
+    @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """
         Returns: correspond to a subset of output ports of model module.
