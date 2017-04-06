@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Here we define light data structures to store the input to jtr readers, and their output.
 """
