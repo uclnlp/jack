@@ -47,6 +47,7 @@ def __genqa_reader(f):
     # TODO eval hook
     return f
 
+
 @__mcqa_reader
 def example_reader(vocab, config):
     """ Creates an example multiple choice reader. """
@@ -57,7 +58,6 @@ def example_reader(vocab, config):
     output_module = SimpleMCOutputModule()
     jtreader = JTReader(shared_resources, input_module, model_module, output_module)
     return jtreader
-
 
 
 @__kbp_reader
