@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Here we define the basic interfaces of jtr. jtr readers consist of 3 layers, one that transform
 jtr data structures into tensors, one that processes predicts the outputs and losses
@@ -258,19 +260,7 @@ class FlatPorts:
 
 
 class SharedResources:
-    @abstractmethod
-    def load(self, path):
-        """
-        Loads this (potentially empty) resource from path
-        :param path: path to shared resources
-        """
-
-    @abstractmethod
-    def store(self, path):
-        """
-        Saves this resource from path
-        :param path: path to save shared resources
-        """
+    pass
 
 
 class SharedVocabAndConfig(SharedResources):
@@ -281,29 +271,6 @@ class SharedVocabAndConfig(SharedResources):
     def __init__(self, vocab: Vocab, config: dict = None):
         self.config = config
         self.vocab = vocab
-
-    def store(self, path):
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-        if not isinstance(self.vocab, Vocab):
-            with open(os.path.join(path, "vocab"), 'wb') as f:
-                pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
-        with open(os.path.join(path, "config"), 'wb') as f:
-            pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
-
-    def load(self, path):
-        if os.path.exists(os.path.join(path, 'vocab')):
-            with open(os.path.join(path, "vocab"), 'rb') as f:
-                self.vocab = pickle.load(f)
-        with open(os.path.join(path, "config"), 'rb') as f:
-            config = pickle.load(f)
-            if self.config is None:
-                self.config = config
-            else:
-                for k, v in config.items():
-                    if k not in self.config:
-                        self.config[k] = v
 
 
 class InputModule:
