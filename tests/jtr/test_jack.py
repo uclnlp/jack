@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import pytest
 
 import jtr.jack as jack
@@ -15,8 +17,7 @@ def test_example_reader_overfit():
     reader = jack.JTReader(vocab, input_module, model_module, output_module)
 
     example_input = QASetting(["the father of Bart is Homer", "the father of Homer is Abe"],
-                             "Who is the father of Homer?",
-                              ["Homer", "Bart", "Abe", "Lisa"])
+                              "Who is the father of Homer?", ["Homer", "Bart", "Abe", "Lisa"])
     train_data = [(example_input, "Abe")]
 
     dev_data = train_data

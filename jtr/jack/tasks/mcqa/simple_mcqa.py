@@ -1,17 +1,17 @@
+# -*- coding: utf-8 -*-
+
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
 from jtr.jack.tf_fun import rnn, simple
-
-
 
 from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify
 from jtr.preprocess.vocab import Vocab
 from jtr.jack.preprocessing import preprocess_with_pipeline
-from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel, SingleSupportFixedClassForward
+from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
 
-from typing import List, Tuple, Dict, Mapping
+from typing import List, Tuple, Mapping
 import tensorflow as tf
 import numpy as np
 
@@ -78,6 +78,7 @@ class SimpleMCInputModule(InputModule):
         return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.atomic_candidates]
 
+
 class SingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
@@ -100,23 +101,9 @@ class SingleSupportFixedClassInputs(InputModule):
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length, Ports.Targets.candidate_idx, Ports.Input.sample_id]
 
-
-    def __call__(self, qa_settings : List[QASetting]) \
-                    -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) \
+            -> Mapping[TensorPort, np.ndarray]:
         pass
-        #corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-        #        preprocess_with_pipeline(data, self.shared_vocab_config.vocab)
-
-        #x_dict = {
-        #    Ports.Input.single_support: corpus["support"],
-        #    Ports.Input.question: corpus["question"],
-        #    Ports.Input.question_length : corpus['question_lengths'],
-        #    Ports.Input.support_length : corpus['support_lengths'],
-        #    Ports.Input.atomic_candiates : corpus['candidates']
-        #}
-
-        #return numpify(x_dict)
-
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
@@ -219,27 +206,6 @@ class SimpleMCOutputModule(OutputModule):
             score = candidate_scores[index_in_batch, winning_index]
             result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
-
-
-if __name__ == '__main__':
-    data_set = [
-        (QASettingWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
-         AnswerWithDefault("a", score=1.0))
-    ]
-    questions = [q for q, _ in data_set]
-
-    resources = SharedVocabAndConfig(Vocab(), {"repr_dim": 100})
-    example_reader = JTReader(resources,
-                              SimpleMCInputModule(resources),
-                              SimpleMCModelModule(resources),
-                              SimpleMCOutputModule())
-
-    # example_reader.setup_from_data(data_set)
-
-    # todo: chose optimizer based on config
-    example_reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=10)
-
-    answers = example_reader(questions)
 
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
