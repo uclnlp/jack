@@ -107,7 +107,7 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
                 s = s[:max_support_length]
                 word_in_question[-1] = word_in_question[-1][:max_support_length]
             else:
-                offset = rng.randint(0, 10)
+                offset = rng.randint(1, 11)
                 new_end = max_answer + offset
                 new_start = max(0, min(min_answer - offset, new_end - max_support_length))
                 while new_end - new_start > max_support_length:
