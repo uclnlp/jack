@@ -18,6 +18,8 @@ import tensorflow as tf
 from jtr.jack.data_structures import *
 from jtr.preprocess.vocab import Vocab
 
+logger = logging.getLogger(__name__)
+
 
 class TensorPort:
     """
@@ -69,8 +71,7 @@ class TensorPortWithDefault(TensorPort):
         """
         ph = tf.placeholder_with_default(self.default_value, self.shape, self.name)
         if ph.dtype != self.dtype:
-            logging.warning("Placeholder %s with default of type %s created for TensorPort with type %s!" %
-                            (self.name, ph.dtype, self.dtype))
+            logger.warning("Placeholder {} with default of type {} created for TensorPort with type {}!".format(self.name, ph.dtype, self.dtype))
         return ph
 
 
@@ -705,12 +706,10 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
-        if debug:
-            print("Setting up batches...")
+        logger.debug("Setting up batches...")
         batches = self.input_module.dataset_generator(dataset, is_eval=True)
         answers = list()
-        if debug:
-            print("Start answering...")
+        logger.debug("Start answering...")
         for j, batch in enumerate(batches):
             output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
             inputs = [x for x, _ in dataset[j*batch_size:(j+1)*batch_size]]
@@ -719,8 +718,6 @@ class JTReader:
             if debug:
                 sys.stdout.write("\r%d/%d examples processed..." % (len(answers), len(dataset)))
                 sys.stdout.flush()
-        print()
-
         return answers
 
     def train(self, optim,
@@ -743,20 +740,19 @@ class JTReader:
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
-        logging.info("Setting up data and model...")
+        logger.info("Setting up data and model...")
         with tf.device(device):
             # First setup shared resources, e.g., vocabulary. This depends on the input module.
             self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
-        if l2 != 0.0:
+        if l2:
             loss += \
                 tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
-        if clip is not None:
+        if clip:
             gradients = optim.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
@@ -771,7 +767,7 @@ class JTReader:
         # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
-        logging.info("Start training...")
+        logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
