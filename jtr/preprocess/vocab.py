@@ -140,6 +140,7 @@ class Vocab(object):
             `emb`: function handle; returns pre-trained embedding (fixed-size numerical list or ndarray)
               for a given symbol, and None for unknown symbols.
         """
+        self.next_pos = 0
         self.next_neg = -1
         self.unk = unk
         self.emb = emb if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
@@ -153,6 +154,7 @@ class Vocab(object):
             self.sym2freqs = {w: emb.vocabulary.get_word_count(w) for w in self.sym2id}
             self.frozen = True
             self.next_pos = 0
+            self.next_neg = -1*len(self.sym2id)
         else:
             self.sym2id = {}
             # with pos and neg indices
