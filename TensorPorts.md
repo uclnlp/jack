@@ -1,4 +1,4 @@
-# Ports
+# TensorPorts
 
 ## Introduction
 The functional interfaces between modules in JTR are represented and implemented by so called TensorPorts. Much like,
