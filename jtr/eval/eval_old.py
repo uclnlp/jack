@@ -1,8 +1,10 @@
-import sys
-import json
-from jtr.io.read_jtr import jtr_load as jtr_load
-import numpy as np
 import argparse
+import json
+import sys
+
+import numpy as np
+from jtr.io.read_jtr import jtr_load as jtr_load
+
 
 def hits_at_k(predictions, golds, k=1):
     """Returns k-hit rate for predictions and questions with ranked answers"""
