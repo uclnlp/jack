@@ -1,11 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
 
 from jtr.preprocess.map import get_entry_dims
 from jtr.preprocess.map import tokenize, notokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 from jtr.preprocess.vocab import Vocab
-
-
-
 
 """
 Here come different flavours of pipelines, tailored towards particular problems
@@ -36,12 +35,10 @@ def simple_pipeline(corpus, vocab=None, candidate_vocab=None, emb=None, negsampl
 
     return corpus, vocab, candidate_vocab
 
-
-
-
 """
 Placeholders should be made based on the corpus (not within the models as done previously)
 """
+
 
 def create_placeholders(corpus, types={}):
     """
@@ -65,10 +62,6 @@ def create_placeholders(corpus, types={}):
         placeholders[key] = tf.placeholder(typ, shape, name) #guaranteed same keys as corpus
 
     return placeholders
-
-
-
-
 
 """
 Below:
@@ -105,9 +98,7 @@ def _create_vocab(corpus, keys, vocab=None, emb=None, unk=Vocab.DEFAULT_UNK, low
     if add_length:
         corpus = deep_seq_map(corpus, lambda xs: len(xs), keys=keys, fun_name='lengths', expand=True)
 
-
     return corpus, vocab
-
 
 
 #@todo: rewrite such that it works for different types of jtr files / models
@@ -155,7 +146,6 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
-
 
 
 def jtr_map_to_targets(xs, cands_name, ans_name):

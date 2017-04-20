@@ -102,3 +102,6 @@ ENV/
 
 # Test result files
 testresult_*
+
+# Snippets
+snippets/

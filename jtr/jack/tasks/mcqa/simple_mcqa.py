@@ -7,7 +7,6 @@ from jtr.jack.tf_fun import rnn, simple
 from jtr.pipelines import pipeline
 from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify
-from jtr.preprocess.vocab import Vocab
 from jtr.jack.preprocessing import preprocess_with_pipeline
 from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
 
@@ -115,7 +114,6 @@ class SingleSupportFixedClassInputs(InputModule):
         self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
         self.shared_vocab_config.vocab = train_vocab
         self.answer_vocab = train_answer_vocab
-
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
