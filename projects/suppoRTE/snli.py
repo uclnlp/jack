@@ -11,12 +11,14 @@ from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import NeuralVocab
 from jtr.train import train
 from jtr.util.hooks import ExamplesPerSecHook, LossHook, EvalHook
-from jtr.pipelines import simple_pipeline, create_placeholders
+from jtr.pipelines import create_placeholders, _create_vocab, _map_to_targets
 import jtr.nn.models as models
 from jtr.util.rs import DefaultRandomState
 
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.load.read_jtr import jtr_load
+
+from jtr.preprocess.map import dynamic_subsample
 
 from .kvrte import key_value_rte
 
@@ -33,6 +35,31 @@ class Duration(object):
         self.t = time()
 
 checkpoint = Duration()
+
+
+def simple_pipeline(corpus, vocab=None, candidate_vocab=None, emb=None, negsamples=0):
+    """
+    TO DO: docstring
+    (replaces original pipeline in training_pipeline; new functionality: returns placeholders as well)
+    simple scenario: candidate vocab = target vocab
+    """
+
+    corpus, vocab = _create_vocab(corpus, ['question', 'support'], vocab=vocab, emb=emb, lowercase=True, tokens=True, add_length=True)
+    corpus, candidate_vocab = _create_vocab(corpus, ['candidates'], vocab=candidate_vocab, unk=None)
+    candidate_vocab.freeze()  #to be certain: freeze after first call
+
+    corpus, _ = _create_vocab(corpus, ['answers'], vocab=candidate_vocab, unk=None)
+
+    corpus = _map_to_targets(corpus, 'answers', 'candidates', expand=True, fun_name='binary_vector')
+
+
+    #todo: make compatible with DynamicSubsampledList
+
+    if negsamples > 0:#we want this to be the last thing we do to candidates
+        corpus = dynamic_subsample(corpus, 'candidates', 'answers', how_many=negsamples)
+    #todo: not tested yet
+
+    return corpus, vocab, candidate_vocab
 
 
 def map_to_targets(xs, cands_name, ans_name):

@@ -7,35 +7,7 @@ from jtr.preprocess.map import tokenize, notokenize, lower, deep_map, deep_seq_m
 from jtr.preprocess.vocab import Vocab
 
 """
-Here come different flavours of pipelines, tailored towards particular problems
-"""
-
-
-def simple_pipeline(corpus, vocab=None, candidate_vocab=None, emb=None, negsamples=0):
-    """
-    TO DO: docstring
-    (replaces original pipeline in training_pipeline; new functionality: returns placeholders as well)
-    simple scenario: candidate vocab = target vocab
-    """
-
-    corpus, vocab = _create_vocab(corpus, ['question', 'support'], vocab=vocab, emb=emb, lowercase=True, tokens=True, add_length=True)
-    corpus, candidate_vocab = _create_vocab(corpus, ['candidates'], vocab=candidate_vocab, unk=None)
-    candidate_vocab.freeze()  #to be certain: freeze after first call
-
-    corpus, _ = _create_vocab(corpus, ['answers'], vocab=candidate_vocab, unk=None)
-
-    corpus = _map_to_targets(corpus, 'answers', 'candidates', expand=True, fun_name='binary_vector')
-
-
-    #todo: make compatible with DynamicSubsampledList
-
-    if negsamples > 0:#we want this to be the last thing we do to candidates
-        corpus = dynamic_subsample(corpus, 'candidates', 'answers', how_many=negsamples)
-    #todo: not tested yet
-
-    return corpus, vocab, candidate_vocab
-
-"""
+Here come different flavours of pipelines, tailored towards particular problems.
 Placeholders should be made based on the corpus (not within the models as done previously)
 """
 
