@@ -11,14 +11,16 @@ from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import NeuralVocab
 from jtr.train import train
 from jtr.util.hooks import ExamplesPerSecHook, LossHook, EvalHook
-from jtr.pipelines import create_placeholders, _create_vocab, _map_to_targets
+from jtr.pipelines import create_placeholders, _map_to_targets
 import jtr.nn.models as models
 from jtr.util.rs import DefaultRandomState
 
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.load.read_jtr import jtr_load
 
-from jtr.preprocess.map import dynamic_subsample
+from jtr.preprocess.map import tokenize, deep_map, deep_seq_map, dynamic_subsample
+from jtr.preprocess.vocab import Vocab
+
 
 from .kvrte import key_value_rte
 
@@ -60,6 +62,37 @@ def simple_pipeline(corpus, vocab=None, candidate_vocab=None, emb=None, negsampl
     #todo: not tested yet
 
     return corpus, vocab, candidate_vocab
+
+
+def _create_vocab(corpus, keys, vocab=None, emb=None, unk=Vocab.DEFAULT_UNK, lowercase=False, tokens=False, add_os=False, add_length=False):
+    if isinstance(corpus, dict):
+        assert all([key in corpus for key in keys])
+    elif isinstance(corpus, list):
+        assert all([key in range(len(corpus)) for key in keys])
+
+    vocab = vocab or Vocab(unk=unk, emb=emb)
+    #preprocessing
+    if lowercase:
+        corpus = deep_map(corpus, lambda x: x.lower(), keys)
+    if tokens:
+        corpus = deep_map(corpus, tokenize, keys)
+    if add_os:
+        corpus = deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
+
+    #replace symbols by ids + fill up vocab
+    corpus = deep_map(corpus, vocab, keys)
+    if not vocab.frozen:
+        #always return normalized id's (watch out, this does not freeze vocab)
+        corpus = deep_map(corpus, vocab._normalize, keys=keys)
+    #if unk is None (e.g. for fixed candidates labels) and vocab is frozen: unseen id's are None; remove these
+    #this can happen if dev/test set has instances with target labels unseen during training
+    if vocab.frozen and unk is None:
+        corpus = deep_seq_map(corpus, lambda seq: [s for s in seq if not s is None], keys=keys)
+
+    if add_length:
+        corpus = deep_seq_map(corpus, lambda xs: len(xs), keys=keys, fun_name='lengths', expand=True)
+
+    return corpus, vocab
 
 
 def map_to_targets(xs, cands_name, ans_name):
