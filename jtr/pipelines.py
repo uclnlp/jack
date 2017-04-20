@@ -28,7 +28,7 @@ def create_placeholders(corpus, types={}):
 
     dims = get_entry_dims(corpus)
     for key in keys:
-        typ = tf.int64 if not key in types else types[key]
+        typ = tf.int64 if key not in types else types[key]
         shape = [None]*dims[key]
         name = key if isinstance(corpus, dict) else None # no name if list
         placeholders[key] = tf.placeholder(typ, shape, name) #guaranteed same keys as corpus
