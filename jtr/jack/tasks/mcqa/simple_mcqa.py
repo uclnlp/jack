@@ -253,10 +253,6 @@ class EmptyOutputModule(OutputModule):
     def load(self, path):
         pass
 
-def softmax(x):
-    """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp(x - np.max(x, 1).reshape(-1,1))
-    return e_x / e_x.sum(1).reshape(-1,1)
 
 class MisclassificationOutputModule(OutputModule):
 
@@ -273,15 +269,20 @@ class MisclassificationOutputModule(OutputModule):
                 Ports.Input.sample_id]
 
     def __call__(self, inputs: List[QASetting],
-            candidate_scores,
-            candidate_idx,
-            labels,
-            sample_ids) -> List[Answer]:
-        if self.i >= self.limit: return
-
+                 candidate_scores,
+                 candidate_idx,
+                 labels,
+                 sample_ids) -> List[Answer]:
+        if self.i >= self.limit:
+            return
 
         class2idx = {}
         idx2class = {}
+
+        def softmax(x):
+            """Compute softmax values for each sets of scores in x."""
+            e_x = np.exp(x - np.max(x, 1).reshape(-1, 1))
+            return e_x / e_x.sum(1).reshape(-1, 1)
 
         candidate_scores = softmax(candidate_scores)
         num_classes = candidate_scores.shape[1]

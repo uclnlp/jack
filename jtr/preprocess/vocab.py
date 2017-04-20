@@ -450,8 +450,7 @@ class NeuralVocab(Vocab):
 
             # must be provided is embedding_matrix is None
             self.input_size = input_size
-            self.embedding_matrix = tf.concat([E_oov, E_pre],
-                    0, name="embeddings")
+            self.embedding_matrix = tf.concat([E_oov, E_pre], 0, name="embeddings")
 
         else:
             # ignore input argument input_size
