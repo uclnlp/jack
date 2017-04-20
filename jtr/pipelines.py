@@ -76,6 +76,15 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
         corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
     corpus_ids = deep_map(corpus_ids, candidate_vocab, ['candidates'], cache_fun=cache_fun)
     if map_to_target and not test_time:
+        def jtr_map_to_targets(xs, cands_name, ans_name):
+            """
+            Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
+            #@todo: integrate this function with the one below - the pipeline() method only works with this function
+            """
+            xs["targets"] = [1.0 if xs[ans_name][i] == cand else 0.0
+                             for i in range(len(xs[ans_name]))
+                             for cand in xs[cands_name][i]]
+            return xs
         corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
     #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
     #todo: there is no guarantee that these are the same)
@@ -87,21 +96,3 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
-
-
-def jtr_map_to_targets(xs, cands_name, ans_name):
-    """
-    Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
-    #@todo: integrate this function with the one below - the pipeline() method only works with this function
-    """
-    targs = []
-    for i in range(len(xs[ans_name])):
-        targ = []
-        for cand in xs[cands_name][i]:
-            if xs[ans_name][i] == cand:
-                targ.append(1.0)
-            else:
-                targ.append(0.0)
-        targs.append(targ)
-    xs["targets"] = targs
-    return xs
