@@ -11,7 +11,7 @@ from jtr.preprocess.batch import get_feed_dicts
 from jtr.preprocess.vocab import NeuralVocab
 from jtr.train import train
 from jtr.util.hooks import ExamplesPerSecHook, LossHook, EvalHook
-from jtr.pipelines import create_placeholders, _map_to_targets
+from jtr.pipelines import create_placeholders
 import jtr.nn.models as models
 from jtr.util.rs import DefaultRandomState
 
