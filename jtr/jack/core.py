@@ -728,8 +728,6 @@ class JTReader:
         """
         This method trains the reader (and changes its state).
         Args:
-            test_set: test set
-            dev_set: dev set
             training_set: the training instances.
             max_epochs: maximum number of epochs
             hooks: TrainingHook implementations that are called after epochs and batches
