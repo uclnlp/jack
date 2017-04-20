@@ -41,6 +41,7 @@ set of simple functions that aggregate common pipeline functionality,
 to be used to create custom pipelines
 """
 
+
 #@todo: rewrite such that it works for different types of jtr files / models
 # this is the general jtr pipeline
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
@@ -103,41 +104,4 @@ def jtr_map_to_targets(xs, cands_name, ans_name):
                 targ.append(0.0)
         targs.append(targ)
     xs["targets"] = targs
-    return xs
-
-
-def _map_to_targets(xs, answers_key, candidates_key, expand=False, fun_name='binary_vector'):
-    """
-    Transforms lists of keys in xs[answers_key] into number-of-candidates long binary vectors,
-    containing 1's or 0's depending on whether the answers are in the *corresponding* candidates list.
-    (Not consistent over whole dataset if candidate lists vary over instances!)
-
-    Replaces xs[answers_key] if expand=False, else creates new key answers_key+'_'+fun_name.
-
-    (assumes xs is dict)
-    So far only limited implementation of 1 level of nested lists
-    """
-    #todo: more general implementation
-
-    def convert2bin(ans,cand):
-        assert isinstance(cand,list) or isinstance(cand,tuple), \
-            'candidates must be list or tuple'
-        if isinstance(ans,list) or isinstance(ans,tuple):
-            assert all(type(ai) == type(ci) for ai in ans for ci in cand), \
-                'found different types in answers and candidates lists; revise pipeline'
-            return [1 if ci in ans else 0 for ci in cand]
-        else: #assume scalar or string
-            assert all(type(ci) == type(ans) for ci in cand), \
-                'found type mismatch between answer and entries in candidates list; revise pipeline'
-            return [1 if ans==ci else 0 for ci in cand]
-
-    targs = []
-    for answers, cands in zip(xs[answers_key],xs[candidates_key]):
-        targs.append(convert2bin(answers, cands))
-
-    if expand:
-        key = '%s_%s'%(answers_key, fun_name)
-    else:
-        key = answers_key
-    xs[key] = targs
     return xs
