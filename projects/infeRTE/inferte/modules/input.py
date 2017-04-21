@@ -12,7 +12,7 @@ import numpy as np
 
 def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamples=0,
                              tokenization=True, use_single_support=True, sepvocab=True):
-    corpus = {"support": [], "question": [], "candidates": [], "ids" : []}
+    corpus = {"support": [], "question": [], "candidates": [], "ids": []}
     if not test_time:
         corpus["answers"] = []
     for i, xy in enumerate(data):
