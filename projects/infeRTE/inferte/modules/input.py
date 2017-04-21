@@ -85,7 +85,7 @@ class SingleSupportFixedClassInputs(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Input.candidates1d]
+        return [Ports.Target.target_index]
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -97,11 +97,12 @@ class SingleSupportFixedClassInputs(InputModule):
         4. Max timestep length of mini-batches for question tensor
         5. Labels
         """
-        return [Ports.Input.single_support,
+        return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Targets.candidate_idx, Ports.Input.sample_id]
+                Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) \
+            -> Mapping[TensorPort, np.ndarray]:
         pass
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
@@ -117,13 +118,14 @@ class SingleSupportFixedClassInputs(InputModule):
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, _, _, _ = preprocess_with_pipeline(dataset, self.shared_vocab_config.vocab, self.answer_vocab,
-                                                   use_single_support=True, sepvocab=True)
+        corpus, _, _, _ = \
+                preprocess_with_pipeline(dataset,
+                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
 
         xy_dict = {
-            Ports.Input.single_support: corpus["support"],
+            Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            Ports.Targets.candidate_idx:  corpus["answers"],
+            Ports.Target.target_index:  corpus["answers"],
             Ports.Input.question_length : corpus['question_lengths'],
             Ports.Input.support_length : corpus['support_lengths'],
             Ports.Input.sample_id : corpus['ids']

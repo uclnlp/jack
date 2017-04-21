@@ -11,9 +11,9 @@ class EmptyOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores,
-                Ports.Prediction.candidate_idx,
-                Ports.Targets.candidate_idx]
+        return [Ports.Prediction.logits,
+                Ports.Prediction.candidate_index,
+                Ports.Target.target_index]
 
     def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
         return tensor_inputs
