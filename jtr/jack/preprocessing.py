@@ -1,8 +1,6 @@
+# -*- coding: utf-8 -*-
+
 from jtr.pipelines import pipeline
-from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify, deep_map
-from jtr.preprocess.vocab import Vocab
-import re
 
 
 def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamples=0,
