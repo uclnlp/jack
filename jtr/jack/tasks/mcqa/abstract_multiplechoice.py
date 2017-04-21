@@ -22,12 +22,12 @@ class SingleSupportFixedClassForward(object):
 
 
 class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
-    def __init__(self, shared_resources):
+    def __init__(self, shared_resources, question_embedding_matrix=None, support_embedding_matrix=None):
         self.shared_resources = shared_resources
-        self.vocab = self.shared_resources.vocab
+        self.vocab_size = len(self.shared_resources.vocab)
         self.config = self.shared_resources.config
-        self.question_embedding_matrix = None
-        self.support_embedding_matrix = None
+        self.question_embedding_matrix = question_embedding_matrix
+        self.support_embedding_matrix = support_embedding_matrix
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -57,18 +57,14 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
             input_size = self.config['repr_dim_input']
-            if 'pretrained_embedding' not in self.config:
-                self.question_embedding_matrix = tf.get_variable(
-                        "emb_Q", [len(self.vocab), input_size],
-                                         initializer=tf.contrib.layers.xavier_initializer(),
-                                         trainable=True, dtype="float32")
-                self.support_embedding_matrix = tf.get_variable(
-                        "emb_S", [len(self.vocab), input_size],
-                                         initializer=tf.contrib.layers.xavier_initializer(),
-                                         trainable=True, dtype="float32")
-            else:
-                self.question_embedding_matrix = self.shared_resources.config['pretrained_embedding'][0]
-                self.support_embedding_matrix = self.shared_resources.config['pretrained_embedding'][1]
+            self.question_embedding_matrix = tf.get_variable(
+                "emb_Q", [self.vocab_size, input_size],
+                initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=True, dtype="float32")
+            self.support_embedding_matrix = tf.get_variable(
+                "emb_S", [self.vocab_size, input_size],
+                initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=True, dtype="float32")
 
         logits = self.forward_pass(shared_resources,
                                    question_ids, question_length,
