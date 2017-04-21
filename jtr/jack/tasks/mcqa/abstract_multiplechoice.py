@@ -22,7 +22,7 @@ class SingleSupportFixedClassForward(object):
 class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
     def __init__(self, shared_resources, question_embedding_matrix=None, support_embedding_matrix=None):
         self.shared_resources = shared_resources
-        self.vocab_size = len(self.shared_resources.vocab)
+        self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
         self.question_embedding_matrix = question_embedding_matrix
         self.support_embedding_matrix = support_embedding_matrix
@@ -54,13 +54,14 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       question_length : tf.Tensor) -> Sequence[tf.Tensor]:
         question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
+            vocab_size = len(self.vocab)
             input_size = self.config['repr_dim_input']
             self.question_embedding_matrix = tf.get_variable(
-                "emb_Q", [self.vocab_size, input_size],
+                "emb_Q", [vocab_size, input_size],
                 initializer=tf.contrib.layers.xavier_initializer(),
                 trainable=True, dtype="float32")
             self.support_embedding_matrix = tf.get_variable(
-                "emb_S", [self.vocab_size, input_size],
+                "emb_S", [vocab_size, input_size],
                 initializer=tf.contrib.layers.xavier_initializer(),
                 trainable=True, dtype="float32")
 
