@@ -69,7 +69,7 @@ def mutable_attention(memory_states, input, input_lengths,
 
         #attention_states_fw, attention_states_bw = tf.split(memory_states, 2, 0)
         #attention_states = tf.concat([attention_states_fw,
-        attention_states_bw], 3)
+        #attention_states_bw], 3)
         #attention_states = tf.squeeze(attention_states, [0])
 
         memory_key, memory_val = memory_states
