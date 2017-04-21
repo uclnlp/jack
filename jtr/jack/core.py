@@ -118,11 +118,11 @@ class Ports:
                                         "[]")
 
         # add multiple x_length; change description
-        support_length = TensorPort(tf.int32, [None], "support_length_flat",
-                                    "Represents length of support in batch",
-                                    "[S]")
+        support_length = TensorPort(tf.int32, [None, None], "support_length",
+                                    "Represents length of supports in each support in batch",
+                                    "[batch_size, num_supports]")
 
-        question_length = TensorPort(tf.int32, [None], "question_length_flat",
+        question_length = TensorPort(tf.int32, [None], "question_length",
                                      "Represents length of questions in batch",
                                      "[Q]")
 
