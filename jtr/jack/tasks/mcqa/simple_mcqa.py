@@ -213,8 +213,11 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
 
-        Q_seq = nvocab(Q)
-        S_seq = nvocab(S)
+        #Q_seq = nvocab(Q)
+        #S_seq = nvocab(S)
+
+        Q_seq = tf.nn.embedding_lookup(nvocab.embedding_matrix, Q)
+        S_seq = tf.nn.embedding_lookup(nvocab.embedding_matrix, S)
 
         all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
                 Q_seq, Q_lengths, S_seq, S_lengths,
