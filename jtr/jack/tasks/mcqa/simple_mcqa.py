@@ -179,8 +179,7 @@ class SimpleMCModelModule(SimpleModelModule):
             embedded_supports_and_question = embedded_supports + embedded_question
             embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, emb_dim]
 
-            scores = tf.matmul(embedded_candidates,
-                                     tf.expand_dims(embedded_supports_and_question, -1))
+            scores = tf.matmul(embedded_candidates, tf.expand_dims(embedded_supports_and_question, -1))
 
             squeezed = tf.squeeze(scores, 2)
             return squeezed,
@@ -208,19 +207,11 @@ class SimpleMCOutputModule(OutputModule):
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources,
-                     #Q, S, Q_lengths, S_lengths,
                      Q_embedding_matrix, Q_ids, Q_lengths,
                      S_embedding_matrix, S_ids,  S_lengths,
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-
-        #Q_seq = nvocab(Q)
-        #S_seq = nvocab(S)
-
-        #Q_seq = tf.nn.embedding_lookup(nvocab.embedding_matrix, Q)
-        #S_seq = tf.nn.embedding_lookup(nvocab.embedding_matrix, S)
-
         Q_seq = tf.nn.embedding_lookup(Q_embedding_matrix, Q_ids)
         S_seq = tf.nn.embedding_lookup(S_embedding_matrix, S_ids)
 

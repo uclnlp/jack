@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from jtr.jack.core import *
-from jtr.jack.data_structures import *
 
 from jtr.preprocess.vocab import NeuralVocab
 
 from abc import abstractmethod, ABCMeta
-from typing import List, Tuple, Dict, Mapping
+from typing import List
 
 import tensorflow as tf
 
@@ -12,13 +13,12 @@ class SingleSupportFixedClassForward(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def forward_pass(self, shared_resources, nvocab,
-                     Q, S, Q_lengths, S_lengths,
+    def forward_pass(self, shared_resources,
+                     Q_embedding_matrix, Q_ids, Q_lengths,
+                     S_embedding_matrix, S_ids, S_lengths,
                      num_classes):
         '''Takes a single support and question and produces logits'''
         pass
-
-#class MultipleSupportFixedClassForward(object):
 
 
 class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
@@ -52,15 +52,14 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       support_length : tf.Tensor,
                       question_length : tf.Tensor) -> Sequence[tf.Tensor]:
 
-        if self.nvocab == None:
+        if not self.nvocab:
             self.nvocab = NeuralVocab(shared_resources.vocab,
-                    input_size=shared_resources.config['repr_dim_input'])
+                                      input_size=shared_resources.config['repr_dim_input'])
 
         question_embedding_matrix, support_embedding_matrix = self.nvocab.embedding_matrix, self.nvocab.embedding_matrix
         question_ids, support_ids = question, support
 
         logits = self.forward_pass(shared_resources,
-                                   #self.nvocab, question, support, question_length, support_length,
                                    question_embedding_matrix, question_ids, question_length,
                                    support_embedding_matrix, support_ids, support_length,
                                    shared_resources.config['answer_size'])
@@ -71,9 +70,7 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
 
 
     def create_training_output(self, shared_resources: SharedResources,
-                               logits : tf.Tensor,
-                               labels : tf.Tensor) -> Sequence[tf.Tensor]:
-
+                               logits : tf.Tensor, labels : tf.Tensor) -> Sequence[tf.Tensor]:
         loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                              labels=labels), name='predictor_loss')
         return [loss]
