@@ -108,11 +108,6 @@ class Ports:
                                "Maps this sample to the index in the input text data",
                                "[batch_size]")
 
-        # remove
-        candidates1d = TensorPort(tf.int32, [None], "candidates_idx",
-                                  "Represents candidate choices using single symbols",
-                                  "[batch_size]")
-
         # remove?
         keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
                                           "scalar representing keep probability when using dropout",

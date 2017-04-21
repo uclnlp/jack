@@ -84,7 +84,7 @@ class SingleSupportFixedClassInputs(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Input.candidates1d]
+        return [Ports.Targets.target_index]
 
     @property
     def output_ports(self) -> List[TensorPort]:
