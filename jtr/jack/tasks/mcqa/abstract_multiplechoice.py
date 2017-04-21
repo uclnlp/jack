@@ -2,8 +2,6 @@
 
 from jtr.jack.core import *
 
-from jtr.preprocess.vocab import NeuralVocab
-
 from abc import abstractmethod, ABCMeta
 from typing import List
 

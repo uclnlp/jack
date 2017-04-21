@@ -28,23 +28,3 @@ def test_vocab():
 
     assert v.get_ids_pretrained() == []
     assert v.get_ids_oov() == [0, 1, 2, 3, 4, 5]
-
-
-def test_neural_vocab():
-    def emb(w):
-        v = {'A': [1.7, 0, .3], 'B': [0, 1.5, 0.5], 'C': [0, 0, 2]}
-        return v.get(w, None)
-
-    v = vocab.Vocab(emb=emb)
-    v('A', 'B', 'C', 'hello', 'world')
-    v(['B', 'world', 'wake', 'up'])
-
-    with tf.variable_scope('neural_test'):
-        nv = vocab.NeuralVocab(v, None, 3, unit_normalize=False)
-
-    init_op = tf.initialize_all_variables()
-    with tf.Session() as session:
-        session.run(init_op)
-        np.testing.assert_almost_equal(session.run(nv(v('A'))), [1.7, 0, .3])
-        np.testing.assert_almost_equal(session.run(nv(v('B'))), [0., 1.5, 0.5])
-        np.testing.assert_almost_equal(session.run(nv(v('C'))), [0., 0., 2.])
