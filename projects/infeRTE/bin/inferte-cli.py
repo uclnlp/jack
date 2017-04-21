@@ -12,6 +12,11 @@ from inferte.modules.input import SingleSupportFixedClassInputs
 from inferte.modules.model import PairOfBiLSTMOverSupportAndQuestionModel
 from inferte.modules.output import EmptyOutputModule
 
+from jtr.preprocess.vocab import Vocab
+from jtr.jack.core import JTReader, SharedVocabAndConfig
+
+from jtr.jack.train.hooks import LossHook
+
 import logging
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -54,7 +59,6 @@ print(train[0])
 
 # We creates hooks which keep track of the loss
 # We also create 'the standard hook' for our model
-from jtr.jack.train.hooks import LossHook
 hooks = [
     LossHook(reader, iter_interval=10),
     readers.eval_hooks['snli_reader'](reader, dev, iter_interval=25)
@@ -63,10 +67,10 @@ hooks = [
 # Here we initialize our optimizer
 # we choose Adam with standard momentum values and learning rate 0.001
 learning_rate = 0.001
-optim = tf.train.AdamOptimizer(learning_rate)
+optimizer = tf.train.AdamOptimizer(learning_rate)
 
 # Lets train the reader on the CPU for 2 epochs
-reader.train(optim, train,
+reader.train(optimizer, train,
              hooks=hooks,
              max_epochs=1,
              device='/cpu:0')
