@@ -74,7 +74,7 @@ class ModelFInputModule(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Targets.target_index]
+        return [Ports.Target.target_index]
 
     def preprocess(self, data, test_time=False):
         corpus = { "question": [], "candidates": [], "answers":[]}
@@ -107,7 +107,7 @@ class ModelFInputModule(InputModule):
         xy_dict = {
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.target_index: corpus["answers"]
+            Ports.Target.target_index: corpus["answers"]
         }
         return get_batches(xy_dict, batch_size=self.config['batch_size'])
 
@@ -116,13 +116,13 @@ class ModelFInputModule(InputModule):
         xy_dict = {
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.target_index: corpus["answers"]
+            Ports.Target.target_index: corpus["answers"]
         }
         return numpify(xy_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Targets.target_index]
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
 
 class ModelFModelModule(SimpleModelModule):
@@ -140,7 +140,7 @@ class ModelFModelModule(SimpleModelModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Targets.target_index]
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,

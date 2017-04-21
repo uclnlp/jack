@@ -387,8 +387,8 @@ class ClassificationEvalHook(EvalHook):
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
 
         ports = [Ports.Prediction.candidate_scores,
-                 Ports.Prediction.candidate_idx,
-                 Ports.Targets.candidate_idx]
+                 Ports.Prediction.candidate_index,
+                 Ports.Target.target_index]
 
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
@@ -403,8 +403,8 @@ class ClassificationEvalHook(EvalHook):
 
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        labels = tensors[Ports.Targets.candidate_idx]
-        predictions = tensors[Ports.Prediction.candidate_idx]
+        labels = tensors[Ports.Target.target_index]
+        predictions = tensors[Ports.Prediction.candidate_index]
         #scores = tensors[Ports.Prediction.candidate_scores]
 
         def len_np_or_list(v):
@@ -427,7 +427,7 @@ class KBPEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Input.question, Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
+        ports = [Ports.Input.question, Ports.Target.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
         self.epoch = 0
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
@@ -441,7 +441,7 @@ class KBPEvalHook(EvalHook):
             return 'epoch', [0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_answers  = tensors[Ports.Targets.target_index]
+        correct_answers  = tensors[Ports.Target.target_index]
         candidate_scores = tensors[Ports.Prediction.candidate_scores]
         candidate_ids    = tensors[Ports.Input.atomic_candidates]
         loss             = tensors[Ports.loss]
@@ -488,7 +488,7 @@ class KBPEvalHook(EvalHook):
         qa_ids=[]
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
-            correct_answers =  predictions[Ports.Targets.target_index]
+            correct_answers =  predictions[Ports.Target.target_index]
             candidate_scores = predictions[Ports.Prediction.candidate_scores]
             candidate_ids =    predictions[Ports.Input.atomic_candidates]
             questions        = predictions[Ports.Input.question]

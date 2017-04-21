@@ -30,7 +30,7 @@ class SimpleMCInputModule(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Targets.candidate_labels]
+        return [Ports.Target.candidate_labels]
 
     def preprocess(self, data, test_time=False):
         corpus = {"support": [], "question": [], "candidates": []}
@@ -59,7 +59,7 @@ class SimpleMCInputModule(InputModule):
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.candidate_labels: corpus["targets"]
+            Ports.Target.candidate_labels: corpus["targets"]
         }
         return get_batches(xy_dict)
 
@@ -84,7 +84,7 @@ class SingleSupportFixedClassInputs(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Targets.target_index]
+        return [Ports.Target.target_index]
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -98,7 +98,7 @@ class SingleSupportFixedClassInputs(InputModule):
         """
         return [Ports.Input.single_support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Targets.candidate_idx, Ports.Input.sample_id]
+                Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
     def __call__(self, qa_settings: List[QASetting]) \
             -> Mapping[TensorPort, np.ndarray]:
@@ -124,7 +124,7 @@ class SingleSupportFixedClassInputs(InputModule):
         xy_dict = {
             Ports.Input.single_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            Ports.Targets.candidate_idx:  corpus["answers"],
+            Ports.Target.target_index:  corpus["answers"],
             Ports.Input.question_length : corpus['question_lengths'],
             Ports.Input.support_length : corpus['support_lengths'],
             Ports.Input.sample_id : corpus['ids']
@@ -148,7 +148,7 @@ class SimpleMCModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, Ports.Targets.candidate_labels]
+        return [Ports.Prediction.candidate_scores, Ports.Target.candidate_labels]
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -235,8 +235,8 @@ class EmptyOutputModule(OutputModule):
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.candidate_scores,
-                Ports.Prediction.candidate_idx,
-                Ports.Targets.candidate_idx]
+                Ports.Prediction.candidate_index,
+                Ports.Target.target_index]
 
     def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
         return tensor_inputs
@@ -261,8 +261,8 @@ class MisclassificationOutputModule(OutputModule):
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.candidate_scores,
-                Ports.Prediction.candidate_idx,
-                Ports.Targets.candidate_idx,
+                Ports.Prediction.candidate_index,
+                Ports.Target.target_index,
                 Ports.Input.sample_id]
 
     def __call__(self, inputs: List[QASetting],
