@@ -48,29 +48,25 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
              emb=None, freeze=False, normalize=False, tokenization=True, lowercase=True,
              negsamples=0, sepvocab=True, test_time=False, cache_fun=False, map_to_target=True):
     vocab = vocab or Vocab(emb=emb)
-    if sepvocab == True:
+    if sepvocab:
         target_vocab = target_vocab or Vocab(unk=None)
         candidate_vocab = candidate_vocab or Vocab(unk=None)
     if freeze:
         vocab.freeze()
-        if sepvocab == True:
+        if sepvocab:
             target_vocab.freeze()
             candidate_vocab.freeze()
 
-    if sepvocab == False:
+    if not sepvocab:
         target_vocab = candidate_vocab = vocab
-    
-    if tokenization == True:
-        corpus_tokenized = deep_map(corpus, tokenize, ['question', 'support'])
-    else:
-        corpus_tokenized =deep_map(corpus, notokenize, ['question', 'support'])
+
+    corpus_tokenized = deep_map(corpus, tokenize if tokenization else notokenize, ['question', 'support'])
 
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support']) if lowercase else corpus_tokenized
 
-    if tokenization == True:
-        corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
-    else:
-        corpus_os = corpus_lower
+    corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])\
+        if tokenization else corpus_lower
+
     corpus_ids = deep_map(corpus_os, vocab, ['question', 'support'])
     if not test_time:
         corpus_ids = deep_map(corpus_ids, target_vocab, ['answers'])
