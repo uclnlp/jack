@@ -5,9 +5,6 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from jtr.nn.models import get_total_trainable_variables
-from jtr.util.tfutil import tfrun
-
 
 class Vocab(object):
     """

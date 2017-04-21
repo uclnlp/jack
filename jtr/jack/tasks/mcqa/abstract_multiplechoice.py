@@ -54,7 +54,6 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       question : tf.Tensor,
                       support_length : tf.Tensor,
                       question_length : tf.Tensor) -> Sequence[tf.Tensor]:
-
         question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
             input_size = self.config['repr_dim_input']
