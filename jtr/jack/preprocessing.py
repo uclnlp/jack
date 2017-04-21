@@ -11,7 +11,7 @@ def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamp
     for i, xy in enumerate(data):
         x, y = (xy, None) if test_time else xy
 
-        corpus["support"] += [x.support[0] if use_single_support else x.support]
+        corpus["support"] += [x.support if use_single_support else x.support]
         corpus['ids'].append(i)
         corpus["question"].append(x.question)
         corpus["candidates"].append(x.atomic_candidates)

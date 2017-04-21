@@ -386,9 +386,9 @@ class ClassificationEvalHook(EvalHook):
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
 
-        ports = [Ports.Prediction.candidate_scores,
-                 Ports.Prediction.candidate_idx,
-                 Ports.Targets.candidate_idx]
+        ports = [Ports.Prediction.logits,
+                 Ports.Prediction.candidate_index,
+                 Ports.Target.target_index]
 
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
@@ -403,9 +403,9 @@ class ClassificationEvalHook(EvalHook):
 
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        labels = tensors[Ports.Targets.candidate_idx]
-        predictions = tensors[Ports.Prediction.candidate_idx]
-        #scores = tensors[Ports.Prediction.candidate_scores]
+        labels = tensors[Ports.Target.target_index]
+        predictions = tensors[Ports.Prediction.candidate_index]
+        #scores = tensors[Ports.Prediction.logits]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -427,7 +427,7 @@ class KBPEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Input.question, Ports.Targets.target_index, Ports.Prediction.candidate_scores, Ports.Input.atomic_candidates, Ports.loss]
+        ports = [Ports.Input.question, Ports.Target.target_index, Ports.Prediction.logits, Ports.Input.atomic_candidates, Ports.loss]
         self.epoch = 0
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
@@ -441,15 +441,15 @@ class KBPEvalHook(EvalHook):
             return 'epoch', [0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_answers  = tensors[Ports.Targets.target_index]
-        candidate_scores = tensors[Ports.Prediction.candidate_scores]
+        correct_answers  = tensors[Ports.Target.target_index]
+        logits = tensors[Ports.Prediction.logits]
         candidate_ids    = tensors[Ports.Input.atomic_candidates]
         loss             = tensors[Ports.loss]
 
         neg_loss = 0.0
         acc_exact = 0.0
 
-        winning_indices = np.argmax(candidate_scores, axis=1)
+        winning_indices = np.argmax(logits, axis=1)
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -488,13 +488,13 @@ class KBPEvalHook(EvalHook):
         qa_ids=[]
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
-            correct_answers =  predictions[Ports.Targets.target_index]
-            candidate_scores = predictions[Ports.Prediction.candidate_scores]
+            correct_answers =  predictions[Ports.Target.target_index]
+            logits = predictions[Ports.Prediction.logits]
             candidate_ids =    predictions[Ports.Input.atomic_candidates]
             questions        = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
                 q=questions[j][0]
-                q_cand_scores[q]=candidate_scores[j]
+                q_cand_scores[q]=logits[j]
                 q_cand_ids[q]=candidate_ids[j]
                 if q not in q_answers:
                     q_answers[q]=set()

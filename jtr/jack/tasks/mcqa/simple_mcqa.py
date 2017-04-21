@@ -30,7 +30,7 @@ class SimpleMCInputModule(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Targets.candidate_labels]
+        return [Ports.Target.candidate_1hot]
 
     def preprocess(self, data, test_time=False):
         corpus = {"support": [], "question": [], "candidates": []}
@@ -59,7 +59,7 @@ class SimpleMCInputModule(InputModule):
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.candidate_labels: corpus["targets"]
+            Ports.Target.candidate_1hot: corpus["targets"]
         }
         return get_batches(xy_dict)
 
@@ -84,7 +84,7 @@ class SingleSupportFixedClassInputs(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Input.candidates1d]
+        return [Ports.Target.target_index]
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -96,9 +96,9 @@ class SingleSupportFixedClassInputs(InputModule):
         4. Max timestep length of mini-batches for question tensor
         5. Labels
         """
-        return [Ports.Input.single_support,
+        return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Targets.candidate_idx, Ports.Input.sample_id]
+                Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
     def __call__(self, qa_settings: List[QASetting]) \
             -> Mapping[TensorPort, np.ndarray]:
@@ -122,9 +122,9 @@ class SingleSupportFixedClassInputs(InputModule):
                         self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
 
         xy_dict = {
-            Ports.Input.single_support: corpus["support"],
+            Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            Ports.Targets.candidate_idx:  corpus["answers"],
+            Ports.Target.target_index:  corpus["answers"],
             Ports.Input.question_length : corpus['question_lengths'],
             Ports.Input.support_length : corpus['support_lengths'],
             Ports.Input.sample_id : corpus['ids']
@@ -140,7 +140,7 @@ class SimpleMCModelModule(SimpleModelModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores]
+        return [Ports.Prediction.logits]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
@@ -148,7 +148,7 @@ class SimpleMCModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, Ports.Targets.candidate_labels]
+        return [Ports.Prediction.logits, Ports.Target.candidate_1hot]
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -156,9 +156,9 @@ class SimpleMCModelModule(SimpleModelModule):
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
-                               candidate_scores: tf.Tensor,
+                               logits: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.nn.softmax_cross_entropy_with_logits(logits=candidate_scores,
+        loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
                 labels=candidate_labels)
         return loss,
 
@@ -191,16 +191,16 @@ class SimpleMCOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores]
+        return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: List[QASetting], candidate_scores: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: List[QASetting], logits: np.ndarray) -> List[Answer]:
         # len(inputs) == batch size
-        # candidate_scores: [batch_size, max_num_candidates]
-        winning_indices = np.argmax(candidate_scores, axis=1)
+        # logits: [batch_size, max_num_candidates]
+        winning_indices = np.argmax(logits, axis=1)
         result = []
         for index_in_batch, question in enumerate(inputs):
             winning_index = winning_indices[index_in_batch]
-            score = candidate_scores[index_in_batch, winning_index]
+            score = logits[index_in_batch, winning_index]
             result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
 
@@ -212,6 +212,9 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
+        S_ids = tf.squeeze(S_ids, 1)
+        S_lengths = tf.squeeze(S_lengths, 1)
+
         Q_seq = tf.nn.embedding_lookup(Q_embedding_matrix, Q_ids)
         S_seq = tf.nn.embedding_lookup(S_embedding_matrix, S_ids)
 
@@ -230,9 +233,9 @@ class EmptyOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores,
-                Ports.Prediction.candidate_idx,
-                Ports.Targets.candidate_idx]
+        return [Ports.Prediction.logits,
+                Ports.Prediction.candidate_index,
+                Ports.Target.target_index]
 
     def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
         return tensor_inputs
@@ -256,13 +259,13 @@ class MisclassificationOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores,
-                Ports.Prediction.candidate_idx,
-                Ports.Targets.candidate_idx,
+        return [Ports.Prediction.logits,
+                Ports.Prediction.candidate_index,
+                Ports.Target.target_index,
                 Ports.Input.sample_id]
 
     def __call__(self, inputs: List[QASetting],
-                 candidate_scores,
+                 logits,
                  candidate_idx,
                  labels,
                  sample_ids) -> List[Answer]:
@@ -277,8 +280,8 @@ class MisclassificationOutputModule(OutputModule):
             e_x = np.exp(x - np.max(x, 1).reshape(-1, 1))
             return e_x / e_x.sum(1).reshape(-1, 1)
 
-        candidate_scores = softmax(candidate_scores)
-        num_classes = candidate_scores.shape[1]
+        logits = softmax(logits)
+        num_classes = logits.shape[1]
         for i, (right_idx, predicted_idx) in enumerate(zip(labels, candidate_idx)):
             data_idx = sample_ids[i]
             qa, answer = inputs[data_idx]
@@ -289,7 +292,7 @@ class MisclassificationOutputModule(OutputModule):
             if len(class2idx) < num_classes: continue
             if self.i >= self.limit: continue
             if right_idx == predicted_idx: continue
-            score = candidate_scores[i][right_idx]
+            score = logits[i][right_idx]
             if score < self.upper and score > self.lower:
                 self.i += 1
                 print('#'*75)
@@ -300,7 +303,7 @@ class MisclassificationOutputModule(OutputModule):
                 print('Predicted class: {0}'.format(
                     idx2class[predicted_idx]))
                 print('Predictions: {0}'.format(
-                    [(idx2class[b], a) for a,b in zip(candidate_scores[i],range(num_classes))]))
+                    [(idx2class[b], a) for a,b in zip(logits[i],range(num_classes))]))
                 print('#'*75 + '\n')
 
     def setup(self):

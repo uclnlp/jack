@@ -74,7 +74,7 @@ class ModelFInputModule(InputModule):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [Ports.Targets.target_index]
+        return [Ports.Target.target_index]
 
     def preprocess(self, data, test_time=False):
         corpus = { "question": [], "candidates": [], "answers":[]}
@@ -107,7 +107,7 @@ class ModelFInputModule(InputModule):
         xy_dict = {
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.target_index: corpus["answers"]
+            Ports.Target.target_index: corpus["answers"]
         }
         return get_batches(xy_dict, batch_size=self.config['batch_size'])
 
@@ -116,19 +116,19 @@ class ModelFInputModule(InputModule):
         xy_dict = {
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Targets.target_index: corpus["answers"]
+            Ports.Target.target_index: corpus["answers"]
         }
         return numpify(xy_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Targets.target_index]
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
 
 class ModelFModelModule(SimpleModelModule):
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores, Ports.loss]
+        return [Ports.Prediction.logits, Ports.loss]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
@@ -140,7 +140,7 @@ class ModelFModelModule(SimpleModelModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Targets.target_index]
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
@@ -164,11 +164,11 @@ class ModelFModelModule(SimpleModelModule):
             embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),1)  # [batch_size, 1, repr_dim]
             #embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
             #embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
-            candidate_scores = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
+            logits = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
             answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(candidate_scores-answer_score))
+            loss = tf.reduce_sum(tf.nn.softplus(logits-answer_score))
 
-            return candidate_scores, loss
+            return logits, loss
 
 
 class ModelFOutputModule(OutputModule):
@@ -177,16 +177,16 @@ class ModelFOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores]
+        return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: List[QASetting], candidate_scores: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: List[QASetting], logits: np.ndarray) -> List[Answer]:
         # len(inputs) == batch size
-        # candidate_scores: [batch_size, max_num_candidates]
-        winning_indices = np.argmax(candidate_scores, axis=1)
+        # logits: [batch_size, max_num_candidates]
+        winning_indices = np.argmax(logits, axis=1)
         result = []
         for index_in_batch, question in enumerate(inputs):
             winning_index = winning_indices[index_in_batch]
-            score = candidate_scores[index_in_batch, winning_index]
+            score = logits[index_in_batch, winning_index]
             result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
         return result
 
