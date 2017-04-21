@@ -23,8 +23,11 @@ class SingleSupportFixedClassForward(object):
 
 class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
     def __init__(self, shared_resources):
-        self.nvocab = None
         self.shared_resources = shared_resources
+        self.vocab = self.shared_resources.vocab
+        self.config = self.shared_resources.config
+        self.question_embedding_matrix = None
+        self.support_embedding_matrix = None
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -52,16 +55,25 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       support_length : tf.Tensor,
                       question_length : tf.Tensor) -> Sequence[tf.Tensor]:
 
-        if not self.nvocab:
-            self.nvocab = NeuralVocab(shared_resources.vocab,
-                                      input_size=shared_resources.config['repr_dim_input'])
-
-        question_embedding_matrix, support_embedding_matrix = self.nvocab.embedding_matrix, self.nvocab.embedding_matrix
         question_ids, support_ids = question, support
+        if self.question_embedding_matrix is None:
+            input_size = self.config['repr_dim_input']
+            if 'pretrained_embedding' not in self.config:
+                self.question_embedding_matrix = tf.get_variable(
+                        "emb_Q", [len(self.vocab), input_size],
+                                         initializer=tf.contrib.layers.xavier_initializer(),
+                                         trainable=True, dtype="float32")
+                self.support_embedding_matrix = tf.get_variable(
+                        "emb_S", [len(self.vocab), input_size],
+                                         initializer=tf.contrib.layers.xavier_initializer(),
+                                         trainable=True, dtype="float32")
+            else:
+                self.question_embedding_matrix = self.shared_resources.config['pretrained_embedding'][0]
+                self.support_embedding_matrix = self.shared_resources.config['pretrained_embedding'][1]
 
         logits = self.forward_pass(shared_resources,
-                                   question_embedding_matrix, question_ids, question_length,
-                                   support_embedding_matrix, support_ids, support_length,
+                                   question_ids, question_length,
+                                   support_ids, support_length,
                                    shared_resources.config['answer_size'])
 
         predictions = tf.arg_max(logits, 1, name='prediction')
