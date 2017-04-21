@@ -212,7 +212,7 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-        S = tf.squeeze(S,1)
+        S_ids = tf.squeeze(S_ids, 1)
         S_lengths = tf.squeeze(S_lengths, 1)
 
         Q_seq = tf.nn.embedding_lookup(Q_embedding_matrix, Q_ids)
