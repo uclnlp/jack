@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import json
 import logging
 import math
 import os
@@ -138,6 +139,9 @@ def main():
     parser.add_argument('--max_support_length', default=-1, type=int,
                         help="How large the support should be. Can be used for cutting or filtering QA examples.")
 
+    parser.add_argument('--kwargs', default='{}', type=str, help='string in json format that contains additional '
+                                                                 'model- or application-specific configurations.')
+
     args = parser.parse_args()
 
     # make everything deterministic
@@ -192,7 +196,12 @@ def main():
     with tf.device(args.device):
         # build JTReader
         checkpoint()
-        reader = readers.readers[args.model](vocab, vars(args))
+
+        config = vars(args)
+        kwargs = config.pop("kwargs", "{}")
+        kwargs = json.loads(kwargs)
+        config.update(kwargs)
+        reader = readers.readers[args.model](vocab, config)
         checkpoint()
 
         learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
@@ -256,4 +265,5 @@ def main():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
     main()
