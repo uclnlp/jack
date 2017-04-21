@@ -207,7 +207,7 @@ class SimpleMCOutputModule(OutputModule):
 
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources, nvocab,
+    def forward_pass(self, shared_resources,
                      #Q, S, Q_lengths, S_lengths,
                      Q_embedding_matrix, Q_ids, Q_lengths,
                      S_embedding_matrix, S_ids,  S_lengths,
