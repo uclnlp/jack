@@ -28,18 +28,18 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.single_support,
+        return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length]
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores,
+        return [Ports.Prediction.logits,
                 Ports.Prediction.candidate_index]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.candidate_scores,
+        return [Ports.Prediction.logits,
                 Ports.Target.target_index]
 
     @property

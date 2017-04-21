@@ -90,32 +90,22 @@ class Ports:
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
 
-        # keep it for now
-        single_support = TensorPort(tf.int32, [None, None], "single_support",
-                                    "Represents instances with a single support document. ",
-                                    "[batch_size, max_num_tokens]")
-
         multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
                                       "Represents instances with multiple support documents",
                                       "[batch_size, max_num_support, max_num_tokens]")
 
         # extend description
         atomic_candidates = TensorPort(tf.int32, [None, None], "candidates",
-                                       "Represents candidate choices using single symbols",
+                                       ("Represents candidate choices using single symbols. ",
+                                        "This could be a list of entities from global entities ",
+                                        "for example atomic_candidates = [e1, e7, e83] from ",
+                                        "global_entities = [e1, e2, e3, ..., eN-1, eN"),
                                        "[batch_size, num_candidates]")
 
         sample_id = TensorPort(tf.int32, [None], "sample_id",
                                "Maps this sample to the index in the input text data",
                                "[batch_size]")
 
-        # remove?
-        keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
-                                          "scalar representing keep probability when using dropout",
-                                          "[]")
-
-        is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
-                                        "boolean that determines whether input is eval or training.",
-                                        "[]")
 
         # add multiple x_length; change description
         support_length = TensorPort(tf.int32, [None, None], "support_length",
@@ -127,8 +117,7 @@ class Ports:
                                      "[Q]")
 
     class Prediction:
-        # rename to logits
-        candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
+        logits = TensorPort(tf.float32, [None, None], "candidate_scores",
                                       "Represents output scores for each candidate",
                                       "[batch_size, num_candidates]")
 
@@ -138,12 +127,10 @@ class Ports:
                                      "[batch_size]")
 
     class Target:
-        # rename candidate 1hot
-        candidate_labels = TensorPort(tf.float32, [None, None], "candidate_targets",
+        candidate_1hot = TensorPort(tf.float32, [None, None], "candidate_targets",
                                       "Represents target (0/1) values for each candidate",
                                       "[batch_size, num_candidates]")
 
-        # more description: KBP example
         target_index = TensorPort(tf.int32, [None], "target_index",
                                   ("Represents symbol id of target candidate. ",
                                    "This can either be an index into a full list of candidates,",

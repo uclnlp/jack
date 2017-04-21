@@ -5,6 +5,15 @@ This file contains reusable modules for extractive QA models and ports
 from jtr.jack.core import *
 from jtr.preprocess.map import deep_map
 
+class ParameterTensorPorts:
+        # remove?
+        keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
+                                          "scalar representing keep probability when using dropout",
+                                          "[]")
+
+        is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
+                                        "boolean that determines whether input is eval or training.",
+                                        "[]")
 
 class XQAPorts:
     # When feeding embeddings directly
@@ -27,8 +36,8 @@ class XQAPorts:
                                       "Represents support using symbol vectors",
                                       "[batch_size, max_num_support_tokens, max]")
 
-    keep_prob = Ports.Input.keep_prob
-    is_eval = Ports.Input.is_eval
+    keep_prob = ParameterTensorPorts.keep_prob
+    is_eval = ParameterTensorPorts.is_eval
 
     # This feature is model specific and thus, not part of the conventional Ports
     word_in_question = TensorPort(tf.float32, [None, None], "word_in_question_feature",
