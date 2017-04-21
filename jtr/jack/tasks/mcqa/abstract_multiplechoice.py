@@ -47,11 +47,8 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         return [Ports.loss]
 
     def create_output(self, shared_resources: SharedResources,
-                      support : tf.Tensor,
-                      question : tf.Tensor,
-                      support_length : tf.Tensor,
-                      question_length : tf.Tensor) -> Sequence[tf.Tensor]:
-
+                      support : tf.Tensor, question : tf.Tensor,
+                      support_length : tf.Tensor, question_length : tf.Tensor) -> Sequence[tf.Tensor]:
         if not self.nvocab:
             self.nvocab = NeuralVocab(shared_resources.vocab,
                                       input_size=shared_resources.config['repr_dim_input'])
