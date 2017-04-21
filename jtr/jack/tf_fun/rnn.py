@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import tensorflow as tf
 
@@ -49,8 +51,6 @@ def fused_birnn(fused_rnn, inputs, sequence_length, initial_state=None, dtype=No
             outputs_fw = tf.transpose(outputs_fw, [1, 0, 2])
             outputs_bw = tf.transpose(outputs_bw, [1, 0, 2])
     return (outputs_fw, outputs_bw), (state_fw, state_bw)
-
-
 
 
 def pair_of_bidirectional_LSTMs(seq1, seq1_lengths, seq2, seq2_lengths,
@@ -109,21 +109,30 @@ def dynamic_bidirectional_lstm(inputs, lengths, output_size,
     """
     with tf.variable_scope(scope or "reader") as varscope:
         varscope
-        cell = tf.contrib.rnn.LSTMCell(
+        cell_fw = tf.contrib.rnn.LSTMCell(
+            output_size,
+            state_is_tuple=True,
+            initializer=tf.contrib.layers.xavier_initializer()
+        )
+        cell_bw = tf.contrib.rnn.LSTMCell(
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
         if drop_keep_prob != 1.0:
-            cell = tf.contrib.rnn.DropoutWrapper(
-                                    cell=cell,
+            cell_fw = tf.contrib.rnn.DropoutWrapper(
+                                    cell=cell_fw,
+                                    output_keep_prob=drop_keep_prob,
+                                    input_keep_prob=drop_keep_prob, seed=1233)
+            cell_bw = tf.contrib.rnn.DropoutWrapper(
+                                    cell=cell_bw,
                                     output_keep_prob=drop_keep_prob,
                                     input_keep_prob=drop_keep_prob, seed=1233)
 
         all_states_fw_bw, final_states_fw_bw = tf.nn.bidirectional_dynamic_rnn(
-            cell,
-            cell,
+            cell_fw,
+            cell_bw,
             inputs,
             sequence_length=lengths,
             initial_state_fw=initial_state[0],
