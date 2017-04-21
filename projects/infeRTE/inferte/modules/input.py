@@ -29,7 +29,9 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
         target_vocab = candidate_vocab = vocab
 
     corpus_tokenized = deep_map(corpus, tokenize if tokenization else notokenize, ['question', 'support'])
+
     corpus_lower = deep_seq_map(corpus_tokenized, lower, ['question', 'support']) if lowercase else corpus_tokenized
+
     corpus_os = deep_seq_map(corpus_lower, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])\
         if tokenization else corpus_lower
 
@@ -48,12 +50,17 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
                              for cand in xs[cands_name][i]]
             return xs
         corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
+    #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
+    #todo: there is no guarantee that these are the same)
+    #todo: alternative: use functions in pipeline.py
+
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if negsamples > 0 and not test_time:#we want this to be the last thing we do to candidates
-            corpus_ids = dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+            corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
+
 
 
 def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamples=0,
@@ -64,7 +71,7 @@ def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamp
     for i, xy in enumerate(data):
         x, y = (xy, None) if test_time else xy
 
-        corpus["support"] += [x.support[0] if use_single_support else x.support]
+        corpus["support"] += [x.support if use_single_support else x.support]
         corpus['ids'].append(i)
         corpus["question"].append(x.question)
         corpus["candidates"].append(x.atomic_candidates)

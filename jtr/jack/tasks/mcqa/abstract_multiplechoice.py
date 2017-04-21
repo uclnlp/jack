@@ -77,6 +77,6 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
 
     def create_training_output(self, shared_resources: SharedResources,
                                logits : tf.Tensor, labels : tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                                                                             labels=labels), name='predictor_loss')
+        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels),
+                              name='predictor_loss')
         return [loss]

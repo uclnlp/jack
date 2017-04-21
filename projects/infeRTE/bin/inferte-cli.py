@@ -8,10 +8,17 @@ import tensorflow as tf
 
 import jtr.jack.readers as readers
 
+#from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs
+#from jtr.jack.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel
+#from jtr.jack.tasks.mcqa.simple_mcqa import EmptyOutputModule
+#from jtr.jack.core import JTReader
+
 from inferte.modules.input import SingleSupportFixedClassInputs
 from inferte.modules.model import PairOfBiLSTMOverSupportAndQuestionModel
 from inferte.modules.output import EmptyOutputModule
 from inferte.reader import JTReader
+
+
 
 from jtr.preprocess.vocab import Vocab
 from jtr.jack.core import SharedVocabAndConfig
@@ -55,7 +62,7 @@ def main(argv):
     print(vocab.sym2id)
 
     train, dev, test = TestDatasets.generate()
-    train = train[:10]
+    #train = train[:10]
 
     print(len(train))
     print(train[0])
