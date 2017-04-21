@@ -25,4 +25,3 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
         # [batch, 2*output_dim] -> [batch, num_classes]
         outputs = simple.fully_connected_projection(final_states, num_classes)
         return outputs
-    
