@@ -56,9 +56,13 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
             self.nvocab = NeuralVocab(shared_resources.vocab,
                     input_size=shared_resources.config['repr_dim_input'])
 
-        logits = self.forward_pass(shared_resources, self.nvocab,
-                                   question, support, question_length,
-                                   support_length,
+        question_embedding_matrix, support_embedding_matrix = self.nvocab.embedding_matrix, self.nvocab.embedding_matrix
+        question_ids, support_ids = question, support
+
+        logits = self.forward_pass(shared_resources,
+                                   #self.nvocab, question, support, question_length, support_length,
+                                   question_embedding_matrix, question_ids, question_length,
+                                   support_embedding_matrix, support_ids, support_length,
                                    shared_resources.config['answer_size'])
 
         predictions = tf.arg_max(logits, 1, name='prediction')
@@ -70,7 +74,6 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                                logits : tf.Tensor,
                                labels : tf.Tensor) -> Sequence[tf.Tensor]:
 
-        loss = tf.reduce_mean(
-        tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-            labels=labels), name='predictor_loss')
+        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+                                                                             labels=labels), name='predictor_loss')
         return [loss]
