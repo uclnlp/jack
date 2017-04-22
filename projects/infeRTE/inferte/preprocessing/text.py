@@ -33,15 +33,13 @@ class Tokenizer(object):
             self.document_count += 1
             seq = text if self.char_level else text_to_word_sequence(text, self.filters, self.lower, self.split)
             for w in seq:
-                if w in self.word_counts:
-                    self.word_counts[w] += 1
-                else:
-                    self.word_counts[w] = 1
+                if w not in self.word_counts:
+                    self.word_counts[w] = 0
+                self.word_counts[w] += 1
             for w in set(seq):
-                if w in self.word_docs:
-                    self.word_docs[w] += 1
-                else:
-                    self.word_docs[w] = 1
+                if w not in self.word_docs:
+                    self.word_docs[w] = 0
+                self.word_docs[w] += 1
 
         word_counts = list(self.word_counts.items())
         word_counts.sort(key=lambda x: x[1], reverse=True)

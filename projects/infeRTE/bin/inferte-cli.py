@@ -43,16 +43,27 @@ def main(argv):
     train, dev, test = TestDatasets.generate()
     train = train[:10]
 
-    print(train)
+    question_texts = [instance[0].question for instance in train]
+    support_texts = [instance[0].support[0] for instance in train]
+
+    candidates_texts = []
+    for instance in train:
+        candidates_texts += instance[0].atomic_candidates
+    answer_texts = [instance[1][0].text for instance in train]
+
+    qs_tokenizer, ca_tokenizer = Tokenizer(), Tokenizer()
+
+    qs_tokenizer.fit_on_texts(question_texts + support_texts)
+    ca_tokenizer.fit_on_texts(candidates_texts + answer_texts)
+
+    corpus = {
+        'question': qs_tokenizer.texts_to_sequences(question_texts),
+        'support': [[s] for s in qs_tokenizer.texts_to_sequences(support_texts)]
+    }
+
+    print(corpus)
 
     sys.exit(0)
-
-    texts = ['Hello world', 'How are you?']
-    tokenizer = Tokenizer()
-    tokenizer.fit_on_texts(texts)
-    seqs = tokenizer.texts_to_sequences(texts)
-
-    print('seqs', seqs)
 
     logger.info("Existing models: {}".format(", ".join(readers.readers.keys())))
 
@@ -66,12 +77,12 @@ def main(argv):
     vocab = Vocab()
 
     shared_resources = SharedVocabAndConfig(vocab, config)
-    reader = JTReader(shared_resources,
-                      SingleSupportFixedClassInputs(shared_resources),
-                      PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
-                      EmptyOutputModule())
-
-    print(train[0])
+    reader = JTReader(
+        shared_resources,
+        SingleSupportFixedClassInputs(shared_resources),
+        PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
+        EmptyOutputModule()
+    )
 
     optimizer = tf.train.AdamOptimizer(0.001)
     reader.train(optimizer, train, hooks=[], max_epochs=1, device='/cpu:0')
