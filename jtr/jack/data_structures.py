@@ -20,7 +20,11 @@ def NamedTupleWithDefaults(typename, fields, default_values=()):
     return T
 
 
-Answer = NamedTuple("Answer", [('text', str), ('span', Tuple[int, int]), ('score', float)])
+Answer = NamedTuple("Answer",
+                    [('text', str),
+                     ('span', Tuple[int, int]),
+                     ('score', float)])
+
 QASetting = NamedTuple("QASetting", [('question', str),
                                      ('support', List[str]),
                                      # id of the instance
@@ -32,9 +36,9 @@ QASetting = NamedTuple("QASetting", [('question', str),
 
 
 # Wrapper for creating input
-def QASettingWithDefaults(question, support=(), id=None,
+def QASettingWithDefaults(question, support=(), idx=None,
                           atomic_candidates=None, seq_candidates=None, candidate_spans=None):
-    return QASetting(question, support, id,
+    return QASetting(question, support, idx,
                      atomic_candidates, seq_candidates, candidate_spans)
 
 
@@ -67,7 +71,7 @@ def convert2qasettings(jtr_data, max_count=None, **options):
                 candidates = global_candidates
             answers = [Answer(value(c), value(c, 'span'), 1.0)
                        for c in question_instance['answers']] if "answers" in question_instance else None
-            yield QASettingWithDefaults(question, support, atomic_candidates=candidates, id=idd), answers
+            yield QASettingWithDefaults(question, support, atomic_candidates=candidates, idx=idd), answers
 
     result = [(inp, answer) for i in jtr_data["instances"] for inp, answer in convert_instance(i)][:max_count]
     if max_count is None:
