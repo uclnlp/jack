@@ -46,21 +46,23 @@ def main(argv):
     question_texts = [instance[0].question for instance in train]
     support_texts = [instance[0].support[0] for instance in train]
 
-    candidates_texts = []
-    for instance in train:
-        candidates_texts += instance[0].atomic_candidates
+    candidates_texts = [instance[0].atomic_candidates for instance in train]
     answer_texts = [instance[1][0].text for instance in train]
 
     qs_tokenizer, ca_tokenizer = Tokenizer(), Tokenizer()
 
     qs_tokenizer.fit_on_texts(question_texts + support_texts)
-    ca_tokenizer.fit_on_texts(candidates_texts + answer_texts)
+    ca_tokenizer.fit_on_texts([c for l in candidates_texts for c in l] + answer_texts)
 
     corpus = {
         'question': qs_tokenizer.texts_to_sequences(question_texts),
-        'support': [[s] for s in qs_tokenizer.texts_to_sequences(support_texts)]
-    }
-
+        'support': [[s] for s in qs_tokenizer.texts_to_sequences(support_texts)],
+        'candidates': [c for cs in candidates_texts for [c] in ca_tokenizer.texts_to_sequences(cs)],
+        'answers': [a for [a] in ca_tokenizer.texts_to_sequences(answer_texts)]}
+    corpus['question_lengths'] = [len(q) for q in corpus['question']]
+    corpus['support_lengths'] = [[len(s)] for [s] in corpus['support']]
+    corpus['ids'] = list(range(len(corpus['question'])))
+    
     print(corpus)
 
     sys.exit(0)
