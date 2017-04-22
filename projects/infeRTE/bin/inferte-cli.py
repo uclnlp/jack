@@ -18,12 +18,10 @@ from inferte.modules.model import PairOfBiLSTMOverSupportAndQuestionModel
 from inferte.modules.output import EmptyOutputModule
 from inferte.reader import JTReader
 
-
+from inferte.preprocessing.text import Tokenizer
 
 from jtr.preprocess.vocab import Vocab
 from jtr.jack.core import SharedVocabAndConfig
-
-from jtr.jack.train.hooks import LossHook
 
 import logging
 
@@ -42,6 +40,20 @@ class TestDatasets:
 
 
 def main(argv):
+    train, dev, test = TestDatasets.generate()
+    train = train[:10]
+
+    print(train)
+
+    sys.exit(0)
+
+    texts = ['Hello world', 'How are you?']
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(texts)
+    seqs = tokenizer.texts_to_sequences(texts)
+
+    print('seqs', seqs)
+
     logger.info("Existing models: {}".format(", ".join(readers.readers.keys())))
 
     config = {
@@ -59,33 +71,10 @@ def main(argv):
                       PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
                       EmptyOutputModule())
 
-    print(vocab.sym2id)
-
-    train, dev, test = TestDatasets.generate()
-    #train = train[:10]
-
-    print(len(train))
     print(train[0])
 
-    # We creates hooks which keep track of the loss
-    # We also create 'the standard hook' for our model
-    hooks = [
-        LossHook(reader, iter_interval=10),
-        readers.eval_hooks['snli_reader'](reader, dev, iter_interval=25)
-    ]
-
-    # Here we initialize our optimizer
-    # we choose Adam with standard momentum values and learning rate 0.001
-    learning_rate = 0.001
-    optimizer = tf.train.AdamOptimizer(learning_rate)
-
-    # Lets train the reader on the CPU for 2 epochs
-    reader.train(optimizer, train,
-                 hooks=hooks,
-                 max_epochs=1,
-                 device='/cpu:0')
-
-    print(vocab.sym2id)
+    optimizer = tf.train.AdamOptimizer(0.001)
+    reader.train(optimizer, train, hooks=[], max_epochs=1, device='/cpu:0')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

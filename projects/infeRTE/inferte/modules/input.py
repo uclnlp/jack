@@ -56,11 +56,10 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
 
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if negsamples > 0 and not test_time:#we want this to be the last thing we do to candidates
-            corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+            corpus_ids = dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
-
 
 
 def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamples=0,
@@ -75,7 +74,9 @@ def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamp
         corpus['ids'].append(i)
         corpus["question"].append(x.question)
         corpus["candidates"].append(x.atomic_candidates)
+
         assert len(y) == 1
+
         if not test_time:
             corpus["answers"].append(y[0].text)
 
@@ -108,14 +109,25 @@ class SingleSupportFixedClassInputs(InputModule):
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
-    def __call__(self, qa_settings: List[QASetting]) \
-            -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_vocab_config.vocab,
-                        None, sepvocab=True)
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]):
+        corpus, train_vocab, train_answer_vocab, train_candidate_vocab =\
+            preprocess_with_pipeline(data, self.shared_vocab_config.vocab, None, sepvocab=True)
+
+        print(type(corpus), corpus.keys())
+
+        print('question', corpus['question'])
+        print('question_lengths', corpus['question_lengths'])
+
+        print('support', corpus['support'])
+        print('support_lengths', corpus['support_lengths'])
+
+        print('candidates', corpus['candidates'])
+        print('ids', corpus['ids'])
+        print('answers', corpus['answers'])
+
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
@@ -125,19 +137,16 @@ class SingleSupportFixedClassInputs(InputModule):
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, _, _, _ = \
-                preprocess_with_pipeline(dataset,
-                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
-
+        corpus, _, _, _ = preprocess_with_pipeline(dataset, self.shared_vocab_config.vocab, self.answer_vocab,
+                                                   use_single_support=True, sepvocab=True)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Target.target_index:  corpus["answers"],
-            Ports.Input.question_length : corpus['question_lengths'],
-            Ports.Input.support_length : corpus['support_lengths'],
-            Ports.Input.sample_id : corpus['ids']
+            Ports.Input.question_length: corpus['question_lengths'],
+            Ports.Input.support_length: corpus['support_lengths'],
+            Ports.Input.sample_id: corpus['ids']
         }
-
         return get_batches(xy_dict)
 
     def setup(self):
