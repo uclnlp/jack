@@ -90,9 +90,9 @@ def tfprint_legacy(tensor, message=None, precision=5, first_n=None, summarize=10
 def get_timestamped_dir(path, name=None, link_to_latest=False):
     """Create a directory with the current timestamp."""
     current_time = strftime("%y-%m-%d/%H-%M-%S", gmtime())
-    dir = path + "/" + current_time + "/"
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    folder_path = path + "/" + current_time + "/"
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     if name is not None:
         if os.path.exists(path + "/" + name):
             os.remove(path + "/" + name)
@@ -101,14 +101,14 @@ def get_timestamped_dir(path, name=None, link_to_latest=False):
         if os.path.exists(path + "/latest"):
             os.remove(path + "/latest")
         os.symlink(current_time, path + "/latest", target_is_directory=True)
-    return dir
+    return folder_path
 
 
 def save_conf(path, conf):
     with open(path, "w") as f_out:
         splits = path.split("/")
-        dir = "/".join(splits[:-1]) + "/"
-        conf["meta"]["experiment_dir"] = dir
+        folder_path = "/".join(splits[:-1]) + "/"
+        conf["meta"]["experiment_dir"] = folder_path
         json.dump(conf, f_out, indent=4, sort_keys=True)
         f_out.close()
 

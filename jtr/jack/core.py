@@ -775,42 +775,42 @@ class JTReader:
         self.output_module.setup()
         self.sess.run([v.initializer for v in self.model_module.variables])
 
-    def setup_from_file(self, dir):
+    def setup_from_file(self, path):
         """
         Sets up already stored reader from model directory.
         Args:
-            data: training dataset
+            path: training dataset
         """
-        self.shared_resources.load(os.path.join(dir, "shared_resources"))
+        self.shared_resources.load(os.path.join(path, "shared_resources"))
         self.input_module.setup()
-        self.input_module.load(os.path.join(dir, "input_module"))
+        self.input_module.load(os.path.join(path, "input_module"))
         self.model_module.setup(self.is_train)
         self.sess.run([v.initializer for v in self.model_module.variables])
-        self.model_module.load(self.sess, os.path.join(dir, "model_module"))
+        self.model_module.load(self.sess, os.path.join(path, "model_module"))
         self.output_module.setup()
-        self.output_module.load(os.path.join(dir, "output_module"))
+        self.output_module.load(os.path.join(path, "output_module"))
 
-    def load(self, dir):
+    def load(self, path):
         """
         (Re)loads module states on a setup reader (but not shared resources).
         If reader is not setup yet use setup from file instead.
         Args:
-            dir: model directory
+            path: model directory
         """
-        self.input_module.load(os.path.join(dir, "input_module"))
-        self.model_module.load(self.sess, os.path.join(dir, "model_module"))
-        self.output_module.load(os.path.join(dir, "output_module"))
+        self.input_module.load(os.path.join(path, "input_module"))
+        self.model_module.load(self.sess, os.path.join(path, "model_module"))
+        self.output_module.load(os.path.join(path, "output_module"))
 
-    def store(self, dir):
+    def store(self, path):
         """
         Store module states and shared resources.
         Args:
-            dir: model directory
+            path: model directory
         """
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
-        os.makedirs(dir)
-        self.shared_resources.store(os.path.join(dir, "shared_resources"))
-        self.input_module.store(os.path.join(dir, "input_module"))
-        self.model_module.store(self.sess, os.path.join(dir, "model_module"))
-        self.output_module.store(os.path.join(dir, "output_module"))
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.makedirs(path)
+        self.shared_resources.store(os.path.join(path, "shared_resources"))
+        self.input_module.store(os.path.join(path, "input_module"))
+        self.model_module.store(self.sess, os.path.join(path, "model_module"))
+        self.output_module.store(os.path.join(path, "output_module"))
