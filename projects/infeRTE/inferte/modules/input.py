@@ -33,7 +33,6 @@ class SingleSupportFixedClassInputs(InputModule):
         pass
 
     def dataset_generator(self, corpus: Dict[str, Any], is_eval=True) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        print(corpus)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],

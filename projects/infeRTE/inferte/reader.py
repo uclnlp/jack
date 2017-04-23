@@ -107,7 +107,6 @@ class JTReader:
         self.setup()
 
         batches = self.input_module.dataset_generator(training_set)
-        print(self.model_module.tensors)
         loss = self.model_module.tensors[Ports.loss]
 
         if l2:

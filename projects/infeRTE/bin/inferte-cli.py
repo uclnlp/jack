@@ -13,7 +13,7 @@ from inferte.modules.model import PairOfBiLSTMOverSupportAndQuestionModel
 from inferte.modules.output import EmptyOutputModule
 from inferte.reader import JTReader
 
-from inferte.preprocessing.text import Tokenizer
+import tensorflow.contrib.keras as keras
 
 import logging
 
@@ -39,11 +39,11 @@ def to_corpus(train, qs_tokenizer=None, ca_tokenizer=None):
     answer_texts = [instance[1][0].text for instance in train]
 
     if not qs_tokenizer:
-        qs_tokenizer = Tokenizer()
+        qs_tokenizer = keras.preprocessing.text.Tokenizer()
         qs_tokenizer.fit_on_texts(question_texts + support_texts)
 
     if not ca_tokenizer:
-        ca_tokenizer = Tokenizer()
+        ca_tokenizer = keras.preprocessing.text.Tokenizer()
         ca_tokenizer.fit_on_texts([c for l in candidates_texts for c in l] + answer_texts)
 
     corpus = {
@@ -88,7 +88,10 @@ def main(argv):
     optimizer = tf.train.AdamOptimizer(0.001)
 
     from jtr.jack.train.hooks import LossHook
-    hooks = [LossHook(reader, iter_interval=10)]
+    hooks = [
+        LossHook(reader, iter_interval=10),
+        readers.eval_hooks['snli_reader'](reader, dev_corpus, iter_interval=25)
+    ]
 
     reader.train(optimizer, train_corpus, hooks=hooks, max_epochs=500)
 
