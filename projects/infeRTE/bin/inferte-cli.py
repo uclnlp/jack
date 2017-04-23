@@ -31,20 +31,20 @@ class TestDatasets:
         return [load_labelled_data(os.path.join('SNLI/', split)) for split in splits]
 
 
-def main(argv):
-    train, dev, test = TestDatasets.generate()
-    train = train[:100]
-
+def to_corpus(train, qs_tokenizer=None, ca_tokenizer=None):
     question_texts = [instance[0].question for instance in train]
     support_texts = [instance[0].support[0] for instance in train]
 
     candidates_texts = [instance[0].atomic_candidates for instance in train]
     answer_texts = [instance[1][0].text for instance in train]
 
-    qs_tokenizer, ca_tokenizer = Tokenizer(), Tokenizer()
+    if not qs_tokenizer:
+        qs_tokenizer = Tokenizer()
+        qs_tokenizer.fit_on_texts(question_texts + support_texts)
 
-    qs_tokenizer.fit_on_texts(question_texts + support_texts)
-    ca_tokenizer.fit_on_texts([c for l in candidates_texts for c in l] + answer_texts)
+    if not ca_tokenizer:
+        ca_tokenizer = Tokenizer()
+        ca_tokenizer.fit_on_texts([c for l in candidates_texts for c in l] + answer_texts)
 
     corpus = {
         'question': qs_tokenizer.texts_to_sequences(question_texts),
@@ -56,6 +56,17 @@ def main(argv):
     corpus['question_lengths'] = [len(q) for q in corpus['question']]
     corpus['support_lengths'] = [[len(s)] for [s] in corpus['support']]
     corpus['ids'] = list(range(len(corpus['question'])))
+
+    return corpus, qs_tokenizer, ca_tokenizer
+
+
+def main(argv):
+    train, dev, test = TestDatasets.generate()
+    train = train[:100]
+
+    train_corpus, qs_tokenizer, ca_tokenizer = to_corpus(train)
+    dev_corpus, _, _ = to_corpus(dev, qs_tokenizer, ca_tokenizer)
+    test_corpus, _, _ = to_corpus(test, qs_tokenizer, ca_tokenizer)
 
     logger.info("Existing models: {}".format(", ".join(readers.readers.keys())))
 
@@ -79,7 +90,7 @@ def main(argv):
     from jtr.jack.train.hooks import LossHook
     hooks = [LossHook(reader, iter_interval=10)]
 
-    reader.train(optimizer, corpus, hooks=hooks, max_epochs=500)
+    reader.train(optimizer, train_corpus, hooks=hooks, max_epochs=500)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
