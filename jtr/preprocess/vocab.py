@@ -4,9 +4,12 @@ import sys
 
 import numpy as np
 import tensorflow as tf
+import logging
 
 from jtr.nn.models import get_total_trainable_variables
 from jtr.util.tfutil import tfrun
+
+logger = logging.getLogger(__name__)
 
 
 class Vocab(object):
@@ -30,18 +33,7 @@ class Vocab(object):
         >>> print(vocab("world"))
         5
 
-        >>> #Sym2id before freezing:
-        >>> for k in sorted(vocab.sym2id.keys()):
-        ...     print(k,' : ',vocab.sym2id[k])
-        <UNK>  :  0
-        blah  :  1
-        bleh  :  3
-        bluh  :  2
-        hello  :  4
-        world  :  5
-
-        >>> #Sym2id after freezing (no difference, because no pre-trained embeddings used):
-        >>> vocab.freeze()
+        >>> #Sym2id:
         >>> for k in sorted(vocab.sym2id.keys()):
         ...     print(k,' : ',vocab.sym2id[k])
         <UNK>  :  0
@@ -52,122 +44,97 @@ class Vocab(object):
         world  :  5
 
         >>> #Test Vocab with pre-trained embeddings
-        >>> def emb(w):
-        ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
-        ...    return None if not w in v else v[w]
+        >>> from jtr.load.embeddings.vocabulary import Vocabulary as EVocab
+        >>> from jtr.load.embeddings import Embeddings
+        >>> np.random.seed(0)
+        >>> tf.set_random_seed(0)
+        >>> emb = Embeddings(EVocab({'blah':0,'bluh':1,'bleh':2}), np.random.rand(3,4))
         >>> vocab = Vocab(emb=emb)
+        >>> print(vocab.id2sym)
+        {0: 'blah', 1: 'bluh', 2: 'bleh', 3: '<UNK>'}
         >>> print(vocab("blah"))
-        -1
+        0
         >>> print(vocab("bluh"))
-        -2
-        >>> print(vocab("bleh"))
-        -3
-        >>> print(vocab("bluh"))
-        -2
-        >>> print(vocab("hello"))
         1
-        >>> print(vocab("world"))
+        >>> print(vocab("bleh"))
         2
-
-        >>> #Sym2id before freezing:
-        >>> for k in sorted(vocab.sym2id.keys()):
-        ...     print(k,' : ',vocab.sym2id[k])
-        <UNK>  :  0
-        blah  :  -1
-        bleh  :  -3
-        bluh  :  -2
-        hello  :  1
-        world  :  2
-
-        >>> #Sym2id after freezing: normalized (positive) ids, also for pre-trained terms
-        >>> vocab.freeze()
-        >>> for k in sorted(vocab.sym2id.keys()):
-        ...     print(k,' : ',vocab.sym2id[k])
-        <UNK>  :  0
-        blah  :  3
-        bleh  :  5
-        bluh  :  4
-        hello  :  1
-        world  :  2
-
-        >>> #Test pretrained and out-of-vocab id's before freezing
-        >>> vocab.unfreeze()
+        >>> print(vocab("bluh"))
+        1
+        >>> print(vocab("hello"))
+        4
+        >>> print(vocab("world"))
+        5
+        >>> print(vocab.n_pretrained)
+        3
         >>> vocab.get_ids_pretrained()
-        [-1, -2, -3]
-        >>> vocab.get_ids_oov()
         [0, 1, 2]
-
-        >>> #Test pretrained and out-of-vocab id's after freezing
-        >>> vocab.freeze()
-        >>> vocab.get_ids_pretrained()
+        >>> vocab.get_ids_oov()
         [3, 4, 5]
-        >>> vocab.get_ids_oov()
-        [0, 1, 2]
 
         >>> #Test calling frozen Vocab object
+        >>> vocab.freeze()
+        >>> vocab.sym2id[vocab.unk]
+        3
         >>> vocab(['bluh','world','wake','up']) #last 2 are new words, hence unknown
-        [4, 2, 0, 0]
-
+        [1, 5, 3, 3]
         >>> #Test calling unfrozen Vocab object
         >>> vocab.unfreeze()
-        >>> vocab(['bluh','world','wake','up']) #last 2 are new words, hence added to Vocab
-        [-2, 2, 3, 4]
+        >>> encoded_data = vocab(['bluh','world','wake','up', 'world', 'wake','up','wake','up','up','up']) #wake and up are new words, hence added to Vocab
+        >>> encoded_data
+        [1, 5, 6, 7, 5, 6, 7, 6, 7, 7, 7]
+        >>> #before pruning:
+        >>> print(sorted(vocab.id2sym.items()))
+        [(0, 'blah'), (1, 'bluh'), (2, 'bleh'), (3, '<UNK>'), (4, 'hello'), (5, 'world'), (6, 'wake'), (7, 'up')]
+        >>> #frequencies
+        >>> print(sorted(vocab.sym2freqs.items()))
+        [('<UNK>', 2), ('blah', 1), ('bleh', 1), ('bluh', 3), ('hello', 1), ('up', 5), ('wake', 3), ('world', 3)]
+        >>> encoded_data_pruned = vocab.prune(min_freq=2, max_size=4, data=encoded_data)
+        >>> #after pruning:
+        >>> print(encoded_data_pruned)
+        [0, 2, 1, 3, 2, 1, 3, 1, 3, 3, 3]
+        >>> print(vocab(['bluh','world','wake','up', 'world', 'wake','up','wake','up','up','up']))
+        [0, 2, 1, 3, 2, 1, 3, 1, 3, 3, 3]
+        >>> print(sorted(vocab.sym2id.items()))
+        [('<UNK>', 1), ('bluh', 0), ('up', 3), ('world', 2)]
 
-        >>> #Test sym2id after freezing again
-        >>> vocab.freeze()
-        >>> for k in sorted(vocab.sym2id.keys()):
-        ...     print(k,' : ',vocab.sym2id[k])
-        <UNK>  :  0
-        blah  :  5
-        bleh  :  7
-        bluh  :  6
-        hello  :  1
-        up  :  4
-        wake  :  3
-        world  :  2
     """
 
     DEFAULT_UNK = "<UNK>"
 
-    def __init__(self, unk=DEFAULT_UNK, emb=None, init_from_embeddings=False):
+    def __init__(self, unk=DEFAULT_UNK, emb=None):
         """
         Creates Vocab object.
 
         Args:
-            `unk`: symbol for unknown term (default: "<UNK>").
-              If set to `None`, and `None` is not included as symbol while unfrozen,
-              it will return `None` upon calling `get_id(None)` when frozen.
-            `emb`: function handle; returns pre-trained embedding (fixed-size numerical list or ndarray)
-              for a given symbol, and None for unknown symbols.
+            unk: unknown symbol; not added in case None
+            emb: object of type jtr.load.embeddings.embeddings.Embeddings
+                 or None (for not using pre-trained embeddings)
         """
-        self.next_pos = 0
-        self.next_neg = -1
         self.unk = unk
-        self.emb = emb if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
+        self.emb = emb if emb is not None else lambda _: None
 
-        if init_from_embeddings and emb is not None:
+        if emb is not None:#start by adding all words with pre-trained embeddings
             self.sym2id = dict(emb.vocabulary.word2idx)
             self.id2sym = {v: k for k, v in emb.vocabulary.word2idx.items()}
-            if unk is not None and unk not in self.sym2id:
-                self.sym2id[unk] = len(self.sym2id)
-                self.id2sym[len(self.id2sym)] = unk
-            self.sym2freqs = {w: emb.vocabulary.get_word_count(w) for w in self.sym2id}
-            self.frozen = True
-            self.next_pos = 0
-            self.next_neg = -1*len(self.sym2id)
+            self.n_pretrained = len(self.sym2id)
+            if self.unk is not None and self.unk not in self.sym2id:
+                self.sym2id[self.unk] = len(self.sym2id)
+                self.id2sym[len(self.id2sym)] = self.unk
+            self.sym2freqs = {w: 0 for w in self.sym2id}
+            self.next = len(self.sym2id)
         else:
+            self.n_pretrained = 0
             self.sym2id = {}
-            # with pos and neg indices
             self.id2sym = {}
-            self.next_pos = 0
+            self.next = 0
             self.sym2freqs = {}
-            if unk is not None:
-                self.sym2id[unk] = 0
-                # with pos and neg indices
-                self.id2sym[0] = unk
-                self.next_pos = 1
-                self.sym2freqs[unk] = 0
-            self.frozen = False
+            if self.unk is not None:
+                self.sym2id[self.unk] = 0
+                self.id2sym[0] = self.unk
+                self.next = 1
+                self.sym2freqs[self.unk] = 0
+
+        self.frozen = False
 
         if emb is not None and hasattr(emb, "lookup") and isinstance(emb.lookup, np.ndarray):
             self.emb_length = emb.lookup.shape[1]
@@ -176,88 +143,54 @@ class Vocab(object):
 
     def freeze(self):
         """Freeze current Vocab object (set `self.frozen` to True).
-        To be used after loading symbols from a given corpus;
-        transforms all internal symbol id's to positive indices (for use in tensors).
-
-        - additional calls to the __call__ method will return the id for the unknown symbold
-        - out-of-vocab id's are positive integers and do not change
-        - id's of symbols with pre-trained embeddings are converted to positive integer id's,
-          counting up from the all out-of-vocab id's.
+        Further unseen terms will be considered self.unk
         """
-        # if any pretrained have been encountered
-        if not self.frozen and self.next_neg < -1:
-            sym2id = {sym: self._normalize(id) for sym,id in self.sym2id.items()}
-            id2sym = {self._normalize(id): sym for id,sym in self.id2sym.items()}
-            self.sym2id = sym2id
-            self.id2sym = id2sym
         self.frozen = True
 
     def unfreeze(self):
         """Unfreeze current Vocab object (set `self.frozen` to False).
-        Caution: use with care! Unfreezing a Vocab, adding new terms, and again Freezing it,
-        will result in shifted id's for pre-trained symbols.
-
-        - maps all normalized id's to the original internal id's.
-        - additional calls to __call__ will allow adding new symbols to the vocabulary.
+        Further unseen terms will be added to vocab
         """
-        if self.frozen and self.next_neg < -1:
-            sym2id = {sym: self._denormalize(id) for sym, id in self.sym2id.items()}
-            id2sym = {self._denormalize(id): sym for id, sym in self.id2sym.items()}
-            self.sym2id = sym2id
-            self.id2sym = id2sym
         self.frozen = False
 
     def get_id(self, sym):
         """
-        Returns the id of `sym`; different behavior depending on the state of the Vocab:
-
-        - In case self.frozen==False (default): returns internal id,
-          that is, positive for out-of-vocab symbol, negative for symbol
-          found in `self.emb`. If `sym` is a new symbol, it is added to the Vocab.
-
-        - In case self.frozen==True (after explicit call to 'freeze()', or after building a `NeuralVocab` with it):
-          Returns normalized id (positive integer, also for symbols with pre-trained embedding)
-          If `sym` is a new symbol, the id for unknown terms is returned, if available,
-          and otherwise `None` (only possible when input argument `unk` for `Vocab.__init__()` was set to `None`, e.g. ;
-          for classification labels; it is assumed action is taken in the pipeline
-          creating or calling the `Vocab` object, when `None` is encountered).
+        Returns the id of `sym`.
+        If self.frozen==False, `sym` is added (or its frequency +1 if already in the vocab), and its id returned.
+        If self.frozen==True: if `sym` is a new symbol, the id for `self.unk` (unknown) is returned, if available,
+        and otherwise `None` (only possible when input argument `unk` for `Vocab.__init__()` was set to `None`, e.g.,
+        for classification labels; it is assumed action is taken in the pipeline
+        creating or calling the `Vocab` object, when `None` is encountered).
 
         Args:
             `sym`: symbol (e.g., token)
         """
         if not self.frozen:
-            vec = self.emb(sym)
-            if self.emb_length is None and vec is not None:
-                self.emb_length = len(vec) if isinstance(vec, list) else vec.shape[0]
             if sym not in self.sym2id:
-                if vec is None:
-                    self.sym2id[sym] = self.next_pos
-                    self.id2sym[self.next_pos] = sym
-                    self.next_pos += 1
-                else:
-                    self.sym2id[sym] = self.next_neg
-                    self.id2sym[self.next_neg] = sym
-                    self.next_neg -= 1
+                self.sym2id[sym] = self.next
+                self.id2sym[self.next] = sym
+                self.next += 1
                 self.sym2freqs[sym] = 1
             else:
                 self.sym2freqs[sym] += 1
-        if sym in self.sym2id:
             return self.sym2id[sym]
-        else:
-            if self.unk in self.sym2id:
-                return self.sym2id[self.unk]
-            # can happen for `Vocab` initialized with `unk` argument set to `None`
-            else:
-                return None
+        elif sym in self.sym2id:  #if frozen and sym already in vocab
+            return self.sym2id[sym]
+        elif self.unk in self.sym2id: #if frozen and sym not in vocab but unk exists in vocab
+            self.sym2freqs[self.unk] += 1
+            return self.sym2id[self.unk]
+        else:  #if self.unk is None
+            return None
+
 
     def get_sym(self, id):
-        """returns symbol for a given id (consistent with the `self.frozen` state), and None if not found."""
+        """returns symbol for a given id, and None if not found."""
         return None if not id in self.id2sym else self.id2sym[id]
 
     def __call__(self, *args, **kwargs):
         """
         calls the `get_id` function for the provided symbol(s), which adds symbols to the Vocab if needed and allowed,
-        and returns their id(s).
+        and returns the id(s).
 
         Args:
             *args: a single symbol, a list of symbols, or multiple symbols
@@ -278,52 +211,95 @@ class Vocab(object):
         """checks if `sym` already in the Vocab object"""
         return sym in self.sym2id
 
-    def _normalize(self, id):
-        """map original (pos/neg) ids to normalized (non-neg) ids: first new symbols, then those in emb"""
-        # e.g. -1 should be mapped to self.next_pos + 0
-        # e.g. -3 should be mapped to self.next_pos + 2
-        return id if id >=0 else self.next_pos - id - 1
-
-    def _denormalize(self,id):
-        # self.next_pos + i is mapped back to  -1-i
-        return id if id < self.next_pos else -1-(id-self.next_pos)
-
     def get_ids_pretrained(self):
-        """return internal or normalized id's (depending on frozen/unfrozen state)
-        for symbols that have an embedding in `self.emb` """
-        if self.frozen:
-            return list(range(self.next_pos,self.next_pos+self.count_pretrained()))
-        else:
-            return list(range(-1,self.next_neg,-1))
+        """return ids for symbols that have an embedding in `self.emb` """
+        return list(range(self.n_pretrained))
 
     def get_ids_oov(self):
-        """return out-of-vocab id's (indep. of frozen/unfrozen state)"""
-        return list(range(self.next_pos))
+        """return out-of-vocab id's"""
+        return list(range(self.n_pretrained, self.next))
+
+    def get_ids(self):
+        return list(range(len(self.sym2id)))
+
+    def get_syms(self):
+        return [self.id2sym[id] for id in self.get_ids()]
 
     def count_pretrained(self):
         """equivalent to `len(get_ids_pretrained())`"""
-        return -self.next_neg - 1
+        return self.n_pretrained
 
     def count_oov(self):
         """equivalent to `len(get_ids_oov())`"""
-        return self.next_pos
+        return self.next - self.n_pretrained
 
-    def prune(self, min_freq=5, max_size=sys.maxsize):
-        """returns new Vocab object, pruned based on minimum symbol frequency"""
-        pruned_vocab = Vocab(unk=self.unk, emb=self.emb)
-        cnt = 0
-        for sym, freq in sorted(self.sym2freqs.items(), key=operator.itemgetter(1), reverse=True):
-            # for sym in self.sym2freqs:
-            # freq = self.sym2freqs[sym]
-            cnt += 1
-            if freq >= min_freq and cnt < max_size:
-                pruned_vocab(sym)
-                pruned_vocab.sym2freqs[sym] = freq
-        if self.frozen:
-            # if original Vocab was frozen, freeze new one
-            pruned_vocab.freeze()
+    def prune(self, min_freq=1, max_size=None):
+        """
+        prunes Vocab in place, according to min_freq and max_size.
+        After pruning, the Vocab object gets frozen.
+        (Unfreezing and adding tokens is possible although not advised: any previously pruned token
+        will be added again as out-of-vocab.)
 
-        return pruned_vocab
+        Args:
+            min_freq: int (default 1: filtering out symbols from self.emb that don't appear in the training data)
+            max_size: int or None. Resulting Vocab will have at most max_size symbols
+
+        Returns:
+            function that allows mapping old id's to id's after this pruning operation
+
+        """
+        #filter symbols
+        #syms_oov = [self.id2sym[id] for id in self.get_ids_oov()]
+        #syms_pretrained = [self.id2sym[id] for id in self.get_ids_pretrained()]
+        filtered_syms = [sym for sym in self.get_syms() if self.sym2freqs[sym] >= min_freq]
+        filtered_syms = sorted(filtered_syms, key=lambda s: self.sym2freqs[s], reverse=True)
+
+        if isinstance(max_size, int) and len(filtered_syms) >= max_size:
+            filtered_syms = filtered_syms[:max_size]
+            if self.unk is not None and not self.unk in filtered_syms:
+                filtered_syms[-1] = self.unk
+        elif self.unk is not None and not self.unk in filtered_syms:
+            filtered_syms.append(self.unk)
+
+
+        #create mapping from old ids to new ids (or the id of self.unk for those left out)
+        id_map = [None for _ in range(len(self.sym2id))]
+        next_new = 0
+        for old_id in self.get_ids_pretrained():
+            if self.id2sym[old_id] in filtered_syms:
+                id_map[old_id] = next_new
+                next_new += 1
+        n_pretrained_new = next_new
+        for old_id in self.get_ids_oov():
+            if self.id2sym[old_id] in filtered_syms:
+                id_map[old_id] = next_new
+                next_new += 1
+        #id_map contains None for filtered out symbols; should become the new id of self.unk
+        if self.unk is not None: #then self.unk in filtered_syms
+            unk_id_new = id_map[self.sym2id[self.unk]]
+            id_map = [unk_id_new if id_new is None else id_new for id_new in id_map]
+
+        #construct id transformation function
+        id_trf = lambda old_id: id_map[old_id] if old_id < len(self) else None
+
+        #create updated fields:
+        sym2id_new = {sym: id_map[self.sym2id[sym]] for sym in filtered_syms}
+        id2sym_new = {id: sym for sym, id in sym2id_new.items()}
+        sym2freqs_new = {sym: self.sym2freqs[sym] for sym in filtered_syms}
+
+        #update self:
+        self.n_pretrained = n_pretrained_new
+        self.sym2id = sym2id_new
+        self.id2sym = id2sym_new
+        self.sym2freqs = sym2freqs_new
+        self.next = next_new
+
+        #freeze after pruning
+        self.freeze()
+
+        return id_trf
+
+
 
 
 class NeuralVocab(Vocab):
