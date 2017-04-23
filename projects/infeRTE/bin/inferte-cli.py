@@ -33,7 +33,7 @@ class TestDatasets:
 
 def main(argv):
     train, dev, test = TestDatasets.generate()
-    train = train[:10]
+    train = train[:100]
 
     question_texts = [instance[0].question for instance in train]
     support_texts = [instance[0].support[0] for instance in train]
@@ -49,8 +49,8 @@ def main(argv):
     corpus = {
         'question': qs_tokenizer.texts_to_sequences(question_texts),
         'support': [[s] for s in qs_tokenizer.texts_to_sequences(support_texts)],
-        'candidates': [c for cs in candidates_texts for [c] in ca_tokenizer.texts_to_sequences(cs)],
-        'answers': [a for [a] in ca_tokenizer.texts_to_sequences(answer_texts)]}
+        'candidates': [c - 1 for cs in candidates_texts for [c] in ca_tokenizer.texts_to_sequences(cs)],
+        'answers': [a - 1 for [a] in ca_tokenizer.texts_to_sequences(answer_texts)]}
 
     # Note - those parts feel redundant
     corpus['question_lengths'] = [len(q) for q in corpus['question']]
@@ -66,7 +66,7 @@ def main(argv):
         'dropout': 0.1,
 
         'vocab_size': qs_tokenizer.num_words if qs_tokenizer.num_words else len(qs_tokenizer.word_index) + 1,
-        'answer_size': 4
+        'answer_size': 3
     }
 
     reader = JTReader(config,
@@ -77,9 +77,7 @@ def main(argv):
     optimizer = tf.train.AdamOptimizer(0.001)
 
     from jtr.jack.train.hooks import LossHook
-    hooks = [
-        LossHook(reader, iter_interval=10),
-    ]
+    hooks = [LossHook(reader, iter_interval=10)]
 
     reader.train(optimizer, corpus, hooks=hooks, max_epochs=500)
 
