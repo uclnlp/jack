@@ -2,11 +2,10 @@
 
 import logging
 import sys
-from typing import Sequence
+from typing import Sequence, Mapping, Dict, Any
 import tensorflow as tf
 
-from jtr.jack.core import SharedResources, InputModule, ModelModule, OutputModule, Ports, Tuple
-from jtr.jack.data_structures import QASetting, Answer
+from jtr.jack.core import InputModule, ModelModule, OutputModule, Ports
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +18,16 @@ class JTReader:
     """
 
     def __init__(self,
-                 shared_resources: SharedResources,
+                 config: dict,
                  input_module: InputModule,
                  model_module: ModelModule,
                  output_module: OutputModule,
-                 sess: tf.Session = None,
-                 is_train: bool = True):
-        self.shared_resources = shared_resources
+                 sess: tf.Session = None):
+        self.config = config
         self.sess = sess
         self.output_module = output_module
         self.model_module = model_module
         self.input_module = input_module
-        self.is_train = is_train
 
         if self.sess is None:
             sess_config = tf.ConfigProto(allow_soft_placement=True)
@@ -48,7 +45,7 @@ class JTReader:
                    for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
 
-    def __call__(self, inputs: Sequence[QASetting]) -> Sequence[Answer]:
+    def __call__(self, inputs: Sequence[Mapping]) -> Sequence[dict]:
         """
         Answers a list of question settings
         Args:
@@ -62,7 +59,9 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+    def process_outputs(self, dataset: Dict[str, Any],
+                        batch_size: int,
+                        debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.dataset_generator are processed in order and do not get shuffled during with
@@ -77,7 +76,7 @@ class JTReader:
             predicted outputs/answers to a given (labeled) dataset
         """
         logger.debug("Setting up batches...")
-        batches = self.input_module.dataset_generator(dataset, is_eval=True)
+        batches = self.input_module.dataset_generator(dataset)
         answers = list()
         logger.debug("Start answering...")
         for j, batch in enumerate(batches):
@@ -90,11 +89,11 @@ class JTReader:
                 sys.stdout.flush()
         return answers
 
-    def train(self, optimizer,
-              training_set: Sequence[Tuple[QASetting, Answer]],
+    def train(self,
+              optimizer,
+              training_set: Dict[str, Any],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              device="/cpu:0"):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -104,30 +103,22 @@ class JTReader:
             l2: whether to use l2 regularization
             clip: whether to apply gradient clipping and at which value
             clip_op: operation to perform for clipping
-            device: device that is used during training
         """
-        assert self.is_train, "Reader has to be created for with is_train=True for training."
+        self.setup()
 
-        logger.info("Setting up data and model...")
-        with tf.device(device):
-            # First setup shared resources, e.g., vocabulary. This depends on the input module.
-            self.setup_from_data(training_set)
-
-        batches = self.input_module.dataset_generator(training_set, is_eval=False)
+        batches = self.input_module.dataset_generator(training_set)
+        print(self.model_module.tensors)
         loss = self.model_module.tensors[Ports.loss]
 
         if l2:
-            loss += \
-                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+            loss += tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
         if clip:
             gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
-                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                             for grad, var in gradients]
+                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var) for grad, var in gradients]
             elif clip_op == tf.clip_by_norm:
-                gradients = [(tf.clip_by_norm(grad, clip), var)
-                             for grad, var in gradients]
+                gradients = [(tf.clip_by_norm(grad, clip), var) for grad, var in gradients]
             min_op = optimizer.apply_gradients(gradients)
         else:
             min_op = optimizer.minimize(loss)
@@ -148,22 +139,14 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
+    def setup(self):
         """
         Sets up modules given a training dataset if necessary.
         Args:
             data: training dataset
         """
-        self.input_module.setup_from_data(data)
-        self.model_module.setup(self.is_train)
+        self.input_module.setup()
+        self.model_module.setup(is_training=True)
         self.output_module.setup()
+
         self.sess.run([v.initializer for v in self.model_module.variables])
-
-    def setup_from_file(self, dir):
-        pass
-
-    def load(self, dir):
-        pass
-
-    def store(self, dir):
-        pass

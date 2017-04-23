@@ -8,20 +8,12 @@ import tensorflow as tf
 
 import jtr.jack.readers as readers
 
-#from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs
-#from jtr.jack.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel
-#from jtr.jack.tasks.mcqa.simple_mcqa import EmptyOutputModule
-#from jtr.jack.core import JTReader
-
 from inferte.modules.input import SingleSupportFixedClassInputs
 from inferte.modules.model import PairOfBiLSTMOverSupportAndQuestionModel
 from inferte.modules.output import EmptyOutputModule
 from inferte.reader import JTReader
 
 from inferte.preprocessing.text import Tokenizer
-
-from jtr.preprocess.vocab import Vocab
-from jtr.jack.core import SharedVocabAndConfig
 
 import logging
 
@@ -59,13 +51,11 @@ def main(argv):
         'support': [[s] for s in qs_tokenizer.texts_to_sequences(support_texts)],
         'candidates': [c for cs in candidates_texts for [c] in ca_tokenizer.texts_to_sequences(cs)],
         'answers': [a for [a] in ca_tokenizer.texts_to_sequences(answer_texts)]}
+
+    # Note - those parts feel redundant
     corpus['question_lengths'] = [len(q) for q in corpus['question']]
     corpus['support_lengths'] = [[len(s)] for [s] in corpus['support']]
     corpus['ids'] = list(range(len(corpus['question'])))
-    
-    print(corpus)
-
-    sys.exit(0)
 
     logger.info("Existing models: {}".format(", ".join(readers.readers.keys())))
 
@@ -73,21 +63,19 @@ def main(argv):
         'batch_size': 128,
         'repr_dim': 128,
         'repr_dim_input': 128,
-        'dropout': 0.1
+        'dropout': 0.1,
+
+        'vocab_size': qs_tokenizer.num_words if qs_tokenizer.num_words else len(qs_tokenizer.word_index) + 1,
+        'answer_size': 4
     }
 
-    vocab = Vocab()
-
-    shared_resources = SharedVocabAndConfig(vocab, config)
-    reader = JTReader(
-        shared_resources,
-        SingleSupportFixedClassInputs(shared_resources),
-        PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
-        EmptyOutputModule()
-    )
+    reader = JTReader(config,
+                      SingleSupportFixedClassInputs(),
+                      PairOfBiLSTMOverSupportAndQuestionModel(config),
+                      EmptyOutputModule())
 
     optimizer = tf.train.AdamOptimizer(0.001)
-    reader.train(optimizer, train, hooks=[], max_epochs=1, device='/cpu:0')
+    reader.train(optimizer, corpus, hooks=[], max_epochs=1)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
