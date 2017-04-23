@@ -280,7 +280,7 @@ class EvalHook(TraceHook):
 
 
     def __call__(self, epoch):
-        logger.info("Started evaluation %s" % self._info)
+#        logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
             self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True)

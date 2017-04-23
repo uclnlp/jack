@@ -111,8 +111,7 @@ class Vocab(object):
                  or None (for not using pre-trained embeddings)
         """
         self.unk = unk
-        self.emb = emb if emb is not None else lambda _: None
-
+        self.emb = emb
         if emb is not None:#start by adding all words with pre-trained embeddings
             self.sym2id = dict(emb.vocabulary.word2idx)
             self.id2sym = {v: k for k, v in emb.vocabulary.word2idx.items()}

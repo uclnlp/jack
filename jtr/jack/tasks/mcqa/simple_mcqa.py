@@ -4,12 +4,14 @@ from jtr.jack.core import *
 from jtr.jack.data_structures import *
 from jtr.jack.tf_fun import rnn, simple
 
-from jtr.pipelines import pipeline
+from jtr.pipelines import pipeline, jtr_map_to_targets
 from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify
 from jtr.preprocess.vocab import Vocab
 from jtr.jack.preprocessing import preprocess_with_pipeline
 from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
+
+from jtr.preprocess.map import tokenize, notokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 
 from typing import List, Tuple, Mapping
 import tensorflow as tf
@@ -80,8 +82,10 @@ class SimpleMCInputModule(InputModule):
 
 
 class SingleSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_vocab_config):
-        self.shared_vocab_config = shared_vocab_config
+    def __init__(self, shared_resources):
+        self.vocab = shared_resources.vocab
+        self.config = shared_resources.config
+        self.shared_resources = shared_resources
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -105,34 +109,80 @@ class SingleSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
+    def preprocess(self, data, test_time=False, prune_vocab=True, add_lengths=True):
+        corpus = {"support": [], "question": [], "candidates": [], "ids": []}
+        if not test_time:
+            corpus["answers"] = []
+        #read data
+        for i, xy in enumerate(data):
+            if test_time:
+                x = xy
+                y = None
+            else:
+                x, y = xy
+            corpus["support"].append((x.support)[0])
+            corpus['ids'].append(i)
+            corpus["question"].append(x.question)
+            corpus["candidates"].append(x.atomic_candidates)
+            assert len(y) == 1
+            if not test_time:
+                corpus["answers"].append(y[0].text)
+        #preprocessing
+        corpus = deep_map(corpus, tokenize, ['question', 'support'])
+        if 'lowercase' in self.config and self.config['lowercase']:
+            corpus = deep_seq_map(corpus, lower, ['question', 'support'])
+        corpus = deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
+
+        #add length
+        if add_lengths:
+            corpus = deep_seq_map(corpus, lambda xs: len(xs), keys=['question', 'support'],
+                                  fun_name='lengths', expand=True)
+
+        #encode data (and populate vocab if not frozen)
+        corpus = deep_map(corpus, self.vocab, ['question', 'support'])
+        vocab_length = len(self.vocab)
+
+        #prune vocab
+        if prune_vocab:
+            min_freq = 1 if not 'vocab_min_freq' in self.config else self.config['vocab_min_freq']
+            max_size = sys.maxsize if not 'vocab_max_size' in self.config else self.config['vocab_max_size']
+            trf = self.vocab.prune(min_freq=1, max_size=max_size)
+            corpus = deep_map(corpus, trf, ['question', 'support']) #currently not used in setup_from_data
+            logger.debug('Pruned train vocab size (%d to %d)'%(vocab_length, len(self.vocab)))
+
+        return corpus
+
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_vocab_config.vocab,
-                        None, sepvocab=True)
-        train_vocab.freeze()
-        train_answer_vocab.freeze()
-        train_candidate_vocab.freeze()
-        self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
-        self.shared_vocab_config.vocab = train_vocab
-        self.answer_vocab = train_answer_vocab
+        corpus = self.preprocess(data, test_time=False, prune_vocab=True, add_lengths=False)
+        self.vocab.freeze()
+        self.answer_vocab = Vocab(unk=None)
+        deep_map(corpus, self.answer_vocab, ['candidates'])
+        logger.debug('answer_vocab: '+str(self.answer_vocab.sym2id))
+        self.answer_vocab.freeze()
+        self.config['answer_size'] = len(self.answer_vocab)
 
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus, _, _, _ = \
-                preprocess_with_pipeline(dataset,
-                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
+                          is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        corpus = self.preprocess(dataset, test_time=test_time, prune_vocab=False, add_lengths=True)
+        corpus = deep_map(corpus, self.answer_vocab, ['candidates', 'answers'])
+        #corpus = jtr_map_to_targets(corpus, 'candidates', 'answers')
 
         xy_dict = {
             Ports.Input.single_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Targets.candidate_idx:  corpus["answers"],
-            Ports.Input.question_length : corpus['question_lengths'],
-            Ports.Input.support_length : corpus['support_lengths'],
-            Ports.Input.sample_id : corpus['ids']
+            Ports.Input.question_length: corpus['question_lengths'],
+            Ports.Input.support_length: corpus['support_lengths'],
+            Ports.Input.sample_id: corpus['ids']
         }
 
-        return get_batches(xy_dict)
+        if is_eval:
+            eval_batch_size = 256 if not 'eval_batch_size' in self.config else self.config['eval_batch_size']
+            return get_batches(xy_dict, batch_size=eval_batch_size, exact_epoch=True)
+        else:
+            return get_batches(xy_dict, batch_size=self.config['batch_size'])
+
 
     def setup(self):
         pass
