@@ -75,7 +75,13 @@ def main(argv):
                       EmptyOutputModule())
 
     optimizer = tf.train.AdamOptimizer(0.001)
-    reader.train(optimizer, corpus, hooks=[], max_epochs=1)
+
+    from jtr.jack.train.hooks import LossHook
+    hooks = [
+        LossHook(reader, iter_interval=10),
+    ]
+
+    reader.train(optimizer, corpus, hooks=hooks, max_epochs=500)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
