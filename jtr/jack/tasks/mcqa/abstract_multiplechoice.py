@@ -32,7 +32,7 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.single_support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length]
+                Ports.Input.question_length, Ports.Input.keep_prob]
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -52,7 +52,8 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       support: tf.Tensor,
                       question: tf.Tensor,
                       support_length: tf.Tensor,
-                      question_length: tf.Tensor) -> Sequence[tf.Tensor]:
+                      question_length: tf.Tensor,
+                      keep_prob: tf.Tensor) -> Sequence[tf.Tensor]:
 
         if self.embeddings is None:
             embedding_tensor = Vocab.vocab_to_tensor(shared_resources.vocab,
@@ -64,7 +65,9 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         logits = self.forward_pass(shared_resources, self.embeddings,
                                    question, support, question_length,
                                    support_length,
-                                   shared_resources.config['answer_size'])
+                                   shared_resources.config['answer_size'],
+                                   keep_prob
+                                   )
 
         predictions = tf.arg_max(logits, 1, name='prediction')
 

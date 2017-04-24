@@ -328,6 +328,9 @@ class Vocab(object):
             E_pre = tf.get_variable("embeddings_pretrained", initializer=tf.identity(np_E_pre),
                                     trainable=train_pretrained, dtype="float32")
 
+        logger.debug('Created embedding tensor with %d out-of-vocab and %d pre-trained embeddings'%
+                     (n_oov, n_pre))
+
         if n_oov > 0 and n_pre > 0:
             return tf.concat([E_oov, E_pre], 0, name=name)
         elif n_pre == 0:

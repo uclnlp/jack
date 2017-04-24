@@ -3,6 +3,9 @@ import random
 from itertools import islice
 from jtr.preprocess.map import numpify
 from jtr.util.rs import DefaultRandomState
+import logging
+
+logger = logging.getLogger(__name__)
 
 rs = DefaultRandomState(1337)#new seed ignored if set previously
 
@@ -90,7 +93,7 @@ def get_buckets(data, order, structure):
     return buckets2ids, ids2buckets
 
 
-def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):
+def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False, update={}):
     """
     Creates generator that batches `data`.
     To avoid biases, it is advised to keep `bucket_order=None` and `bucket_structure=None` if computationally possible.
@@ -107,6 +110,7 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
             once during training. Default: `False`, to be certain during training
             that each instance per batch gets same weight in the total loss
             (but not all instances are observed per epoch if bucket sizes are no multiple of `batch_size`).
+        `update`: update each created batch with the given dict
 
     Returns:
         a generator that generates a dict with same keys as `data`, and
@@ -152,7 +156,13 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
                 buckets2instances[bid] = buckets2instances[bid][batch_size:]
                 # if required by exact_epoch: also include last batch in bucket if too small
                 if len(batch_indices) == batch_size or exact_epoch:
-                    yield {k: data_np[k][batch_indices] for k in data_np}
+                    if isinstance(update, dict) and len(update) > 0:
+                        batch = {k: data_np[k][batch_indices] for k in data_np}
+                        batch.update(update)
+                        yield batch
+                    else:
+                        yield {k: data_np[k][batch_indices] for k in data_np}
+
 
     return GeneratorWithRestart(bucket_generator)
 

@@ -93,17 +93,10 @@ class SingleSupportFixedClassInputs(InputModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        """Defines the outputs of the InputModule
-
-        1. Word embedding index tensor of questions of mini-batchs
-        2. Word embedding index tensor of support of mini-batchs
-        3. Max timestep length of mini-batches for support tensor
-        4. Max timestep length of mini-batches for question tensor
-        5. Labels
-        """
         return [Ports.Input.single_support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Targets.candidate_idx, Ports.Input.sample_id]
+                Ports.Input.question_length, Ports.Targets.candidate_idx,
+                Ports.Input.sample_id, Ports.Input.keep_prob]
 
     def __call__(self, qa_settings: List[QASetting]) \
             -> Mapping[TensorPort, np.ndarray]:
@@ -129,7 +122,7 @@ class SingleSupportFixedClassInputs(InputModule):
                 corpus["answers"].append(y[0].text)
         #preprocessing
         corpus = deep_map(corpus, tokenize, ['question', 'support'])
-        if 'lowercase' in self.config and self.config['lowercase']:
+        if self.lowercase:
             corpus = deep_seq_map(corpus, lower, ['question', 'support'])
         corpus = deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
 
@@ -144,15 +137,16 @@ class SingleSupportFixedClassInputs(InputModule):
 
         #prune vocab
         if prune_vocab:
-            min_freq = 1 if not 'vocab_min_freq' in self.config else self.config['vocab_min_freq']
-            max_size = sys.maxsize if not 'vocab_max_size' in self.config else self.config['vocab_max_size']
-            trf = self.vocab.prune(min_freq=1, max_size=max_size)
+            trf = self.vocab.prune(min_freq=self.min_freq, max_size=self.max_size)
             corpus = deep_map(corpus, trf, ['question', 'support']) #currently not used in setup_from_data
             logger.debug('Pruned train vocab size (%d to %d)'%(vocab_length, len(self.vocab)))
 
         return corpus
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        #set config params
+        self.setup()
+        #preprocess data
         corpus = self.preprocess(data, test_time=False, prune_vocab=True, add_lengths=False)
         self.vocab.freeze()
         self.answer_vocab = Vocab(unk=None)
@@ -161,12 +155,10 @@ class SingleSupportFixedClassInputs(InputModule):
         self.answer_vocab.freeze()
         self.config['answer_size'] = len(self.answer_vocab)
 
-
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset, test_time=test_time, prune_vocab=False, add_lengths=True)
         corpus = deep_map(corpus, self.answer_vocab, ['candidates', 'answers'])
-        #corpus = jtr_map_to_targets(corpus, 'candidates', 'answers')
 
         xy_dict = {
             Ports.Input.single_support: corpus["support"],
@@ -178,14 +170,19 @@ class SingleSupportFixedClassInputs(InputModule):
         }
 
         if is_eval:
-            eval_batch_size = 256 if not 'eval_batch_size' in self.config else self.config['eval_batch_size']
-            return get_batches(xy_dict, batch_size=eval_batch_size, exact_epoch=True)
+            keep_prob_dict = {Ports.Input.keep_prob: 1}
+            return get_batches(xy_dict, batch_size=self.eval_batch_size, exact_epoch=True, update=keep_prob_dict)
         else:
-            return get_batches(xy_dict, batch_size=self.config['batch_size'])
-
+            keep_prob_dict = {Ports.Input.keep_prob: 1.-self.dropout}
+            return get_batches(xy_dict, batch_size=self.batch_size, update=keep_prob_dict)
 
     def setup(self):
-        pass
+        self.batch_size = self.config.get("batch_size", 1)
+        self.eval_batch_size = self.config.get("eval_batch_size", 256)
+        self.dropout = self.config.get("dropout", 1)
+        self.lowercase = self.config.get("lowercase", False)
+        self.min_freq = self.config.get("vocab_min_freq", 1)
+        self.max_size = self.config.get("vocab_max_size", sys.maxsize)
 
 
 class SimpleMCModelModule(SimpleModelModule):
@@ -220,7 +217,7 @@ class SimpleMCModelModule(SimpleModelModule):
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
         emb_dim = shared_resources.config["repr_dim"]
-        with tf.variable_scope("simplce_mcqa"):
+        with tf.variable_scope("simple_mcqa"):
             # varscope.reuse_variables()
             embeddings = tf.get_variable(
                 "embeddings", [len(self.shared_resources.vocab), emb_dim],
@@ -261,7 +258,7 @@ class SimpleMCOutputModule(OutputModule):
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources, embeddings,
                      Q, S, Q_lengths, S_lengths,
-                     num_classes):
+                     num_classes, keep_prob=1):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
 
@@ -270,17 +267,16 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
 
         all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
                 Q_seq, Q_lengths, S_seq, S_lengths,
-                shared_resources.config['repr_dim'], drop_keep_prob =
-                1.0-shared_resources.config['dropout'],
+                shared_resources.config['repr_dim'], drop_keep_prob=keep_prob,
                 conditional_encoding=True)
 
         # ->  [batch, 2*output_dim]
         final_states = tf.concat([final_states_fw_bw[0][1],
-                                 final_states_fw_bw[1][1]],axis=1)
+                                 final_states_fw_bw[1][1]], axis=1)
 
         # [batch, 2*output_dim] -> [batch, num_classes]
         outputs = simple.fully_connected_projection(final_states,
-                                                         num_classes)
+                                                         num_classes, name='output_projection')
 
         return outputs
 
