@@ -31,12 +31,12 @@ class TestDatasets:
         return [load_labelled_data(os.path.join('SNLI/', split)) for split in splits]
 
 
-def to_corpus(train, qs_tokenizer=None, ca_tokenizer=None):
-    question_texts = [instance[0].question for instance in train]
-    support_texts = [instance[0].support[0] for instance in train]
+def to_corpus(instances, qs_tokenizer=None, ca_tokenizer=None):
+    question_texts = [instance[0].question for instance in instances]
+    support_texts = [instance[0].support[0] for instance in instances]
 
-    candidates_texts = [instance[0].atomic_candidates for instance in train]
-    answer_texts = [instance[1][0].text for instance in train]
+    candidates_texts = [instance[0].atomic_candidates for instance in instances]
+    answer_texts = [instance[1][0].text for instance in instances]
 
     if not qs_tokenizer:
         qs_tokenizer = keras.preprocessing.text.Tokenizer()
@@ -62,7 +62,7 @@ def to_corpus(train, qs_tokenizer=None, ca_tokenizer=None):
 
 def main(argv):
     train, dev, test = TestDatasets.generate()
-    train = train[:100]
+    #train = train[:100]
 
     train_corpus, qs_tokenizer, ca_tokenizer = to_corpus(train)
     dev_corpus, _, _ = to_corpus(dev, qs_tokenizer, ca_tokenizer)
@@ -90,7 +90,8 @@ def main(argv):
     from jtr.jack.train.hooks import LossHook
     hooks = [
         LossHook(reader, iter_interval=10),
-        readers.eval_hooks['snli_reader'](reader, dev_corpus, iter_interval=25)
+        readers.eval_hooks['snli_reader'](reader, dev_corpus, iter_interval=25),
+        readers.eval_hooks['snli_reader'](reader, test_corpus, iter_interval=25)
     ]
 
     reader.train(optimizer, train_corpus, hooks=hooks, max_epochs=500)
