@@ -298,193 +298,228 @@ class Vocab(object):
 
         return id_trf
 
-
-
-
-class NeuralVocab(Vocab):
-    """
-    Wrapper around Vocab to go from indices to tensors.
-
-    Example:
-        >>> #Start from same Vocab as the doctest example in Vocab
-        >>> def emb(w):
-        ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
-        ...    return None if not w in v else v[w]
-        >>> vocab = Vocab(emb=emb)
-        >>> vocab("blah", "bluh", "bleh", "hello", "world")  #symbols as multiple arguments
-        [-1, -2, -3, 1, 2]
-        >>> vocab(['bluh','world','wake','up']) #as list of symbols
-        [-2, 2, 3, 4]
-
-        >>> #Create NeuralVocab object
-        >>> with tf.variable_scope('neural_test1'):
-        ...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
-        ...     tfrun(nvocab(vocab("world")))
-        array([ 0.46077079,  0.38316524, -0.63771147], dtype=float32)
-        >>> tra1 = get_total_trainable_variables()
-
-
-        >>> #Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)
-        >>> with tf.variable_scope('neural_test2'):
-        ...     for w in ['blah','bluh','bleh']:
-        ...         w, emb(w)
-        ...     nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
-        ...     tfrun(nvocab.embedding_matrix)
-        ('blah', [1.7, 0, 0.3])
-        ('bluh', [0, 1.5, 0.5])
-        ('bleh', [0, 0, 2])
-        array([[-0.26461828,  0.65265107,  0.39575091, -0.30496973],
-               [ 0.48515028,  0.19880073, -0.02314733, -0.02336031],
-               [ 0.26688093, -0.24634691,  0.2248017 ,  0.24709973],
-               [-0.39200979, -0.49848005, -1.11226082, -0.15154324],
-               [ 0.46785676,  1.64755058,  0.15274598,  0.17200644],
-               [ 0.98478359,  0.        ,  0.17378533, -0.46795556],
-               [ 0.        ,  0.94868326,  0.31622776, -0.72465843],
-               [ 0.        ,  0.        ,  1.        , -0.46098801]], dtype=float32)
-        >>> get_total_trainable_variables()-tra1
-        23
-
-    Interpretation of number of trainable variables from neural_test2:
-    out-of-vocab: 8 - 3 = 5 symbols, with each 4 dimensions = 20;
-    for fixed pre-trained embeddings with length 3, three times 1 extra trainable dimension for total embedding length 4.
-    Total is 23.
-    """
-
-    def __init__(self, base_vocab, embedding_matrix=None,
-                 input_size=None, reduced_input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True):
+    @staticmethod
+    def vocab_to_tensor(vocab, emb_length=None, train_pretrained=False,
+                        name='embedding_tensor'):
         """
-        Creates NeuralVocab object from a given Vocab object `base_vocab`.
-        Pre-calculates embedding vector (as `Tensor` object) for each symbol in Vocab
-
+        Constructs embedding tensor from vocab. Embeddings are initialized with (expected) unit norm.
         Args:
-            `base_vocab`:
-            `embedding_matrix`: tensor with shape (len_vocab, input_size). If provided,
-              the arguments `input_size`, `use_trained`, `train_pretrained`, and `unit_normalize` are ignored.
-            `input_size`: integer; embedding length in case embedding matrix not provided, else ignored.
-              If shorter than pre-trained embeddings, only their first `input_size` dimensions are used.
-              If longer, extra (Trainable) dimensions are added.
-            `reduced_input_size`: integer; optional; ignored in case `None`. If set to positive integer, an additional
-              linear layer is introduced to reduce (or extend) the embeddings to the indicated size.
-            `use_pretrained`:  boolean; True (default): use pre-trained if available through `base_vocab`.
-              False: ignore pre-trained embeddings accessible through `base_vocab`
-            `train_pretrained`: boolean; False (default): fix pretrained embeddings. True: continue training.
-              Ignored if embedding_matrix is given.
-            `unit_normalize`: initialize pre-trained vectors with unit norm
-              (note: randomly initialized embeddings are always initialized with expected unit norm)
+            vocab: populated Vocab
+            emb_length: length of embeddings; ignored if vocab.emb_length is not None
+            train_pretrained: continue training pre-trained embeddings
+        Returns:
+            embedding tensor
         """
-        super(NeuralVocab, self).__init__(unk=base_vocab.unk, emb=base_vocab.emb)
+        assert len(vocab) > 0, "vocab_to_tensor requires a populated Vocab object"
 
-        assert (embedding_matrix, input_size) is not (None, None), "if no embedding_matrix is provided, define input_size"
+        np_normalize = lambda v: v / np.sqrt(np.sum(np.square(v)))
+        emb_length = emb_length if vocab.emb_length is None else vocab.emb_length
+        n_oov, n_pre = vocab.count_oov(), vocab.count_pretrained()
 
-        self.freeze() #has no actual functionality here
-        base_vocab.freeze() #freeze if not frozen (to ensure fixed non-negative indices)
+        if n_oov > 0:
+            E_oov = tf.get_variable("embeddings_oov", [n_oov, emb_length],
+                                    initializer=tf.random_normal_initializer(0, 1. / np.sqrt(emb_length)),
+                                    trainable=True, dtype="float32")
+        if n_pre > 0:
+            np_E_pre = np.zeros([n_pre, emb_length]).astype("float32")
+            for i in vocab.get_ids_pretrained():
+                sym = vocab.id2sym[i]
+                np_E_pre[i, :] = np_normalize(vocab.emb(sym))
+            E_pre = tf.get_variable("embeddings_pretrained", initializer=tf.identity(np_E_pre),
+                                    trainable=train_pretrained, dtype="float32")
 
-        self.sym2id = base_vocab.sym2id
-        self.id2sym = base_vocab.id2sym
-        self.sym2freqs = base_vocab.sym2freqs
-        self.unit_normalize = unit_normalize
-
-        def np_normalize(v):
-            return v / np.sqrt(np.sum(np.square(v)))
-
-        if embedding_matrix is None:
-            # construct part oov
-            n_oov = base_vocab.count_oov()
-            n_pre = base_vocab.count_pretrained()
-            E_oov = tf.get_variable("embeddings_oov", [n_oov, input_size],
-                                     initializer=tf.random_normal_initializer(0, 1./np.sqrt(input_size)),
-                                     trainable=True, dtype="float32")
-            # stdev = 1/sqrt(length): then expected initial L2 norm is 1
-
-            # construct part pretrained
-            if use_pretrained and base_vocab.emb_length is not None:
-                # load embeddings into numpy tensor with shape (count_pretrained, min(input_size,emb_length))
-                np_E_pre = np.zeros([n_pre, min(input_size, base_vocab.emb_length)]).astype("float32")
-                for id in base_vocab.get_ids_pretrained():
-                    sym = base_vocab.id2sym[id]
-                    i = id - n_oov  #shifted to start from 0
-                    np_E_pre[i, :] = base_vocab.emb(sym)[:min(input_size,base_vocab.emb_length)]
-                    if unit_normalize:
-                        np_E_pre[i, :] = np_normalize(np_E_pre[i, :])
-                E_pre = tf.get_variable("embeddings_pretrained",
-                                        initializer=tf.identity(np_E_pre),
-                                        trainable=train_pretrained, dtype="float32")
-
-                if input_size > base_vocab.emb_length:
-                    E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
-                                                initializer=tf.random_normal_initializer(0.0, 1. / np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
-                    # note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
-                    E_pre = tf.concat([E_pre, E_pre_ext],
-                            1, name="embeddings_pretrained_extended")
-            else:
-                # initialize all randomly anyway
-                E_pre = tf.get_variable("embeddings_not_pretrained", [n_pre, input_size],
-                                        initializer=tf.random_normal_initializer(0., 1./np.sqrt(input_size)),
-                                        trainable=True, dtype="float32")
-                # again: initialize with expected unit norm
-
-            # must be provided is embedding_matrix is None
-            self.input_size = input_size
-            self.embedding_matrix = tf.concat([E_oov, E_pre],
-                    0, name="embeddings")
-
+        if n_oov > 0 and n_pre > 0:
+            return tf.concat([E_oov, E_pre], 0, name=name)
+        elif n_pre == 0:
+            return tf.identity(E_oov, name=name)
         else:
-            # ignore input argument input_size
-            self.input_size = embedding_matrix.get_shape()[1]
-            self.embedding_matrix = embedding_matrix
+            return tf.identity(E_pre, name=name)
 
-        if isinstance(reduced_input_size, int) and reduced_input_size > 0:
-            # uniform=False for truncated normal
-            init = tf.contrib.layers.xavier_initializer(uniform=True)
-            self.embedding_matrix = tf.contrib.layers.fully_connected(self.embedding_matrix, reduced_input_size,
-                                                                      weights_initializer=init, activation_fn=None)
 
-        # pre-assign embedding vectors to all ids
-        # always OK if frozen
-        self.id2vec = [tf.nn.embedding_lookup(self.embedding_matrix, idx) for idx in range(len(self))]
-
-    def embed_symbol(self, ids):
-        """returns embedded id's
-
-        Args:
-            `ids`: integer, ndarray with np.int32 integers, or tensor with tf.int32 integers.
-            These integers correspond to (normalized) id's for symbols in `self.base_vocab`.
-
-        Returns:
-            tensor with id's embedded by numerical vectors (in last dimension)
-        """
-        return tf.nn.embedding_lookup(self.embedding_matrix, ids)
-
-    def __call__(self, *args, **kwargs):
-        """
-        Calling the NeuralVocab object with symbol id's,
-        returns a `Tensor` with corresponding embeddings.
-
-        Args:
-            `*args`: `Tensor` with integer indices
-              (such as a placeholder, to be evaluated when run in a `tf.Session`),
-              or list of integer id's,
-              or just multiple integer ids as input arguments
-
-        Returns:
-            Embedded `Tensor` in case a `Tensor` was provided as input,
-            and otherwise a list of embedded input id's under the form of fixed-length embeddings (`Tensor` objects).
-        """
-        # tuple with length 1: then either list with ids, tensor with ids, or single id
-        if len(args) == 1:
-            if isinstance(args[0], list):
-                ids = args[0]
-            elif tf.contrib.framework.is_tensor(args[0]):
-                # return embedded tensor
-                return self.embed_symbol(args[0])
-            else:
-                return self.id2vec[args[0]]
-        else: # tuple with ids
-            ids = args
-        return [self.id2vec[id] for id in ids]
-
-    def get_embedding_matrix(self):
-        return self.embedding_matrix
+# class NeuralVocab(Vocab):
+#     """
+#     Wrapper around Vocab to go from indices to tensors.
+#
+#     Example:
+#         >>> #Start from same Vocab as the doctest example in Vocab
+#         >>> def emb(w):
+#         ...    v = {'blah':[1.7,0,.3],'bluh':[0,1.5,0.5],'bleh':[0,0,2]}
+#         ...    return None if not w in v else v[w]
+#         >>> vocab = Vocab(emb=emb)
+#         >>> vocab("blah", "bluh", "bleh", "hello", "world")  #symbols as multiple arguments
+#         [-1, -2, -3, 1, 2]
+#         >>> vocab(['bluh','world','wake','up']) #as list of symbols
+#         [-2, 2, 3, 4]
+#
+#         >>> #Create NeuralVocab object
+#         >>> with tf.variable_scope('neural_test1'):
+#         ...     nvocab = NeuralVocab(vocab, None, 3, unit_normalize=True)
+#         ...     tfrun(nvocab(vocab("world")))
+#         array([ 0.46077079,  0.38316524, -0.63771147], dtype=float32)
+#         >>> tra1 = get_total_trainable_variables()
+#
+#
+#         >>> #Test NeuralVocab with pre-trained embeddings  (case: input_size larger than pre-trained embeddings)
+#         >>> with tf.variable_scope('neural_test2'):
+#         ...     for w in ['blah','bluh','bleh']:
+#         ...         w, emb(w)
+#         ...     nvocab = NeuralVocab(vocab, None, 4, unit_normalize=True, use_pretrained=True, train_pretrained=False)
+#         ...     tfrun(nvocab.embedding_matrix)
+#         ('blah', [1.7, 0, 0.3])
+#         ('bluh', [0, 1.5, 0.5])
+#         ('bleh', [0, 0, 2])
+#         array([[-0.26461828,  0.65265107,  0.39575091, -0.30496973],
+#                [ 0.48515028,  0.19880073, -0.02314733, -0.02336031],
+#                [ 0.26688093, -0.24634691,  0.2248017 ,  0.24709973],
+#                [-0.39200979, -0.49848005, -1.11226082, -0.15154324],
+#                [ 0.46785676,  1.64755058,  0.15274598,  0.17200644],
+#                [ 0.98478359,  0.        ,  0.17378533, -0.46795556],
+#                [ 0.        ,  0.94868326,  0.31622776, -0.72465843],
+#                [ 0.        ,  0.        ,  1.        , -0.46098801]], dtype=float32)
+#         >>> get_total_trainable_variables()-tra1
+#         23
+#
+#     Interpretation of number of trainable variables from neural_test2:
+#     out-of-vocab: 8 - 3 = 5 symbols, with each 4 dimensions = 20;
+#     for fixed pre-trained embeddings with length 3, three times 1 extra trainable dimension for total embedding length 4.
+#     Total is 23.
+#     """
+#
+#     def __init__(self, base_vocab, embedding_matrix=None,
+#                  input_size=None, reduced_input_size=None, use_pretrained=True, train_pretrained=False, unit_normalize=True):
+#         """
+#         Creates NeuralVocab object from a given Vocab object `base_vocab`.
+#         Pre-calculates embedding vector (as `Tensor` object) for each symbol in Vocab
+#
+#         Args:
+#             `base_vocab`:
+#             `embedding_matrix`: tensor with shape (len_vocab, input_size). If provided,
+#               the arguments `input_size`, `use_trained`, `train_pretrained`, and `unit_normalize` are ignored.
+#             `input_size`: integer; embedding length in case embedding matrix not provided, else ignored.
+#               If shorter than pre-trained embeddings, only their first `input_size` dimensions are used.
+#               If longer, extra (Trainable) dimensions are added.
+#             `reduced_input_size`: integer; optional; ignored in case `None`. If set to positive integer, an additional
+#               linear layer is introduced to reduce (or extend) the embeddings to the indicated size.
+#             `use_pretrained`:  boolean; True (default): use pre-trained if available through `base_vocab`.
+#               False: ignore pre-trained embeddings accessible through `base_vocab`
+#             `train_pretrained`: boolean; False (default): fix pretrained embeddings. True: continue training.
+#               Ignored if embedding_matrix is given.
+#             `unit_normalize`: initialize pre-trained vectors with unit norm
+#               (note: randomly initialized embeddings are always initialized with expected unit norm)
+#         """
+#         super(NeuralVocab, self).__init__(unk=base_vocab.unk, emb=base_vocab.emb)
+#
+#         assert (embedding_matrix, input_size) is not (None, None), "if no embedding_matrix is provided, define input_size"
+#
+#         self.freeze() #has no actual functionality here
+#         base_vocab.freeze() #freeze if not frozen (to ensure fixed non-negative indices)
+#
+#         self.sym2id = base_vocab.sym2id
+#         self.id2sym = base_vocab.id2sym
+#         self.sym2freqs = base_vocab.sym2freqs
+#         self.unit_normalize = unit_normalize
+#
+#         def np_normalize(v):
+#             return v / np.sqrt(np.sum(np.square(v)))
+#
+#         if embedding_matrix is None:
+#             # construct part oov
+#             n_oov = base_vocab.count_oov()
+#             n_pre = base_vocab.count_pretrained()
+#             E_oov = tf.get_variable("embeddings_oov", [n_oov, input_size],
+#                                      initializer=tf.random_normal_initializer(0, 1./np.sqrt(input_size)),
+#                                      trainable=True, dtype="float32")
+#             # stdev = 1/sqrt(length): then expected initial L2 norm is 1
+#
+#             # construct part pretrained
+#             if use_pretrained and base_vocab.emb_length is not None:
+#                 # load embeddings into numpy tensor with shape (count_pretrained, min(input_size,emb_length))
+#                 np_E_pre = np.zeros([n_pre, min(input_size, base_vocab.emb_length)]).astype("float32")
+#                 for id in base_vocab.get_ids_pretrained():
+#                     sym = base_vocab.id2sym[id]
+#                     i = id - n_oov  #shifted to start from 0
+#                     np_E_pre[i, :] = base_vocab.emb(sym)[:min(input_size,base_vocab.emb_length)]
+#                     if unit_normalize:
+#                         np_E_pre[i, :] = np_normalize(np_E_pre[i, :])
+#                 E_pre = tf.get_variable("embeddings_pretrained",
+#                                         initializer=tf.identity(np_E_pre),
+#                                         trainable=train_pretrained, dtype="float32")
+#
+#                 if input_size > base_vocab.emb_length:
+#                     E_pre_ext = tf.get_variable("embeddings_extra", [n_pre, input_size-base_vocab.emb_length],
+#                                                 initializer=tf.random_normal_initializer(0.0, 1. / np.sqrt(base_vocab.emb_length)), dtype="float32", trainable=True)
+#                     # note: stdev = 1/sqrt(emb_length) means: elements from same normal distr. as normalized first part (in case normally distr.)
+#                     E_pre = tf.concat([E_pre, E_pre_ext],
+#                             1, name="embeddings_pretrained_extended")
+#             else:
+#                 # initialize all randomly anyway
+#                 E_pre = tf.get_variable("embeddings_not_pretrained", [n_pre, input_size],
+#                                         initializer=tf.random_normal_initializer(0., 1./np.sqrt(input_size)),
+#                                         trainable=True, dtype="float32")
+#                 # again: initialize with expected unit norm
+#
+#             # must be provided is embedding_matrix is None
+#             self.input_size = input_size
+#             self.embedding_matrix = tf.concat([E_oov, E_pre],
+#                     0, name="embeddings")
+#
+#         else:
+#             # ignore input argument input_size
+#             self.input_size = embedding_matrix.get_shape()[1]
+#             self.embedding_matrix = embedding_matrix
+#
+#         if isinstance(reduced_input_size, int) and reduced_input_size > 0:
+#             # uniform=False for truncated normal
+#             init = tf.contrib.layers.xavier_initializer(uniform=True)
+#             self.embedding_matrix = tf.contrib.layers.fully_connected(self.embedding_matrix, reduced_input_size,
+#                                                                       weights_initializer=init, activation_fn=None)
+#
+#         # pre-assign embedding vectors to all ids
+#         # always OK if frozen
+#         self.id2vec = [tf.nn.embedding_lookup(self.embedding_matrix, idx) for idx in range(len(self))]
+#
+#     def embed_symbol(self, ids):
+#         """returns embedded id's
+#
+#         Args:
+#             `ids`: integer, ndarray with np.int32 integers, or tensor with tf.int32 integers.
+#             These integers correspond to (normalized) id's for symbols in `self.base_vocab`.
+#
+#         Returns:
+#             tensor with id's embedded by numerical vectors (in last dimension)
+#         """
+#         return tf.nn.embedding_lookup(self.embedding_matrix, ids)
+#
+#     def __call__(self, *args, **kwargs):
+#         """
+#         Calling the NeuralVocab object with symbol id's,
+#         returns a `Tensor` with corresponding embeddings.
+#
+#         Args:
+#             `*args`: `Tensor` with integer indices
+#               (such as a placeholder, to be evaluated when run in a `tf.Session`),
+#               or list of integer id's,
+#               or just multiple integer ids as input arguments
+#
+#         Returns:
+#             Embedded `Tensor` in case a `Tensor` was provided as input,
+#             and otherwise a list of embedded input id's under the form of fixed-length embeddings (`Tensor` objects).
+#         """
+#         # tuple with length 1: then either list with ids, tensor with ids, or single id
+#         if len(args) == 1:
+#             if isinstance(args[0], list):
+#                 ids = args[0]
+#             elif tf.contrib.framework.is_tensor(args[0]):
+#                 # return embedded tensor
+#                 return self.embed_symbol(args[0])
+#             else:
+#                 return self.id2vec[args[0]]
+#         else: # tuple with ids
+#             ids = args
+#         return [self.id2vec[id] for id in ids]
+#
+#     def get_embedding_matrix(self):
+#         return self.embedding_matrix
 
 
 if __name__ == '__main__':

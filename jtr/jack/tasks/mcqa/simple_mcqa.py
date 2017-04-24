@@ -259,14 +259,14 @@ class SimpleMCOutputModule(OutputModule):
 
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources, nvocab,
+    def forward_pass(self, shared_resources, embeddings,
                      Q, S, Q_lengths, S_lengths,
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
 
-        Q_seq = nvocab(Q)
-        S_seq = nvocab(S)
+        Q_seq = tf.nn.embedding_lookup(embeddings, Q)
+        S_seq = tf.nn.embedding_lookup(embeddings, S)
 
         all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
                 Q_seq, Q_lengths, S_seq, S_lengths,

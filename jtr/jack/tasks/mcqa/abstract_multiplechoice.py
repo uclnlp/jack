@@ -1,7 +1,8 @@
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
 
-from jtr.preprocess.vocab import NeuralVocab
+from jtr.preprocess.vocab import Vocab
+from jtr.jack.tf_fun.simple import fully_connected_projection
 
 from abc import abstractmethod, ABCMeta
 from typing import List, Tuple, Dict, Mapping
@@ -23,7 +24,8 @@ class SingleSupportFixedClassForward(object):
 
 class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
     def __init__(self, shared_resources):
-        self.nvocab = None
+        self.embeddings = None
+        self.config = shared_resources.config
         self.shared_resources = shared_resources
 
     @property
@@ -47,16 +49,19 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         return [Ports.loss]
 
     def create_output(self, shared_resources: SharedResources,
-                      support : tf.Tensor,
-                      question : tf.Tensor,
-                      support_length : tf.Tensor,
-                      question_length : tf.Tensor) -> Sequence[tf.Tensor]:
+                      support: tf.Tensor,
+                      question: tf.Tensor,
+                      support_length: tf.Tensor,
+                      question_length: tf.Tensor) -> Sequence[tf.Tensor]:
 
-        if self.nvocab == None:
-            self.nvocab = NeuralVocab(shared_resources.vocab,
-                    input_size=shared_resources.config['repr_dim_input'])
+        if self.embeddings is None:
+            embedding_tensor = Vocab.vocab_to_tensor(shared_resources.vocab,
+                                                     emb_length=self.config['repr_dim_input'],
+                                                     train_pretrained=self.config['train_pretrained'])
+            self.embeddings = fully_connected_projection(embedding_tensor, self.config['repr_dim'],
+                                                         name='projected_embeddings')
 
-        logits = self.forward_pass(shared_resources, self.nvocab,
+        logits = self.forward_pass(shared_resources, self.embeddings,
                                    question, support, question_length,
                                    support_length,
                                    shared_resources.config['answer_size'])
