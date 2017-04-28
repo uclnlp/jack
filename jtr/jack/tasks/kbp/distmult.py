@@ -82,21 +82,6 @@ class DistMultInputModule(InputModule):
             #corpus["candidates"].append(x.atomic_candidates)
             assert len(y) == 1
             corpus["answers"].append(int(y[0].text))
-        corpus = deep_map(corpus, notokenize, ['question'])
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
-        qanswers = {}
-        for i, q in enumerate(corpus['question']):
-            q0=q[0]
-            if q0 not in qanswers:
-                qanswers[q0] = set()
-            a = corpus["answers"][i]
-            qanswers[q0].add(a)
-        if not test_time:
-            sl = ShuffleList(corpus["candidates"][0], qanswers)
-            corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
-            #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],

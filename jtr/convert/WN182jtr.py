@@ -22,7 +22,6 @@ Training data:
 """
 
 from collections import defaultdict
-import gc
 import json
 import argparse
 
@@ -138,7 +137,7 @@ def convert_wn18(triples, neighbourhoods, unique_entities):
         unique_entities: List of strings
 
     Returns:
-        jtr formatted fb15k data.
+        jtr formatted wn18 data.
     """
     # figure out cases with multiple possible true answers
     multiple_answers_dict = defaultdict(set)
@@ -147,11 +146,7 @@ def convert_wn18(triples, neighbourhoods, unique_entities):
 
     instances = []
     for i, triple in enumerate(triples):
-        if not i % 1000:
-            # print(i)
-            gc.collect()
         # correct answers for this (s,r,.) case
-        correct_answers = multiple_answers_dict[triple[:2]]
 
         # obtain supporting facts for this triple
         neighbour_ids = neighbourhoods[i]
@@ -163,9 +158,9 @@ def convert_wn18(triples, neighbourhoods, unique_entities):
 
         qset_dict['support'] = [{'text': t} for t in support_texts]
         qset_dict['questions'] = [{
-            "question": " ".join([str(triple[0]), str(triple[1])]),  # subject and relation
+            "question": " ".join([str(triple[0]), str(triple[1]), str(triple[2])]),  # subject relation object
             "candidates": [],  # use global candidates instead.
-            "answers": [{'text': str(a)} for a in correct_answers]  # object
+            "answers": [{'text': '1'}]  # truth value
         }]
         instances.append(qset_dict)
 
@@ -200,10 +195,6 @@ def main():
                         help="reference file - use training set path here.")
     parser.add_argument('outfile',
                         help="path to the jtr format -generated output file (e.g. data/WN18/WN18_train.jtr.json)")
-    # parser.add_argument('dataset', choices=['cnn', 'dailymail'],
-    #                     help="which dataset to access: cnn or dailymail")
-    # parser.add_argument('split', choices=['train', 'dev', 'test'],
-    #                     help="which split of the dataset to convert: train, dev or test")
     args = parser.parse_args()
 
     # load data from files into fact triples
