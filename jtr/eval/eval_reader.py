@@ -3,7 +3,7 @@ import json
 import tensorflow as tf
 
 from jtr.jack.data_structures import convert2qasettings
-from jtr.jack.readers import readers
+from jtr.jack.readers import readers, eval_hooks
 from jtr.load.embeddings import load_embeddings
 from jtr.preprocess.vocab import Vocab
 
@@ -48,7 +48,7 @@ def side_effect(metrics, prev_metric):
     return 0.0
 
 
-test_eval_hook = readers.eval_hooks[FLAGS.model](reader, dataset, epoch_interval=1, side_effect=side_effect)
+test_eval_hook = eval_hooks[FLAGS.model](reader, dataset, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 
 print("Done!")
