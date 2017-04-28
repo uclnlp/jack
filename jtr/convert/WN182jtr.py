@@ -195,7 +195,7 @@ def main():
     #
     parser.add_argument('infile',
                         help="dataset path you're interested in, train/dev/test."
-                             "(e.g. data/WN18/WN18/wordnet-mlj12-train.txt)")
+                             "(e.g. data/WN18/wordnet-mlj12/wordnet-mlj12-train.txt)")
     parser.add_argument('reffile',
                         help="reference file - use training set path here.")
     parser.add_argument('outfile',
