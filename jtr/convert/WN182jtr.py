@@ -10,7 +10,7 @@ Original paper:
         https://papers.nips.cc/paper/5071-translating-embeddings-for-modeling-multi-relational-data
 Data:   https://everest.hds.utc.fr/lib/exe/fetch.php?media=en:wordnet-mlj12.tar.gz
 Web:    https://everest.hds.utc.fr/doku.php?id=en:transe
-JTR download script: data/FB15k/download.sh
+JTR download script: data/WN18/download.sh
 
 Metadata:
 
