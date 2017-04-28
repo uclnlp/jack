@@ -105,3 +105,6 @@ testresult_*
 
 # Snippets
 snippets/
+
+data/WN18/*.tgz
+data/WN18/wordnet-mlj12
