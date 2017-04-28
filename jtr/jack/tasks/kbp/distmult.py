@@ -6,17 +6,18 @@ from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify, deep_map, notokenize
 
 from typing import List, Sequence
-from random import shuffle, choice
+from random import shuffle
 
 
 class ShuffleList:
-    def __init__(self,drawlist,qa):
+    def __init__(self, drawlist, qa):
         assert len(drawlist) > 0
         self.qa = qa
         self.drawlist = drawlist
         shuffle(self.drawlist)
         self.iter = self.drawlist.__iter__()
-    def next(self,q):
+
+    def next(self, q):
         try:
             avoided = False
             trial, max_trial = 0, 50
@@ -32,7 +33,7 @@ class ShuffleList:
             return next(self.iter)
 
 
-def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
+def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
     question_dataset = corpus[question_key]
     candidate_dataset = corpus[candidate_key]
     answer_dataset = corpus[answer_key]
@@ -40,8 +41,7 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         question = question_dataset[i][0]
-        candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
+        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
         posneg = [] + answers
         avoided = False
         trial, max_trial = 0, 50
@@ -58,13 +58,13 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
     return result
 
 
-class ModelFInputModule(InputModule):
+class DistMultInputModule(InputModule):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
-        self.vocab.freeze()
+        self.shared_resources.vocab.freeze()
         return self.shared_resources
 
     def setup(self, shared_resources: SharedResources):
@@ -75,19 +75,19 @@ class ModelFInputModule(InputModule):
         return [Ports.Target.target_index]
 
     def preprocess(self, data, test_time=False):
-        corpus = { "question": [], "candidates": [], "answers":[]}
+        corpus = {"question": [], "candidates": [], "answers": []}
         for xy in data:
             x, y = xy
-            corpus["question"].append(x.question)
-            corpus["candidates"].append(x.atomic_candidates)
+            corpus["question"].append([int(s) for s in x.question.split(' ')])
+            #corpus["candidates"].append(x.atomic_candidates)
             assert len(y) == 1
-            corpus["answers"].append(y[0].text)
+            corpus["answers"].append(int(y[0].text))
         corpus = deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
         corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
         qanswers = {}
-        for i,q in enumerate(corpus['question']):
+        for i, q in enumerate(corpus['question']):
             q0=q[0]
             if q0 not in qanswers:
                 qanswers[q0] = set()
@@ -123,7 +123,7 @@ class ModelFInputModule(InputModule):
         return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
 
-class ModelFModelModule(SimpleModelModule):
+class DistMultModelModule(SimpleModelModule):
     @property
     def output_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.loss]
@@ -169,7 +169,7 @@ class ModelFModelModule(SimpleModelModule):
             return logits, loss
 
 
-class ModelFOutputModule(OutputModule):
+class DistMultOutputModule(OutputModule):
     def setup(self):
         pass
 
@@ -177,7 +177,7 @@ class ModelFOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: List[QASetting], logits: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: Sequence[QASetting], logits: np.ndarray) -> List[Answer]:
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
         winning_indices = np.argmax(logits, axis=1)
@@ -198,8 +198,7 @@ class KBPReader(JTReader):
 
     def train(self, optim,
               training_set: List[Tuple[QASetting, Answer]],
-              max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value):
+              max_epochs=10, hooks=[]):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -214,26 +213,11 @@ class KBPReader(JTReader):
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logging.info("Setting up data and model...")
-        # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
 
         loss = self.model_module.tensors[Ports.loss]
 
-        if l2 != 0.0:
-            loss += \
-                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2 
-
-        if clip is not None:
-            gradients = optim.compute_gradients(loss)
-            if clip_op == tf.clip_by_value:
-                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                             for grad, var in gradients]
-            elif clip_op == tf.clip_by_norm:
-                gradients = [(tf.clip_by_norm(grad, clip), var)
-                             for grad, var in gradients]
-            min_op = optim.apply_gradients(gradients)
-        else:
-            min_op = optim.minimize(loss)
+        min_op = optim.minimize(loss)
 
         # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])

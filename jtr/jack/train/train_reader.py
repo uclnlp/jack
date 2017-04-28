@@ -131,7 +131,6 @@ def main():
                         help='If the vocabulary should be pruned to the most frequent words.')
     parser.add_argument('--model_dir', default='/tmp/jtreader', type=str, help="Directory to write reader to.")
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
-    parser.add_argument('--device', default='/cpu:0', type=str, help='device setting for tensorflow')
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
     parser.add_argument('--seed', default=325, type=int, help="Seed for rngs.")
     parser.add_argument('--answer_size', default=3, type=int, help=("How many answer does the output have. Used for "
@@ -193,74 +192,72 @@ def main():
 
     vocab = Vocab(emb=emb, init_from_embeddings=args.vocab_from_embeddings)
 
-    with tf.device(args.device):
-        # build JTReader
-        checkpoint()
+    # build JTReader
+    checkpoint()
 
-        config = vars(args)
-        kwargs = config.pop("kwargs", "{}")
-        kwargs = json.loads(kwargs)
-        config.update(kwargs)
-        reader = readers.readers[args.model](vocab, config)
-        checkpoint()
+    config = vars(args)
+    kwargs = config.pop("kwargs", "{}")
+    kwargs = json.loads(kwargs)
+    config.update(kwargs)
+    reader = readers.readers[args.model](vocab, config)
+    checkpoint()
 
-        learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
-                                        trainable=False)
-        lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
-        optim = tf.train.AdamOptimizer(learning_rate)
+    learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
+                                    trainable=False)
+    lr_decay_op = learning_rate.assign(args.learning_rate_decay * learning_rate)
+    optim = tf.train.AdamOptimizer(learning_rate)
 
-        if args.tensorboard_folder is not None:
-            if os.path.exists(args.tensorboard_folder):
-                shutil.rmtree(args.tensorboard_folder)
-            sw = tf.summary.FileWriter(args.tensorboard_folder)
-        else:
-            sw = None
+    if args.tensorboard_folder is not None:
+        if os.path.exists(args.tensorboard_folder):
+            shutil.rmtree(args.tensorboard_folder)
+        sw = tf.summary.FileWriter(args.tensorboard_folder)
+    else:
+        sw = None
 
-        # Hooks
-        iter_interval = 1 if args.debug else args.log_interval
-        hooks = [LossHook(reader, iter_interval, summary_writer=sw),
-                 ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw),
-                 ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
-                         args.checkpoint, sw)]
+    # Hooks
+    iter_interval = 1 if args.debug else args.log_interval
+    hooks = [LossHook(reader, iter_interval, summary_writer=sw),
+             ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw),
+             ETAHook(reader, iter_interval, math.ceil(len(train_data) / args.batch_size), args.epochs,
+                     args.checkpoint, sw)]
 
-        preferred_metric, best_metric = readers.eval_hooks[args.model].preferred_metric_and_best_score()
+    preferred_metric, best_metric = readers.eval_hooks[args.model].preferred_metric_and_best_score()
 
-        def side_effect(metrics, prev_metric):
-            """Returns: a state (in this case a metric) that is used as input for the next call"""
-            m = metrics[preferred_metric]
-            if prev_metric is not None and m < prev_metric:
-                reader.sess.run(lr_decay_op)
-                logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
-            elif m > best_metric[0]:
-                best_metric[0] = m
-                if prev_metric is None:  # store whole model only at beginning of training
-                    reader.store(args.model_dir)
-                else:
-                    reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
-                logger.info("Saving model to: %s" % args.model_dir)
-            return m
+    def side_effect(metrics, prev_metric):
+        """Returns: a state (in this case a metric) that is used as input for the next call"""
+        m = metrics[preferred_metric]
+        if prev_metric is not None and m < prev_metric:
+            reader.sess.run(lr_decay_op)
+            logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
+        elif m > best_metric[0]:
+            best_metric[0] = m
+            if prev_metric is None:  # store whole model only at beginning of training
+                reader.store(args.model_dir)
+            else:
+                reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
+            logger.info("Saving model to: %s" % args.model_dir)
+        return m
 
-        # this is the standard hook for the model
-        hooks.append(readers.eval_hooks[args.model](
-            reader, dev_data, summary_writer=sw, side_effect=side_effect,
-            iter_interval=args.checkpoint,
-            epoch_interval=(1 if args.checkpoint is None else None),
-            write_metrics_to=args.write_metrics_to))
+    # this is the standard hook for the model
+    hooks.append(readers.eval_hooks[args.model](
+        reader, dev_data, summary_writer=sw, side_effect=side_effect,
+        iter_interval=args.checkpoint,
+        epoch_interval=(1 if args.checkpoint is None else None),
+        write_metrics_to=args.write_metrics_to))
 
-        # Train
-        reader.train(optim, training_set=train_data,
-                     max_epochs=args.epochs, hooks=hooks,
-                     l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value,
-                     device=args.device)
+    # Train
+    reader.train(optim, training_set=train_data,
+                 max_epochs=args.epochs, hooks=hooks,
+                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
 
-        # Test final model
-        if test_data is not None:
-            test_eval_hook = readers.eval_hooks[args.model](reader, test_data,
-                                                            summary_writer=sw, epoch_interval=1,
-                                                            write_metrics_to=args.write_metrics_to)
+    # Test final model
+    if test_data is not None:
+        test_eval_hook = readers.eval_hooks[args.model](reader, test_data,
+                                                        summary_writer=sw, epoch_interval=1,
+                                                        write_metrics_to=args.write_metrics_to)
 
-            reader.load(args.model_dir)
-            test_eval_hook.at_test_time(1)
+        reader.load(args.model_dir)
+        test_eval_hook.at_test_time(1)
 
 
 if __name__ == "__main__":

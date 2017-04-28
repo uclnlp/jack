@@ -709,8 +709,7 @@ class JTReader:
     def train(self, optim,
               training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              device="/cpu:0"):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -725,9 +724,8 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logger.info("Setting up data and model...")
-        with tf.device(device):
-            # First setup shared resources, e.g., vocabulary. This depends on the input module.
-            self.setup_from_data(training_set)
+        # First setup shared resources, e.g., vocabulary. This depends on the input module.
+        self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         loss = self.model_module.tensors[Ports.loss]
