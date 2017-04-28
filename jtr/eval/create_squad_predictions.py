@@ -31,7 +31,8 @@ config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_sup
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
 
-reader.setup_from_file(FLAGS.model_dir)
+with tf.device(FLAGS.device):
+    reader.setup_from_file(FLAGS.model_dir)
 
 if FLAGS.dataset_type == "squad":
     dataset_jtr = convert_squad(FLAGS.file)

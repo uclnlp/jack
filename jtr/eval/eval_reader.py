@@ -27,7 +27,8 @@ print("Creating and loading reader from %s..." % FLAGS.model_dir)
 config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
-reader.setup_from_file(FLAGS.model_dir)
+with tf.device(FLAGS.device):
+    reader.setup_from_file(FLAGS.model_dir)
 
 with open(FLAGS.file) as f:
     dataset_jtr = json.load(f)
