@@ -4,6 +4,7 @@ from itertools import islice
 from jtr.preprocess.map import numpify
 from jtr.util.rs import DefaultRandomState
 import logging
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -156,12 +157,12 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
                 buckets2instances[bid] = buckets2instances[bid][batch_size:]
                 # if required by exact_epoch: also include last batch in bucket if too small
                 if len(batch_indices) == batch_size or exact_epoch:
+                    batch = {k: data_np[k][batch_indices] for k in data_np}
                     if isinstance(update, dict) and len(update) > 0:
-                        batch = {k: data_np[k][batch_indices] for k in data_np}
                         batch.update(update)
                         yield batch
                     else:
-                        yield {k: data_np[k][batch_indices] for k in data_np}
+                        yield batch
 
 
     return GeneratorWithRestart(bucket_generator)
