@@ -20,7 +20,7 @@ def get_pipeline_script_cmdcall_snli_converter():
     :return:
     """
     # convert snli files into jtr format
-    cmd = "python3 jtr/format/convert/SNLI2jtr_v1.py"
+    cmd = "python3 jtr/convert/SNLI2jtr_v1.py"
     return cmd
 
 
