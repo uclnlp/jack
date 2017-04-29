@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jtr.format.convert import SNLI2jtr_v1
+from jtr.convert import SNLI2jtr_v1
 
 import subprocess
 import pytest
