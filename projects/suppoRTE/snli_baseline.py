@@ -60,8 +60,8 @@ def main():
                         type=int, help="Batch size when eval=True, default 256")
     parser.add_argument('--learning_rate', default=0.001, type=float, help="Learning rate, default 0.001")
     parser.add_argument('--l2', default=0.0, type=float, help="L2 regularization weight, default 0.0")
-    #parser.add_argument('--clip_value', default=None, type=float,
-    #                    help="Gradients clipped between [-clip_value, clip_value] (default: no clipping)")
+    parser.add_argument('--clip_value', default=0, type=float,
+                        help="Gradients clipped between [-clip_value, clip_value] (default = 0, no clipping)")
     parser.add_argument('--dropout', default=0.0, type=float,
                         help="Dropout probability (default 0.0 for no dropout)")
     parser.add_argument('--epochs', default=30, type=int, help="Number of train epochs, default 30")
@@ -83,7 +83,7 @@ def main():
     repr_dim_input = 50 if debug else 300
     hidden_dim = args.hidden_dim
     batch_size, eval_batch_size, learning_rate = args.batch_size, args.eval_batch_size, args.learning_rate
-    dropout, l2 = args.dropout, args.l2
+    dropout, l2, clip_value = args.dropout, args.l2, args.clip_value
     epochs = args.epochs
     write_metrics_to = args.write_metrics_to
 
@@ -149,10 +149,10 @@ def main():
                  hooks=hooks,
                  max_epochs=epochs,
                  l2=l2,
-                 clip=None
+                 clip=None if abs(clip_value) < 1.e-12 else [-clip_value, clip_value]
                  )
     #todo: check device setup in JTReader.train
-    print('training took %.2f hours'%((time()-t0)/3600.))
+    print('training took %.3f hours'%((time()-t0)/3600.))
 
 
 

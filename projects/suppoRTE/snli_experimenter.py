@@ -17,10 +17,12 @@ def cartesian_product(dicts):
 
 def summary(configuration):
     #not mentioning at the moment:
-    # 'lowercase', 'vocab_max_size', 'vocab_min_freq', 'tensorboard_folder', 'train_pretrained',
-    # 'hidden_dim', 'eval_batch_size', 'seed', 'logfile', 'write_metrics_to', 'jtr_path'
-    keys2mention = ['pretrain', 'lowercase', 'batch_size', 'learning_rate', 'l2', 'dropout',
-                    'epochs', 'debug', 'debug_examples']
+    # 'vocab_max_size', 'vocab_max_size', 'tensorboard_folder',
+    # 'eval_batch_size', 'seed', 'logfile', 'write_metrics_to', 'jtr_path'
+    keys2mention = ['pretrain', 'train_pretrained', 'lowercase', 'batch_size', 'hidden_dim', 'vocab_min_freq', 'learning_rate', 'l2', 'dropout', 'clip_value',
+                    'epochs', 'debug']
+    if 'debug' in keys2mention and configuration['debug']:
+        keys2mention.append('debug_examples')
     kvs = [(k, configuration[k]) for k in keys2mention if k in configuration]
     return '_'.join([('%s=%s' % (k, str(v))) for (k, v) in kvs])
 
@@ -40,6 +42,7 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
                 ' --learning_rate {}' \
                 ' --l2 {}' \
                 ' --dropout {}' \
+                ' --clip_value {}' \
                 ' --epochs {}' \
                 ' --seed {}' \
                 ' --debug_examples {}' \
@@ -52,6 +55,7 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
                           c['learning_rate'],
                           c['l2'],
                           c['dropout'],
+                          c['clip_value'],
                           c['epochs'],
                           c['seed'],
                           c['debug_examples']
@@ -78,21 +82,43 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
 
 def main():
 
+    # #debug
+    # hyperparam_space = dict(
+    #     debug=[True],
+    #     lowercase=[False],
+    #     pretrain=[True],
+    #     train_pretrained=[False],
+    #     debug_examples=[50000],
+    #     vocab_max_size=[sys.maxsize],
+    #     vocab_min_freq=[1],
+    #     hidden_dim=[100],
+    #     batch_size=[1024],
+    #     eval_batch_size=[1000],
+    #     learning_rate=[1.e-3, 1.e-2, 1.e-1],
+    #     l2=[0., 1.e-5, 1.e-6],
+    #     dropout=[0.5, 0.3, 0.],
+    #     clip_value=[0., 1.],
+    #     epochs=[50],
+    #     seed=[1337]
+    # )
+
+    #full
     hyperparam_space = dict(
         debug=[False],
-        lowercase=[False],
+        lowercase=[False, True],
         pretrain=[True],
-        train_pretrained=[False],
+        train_pretrained=[False, True],
         debug_examples=[100],
         vocab_max_size=[sys.maxsize],
-        vocab_min_freq=[1],
+        vocab_min_freq=[1, 2],
         hidden_dim=[100],
         batch_size=[1024],
-        eval_batch_size=[1024],
-        learning_rate=[1.e-3, 1.e-2],
-        l2=[0, 1.e-6, 1.e-5],
-        dropout=[0.5, .6, .4, 0],
-        epochs=[50],
+        eval_batch_size=[512, 1024],
+        learning_rate=[1.e-3],
+        l2=[1.e-5],#[1.e-5, 5.e-6, 1.e-6],
+        dropout=[0.5],
+        clip_value=[0.],
+        epochs=[100],
         seed=[1337]
     )
 

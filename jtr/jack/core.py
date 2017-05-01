@@ -741,9 +741,9 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logger.info("Setting up data and model...")
-        with tf.device(device):
-            # First setup shared resources, e.g., vocabulary. This depends on the input module.
-            self.setup_from_data(training_set)
+        #with tf.device(device):
+        # First setup shared resources, e.g., vocabulary. This depends on the input module.
+        self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         loss = self.model_module.tensors[Ports.loss]
