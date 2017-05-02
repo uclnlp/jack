@@ -105,18 +105,18 @@ def main():
     #full
     hyperparam_space = dict(
         debug=[False],
-        lowercase=[False, True],
+        lowercase=[True],
         pretrain=[True],
-        train_pretrained=[False, True],
+        train_pretrained=[False],
         debug_examples=[100],
         vocab_max_size=[sys.maxsize],
         vocab_min_freq=[1, 2],
         hidden_dim=[100],
         batch_size=[1024],
-        eval_batch_size=[512, 1024],
-        learning_rate=[1.e-3],
-        l2=[1.e-5],#[1.e-5, 5.e-6, 1.e-6],
-        dropout=[0.5],
+        eval_batch_size=[1024],
+        learning_rate=[5e-3],#[1.e-3, 5.e-3],
+        l2=[1.e-5],#[1.e-5, 5.e-5],
+        dropout=[0.4],#[0.5, 0.4, 0.6],
         clip_value=[0.],
         epochs=[100],
         seed=[1337]
@@ -125,7 +125,8 @@ def main():
     parser = argparse.ArgumentParser(description='Baseline SNLI model experiments')
     parser.add_argument('--tag', default="test", help="tag for the current experiment")
     parser.add_argument('--gpu', nargs='*', default=[None], type=int,
-                        help='ids of gpus that get a separate run file (e.g. --gpu 0 1)')
+                        help='ids of gpus that get a separate run file (e.g. --gpu 0 1 0 1  '
+                             'for launch scripts for 2 machines with each 2 gpus)')
     parser.add_argument('--log_path', default=LOGPATH, help='path for execution and metrics logs')
     parser.add_argument('--tensorboard_path', default=TBPATH, help='path for tensorboard logs')
     args = parser.parse_args()
@@ -145,8 +146,8 @@ def main():
     #kill running python3 processes
     #print("ps aux | grep python3 | awk '{print $2}' | xargs kill -9")
 
-    for gpu, config_chunk in zip(gpus, config_chunks):
-        sh_file = '%s_%s.sh'%(tag, str(gpu)) if gpu is not None else '%s.sh'%(tag)
+    for i, (gpu, config_chunk) in enumerate(zip(gpus, config_chunks)):
+        sh_file = '%s_e%d_gpu%s.sh'%(tag, i, str(gpu)) if gpu is not None else '%s_e%d.sh'%(tag, i)
         with open(sh_file, 'w') as fID:
 
             for job_id, cfg in enumerate(config_chunk):
