@@ -539,18 +539,24 @@ def reader(inputs, lengths, output_size, contexts=(None, None), scope=None, drop
         States (tensor): The cell states from the bi-LSTM.
     """
     with tf.variable_scope(scope or "reader") as varscope:
-        cell = tf.nn.rnn_cell.LSTMCell(
+        cell_fw = tf.nn.rnn_cell.LSTMCell(
+            output_size,
+            state_is_tuple=True,
+            initializer=tf.contrib.layers.xavier_initializer()
+        )
+        cell_bw = tf.nn.rnn_cell.LSTMCell(
             output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
 
         #if drop_keep_prob != 1.0:
-        cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, output_keep_prob=drop_keep_prob, input_keep_prob=drop_keep_prob, seed=1233)
+        cell_fw = tf.nn.rnn_cell.DropoutWrapper(cell=cell_fw, output_keep_prob=drop_keep_prob, input_keep_prob=drop_keep_prob, seed=1233)
+        cell_bw = tf.nn.rnn_cell.DropoutWrapper(cell=cell_bw, output_keep_prob=drop_keep_prob, input_keep_prob=drop_keep_prob, seed=1233)
 
         outputs, states = tf.nn.bidirectional_dynamic_rnn(
-            cell,
-            cell,
+            cell_fw,
+            cell_bw,
             inputs,
             sequence_length=lengths,
             initial_state_fw=contexts[0],
