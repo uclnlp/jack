@@ -174,10 +174,10 @@ class ModelFOutputModule(OutputModule):
         pass
 
     @property
-    def input_ports(self) -> List[TensorPort]:
+    def input_ports(self) -> Sequence[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: List[QASetting], logits: np.ndarray) -> List[Answer]:
+    def __call__(self, inputs: Sequence[QASetting], logits: np.ndarray) -> Sequence[Answer]:
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
         winning_indices = np.argmax(logits, axis=1)
