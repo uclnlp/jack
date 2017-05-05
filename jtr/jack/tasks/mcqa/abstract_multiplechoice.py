@@ -1,7 +1,7 @@
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
 
-from jtr.preprocess.vocab import Vocab
+from jtr.preprocess.vocabulary import Vocab
 from jtr.jack.tf_fun.simple import fully_connected_projection
 
 from abc import abstractmethod, ABCMeta
@@ -55,12 +55,13 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       question_length: tf.Tensor,
                       keep_prob: tf.Tensor) -> Sequence[tf.Tensor]:
 
-        if self.embeddings is None:
-            embedding_tensor = Vocab.vocab_to_tensor(shared_resources.vocab,
-                                                     emb_length=self.config['repr_dim_input'],
-                                                     train_pretrained=self.config['train_pretrained'])
+        if not self.embeddings:
+            embedding_tensor = Vocab.get_tensor(shared_resources.vocab,
+                                                emb_length=self.config['repr_dim_input'],
+                                                init=self.config['init_embeddings'],
+                                                normalize=self.config['normalize_embeddings'])
             self.embeddings = fully_connected_projection(embedding_tensor, self.config['repr_dim'],
-                                                         name='projected_embeddings')
+                                                                name='embeddings_projection')
 
         logits = self.forward_pass(shared_resources, self.embeddings,
                                    question, support, question_length,

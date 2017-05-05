@@ -19,7 +19,9 @@ def summary(configuration):
     #not mentioning at the moment:
     # 'vocab_max_size', 'vocab_max_size', 'tensorboard_folder',
     # 'eval_batch_size', 'seed', 'logfile', 'write_metrics_to', 'jtr_path'
-    keys2mention = ['pretrain', 'train_pretrained', 'lowercase', 'batch_size', 'hidden_dim', 'vocab_min_freq', 'learning_rate', 'l2', 'dropout', 'clip_value',
+    keys2mention = ['pretrain', 'lowercase', 'batch_size', 'hidden_dim', 'vocab_min_freq',
+                    'init_embeddings', 'normalize_embeddings',
+                    'learning_rate', 'l2', 'dropout', 'clip_value',
                     'epochs', 'debug']
     if 'debug' in keys2mention and configuration['debug']:
         keys2mention.append('debug_examples')
@@ -36,6 +38,7 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
     command = 'python3 {}' \
                 ' --vocab_max_size {}' \
                 ' --vocab_min_freq {}' \
+                ' --init_embeddings {}' \
                 ' --hidden_dim {}' \
                 ' --batch_size {}' \
                 ' --eval_batch_size {}' \
@@ -45,10 +48,10 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
                 ' --clip_value {}' \
                 ' --epochs {}' \
                 ' --seed {}' \
-                ' --debug_examples {}' \
                 ''.format(snli_baseline,
                           c['vocab_max_size'],
                           c['vocab_min_freq'],
+                          c['init_embeddings'],
                           c['hidden_dim'],
                           c['batch_size'],
                           c['eval_batch_size'],
@@ -57,18 +60,18 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
                           c['dropout'],
                           c['clip_value'],
                           c['epochs'],
-                          c['seed'],
-                          c['debug_examples']
+                          c['seed']
                           )
-
     if c['debug']:
         command += ' --debug'
+    if 'debug_examples' in c:
+        command += ' --debug_examples {}'.format(c['debug_examples'])
     if c['lowercase']:
         command += ' --lowercase'
     if c['pretrain']:
         command += ' --pretrain'
-    if c['train_pretrained']:
-        command += ' --train_pretrained'
+    if c['normalize_embeddings']:
+        command += ' --normalize_embeddings'
 
     command += ' --jtr_path {}'.format(JTRPATH)
     command += ' --tensorboard_path {}'.format(os.path.join(tensorboard_path, summary(c)))
@@ -87,17 +90,18 @@ def main():
     #     debug=[True],
     #     lowercase=[False],
     #     pretrain=[True],
-    #     train_pretrained=[False],
-    #     debug_examples=[50000],
+    #     debug_examples=[10000],
     #     vocab_max_size=[sys.maxsize],
-    #     vocab_min_freq=[1],
+    #     vocab_min_freq=[0],
+    #     init_embeddings=['normal'],
+    #     normalize_embeddings=[False],
     #     hidden_dim=[100],
     #     batch_size=[1024],
-    #     eval_batch_size=[1000],
-    #     learning_rate=[1.e-3, 1.e-2, 1.e-1],
-    #     l2=[0., 1.e-5, 1.e-6],
-    #     dropout=[0.5, 0.3, 0.],
-    #     clip_value=[0., 1.],
+    #     eval_batch_size=[1024],
+    #     learning_rate=[.01],
+    #     l2=[1.e-5],
+    #     dropout=[0.5],
+    #     clip_value=[0.],
     #     epochs=[50],
     #     seed=[1337]
     # )
@@ -107,16 +111,16 @@ def main():
         debug=[False],
         lowercase=[True],
         pretrain=[True],
-        train_pretrained=[False],
-        debug_examples=[100],
         vocab_max_size=[sys.maxsize],
-        vocab_min_freq=[1, 2],
+        vocab_min_freq=[0, 1],
+        init_embeddings=['normal', 'uniform'],
+        normalize_embeddings=[True, False],
         hidden_dim=[100],
         batch_size=[1024],
-        eval_batch_size=[1024],
-        learning_rate=[5e-3],#[1.e-3, 5.e-3],
+        eval_batch_size=[1024, 512],
+        learning_rate=[5e-3, 1.e-2],#[1.e-3, 5.e-3],
         l2=[1.e-5],#[1.e-5, 5.e-5],
-        dropout=[0.4],#[0.5, 0.4, 0.6],
+        dropout=[0.4, 0.3, 0.5],#[0.5, 0.4, 0.6],
         clip_value=[0.],
         epochs=[100],
         seed=[1337]

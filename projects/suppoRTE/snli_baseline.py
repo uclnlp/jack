@@ -4,6 +4,7 @@ import argparse
 import sys
 import os
 import tensorflow as tf
+import numpy as np
 from time import time
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -13,8 +14,8 @@ logger = logging.getLogger(os.path.basename(sys.argv[0]))
 import jtr.jack.readers as readers
 from jtr.load.embeddings.embeddings import load_embeddings
 from jtr.jack.data_structures import load_labelled_data
-from jtr.preprocess.vocab import Vocab
-
+from jtr.preprocess.vocabulary import Vocab
+from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs
 
 def main():
 
@@ -44,14 +45,18 @@ def main():
     #config of Vocab
     parser.add_argument('--vocab_max_size', default=sys.maxsize, type=int)
     parser.add_argument('--vocab_min_freq', default=1, type=int)
+
+    #config of embeddings
     parser.add_argument('--pretrain', action='store_true',
                         help="Use pretrained embeddings, by default the initialisation is random")
-    parser.add_argument('--train_pretrained', action='store_true',
-                        help="Continue training pretrained embeddings together with model parameters")
-    #parser.add_argument('--repr_dim_input', default=300, type=int,
-    #                    help="Size of the input representation (embeddings), default 300")
+    parser.add_argument('--normalize_embeddings', action='store_true',
+                        help="Normalize (initial) embeddings")
+    parser.add_argument('--init_embeddings', default='uniform', choices=['uniform', 'normal'])
+
+    #config of model architecture
     parser.add_argument('--hidden_dim', default=100, type=int,
                         help="Size of the hidden representations, default 100")
+
 
     #training
     parser.add_argument('--batch_size', default=256,
@@ -79,7 +84,8 @@ def main():
     tensorboard_path = args.tensorboard_path
     lowercase = args.lowercase
     vocab_max_size, vocab_min_freq = args.vocab_max_size, args.vocab_min_freq
-    pretrain, train_pretrained = args.pretrain, args.train_pretrained
+    pretrain = args.pretrain
+    init_embeddings, normalize_embeddings = args.init_embeddings, args.normalize_embeddings
     repr_dim_input = 50 if debug else 300
     hidden_dim = args.hidden_dim
     batch_size, eval_batch_size, learning_rate = args.batch_size, args.eval_batch_size, args.learning_rate
@@ -88,6 +94,7 @@ def main():
     write_metrics_to = args.write_metrics_to
 
     tf.set_random_seed(args.seed)
+    np.random.seed(args.seed)
 
     #config params needed for JTReader
     config = {
@@ -99,8 +106,9 @@ def main():
         'lowercase': lowercase,
         'repr_dim_input': repr_dim_input,
         'repr_dim': hidden_dim,
-        'train_pretrained': train_pretrained,
-        'dropout': dropout
+        'dropout': dropout,
+        'init_embeddings': init_embeddings,
+        'normalize_embeddings': normalize_embeddings,
     }
 
     #logging
@@ -124,8 +132,20 @@ def main():
             embeddings = load_embeddings(os.path.join(jtr_path, 'jtr', 'data', 'SG_GoogleNews', emb_file), 'word2vec')
         logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
 
-    #create Vocab object and reader
+    #create Vocab object
     vocab = Vocab(emb=embeddings)
+
+    #filter dev and test tokens which have pre-trained embeddings (to avoid having to load all)
+    if pretrain:
+        dev_tmp = SingleSupportFixedClassInputs.preprocess(dev_set, lowercase=config['lowercase'],
+                                                           test_time=False, add_lengths=False)
+        test_tmp = SingleSupportFixedClassInputs.preprocess(test_set, lowercase=config['lowercase'],
+                                                            test_time=False, add_lengths=False)
+        vocab.add_pretrained_for_testing(dev_tmp['question'], dev_tmp['support'])
+        vocab.add_pretrained_for_testing(test_tmp['question'], test_tmp['support'])
+        logger.debug('loaded %d filtered pretrained symbols into vocab for dev and test data'%len(vocab.symset_pt))
+
+    #create reader
     reader = readers.readers["snli_reader"](vocab, config)
 
     #add hooks

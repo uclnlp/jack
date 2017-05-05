@@ -7,7 +7,7 @@ from jtr.jack.tf_fun import rnn, simple
 from jtr.pipelines import pipeline, jtr_map_to_targets
 from jtr.preprocess.batch import get_batches
 from jtr.preprocess.map import numpify
-from jtr.preprocess.vocab import Vocab
+from jtr.preprocess.vocabulary import Vocab
 from jtr.jack.preprocessing import preprocess_with_pipeline
 from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
 
@@ -102,7 +102,8 @@ class SingleSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def preprocess(self, data, test_time=False, prune_vocab=True, add_lengths=True):
+    @staticmethod
+    def preprocess(data, lowercase=False, test_time=False, add_lengths=True):
         corpus = {"support": [], "question": [], "candidates": [], "ids": []}
         if not test_time:
             corpus["answers"] = []
@@ -122,7 +123,7 @@ class SingleSupportFixedClassInputs(InputModule):
                 corpus["answers"].append(y[0].text)
         #preprocessing
         corpus = deep_map(corpus, tokenize, ['question', 'support'])
-        if self.lowercase:
+        if lowercase:
             corpus = deep_seq_map(corpus, lower, ['question', 'support'])
         corpus = deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question', 'support'])
 
@@ -130,35 +131,30 @@ class SingleSupportFixedClassInputs(InputModule):
         if add_lengths:
             corpus = deep_seq_map(corpus, lambda xs: len(xs), keys=['question', 'support'],
                                   fun_name='lengths', expand=True)
-
-        #encode data (and populate vocab if not frozen)
-        corpus = deep_map(corpus, self.vocab, ['question', 'support'])
-        vocab_length = len(self.vocab)
-
-        #prune vocab
-        if prune_vocab:
-            trf = self.vocab.prune(min_freq=self.min_freq, max_size=self.max_size)
-            corpus = deep_map(corpus, trf, ['question', 'support']) #currently not used in setup_from_data
-            logger.debug('Pruned train vocab size (%d to %d)'%(vocab_length, len(self.vocab)))
-
         return corpus
+
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         #set config params
         self.setup()
         #preprocess data
-        corpus = self.preprocess(data, test_time=False, prune_vocab=True, add_lengths=False)
-        self.vocab.freeze()
+        corpus = self.preprocess(data, self.lowercase, test_time=False, add_lengths=False)
+        #populate and build vocab
+        self.vocab.add(corpus["question"], corpus["support"])
+        self.vocab.build(min_freq=self.min_freq, max_size=self.max_size)
+        #create answer vocab
         self.answer_vocab = Vocab(unk=None)
-        deep_map(corpus, self.answer_vocab, ['candidates'])
+        self.answer_vocab.add(corpus["candidates"])
+        self.answer_vocab.build()
         logger.debug('answer_vocab: '+str(self.answer_vocab.sym2id))
-        self.answer_vocab.freeze()
         self.config['answer_size'] = len(self.answer_vocab)
+
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset, test_time=test_time, prune_vocab=False, add_lengths=True)
-        corpus = deep_map(corpus, self.answer_vocab, ['candidates', 'answers'])
+        corpus = self.preprocess(dataset, self.lowercase, test_time=test_time, add_lengths=True)
+        corpus = self.vocab.encode(corpus, keys=['question', 'support'])
+        corpus = self.answer_vocab.encode(corpus, keys=['candidates', 'answers'])
 
         xy_dict = {
             Ports.Input.single_support: corpus["support"],
@@ -176,13 +172,16 @@ class SingleSupportFixedClassInputs(InputModule):
             keep_prob_dict = {Ports.Input.keep_prob: 1.-self.dropout}
             return get_batches(xy_dict, batch_size=self.batch_size, update=keep_prob_dict)
 
+
     def setup(self):
         self.batch_size = self.config.get("batch_size", 1)
         self.eval_batch_size = self.config.get("eval_batch_size", 256)
-        self.dropout = self.config.get("dropout", 1)
+        self.dropout = self.config.get("dropout", 0)
         self.lowercase = self.config.get("lowercase", False)
         self.min_freq = self.config.get("vocab_min_freq", 1)
         self.max_size = self.config.get("vocab_max_size", sys.maxsize)
+        self.init_embeddings = self.config.get("init_embeddings", 'uniform')
+        self.normalize_embeddings = self.config.get("normalize_embeddings", False)
 
 
 class SimpleMCModelModule(SimpleModelModule):
@@ -207,8 +206,7 @@ class SimpleMCModelModule(SimpleModelModule):
                                shared_resources: SharedVocabAndConfig,
                                candidate_scores: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.nn.softmax_cross_entropy_with_logits(logits=candidate_scores,
-                labels=candidate_labels)
+        loss = tf.nn.softmax_cross_entropy_with_logits(logits=candidate_scores, labels=candidate_labels)
         return loss,
 
     def create_output(self,
