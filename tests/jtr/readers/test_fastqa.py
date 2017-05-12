@@ -30,7 +30,7 @@ def test_fastqa():
               "with_char_embeddings": True}
 
     # create/setup reader
-    shared_resources = SharedVocabAndConfig(vocab, config)
+    shared_resources = SharedVocabAndConfig(vocab, config, data)
     fastqa_reader = readers.readers["fastqa_reader"](shared_resources)
     fastqa_reader.setup_from_data(data)
 

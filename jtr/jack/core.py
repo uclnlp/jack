@@ -267,9 +267,11 @@ class SharedVocabAndConfig(SharedResources):
     A class to provide and store a vocab shared across some of the reader modules.
     """
 
-    def __init__(self, vocab: Vocab, config: dict = None):
+    def __init__(self, vocab: Vocab, config: dict = None,
+                 train_data: Sequence[Tuple[QASetting, Answer]] = None ):
         self.config = config
         self.vocab = vocab
+        self.train_data = train_data
 
     def store(self, path):
         if not os.path.exists(path):
@@ -768,9 +770,9 @@ class JTReader:
         Args:
             data: training dataset
         """
-        self.input_module.setup_from_data(data)
-        self.model_module.setup(self.is_train)
-        self.output_module.setup()
+        #self.input_module.setup_from_data(data)
+        #self.model_module.setup(self.is_train)
+        #self.output_module.setup()
         self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, path):

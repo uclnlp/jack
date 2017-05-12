@@ -53,10 +53,15 @@ def example_reader(shared_resources: SharedVocabAndConfig):
     """ Creates an example multiple choice reader. """
     from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
     input_module = SimpleMCInputModule(shared_resources)
+    input_module.setup_from_data(shared_resources.train_data)
+
     model_module = SimpleMCModelModule(shared_resources)
+    model_module.setup(is_training=True)
+
     output_module = SimpleMCOutputModule()
-    jtreader = JTReader(shared_resources, input_module, model_module, output_module)
-    return jtreader
+    output_module.setup()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__kbp_reader
@@ -64,10 +69,15 @@ def modelf_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a simple kbp reader. """
     from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
     input_module = ModelFInputModule(shared_resources)
+    input_module.setup_from_data(shared_resources.train_data)
+
     model_module = ModelFModelModule(shared_resources)
+    model_module.setup(is_training=True)
+
     output_module = ModelFOutputModule()
-    jtreader = KBPReader(shared_resources, input_module, model_module, output_module)
-    return jtreader
+    output_module.setup()
+
+    return KBPReader(shared_resources, input_module, model_module, output_module)
 
 
 
@@ -77,23 +87,36 @@ def fastqa_reader(shared_resources: SharedVocabAndConfig):
     from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.jack.tasks.xqa.shared import XQAOutputModule
 
-    return JTReader(shared_resources,
-                    FastQAInputModule(shared_resources),
-                    fatqa_model_module(shared_resources),
-                    XQAOutputModule(shared_resources))
+    input_module = FastQAInputModule(shared_resources)
+    input_module.setup_from_data(shared_resources.train_data)
+
+    model_module = fatqa_model_module(shared_resources)
+    model_module.setup(is_training=True)
+
+    output_module = XQAOutputModule(shared_resources)
+    output_module.setup()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__xqa_reader
 def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a FastQA reader instance (extractive qa model). """
-    from jtr.jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
-    from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
     from jtr.jack.tasks.xqa.cbow_baseline import CBOWXqaInputModule
 
-    return JTReader(shared_resources,
-                    CBOWXqaInputModule(shared_resources),
-                    cbow_xqa_model_module(shared_resources),
-                    XQANoScoreOutputModule(shared_resources))
+    from jtr.jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
+    from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
+
+    input_module = CBOWXqaInputModule(shared_resources)
+    input_module.setup_from_data(shared_resources.train_data)
+
+    model_module = cbow_xqa_model_module(shared_resources)
+    model_module.setup(is_training=True)
+
+    output_module = XQANoScoreOutputModule(shared_resources)
+    output_module.setup()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__mcqa_reader
@@ -101,7 +124,13 @@ def snli_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a SNLI reader instance (multiple choice qa model). """
     from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
 
-    return JTReader(shared_resources,
-                    SingleSupportFixedClassInputs(shared_resources),
-                    PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
-                    EmptyOutputModule())
+    input_module = SingleSupportFixedClassInputs(shared_resources)
+    input_module.setup_from_data(shared_resources.train_data)
+
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
+    model_module.setup(is_training=True)
+
+    output_module = EmptyOutputModule()
+    output_module.setup()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)

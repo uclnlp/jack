@@ -201,7 +201,7 @@ def main():
     kwargs = json.loads(kwargs)
     config.update(kwargs)
 
-    shared_resources = SharedVocabAndConfig(vocab, config)
+    shared_resources = SharedVocabAndConfig(vocab, config, train_data)
     reader = readers.readers[args.model](shared_resources)
     checkpoint()
 

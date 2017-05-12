@@ -313,7 +313,7 @@ class EvalHook(TraceHook):
     def at_epoch_end(self, epoch: int, **kwargs):
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
-    
+
     def at_test_time(self, epoch):
         self.__call__(epoch)
 
@@ -464,12 +464,12 @@ class KBPEvalHook(EvalHook):
         neg_loss = -1*len_np_or_list(winning_indices)*loss
 
         return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
-    
-    
+
+
     def at_test_time(self, epoch, vocab=None):
         from scipy.stats import rankdata
         from numpy import asarray
-        
+
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
@@ -518,7 +518,7 @@ class KBPEvalHook(EvalHook):
             ans_ranks=[]
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
-                    if a==cand and cand_ranks[c]<=100:# and qa_rank[str(q)+"\t"+str(a)]<=1000: 
+                    if a==cand and cand_ranks[c]<=100:# and qa_rank[str(q)+"\t"+str(a)]<=1000:
                         ans_ranks.append(cand_ranks[c])
             av_p=0
             answers=1
@@ -568,16 +568,15 @@ class KBPEvalHook(EvalHook):
         #        w.write(line)
         #    for r in lost:
         #        print(r)
-       
-        
+
+
 
     def at_epoch_end(self, epoch: int, **kwargs):
         self.epoch += 1
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
-    
-    
+
+
 #    def at_epoch_end(self, epoch: int, **kwargs):
 #        if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
 #            self.at_test_time(epoch)
-        

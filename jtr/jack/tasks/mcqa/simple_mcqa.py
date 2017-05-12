@@ -79,7 +79,7 @@ class SimpleMCInputModule(InputModule):
 
 
 class SingleSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_vocab_config):
+    def __init__(self, shared_vocab_config, train_data):
         self.shared_vocab_config = shared_vocab_config
 
     @property

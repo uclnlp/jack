@@ -140,4 +140,3 @@ def datetime_test_result_filename():
     '''Generates a string of the format testresult_CURRENT_DATE-TIME'''
     timestr = time.strftime("%Y%m%d-%H%M%S")
     return 'testresult_' + timestr
-
