@@ -314,4 +314,3 @@ class MisclassificationOutputModule(OutputModule):
 
     def load(self, path):
         pass
-

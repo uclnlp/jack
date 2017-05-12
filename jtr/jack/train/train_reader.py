@@ -19,6 +19,7 @@ from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.load.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.preprocess.vocab import Vocab
+from jtr.jack.core import SharedVocabAndConfig
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -199,7 +200,9 @@ def main():
     kwargs = config.pop("kwargs", "{}")
     kwargs = json.loads(kwargs)
     config.update(kwargs)
-    reader = readers.readers[args.model](vocab, config)
+
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    reader = readers.readers[args.model](shared_resources)
     checkpoint()
 
     learning_rate = tf.get_variable("learning_rate", initializer=args.learning_rate, dtype=tf.float32,
