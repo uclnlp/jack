@@ -676,6 +676,7 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
+        self.sess.run([v.initializer for v in self.model_module.variables])
         batch = self.input_module(inputs)
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
@@ -728,7 +729,7 @@ class JTReader:
 
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.setup_from_data(training_set)
+        self.sess.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         loss = self.model_module.tensors[Ports.loss]
@@ -764,17 +765,6 @@ class JTReader:
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
-
-    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
-        """
-        Sets up modules given a training dataset if necessary.
-        Args:
-            data: training dataset
-        """
-        #self.input_module.setup_from_data(data)
-        #self.model_module.setup(self.is_train)
-        #self.output_module.setup()
-        self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, path):
         """
