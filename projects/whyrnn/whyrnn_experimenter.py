@@ -34,7 +34,7 @@ def to_logfile(c, path, tag='experiment', ext='log'):
 
 
 def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
-    snli_baseline = os.path.join(JTRPATH, 'projects', 'suppoRTE', 'snli_baseline.py')
+    snli_baseline = os.path.join(JTRPATH, 'projects', 'whyrnn', 'whyrnn_baseline.py')
     command = 'python3 {}' \
                 ' --vocab_max_size {}' \
                 ' --vocab_min_freq {}' \
