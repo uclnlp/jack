@@ -710,6 +710,7 @@ class JTReader:
                 sys.stdout.flush()
         return answers
 
+
     def train(self, optim,
               training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
