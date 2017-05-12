@@ -53,7 +53,6 @@ def example_reader(shared_resources: SharedVocabAndConfig):
     """ Creates an example multiple choice reader. """
     from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
     input_module = SimpleMCInputModule(shared_resources)
-    input_module.setup_from_data(shared_resources.train_data)
 
     model_module = SimpleMCModelModule(shared_resources)
     model_module.setup(is_training=True)
@@ -69,7 +68,6 @@ def modelf_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a simple kbp reader. """
     from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
     input_module = ModelFInputModule(shared_resources)
-    input_module.setup_from_data(shared_resources.train_data)
 
     model_module = ModelFModelModule(shared_resources)
     model_module.setup(is_training=True)
@@ -88,7 +86,6 @@ def fastqa_reader(shared_resources: SharedVocabAndConfig):
     from jtr.jack.tasks.xqa.shared import XQAOutputModule
 
     input_module = FastQAInputModule(shared_resources)
-    input_module.setup_from_data(shared_resources.train_data)
 
     model_module = fatqa_model_module(shared_resources)
     model_module.setup(is_training=True)
@@ -108,7 +105,6 @@ def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
     from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
 
     input_module = CBOWXqaInputModule(shared_resources)
-    input_module.setup_from_data(shared_resources.train_data)
 
     model_module = cbow_xqa_model_module(shared_resources)
     model_module.setup(is_training=True)
@@ -125,7 +121,6 @@ def snli_reader(shared_resources: SharedVocabAndConfig):
     from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
-    input_module.setup_from_data(shared_resources.train_data)
 
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
     model_module.setup(is_training=True)

@@ -38,6 +38,7 @@ class CBOWXqaInputModule(InputModule):
             "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
         self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
+        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         # create character vocab + word lengths + char ids per word

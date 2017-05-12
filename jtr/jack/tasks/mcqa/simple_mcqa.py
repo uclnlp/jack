@@ -20,6 +20,7 @@ class SimpleMCInputModule(InputModule):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
+        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
@@ -79,8 +80,9 @@ class SimpleMCInputModule(InputModule):
 
 
 class SingleSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_vocab_config, train_data):
+    def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
+        self.setup_from_data(self.shared_vocab_config.train_data)
 
     @property
     def training_ports(self) -> List[TensorPort]:

@@ -61,6 +61,7 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
 class ModelFInputModule(InputModule):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
+        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
@@ -221,7 +222,7 @@ class KBPReader(JTReader):
 
         if l2 != 0.0:
             loss += \
-                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2 
+                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
         if clip is not None:
             gradients = optim.compute_gradients(loss)
