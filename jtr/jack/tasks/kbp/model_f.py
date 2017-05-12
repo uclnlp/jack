@@ -171,6 +171,9 @@ class ModelFModelModule(SimpleModelModule):
 
 
 class ModelFOutputModule(OutputModule):
+    def __init__():
+        self.setup()
+
     def setup(self):
         pass
 

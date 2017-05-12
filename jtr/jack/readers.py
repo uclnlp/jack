@@ -57,7 +57,6 @@ def example_reader(shared_resources: SharedVocabAndConfig):
     model_module = SimpleMCModelModule(shared_resources)
 
     output_module = SimpleMCOutputModule()
-    output_module.setup()
 
     return JTReader(shared_resources, input_module, model_module, output_module)
 
@@ -71,7 +70,6 @@ def modelf_reader(shared_resources: SharedVocabAndConfig):
     model_module = ModelFModelModule(shared_resources)
 
     output_module = ModelFOutputModule()
-    output_module.setup()
 
     return KBPReader(shared_resources, input_module, model_module, output_module)
 
@@ -88,7 +86,6 @@ def fastqa_reader(shared_resources: SharedVocabAndConfig):
     model_module = fatqa_model_module(shared_resources)
 
     output_module = XQAOutputModule(shared_resources)
-    output_module.setup()
 
     return JTReader(shared_resources, input_module, model_module, output_module)
 
@@ -106,7 +103,6 @@ def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
     model_module = cbow_xqa_model_module(shared_resources)
 
     output_module = XQANoScoreOutputModule(shared_resources)
-    output_module.setup()
 
     return JTReader(shared_resources, input_module, model_module, output_module)
 
@@ -121,6 +117,5 @@ def snli_reader(shared_resources: SharedVocabAndConfig):
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
 
     output_module = EmptyOutputModule()
-    output_module.setup()
 
     return JTReader(shared_resources, input_module, model_module, output_module)

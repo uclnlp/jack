@@ -188,6 +188,9 @@ class SimpleMCModelModule(SimpleModelModule):
 
 
 class SimpleMCOutputModule(OutputModule):
+    def __init__(self):
+        self.setup()
+
     def setup(self):
         pass
 
@@ -233,6 +236,9 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
 
 class EmptyOutputModule(OutputModule):
 
+    def __init__(self):
+        self.setup()
+
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits,
@@ -258,6 +264,7 @@ class MisclassificationOutputModule(OutputModule):
         self.lower, self.upper = interval
         self.limit = limit
         self.i = 0
+        self.setup()
 
     @property
     def input_ports(self) -> List[TensorPort]:
