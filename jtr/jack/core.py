@@ -504,6 +504,7 @@ class SimpleModelModule(ModelModule):
 
     def __init__(self, shared_resources: SharedResources):
         self.shared_resources = shared_resources
+        self.setup(is_training=True)
 
     @abstractmethod
     def create_output(self, shared_resources: SharedResources,
