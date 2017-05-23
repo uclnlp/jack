@@ -1,25 +1,33 @@
-#creates bash commands for experiments with varying hyperparams.
+#!/usr/bin/env python3
+
+# Creates bash commands for experiments with varying hyperparams.
 import os
 import sys
 import itertools
 import logging
 import argparse
 import numpy as np
+import re
+import stat
 
-#JTRPATH = '/Users/tdmeeste/workspace/jtr'
-JTRPATH = '/users/tdmeeste/workspace/jtr'
+# JTRPATH = '/Users/tdmeeste/workspace/jtr'
+# default assumption: you're running this from whyrnn folder
+JTRPATH = re.sub('jtr.*$', 'jtr', os.getcwd())
 
 LOGPATH = os.path.join('.', 'logs')
 TBPATH = os.path.join('.', 'tb')
 
+
 def cartesian_product(dicts):
     return (dict(zip(dicts, x)) for x in itertools.product(*dicts.values()))
 
+
 def summary(configuration):
-    #not mentioning at the moment:
+    # not mentioning at the moment:
     # 'vocab_max_size', 'vocab_max_size', 'tensorboard_folder',
     # 'eval_batch_size', 'seed', 'logfile', 'write_metrics_to', 'jtr_path'
-    keys2mention = ['pretrain', 'lowercase', 'batch_size', 'hidden_dim', 'vocab_min_freq',
+    keys2mention = ['pretrain', 'lowercase', 'batch_size', 'hidden_dim',
+                    'vocab_min_freq',
                     'init_embeddings', 'normalize_embeddings',
                     'learning_rate', 'l2', 'dropout', 'clip_value',
                     'epochs', 'debug']
@@ -28,40 +36,41 @@ def summary(configuration):
     kvs = [(k, configuration[k]) for k in keys2mention if k in configuration]
     return '_'.join([('%s=%s' % (k, str(v))) for (k, v) in kvs])
 
+
 def to_logfile(c, path, tag='experiment', ext='log'):
     outfile = os.path.join(path, "%s.%s.%s" % (tag, summary(c), ext))
     return outfile
 
 
 def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
-    snli_baseline = os.path.join(JTRPATH, 'projects', 'whyrnn', 'whyrnn_baseline.py')
+    snli_baseline = os.path.join(
+        JTRPATH, 'projects', 'whyrnn', 'whyrnn_baseline.py')
     command = 'python3 {}' \
-                ' --vocab_max_size {}' \
-                ' --vocab_min_freq {}' \
-                ' --init_embeddings {}' \
-                ' --hidden_dim {}' \
-                ' --batch_size {}' \
-                ' --eval_batch_size {}' \
-                ' --learning_rate {}' \
-                ' --l2 {}' \
-                ' --dropout {}' \
-                ' --clip_value {}' \
-                ' --epochs {}' \
-                ' --seed {}' \
-                ''.format(snli_baseline,
-                          c['vocab_max_size'],
-                          c['vocab_min_freq'],
-                          c['init_embeddings'],
-                          c['hidden_dim'],
-                          c['batch_size'],
-                          c['eval_batch_size'],
-                          c['learning_rate'],
-                          c['l2'],
-                          c['dropout'],
-                          c['clip_value'],
-                          c['epochs'],
-                          c['seed']
-                          )
+              ' --vocab_max_size {}' \
+              ' --vocab_min_freq {}' \
+              ' --init_embeddings {}' \
+              ' --hidden_dim {}' \
+              ' --batch_size {}' \
+              ' --eval_batch_size {}' \
+              ' --learning_rate {}' \
+              ' --l2 {}' \
+              ' --dropout {}' \
+              ' --clip_value {}' \
+              ' --epochs {}' \
+              ' --seed {}' \
+              ''.format(snli_baseline,
+                        c['vocab_max_size'],
+                        c['vocab_min_freq'],
+                        c['init_embeddings'],
+                        c['hidden_dim'],
+                        c['batch_size'],
+                        c['eval_batch_size'],
+                        c['learning_rate'],
+                        c['l2'],
+                        c['dropout'],
+                        c['clip_value'],
+                        c['epochs'],
+                        c['seed'])
     if c['debug']:
         command += ' --debug'
     if 'debug_examples' in c:
@@ -74,8 +83,10 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
         command += ' --normalize_embeddings'
 
     command += ' --jtr_path {}'.format(JTRPATH)
-    command += ' --tensorboard_path {}'.format(os.path.join(tensorboard_path, summary(c)))
-    command += ' --write_metrics_to {}'.format(to_logfile(c, log_path, tag=tag, ext='metrics'))
+    command += ' --tensorboard_path {}'.format(
+        os.path.join(tensorboard_path, summary(c)))
+    command += ' --write_metrics_to {}'.format(to_logfile(
+        c, log_path, tag=tag, ext='metrics'))
 
     if which_gpu is not None:
         command = 'CUDA_VISIBLE_DEVICES={} {}'.format(which_gpu, command)
@@ -84,7 +95,6 @@ def to_cmd(c, tag, log_path, tensorboard_path, which_gpu=None):
 
 
 def main():
-
     # #debug
     # hyperparam_space = dict(
     #     debug=[True],
@@ -106,7 +116,7 @@ def main():
     #     seed=[1337]
     # )
 
-    #full
+    # full
     hyperparam_space = dict(
         debug=[False],
         lowercase=[True],
@@ -118,21 +128,26 @@ def main():
         hidden_dim=[100],
         batch_size=[512, 1024],
         eval_batch_size=[1024],
-        learning_rate=[5e-3],#[1.e-3, 5.e-3],
-        l2=[1.e-5],#[1.e-5, 5.e-5],
-        dropout=[.4],#[0.5, 0.4, 0.6],
+        learning_rate=[5e-3],  # [1.e-3, 5.e-3],
+        l2=[1.e-5],  # [1.e-5, 5.e-5],
+        dropout=[.4],  # [0.5, 0.4, 0.6],
         clip_value=[0.],
         epochs=[100],
         seed=[1337]
     )
 
-    parser = argparse.ArgumentParser(description='Baseline SNLI model experiments')
-    parser.add_argument('--tag', default="test", help="tag for the current experiment")
+    parser = argparse.ArgumentParser(
+        description='Baseline SNLI model experiments')
+    parser.add_argument('--tag', default="test",
+                        help="tag for the current experiment")
     parser.add_argument('--gpu', nargs='*', default=[None], type=int,
-                        help='ids of gpus that get a separate run file (e.g. --gpu 0 1 0 1  '
-                             'for launch scripts for 2 machines with each 2 gpus)')
-    parser.add_argument('--log_path', default=LOGPATH, help='path for execution and metrics logs')
-    parser.add_argument('--tensorboard_path', default=TBPATH, help='path for tensorboard logs')
+                        help='ids of gpus that get a separate run file '
+                             '(e.g., --gpu 0 1 0 1  for launching scripts on '
+                             '2 machines having 2 gpus each)')
+    parser.add_argument('--log_path', default=LOGPATH,
+                        help='path for execution and metrics logs')
+    parser.add_argument('--tensorboard_path', default=TBPATH,
+                        help='path for tensorboard logs')
     args = parser.parse_args()
     tag = args.tag
     gpus = list(args.gpu)
@@ -147,18 +162,21 @@ def main():
     configs = cartesian_product(hyperparam_space)
     config_chunks = [list(a) for a in np.array_split(list(configs), len(gpus))]
 
-    #kill running python3 processes
-    #print("ps aux | grep python3 | awk '{print $2}' | xargs kill -9")
+    # kill running python3 processes
+    # print("ps aux | grep python3 | awk '{print $2}' | xargs kill -9")
 
     for i, (gpu, config_chunk) in enumerate(zip(gpus, config_chunks)):
-        sh_file = '%s_e%d_gpu%s.sh'%(tag, i, str(gpu)) if gpu is not None else '%s_e%d.sh'%(tag, i)
+        sh_file = ('{}_e{}_gpu{}.sh'.format(tag, i, str(gpu))
+                   if gpu is not None
+                   else '{}_e{}.sh'.format(tag, i))
         with open(sh_file, 'w') as fID:
 
             for job_id, cfg in enumerate(config_chunk):
                 log_file = to_logfile(cfg, log_path, tag=tag, ext='log')
                 completed = False
                 if os.path.isfile(log_file):
-                    with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(log_file, 'r', encoding='utf-8',
+                              errors='ignore') as f:
                         content = f.read()
                         completed = '\ttest' in content
                 if not completed:
@@ -166,13 +184,14 @@ def main():
                                                         tag,
                                                         log_path,
                                                         tensorboard_path,
-                                                        which_gpu=gpu), log_file)
-                    fID.write(line+'\n')
+                                                        which_gpu=gpu),
+                                                 log_file)
+                    fID.write(line + '\n')
+            # make the bash file executable
+            st = os.stat(sh_file)
+            os.chmod(sh_file, st.st_mode | stat.S_IEXEC)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     main()
-
-
-
-
