@@ -1,84 +1,16 @@
 from os.path import join
 
 import numpy as np
-import pickle
+import cPickle as pickle
 import os
-import json
-import tensorflow as tf
+import simplejson
 
-from jtr.util.util import get_data_path, write_to_hdf, make_dirs_if_not_exists, load_hdf_file
-from jtr.preprocess.hdf5_processing.interfaces import IAtBatchPreparedObservable
-from jtr.util.global_config import Config
+from spodernet.utils.util import get_data_path, write_to_hdf, make_dirs_if_not_exists, load_hdf_file
+from spodernet.interfaces import IAtBatchPreparedObservable
+from spodernet.utils.global_config import Config
 
-from jtr.util.logger import Logger
+from spodernet.utils.logger import Logger
 log = Logger('processors.py.txt')
-
-
-class TensorFlowConfig:
-    inp = None
-    support = None
-    input_length = None
-    support_length = None
-    target = None
-    index = None
-    sess = None
-
-    @staticmethod
-    def init_batch_size(batch_size):
-        TensorFlowConfig.inp = tf.placeholder(tf.int64, [batch_size, None])
-        TensorFlowConfig.support = tf.placeholder(tf.int64, [batch_size, None])
-        TensorFlowConfig.input_length = tf.placeholder(tf.int64, [batch_size,])
-        TensorFlowConfig.support_length = tf.placeholder(tf.int64, [batch_size,])
-        TensorFlowConfig.target = tf.placeholder(tf.int64, [batch_size])
-        TensorFlowConfig.index = tf.placeholder(tf.int64, [batch_size])
-
-    @staticmethod
-    def get_session():
-        if TensorFlowConfig.sess is None:
-            TensorFlowConfig.sess = tf.Session()
-        return TensorFlowConfig.sess
-
-
-
-class TensorFlowConverter(IAtBatchPreparedObservable):
-
-    def at_batch_prepared(self, batch_parts):
-        inp, inp_len, sup, sup_len, t, idx = batch_parts
-        if TensorFlowConfig.inp == None:
-            log.error('You need to initialize the batch size via TensorflowConfig.init_batch_size(batchsize)!')
-        feed_dict = {}
-        feed_dict[TensorFlowConfig.inp] = inp
-        feed_dict[TensorFlowConfig.support] = sup
-        feed_dict[TensorFlowConfig.input_length] = inp_len
-        feed_dict[TensorFlowConfig.support_length] = sup_len
-        feed_dict[TensorFlowConfig.target] = t
-        feed_dict[TensorFlowConfig.index] = idx
-
-        str2var = {}
-        str2var['input'] = TensorFlowConfig.inp
-        str2var['input_length'] = TensorFlowConfig.input_length
-        str2var['support'] = TensorFlowConfig.support
-        str2var['support_length'] = TensorFlowConfig.support_length
-        str2var['target'] = TensorFlowConfig.target
-        str2var['index'] = TensorFlowConfig.index
-
-        return str2var, feed_dict
-
-def build_str2var_dict():
-    str2var = {}
-    if TensorFlowConfig.inp is not None:
-        str2var['input'] = TensorFlowConfig.inp
-    if TensorFlowConfig.support is not None:
-        str2var['support'] = TensorFlowConfig.support
-    if TensorFlowConfig.target is not None:
-        str2var['target'] = TensorFlowConfig.target
-    if TensorFlowConfig.input_length is not None:
-        str2var['input_length'] = TensorFlowConfig.input_length
-    if TensorFlowConfig.support_length is not None:
-        str2var['support_length'] = TensorFlowConfig.support_length
-    if TensorFlowConfig.index is not None:
-        str2var['index'] = TensorFlowConfig.index
-        return str2var
 
 class KeyToKeyMapper(IAtBatchPreparedObservable):
     def __init__(self, key2key):
@@ -109,6 +41,7 @@ class TargetIdx2MultiTarget(IAtBatchPreparedObservable):
 
         return [inp, inp_len, sup, sup_len, t, idx, new_t]
 
+
 class ListIndexRemapper(object):
     def __init__(self, list_of_new_idx):
         self.list_of_new_idx = list_of_new_idx
@@ -122,7 +55,7 @@ class ListIndexRemapper(object):
 
 class JsonLoaderProcessors(object):
     def process(self, line):
-        return json.loads(line)
+        return simplejson.loads(line)
 
 class RemoveLineOnJsonValueCondition(object):
     def __init__(self, key, func_condition):
@@ -170,8 +103,8 @@ class AbstractLoopLevelTokenProcessor(AbstractProcessor):
         if self.successive_for_loops_to_tokens == None:
             i = 0
             level = sample
-            while not (   isinstance(level, str)
-                       or isinstance(level, int)):
+            while not (   isinstance(level, basestring)
+                       or isinstance(level, long)):
                     level = level[0]
                     i+=1
             self.successive_for_loops_to_tokens = i
@@ -208,7 +141,7 @@ class AbstractLoopLevelListOfTokensProcessor(AbstractProcessor):
         if self.successive_for_loops_to_list_of_tokens == None:
             i = 0
             level = sample
-            while not (isinstance(level, str)
+            while not (isinstance(level, basestring)
                        or isinstance(level, int)
                        or isinstance(level, np.int32)):
                     level = level[0]
@@ -226,6 +159,16 @@ class AbstractLoopLevelListOfTokensProcessor(AbstractProcessor):
 
         return ret
 
+
+
+class DeepSeqMap(AbstractLoopLevelListOfTokensProcessor):
+    def __init__(self, func):
+        super(DeepSeqMap, self).__init__()
+        self.func = func
+
+    def process_list_of_tokens(self, data, inp_type):
+        return self.func(data)
+
 class Tokenizer(AbstractProcessor):
     def __init__(self, tokenizer_method):
         super(Tokenizer, self).__init__()
@@ -242,15 +185,16 @@ class NaiveNCharTokenizer(AbstractProcessor):
     def process(self, sentence, inp_type):
         return [sentence[i:i+self.N] for i in range(0, len(sentence), self.N)]
 
-class AddToVocab(AbstractProcessor):
-    def __init__(self):
+class AddToVocab(AbstractLoopLevelTokenProcessor):
+    def __init__(self, general_vocab_keys=['input', 'support']):
         super(AddToVocab, self).__init__()
+        self.general_vocab_keys = set(general_vocab_keys)
 
-    def process(self, token, inp_type):
+    def process_token(self, token, inp_type):
         if inp_type == 'target':
             self.state['vocab']['general'].add_label(token)
             log.statistical('Example vocab target token {0}', 0.01, token)
-        else:
+        if inp_type in self.general_vocab_keys:
             self.state['vocab']['general'].add_token(token)
             message = 'Example vocab {0} token'.format(inp_type)
             log.statistical(message + ': {0}', 0.01, token)
@@ -264,14 +208,15 @@ class ToLower(AbstractProcessor):
     def process(self, token, inp_type):
         return token.lower()
 
+
 class ConvertTokenToIdx(AbstractLoopLevelTokenProcessor):
-    def __init__(self, keys=None):
+    def __init__(self, keys2keys=None):
         super(ConvertTokenToIdx, self).__init__()
-        self.keys = keys
+        self.keys2keys = keys2keys #maps key to other key, for example encode inputs with support vocabulary
 
     def process_token(self, token, inp_type):
-        if not self.keys is None and inp_type in self.keys:
-            return self.state['vocab'][inp_type].get_idx(token)
+        if not self.keys2keys is None and inp_type in self.keys2keys:
+            return self.state['vocab'][self.keys2keys[inp_type]].get_idx(token)
         else:
             if inp_type != 'target':
                 log.statistical('a non-label token {0}', 0.00001, token)
@@ -279,6 +224,17 @@ class ConvertTokenToIdx(AbstractLoopLevelTokenProcessor):
             else:
                 log.statistical('a token {0}', 0.00001, token)
                 return self.state['vocab']['general'].get_idx_label(token)
+
+class ApplyFunction(AbstractProcessor):
+    def __init__(self, func, keys=['input', 'support', 'target']):
+        self.func = func
+        self.keys = set(keys)
+
+    def process(self, data, inp_type):
+        if inp_type in self.keys:
+            return self.func(data)
+        else:
+            return data
 
 class SaveStateToList(AbstractProcessor):
     def __init__(self, name):
@@ -313,15 +269,22 @@ class SaveLengthsToState(AbstractLoopLevelListOfTokensProcessor):
         return tokens
 
 class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
-    def __init__(self, name, samples_per_file=50000):
+    def __init__(self, name, samples_per_file=50000, keys=['input', 'support', 'target'], keys_for_length=['input', 'support']):
         super(StreamToHDF5, self).__init__()
         self.max_length = None
         self.samples_per_file = samples_per_file
         self.name = name
         self.idx = 0
-        self.shard_id = {'target' : 0, 'input' : 0, 'support' : 0}
-        self.max_lengths = {'target' : 0, 'input' : 0, 'support' : 0}
-        self.data = {'target' : [], 'input' : [], 'support' : [], 'index' : []}
+        self.keys = keys
+        if 'index' not in self.keys:
+            self.keys.append('index')
+        self.shard_id = {}
+        self.max_lengths = {}
+        self.data = {}
+        for key in keys:
+            self.shard_id[key] = 0
+            self.max_lengths[key] = 0
+            self.data[key] = []
         self.num_samples = None
         self.config = {'paths' : [], 'sample_count' : []}
         self.checked_for_lengths = False
@@ -338,10 +301,10 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
             log.error('Do a first pass to produce lengths first, that is use the "SaveLengths" ' \
                        'processor, execute, clean processors, then rerun the pipeline with hdf5 streaming.')
         if self.num_samples == None:
-            self.num_samples = len(self.state['data']['lengths']['input'])
+            self.num_samples = len(self.state['data']['lengths'][self.keys[0]])
         log.debug('Using type int32 for inputs and supports for now, but this may not be correct in the future')
         self.checked_for_lengths = True
-        self.num_samples = len(self.state['data']['lengths']['input'])
+        self.num_samples = len(self.state['data']['lengths'][self.keys[0]])
         log.debug('Number of samples as calcualted with the length data (SaveLengthsToState): {0}', self.num_samples)
 
     def process_list_of_tokens(self, tokens, inp_type):
@@ -355,19 +318,20 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
             log.statistical('max length of the dataset: {0}', 0.0001, max_length)
         x = np.zeros((self.max_lengths[inp_type]), dtype=np.int32)
         x[:len(tokens)] = tokens
-        if len(tokens) == 1 and inp_type == 'target' and self.max_lengths[inp_type] == 1:
+        if len(tokens) == 1 and self.max_lengths[inp_type] == 1:
             self.data[inp_type].append(x[0])
             log.debug_once('Adding one dimensional data for type ' + inp_type + ': {0}', x[0])
         else:
             self.data[inp_type].append(x.tolist())
             log.debug_once('Adding list data for type ' + inp_type + ': {0}', x.tolist())
-        if inp_type == 'target':
+        if inp_type == self.keys[-2]:
             self.data['index'].append(self.idx)
             self.idx += 1
 
         if (  len(self.data[inp_type]) == self.samples_per_file
            or len(self.data[inp_type]) == self.num_samples):
             self.save_to_hdf5(inp_type)
+
 
         if self.idx % 10000 == 0:
             if self.idx % 50000 == 0:
@@ -385,7 +349,7 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
             for i in range(fractions.size):
                 self.config['paths'].append(self.paths[i])
 
-            pickle.dump(self.config, open(join(self.base_path, 'hdf5_config.pkl'), 'wb'))
+            pickle.dump(self.config, open(join(self.base_path, 'hdf5_config.pkl'), 'w'))
 
         return tokens
 
@@ -412,11 +376,11 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
         self.paths[idx].append(join(self.base_path, file_name))
 
 
-        if inp_type == 'input':
+        if inp_type == self.keys[0]:
             log.statistical('Count of shard {0}; should be {1} most of the time'.format(X.shape[0], self.samples_per_file), 0.1)
             self.config['sample_count'].append(X.shape[0])
 
-        if inp_type != 'target':
+        if inp_type != self.keys[-2]:
             start = idx*self.samples_per_file
             end = (idx+1)*self.samples_per_file
             X_len = np.array(self.state['data']['lengths'][inp_type][start:end], dtype=np.int32)
@@ -584,7 +548,7 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
         config['fractions'] = (np.float64(np.array(counts)) / np.sum(counts))
         config['counts'] = counts
         self.config = config
-        pickle.dump(config, open(join(self.base_path, 'hdf5_config.pkl'), 'wb'))
+        pickle.dump(config, open(join(self.base_path, 'hdf5_config.pkl'), 'w'))
 
         self.performed_search = True
 
@@ -630,6 +594,7 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
         #self.num_samples = total_bin_count/(1.0-wasted_fraction)
 
         return wasted_lengths, bin_by_size
+
 
 
 

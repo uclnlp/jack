@@ -5,17 +5,18 @@ from collections import namedtuple
 import time
 import datetime
 import numpy as np
-import pickle
-import queue
+import cPickle as pickle
+import Queue
 
-from jtr.util.util import get_data_path, load_hdf_file, Timer
-from jtr.util.global_config import Config, Backends
-from jtr.preprocess.hdf5_processing.hooks import ETAHook
-from jtr.preprocess.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
-from jtr.preprocess.hdf5_processing.processors import TensorFlowConverter
+from spodernet.utils.util import get_data_path, load_hdf_file, Timer
+from spodernet.utils.global_config import Config, Backends
+from spodernet.hooks import ETAHook
+from spodernet.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
 
-from jtr.util.logger import Logger
+from spodernet.utils.logger import Logger
 log = Logger('batching.py.txt')
+
+benchmark = False
 
 
 class BatcherState(object):
@@ -52,6 +53,8 @@ class DataLoaderSlave(Thread):
         self.paths = paths
         self._stop = Event()
         self.daemon = True
+        self.t = Timer()
+        self.batches_processes = 0
 
     def stop(self):
         self._stop.set()
@@ -115,13 +118,15 @@ class DataLoaderSlave(Thread):
             current_paths = current_paths[0] + current_paths[1]
 
 
-        for old_path in list(self.current_data.keys()):
+        for old_path in self.current_data.keys():
             if old_path not in current_paths:
                 self.current_data.pop(old_path, None)
 
     def publish_at_prepared_batch_event(self, batch_parts):
-        for obs in self.stream_batcher.at_batch_prepared_observers:
+        for i, obs in enumerate(self.stream_batcher.at_batch_prepared_observers):
+            self.t.tick(str(i))
             batch_parts = obs.at_batch_prepared(batch_parts)
+            self.t.tick(str(i))
         return batch_parts
 
     def run(self):
@@ -165,12 +170,18 @@ class DataLoaderSlave(Thread):
                 continue
 
             self.clean_cache(current_paths)
+            self.batches_processes += 1
+            if self.batches_processes % 100 == 0:
+                if benchmark:
+                    for i, obs in enumerate(self.stream_batcher.at_batch_prepared_observers):
+                        t = self.t.tock(str(i))
+                        print(i, t, type(obs))
 
 
 class StreamBatcher(object):
     def __init__(self, pipeline_name, name, batch_size, loader_threads=4, randomize=False, seed=None):
         config_path = join(get_data_path(), pipeline_name, name, 'hdf5_config.pkl')
-        config = pickle.load(open(config_path, 'rb'))
+        config = pickle.load(open(config_path))
         self.paths = config['paths']
         self.fractions = config['fractions']
         self.num_batches = int(np.sum(config['counts']) / batch_size)
@@ -179,8 +190,8 @@ class StreamBatcher(object):
         self.prefetch_batch_idx = 0
         self.loaders = []
         self.prepared_batches = {}
-        self.prepared_batchidx = queue.Queue()
-        self.work = queue.Queue()
+        self.prepared_batchidx = Queue.Queue()
+        self.work = Queue.Queue()
         self.cached_batches = {}
         self.end_iter_observers = []
         self.end_epoch_observers = []
@@ -191,7 +202,15 @@ class StreamBatcher(object):
         self.current_epoch = 0
         self.timer = Timer()
         self.loader_threads = loader_threads
-        if Config.backend == Backends.TENSORFLOW:
+        if Config.backend == Backends.TORCH:
+            from spodernet.backends.torchbackend import TorchConverter, TorchCUDAConverter, TorchDictConverter
+            self.subscribe_to_batch_prepared_event(TorchConverter())
+            if Config.cuda:
+                import torch
+                self.subscribe_to_batch_prepared_event(TorchCUDAConverter(torch.cuda.current_device()))
+            self.subscribe_to_batch_prepared_event(TorchDictConverter())
+        elif Config.backend == Backends.TENSORFLOW:
+            from spodernet.backends.tfbackend import TensorFlowConverter
             self.subscribe_to_batch_prepared_event(TensorFlowConverter())
         elif Config.backend == Backends.TEST:
             pass
@@ -295,25 +314,26 @@ class StreamBatcher(object):
             if self.batch_idx == batch_idx:
                 return self.prepared_batches.pop(self.batch_idx)
             else:
-                self.cached_batches[batch_idx] = self.prepared_batches.pop(batch_idx)
+                if batch_idx in self.prepared_batches:
+                    self.cached_batches[batch_idx] = self.prepared_batches.pop(batch_idx)
                 return self.get_next_batch_parts()
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def next(self):
         if self.batch_idx == 0:
             while self.prefetch_batch_idx < self.loader_threads:
                 self.work.put(self.prefetch_batch_idx)
                 self.prefetch_batch_idx += 1
-        if self.batch_idx + 1 < self.num_batches:
+        if self.batch_idx < self.num_batches:
             batch_parts = self.get_next_batch_parts()
             self.publish_end_of_iter_event()
 
             self.batch_idx += 1
             self.work.put(self.prefetch_batch_idx)
             self.prefetch_batch_idx +=1
-            if self.prefetch_batch_idx + 1 >= self.num_batches:
+            if self.prefetch_batch_idx >= self.num_batches:
                 self.prefetch_batch_idx = 0
 
             return batch_parts

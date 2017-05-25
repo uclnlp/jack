@@ -2,11 +2,12 @@ import numpy as np
 import scipy.stats
 import datetime
 
-from jtr.preprocess.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable
-from jtr.util.util import Timer
-from jtr.util.global_config import Config, Backends
+from spodernet.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable
+from spodernet.utils.util import Timer
+from spodernet.utils.global_config import Config, Backends
+from spodernet.backends.torchbackend import convert_state
 
-from jtr.util.logger import Logger
+from spodernet.utils.logger import Logger
 log = Logger('hooks.py.txt')
 
 class AbstractHook(IAtIterEndObservable, IAtEpochEndObservable):
@@ -27,7 +28,11 @@ class AbstractHook(IAtIterEndObservable, IAtEpochEndObservable):
         self.load_backend_specific_functions()
 
     def load_backend_specific_functions(self):
-        self.convert_state = lambda x: x
+        if Config.backend == Backends.TORCH:
+            from spodernet.backends.torchbackend import convert_state
+            self.convert_state = convert_state
+        else:
+            self.convert_state = lambda x: x
 
     def calculate_metric(self, state):
         raise NotImplementedError('Classes that inherit from abstract hook need to implement the calcualte metric method.')
@@ -89,9 +94,16 @@ class AccuracyHook(AbstractHook):
     def __init__(self, name='', print_every_x_batches=1000):
         super(AccuracyHook, self).__init__(name, 'Accuracy', print_every_x_batches)
         self.func = None
+        if Config.backend == Backends.TORCH:
+            import torch
+            self.func = lambda x: torch.sum(x)
 
     def calculate_metric(self, state):
-        if Config.backend == Backends.TENSORFLOW:
+        if Config.backend == Backends.TORCH:
+            correct = self.func(state.targets==state.argmax)
+            n = state.argmax.size()[0]
+            return correct/np.float32(n)
+        elif Config.backend == Backends.TENSORFLOW:
             n = state.argmax.shape[0]
             return np.sum(state.targets==state.argmax)/np.float32(n)
         elif Config.backend == Backends.TEST:
@@ -109,9 +121,13 @@ class TopKRankingLoss(AbstractHook):
         self.sum_func = None
         self.k = k
         self.filtered = filtered
+        if Config.backend == Backends.TORCH:
+            import torch
+            self.argsort = lambda x, k: torch.topk(x, k)
+            self.sum_func = lambda x: torch.sum(x)
+
 
     def calculate_metric(self, state):
-        # Not working in jtr at the moment
         if Config.backend == Backends.TORCH:
             if self.filtered:
                 import torch
@@ -129,6 +145,7 @@ class TopKRankingLoss(AbstractHook):
             raise Exception('Backend has unsupported value {0}'.format(Config.backend))
 
 
+
 class LossHook(AbstractHook):
     def __init__(self, name='', print_every_x_batches=1000):
         super(LossHook, self).__init__(name, 'Loss', print_every_x_batches)
@@ -136,6 +153,9 @@ class LossHook(AbstractHook):
     def calculate_metric(self, state):
         if Config.backend == Backends.TENSORFLOW:
             return state.loss
+        elif Config.backend == Backends.TORCH:
+            state = convert_state(state)
+            return state.loss[0]
         elif Config.backend == Backends.TEST:
             return state.loss
 

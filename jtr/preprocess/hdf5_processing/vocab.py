@@ -1,11 +1,11 @@
 from collections import Counter
 
-import pickle
+import cPickle as pickle
 import numpy as np
 
 '''This models the vocabulary and token embeddings'''
 
-from jtr.util.logger import Logger
+from spodernet.utils.util import Logger
 log = Logger('vocab.py.txt')
 
 class Vocab(object):
@@ -39,12 +39,12 @@ class Vocab(object):
         self.idx2token = idx2token
         self.path = path
         if len(idx2token.keys()) > 0:
-            self.next_idx = int(np.max(list(idx2token.keys())) + 1)
+            self.next_idx = int(np.max(idx2token.keys()) + 1)
         else:
             self.next_idx = int(2)
 
         if len(self.idx2label.keys()) > 0:
-            self.next_label_2dx = int(np.max(list(self.idx2label.keys())) + 1)
+            self.next_label_2dx = int(np.max(self.idx2label.keys()) + 1)
         else:
             self.next_label_idx = int(0)
 
@@ -84,7 +84,7 @@ class Vocab(object):
         if idx in self.idx2token:
             return self.idx2token[idx]
         else:
-            return self.idx2token[-1]
+            return self.idx2token[0]
 
     def save_to_disk(self, name=''):
         log.info('Saving vocab to: {0}'.format(self.path))
@@ -94,4 +94,4 @@ class Vocab(object):
 
     def load_from_disk(self, name=''):
         log.info('Loading vocab from: {0}'.format(self.path + name))
-        self.token2idx, self.idx2token, self.label2idx, self.idx2label = pickle.load(open(self.path, 'rb'))
+        self.token2idx, self.idx2token, self.label2idx, self.idx2label = pickle.load(open(self.path))
