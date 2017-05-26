@@ -5,19 +5,15 @@ from collections import namedtuple
 import time
 import datetime
 import numpy as np
-import cPickle as pickle
-import Queue
+import pickle
+import queue
 
-from spodernet.utils.util import get_data_path, load_hdf_file, Timer
-from spodernet.utils.global_config import Config, Backends
-from spodernet.hooks import ETAHook
-from spodernet.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
-
-from spodernet.utils.logger import Logger
-log = Logger('batching.py.txt')
+from jtr.util.util import get_data_path, load_hdf_file, Timer
+from jtr.util.global_config import Config, Backends
+from jtr.preprocess.hdf5_processing.hooks import ETAHook
+from jtr.preprocess.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
 
 benchmark = False
-
 
 class BatcherState(object):
     def __init__(self):
@@ -118,7 +114,7 @@ class DataLoaderSlave(Thread):
             current_paths = current_paths[0] + current_paths[1]
 
 
-        for old_path in self.current_data.keys():
+        for old_path in list(self.current_data.keys()):
             if old_path not in current_paths:
                 self.current_data.pop(old_path, None)
 
@@ -141,7 +137,7 @@ class DataLoaderSlave(Thread):
                 continue
 
             if self.randomize:
-                shard_idx = self.rdm.choice(len(self.shard2batchidx.keys()), 1, p=self.shard_fractions)[0]
+                shard_idx = self.rdm.choice(len(list(self.shard2batchidx.keys())), 1, p=self.shard_fractions)[0]
                 current_paths = self.paths[shard_idx]
 
                 self.load_files_if_needed(current_paths)
@@ -152,8 +148,8 @@ class DataLoaderSlave(Thread):
 
                 batch_parts = self.create_batch_parts(current_paths, start, end)
             else:
-                if batch_idx not in self.batchidx2paths:
-                    log.error('{0}, {1}', batch_idx, self.batchidx2paths.keys())
+                #if batch_idx not in self.batchidx2paths:
+                # todo error message
                 current_paths = self.batchidx2paths[batch_idx]
                 start, end = self.batchidx2start_end[batch_idx]
 
@@ -181,7 +177,7 @@ class DataLoaderSlave(Thread):
 class StreamBatcher(object):
     def __init__(self, pipeline_name, name, batch_size, loader_threads=4, randomize=False, seed=None):
         config_path = join(get_data_path(), pipeline_name, name, 'hdf5_config.pkl')
-        config = pickle.load(open(config_path))
+        config = pickle.load(open(config_path, 'rb'))
         self.paths = config['paths']
         self.fractions = config['fractions']
         self.num_batches = int(np.sum(config['counts']) / batch_size)
@@ -190,8 +186,8 @@ class StreamBatcher(object):
         self.prefetch_batch_idx = 0
         self.loaders = []
         self.prepared_batches = {}
-        self.prepared_batchidx = Queue.Queue()
-        self.work = Queue.Queue()
+        self.prepared_batchidx = queue.Queue()
+        self.work = queue.Queue()
         self.cached_batches = {}
         self.end_iter_observers = []
         self.end_epoch_observers = []
@@ -202,15 +198,8 @@ class StreamBatcher(object):
         self.current_epoch = 0
         self.timer = Timer()
         self.loader_threads = loader_threads
-        if Config.backend == Backends.TORCH:
-            from spodernet.backends.torchbackend import TorchConverter, TorchCUDAConverter, TorchDictConverter
-            self.subscribe_to_batch_prepared_event(TorchConverter())
-            if Config.cuda:
-                import torch
-                self.subscribe_to_batch_prepared_event(TorchCUDAConverter(torch.cuda.current_device()))
-            self.subscribe_to_batch_prepared_event(TorchDictConverter())
-        elif Config.backend == Backends.TENSORFLOW:
-            from spodernet.backends.tfbackend import TensorFlowConverter
+        if Config.backend == Backends.TENSORFLOW:
+            from jtr.preprocess.hdf5_processing.backends.tfbackend import TensorFlowConverter
             self.subscribe_to_batch_prepared_event(TensorFlowConverter())
         elif Config.backend == Backends.TEST:
             pass
@@ -227,11 +216,9 @@ class StreamBatcher(object):
 
 
     def __del__(self):
-        log.debug('Stopping threads...')
         for worker in self.loaders:
             worker.stop()
 
-        log.debug('Waiting for threads to finish...')
         while threading.active_count() > 0:
             time.sleep(0.1)
 
@@ -321,7 +308,7 @@ class StreamBatcher(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.batch_idx == 0:
             while self.prefetch_batch_idx < self.loader_threads:
                 self.work.put(self.prefetch_batch_idx)

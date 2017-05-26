@@ -16,18 +16,13 @@ from io import StringIO
 from jtr.preprocess.hdf5_processing.pipeline import Pipeline
 from jtr.preprocess.hdf5_processing.processors import Tokenizer, SaveStateToList, AddToVocab, ToLower, ConvertTokenToIdx, SaveLengthsToState
 from jtr.preprocess.hdf5_processing.processors import JsonLoaderProcessors, RemoveLineOnJsonValueCondition, DictKey2ListMapper
-from jtr.preprocess.hdf5_processing.processors import StreamToHDF5, CreateBinsByNestedLength
+from jtr.preprocess.hdf5_processing.processors import StreamToHDF5, CreateBinsByNestedLength, DeepSeqMap
 from jtr.preprocess.hdf5_processing.vocab import Vocab
 from jtr.preprocess.hdf5_processing.batching import StreamBatcher, BatcherState
 from jtr.util.util import get_data_path, load_hdf_file
 from jtr.util.global_config import Config, Backends
 from jtr.preprocess.hdf5_processing.hooks import LossHook, AccuracyHook, ETAHook
 
-from jtr.util.logger import Logger, LogLevel
-log = Logger('test_pipeline.py.txt')
-
-Logger.GLOBAL_LOG_LEVEL = LogLevel.STATISTICAL
-Logger.LOG_PROPABILITY = 0.1
 Config.backend = Backends.TEST
 
 def get_test_data_path_dict():
@@ -112,8 +107,6 @@ def test_tokenization():
     inp_sents = state['data']['tokens']['input']
     sup_sents = state['data']['tokens']['support']
     sents = inp_sents + sup_sents
-    log.statistical('input sentence of tokens: {0}', 0.5, inp_sents[0])
-    log.statistical('support sentence of tokens: {0}', 0.5, sup_sents[0])
 
     # 2. setup nltk tokenization
     with open(get_test_data_path_dict()['snli']) as f:
@@ -122,19 +115,14 @@ def test_tokenization():
             inp, sup, t = json.loads(line)
             tokenized_sents['input'].append(tokenizer.tokenize(inp))
             tokenized_sents['support'].append(tokenizer.tokenize(sup))
-            log.statistical('input sentence of tokens: {0}', 0.01, tokenized_sents['input'][-1])
-            log.statistical('support sentence of tokens: {0}', 0.01, tokenized_sents['support'][-1])
 
     sents_nltk = tokenized_sents['input'] + tokenized_sents['support']
     # 3. test equality
     assert len(sents) == len(sents_nltk), 'Sentence count differs!'
-    log.debug('count should be 200: {0}', len(sents))
     for sent1, sent2 in zip(sents, sents_nltk):
         assert len(sent1) == len(sent2), 'Token count differs!'
-        log.statistical('a sentence of tokens: {0}', 0.01, sent1)
         for token1, token2 in zip(sent1, sent2):
             assert token1 == token2, 'Token values differ!'
-            log.statistical('a token: {0}', 0.001, token1)
 
 def test_path_creation():
     names = []
@@ -182,8 +170,6 @@ def test_vocab():
                     token2idx[token] = idx
                     idx2token[idx] = token
                     idx += 1
-                    log.statistical('uncommon word if high number: {0}, {1}', 0.001, token, idx)
-                    log.statistical('uncommon word if high number: {0}, {1}', 0.001, token, v.get_idx(token))
 
             for token in tokenizer.tokenize(sup):
                 v.add_token(token)
@@ -191,11 +177,8 @@ def test_vocab():
                     token2idx[token] = idx
                     idx2token[idx] = token
                     idx += 1
-                    log.statistical('uncommon word if high number: {0}, {1}', 0.001, token, idx)
-                    log.statistical('uncommon word if high number: {0}, {1}', 0.001, token, v.get_idx(token))
 
             v.add_label(t)
-            log.statistical('label vocab index, that is small numbers: {0}', 0.01, v.idx2label.keys())
 
 
     # 3. Compare vocabs
@@ -209,7 +192,6 @@ def test_vocab():
         assert v.idx2token[idx] == idx2token[idx], 'Token for index not the same!'
 
     for label in v.label2idx:
-        log.statistical('a label: {0}', 0.001, label)
         assert v.label2idx[label] == v2.label2idx[label], 'Index for label not the same!'
 
     for idx in v.idx2label:
@@ -279,7 +261,6 @@ def test_to_lower_sent():
     # 2. test lowercase
     assert len(sents) == 200 # we have 100 samples for snli
     for sent in sents:
-        log.statistical('lower case sentence {0}', 0.001, sent)
         assert sent == sent.lower(), 'Sentence is not lower case'
 
 def test_to_lower_token():
@@ -301,7 +282,6 @@ def test_to_lower_token():
 
     # 2. test lowercase
     for token in tokens:
-        log.statistical('lower case token: {0}', 0.0001, token)
         assert token == token.lower(), 'Token is not lower case'
 
 def test_save_to_list_text():
@@ -321,7 +301,6 @@ def test_save_to_list_text():
     with open(path) as f:
         for inp1, sup1, line in zip(inp_texts, sup_texts, f):
             inp2, sup2, t = json.loads(line)
-            log.statistical('a wikipedia paragraph: {0}', 0.5, sup1)
             assert inp1 == inp2, 'Saved text data not the same!'
             assert sup1 == sup2, 'Saved text data not the same!'
 
@@ -348,7 +327,6 @@ def test_save_to_list_sentences():
             inp, sup, t = json.loads(line)
             sup_sents2 += sent_tokenizer.tokenize(sup)
             inp_sents2 += sent_tokenizer.tokenize(inp)
-            log.statistical('a list of sentences: {0}', 0.3, sup_sents)
 
     # 3. test equivalence
     assert len(inp_sents) == len(inp_sents2), 'Sentence count differs!'
@@ -358,7 +336,6 @@ def test_save_to_list_sentences():
         assert sent1 == sent2, 'Saved sentence data not the same!'
 
     for sent1, sent2 in zip(sup_sents, sup_sents2):
-        log.statistical('a sentence from a wiki paragraph: {0}', 0.3, sent1)
         assert sent1 == sent2, 'Saved sentence data not the same!'
 
 
@@ -403,13 +380,10 @@ def test_save_to_list_post_process():
                 assert token1 == token2, 'Tokens differ!'
 
     for sample1, sample2 in zip(sup_samples, sup_samples2):
-        log.statistical('a wiki paragraph {0}', 0.1,  sample1)
         assert len(sample1) == len(sample2), 'Sentence count differs!'
         for sent1, sent2, in zip(sample1, sample2):
-            log.statistical('a sentence of tokens of a wiki paragraph {0}', 0.01, sent1)
             assert len(sent1) == len(sent2), 'Token count differs!'
             for token1, token2 in zip(sent1, sent2):
-                log.statistical('a token from a sentence of a wiki paragraph {0}', 0.001, token1)
                 assert token1 == token2, 'Tokens differ!'
 
 
@@ -429,7 +403,6 @@ def test_convert_token_to_idx_no_sentences():
 
     inp_indices = state['data']['idx']['input']
     label_idx = state['data']['idx']['target']
-    log.statistical('a list of about 10 indices: {0}', 0.5, inp_indices[0])
 
     # 2. use Vocab manually
     v = Vocab('test')
@@ -460,7 +433,6 @@ def test_convert_token_to_idx_no_sentences():
             for token in tokenizer.tokenize(sup):
                 sup_idx.append(v.get_idx(token))
 
-            log.statistical('a list of about 10 indices {0}', 0.01, inp_idx)
             tokenized_sents['target'].append(v.get_idx_label(t))
             tokenized_sents['input'].append(inp_idx)
             tokenized_sents['support'].append(sup_idx)
@@ -491,12 +463,15 @@ def test_convert_to_idx_with_separate_vocabs():
         f.write(json.dumps(['2', 'c','#']) + '\n')
 
     # 2. read test data with pipeline
-    p = Pipeline('test_pipeline')
+    keys2keys = {}
+    keys2keys['input'] = 'input'
+    keys2keys['support'] = 'support'
 
+    p = Pipeline('test_pipeline')
     p.add_path(file_path)
     p.add_line_processor(JsonLoaderProcessors())
     p.add_token_processor(AddToVocab())
-    p.add_post_processor(ConvertTokenToIdx(keys=['input', 'support']))
+    p.add_post_processor(ConvertTokenToIdx(keys2keys=keys2keys))
     p.add_post_processor(SaveStateToList('idx'))
     state = p.execute()
 
@@ -520,7 +495,6 @@ def test_save_lengths():
 
     lengths_inp = state['data']['lengths']['input']
     lengths_sup = state['data']['lengths']['support']
-    log.statistical('a list of length values {0}', 0.5, lengths_inp)
     lengths1 = lengths_inp + lengths_sup
 
     # 2. generate lengths manually
@@ -566,7 +540,7 @@ def test_stream_to_hdf5():
     p.add_post_processor(ConvertTokenToIdx())
     p.add_post_processor(SaveStateToList('idx'))
     # 2 samples per file -> 50 files
-    streamer = StreamToHDF5(data_folder_name, samples_per_file=2)
+    streamer = StreamToHDF5(data_folder_name, samples_per_file=2, keys=['input', 'support', 'target'])
     p.add_post_processor(streamer)
     state = p.execute()
 
@@ -744,7 +718,7 @@ def test_bin_search():
     shutil.rmtree(base_path)
 
 
-batch_size = [17]
+batch_size = [17, 128]
 samples_per_file = [500]
 randomize = [True, False]
 test_data = [r for r in itertools.product(samples_per_file, randomize, batch_size)]
@@ -777,7 +751,7 @@ def test_non_random_stream_batcher(samples_per_file, randomize, batch_size):
     p.add_post_processor(ConvertTokenToIdx())
     p.add_post_processor(SaveStateToList('idx'))
     # 2 samples per file -> 50 files
-    streamer = StreamToHDF5(data_folder_name, samples_per_file=samples_per_file)
+    streamer = StreamToHDF5(data_folder_name, samples_per_file=samples_per_file, keys=['input', 'support', 'target'])
     p.add_post_processor(streamer)
     state = p.execute()
 
@@ -821,7 +795,7 @@ def test_non_random_stream_batcher(samples_per_file, randomize, batch_size):
         T[i] = sample_t[0]
 
     epochs = 2
-    batcher = StreamBatcher(pipeline_folder, data_folder_name, batch_size, loader_threads=2, randomize=randomize)
+    batcher = StreamBatcher(pipeline_folder, data_folder_name, batch_size, loader_threads=8, randomize=randomize)
     del batcher.at_batch_prepared_observers[:]
 
     # 4. test data equality
@@ -841,6 +815,58 @@ def test_non_random_stream_batcher(samples_per_file, randomize, batch_size):
 
     # 5. clean up
     shutil.rmtree(base_path)
+
+def test_abitrary_input_data():
+    tokenizer = nltk.tokenize.WordPunctTokenizer()
+    base_path = join(get_data_path(), 'test_keys')
+    # clean all data from previous failed tests   
+    if os.path.exists(base_path):
+        shutil.rmtree(base_path)
+    file_path = join(get_data_path(), 'test_pipeline', 'test_data.json')
+
+    questions = [['bla bla Q1', 'this is q2', 'q3'], ['q4 set2', 'or is it q1?']]
+    support = [['I like', 'multiple supports'], ['yep', 'they are pretty cool', 'yeah, right?']]
+    answer = [['yes', 'absolutly', 'not really'], ['you bet', 'yes']]
+    pos_tag = [['t1', 't2'], ['t1', 't2', 't3']]
+
+    with open(file_path, 'w') as f:
+        for i in range(2):
+            f.write(json.dumps([questions[i], support[i], answer[i], pos_tag[i]]) + '\n')
+
+    keys2keys = {}
+    keys2keys['answer'] = 'answer'
+    keys2keys['pos'] = 'pos'
+    p = Pipeline('test_keys', keys=['question', 'support', 'answer', 'pos'])
+    p.add_path(file_path)
+    p.add_line_processor(JsonLoaderProcessors())
+    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+    p.add_token_processor(AddToVocab(general_vocab_keys=['question', 'support']))
+    p.add_post_processor(SaveLengthsToState())
+    p.execute()
+
+    p.clear_processors()
+    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+    p.add_token_processor(ConvertTokenToIdx(keys2keys=keys2keys))
+    p.add_post_processor(StreamToHDF5('test', keys=['question', 'support', 'answer', 'pos']))
+    p.add_post_processor(SaveStateToList('data'))
+    state = p.execute()
+
+    Q = state['data']['data']['question']
+    S = state['data']['data']['support']
+    A = state['data']['data']['answer']
+    pos = state['data']['data']['pos']
+    #vocab is offset by 2, due to UNK and empty word ''
+    # note that we travers the data like q1, s1, a1; q2, s2, a2
+    # we share vocab between question and support
+    expected_Q_ids = [[[ 2, 2, 3], [4, 5, 6], [7]], [[12, 13], [14, 5, 15, 16, 17]]]
+    expected_S_ids = [[[8, 9], [10, 11]], [[18], [19, 20, 21, 22], [23, 24, 25, 17]]]
+    expected_answer_ids = [[[2],[3],[4, 5]],[[6,7], [2]]]
+    expected_pos_ids = [[[2],[3]],[[2],[3],[4]]]
+
+    np.testing.assert_array_equal(np.array(expected_Q_ids), Q)
+    np.testing.assert_array_equal(np.array(expected_S_ids), S)
+    np.testing.assert_array_equal(np.array(expected_answer_ids), A)
+    np.testing.assert_array_equal(np.array(expected_pos_ids), pos)
 
 
 def test_bin_streamer():
@@ -988,3 +1014,66 @@ def test_hook(hook_name, print_every):
         del expected_loss[:]
 
 
+def test_variable_duplication():
+    tokenizer = nltk.tokenize.WordPunctTokenizer()
+    pipeline_folder = 'test_pipeline'
+    base_path = join(get_data_path(), pipeline_folder)
+    batch_size = 32
+    func = lambda x: [tag for word, tag in nltk.pos_tag(x)]
+    # clean all data from previous failed tests   
+    if os.path.exists(base_path):
+        shutil.rmtree(base_path)
+
+    # 1. Setup pipeline to save lengths and generate vocabulary
+    keys = ['input', 'support', 'target', 'input_pos']
+    keys2keys = { 'input_pos' : 'input'}
+    p = Pipeline(pipeline_folder, keys=keys, keys2keys=keys2keys)
+    p.add_path(get_test_data_path_dict()['snli'])
+    p.add_line_processor(JsonLoaderProcessors())
+    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+    p.add_sent_processor(SaveStateToList('tokens'))
+    p.add_post_processor(SaveLengthsToState())
+    p.add_post_processor(DeepSeqMap(func), keys=['input_pos'])
+    p.execute()
+    p.clear_processors()
+
+    # 2. Process the data further to stream it to hdf5
+    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+    p.add_post_processor(DeepSeqMap(func), keys=['input_pos'])
+    p.add_post_processor(AddToVocab())
+    p.add_post_processor(ConvertTokenToIdx(keys2keys={'input_pos' : 'input_pos'}))
+    p.add_post_processor(SaveStateToList('idx'))
+    # 2 samples per file -> 50 files
+    #p.add_post_processor(StreamToHDF5(data_folder_name, keys=keys))
+    state = p.execute()
+
+    # 2. Load data from the SaveStateToList hook
+    inp_sents = state['data']['tokens']['input']
+    pos_tags = state['data']['idx']['input_pos']
+    vocab = p.state['vocab']['input_pos']
+
+    print(vocab.idx2token)
+    print(pos_tags[0][0])
+
+
+    tags_expected = []
+    for sent in inp_sents:
+        tag_tuples = nltk.pos_tag(sent)
+        tag = [tag for word, tag in tag_tuples]
+        tags_expected.append(tag)
+
+    tags = []
+    for sent in pos_tags[0]:
+        tag = [vocab.get_word(idx) for idx in sent]
+        tags.append(tag)
+
+
+    print(tags[0])
+    print(tags_expected[0])
+    for tags1, tags2 in zip(tags, tags_expected):
+        assert len(tags1) == len(tags2), 'POS tag lengths not the same!'
+        for tag1, tag2 in zip(tags1, tags2):
+            assert tag1 == tag2, 'POS tags were not the same!'
+
+    # 5. clean up
+    shutil.rmtree(base_path)

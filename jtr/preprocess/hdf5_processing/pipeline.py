@@ -5,11 +5,8 @@ import shutil
 import simplejson as json
 import zipfile
 
-from spodernet.preprocessing.vocab import Vocab
-from spodernet.utils.util import Timer
-
-from spodernet.utils.logger import Logger
-log = Logger('pipeline.py.txt')
+from jtr.preprocess.hdf5_processing.vocab import Vocab
+from jtr.util.util import Timer
 
 t = Timer()
 
@@ -36,16 +33,13 @@ class Pipeline(object):
         home = os.environ['HOME']
         self.root = join(home, '.data', name)
         if not os.path.exists(self.root):
-            log.debug_once('Pipeline path {0} does not exist. Creating folder...', self.root)
             os.mkdir(self.root)
         else:
             if delete_all_previous_data:
-                log.warning('delete_all_previous_data=True! Deleting all folder contents of folder {0}!', self.root)
                 shutil.rmtree(self.root)
-                log.info('Recreating path: {0}', self.root)
                 os.mkdir(self.root)
             else:
-                log.warning('Pipeline path {0} already exist. This pipeline may overwrite data in this path!', self.root)
+                pass
 
         self.state = {'name' : name, 'home' : home, 'path' : self.root, 'data' : {}}
         self.state['vocab'] = {}
@@ -59,33 +53,27 @@ class Pipeline(object):
     def add_text_processor(self, text_processor, keys=None):
         keys = keys or self.keys
         text_processor.link_with_pipeline(self.state)
-        log.debug('Added text preprocessor {0}', type(text_processor))
         self.text_processors.append([keys, text_processor])
 
     def add_sent_processor(self, sent_processor, keys=None):
         keys = keys or self.keys
         sent_processor.link_with_pipeline(self.state)
-        log.debug('Added sent preprocessor {0}', type(sent_processor))
         self.sent_processors.append([keys, sent_processor])
 
     def add_token_processor(self, token_processor, keys=None):
         keys = keys or self.keys
         token_processor.link_with_pipeline(self.state)
-        log.debug('Added token preprocessor {0}', type(token_processor))
         self.token_processors.append([keys, token_processor])
 
     def add_post_processor(self, post_processor, keys=None):
         keys = keys or self.keys
         post_processor.link_with_pipeline(self.state)
-        log.debug('Added post preprocessor {0}', type(post_processor))
         self.post_processors.append([keys, post_processor])
 
     def add_path(self, path):
-        log.debug('Added path to JSON file {0}', path)
         self.paths.append(path)
 
     def stream_file(self, path):
-        log.debug('Processing file {0}'.format(path))
         file_handle = None
         key2idx = {}
         for i, key in enumerate(self.keys):
@@ -112,7 +100,6 @@ class Pipeline(object):
             if filtered:
                 continue
             else:
-                log.debug_once('First line processed by line processors: {0}', line)
                 data = []
                 for key in self.keys:
                     data_key = self.keys2keys[key]
@@ -127,7 +114,6 @@ class Pipeline(object):
         self.sent_processors = []
         self.token_processors = []
         self.text_processors = []
-        log.debug('Cleared processors of pipeline {0}', self.state['name'])
 
     def clear_paths(self):
         self.paths = []
@@ -152,7 +138,6 @@ class Pipeline(object):
                 self.state['vocab'][vocab_type] = pipeline_or_vocab
         else:
             str_error = 'The add vocab method expects a Pipeline or Vocab instance as argument, got {0} instead!'.format(type(pipeline_or_vocab))
-            log.error(str_error)
             raise TypeError(str_error)
 
     def iterate_over_processors(self, processors, variables):

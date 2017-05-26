@@ -1,12 +1,9 @@
 from collections import Counter
 
-import cPickle as pickle
+import pickle
 import numpy as np
 
 '''This models the vocabulary and token embeddings'''
-
-from spodernet.utils.util import Logger
-log = Logger('vocab.py.txt')
 
 class Vocab(object):
     '''Class that manages work/char embeddings'''
@@ -39,7 +36,7 @@ class Vocab(object):
         self.idx2token = idx2token
         self.path = path
         if len(idx2token.keys()) > 0:
-            self.next_idx = int(np.max(idx2token.keys()) + 1)
+            self.next_idx = int(np.max(list(idx2token.keys())) + 1)
         else:
             self.next_idx = int(2)
 
@@ -87,11 +84,9 @@ class Vocab(object):
             return self.idx2token[0]
 
     def save_to_disk(self, name=''):
-        log.info('Saving vocab to: {0}'.format(self.path))
         pickle.dump([self.token2idx, self.idx2token, self.label2idx,
             self.idx2label], open(self.path + name, 'wb'),
                     pickle.HIGHEST_PROTOCOL)
 
     def load_from_disk(self, name=''):
-        log.info('Loading vocab from: {0}'.format(self.path + name))
-        self.token2idx, self.idx2token, self.label2idx, self.idx2label = pickle.load(open(self.path))
+        self.token2idx, self.idx2token, self.label2idx, self.idx2label = pickle.load(open(self.path, 'rb'))

@@ -1,16 +1,13 @@
 from os.path import join
 
 import numpy as np
-import cPickle as pickle
+import pickle
 import os
-import simplejson
+import json
 
-from spodernet.utils.util import get_data_path, write_to_hdf, make_dirs_if_not_exists, load_hdf_file
-from spodernet.interfaces import IAtBatchPreparedObservable
-from spodernet.utils.global_config import Config
-
-from spodernet.utils.logger import Logger
-log = Logger('processors.py.txt')
+from jtr.util.util import get_data_path, write_to_hdf, make_dirs_if_not_exists, load_hdf_file
+from jtr.preprocess.hdf5_processing.interfaces import IAtBatchPreparedObservable
+from jtr.util.global_config import Config
 
 class KeyToKeyMapper(IAtBatchPreparedObservable):
     def __init__(self, key2key):
@@ -55,7 +52,7 @@ class ListIndexRemapper(object):
 
 class JsonLoaderProcessors(object):
     def process(self, line):
-        return simplejson.loads(line)
+        return json.loads(line)
 
 class RemoveLineOnJsonValueCondition(object):
     def __init__(self, key, func_condition):
@@ -103,8 +100,8 @@ class AbstractLoopLevelTokenProcessor(AbstractProcessor):
         if self.successive_for_loops_to_tokens == None:
             i = 0
             level = sample
-            while not (   isinstance(level, basestring)
-                       or isinstance(level, long)):
+            while not (   isinstance(level, str)
+                       or isinstance(level, int)):
                     level = level[0]
                     i+=1
             self.successive_for_loops_to_tokens = i
@@ -141,7 +138,7 @@ class AbstractLoopLevelListOfTokensProcessor(AbstractProcessor):
         if self.successive_for_loops_to_list_of_tokens == None:
             i = 0
             level = sample
-            while not (isinstance(level, basestring)
+            while not (isinstance(level, str)
                        or isinstance(level, int)
                        or isinstance(level, np.int32)):
                     level = level[0]
@@ -193,11 +190,9 @@ class AddToVocab(AbstractLoopLevelTokenProcessor):
     def process_token(self, token, inp_type):
         if inp_type == 'target':
             self.state['vocab']['general'].add_label(token)
-            log.statistical('Example vocab target token {0}', 0.01, token)
         if inp_type in self.general_vocab_keys:
             self.state['vocab']['general'].add_token(token)
             message = 'Example vocab {0} token'.format(inp_type)
-            log.statistical(message + ': {0}', 0.01, token)
         self.state['vocab'][inp_type].add_token(token)
         return token
 
@@ -219,10 +214,8 @@ class ConvertTokenToIdx(AbstractLoopLevelTokenProcessor):
             return self.state['vocab'][self.keys2keys[inp_type]].get_idx(token)
         else:
             if inp_type != 'target':
-                log.statistical('a non-label token {0}', 0.00001, token)
                 return self.state['vocab']['general'].get_idx(token)
             else:
-                log.statistical('a token {0}', 0.00001, token)
                 return self.state['vocab']['general'].get_idx_label(token)
 
 class ApplyFunction(AbstractProcessor):
@@ -264,8 +257,6 @@ class SaveLengthsToState(AbstractLoopLevelListOfTokensProcessor):
     def process_list_of_tokens(self, tokens, inp_type):
         if inp_type not in self.data: self.data[inp_type] = []
         self.data[inp_type].append(int(len(tokens)))
-        log.statistical('A list of tokens: {0}', 0.0001, tokens)
-        log.debug_once('Pipeline {1}: A list of tokens: {0}', tokens, self.state['name'])
         return tokens
 
 class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
@@ -297,15 +288,13 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
         make_dirs_if_not_exists(self.base_path)
 
     def init_and_checks(self):
-        if 'lengths' not in self.state['data']:
-            log.error('Do a first pass to produce lengths first, that is use the "SaveLengths" ' \
-                       'processor, execute, clean processors, then rerun the pipeline with hdf5 streaming.')
+        #if 'lengths' not in self.state['data']:
+        #    log.error('Do a first pass to produce lengths first, that is use the "SaveLengths" ' \
+        #               'processor, execute, clean processors, then rerun the pipeline with hdf5 streaming.')
         if self.num_samples == None:
             self.num_samples = len(self.state['data']['lengths'][self.keys[0]])
-        log.debug('Using type int32 for inputs and supports for now, but this may not be correct in the future')
         self.checked_for_lengths = True
         self.num_samples = len(self.state['data']['lengths'][self.keys[0]])
-        log.debug('Number of samples as calcualted with the length data (SaveLengthsToState): {0}', self.num_samples)
 
     def process_list_of_tokens(self, tokens, inp_type):
         if not self.checked_for_lengths:
@@ -313,17 +302,13 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
 
         if self.max_lengths[inp_type] == 0:
             max_length = np.max(self.state['data']['lengths'][inp_type])
-            log.debug('Calculated max length for input type {0} to be {1}', inp_type, max_length)
             self.max_lengths[inp_type] = max_length
-            log.statistical('max length of the dataset: {0}', 0.0001, max_length)
         x = np.zeros((self.max_lengths[inp_type]), dtype=np.int32)
         x[:len(tokens)] = tokens
         if len(tokens) == 1 and self.max_lengths[inp_type] == 1:
             self.data[inp_type].append(x[0])
-            log.debug_once('Adding one dimensional data for type ' + inp_type + ': {0}', x[0])
         else:
             self.data[inp_type].append(x.tolist())
-            log.debug_once('Adding list data for type ' + inp_type + ': {0}', x.tolist())
         if inp_type == self.keys[-2]:
             self.data['index'].append(self.idx)
             self.idx += 1
@@ -335,13 +320,12 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
 
         if self.idx % 10000 == 0:
             if self.idx % 50000 == 0:
-                log.info('Processed {0} samples so far...', self.idx)
+                print('Processed {0} samples so far...', self.idx)
             else:
-                log.debug('Processed {0} samples so far...', self.idx)
+                print('Processed {0} samples so far...', self.idx)
 
         if self.idx == self.num_samples:
             counts = np.array(self.config['sample_count'])
-            log.debug('Counts for each shard: {0}'.format(counts))
             fractions = counts / np.float32(np.sum(counts))
             self.config['fractions'] = fractions.tolist()
             self.config['counts'] = counts.tolist()
@@ -349,7 +333,7 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
             for i in range(fractions.size):
                 self.config['paths'].append(self.paths[i])
 
-            pickle.dump(self.config, open(join(self.base_path, 'hdf5_config.pkl'), 'w'))
+            pickle.dump(self.config, open(join(self.base_path, 'hdf5_config.pkl'), 'wb'))
 
         return tokens
 
@@ -363,21 +347,16 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
             for i, list_item in enumerate(X):
                 assert l == len(list_item)
             X = np.array(new_X, dtype=np.int32)
-            log.debug("{0}", X)
 
         if inp_type == 'input':
             self.shuffle_idx = np.arange(X.shape[0])
-            log.debug_once('First row of input data with shape {1} written to hdf5: {0}', X[0], X.shape)
             #X = X[self.shuffle_idx]
-        log.debug('Writing hdf5 file for input type {0} to disk. Using index {1} and path {2}', inp_type, idx, join(self.base_path, file_name))
-        log.debug('Writing hdf5 data. One sample row: {0}, shape: {1}, type: {2}', X[0], X.shape, X.dtype)
         write_to_hdf(join(self.base_path, file_name), X)
         if idx not in self.paths: self.paths[idx] = []
         self.paths[idx].append(join(self.base_path, file_name))
 
 
         if inp_type == self.keys[0]:
-            log.statistical('Count of shard {0}; should be {1} most of the time'.format(X.shape[0], self.samples_per_file), 0.1)
             self.config['sample_count'].append(X.shape[0])
 
         if inp_type != self.keys[-2]:
@@ -424,12 +403,9 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
         make_dirs_if_not_exists(self.base_path)
 
     def process_list_of_tokens(self, tokens, inp_type):
-        if 'lengths' not in self.state['data']:
-            log.error(('Do a first pass to produce lengths first, that is use the "SaveLengths" ',
-                       'processor, execute, clean processors, then rerun the pipeline with this module.'))
-        if inp_type not in self.state['data']['lengths']:
-            log.error(('Do a first pass to produce lengths first, that is use the "SaveLengths" ',
-                       'processor, execute, clean processors, then rerun the pipeline with this module.'))
+        #if 'lengths' not in self.state['data']:
+        # todo: informative error message
+        #if inp_type not in self.state['data']['lengths']:
         if not self.performed_search:
             self.perform_bin_search()
 
@@ -442,9 +418,9 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
 
         if inp_type == 'input' and idx % 10000 == 0:
             if idx % 50000 == 0:
-                log.info('Processed {0} samples so far...', idx)
+                print('Processed {0} samples so far...', idx)
             else:
-                log.debug('Processed {0} samples so far...', idx)
+                print('Processed {0} samples so far...', idx)
 
         if idx in self.idx2data['input'] and idx in self.idx2data['support'] and idx in self.idx2data['target']:
             x1 = self.idx2data['input'][idx]
@@ -548,7 +524,7 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
         config['fractions'] = (np.float64(np.array(counts)) / np.sum(counts))
         config['counts'] = counts
         self.config = config
-        pickle.dump(config, open(join(self.base_path, 'hdf5_config.pkl'), 'w'))
+        pickle.dump(config, open(join(self.base_path, 'hdf5_config.pkl'), 'wb'))
 
         self.performed_search = True
 
@@ -582,10 +558,8 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
             wasted_lengths.append([l1_waste, l2_waste])
             wasted_samples += np.sum(l2_counts[l2_counts < self.min_batch_size])
         wasted_fraction = wasted_samples / l1.size
-        log.info('Wasted fraction for batch size {0} is {1}', self.min_batch_size, wasted_fraction)
         if wasted_fraction > self.raise_fraction:
             str_message = 'Wasted fraction {1}! This is higher than the raise error threshold of {0}!'.format(self.raise_fraction, wasted_fraction)
-            log.error(str_message)
             raise Exception(str_message)
 
         # assign this here for testing purposes

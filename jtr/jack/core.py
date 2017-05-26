@@ -796,46 +796,23 @@ class JTReader:
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, (batch, batch_dev) in enumerate(zip(batches, batches_dev)):
-                self.timer.tick('convert batch')
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
 
-                self.timer.tick('convert batch')
-                self.timer.tick('full pass')
                 current_loss, _ = self.sess.run([loss, min_op], feed_dict=feed_dict)
-                self.timer.tick('full pass')
 
-                self.timer.tick('train iter hook')
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
-                self.timer.tick('train iter hook')
 
-                self.timer.tick('dev convert batch')
                 feed_dict = self.model_module.convert_to_feed_dict(batch_dev)
-                self.timer.tick('dev convert batch')
-                self.timer.tick('dev forward pass')
                 current_loss = self.sess.run([loss], feed_dict=feed_dict)[0]
-                self.timer.tick('dev forward pass')
 
-                self.timer.tick('dev iter hook')
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='dev')
-                self.timer.tick('dev iter hook')
 
 
             # calling post-epoch hooks
-            self.timer.tick('epoch hook')
             for hook in hooks:
                 hook.at_epoch_end(i)
-            self.timer.tick('epoch hook')
-
-        self.timer.tock('training')
-        self.timer.tock('convert batch')
-        self.timer.tock('full pass')
-        self.timer.tock('train iter hook')
-        self.timer.tock('dev convert batch')
-        self.timer.tock('dev forward pass')
-        self.timer.tock('dev iter hook')
-        self.timer.tock('epoch hook')
 
     def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
         """
