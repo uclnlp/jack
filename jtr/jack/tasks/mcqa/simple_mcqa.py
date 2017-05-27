@@ -82,7 +82,6 @@ class SimpleMCInputModule(InputModule):
 class SingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
-        self.setup_from_data(self.shared_vocab_config.train_data)
 
     @property
     def training_ports(self) -> List[TensorPort]:

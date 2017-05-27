@@ -306,11 +306,9 @@ class SharedVocabAndConfig(SharedResources):
     A class to provide and store a vocab shared across some of the reader modules.
     """
 
-    def __init__(self, vocab: Vocab, config: dict = None,
-                 train_data: Sequence[Tuple[QASetting, Answer]] = None ):
+    def __init__(self, vocab: Vocab, config: dict = None):
         self.config = config
         self.vocab = vocab
-        self.train_data = train_data
 
     def store(self, path):
         if not os.path.exists(path):
@@ -543,7 +541,6 @@ class SimpleModelModule(ModelModule):
 
     def __init__(self, shared_resources: SharedResources):
         self.shared_resources = shared_resources
-        self.setup(is_training=True)
 
     @abstractmethod
     def create_output(self, shared_resources: SharedResources,
@@ -770,6 +767,7 @@ class JTReader:
 
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
+        self.setup_from_data(training_set)
         self.sess.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
@@ -816,6 +814,17 @@ class JTReader:
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
+
+    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
+        """
+        Sets up modules given a training dataset if necessary.
+        Args:
+            data: training dataset
+        """
+        self.input_module.setup_from_data(data)
+        self.model_module.setup(self.is_train)
+        self.output_module.setup()
+        self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, path):
         """
