@@ -14,8 +14,6 @@ class DistMultInputModule(InputModule):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        print('XXX')
-
         self.vocab = self.shared_resources.vocab
         self.triples = [x[0].question.split() for x in data]
 
@@ -38,22 +36,9 @@ class DistMultInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def preprocess(self, data, test_time=False):
-        corpus = {'support': [], 'question': [], 'candidates': [], 'answers': []}
-        for x, y in data:
-            corpus["question"].append(x.question)
-            assert len(y) == 1
-        corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=test_time)
-
-        print('AAAAA', corpus)
-
-        return corpus
-
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool,
                           test_time: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        # corpus = self.preprocess(dataset)
         question = []
         for x, _ in dataset:
             s, p, o = x.question.split()
@@ -75,15 +60,6 @@ class DistMultInputModule(InputModule):
         }
         batches = get_batches(xy_dict)
         return batches
-
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = self.preprocess(qa_settings, test_time=True)
-        xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"]
-        }
-        return get_batches(xy_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -114,8 +90,6 @@ class DistMultModelModule(SimpleModelModule):
         return [self.loss]
 
     def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
-        print('YYY')
-
         with tf.variable_scope('distmult'):
             self.embedding_size = shared_resources.config['repr_dim']
 
