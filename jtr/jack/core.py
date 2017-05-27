@@ -306,9 +306,11 @@ class SharedVocabAndConfig(SharedResources):
     A class to provide and store a vocab shared across some of the reader modules.
     """
 
-    def __init__(self, vocab: Vocab, config: dict = None):
+    def __init__(self, vocab: Vocab, config: dict = None,
+                 train_data: Sequence[Tuple[QASetting, Answer]] = None ):
         self.config = config
         self.vocab = vocab
+        self.train_data = train_data
 
     def store(self, path):
         if not os.path.exists(path):
@@ -541,6 +543,7 @@ class SimpleModelModule(ModelModule):
 
     def __init__(self, shared_resources: SharedResources):
         self.shared_resources = shared_resources
+        self.setup(is_training=True)
 
     @abstractmethod
     def create_output(self, shared_resources: SharedResources,
@@ -713,6 +716,7 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
+        self.sess.run([v.initializer for v in self.model_module.variables])
         batch = self.input_module(inputs)
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
@@ -746,11 +750,11 @@ class JTReader:
                 sys.stdout.flush()
         return answers
 
+
     def train(self, optim,
               training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              device="/cpu:0", dev_set=None):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -765,9 +769,8 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logger.info("Setting up data and model...")
-        with tf.device(device):
-            # First setup shared resources, e.g., vocabulary. This depends on the input module.
-            self.setup_from_data(training_set)
+        # First setup shared resources, e.g., vocabulary. This depends on the input module.
+        self.sess.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         batches_dev = self.input_module.dataset_generator(training_set, is_eval=True)
@@ -813,17 +816,6 @@ class JTReader:
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
-
-    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
-        """
-        Sets up modules given a training dataset if necessary.
-        Args:
-            data: training dataset
-        """
-        self.input_module.setup_from_data(data)
-        self.model_module.setup(self.is_train)
-        self.output_module.setup()
-        self.sess.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, path):
         """

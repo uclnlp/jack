@@ -1,10 +1,9 @@
 import numpy as np
-import random
 from itertools import islice
 from jtr.preprocess.map import numpify
 from jtr.util.rs import DefaultRandomState
 
-rs = DefaultRandomState(1337)#new seed ignored if set previously
+rs = DefaultRandomState(1337)
 
 
 def get_buckets(data, order, structure):
@@ -155,6 +154,7 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
                     yield {k: data_np[k][batch_indices] for k in data_np}
 
     return GeneratorWithRestart(bucket_generator)
+
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):
     """Creates feed dicts for all batches with a given batch size.

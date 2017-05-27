@@ -49,63 +49,73 @@ def __genqa_reader(f):
 
 
 @__mcqa_reader
-def example_reader(vocab, config):
+def example_reader(shared_resources: SharedVocabAndConfig):
     """ Creates an example multiple choice reader. """
     from jtr.jack.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
-    shared_resources = SharedVocabAndConfig(vocab, config)
     input_module = SimpleMCInputModule(shared_resources)
+
     model_module = SimpleMCModelModule(shared_resources)
+
     output_module = SimpleMCOutputModule()
-    jtreader = JTReader(shared_resources, input_module, model_module, output_module)
-    return jtreader
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__kbp_reader
-def modelf_reader(vocab, config):
+def modelf_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a simple kbp reader. """
     from jtr.jack.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
-    shared_resources = SharedVocabAndConfig(vocab, config)
     input_module = ModelFInputModule(shared_resources)
+
     model_module = ModelFModelModule(shared_resources)
+
     output_module = ModelFOutputModule()
-    jtreader = KBPReader(shared_resources, input_module, model_module, output_module)
-    return jtreader
+
+    return KBPReader(shared_resources, input_module, model_module, output_module)
 
 
 
 @__xqa_reader
-def fastqa_reader(vocab, config=dict()):
+def fastqa_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.jack.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.jack.tasks.xqa.shared import XQAOutputModule
 
-    shared_resources = SharedVocabAndConfig(vocab, config)
-    return JTReader(shared_resources,
-                    FastQAInputModule(shared_resources),
-                    fatqa_model_module(shared_resources),
-                    XQAOutputModule(shared_resources))
+    input_module = FastQAInputModule(shared_resources)
+
+    model_module = fatqa_model_module(shared_resources)
+
+    output_module = XQAOutputModule(shared_resources)
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__xqa_reader
-def cbow_xqa_reader(vocab, config=dict()):
+def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a FastQA reader instance (extractive qa model). """
-    from jtr.jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
-    from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
     from jtr.jack.tasks.xqa.cbow_baseline import CBOWXqaInputModule
 
-    shared_resources = SharedVocabAndConfig(vocab, config)
-    return JTReader(shared_resources,
-                    CBOWXqaInputModule(shared_resources),
-                    cbow_xqa_model_module(shared_resources),
-                    XQANoScoreOutputModule(shared_resources))
+    from jtr.jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
+    from jtr.jack.tasks.xqa.shared import XQANoScoreOutputModule
+
+    input_module = CBOWXqaInputModule(shared_resources)
+
+    model_module = cbow_xqa_model_module(shared_resources)
+
+    output_module = XQANoScoreOutputModule(shared_resources)
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__mcqa_reader
-def snli_reader(vocab, config):
+def snli_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a SNLI reader instance (multiple choice qa model). """
     from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
-    shared_resources = SharedVocabAndConfig(vocab, config)
-    return JTReader(shared_resources,
-                    SingleSupportFixedClassInputs(shared_resources),
-                    PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
-                    EmptyOutputModule())
+
+    input_module = SingleSupportFixedClassInputs(shared_resources)
+
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
+
+    output_module = EmptyOutputModule()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)

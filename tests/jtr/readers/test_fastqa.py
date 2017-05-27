@@ -6,6 +6,7 @@ from jtr.jack.tasks.xqa.util import tokenize
 from jtr.load.embeddings.embeddings import Embeddings
 from jtr.load.embeddings.vocabulary import Vocabulary
 from jtr.preprocess.vocab import Vocab
+from jtr.jack.core import SharedVocabAndConfig
 
 
 def test_fastqa():
@@ -29,8 +30,8 @@ def test_fastqa():
               "with_char_embeddings": True}
 
     # create/setup reader
-    fastqa_reader = readers.readers["fastqa_reader"](vocab, config)
-    fastqa_reader.setup_from_data(data)
+    shared_resources = SharedVocabAndConfig(vocab, config, data)
+    fastqa_reader = readers.readers["fastqa_reader"](shared_resources)
 
     answers = fastqa_reader(questions)
 

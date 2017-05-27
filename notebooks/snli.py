@@ -37,8 +37,7 @@ optim = tf.train.AdamOptimizer(learning_rate)
 
 # Lets train the reader on the CPU for 2 epochs
 reader.train(optim, train,
-             hooks=hooks, max_epochs=1,
-             device='/cpu:0', dev_set = dev)
+             hooks=hooks, max_epochs=2)
 
 #hooks[0].plot()
 #hooks[1].plot(ylim=[0.0, 1.0])

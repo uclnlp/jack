@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2017-05-26 12:13:21.459951 ClassificationEvalHook_Accuracy 0.404
 2017-05-26 12:13:21.460088 ClassificationEvalHook_F1_macro 0.32812
 2017-05-26 12:13:54.726833 ClassificationEvalHook_Accuracy 0.47
@@ -10,3 +11,17 @@
 2017-05-26 12:15:37.232589 ClassificationEvalHook_F1_macro 0.49454
 2017-05-26 12:15:45.484572 ClassificationEvalHook_Accuracy 0.5095
 2017-05-26 12:15:45.484677 ClassificationEvalHook_F1_macro 0.49403
+=======
+2017-05-12 15:49:58.296001 ClassificationEvalHook_Accuracy 0.427
+2017-05-12 15:49:58.296193 ClassificationEvalHook_F1_macro 0.39516
+2017-05-12 15:50:19.160542 ClassificationEvalHook_Accuracy 0.443
+2017-05-12 15:50:19.160774 ClassificationEvalHook_F1_macro 0.39642
+2017-05-12 15:50:39.887277 ClassificationEvalHook_Accuracy 0.462
+2017-05-12 15:50:39.887520 ClassificationEvalHook_F1_macro 0.44156
+2017-05-12 15:51:00.448115 ClassificationEvalHook_Accuracy 0.497
+2017-05-12 15:51:00.448293 ClassificationEvalHook_F1_macro 0.4750
+2017-05-12 15:51:19.558277 ClassificationEvalHook_Accuracy 0.503
+2017-05-12 15:51:19.558497 ClassificationEvalHook_F1_macro 0.48939
+2017-05-12 15:51:27.030751 ClassificationEvalHook_Accuracy 0.5145
+2017-05-12 15:51:27.030912 ClassificationEvalHook_F1_macro 0.50638
+>>>>>>> 3f492f4ba1829f22433362aa47da7ff57ce1953b

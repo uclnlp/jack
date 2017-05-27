@@ -20,6 +20,7 @@ class SimpleMCInputModule(InputModule):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
+        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
@@ -81,6 +82,7 @@ class SimpleMCInputModule(InputModule):
 class SingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
+        self.setup_from_data(self.shared_vocab_config.train_data)
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -186,6 +188,9 @@ class SimpleMCModelModule(SimpleModelModule):
 
 
 class SimpleMCOutputModule(OutputModule):
+    def __init__(self):
+        self.setup()
+
     def setup(self):
         pass
 
@@ -231,6 +236,9 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
 
 class EmptyOutputModule(OutputModule):
 
+    def __init__(self):
+        self.setup()
+
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits,
@@ -256,6 +264,7 @@ class MisclassificationOutputModule(OutputModule):
         self.lower, self.upper = interval
         self.limit = limit
         self.i = 0
+        self.setup()
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -314,4 +323,3 @@ class MisclassificationOutputModule(OutputModule):
 
     def load(self, path):
         pass
-

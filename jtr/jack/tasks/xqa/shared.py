@@ -79,6 +79,7 @@ def _np_softmax(x):
 class XQAOutputModule(OutputModule):
     def __init__(self, shared_vocab_confg: SharedVocabAndConfig):
         self.vocab = shared_vocab_confg.vocab
+        self.setup()
 
     def __call__(self, questions, span_prediction, token_char_offsets, start_scores, end_scores) -> List[Answer]:
         answers = []
@@ -112,6 +113,7 @@ class XQAOutputModule(OutputModule):
 class XQANoScoreOutputModule(OutputModule):
     def __init__(self, shared_vocab_confg: SharedVocabAndConfig):
         self.vocab = shared_vocab_confg.vocab
+        self.setup()
 
     def __call__(self, questions, span_prediction, token_char_offsets) -> List[Answer]:
         answers = []

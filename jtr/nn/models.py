@@ -39,7 +39,7 @@ def boe_nosupport_cands_reader_model(placeholders, nvocab, **options):
     scores = logits = tf.reduce_sum(tf.expand_dims(question_encoding, 1) * candidates_embedded, 2)
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=scores,
         labels=targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(logits, 1, name='prediction')
 
     logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
     logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
@@ -87,7 +87,7 @@ def bilstm_nosupport_reader_model_with_cands(placeholders, nvocab, **options):
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=scores,
         labels=targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(logits, 1, name='prediction')
 
     logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
     logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
@@ -141,7 +141,7 @@ def bilstm_reader_model_with_cands(placeholders, nvocab, **options):
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=scores,
         labels=targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(logits, 1, name='prediction')
 
     logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
     logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
@@ -324,7 +324,7 @@ def conditional_reader_model_with_cands(placeholders, nvocab, **options):
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=scores,
         labels=targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(logits, 1, name='prediction')
 
     logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
     logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
@@ -374,7 +374,7 @@ def boe_support_cands_reader_model(placeholders, nvocab, **options):
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=scores,
         labels=targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(logits, 1, name='prediction')
 
     logger.info('TRAINABLE VARIABLES (embeddings + model): {}'.format(get_total_trainable_variables()))
     logger.info('ALL VARIABLES (embeddings + model): {}'.format(get_total_variables()))
@@ -665,7 +665,7 @@ def predictor(inputs, targets, target_size):
     loss = tf.reduce_mean(
         tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
             labels=targets), name='predictor_loss')
-    predict = tf.arg_max(tf.nn.softmax(logits), 1, name='prediction')
+    predict = tf.arg_max(logits, 1, name='prediction')
     return logits, loss, predict
 
 

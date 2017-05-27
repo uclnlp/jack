@@ -26,6 +26,8 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         self.config = self.shared_resources.config
         self.question_embedding_matrix = question_embedding_matrix
         self.support_embedding_matrix = support_embedding_matrix
+        super(AbstractSingleSupportFixedClassModel, self).__init__(shared_resources)
+
 
     @property
     def input_ports(self) -> List[TensorPort]:
