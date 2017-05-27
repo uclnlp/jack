@@ -23,42 +23,6 @@ from jtr.preprocess.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 
-class TestDatasets(object):
-
-    @staticmethod
-    def generate_SNLI():
-        snli_path = 'tests/test_data/SNLI/'
-        splits = ['train.json', 'dev.json', 'test.json']
-        snli_data = []
-        for split in splits:
-            path = os.path.join(snli_path, split)
-            snli_data.append(load_labelled_data(path))
-
-        return snli_data
-
-
-class CPUTimer(object):
-    def __init__(self):
-        self.cumulative_secs = {}
-        self.current_ticks = {}
-        pass
-
-    def tick(self, name='default'):
-        if name not in self.current_ticks:
-            self.current_ticks[name] = time.time()
-        else:
-            if name not in self.cumulative_secs:
-                self.cumulative_secs[name] = 0
-            t = time.time()
-            self.cumulative_secs[name] += t - self.current_ticks[name]
-            self.current_ticks.pop(name)
-
-    def tock(self, name='default'):
-        self.tick(name)
-        print('Time taken for {0}: {1:.1f}s'.format(name, self.cumulative_secs[name]))
-        self.cumulative_secs.pop(name)
-        self.current_ticks.pop(name, None)
-
 
 class TensorPort:
     """
@@ -110,7 +74,10 @@ class TensorPortWithDefault(TensorPort):
         """
         ph = tf.placeholder_with_default(self.default_value, self.shape, self.name)
         if ph.dtype != self.dtype:
-            logger.warning("Placeholder {} with default of type {} created for TensorPort with type {}!".format(self.name, ph.dtype, self.dtype))
+            logger.warning(
+                "Placeholder {} with default of type {} created for TensorPort with type {}!".format(self.name,
+                                                                                                     ph.dtype,
+                                                                                                     self.dtype))
         return ph
 
 
@@ -145,7 +112,6 @@ class Ports:
                                "Maps this sample to the index in the input text data",
                                "[batch_size]")
 
-
         support_length = TensorPort(tf.int32, [None, None], "support_length",
                                     "Represents length of supports in each support in batch",
                                     "[batch_size, num_supports]")
@@ -156,8 +122,8 @@ class Ports:
 
     class Prediction:
         logits = TensorPort(tf.float32, [None, None], "candidate_scores",
-                                      "Represents output scores for each candidate",
-                                      "[batch_size, num_candidates]")
+                            "Represents output scores for each candidate",
+                            "[batch_size, num_candidates]")
 
         candidate_index = TensorPort(tf.float32, [None], "candidate_idx",
                                      "Represents answer as a single index",
@@ -165,8 +131,8 @@ class Ports:
 
     class Target:
         candidate_1hot = TensorPort(tf.float32, [None, None], "candidate_targets",
-                                      "Represents target (0/1) values for each candidate",
-                                      "[batch_size, num_candidates]")
+                                    "Represents target (0/1) values for each candidate",
+                                    "[batch_size, num_candidates]")
 
         target_index = TensorPort(tf.int32, [None], "target_index",
                                   ("Represents symbol id of target candidate. ",
@@ -686,7 +652,6 @@ class JTReader:
         self.model_module = model_module
         self.input_module = input_module
         self.is_train = is_train
-        self.timer = CPUTimer()
 
         if self.sess is None:
             sess_config = tf.ConfigProto(allow_soft_placement=True)
@@ -739,14 +704,13 @@ class JTReader:
         logger.debug("Start answering...")
         for j, batch in enumerate(batches):
             output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
-            inputs = [x for x, _ in dataset[j*batch_size:(j+1)*batch_size]]
+            inputs = [x for x, _ in dataset[j * batch_size:(j + 1) * batch_size]]
             answers.extend(
                 self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
             if debug:
                 sys.stdout.write("\r%d/%d examples processed..." % (len(answers), len(dataset)))
                 sys.stdout.flush()
         return answers
-
 
     def train(self, optim,
               training_set: Sequence[Tuple[QASetting, Answer]],
@@ -809,7 +773,6 @@ class JTReader:
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='dev')
-
 
             # calling post-epoch hooks
             for hook in hooks:
