@@ -58,6 +58,14 @@ class DistMultInputModule(InputModule):
         return get_batches(xy_dict)
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        xy_dict = {
+            #Ports.Input.question: corpus["question"],
+            #Ports.Input.atomic_candidates: corpus["candidates"],
+            #Ports.Target.target_index: corpus["answers"]
+        }
+        return get_batches(xy_dict)
+
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
         x_dict = {
             Ports.Input.question: corpus["question"],
@@ -128,12 +136,48 @@ class DistMultModelModule(SimpleModelModule):
 
         return tf.reduce_sum(subject_emb * predicate_emb * object_emb, axis=1)
 
-    def create_training_output(self, shared_resources: SharedResources, *training_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
-        return training_input_tensors
 
-    def create_output(self, shared_resources: SharedResources,
-                      *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
-        return None
+    def create_training_output(self, shared_resources: SharedResources,
+                               logits: tf.Tensor, target_index: tf.Tensor) -> Sequence[tf.Tensor]:
+        return [self.loss]
+
+    def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
+        with tf.variable_scope('distmult'):
+            self.embedding_size = shared_resources.config['repr_dim']
+
+            self.entity_to_index = shared_resources.config['entity_to_index']
+            self.predicate_to_index = shared_resources.config['predicate_to_index']
+
+            nb_entities = len(self.entity_to_index)
+            nb_predicates = len(self.predicate_to_index)
+
+            self.entity_embeddings = tf.get_variable('entity_embeddings',
+                                                     [nb_entities, self.embedding_size],
+                                                     initializer=tf.contrib.layers.xavier_initializer(),
+                                                     dtype='float32')
+            self.predicate_embeddings = tf.get_variable('predicate_embeddings',
+                                                        [nb_predicates, self.embedding_size],
+                                                        initializer=tf.contrib.layers.xavier_initializer(),
+                                                        dtype='float32')
+
+            logits = self.forward_pass(shared_resources, question)
+
+            # TODO XXX
+            labels = tf.ones_like(logits)
+            self.loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+        return [self.loss, logits]
+
+    def forward_pass(self, shared_resources, question):
+        subject_idx = question[:, 0]
+        predicate_idx = question[:, 1]
+        object_idx = question[:, 2]
+
+        subject_emb = tf.nn.embedding_lookup(self.entity_embeddings, subject_idx)
+        predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
+        object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx)
+
+        return tf.reduce_sum(subject_emb * predicate_emb * object_emb, axis=1)
+
 
 class DistMultOutputModule(OutputModule):
     def setup(self):
@@ -159,17 +203,6 @@ class KBPReader(JTReader):
               training_set: List[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
-        """
-        This method trains the reader (and changes its state).
-        Args:
-            test_set: test set
-            dev_set: dev set
-            training_set: the training instances.
-            **train_params: parameters to be sent to the training function `jtr.train.train`.
-
-        Returns: None
-
-        """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
         logger.info("Setting up data and model...")
