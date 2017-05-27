@@ -11,8 +11,8 @@ import pytest
 @pytest.mark.skip("Not implemented yet")
 def test_simple_mcqa():
     data_set = [
-        (QASettingWithDefaults("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
-         AnswerWithDefault("a", score=1.0))
+        (QASetting("which is it?", ["a is true", "b isn't"], atomic_candidates=["a", "b", "c"]),
+         Answer("a", score=1.0))
     ]
     questions = [q for q, _ in data_set]
 

@@ -170,7 +170,7 @@ class DistMultOutputModule(OutputModule):
         for index_in_batch, question in enumerate(inputs):
             winning_index = winning_indices[index_in_batch]
             score = logits[index_in_batch, winning_index]
-            result.append(AnswerWithDefault(question.atomic_candidates[winning_index], score=score))
+            result.append(Answer(question.atomic_candidates[winning_index], score=score))
         return result
 
 
