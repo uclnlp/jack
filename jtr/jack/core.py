@@ -23,30 +23,6 @@ from jtr.preprocess.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 
-
-class CPUTimer(object):
-    def __init__(self):
-        self.cumulative_secs = {}
-        self.current_ticks = {}
-        pass
-
-    def tick(self, name='default'):
-        if name not in self.current_ticks:
-            self.current_ticks[name] = time.time()
-        else:
-            if name not in self.cumulative_secs:
-                self.cumulative_secs[name] = 0
-            t = time.time()
-            self.cumulative_secs[name] += t - self.current_ticks[name]
-            self.current_ticks.pop(name)
-
-    def tock(self, name='default'):
-        self.tick(name)
-        print('Time taken for {0}: {1:.1f}s'.format(name, self.cumulative_secs[name]))
-        self.cumulative_secs.pop(name)
-        self.current_ticks.pop(name, None)
-
-
 class TensorPort:
     """
     A TensorPort defines an input or output tensor for a ModelModule. This subsumes a
@@ -675,7 +651,6 @@ class JTReader:
         self.model_module = model_module
         self.input_module = input_module
         self.is_train = is_train
-        self.timer = CPUTimer()
 
         if self.sess is None:
             sess_config = tf.ConfigProto(allow_soft_placement=True)
