@@ -49,7 +49,8 @@ class DistMultInputModule(InputModule):
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+                          is_eval: bool,
+                          test_time: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -132,7 +133,6 @@ class DistMultModelModule(SimpleModelModule):
         subject_emb = tf.nn.embedding_lookup(self.entity_embeddings, subject_idx)
         predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
         object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx)
-
         return tf.reduce_sum(subject_emb * predicate_emb * object_emb, axis=1)
 
 
@@ -166,7 +166,7 @@ class KBPReader(JTReader):
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
 
-        batches = self.input_module.dataset_generator(training_set, is_eval=False)
+        batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
         print(batches)
 
         loss = self.model_module.tensors[Ports.loss]
