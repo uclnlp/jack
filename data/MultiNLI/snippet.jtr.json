@@ -1,0 +1,17 @@
+{
+  "instances": [],
+  "globals": {
+    "candidates": [
+      {
+        "text": "entailment"
+      },
+      {
+        "text": "neutral"
+      },
+      {
+        "text": "contradiction"
+      }
+    ]
+  },
+  "meta": "MultiSNLI"
+}
