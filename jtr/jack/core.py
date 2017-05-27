@@ -23,6 +23,7 @@ from jtr.preprocess.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 
+
 class TensorPort:
     """
     A TensorPort defines an input or output tensor for a ModelModule. This subsumes a
@@ -271,7 +272,7 @@ class SharedVocabAndConfig(SharedResources):
     A class to provide and store a vocab shared across some of the reader modules.
     """
 
-    def __init__(self, vocab: Vocab, config: dict = None ):
+    def __init__(self, vocab: Vocab, config: dict = None):
         self.config = config
         self.vocab = vocab
 
