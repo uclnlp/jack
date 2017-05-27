@@ -77,6 +77,59 @@ class SimpleMCInputModule(InputModule):
         return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.atomic_candidates]
 
+class StreamingSingleSupportFixedClassInputs(InputModule):
+    def __init__(self, shared_vocab_config):
+        self.shared_vocab_config = shared_vocab_config
+        self.setup_from_data(self.shared_vocab_config.train_data)
+
+    @property
+    def training_ports(self) -> List[TensorPort]:
+        return [Ports.Target.target_index]
+
+    @property
+    def output_ports(self) -> List[TensorPort]:
+        """Defines the outputs of the InputModule
+
+        1. Word embedding index tensor of questions of mini-batchs
+        2. Word embedding index tensor of support of mini-batchs
+        3. Max timestep length of mini-batches for support tensor
+        4. Max timestep length of mini-batches for question tensor
+        5. Labels
+        """
+        return [Ports.Input.multiple_support,
+                Ports.Input.question, Ports.Input.support_length,
+                Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
+
+    def __call__(self, qa_settings: List[QASetting]) \
+            -> Mapping[TensorPort, np.ndarray]:
+        pass
+
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        raise Exception("Can only be setup from files!")
+
+    def setup_from_file(self, path):
+        pass
+
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        corpus, _, _, _ = \
+                preprocess_with_pipeline(dataset,
+                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
+
+        xy_dict = {
+            Ports.Input.multiple_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Target.target_index:  corpus["answers"],
+            Ports.Input.question_length : corpus['question_lengths'],
+            Ports.Input.support_length : corpus['support_lengths'],
+            Ports.Input.sample_id : corpus['ids']
+        }
+
+        return get_batches(xy_dict)
+
+    def setup(self):
+        pass
+
 
 class MultiSupportFixedClassInputs(InputModule):
     def __init__(self, shared_resources):
@@ -120,7 +173,7 @@ class MultiSupportFixedClassInputs(InputModule):
             self.shared_resources.answer_vocab = train_vocab
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+                          is_eval: bool, dataset_identifier= None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,

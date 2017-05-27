@@ -7,6 +7,7 @@ from datetime import datetime
 from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
+from jtr.jack.data_structures import load_labelled_data
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -257,10 +258,11 @@ class ETAHook(TraceHook):
 
 
 class EvalHook(TraceHook):
-    def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], ports: List[TensorPort],
+    def __init__(self, reader: JTReader, data_path, ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None):
         super(EvalHook, self).__init__(reader, summary_writer)
+        dataset = load_labelled_data(data_path)
         self._dataset = dataset
         self._batches = None
         self._total = len(dataset)

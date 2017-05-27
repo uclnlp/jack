@@ -330,7 +330,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) -> \
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool, identifier=None) -> \
             Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -356,6 +356,20 @@ class InputModule:
         Returns: vocab
         """
         raise NotImplementedError
+
+    def setup_from_file(self, train_path, additional_paths=[]):
+        """
+        Takes input path and creates generator used in setup from data.
+        Args:
+            train_path: Path to the train file.
+            additional_paths: List of addtional paths to process, for example dev and test set.
+
+        Returns: vocab
+        """
+        train_data = load_labelled_data(train_path)
+        print('uden', len(train_data))
+        self.setup_from_data(train_data)
+        return train_data
 
     @abstractmethod
     def setup(self):
@@ -700,10 +714,12 @@ class JTReader:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
-    def train(self, optimizer,
-              training_set: Sequence[Tuple[QASetting, Answer]],
+
+    def train(self, optim,
+              train_path,
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value,
+              dataset_identifier=None):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -719,10 +735,18 @@ class JTReader:
 
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
+<<<<<<< ebc562dce544a8fbe84e15ff4b0a963bf8343975
         self.setup_from_data(training_set)
         self.session.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
+=======
+        training_set = self.input_module.setup_from_file(train_path)
+        self.model_module.setup()
+        self.sess.run([v.initializer for v in self.model_module.variables])
+
+        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_identifier=dataset_identifier)
+>>>>>>> Added filepath and file id for preprocessing.
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
