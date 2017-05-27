@@ -72,6 +72,18 @@ def modelf_reader(vocab, config):
     return jtreader
 
 
+@__kbp_reader
+def distmult_reader(vocab, config):
+    """ Creates a simple kbp reader. """
+    from jtr.jack.tasks.kbp.distmult import DistMultInputModule, DistMultModelModule, DistMultOutputModule, KBPReader
+    shared_resources = SharedVocabAndConfig(vocab, config)
+    input_module = DistMultInputModule(shared_resources)
+    model_module = DistMultModelModule(shared_resources)
+    output_module = DistMultOutputModule()
+    jtreader = KBPReader(shared_resources, input_module, model_module, output_module)
+    return jtreader
+
+
 
 @__xqa_reader
 def fastqa_reader(vocab, config=dict()):
