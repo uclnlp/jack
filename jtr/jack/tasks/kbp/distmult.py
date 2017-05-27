@@ -2,7 +2,6 @@
 
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
-from jtr.preprocess.map import numpify
 
 from jtr.preprocess.batch import get_batches
 from jtr.pipelines import pipeline
@@ -46,19 +45,36 @@ class DistMultInputModule(InputModule):
             assert len(y) == 1
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
                                    test_time=test_time)
+
+        print('AAAAA', corpus)
+
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool,
                           test_time: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset)
+        # corpus = self.preprocess(dataset)
+        question = []
+        for x, _ in dataset:
+            s, p, o = x.question.split()
+            s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
+            p_idx = self.predicate_to_index[p]
+            question.append([s_idx, p_idx, o_idx])
+
+        corpus = {'support': [0 for _ in dataset],
+                  'question': question,
+                  'candidates': [0 for _ in dataset],
+                  'answers': [],
+                  'targets': [1 for _ in dataset]
+        }
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
             Ports.Target.candidate_1hot: corpus["targets"]
         }
-        return get_batches(xy_dict)
+        batches = get_batches(xy_dict)
+        return batches
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
@@ -118,11 +134,27 @@ class DistMultModelModule(SimpleModelModule):
                                                         initializer=tf.contrib.layers.xavier_initializer(),
                                                         dtype='float32')
 
-            logits = self.forward_pass(shared_resources, question)
+            positive_logits = self.forward_pass(shared_resources, question)
+            positive_labels = tf.ones_like(positive_logits)
 
-            # TODO XXX
-            labels = tf.ones_like(logits)
-            self.loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+            random_subject_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
+                                                       minval=0, maxval=nb_entities, dtype=tf.int32)
+            random_object_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
+                                                      minval=0, maxval=nb_entities, dtype=tf.int32)
+
+            # question_corrupted_subjects[:, 0].assign(random_indices)
+            question_corrupted_subjects = tf.concat(values=[random_subject_indices, question[:, 1:]], axis=1)
+            question_corrupted_objects = tf.concat(values=[question[:, :2], random_object_indices], axis=1)
+
+            negative_subject_logits = self.forward_pass(shared_resources, question_corrupted_subjects)
+            negative_object_logits = self.forward_pass(shared_resources, question_corrupted_objects)
+            negative_labels = tf.zeros_like(negative_subject_logits)
+
+            logits = tf.concat(values=[positive_logits, negative_subject_logits, negative_object_logits], axis=0)
+            labels = tf.concat(values=[positive_labels, negative_labels, negative_labels], axis=0)
+
+            losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+            self.loss = tf.reduce_mean(losses, axis=0)
         return [self.loss, logits]
 
     def forward_pass(self, shared_resources, question):
@@ -167,7 +199,6 @@ class KBPReader(JTReader):
         self.setup_from_data(training_set)
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
-        print(batches)
 
         loss = self.model_module.tensors[Ports.loss]
 
@@ -189,9 +220,9 @@ class KBPReader(JTReader):
         # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
-        logger.info("Start training...")
+        logger.info("Start training {} ...".format(max_epochs))
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
-
+                print(current_loss)
