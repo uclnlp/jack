@@ -25,6 +25,8 @@ logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 if len(sys.argv) > 1:
     print_help = sys.argv[1] == '--help'
+else:
+    print_help = True
 
 help_message = '''1. Specify your model with the `--model`` parameter; you can see a list of models in
 2. Specify your data with the `--train`, `--dev` and `--test` parameters.

@@ -1,7 +1,7 @@
 # Understanding Jack the Reader
 
 ## Purpose of Jack
-Jack is a library which is designed to generalize dataset and model structure so that if one adds a new model one can test it on a range of question answering tasks, and vice versa, if one had a new dataset one can try all the models available in Jack. Thus with Jack we hope to push the breadth and depth of research: You design a new model and other researchers are immediately able to compare against it. If you design a new dataset you immediately have a range of baseline from the models used in jtr. Other profit from your efforts and others profit from yours.
+Jack is a library for machine reading tasks, especially questions answering, knowledge base population and recognising textual entailment, which is designed to generalize dataset and model structure. The purpose is that if one adds a new model one can test it on a range of question answering tasks, and vice versa, if one has a new dataset one can use it with all the models available in Jack. Thus with Jack we hope to push the breadth and depth of research: You design a new model and other researchers are immediately able to compare against it. If you design a new dataset you immediately have a range of baseline from the models used in jtr. Other profit from your efforts and others profit from yours.
 
 ## A high Level Overview of Jack
 
@@ -27,7 +27,7 @@ This design introduces more boilerplate in each of the modules and can make exte
 The 3 modules are finally combined in what we call a *reader* which is an instance of the JTReader class. A reader encapsulates most of the functionality needed by a user, like saving, loading, training, processing QA pairs, and thus hides the more modular components of jack. 
 
 ### 3+1: The Three Types of Modules (Plus One)
-We have the following modules with the following functionality:
+We have the following modules with the following functionality, defined in [jtr/jack/core.py](jtr/jack/core.py):
 - InputModule: is responsible for pre-processing datasets that are passed in form of a sequence of question settings (comprising question, id, support(s), answer candidates, etc.) and optional answers (depending on the functionality used). The pre-processing results typically in a mapping from tensor ports to tensors (feed-dict), or an iterator of feed-dicts, which can be passed to the subsequent ModelModule
 - ModelModule: Takes TensorFlow inputs (usually word indices for word embeddings), transfers it to the GPU, runs a more or less complex model (from logistic regression to dual bidirectional LSTMs over question and support with word by word attention) to then produce some outputs
 - OutputModule: This takes numpy arrays as input as generated from the ModelModule to perform complex output, such as beam search for text generation, computing top 10/100/1000 retrieval scores and more
@@ -37,20 +37,20 @@ We have the following modules with the following functionality:
 ### Understanding the functional interfaces of the modules
 - **Input Module**:
   - `dataset_generator(..., is_eval: bool)`: This method takes raw text input data as Q/A tuples and outputs a generator that creates batches of the tensors in the `output_ports()` and `training_ports`. The flag `is_eval` indicates if a training or validation set is passed into the method (a validation set has no `training_ports()` and its preprocessing steps may differ)
-  - `setup_from_data()`: We want to use the same preprocessing whenever we call the `dataset_generator()`, for example, we want to use the same vocabularies every time we call `dataset_generator()` thus we could want to setup a global vocabulary which is valid for all calls to `dataset_generator()`. This is exactly what this method, `setup_from_data()` is supposed to do. We can setup vocabularies, candidates for our training targets (labels from vocabulary), etc.
+  - `setup_from_data()`: We want to use the same preprocessing whenever we call the `dataset_generator()`, for example, we want to use the same vocabularies every time we call `dataset_generator()`, thus we could want to setup a global vocabulary which is valid for all calls to `dataset_generator()`. This is exactly what this method, `setup_from_data()` is supposed to do. We can set up vocabularies, candidates for our training targets (labels from vocabulary), etc.
   - `output_ports()` output tensors generated from the InputModule which are needed to make a prediction (usually no labels required)
   - `training_ports()`  **additional** output tensors needed to generate loss value (usually only the labels here)
-  - `__call__`or `my_input_module()`: Used to preprocess single instances of data when using the model on totally new data (not the test data, but some new manually generated data)
+  - `__call__`: Used to preprocess single instances of data when using the model on totally new data (not the test data, but some new manually generated data)
   - `setup()`: is called after it is certain that the InputModule is completely configured to set up necessary resources given the configuration. Configuration might not always be existent during creation, for instance, in case of loading a saved InputModule which requires creating it first. This method is called instead of `setup_from_data()` but never together.
   
 - **Model Module**:
   - This module is usually not used, but instead just serves as a baseclass for the SimpleModelModule
 - **Simple Model Module**:
-  - `input_ports`: must be a subset of the `output_ports()` of the InputModule used, otherwise Model and Input Module are not compatible. They define the input tensors to the `create_output()`.
+  - `input_ports`: define all the inputs needed for prediction
   - `output_ports`: define the TensorPorts that match the outputs generated by the `create_output()` method.
-  - `training_input_ports`: must be a subset of the union of this module's `output_ports()` and the `training_ports()` of the employed InputModule, otherwise Model and Input Module are not compatible. Usually, you want to compute prediction scores in the `create_output()` method, define them in this method, to later use them in `create_training_outputs()` together with the labels that are passed in by the InputModule.
+  - `training_input_ports`: define the extra Ports needed with respect to the InputPorts and that are needed for loss calculation.
   - `training_output_ports`: define the TensorPorts that match the outputs generated by the `create_training_outputs()` method.
-  - `create_output()`: takes the output tensors specified by `input_ports()` and creates predictions, e.g. prediction scores or -labels, which can later be used by the OutputModule to produce an answer or by the `create_training_outputs()` method which is typically responsible for computing training related tensors such as the loss.
+  - `create_output()`: takes the output tensors specified by `input_ports()`, defines a model over the input and creates predictions, e.g. prediction scores or prediction labels, which can later be used by the OutputModule to produce an answer or by the `create_training_outputs()` method which is typically responsible for computing training related tensors such as the loss.
   - `create_training_outputs()`: takes outputs as defined in the `training_input_ports()` in the InputModule, as well as the `output_ports()` of the ModelModule (which is essentially the output from the `create_output()` method) and then generates a loss
 - **Output Module**:
   - Implements special output processing. During application they can be used, for instance, to produce the actual outputs/answers (typically as strings) given the abstract predictions as tensors.
@@ -59,9 +59,9 @@ We have the following modules with the following functionality:
 1. Define your input, model and output modules in the respective task file; for example if you do classification for a fixed number of classes, then add your modules into the multiple choice (mc) task file
 2. You can leave the output module empty for now, as it is only needed for special processing
 3. Your ModelModule can inherit from the SimpleModelModule which is simpler to implement
-4. Implement the functional interfaces for each module; that is define the input and output ports. Do this by important from Ports if your tensor are of fixed dimensions and from FlatPorts if your tensor Have varying dimension (sometimes 2 dimensional and other times 3 dimensional; if the time dimension changes, still use the normal Ports)
+4. Implement the functional interfaces for each module; that is define the input and output ports. Do this by importing from Ports if your tensor are of fixed dimensions and from FlatPorts if your tensor has varying dimension (sometimes 2 dimensional and other times 3 dimensional; if the time dimension changes, still use the normal Ports)
 5. Use Ports in their respective category. For example `Ports.Inputs.candidate_idx` for the index
-6. Define any ports that are missing
+6. Define any ports that are missing in [jtr/jack/core.py](jtr/jack/core.py)
 
 ##### Implementing the Input module
 
@@ -75,7 +75,7 @@ We have the following modules with the following functionality:
 
 ##### Implementing the Simple Model Module
 
-1. Overwrite the `input_ports()`, `output_ports()` and `training_output()` properties so that output from the `create_outputs()` method is reused in the `create_training_outputs()` 
+1. Overwrite the `input_ports()`, `output_ports()` and `training_output()` properties so that output from the `create_output()` method is reused in the `create_training_outputs()` 
 2. extend the functional interface from a list, to spell out the actual tensor names, for example:
   ```
       # this is the template
@@ -188,7 +188,7 @@ hooks[1].plot(ylim=[0.0, 1.0])
 ### Re-usable Functionality in JTR
 
 ##### Preprocessing Methods (tokenize, normalize, add sequence length)
-- The pipeline method is the heaviest and most detailed processing step. This method is wrangling and preprocessing data with simple call [jtr.pipelines.pipeline(..)](jtr/pipelines.py#L115) but behind this method there are several preprocessing steps:
+- The pipeline method is the heaviest and most detailed processing step. This method is wrangling and preprocessing data with simple call [jtr.pipeline(..)](jtr/pipelines.py#L115) (!!! doesn't exist anymore) but behind this method there are several preprocessing steps:
   - [jtr.preprocess.map.deep_map](jtr/preprocess/map.py): This is a clever method which traverses a dictionary for certain keys and transforms the values of given keys in-place in a very efficient manner. It does this by using a map function to the list of value under the given dictionary keys. It is usually used to transform a list of question strings, into a tokenized version, that is transform it into a list of question word-lists
   - [jtr.preprocess.map.deep_seq_map](jtr/preprocess/map.py): The sister of deep_map. Also applies a function and transforms the given values under a dictionary keys in-place. The difference is that it applies this functionality on lists of lists (for example tokenized questions). With that we can use this function to do many things:
     - Words -> lower case words
