@@ -1,0 +1,129 @@
+config: './conf/jack.yaml'
+
+config_filename: jack.yaml
+
+description: >
+  Train and Evaluate a Machine Reader
+
+seed: 1337
+
+# Run in debug mode, in which case the training file is also used for testing
+debug: False
+
+# If in debug mode, how many examples should be used (default 10)
+debug_examples: 10
+
+# jtr training file
+train: 'tests/test_data/SNLI/train.json'
+
+# jtr dev file
+dev: 'tests/test_data/SNLI/dev.json'
+
+# jtr test file
+test: 'tests/test_data/SNLI/test.json'
+
+# [none], [single] (default) or [multiple] supporting statements per instance; multiple_flat reads multiple instances creates
+# a separate instance for every support
+supports: 'single'
+
+# How large the support should be. Can be used for cutting or filtering QA examples
+max_support_length: -1
+
+# [none], [single] (default), or [multiple] questions per instance
+questions: 'single'
+
+# [open], [per-instance], or [fixed] (default) candidates
+candidates: 'fixed'
+
+# [single] or [multiple]
+answers: 'single'
+
+# How many answer does the output have. Used for classification
+answer_size: 3
+
+# Batch size for training data, default 128
+batch_size: 128
+
+# Batch size for development data, default 128
+dev_batch_size: 128
+
+# Size of the input representation (embeddings),
+# default 128 (embeddings cut off or extended if not,
+# matched with pretrained embeddings)
+repr_dim_input: 128
+
+# Size of the hidden representations, default 128
+repr_dim: 128
+
+# Use pretrained embeddings, by default the initialisation is random
+pretrain: False
+
+# Use also character based embeddings in readers which support it
+with_char_embeddings: False
+
+# Use fixed vocab of pretrained embeddings
+vocab_from_embeddings: False
+
+# Continue training pretrained embeddings together with model parameters
+train_pretrain: False
+
+# Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)
+normalize_pretrain: False
+
+# [word2vec] or [glove] format of embeddings to be loaded
+embedding_format: 'word2vec'
+
+# format of embeddings to be loaded
+embedding_file: 'jtr/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'
+
+vocab_maxsize: 1000000000000
+
+vocab_minfreq: 2
+
+# Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods
+vocab_sep: True
+
+# Reading model to use
+model: 'snli_reader'
+
+# Learning rate, default 0.001
+learning_rate: 0.001
+
+# Learning rate decay, default 0.5
+learning_rate_decay: 0.5
+
+# L2 regularization weight, default 0.0
+l2: 0.0
+
+# Gradients clipped between [-clip_value, clip_value] (default 0.0; no clipping)
+clip_value: 0.0
+
+# Probability for dropout on output (set to 0.0 for no dropout)
+dropout: 0.0
+
+# Number of epochs to train for, default 5
+epochs: 5
+
+# Number of batches before evaluation on devset
+checkpoint: null
+
+# Number of negative samples, default 0 (= use full candidate list)
+negsamples: 0
+
+# Folder for tensorboard logs
+tensorboard_folder: null
+
+# Filename to log the metrics of the EvalHooks
+write_metrics_to: null
+
+# If the vocabulary should be pruned to the most frequent words
+prune: False
+
+# Directory to write reader to
+model_dir: '/tmp/jtreader'
+
+# interval for logging eta, training loss, etc
+log_interval: 100
+
+# lowercase texts
+lowercase: True
