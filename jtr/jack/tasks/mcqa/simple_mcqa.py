@@ -141,20 +141,20 @@ class SingleSupportFixedClassInputs(InputModule):
 class SimpleMCModelModule(SimpleModelModule):
 
     @property
-    def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits]
+    def input_ports(self) -> List[TensorPort]:
+        return [Ports.Input.multiple_support, Ports.Input.question, Ports.Input.atomic_candidates]
 
     @property
-    def training_output_ports(self) -> List[TensorPort]:
-        return [Ports.loss]
+    def output_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.logits]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.Target.candidate_1hot]
 
     @property
-    def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.multiple_support, Ports.Input.question, Ports.Input.atomic_candidates]
+    def training_output_ports(self) -> List[TensorPort]:
+        return [Ports.loss]
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,

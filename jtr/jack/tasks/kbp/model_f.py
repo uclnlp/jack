@@ -126,20 +126,20 @@ class ModelFInputModule(InputModule):
 
 class ModelFModelModule(SimpleModelModule):
     @property
-    def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, Ports.loss]
+    def input_ports(self) -> List[TensorPort]:
+        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
     @property
-    def training_output_ports(self) -> List[TensorPort]:
-        return [Ports.loss]
+    def output_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.logits, Ports.loss]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
     @property
-    def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
+    def training_output_ports(self) -> List[TensorPort]:
+        return [Ports.loss]
 
     def create_training_output(self,
                                shared_resources: SharedVocabAndConfig,
