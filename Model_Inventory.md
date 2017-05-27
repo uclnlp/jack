@@ -1,7 +1,7 @@
 # Model Inventory
 
 Below is an inventory of existing models in jtr (last updated: 27 May 2017). The current list of models can be obtained by running `python3 jtr/jack/train/train_reader.py --help`.
-Models are defined in [jtr/readers.py](jtr/readers.py).
+Models are defined in [jtr/readers.py](jtr/readers.py). Once imported you can construct models by calling their respective factory methods given a SharedResources object (usually holds configuration and vocab, but can contain additional information). The following lists models and the individual modules they are composed of. Modules can be shared across readers. Note that after a model is constructed it is not yet setup. It can be setup by loading it from file (`reader.setup_from_file(...)` when working with trained models) or from datasets which is done in the training script.
 
 ## snli_reader
 
