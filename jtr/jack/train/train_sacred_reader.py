@@ -1,12 +1,26 @@
 # -*- coding: utf-8 -*-
 
+from sacred import Experiment
+
+
+def fetch_parents(path, parents=[]):
+    tmp_ex = Experiment('jack')
+    tmp_ex.add_config(path)
+    tmp_ex.run("print_config")
+    if tmp_ex.current_run is not None and "parent_config" in tmp_ex.current_run.config:
+        return fetch_parents(tmp_ex.current_run.config["parent_config"], [path] + parents)
+    else:
+        return [path] + parents
+
+configs = fetch_parents("./conf/jack_specific.yaml")
+ex = Experiment('jack')
+for path in configs:
+    ex.add_config(path)
+
+
 import sys
 import os
 import os.path as path
-from sacred import Experiment
-ex = Experiment('jack')
-ex.add_config("%s/conf/jack.yaml" % os.getcwd())
-
 import logging
 import math
 
