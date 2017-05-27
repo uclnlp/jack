@@ -254,6 +254,7 @@ class ETAHook(TraceHook):
 
             logger.info(log)
 
+        print(self.iter_per_checkpoint, self.iter, self.start_checkpoint)
         if self.iter_per_checkpoint is not None and self.iter % self.iter_per_checkpoint == 0:
             self.start_checkpoint = time()
 
