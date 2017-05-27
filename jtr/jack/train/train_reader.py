@@ -136,6 +136,7 @@ def main():
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
     parser.add_argument('--seed', default=325, type=int, help="Seed for rngs.")
+    parser.add_argument('--dataset_identifier', default=None)
     parser.add_argument('--answer_size', default=3, type=int, help=("How many answer does the output have. Used for "
                                                                     "classification."))
     parser.add_argument('--max_support_length', default=-1, type=int,
@@ -244,7 +245,7 @@ def main():
     # Train
     reader.train(optim, args.train,
                  max_epochs=args.epochs, hooks=hooks,
-                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=args.l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_identifier=args.dataset_identifier)
 
     # Test final model
     if args.test is not None:

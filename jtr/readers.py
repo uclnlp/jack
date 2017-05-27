@@ -172,6 +172,18 @@ def esim_snli_reader(shared_resources: SharedResources):
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
 
+@__mcqa_reader
+def snli_streaming_reader(shared_resources: SharedVocabAndConfig):
+    """ Creates a SNLI reader instance (multiple choice qa model). """
+    from jtr.jack.tasks.mcqa.simple_mcqa import StreamingSingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
+
+    input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
+
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
+
+    output_module = EmptyOutputModule()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 # Aliases
 @__mcqa_reader
