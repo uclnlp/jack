@@ -1015,6 +1015,7 @@ def test_hook(hook_name, print_every):
 
 
 def test_variable_duplication():
+    nltk.download('averaged_perceptron_tagger')
     tokenizer = nltk.tokenize.WordPunctTokenizer()
     pipeline_folder = 'test_pipeline'
     base_path = join(get_data_path(), pipeline_folder)
