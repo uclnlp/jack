@@ -167,7 +167,7 @@ def main():
         logger.info('device info: ' + str(device).replace("\n", " "))
 
     if args.debug:
-        train_data = load_labelled_data(args.train, args.debug_examples, **vars(args))
+        train_data = load_labelled_data(args.train, args.debug_examples)
 
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(args.debug_examples))
 
@@ -181,8 +181,8 @@ def main():
         else:
             embeddings = Embeddings(None, None)
     else:
-        train_data, dev_data = [load_labelled_data(name, **vars(args)) for name in [args.train, args.dev]]
-        test_data = load_labelled_data(args.test, **vars(args)) if args.test else None
+        train_data, dev_data = [load_labelled_data(name) for name in [args.train, args.dev]]
+        test_data = load_labelled_data(args.test) if args.test else None
         logger.info('loaded train/dev/test data')
         if args.pretrain:
             embeddings = load_embeddings(args.embedding_file, args.embedding_format)
