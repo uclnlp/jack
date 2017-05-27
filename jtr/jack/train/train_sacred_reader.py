@@ -7,7 +7,6 @@ from sacred import Experiment
 ex = Experiment('jack')
 ex.add_config("%s/conf/jack.yaml" % os.getcwd())
 
-import json
 import logging
 import math
 
@@ -60,7 +59,6 @@ def main(batch_size,
          model,
          model_dir,
          pretrain,
-         repr_dim_input,
          seed,
          tensorboard_folder,
          test,
@@ -94,7 +92,6 @@ def main(batch_size,
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
-            repr_dim_input = embeddings.lookup.shape[1]
         else:
             embeddings = Embeddings(None, None)
     else:
@@ -104,7 +101,6 @@ def main(batch_size,
         if pretrain:
             embeddings = load_embeddings(embedding_file, embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(embedding_file))
-            repr_dim_input = embeddings.lookup.shape[1]
         else:
             embeddings = Embeddings(None, None)
 
@@ -116,9 +112,6 @@ def main(batch_size,
     checkpoint()
 
     config = ex.current_run.config
-    kwargs = config.pop("kwargs", "{}")
-    kwargs = json.loads(kwargs)
-    config.update(kwargs)
 
     shared_resources = SharedVocabAndConfig(vocab, config, train_data)
     reader = readers.readers[model](shared_resources)
@@ -174,9 +167,8 @@ def main(batch_size,
 
     # Test final model
     if test_data is not None:
-        test_eval_hook = readers.eval_hooks[model](reader, test_data,
-                                                        summary_writer=sw, epoch_interval=1,
-                                                        write_metrics_to=write_metrics_to)
+        test_eval_hook = readers.eval_hooks[model](
+            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
         reader.load(model_dir)
         test_eval_hook.at_test_time(1)

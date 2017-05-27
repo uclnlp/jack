@@ -125,6 +125,3 @@ log_interval: 100
 
 # lowercase texts
 lowercase: True
-
-# string in json format that contains additional model- or application-specific configurations
-kwargs: "{}"
