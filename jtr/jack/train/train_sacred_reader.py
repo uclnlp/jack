@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from sacred import Experiment
+from sacred.arg_parser import parse_args
+import sys
+
+parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
+if "config" in parsed_args:
+    path = parsed_args["config"]
+else:
+    path = "./conf/jack.yaml"
 
 
 def fetch_parents(path, parents=[]):
@@ -12,13 +20,12 @@ def fetch_parents(path, parents=[]):
     else:
         return [path] + parents
 
-configs = fetch_parents("./conf/jack_specific.yaml")
+configs = fetch_parents(path)
+print("Loading", configs)
 ex = Experiment('jack')
 for path in configs:
     ex.add_config(path)
 
-
-import sys
 import os
 import os.path as path
 import logging
@@ -60,6 +67,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
 @ex.automain
 def main(batch_size,
          clip_value,
+         config,
          debug,
          debug_examples,
          dev,
@@ -83,6 +91,8 @@ def main(batch_size,
     # make everything deterministic
     random.seed(seed)
     tf.set_random_seed(seed)
+
+    print(config)
 
     if clip_value != 0.0:
         clip_value = - abs(clip_value), abs(clip_value)
@@ -125,9 +135,9 @@ def main(batch_size,
     # build JTReader
     checkpoint()
 
-    config = ex.current_run.config
+    parsed_config = ex.current_run.config
 
-    shared_resources = SharedVocabAndConfig(vocab, config, train_data)
+    shared_resources = SharedVocabAndConfig(vocab, parsed_config, train_data)
     reader = readers.readers[model](shared_resources)
     checkpoint()
 
