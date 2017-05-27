@@ -10,7 +10,6 @@ from typing import List, Tuple, Mapping
 
 import numpy as np
 import tensorflow as tf
-import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pandas as pd
@@ -66,7 +65,6 @@ class TraceHook(TrainingHook):
             self._summary_writer.add_summary(summary, current_step)
 
     def plot(self, ylim=None):
-        sns.set_style("darkgrid")
         number_of_subplots=len(self.scores.keys())
         colors = ['blue', 'green', 'orange']
         patches = []
