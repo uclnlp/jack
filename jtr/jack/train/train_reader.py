@@ -132,7 +132,7 @@ def main():
                         help='Filename to log the metrics of the EvalHooks')
     parser.add_argument('--prune', default='False',
                         help='If the vocabulary should be pruned to the most frequent words.')
-    parser.add_argument('--model_dir', default='/tmp/jtreader', type=str, help="Directory to write reader to.")
+    parser.add_argument('--model_dir', default=None, type=str, help="Directory to write reader to.")
     parser.add_argument('--log_interval', default=100, type=int, help="interval for logging eta, training loss, etc.")
     parser.add_argument('--lowercase', action='store_true', help='lowercase texts.')
     parser.add_argument('--seed', default=325, type=int, help="Seed for rngs.")
@@ -237,9 +237,11 @@ def main():
         elif m > best_metric[0]:
             best_metric[0] = m
             if prev_metric is None:  # store whole model only at beginning of training
-                reader.store(args.model_dir)
+                if args.model_dir:
+                    reader.store(args.model_dir)
             else:
-                reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
+                if args.model_dir:
+                    reader.model_module.store(reader.sess, os.path.join(args.model_dir, "model_module"))
             logger.info("Saving model to: %s" % args.model_dir)
         return m
 
@@ -261,7 +263,8 @@ def main():
                                                         summary_writer=sw, epoch_interval=1,
                                                         write_metrics_to=args.write_metrics_to)
 
-        reader.load(args.model_dir)
+        if args.model_dir:
+            reader.load(args.model_dir)
         test_eval_hook.at_test_time(1)
 
 
