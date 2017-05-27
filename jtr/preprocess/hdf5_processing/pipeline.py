@@ -2,7 +2,7 @@ from os.path import join
 
 import os
 import shutil
-import simplejson as json
+import json
 import zipfile
 
 from jtr.preprocess.hdf5_processing.vocab import Vocab
