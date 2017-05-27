@@ -90,8 +90,10 @@ class DistMultModelModule(SimpleModelModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.question]
 
-    def create_training_output(self, shared_resources: SharedResources,
-                               logits: tf.Tensor, target_index: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_training_output(self,
+                               shared_resources: SharedResources,
+                               logits: tf.Tensor,
+                               target_index: tf.Tensor) -> Sequence[tf.Tensor]:
         return [self.loss]
 
     def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
