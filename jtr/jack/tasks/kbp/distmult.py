@@ -15,6 +15,8 @@ class DistMultInputModule(InputModule):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+        print('XXX')
+
         self.vocab = self.shared_resources.vocab
         self.triples = [x[0].question.split() for x in data]
 
@@ -101,6 +103,8 @@ class DistMultModelModule(SimpleModelModule):
         return [self.loss]
 
     def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
+        print('YYY')
+
         with tf.variable_scope('distmult'):
             self.embedding_size = shared_resources.config['repr_dim']
 
