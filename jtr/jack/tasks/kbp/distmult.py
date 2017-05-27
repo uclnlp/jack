@@ -58,10 +58,11 @@ class DistMultInputModule(InputModule):
         return get_batches(xy_dict)
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        corpus = self.preprocess(qa_settings, test_time=True)
         xy_dict = {
-            #Ports.Input.question: corpus["question"],
-            #Ports.Input.atomic_candidates: corpus["candidates"],
-            #Ports.Target.target_index: corpus["answers"]
+            Ports.Input.multiple_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Input.atomic_candidates: corpus["candidates"]
         }
         return get_batches(xy_dict)
 
