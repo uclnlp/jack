@@ -5,7 +5,7 @@ import sys
 
 import tensorflow as tf
 
-from jtr.tasks.kbp import negative_l1_distance
+from jtr.tasks.kbp.similarities import negative_l1_distance
 
 
 class BaseModel(metaclass=abc.ABCMeta):

@@ -1,0 +1,20 @@
+config_filename: experimental/decomposable_attention_multiple_choice.yaml
+
+description: >
+  Basic multiple choice configuration.
+
+parent_config: './conf/jack.yaml'
+
+
+# jtr training file
+train: 'data/WN18/wn18-snippet.jtr.json'
+
+# jtr dev file
+dev: 'data/WN18/wn18-snippet.jtr.json'
+
+# jtr test file
+test: 'data/WN18/wn18-snippet.jtr.json'
+
+# Reading model to use
+model: 'distmult_reader'
+
