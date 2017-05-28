@@ -76,11 +76,8 @@ def distmult_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a simple kbp reader. """
     from jtr.jack.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, KnowledgeGraphEmbeddingOutputModule, KBPReader
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources)
-
+    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='DistMult')
     output_module = KnowledgeGraphEmbeddingOutputModule()
-
     return KBPReader(shared_resources, input_module, model_module, output_module)
 
 

@@ -65,6 +65,10 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
 
 
 class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
+    def __init__(self, *args, model_name='DistMult', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_name = model_name
+
     @property
     def output_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.loss]
@@ -138,7 +142,16 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
         predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
         object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx, max_norm=1.0)
 
-        return tf.reduce_sum(subject_emb * predicate_emb * object_emb, axis=1)
+        from jtr.jack.tasks.kbp import scores
+        assert self.model_name is not None
+
+        model_class = scores.get_function(self.model_name)
+        model = model_class(
+            subject_embeddings=subject_emb,
+            predicate_embeddings=predicate_emb,
+            object_embeddings=object_emb)
+
+        return model()
 
 
 class KnowledgeGraphEmbeddingOutputModule(OutputModule):
