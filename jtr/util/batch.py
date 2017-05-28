@@ -1,6 +1,8 @@
-import numpy as np
 from itertools import islice
-from jtr.preprocess.map import numpify
+
+import numpy as np
+
+from jtr.util.map import numpify
 from jtr.util.rs import DefaultRandomState
 
 rs = DefaultRandomState(1337)

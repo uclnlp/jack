@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from jtr.util.map import numpify
+
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
-from jtr.jack.tf_fun import rnn, simple
-
-from jtr.pipelines import pipeline
-from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify
 from jtr.jack.preprocessing import preprocess_with_pipeline
 from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
-
-from typing import List, Tuple, Mapping
-import tensorflow as tf
-import numpy as np
+from jtr.jack.tf_fun import rnn, simple
+from jtr.util.batch import get_batches
+from jtr.util.pipelines import pipeline
 
 
 class SimpleMCInputModule(InputModule):

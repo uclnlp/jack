@@ -10,8 +10,6 @@ import queue
 
 from jtr.util.util import get_data_path, load_hdf_file, Timer
 from jtr.util.global_config import Config, Backends
-from jtr.preprocess.hdf5_processing.hooks import ETAHook
-from jtr.preprocess.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
 
 benchmark = False
 
@@ -199,7 +197,7 @@ class StreamBatcher(object):
         self.timer = Timer()
         self.loader_threads = loader_threads
         if Config.backend == Backends.TENSORFLOW:
-            from jtr.preprocess.hdf5_processing.backends.tfbackend import TensorFlowConverter
+            from jtr.util.hdf5_processing.backends.tfbackend import TensorFlowConverter
             self.subscribe_to_batch_prepared_event(TensorFlowConverter())
         elif Config.backend == Backends.TEST:
             pass

@@ -3,7 +3,7 @@ This file contains reusable modules for extractive QA models and ports
 """
 
 from jtr.jack.core import *
-from jtr.preprocess.map import deep_map
+
 
 class ParameterTensorPorts:
         # remove?

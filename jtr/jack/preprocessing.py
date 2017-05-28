@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jtr.pipelines import pipeline
+from jtr.util.pipelines import pipeline
 
 
 def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamples=0,

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from jtr.pipelines import pipeline
 from pprint import pprint
+
+from jtr.util.pipelines import pipeline
 
 
 def test_vocab():

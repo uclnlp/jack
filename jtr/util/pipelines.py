@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow as tf
+from jtr.util.map import get_entry_dims
+from jtr.util.map import tokenize, notokenize, lower, deep_map, deep_seq_map, dynamic_subsample
 
-from jtr.preprocess.map import get_entry_dims
-from jtr.preprocess.map import tokenize, notokenize, lower, deep_map, deep_seq_map, dynamic_subsample
-from jtr.preprocess.vocab import Vocab
+from jtr.util.vocab import Vocab
 
 """
 Here come different flavours of pipelines, tailored towards particular problems.

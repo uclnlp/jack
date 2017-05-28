@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats
 import datetime
 
-from jtr.preprocess.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable
+from jtr.util.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable
 from jtr.util.util import Timer
 from jtr.util.global_config import Config
 

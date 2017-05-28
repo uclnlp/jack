@@ -5,7 +5,7 @@ import pytest
 import jtr.jack as jack
 import jtr.jack.tasks.mcqa.simple_mcqa as example
 from jtr.jack.data_structures import *
-from jtr.preprocess.vocab import Vocab
+from jtr.util.vocab import Vocab
 
 
 @pytest.mark.skip("Not implemented yet")

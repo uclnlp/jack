@@ -1,27 +1,27 @@
-from io import StringIO
+import itertools
+import json
+import os
+import pickle
+import shutil
+import uuid
 from os.path import join
 
-import uuid
-import os
 import nltk
-import pytest
-import json
 import numpy as np
-import shutil
-import pickle
-import itertools
+import pytest
 import scipy.stats
-from io import StringIO
+from jtr.util.hdf5_processing.hooks import LossHook, AccuracyHook
+from jtr.util.hdf5_processing.pipeline import Pipeline
+from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, RemoveLineOnJsonValueCondition, \
+    DictKey2ListMapper
+from jtr.util.hdf5_processing.processors import StreamToHDF5, CreateBinsByNestedLength, DeepSeqMap
+from jtr.util.hdf5_processing.processors import Tokenizer, SaveStateToList, AddToVocab, ToLower, \
+    ConvertTokenToIdx, SaveLengthsToState
+from jtr.util.hdf5_processing.vocab import Vocab
 
-from jtr.preprocess.hdf5_processing.pipeline import Pipeline
-from jtr.preprocess.hdf5_processing.processors import Tokenizer, SaveStateToList, AddToVocab, ToLower, ConvertTokenToIdx, SaveLengthsToState
-from jtr.preprocess.hdf5_processing.processors import JsonLoaderProcessors, RemoveLineOnJsonValueCondition, DictKey2ListMapper
-from jtr.preprocess.hdf5_processing.processors import StreamToHDF5, CreateBinsByNestedLength, DeepSeqMap
-from jtr.preprocess.hdf5_processing.vocab import Vocab
-from jtr.preprocess.hdf5_processing.batching import StreamBatcher, BatcherState
-from jtr.util.util import get_data_path, load_hdf_file
 from jtr.util.global_config import Config, Backends
-from jtr.preprocess.hdf5_processing.hooks import LossHook, AccuracyHook, ETAHook
+from jtr.util.hdf5_processing.batching import StreamBatcher, BatcherState
+from jtr.util.util import get_data_path, load_hdf_file
 
 Config.backend = Backends.TEST
 

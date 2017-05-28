@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+
 from sacred import Experiment
 from sacred.arg_parser import parse_args
-import sys
 
 parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
 if "config" in parsed_args:
@@ -42,7 +43,7 @@ import jtr.jack.readers as readers
 from jtr.jack.data_structures import load_labelled_data
 from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
-from jtr.preprocess.vocab import Vocab
+from jtr.util.vocab import Vocab
 from jtr.jack.core import SharedVocabAndConfig
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))

@@ -1,24 +1,26 @@
 '''This models is an example for training a classifier on SNLI'''
 from __future__ import print_function
-from os.path import join
 
-import nltk
-import numpy as np
 import os
+import sys
 import urllib
 import zipfile
-import sys
-import tensorflow as tf
+from os.path import join
 
-from jtr.preprocess.hdf5_processing.hooks import AccuracyHook, LossHook, ETAHook
-from jtr.preprocess.hdf5_processing.pipeline import Pipeline
-from jtr.preprocess.hdf5_processing.processors import AddToVocab, CreateBinsByNestedLength, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
-from jtr.preprocess.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, RemoveLineOnJsonValueCondition, ToLower
-from jtr.preprocess.hdf5_processing.batching import StreamBatcher
-from jtr.util.logger import Logger, LogLevel
+import numpy as np
+import tensorflow as tf
+from jtr.util.hdf5_processing.hooks import AccuracyHook, LossHook, ETAHook
+from jtr.util.hdf5_processing.pipeline import Pipeline
+from jtr.util.hdf5_processing.processors import AddToVocab, CreateBinsByNestedLength, SaveLengthsToState, \
+    ConvertTokenToIdx, StreamToHDF5, Tokenizer
+from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, \
+    RemoveLineOnJsonValueCondition, ToLower
+from jtr.util.hdf5_processing.processors import TensorFlowConfig
+
 from jtr.util.global_config import Config, Backends
+from jtr.util.hdf5_processing.batching import StreamBatcher
+from jtr.util.logger import Logger, LogLevel
 from jtr.util.util import get_data_path
-from jtr.preprocess.hdf5_processing.processors import TensorFlowConfig
 
 Config.parse_argv(sys.argv)
 

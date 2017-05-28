@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from jtr.jack.tasks.mcqa.simple_mcqa import *
-from jtr.preprocess.vocab import Vocab
-
+import pytest
 import tensorflow as tf
 
-import pytest
+from jtr.jack.tasks.mcqa.simple_mcqa import *
+from jtr.util.vocab import Vocab
 
 
 @pytest.mark.skip("Not implemented yet")

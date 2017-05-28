@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from random import shuffle
+from typing import List, Sequence
+
+from jtr.util.map import numpify, deep_map, notokenize
+
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
-from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify, deep_map, notokenize
-
-from typing import List, Sequence
-from random import shuffle, choice
+from jtr.util.batch import get_batches
 
 
 class ShuffleList:

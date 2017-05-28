@@ -1,12 +1,12 @@
 import numpy as np
 
 import jtr.jack.readers as readers
-from jtr.jack.data_structures import load_labelled_data
-from jtr.jack.tasks.xqa.util import tokenize
 from jtr.io.embeddings.embeddings import Embeddings
 from jtr.io.embeddings.vocabulary import Vocabulary
-from jtr.preprocess.vocab import Vocab
 from jtr.jack.core import SharedVocabAndConfig
+from jtr.jack.data_structures import load_labelled_data
+from jtr.jack.tasks.xqa.util import tokenize
+from jtr.util.vocab import Vocab
 
 
 def test_fastqa():

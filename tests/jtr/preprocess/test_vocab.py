@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
-import tensorflow as tf
-
-from jtr.preprocess import vocab
+from jtr.util import vocab
 
 
 def test_vocab():

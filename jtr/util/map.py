@@ -1,9 +1,10 @@
-from collections import defaultdict
-import re
-import numpy as np
 import pprint
-from jtr.preprocess.vocab import Vocab
+import re
+
+import numpy as np
+
 from jtr.util.rs import DefaultRandomState
+from jtr.util.vocab import Vocab
 
 rs = DefaultRandomState(1337)#new seed ignored if set previously
 

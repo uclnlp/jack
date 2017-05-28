@@ -188,16 +188,16 @@ hooks[1].plot(ylim=[0.0, 1.0])
 ### Re-usable Functionality in JTR
 
 ##### Preprocessing Methods (tokenize, normalize, add sequence length)
-- The pipeline method is the heaviest and most detailed processing step. This method is wrangling and preprocessing data with simple call [jtr.pipeline(..)](jtr/pipelines.py#L115) (!!! doesn't exist anymore) but behind this method there are several preprocessing steps:
-  - [jtr.preprocess.map.deep_map](jtr/preprocess/map.py): This is a clever method which traverses a dictionary for certain keys and transforms the values of given keys in-place in a very efficient manner. It does this by using a map function to the list of value under the given dictionary keys. It is usually used to transform a list of question strings, into a tokenized version, that is transform it into a list of question word-lists
-  - [jtr.preprocess.map.deep_seq_map](jtr/preprocess/map.py): The sister of deep_map. Also applies a function and transforms the given values under a dictionary keys in-place. The difference is that it applies this functionality on lists of lists (for example tokenized questions). With that we can use this function to do many things:
+- The pipeline method is the heaviest and most detailed processing step. This method is wrangling and preprocessing data with simple call [jtr.pipeline(..)](jtr/util/pipelines.py#L115) (!!! doesn't exist anymore) but behind this method there are several preprocessing steps:
+  - [jtr.preprocess.map.deep_map](jtr/util/map.py): This is a clever method which traverses a dictionary for certain keys and transforms the values of given keys in-place in a very efficient manner. It does this by using a map function to the list of value under the given dictionary keys. It is usually used to transform a list of question strings, into a tokenized version, that is transform it into a list of question word-lists
+  - [jtr.preprocess.map.deep_seq_map](jtr/util/map.py): The sister of deep_map. Also applies a function and transforms the given values under a dictionary keys in-place. The difference is that it applies this functionality on lists of lists (for example tokenized questions). With that we can use this function to do many things:
     - Words -> lower case words
     - Words -> ids (and then use these ids for indices of word embeddings; this is done with the Vocab class below)
     - Words -> get length of each sentence / sequence, that is a list of sequence lengths for the entire dataset
     - Words -> Pad words with beginning and end of sentence tag, that is
 [Word1, word2, word3] -> [SOS, word1, word2, word3, EOS] would be done with deep map in this way:
 `deep_seq_map(corpus, lambda xs: ["<SOS>"] + xs + ["<EOS>"], ['question'])`
-  - [Class jtr.preprocess.vocab.Vocab](jtr/preprocess/vocab.py): This class builds a vocabulary from tokens (usually words) assigns an identifier to each word and maintains this map from id to word and from word to id. This class also works together with pretrained vocabularies which are then extended through more data
+  - [Class jtr.preprocess.vocab.Vocab](jtr/util/vocab.py): This class builds a vocabulary from tokens (usually words) assigns an identifier to each word and maintains this map from id to word and from word to id. This class also works together with pretrained vocabularies which are then extended through more data
 
 ##### Vocab and NeuralVocab
 The (Vocab)[jtr/preprocess/vocab.py#12] and (NeuralVocab)[jtr/preprocess/vocab.py#327] classes deal with vocabulary and word embedding processing and management. Vocab saves vocabulary, manages new vocabulary with pretrained vocabulary (so that you can train new words not contained in pretrained embeddings). The NeuralVocab class is a class that holds the embedding matrix and handles index-to-embedding-tensor-conversion and out-of-vocabulary (OOV) words. There is also an option for projection layer to reduce the size of the inputs into the next layer and to normalize embeddings to unit norm.

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from typing import List, Sequence
+
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
-
-from jtr.preprocess.batch import get_batches
-
-from typing import List, Sequence
+from jtr.util.batch import get_batches
 
 
 class KnowledgeGraphEmbeddingInputModule(InputModule):

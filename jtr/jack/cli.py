@@ -1,8 +1,7 @@
 import argparse
 
-from jtr.jack.core import *
 from jtr.jack.tasks.mcqa.simple_mcqa import *
-from jtr.preprocess.vocab import Vocab
+from jtr.util.vocab import Vocab
 
 
 def example_reader(config):

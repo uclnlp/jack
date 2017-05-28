@@ -11,15 +11,14 @@ import os
 import pickle
 import shutil
 import sys
-import json
-import time
+from abc import abstractmethod
+from typing import Mapping, Iterable
 
-from abc import abstractmethod, abstractproperty
-from typing import Mapping, Iterable, Sequence
 import numpy as np
 import tensorflow as tf
+
 from jtr.jack.data_structures import *
-from jtr.preprocess.vocab import Vocab
+from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 

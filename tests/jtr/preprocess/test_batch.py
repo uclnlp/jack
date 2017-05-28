@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from jtr.preprocess import batch
+
+from jtr.util import batch
 
 
 def test_get_buckets():

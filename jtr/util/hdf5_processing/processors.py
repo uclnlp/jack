@@ -6,7 +6,7 @@ import os
 import json
 
 from jtr.util.util import get_data_path, write_to_hdf, make_dirs_if_not_exists, load_hdf_file
-from jtr.preprocess.hdf5_processing.interfaces import IAtBatchPreparedObservable
+from jtr.util.hdf5_processing.interfaces import IAtBatchPreparedObservable
 from jtr.util.global_config import Config
 
 class KeyToKeyMapper(IAtBatchPreparedObservable):

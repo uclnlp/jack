@@ -1,11 +1,9 @@
-from os.path import join
-
 import os
 import shutil
-import json
 import zipfile
+from os.path import join
 
-from jtr.preprocess.hdf5_processing.vocab import Vocab
+from jtr.util.hdf5_processing.vocab import Vocab
 from jtr.util.util import Timer
 
 t = Timer()

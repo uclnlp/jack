@@ -2,7 +2,7 @@ import random
 import re
 
 from jtr.jack.data_structures import QASetting
-from jtr.preprocess.map import deep_map
+from jtr.util.map import deep_map
 
 __pattern = re.compile('\w+|[^\w\s]')
 
