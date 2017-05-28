@@ -36,8 +36,7 @@ class DistMultInputModule(InputModule):
         return [Ports.Target.target_index]
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool,
-                          test_time: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         question = []
         for x, _ in dataset:
             s, p, o = x.question.split()
@@ -183,7 +182,7 @@ class KBPReader(JTReader):
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
 
-        batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
+        batches = self.input_module.dataset_generator(training_set, is_eval=False)
 
         loss = self.model_module.tensors[Ports.loss]
 
@@ -207,7 +206,7 @@ class KBPReader(JTReader):
 
         logger.info("Start training {} ...".format(max_epochs))
         for i in range(1, max_epochs + 1):
-            batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
+            batches = self.input_module.dataset_generator(training_set, is_eval=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
