@@ -16,8 +16,10 @@ from jtr.preprocess.hdf5_processing.processors import JsonLoaderProcessors, Dict
 from jtr.preprocess.hdf5_processing.batching import StreamBatcher
 
 from typing import List, Tuple, Mapping
+
 import tensorflow as tf
 import numpy as np
+import nltk
 
 
 class SimpleMCInputModule(InputModule):
@@ -82,9 +84,17 @@ class SimpleMCInputModule(InputModule):
         return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.atomic_candidates]
 
+
+class GeneratorWithRestart(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return self.iterator()
+
 class StreamingSingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
-        self.shared_vocab_config = shared_vocab_config
+        self.shared_resources = shared_vocab_config
         self.identifier = 'train'
 
     @property
@@ -115,13 +125,14 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
     def setup_from_file(self, path):
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
-        p = Pipeline('snli', clear_data=True)
+        tokenizer = nltk.tokenize.WordPunctTokenizer()
+        p = Pipeline('snli', True)
         p.add_path(path)
         p.add_line_processor(JsonLoaderProcessors())
         p.add_line_processor(RemoveLineOnJsonValueCondition('gold_label', lambda label: label == '-'))
         p.add_line_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
         p.add_sent_processor(ToLower())
-        p.add_sent_processor(Tokenizer(tokenizer))
+        p.add_sent_processor(Tokenizer(tokenizer.tokenize))
         p.add_token_processor(AddToVocab())
         p.add_post_processor(SaveLengthsToState())
         p.execute()
@@ -130,18 +141,39 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
 
         # 2. Process the data further to stream it to hdf5
         p.add_sent_processor(ToLower())
-        p.add_sent_processor(Tokenizer(tokenizer))
+        p.add_sent_processor(Tokenizer(tokenizer.tokenize))
         p.add_post_processor(ConvertTokenToIdx())
         p.add_post_processor(StreamToHDF5('train'))
         state = p.execute()
+        p.load_vocabs()
+
+        print(len(state['vocab']['general']))
+        self.shared_resources.config['answer_size'] = state['vocab']['general'].num_labels
+        self.shared_resources.vocab = state['vocab']['general']
+        return self.shared_resources
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool, dataset_identifier) -> Iterable[Mapping[TensorPort, np.ndarray]]:
 
-        batcher = StreamBatcher('snli', 'train', self.shared_vocab_config['batch_size'])
+        batch_size = self.shared_resources.config['batch_size']
+        batcher = StreamBatcher('snli', 'train', batch_size)
+        self.batcher = batcher
 
-        for str2var in batcher:
-            yield str2var
+        def gen():
+            for str2var in batcher:
+                str2var.keys()
+                feed_dict = {
+                    Ports.Input.multiple_support: str2var['support'].reshape(batch_size, 1, -1),
+                    Ports.Input.question: str2var["input"],
+                    Ports.Target.target_index:  str2var["target"],
+                    Ports.Input.question_length : str2var['input_length'],
+                    Ports.Input.support_length : str2var['support_length'].reshape(batch_size, 1),
+                    Ports.Input.sample_id : str2var['index']
+                }
+
+                yield feed_dict
+
+        return GeneratorWithRestart(gen)
 
     def setup(self):
         pass

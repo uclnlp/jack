@@ -260,12 +260,18 @@ class ETAHook(TraceHook):
 class EvalHook(TraceHook):
     def __init__(self, reader: JTReader, data_path, ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None):
+                 write_metrics_to=None, info="", side_effect=None, dataset_identifier=None):
         super(EvalHook, self).__init__(reader, summary_writer)
-        dataset = load_labelled_data(data_path)
-        self._dataset = dataset
+        print(dataset_identifier)
+        if dataset_identifier is None:
+            dataset = load_labelled_data(data_path)
+            self._dataset = dataset
+            self._total = len(dataset)
+        else:
+            self._dataset = None
+            self._total = 0
+
         self._batches = None
-        self._total = len(dataset)
         self._ports = ports
         self._epoch_interval = epoch_interval
         self._iter_interval = iter_interval
@@ -276,6 +282,7 @@ class EvalHook(TraceHook):
         self._metrics = metrics or self.possible_metrics
         self._side_effect = side_effect
         self._side_effect_state = None
+        self._dataset_identifier = dataset_identifier
 
     @abstractmethod
     def possible_metrics(self) -> List[str]:
@@ -291,18 +298,24 @@ class EvalHook(TraceHook):
         """Returns:
                dict from metric name to float. Per default batch metrics are simply averaged by
                total number of examples"""
-        return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
+        return {k: np.mean(vs) for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
-            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True)
+            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
 
         metrics = defaultdict(lambda: list())
+        print(self._batches)
+        print('a')
+        for b in self._batches:
+            print(b)
+        print('b')
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.session, batch, self._ports)
             m = self.apply_metrics(predictions)
+            print(m)
             for k in self._metrics:
                 metrics[k].append(m[k])
 
@@ -310,6 +323,7 @@ class EvalHook(TraceHook):
         super().add_to_history(metrics, self._iter, epoch)
 
         printmetrics = sorted(metrics.keys())
+        print(printmetrics)
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
         print(self._write_metrics_to)
         for m in printmetrics:
@@ -322,6 +336,7 @@ class EvalHook(TraceHook):
         res += '\t' + self._info
         logger.info(res)
 
+        print(metrics)
         if self._side_effect is not None:
             self._side_effect_state = self._side_effect(metrics, self._side_effect_state)
 
@@ -399,14 +414,14 @@ class XQAEvalHook(EvalHook):
 class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, **kwargs):
+                 write_metrics_to=None, info="", side_effect=None, dataset_identifier=None, **kwargs):
 
         ports = [Ports.Prediction.logits,
                  Ports.Prediction.candidate_index,
                  Ports.Target.target_index]
 
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
-                         write_metrics_to, info, side_effect)
+                         write_metrics_to, info, side_effect, dataset_identifier)
 
     @property
     def possible_metrics(self) -> List[str]:

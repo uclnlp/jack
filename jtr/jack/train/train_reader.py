@@ -219,6 +219,7 @@ def main():
              ExamplesPerSecHook(reader, args.batch_size, iter_interval, sw)]
 
     preferred_metric, best_metric = readers.eval_hooks[args.model].preferred_metric_and_best_score()
+    print('metrics', preferred_metric, best_metric)
 
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""
@@ -235,12 +236,15 @@ def main():
             logger.info("Saving model to: %s" % args.model_dir)
         return m
 
+    print(args.dataset_identifier)
+    print('pre')
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[args.model](
         reader, args.dev, summary_writer=sw, side_effect=side_effect,
         iter_interval=args.checkpoint,
         epoch_interval=(1 if args.checkpoint is None else None),
-        write_metrics_to=args.write_metrics_to))
+        write_metrics_to=args.write_metrics_to, dataset_identifier=args.dataset_identifier))
+    print('post')
 
     # Train
     reader.train(optim, args.train,

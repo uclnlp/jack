@@ -735,18 +735,12 @@ class JTReader:
 
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-<<<<<<< ebc562dce544a8fbe84e15ff4b0a963bf8343975
-        self.setup_from_data(training_set)
-        self.session.run([v.initializer for v in self.model_module.variables])
-
-        batches = self.input_module.dataset_generator(training_set, is_eval=False)
-=======
         training_set = self.input_module.setup_from_file(train_path)
+        self.model_module.shared_resources = self.input_module.shared_resources
         self.model_module.setup()
         self.sess.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_identifier=dataset_identifier)
->>>>>>> Added filepath and file id for preprocessing.
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 

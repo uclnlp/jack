@@ -24,7 +24,7 @@ models2dataset['esim_snli_reader'] = 'SNLI_stream'
 models2dataset['cbilstm_snli_reader'] = 'SNLI_stream'
 
 overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
-small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
+small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 1}
 
 ids = []
 testdata = []
