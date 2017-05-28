@@ -19,7 +19,7 @@ rs = DefaultRandomState(1337)#new seed ignored if set previously
 # corpus = [hypotheses, premises, support, labels]
 
 
-def tokenize(xs, pattern="([\s'\-\.\,\!])"):
+def tokenize(xs, pattern="([\s'\-\.\,\!\?])"):
     """Splits sentences into tokens by regex over punctuation: ( -.,!])["""
     return [x for x in re.split(pattern, xs)
             if not re.match("\s", x) and x != ""]

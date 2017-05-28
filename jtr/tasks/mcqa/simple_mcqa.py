@@ -75,7 +75,7 @@ class SimpleMCInputModule(InputModule):
                 Ports.Input.question, Ports.Input.atomic_candidates]
 
 
-class SingleSupportFixedClassInputs(InputModule):
+class MultiSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
 
