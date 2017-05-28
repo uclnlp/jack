@@ -4,28 +4,7 @@ import sys
 
 from sacred import Experiment
 from sacred.arg_parser import parse_args
-
-parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
-if "config" in parsed_args:
-    path = parsed_args["config"]
-else:
-    path = "./conf/jack.yaml"
-
-
-def fetch_parents(path, parents=[]):
-    tmp_ex = Experiment('jack')
-    tmp_ex.add_config(path)
-    tmp_ex.run("print_config")
-    if tmp_ex.current_run is not None and "parent_config" in tmp_ex.current_run.config:
-        return fetch_parents(tmp_ex.current_run.config["parent_config"], [path] + parents)
-    else:
-        return [path] + parents
-
-configs = fetch_parents(path)
-print("Loading", configs)
-ex = Experiment('jack')
-for path in configs:
-    ex.add_config(path)
+from sacred.observers import SqlObserver
 
 import os
 import os.path as path
@@ -46,7 +25,32 @@ from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.vocab import Vocab
 from jtr.core import SharedVocabAndConfig
 
+
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
+
+parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
+if "config" in parsed_args:
+    path = parsed_args["config"]
+else:
+    path = "./conf/jack.yaml"
+
+
+def fetch_parents(current_path, parents=[]):
+    tmp_ex = Experiment('jack')
+    tmp_ex.add_config(current_path)
+    tmp_ex.run("print_config")
+    if tmp_ex.current_run is not None and "parent_config" in tmp_ex.current_run.config:
+        return fetch_parents(tmp_ex.current_run.config["parent_config"], [current_path] + parents)
+    else:
+        return [current_path] + parents
+
+configs = fetch_parents(path)
+print("Loading", configs)
+ex = Experiment('jack')
+for path in configs:
+    ex.add_config(path)
+
+print(ex.current_run)
 
 
 class Duration(object):
@@ -74,6 +78,7 @@ def main(batch_size,
          dev,
          embedding_file,
          embedding_format,
+         experiments_db,
          epochs,
          l2,
          learning_rate,
@@ -81,6 +86,7 @@ def main(batch_size,
          log_interval,
          model,
          model_dir,
+         output_dir,
          pretrain,
          seed,
          tensorboard_folder,
@@ -89,11 +95,12 @@ def main(batch_size,
          vocab_from_embeddings,
          write_metrics_to):
 
+    if experiments_db is not None:
+        ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
+
     # make everything deterministic
     random.seed(seed)
     tf.set_random_seed(seed)
-
-    print(config)
 
     if clip_value != 0.0:
         clip_value = - abs(clip_value), abs(clip_value)
@@ -138,7 +145,7 @@ def main(batch_size,
 
     parsed_config = ex.current_run.config
 
-    shared_resources = SharedVocabAndConfig(vocab, parsed_config, train_data)
+    shared_resources = SharedVocabAndConfig(vocab, parsed_config)
     reader = readers.readers[model](shared_resources)
     checkpoint()
 

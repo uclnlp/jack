@@ -100,3 +100,9 @@ log_interval: 100
 
 # lowercase texts
 lowercase: True
+
+# path to output directory
+output_dir: './out/'
+
+# path to SQLite DB for storing experiments
+experiments_db: './out/experiments.db'
