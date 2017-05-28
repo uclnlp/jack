@@ -15,6 +15,3 @@ def singleton(cls):
 class DefaultRandomState(np.random.RandomState):
     def __init__(self, seed=None):
         super().__init__(seed)
-
-
-
