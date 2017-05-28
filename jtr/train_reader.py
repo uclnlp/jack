@@ -1,31 +1,26 @@
 # -*- coding: utf-8 -*-
 
-import sys
-
-from sacred import Experiment
-from sacred.arg_parser import parse_args
-
-from sacred.observers import SqlObserver
-
-import os
-import os.path as path
 import logging
 import math
-
+import os
+import os.path as path
 import random
 import shutil
+import sys
 from time import time
 
 import tensorflow as tf
+from sacred import Experiment
+from sacred.arg_parser import parse_args
+from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
 import jtr.readers as readers
-from jtr.data_structures import load_labelled_data
-from jtr.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
-from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
-from jtr.util.vocab import Vocab
 from jtr.core import SharedVocabAndConfig
-
+from jtr.data_structures import load_labelled_data
+from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
+from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
+from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 

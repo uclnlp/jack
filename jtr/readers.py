@@ -2,7 +2,7 @@
 
 from jtr.core import *
 
-from jtr.train.hooks import XQAEvalHook, ClassificationEvalHook
+from jtr.util.hooks import XQAEvalHook, ClassificationEvalHook
 
 readers = {}
 eval_hooks = {}
@@ -34,7 +34,7 @@ def __mcqa_reader(f):
 
 
 def __kbp_reader(f):
-    from jtr.train.hooks import KBPEvalHook
+    from jtr.util.hooks import KBPEvalHook
     __reader(f)
     kbp_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, KBPEvalHook)
