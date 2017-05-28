@@ -3,7 +3,7 @@
 import abc
 
 import tensorflow as tf
-from .similarities import negative_l1_distance
+from jtr.jack.tasks.kbp.similarities import negative_l1_distance
 
 import sys
 

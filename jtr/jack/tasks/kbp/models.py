@@ -8,7 +8,7 @@ from jtr.preprocess.batch import get_batches
 from typing import List, Sequence
 
 
-class DistMultInputModule(InputModule):
+class KnowledgeGraphEmbeddingInputModule(InputModule):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
@@ -64,7 +64,7 @@ class DistMultInputModule(InputModule):
         return [Ports.Input.question]
 
 
-class DistMultModelModule(SimpleModelModule):
+class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
     @property
     def output_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.loss]
@@ -88,7 +88,7 @@ class DistMultModelModule(SimpleModelModule):
         return [self.loss]
 
     def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
-        with tf.variable_scope('distmult'):
+        with tf.variable_scope('kge'):
             self.embedding_size = shared_resources.config['repr_dim']
 
             self.entity_to_index = shared_resources.config['entity_to_index']
@@ -141,7 +141,7 @@ class DistMultModelModule(SimpleModelModule):
         return tf.reduce_sum(subject_emb * predicate_emb * object_emb, axis=1)
 
 
-class DistMultOutputModule(OutputModule):
+class KnowledgeGraphEmbeddingOutputModule(OutputModule):
     def setup(self):
         pass
 
