@@ -4,6 +4,7 @@ import sys
 
 from sacred import Experiment
 from sacred.arg_parser import parse_args
+
 from sacred.observers import SqlObserver
 
 import os
@@ -20,7 +21,7 @@ from tensorflow.python.client import device_lib
 
 import jtr.readers as readers
 from jtr.data_structures import load_labelled_data
-from jtr.train import LossHook, ExamplesPerSecHook, ETAHook
+from jtr.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.vocab import Vocab
 from jtr.core import SharedVocabAndConfig
@@ -84,6 +85,7 @@ def main(batch_size,
          learning_rate,
          learning_rate_decay,
          log_interval,
+         validation_interval,
          model,
          model_dir,
          output_dir,
@@ -94,6 +96,7 @@ def main(batch_size,
          train,
          vocab_from_embeddings,
          write_metrics_to):
+    print("TRAINING")
 
     if experiments_db is not None:
         ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
@@ -176,7 +179,7 @@ def main(batch_size,
         if prev_metric is not None and m < prev_metric:
             reader.sess.run(lr_decay_op)
             logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
-        elif m > best_metric[0]:
+        elif m > best_metric[0] and model_dir is not None:
             best_metric[0] = m
             if prev_metric is None:  # store whole model only at beginning of training
                 reader.store(model_dir)
@@ -188,8 +191,8 @@ def main(batch_size,
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
         reader, dev_data, summary_writer=sw, side_effect=side_effect,
-        iter_interval=checkpoint(),
-        epoch_interval=(1 if checkpoint is None else None),
+        iter_interval=validation_interval,
+        epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to))
 
     # Train
@@ -198,7 +201,7 @@ def main(batch_size,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model
-    if test_data is not None:
+    if test_data is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
             reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 

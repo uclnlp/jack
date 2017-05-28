@@ -9,9 +9,9 @@ OVERFIT_PATH = './tests/test_results/overfit_test/'
 SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 
 models = \
-[
-    'snli_reader'
-]
+    [
+        'snli_reader'
+    ]
 
 # if you add a model here, you need the data in the format of:
 
@@ -27,6 +27,7 @@ small_data_epochs = {'SNLI': 5}
 ids = []
 testdata = []
 
+
 def generate_test_data():
     '''Creates all permutations of models and datasets as tests.'''
     for dataset in datasets:
@@ -40,19 +41,22 @@ def generate_test_data():
 def get_string_for_test(model_name, epochs, use_small_data, dataset):
     '''Creates a name for each test, so the output of PyTest is readable'''
     return ('model_name={0}, '
-             'epochs={1}, run_type={2}, '
-             'dataset={3}').format(model_name,
-                epochs,
-                ('smalldata' if use_small_data else 'overfit'), dataset)
+            'epochs={1}, run_type={2}, '
+            'dataset={3}').format(model_name,
+                                  epochs,
+                                  ('smalldata' if use_small_data else 'overfit'), dataset)
+
 
 def generate_names():
     '''Generates all names for all test cases'''
     for args in testdata:
         ids.append(get_string_for_test(*args))
 
+
 generate_test_data()
 generate_names()
 print(testdata)
+
 
 @pytest.mark.parametrize("model_name, epochs, use_small_data, dataset", testdata, ids=ids)
 def test_model(model_name, epochs, use_small_data, dataset):
@@ -89,17 +93,16 @@ def test_model(model_name, epochs, use_small_data, dataset):
         test_file = train_file
     else:
         train_file = 'tests/test_data/{0}/train.json'.format(dataset)
-        dev_file  = 'tests/test_data/{0}/dev.json'.format(dataset)
-        test_file  = 'tests/test_data/{0}/test.json'.format(dataset)
+        dev_file = 'tests/test_data/{0}/dev.json'.format(dataset)
+        test_file = 'tests/test_data/{0}/test.json'.format(dataset)
 
     # Setup the process call command
-    cmd = 'CUDA_VISIBLE_DEVICES=-1 ' # we only test on the CPU
-    cmd += "python3 jtr/jack/train/train_reader.py --train={0} --dev={1} \
-    --test={2}" .format(train_file, dev_file, test_file,)
-    cmd += ' --write_metrics_to={0}'.format(metric_filepath)
-    cmd += ' --model={0}'.format(model_name)
-    cmd += ' --epochs={0}'.format(epochs)
-    print('command: '+cmd)
+    cmd = 'CUDA_VISIBLE_DEVICES=-1 '  # we only test on the CPU
+    cmd += "python3 jtr/train_reader.py with train={0} dev={1} test={2}".format(train_file, dev_file, test_file, )
+    cmd += ' write_metrics_to={0}'.format(metric_filepath)
+    cmd += ' model={0}'.format(model_name)
+    cmd += ' epochs={0} learning_rate_decay=1.0'.format(epochs)
+    print('command: ' + cmd)
     # Execute command and wait for results
     t0 = time.time()
     try:
@@ -108,20 +111,21 @@ def test_model(model_name, epochs, use_small_data, dataset):
         for line in e.output.split(b'\n'):
             print(line)
         assert False, str(e.output)
-    runtime = time.time()-t0
+    runtime = time.time() - t0
 
     # Load and parse the results and the expected rults for testing
     new_results, runtime = load_and_parse_test_results(metric_filepath)
     expected_results, expected_runtime = load_and_parse_test_results(join(test_result_path,
-        'expected_results.txt'))
+                                                                          'expected_results.txt'))
 
     # Match expected results with current results; the order is important to
-    #assert np.testing.assert_array_almost_equal(results[:,1], atol=0.01)
+    # assert np.testing.assert_array_almost_equal(results[:,1], atol=0.01)
 
     for new, base in zip(new_results, expected_results):
         assert new[0] == base[0], "Different order of metrics!"
-        assert np.allclose([new[1]],[base[1]],atol=0.05), \
+        assert np.allclose([new[1]], [base[1]], atol=0.05), \
             "Metric value different from expected results!"
+
 
 def load_and_parse_test_results(filepath):
     '''This method loads and parses a metric file writen by EvalHook.'''
@@ -133,10 +137,14 @@ def load_and_parse_test_results(filepath):
         for i, line in enumerate(data):
             _date, _time, metric_name, metric_value = line.strip().split(' ')
             name_value_metric_pair.append([metric_name,
-                np.float32(metric_value)])
+                                           np.float32(metric_value)])
     return name_value_metric_pair, runtime
+
 
 def datetime_test_result_filename():
     '''Generates a string of the format testresult_CURRENT_DATE-TIME'''
     timestr = time.strftime("%Y%m%d-%H%M%S")
     return 'testresult_' + timestr
+
+
+test_model("snli_reader",1,False,"SNLI")

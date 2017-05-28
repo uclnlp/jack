@@ -308,6 +308,7 @@ class EvalHook(TraceHook):
 
         printmetrics = sorted(metrics.keys())
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        print(self._write_metrics_to)
         for m in printmetrics:
             res += '\t%s: %.3f' % (m, metrics[m])
             self.update_summary(self.reader.sess, self._iter, self._info + '_' + m, metrics[m])
