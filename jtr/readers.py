@@ -111,11 +111,8 @@ def fastqa_reader(shared_resources: SharedVocabAndConfig):
     from jtr.tasks.xqa.shared import XQAOutputModule
 
     input_module = FastQAInputModule(shared_resources)
-
     model_module = fatqa_model_module(shared_resources)
-
     output_module = XQAOutputModule(shared_resources)
-
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -128,11 +125,8 @@ def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
     from jtr.tasks.xqa.shared import XQANoScoreOutputModule
 
     input_module = CBOWXqaInputModule(shared_resources)
-
     model_module = cbow_xqa_model_module(shared_resources)
-
     output_module = XQANoScoreOutputModule(shared_resources)
-
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -141,21 +135,17 @@ def snli_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a SNLI reader instance (multiple choice qa model). """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
-
     input_module = MultiSupportFixedClassInputs(shared_resources)
-
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-
     output_module = EmptyOutputModule()
-
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 
 @__mcqa_reader
 def dam_snli_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a SNLI reader instance (multiple choice qa model). """
-    from jtr.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
-    input_module = SingleSupportFixedClassInputs(shared_resources)
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
+    input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
