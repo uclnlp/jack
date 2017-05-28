@@ -139,10 +139,10 @@ def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
 @__mcqa_reader
 def snli_reader(shared_resources: SharedVocabAndConfig):
     """ Creates a SNLI reader instance (multiple choice qa model). """
-    from jtr.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
 
-    input_module = SingleSupportFixedClassInputs(shared_resources)
+    input_module = MultiSupportFixedClassInputs(shared_resources)
 
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
 
