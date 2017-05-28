@@ -214,5 +214,5 @@ class KBPReader(JTReader):
 
             # calling post-epoch hooks
             for hook in hooks:
-                pass
                 # hook.at_epoch_end(i)
+                pass
