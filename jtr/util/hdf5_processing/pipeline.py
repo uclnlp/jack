@@ -72,40 +72,43 @@ class Pipeline(object):
         self.paths.append(path)
 
     def stream_file(self, path):
-        file_handle = None
         key2idx = {}
         for i, key in enumerate(self.keys):
             if key not in key2idx:
                 key2idx[key] = i
 
-        if '.zip' in path:
-            path_to_zip, path_to_file = path.split('.zip')
-            path_to_zip += '.zip'
-            path_to_file = path_to_file[1:]
+        file_handle = None
+        try:
+            if '.zip' in path:
+                path_to_zip, path_to_file = path.split('.zip')
+                path_to_zip += '.zip'
+                path_to_file = path_to_file[1:]
 
-            archive = zipfile.ZipFile(path_to_zip, 'r')
-            file_handle = archive.open(path_to_file, 'r')
-        else:
-            file_handle = open(path)
-
-        for line in file_handle:
-            filtered = False
-            for linep in self.line_processors:
-                line = linep.process(line)
-                if line is None:
-                    filtered = True
-                    break
-            if filtered:
-                continue
+                archive = zipfile.ZipFile(path_to_zip, 'r')
+                file_handle = archive.open(path_to_file, 'r')
             else:
-                data = []
-                for key in self.keys:
-                    data_key = self.keys2keys[key]
-                    idx = key2idx[data_key]
-                    data.append(line[idx])
+                file_handle = open(path)
 
+            for line in file_handle:
+                filtered = False
+                for linep in self.line_processors:
+                    line = linep.process(line)
+                    if line is None:
+                        filtered = True
+                        break
+                if filtered:
+                    continue
+                else:
+                    data = []
+                    for key in self.keys:
+                        data_key = self.keys2keys[key]
+                        idx = key2idx[data_key]
+                        data.append(line[idx])
 
-                yield data
+                    yield data
+        finally:
+            if file_handle is not None:
+                file_handle.close()
 
     def clear_processors(self):
         self.post_processors = []

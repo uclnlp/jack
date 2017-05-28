@@ -333,7 +333,8 @@ class StreamToHDF5(AbstractLoopLevelListOfTokensProcessor):
             for i in range(fractions.size):
                 self.config['paths'].append(self.paths[i])
 
-            pickle.dump(self.config, open(join(self.base_path, 'hdf5_config.pkl'), 'wb'))
+            with open(join(self.base_path, 'hdf5_config.pkl'), 'wb') as f:
+                pickle.dump(self.config, f)
 
         return tokens
 
@@ -524,7 +525,8 @@ class CreateBinsByNestedLength(AbstractLoopLevelListOfTokensProcessor):
         config['fractions'] = (np.float64(np.array(counts)) / np.sum(counts))
         config['counts'] = counts
         self.config = config
-        pickle.dump(config, open(join(self.base_path, 'hdf5_config.pkl'), 'wb'))
+        with open(join(self.base_path, 'hdf5_config.pkl'), 'wb') as f:
+            pickle.dump(config, f)
 
         self.performed_search = True
 

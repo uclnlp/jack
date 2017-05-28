@@ -635,7 +635,8 @@ def test_stream_to_hdf5():
     config_path = join(base_path, 'hdf5_config.pkl')
     config_reference = streamer.config
     assert os.path.exists(config_path), 'No HDF5 config exists under the path: {0}'.format(config_path)
-    config_dict = pickle.load(open(config_path, 'rb'))
+    with open(config_path, 'rb') as f:
+        config_dict = pickle.load(f)
     assert 'paths' in config_dict, 'paths key not found in config dict!'
     assert 'fractions' in config_dict, 'fractions key not found in config dict!'
     assert 'counts' in config_dict, 'counts key not found in config dict!'
@@ -694,7 +695,8 @@ def test_bin_search():
     config_path = join(base_path, 'hdf5_config.pkl')
     assert os.path.exists(base_path), 'Base path for binning does not exist!'
     assert os.path.exists(config_path), 'Config file for binning not found!'
-    config_dict = pickle.load(open(config_path, 'rb'))
+    with open(config_path, 'rb') as f:
+        config_dict = pickle.load(f)
     assert 'paths' in config_dict, 'paths key not found in config dict!'
     assert 'fractions' in config_dict, 'fractions key not found in config dict!'
     assert 'counts' in config_dict, 'counts key not found in config dict!'
