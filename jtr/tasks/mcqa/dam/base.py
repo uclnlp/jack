@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from abc import abstractmethod
 
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack.tasks.mcqa.dam import tfutil
-
-import logging
+from jtr.tasks.mcqa.dam import tfutil
 
 logger = logging.getLogger(__name__)
 

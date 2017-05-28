@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from jtr.jack.core import *
-
 from abc import abstractmethod, ABCMeta
 from typing import List
 
 import tensorflow as tf
+
+from jtr.core import *
+
 
 class SingleSupportFixedClassForward(object):
     __metaclass__ = ABCMeta

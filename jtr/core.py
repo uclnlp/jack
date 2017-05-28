@@ -17,7 +17,7 @@ from typing import Mapping, Iterable
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack.data_structures import *
+from jtr.data_structures import *
 from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)

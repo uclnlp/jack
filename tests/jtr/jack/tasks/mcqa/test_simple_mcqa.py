@@ -3,7 +3,7 @@
 import pytest
 import tensorflow as tf
 
-from jtr.jack.tasks.mcqa.simple_mcqa import *
+from jtr.tasks.mcqa.simple_mcqa import *
 from jtr.util.vocab import Vocab
 
 

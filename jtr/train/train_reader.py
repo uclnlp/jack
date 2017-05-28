@@ -11,14 +11,14 @@ import shutil
 import sys
 from time import time
 
+import jtr.readers as readers
 import tensorflow as tf
+from jtr.core import SharedVocabAndConfig
+from jtr.data_structures import load_labelled_data
 from tensorflow.python.client import device_lib
 
-import jtr.jack.readers as readers
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
-from jtr.jack.core import SharedVocabAndConfig
-from jtr.jack.data_structures import load_labelled_data
-from jtr.jack.train.hooks import LossHook, ExamplesPerSecHook, ETAHook
+from jtr.train import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))

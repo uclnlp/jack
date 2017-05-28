@@ -11,7 +11,7 @@ their compatibility when combined to form a JTReader.
 
 ## Pre-defined Ports
 
-JTR offers a bunch of pre-defined ports in [core.py](jtr/jack/core.py) (see below for a code snippet) that cover specific QA application scenarios. 
+JTR offers a bunch of pre-defined ports in [core.py](jtr/core.py) (see below for a code snippet) that cover specific QA application scenarios. 
 They include ports for multiple-choice- (mcqa), extractive- (xqa) and generative QA (genqa) settings. 
 
 Depending on the 

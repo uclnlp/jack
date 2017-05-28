@@ -2,8 +2,9 @@
 
 from typing import List, Sequence
 
-from jtr.jack.core import *
-from jtr.jack.data_structures import *
+from jtr.core import *
+from jtr.data_structures import *
+
 from jtr.util.batch import get_batches
 
 
@@ -141,7 +142,7 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
         predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
         object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx, max_norm=1.0)
 
-        from jtr.jack.tasks.kbp import scores
+        from jtr.tasks.kbp import scores
         assert self.model_name is not None
 
         model_class = scores.get_function(self.model_name)

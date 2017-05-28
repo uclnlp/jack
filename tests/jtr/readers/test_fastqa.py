@@ -1,11 +1,11 @@
 import numpy as np
+from jtr.core import SharedVocabAndConfig
+from jtr.data_structures import load_labelled_data
+from jtr.tasks.xqa.util import tokenize
 
-import jtr.jack.readers as readers
+import jtr.readers as readers
 from jtr.io.embeddings.embeddings import Embeddings
 from jtr.io.embeddings.vocabulary import Vocabulary
-from jtr.jack.core import SharedVocabAndConfig
-from jtr.jack.data_structures import load_labelled_data
-from jtr.jack.tasks.xqa.util import tokenize
 from jtr.util.vocab import Vocab
 
 

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import abc
+import sys
 
 import tensorflow as tf
-from jtr.jack.tasks.kbp.similarities import negative_l1_distance
 
-import sys
+from jtr.tasks.kbp import negative_l1_distance
 
 
 class BaseModel(metaclass=abc.ABCMeta):

@@ -2,7 +2,7 @@
 This file contains reusable modules for extractive QA models and ports
 """
 
-from jtr.jack.core import *
+from jtr.core import *
 
 
 class ParameterTensorPorts:
