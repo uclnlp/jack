@@ -4,7 +4,6 @@ from jtr.jack.core import *
 from jtr.jack.data_structures import *
 
 from jtr.preprocess.batch import get_batches
-from jtr.pipelines import pipeline
 
 from typing import List, Sequence
 
