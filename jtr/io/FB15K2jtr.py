@@ -203,7 +203,7 @@ def main():
     # parser.add_argument('dataset', choices=['cnn', 'dailymail'],
     #                     help="which dataset to access: cnn or dailymail")
     # parser.add_argument('split', choices=['train', 'dev', 'test'],
-    #                     help="which split of the dataset to convert: train, dev or test")
+    #                     help="which split of the dataset to io: train, dev or test")
     args = parser.parse_args()
 
     # load data from files into fact triples

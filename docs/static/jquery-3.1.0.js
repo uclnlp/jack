@@ -3420,7 +3420,7 @@ function adoptValue( value, resolve, reject ) {
 			resolve.call( undefined, value );
 		}
 
-	// For Promises/A+, convert exceptions into rejections
+	// For Promises/A+, io exceptions into rejections
 	// Since jQuery.when doesn't unwrap thenables, we can skip the extra checks appearing in
 	// Deferred#then to conditionally suppress rejection.
 	} catch ( value ) {
@@ -4140,7 +4140,7 @@ function dataAttr( elem, key, data ) {
 					data === "false" ? false :
 					data === "null" ? null :
 
-					// Only convert to a number if it doesn't change the string
+					// Only io to a number if it doesn't change the string
 					+data + "" === data ? +data :
 					rbrace.test( data ) ? JSON.parse( data ) :
 					data;
@@ -7804,7 +7804,7 @@ jQuery.fn.extend( {
 				val = value;
 			}
 
-			// Treat null/undefined as ""; convert numbers to string
+			// Treat null/undefined as ""; io numbers to string
 			if ( val == null ) {
 				val = "";
 
@@ -9070,7 +9070,7 @@ jQuery.extend( {
 				} else if ( status === 304 ) {
 					statusText = "notmodified";
 
-				// If we have data, let's convert it
+				// If we have data, let's io it
 				} else {
 					statusText = response.state;
 					success = response.data;

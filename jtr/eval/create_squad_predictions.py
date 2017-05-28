@@ -2,10 +2,10 @@ import json
 
 import tensorflow as tf
 
-from jtr.convert.SQuAD2jtr import convert_squad
+from jtr.io.SQuAD2jtr import convert_squad
 from jtr.jack.data_structures import convert2qasettings
 from jtr.jack.readers import readers
-from jtr.load.embeddings import load_embeddings
+from jtr.io.embeddings import load_embeddings
 from jtr.preprocess.vocab import Vocab
 
 tf.app.flags.DEFINE_string('file', None, 'dataset file')

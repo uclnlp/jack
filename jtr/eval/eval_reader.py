@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from jtr.jack.data_structures import convert2qasettings
 from jtr.jack.readers import readers, eval_hooks
-from jtr.load.embeddings import load_embeddings
+from jtr.io.embeddings import load_embeddings
 from jtr.preprocess.vocab import Vocab
 
 tf.app.flags.DEFINE_string('file', None, 'JTR dataset file')

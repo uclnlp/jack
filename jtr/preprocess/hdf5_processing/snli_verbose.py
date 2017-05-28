@@ -118,7 +118,7 @@ def preprocess_SNLI(clear_data=True):
 
     not_t = []
     t = ['input', 'support', 'target']
-    # tokenize and convert to hdf5
+    # tokenize and io to hdf5
     # 1. Setup pipeline to save lengths and generate vocabulary
     p = Pipeline('snli_example', clear_data)
     p.add_path(join(zip_path, file_paths[0]))
