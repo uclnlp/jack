@@ -33,6 +33,16 @@ class BaseDecomposableAttentionModel:
                  sequence1, sequence1_length, sequence2, sequence2_length,
                  nb_classes=3, reuse=False,
                  use_masking=False, prepend_null_token=False, *args, **kwargs):
+        self.nb_classes = nb_classes
+
+        self.sequence1 = sequence1
+        self.sequence1_length = sequence1_length
+
+        self.sequence2 = sequence2
+        self.sequence2_length = sequence2_length
+
+        self.reuse = reuse
+
         batch_size = tf.shape(self.sequence1)[0]
 
         embedding1_size = self.sequence1.get_shape()[-1].value
