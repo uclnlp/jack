@@ -22,33 +22,13 @@ dev: 'tests/test_data/SNLI/dev.json'
 # jtr test file
 test: 'tests/test_data/SNLI/test.json'
 
-# [none], [single] (default) or [multiple] supporting statements per instance; multiple_flat reads multiple instances creates
-# a separate instance for every support
-supports: 'single'
-
-# How large the support should be. Can be used for cutting or filtering QA examples
-max_support_length: -1
-
-# [none], [single] (default), or [multiple] questions per instance
-questions: 'single'
-
-# [open], [per-instance], or [fixed] (default) candidates
-candidates: 'fixed'
-
-# [single] or [multiple]
-answers: 'single'
-
-# How many answer does the output have. Used for classification
-answer_size: 3
-
 # Batch size for training data, default 128
 batch_size: 128
 
 # Batch size for development data, default 128
 dev_batch_size: 128
 
-# Size of the input representation (embeddings),
-# default 128 (embeddings cut off or extended if not,
+# Size of the input representation (embeddings), default 128 (embeddings cut off or extended if not,
 # matched with pretrained embeddings)
 repr_dim_input: 128
 
@@ -57,9 +37,6 @@ repr_dim: 128
 
 # Use pretrained embeddings, by default the initialisation is random
 pretrain: False
-
-# Use also character based embeddings in readers which support it
-with_char_embeddings: False
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: False
@@ -107,9 +84,6 @@ epochs: 5
 # Number of batches before evaluation on devset
 checkpoint: null
 
-# Number of negative samples, default 0 (= use full candidate list)
-negsamples: 0
-
 # Folder for tensorboard logs
 tensorboard_folder: null
 
@@ -120,7 +94,7 @@ write_metrics_to: null
 prune: False
 
 # Directory to write reader to
-model_dir: '/tmp/jtreader'
+model_dir: null
 
 # interval for logging eta, training loss, etc
 log_interval: 100
