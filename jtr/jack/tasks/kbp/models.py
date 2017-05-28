@@ -162,9 +162,16 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: Sequence[QASetting],
-                 *tensor_inputs: np.ndarray) -> Sequence[Answer]:
-        return None
+    def __call__(self,
+                 inputs: Sequence[QASetting],
+                 logits: np.ndarray) -> Sequence[Answer]:
+        # len(inputs) == batch size
+        # logits: [batch_size, max_num_candidates]
+        results = []
+        for index_in_batch, question in enumerate(inputs):
+            score = logits[index_in_batch]
+            results.append(Answer(None, score=score))
+        return results
 
 
 class KBPReader(JTReader):
