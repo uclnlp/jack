@@ -5,6 +5,19 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+
+# jtr training file
+train: 'tests/test_data/SNLI/train.json'
+
+# jtr dev file
+dev: 'tests/test_data/SNLI/dev.json'
+
+# jtr test file
+test: 'tests/test_data/SNLI/test.json'
+
+# Reading model to use
+model: 'snli_reader'
+
 # [none], [single] (default) or [multiple] supporting statements per instance; multiple_flat reads multiple instances creates
 # a separate instance for every support
 supports: 'single'
@@ -23,3 +36,9 @@ answer_size: 3
 
 # Number of negative samples, default 0 (= use full candidate list)
 negsamples: 0
+
+# [word2vec] or [glove] format of embeddings to be loaded
+embedding_format: 'word2vec'
+
+# format of embeddings to be loaded
+embedding_file: 'jtr/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'

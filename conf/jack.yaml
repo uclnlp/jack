@@ -13,14 +13,14 @@ debug: False
 # If in debug mode, how many examples should be used (default 10)
 debug_examples: 10
 
-# jtr training file
-train: 'tests/test_data/SNLI/train.json'
+# training file
+train: null
 
-# jtr dev file
-dev: 'tests/test_data/SNLI/dev.json'
+# dev file
+dev: null
 
-# jtr test file
-test: 'tests/test_data/SNLI/test.json'
+# test file
+test: null
 
 # Batch size for training data, default 128
 batch_size: 128
@@ -28,8 +28,7 @@ batch_size: 128
 # Batch size for development data, default 128
 dev_batch_size: 128
 
-# Size of the input representation (embeddings), default 128 (embeddings cut off or extended if not,
-# matched with pretrained embeddings)
+# Size of the input representation (embeddings), default 128 (embeddings cut off or extended if not, matched with pretrained embeddings if provided)
 repr_dim_input: 128
 
 # Size of the hidden representations, default 128
@@ -48,10 +47,10 @@ train_pretrain: False
 normalize_pretrain: False
 
 # [word2vec] or [glove] format of embeddings to be loaded
-embedding_format: 'word2vec'
+embedding_format: null
 
 # format of embeddings to be loaded
-embedding_file: 'jtr/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'
+embedding_file: null
 
 vocab_maxsize: 1000000000000
 
@@ -61,7 +60,7 @@ vocab_minfreq: 2
 vocab_sep: True
 
 # Reading model to use
-model: 'snli_reader'
+model: null
 
 # Learning rate, default 0.001
 learning_rate: 0.001
