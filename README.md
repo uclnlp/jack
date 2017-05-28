@@ -52,7 +52,7 @@ Lastly, train a [FastQA][fastqa] model
 ```
 
 A copy of the model is written into the `model_dir` directory after each
-training epoch.  Thesecan be loaded using the commands below or see e.g.
+training epoch.  These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
 ```python
