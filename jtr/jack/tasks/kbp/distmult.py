@@ -2,60 +2,10 @@
 
 from jtr.jack.core import *
 from jtr.jack.data_structures import *
+
 from jtr.preprocess.batch import get_batches
-from jtr.preprocess.map import numpify, deep_map, notokenize
 
 from typing import List, Sequence
-from random import shuffle
-
-
-class ShuffleList:
-    def __init__(self, drawlist, qa):
-        assert len(drawlist) > 0
-        self.qa = qa
-        self.drawlist = drawlist
-        shuffle(self.drawlist)
-        self.iter = self.drawlist.__iter__()
-
-    def next(self, q):
-        try:
-            avoided = False
-            trial, max_trial = 0, 50
-            samp = None
-            while not avoided and trial < max_trial:
-                samp = next(self.iter)
-                trial += 1
-                avoided = False if samp in self.qa[q] else True
-            return samp
-        except:
-            shuffle(self.drawlist)
-            self.iter = self.drawlist.__iter__()
-            return next(self.iter)
-
-
-def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
-    question_dataset = corpus[question_key]
-    candidate_dataset = corpus[candidate_key]
-    answer_dataset = corpus[answer_key]
-    new_candidates = []
-    assert (len(candidate_dataset) == len(answer_dataset))
-    for i in range(0, len(candidate_dataset)):
-        question = question_dataset[i][0]
-        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
-        posneg = [] + answers
-        avoided = False
-        trial, max_trial = 0, 50
-        samp = None
-        while (not avoided and trial < max_trial):
-            samp = sl.next(question)
-            trial += 1
-            avoided = False if samp in answers else True
-        posneg.append(samp)
-        new_candidates.append(posneg)
-    result = {}
-    result.update(corpus)
-    result[candidate_key] = new_candidates
-    return result
 
 
 class DistMultInputModule(InputModule):
@@ -63,49 +13,56 @@ class DistMultInputModule(InputModule):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        self.preprocess(data)
+        self.vocab = self.shared_resources.vocab
+        self.triples = [x[0].question.split() for x in data]
+
+        self.entity_set = {s for [s, _, _] in self.triples} | {o for [_, _, o] in self.triples}
+        self.predicate_set = {p for [_, p, _] in self.triples}
+
+        self.entity_to_index = {entity: index for index, entity in enumerate(self.entity_set)}
+        self.predicate_to_index = {predicate: index for index, predicate in enumerate(self.predicate_set)}
+
+        self.shared_resources.config['entity_to_index'] = self.entity_to_index
+        self.shared_resources.config['predicate_to_index'] = self.predicate_to_index
+
         self.shared_resources.vocab.freeze()
         return self.shared_resources
 
-    def setup(self, shared_resources: SharedResources):
+    def setup(self):
         pass
 
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def preprocess(self, data, test_time=False):
-        corpus = {"question": [], "candidates": [], "answers": []}
-        for xy in data:
-            x, y = xy
-            corpus["question"].append([int(s) for s in x.question.split(' ')])
-            #corpus["candidates"].append(x.atomic_candidates)
-            assert len(y) == 1
-            corpus["answers"].append(int(y[0].text))
-        return corpus
-
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset, test_time=test_time)
-        xy_dict = {
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.target_index: corpus["answers"]
-        }
-        return get_batches(xy_dict, batch_size=self.shared_resources.config['batch_size'])
+                          is_eval: bool,
+                          test_time: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        question = []
+        for x, _ in dataset:
+            s, p, o = x.question.split()
+            s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
+            p_idx = self.predicate_to_index[p]
+            question.append([s_idx, p_idx, o_idx])
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = self.preprocess(qa_settings, test_time=True)
+        corpus = {'support': [0 for _ in dataset],
+                  'question': question,
+                  'candidates': [0 for _ in dataset],
+                  'answers': [],
+                  'targets': [1 for _ in dataset]
+        }
         xy_dict = {
+            Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.target_index: corpus["answers"]
+            Ports.Target.candidate_1hot: corpus["targets"]
         }
-        return numpify(xy_dict)
+        batches = get_batches(xy_dict)
+        return batches
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
+        return [Ports.Input.question]
 
 
 class DistMultModelModule(SimpleModelModule):
@@ -119,39 +76,70 @@ class DistMultModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.loss]
+        return [Ports.Prediction.logits, Ports.Target.target_index]
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
+        return [Ports.Input.question]
 
     def create_training_output(self,
-                               shared_resources: SharedVocabAndConfig,
-                               loss: tf.Tensor) -> Sequence[tf.Tensor]:
-        return loss,
+                               shared_resources: SharedResources,
+                               logits: tf.Tensor,
+                               target_index: tf.Tensor) -> Sequence[tf.Tensor]:
+        return [self.loss]
 
-    def create_output(self,
-                      shared_resources: SharedVocabAndConfig,
-                      question: tf.Tensor,
-                      atomic_candidates: tf.Tensor,
-                      target_index: tf.Tensor) -> Sequence[tf.Tensor]:
-        repr_dim = shared_resources.config["repr_dim"]
-        with tf.variable_scope("modelf"):
-            embeddings = tf.get_variable(
-                "embeddings",
-                trainable=True, dtype="float32",
-                initializer=tf.random_uniform([len(shared_resources.vocab), repr_dim],-.1,.1))
+    def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
+        with tf.variable_scope('distmult'):
+            self.embedding_size = shared_resources.config['repr_dim']
 
-            embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
-            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, atomic_candidates))  # [batch_size, num_candidates, repr_dim]
-            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),1)  # [batch_size, 1, repr_dim]
-            #embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
-            #embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
-            logits = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
-            answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(logits-answer_score))
+            self.entity_to_index = shared_resources.config['entity_to_index']
+            self.predicate_to_index = shared_resources.config['predicate_to_index']
 
-            return logits, loss
+            nb_entities = len(self.entity_to_index)
+            nb_predicates = len(self.predicate_to_index)
+
+            self.entity_embeddings = tf.get_variable('entity_embeddings',
+                                                     [nb_entities, self.embedding_size],
+                                                     initializer=tf.contrib.layers.xavier_initializer(),
+                                                     dtype='float32')
+            self.predicate_embeddings = tf.get_variable('predicate_embeddings',
+                                                        [nb_predicates, self.embedding_size],
+                                                        initializer=tf.contrib.layers.xavier_initializer(),
+                                                        dtype='float32')
+
+            positive_logits = self.forward_pass(shared_resources, question)
+            positive_labels = tf.ones_like(positive_logits)
+
+            random_subject_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
+                                                       minval=0, maxval=nb_entities, dtype=tf.int32)
+            random_object_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
+                                                      minval=0, maxval=nb_entities, dtype=tf.int32)
+
+            # question_corrupted_subjects[:, 0].assign(random_indices)
+            question_corrupted_subjects = tf.concat(values=[random_subject_indices, question[:, 1:]], axis=1)
+            question_corrupted_objects = tf.concat(values=[question[:, :2], random_object_indices], axis=1)
+
+            negative_subject_logits = self.forward_pass(shared_resources, question_corrupted_subjects)
+            negative_object_logits = self.forward_pass(shared_resources, question_corrupted_objects)
+            negative_labels = tf.zeros_like(negative_subject_logits)
+
+            logits = tf.concat(values=[positive_logits, negative_subject_logits, negative_object_logits], axis=0)
+            labels = tf.concat(values=[positive_labels, negative_labels, negative_labels], axis=0)
+
+            losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+            self.loss = tf.reduce_mean(losses, axis=0)
+        return [self.loss, logits]
+
+    def forward_pass(self, shared_resources, question):
+        subject_idx = question[:, 0]
+        predicate_idx = question[:, 1]
+        object_idx = question[:, 2]
+
+        subject_emb = tf.nn.embedding_lookup(self.entity_embeddings, subject_idx, max_norm=1.0)
+        predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
+        object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx, max_norm=1.0)
+
+        return tf.reduce_sum(subject_emb * predicate_emb * object_emb, axis=1)
 
 
 class DistMultOutputModule(OutputModule):
@@ -162,16 +150,9 @@ class DistMultOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: Sequence[QASetting], logits: np.ndarray) -> List[Answer]:
-        # len(inputs) == batch size
-        # logits: [batch_size, max_num_candidates]
-        winning_indices = np.argmax(logits, axis=1)
-        result = []
-        for index_in_batch, question in enumerate(inputs):
-            winning_index = winning_indices[index_in_batch]
-            score = logits[index_in_batch, winning_index]
-            result.append(Answer(question.atomic_candidates[winning_index], score=score))
-        return result
+    def __call__(self, inputs: Sequence[QASetting],
+                 *tensor_inputs: np.ndarray) -> Sequence[Answer]:
+        return None
 
 
 class KBPReader(JTReader):
@@ -183,7 +164,8 @@ class KBPReader(JTReader):
 
     def train(self, optim,
               training_set: List[Tuple[QASetting, Answer]],
-              max_epochs=10, hooks=[]):
+              max_epochs=10, hooks=[],
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -209,7 +191,7 @@ class KBPReader(JTReader):
 
         logging.info("Start training...")
         for i in range(1, max_epochs + 1):
-            batches = self.input_module.dataset_generator(training_set, is_eval=False)
+            batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
@@ -219,4 +201,5 @@ class KBPReader(JTReader):
 
             # calling post-epoch hooks
             for hook in hooks:
-                hook.at_epoch_end(i)
+                # hook.at_epoch_end(i)
+                pass

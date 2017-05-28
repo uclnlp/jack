@@ -295,7 +295,7 @@ class EvalHook(TraceHook):
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
-            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True)
+            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, test_time=False)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
@@ -453,10 +453,10 @@ class KBPEvalHook(EvalHook):
             return 'epoch', [0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_answers  = tensors[Ports.Target.target_index]
+        correct_answers = tensors[Ports.Target.target_index]
         logits = tensors[Ports.Prediction.logits]
-        candidate_ids    = tensors[Ports.Input.atomic_candidates]
-        loss             = tensors[Ports.loss]
+        candidate_ids = tensors[Ports.Input.atomic_candidates]
+        loss = tensors[Ports.loss]
 
         neg_loss = 0.0
         acc_exact = 0.0
