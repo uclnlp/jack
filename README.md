@@ -57,7 +57,11 @@ training epoch.  These can be loaded using the commands below or see e.g.
 
 ```python
     from jtr import readers
-    fastqa_reader = readers.readers["fastqa_reader"](None, None)
+    from jtr.core import SharedVocabAndConfig
+
+    svac = SharedVocabAndConfig()
+    
+    fastqa_reader = readers.fastqa_reader(svac)
     fastqa_reader.setup_from_file("./fastqa_reader")
 ```
 
