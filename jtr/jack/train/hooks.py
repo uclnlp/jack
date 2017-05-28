@@ -546,8 +546,9 @@ class KBPEvalHook(EvalHook):
             else:
                 pass
             mean_ap=mean_ap+av_p
-        mean_ap=mean_ap/len(q_answers)
-        wmap=wmap/md
+        q_answers_len = len(q_answers)
+        mean_ap = mean_ap / q_answers_len if q_answers_len else 0
+        wmap = wmap / md if md else 0
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
         res += '\t%s: %.3f' % ("Mean Average Precision", mean_ap)
         self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Mean Average Precision", mean_ap)

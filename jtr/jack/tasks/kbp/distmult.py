@@ -162,7 +162,7 @@ class KBPReader(JTReader):
     (output_model). These layers are called in-turn on a given input (list).
     """
 
-    def train(self, optim,
+    def train(self, optimizer,
               training_set: List[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
@@ -179,17 +179,33 @@ class KBPReader(JTReader):
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
-        logging.info("Setting up data and model...")
+        logger.info("Setting up data and model...")
+        # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
+
+        batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
 
         loss = self.model_module.tensors[Ports.loss]
 
-        min_op = optim.minimize(loss)
+        if l2:
+            loss += tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+
+        if clip:
+            gradients = optimizer.compute_gradients(loss)
+            if clip_op == tf.clip_by_value:
+                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
+                             for grad, var in gradients]
+            elif clip_op == tf.clip_by_norm:
+                gradients = [(tf.clip_by_norm(grad, clip), var)
+                             for grad, var in gradients]
+            min_op = optimizer.apply_gradients(gradients)
+        else:
+            min_op = optimizer.minimize(loss)
 
         # initialize non model variables like learning rate, optim vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
-        logging.info("Start training...")
+        logger.info("Start training {} ...".format(max_epochs))
         for i in range(1, max_epochs + 1):
             batches = self.input_module.dataset_generator(training_set, is_eval=False, test_time=False)
             for j, batch in enumerate(batches):
@@ -201,5 +217,5 @@ class KBPReader(JTReader):
 
             # calling post-epoch hooks
             for hook in hooks:
-                # hook.at_epoch_end(i)
                 pass
+                # hook.at_epoch_end(i)
