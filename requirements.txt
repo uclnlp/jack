@@ -3,7 +3,6 @@ jsonschema
 matplotlib
 nltk
 numpy
-pandas
 parse
 pycorenlp
 pytest
