@@ -41,12 +41,12 @@ def fetch_parents(current_path, parents=[]):
         return [current_path] + parents
 
 configs = fetch_parents(path)
-print("Loading", configs)
+logger.info("Loading", configs)
 ex = Experiment('jack')
 for path in configs:
     ex.add_config(path)
 
-print(ex.current_run)
+logger.info(ex.current_run)
 
 
 class Duration(object):
@@ -91,7 +91,7 @@ def main(batch_size,
          train,
          vocab_from_embeddings,
          write_metrics_to):
-    print("TRAINING")
+    logger.info("TRAINING")
 
     if experiments_db is not None:
         ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
