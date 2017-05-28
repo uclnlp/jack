@@ -51,7 +51,7 @@ build:
         code: |
           sudo apt-get update
           sudo apt-get -y install libtk8.6 python-sqlalchemy python3-sqlalchemy
-          pip3 install --upgrade tensorflow sqlalchemy
+          pip3 install --upgrade tensorflow sqlalchemy sacred
           python3 setup.py install
 
     - script:
