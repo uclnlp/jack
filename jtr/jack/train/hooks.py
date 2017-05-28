@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class TrainingHook(metaclass=ABCMeta):
     """Serves as Hook interface."""
 
-    @abstractproperty
+    @abstractmethod
     def reader(self) -> JTReader:
         """ Returns: JTReader instance"""
 
@@ -275,7 +275,7 @@ class EvalHook(TraceHook):
         self._side_effect = side_effect
         self._side_effect_state = None
 
-    @abstractproperty
+    @abstractmethod
     def possible_metrics(self) -> List[str]:
         """Returns: list of metric keys this evaluation hook produces. """
 
