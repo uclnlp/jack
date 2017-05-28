@@ -14,3 +14,4 @@ typing
 sacred
 sqlalchemy
 pymongo
+pyyaml
