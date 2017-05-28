@@ -5,17 +5,17 @@ This file contains CBOW baseline specific modules and ports
 import random
 
 import spacy
-from jtr.util.map import numpify
+from jtr.core import *
+from jtr.fun import simple_model_module, no_shared_resources
+from jtr.tasks.xqa.fastqa import XQAPorts
+from jtr.tasks.xqa.util import char_vocab_from_vocab, prepare_data, unique_words_with_chars
+from jtr.tf_fun.embedding import conv_char_embedding_alt
+from jtr.tf_fun.xqa import xqa_min_crossentropy_span_loss
 
-from jtr.jack.core import *
-from jtr.jack.fun import simple_model_module, no_shared_resources
-from jtr.jack.tasks.xqa.fastqa import XQAPorts
-from jtr.jack.tasks.xqa.util import char_vocab_from_vocab, prepare_data, unique_words_with_chars
-from jtr.jack.tf_fun.dropout import fixed_dropout
-from jtr.jack.tf_fun.embedding import conv_char_embedding_alt
-from jtr.jack.tf_fun.xqa import xqa_min_crossentropy_span_loss
+from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
 from jtr.util.batch import GeneratorWithRestart
+from jtr.util.map import numpify
 
 _max_span_size = 10
 

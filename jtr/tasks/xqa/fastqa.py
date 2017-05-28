@@ -4,19 +4,19 @@ This file contains FastQA specific modules and ports
 
 import random
 
-from jtr.util.map import numpify
+from jtr.core import *
+from jtr.fun import simple_model_module, no_shared_resources
+from jtr.tasks.xqa.shared import XQAPorts
+from jtr.tasks.xqa.util import unique_words_with_chars, prepare_data, char_vocab_from_vocab
+from jtr.tf_fun.embedding import conv_char_embedding_alt
+from jtr.tf_fun.highway import highway_network
+from jtr.tf_fun.rnn import birnn_with_projection
+from jtr.tf_fun.xqa import xqa_min_crossentropy_loss
 
-from jtr.jack.core import *
-from jtr.jack.fun import simple_model_module, no_shared_resources
-from jtr.jack.tasks.xqa.shared import XQAPorts
-from jtr.jack.tasks.xqa.util import unique_words_with_chars, prepare_data, char_vocab_from_vocab
-from jtr.jack.tf_fun.dropout import fixed_dropout
-from jtr.jack.tf_fun.embedding import conv_char_embedding_alt
-from jtr.jack.tf_fun.highway import highway_network
-from jtr.jack.tf_fun.rnn import birnn_with_projection
-from jtr.jack.tf_fun.xqa import xqa_min_crossentropy_loss
+from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
 from jtr.util.batch import GeneratorWithRestart
+from jtr.util.map import numpify
 
 
 class FastQAInputModule(InputModule):

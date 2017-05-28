@@ -175,7 +175,8 @@ class DataLoaderSlave(Thread):
 class StreamBatcher(object):
     def __init__(self, pipeline_name, name, batch_size, loader_threads=4, randomize=False, seed=None):
         config_path = join(get_data_path(), pipeline_name, name, 'hdf5_config.pkl')
-        config = pickle.load(open(config_path, 'rb'))
+        with open(config_path, 'rb') as f:
+            config = pickle.load(f)
         self.paths = config['paths']
         self.fractions = config['fractions']
         self.num_batches = int(np.sum(config['counts']) / batch_size)

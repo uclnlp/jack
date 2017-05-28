@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from jtr.util.map import numpify
+from jtr.core import *
+from jtr.data_structures import *
+from jtr.preprocessing import preprocess_with_pipeline
+from jtr.tf_fun import rnn, simple
 
-from jtr.jack.core import *
-from jtr.jack.data_structures import *
-from jtr.jack.preprocessing import preprocess_with_pipeline
-from jtr.jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
-from jtr.jack.tf_fun import rnn, simple
+from jtr.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
 from jtr.util.batch import get_batches
+from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
 

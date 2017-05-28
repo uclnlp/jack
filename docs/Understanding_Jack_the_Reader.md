@@ -7,7 +7,7 @@ Jack is a library for machine reading tasks, especially questions answering, kno
 
 ### Functional interfaces via TensorPorts
 
-The main design of Jack revolves around functional interfaces between the three main modules: InputModule, ModelModule, OutputModule. The functional interface is implemented by so called [TensorPorts](TensorPorts.md) which are TensorFlow tensors wrapped in a layer of description and documentation. Each of the three modules have both input and output TensorPorts and the idea of this functional interface is that just like in functional programming languages, like Haskell, where you often can tell if a function is correct or not simply by looking at the input and output types; similarly, we can implement the same behavior in python and thus ensures correct behavior most of the time. Thus in Jack, the input and output ports must (at least partially) match between the interfaces of the three different modules. The inputs, however, are aggregated over the sequence Input -> Model -> Output such that the input interface for the output module is satisfied if all its TensorPorts occur sometime before, that is somewhere as output TensorPorts of either the InputModule or the ModelModule. As a rule this could be expressed as: **"Module: Do my inputs occur as output in some previous computation?"** In code we express this like this ([core.py](jtr/jack/core.py#L679):
+The main design of Jack revolves around functional interfaces between the three main modules: InputModule, ModelModule, OutputModule. The functional interface is implemented by so called [TensorPorts](TensorPorts.md) which are TensorFlow tensors wrapped in a layer of description and documentation. Each of the three modules have both input and output TensorPorts and the idea of this functional interface is that just like in functional programming languages, like Haskell, where you often can tell if a function is correct or not simply by looking at the input and output types; similarly, we can implement the same behavior in python and thus ensures correct behavior most of the time. Thus in Jack, the input and output ports must (at least partially) match between the interfaces of the three different modules. The inputs, however, are aggregated over the sequence Input -> Model -> Output such that the input interface for the output module is satisfied if all its TensorPorts occur sometime before, that is somewhere as output TensorPorts of either the InputModule or the ModelModule. As a rule this could be expressed as: **"Module: Do my inputs occur as output in some previous computation?"** In code we express this like this ([core.py](jtr/core.py#L679):
 ```
 assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
     "Input Module outputs must include model module inputs"
@@ -27,7 +27,7 @@ This design introduces more boilerplate in each of the modules and can make exte
 The 3 modules are finally combined in what we call a *reader* which is an instance of the JTReader class. A reader encapsulates most of the functionality needed by a user, like saving, loading, training, processing QA pairs, and thus hides the more modular components of jack. 
 
 ### 3+1: The Three Types of Modules (Plus One)
-We have the following modules with the following functionality, defined in [jtr/jack/core.py](jtr/jack/core.py):
+We have the following modules with the following functionality, defined in [jtr/jack/core.py](jtr/core.py):
 - InputModule: is responsible for pre-processing datasets that are passed in form of a sequence of question settings (comprising question, id, support(s), answer candidates, etc.) and optional answers (depending on the functionality used). The pre-processing results typically in a mapping from tensor ports to tensors (feed-dict), or an iterator of feed-dicts, which can be passed to the subsequent ModelModule
 - ModelModule: Takes TensorFlow inputs (usually word indices for word embeddings), transfers it to the GPU, runs a more or less complex model (from logistic regression to dual bidirectional LSTMs over question and support with word by word attention) to then produce some outputs
 - OutputModule: This takes numpy arrays as input as generated from the ModelModule to perform complex output, such as beam search for text generation, computing top 10/100/1000 retrieval scores and more
@@ -61,7 +61,7 @@ We have the following modules with the following functionality, defined in [jtr/
 3. Your ModelModule can inherit from the SimpleModelModule which is simpler to implement
 4. Implement the functional interfaces for each module; that is define the input and output ports. Do this by importing from Ports if your tensor are of fixed dimensions and from FlatPorts if your tensor has varying dimension (sometimes 2 dimensional and other times 3 dimensional; if the time dimension changes, still use the normal Ports)
 5. Use Ports in their respective category. For example `Ports.Inputs.candidate_idx` for the index
-6. Define any ports that are missing in [jtr/jack/core.py](jtr/jack/core.py)
+6. Define any ports that are missing in [jtr/jack/core.py](jtr/core.py)
 
 ##### Implementing the Input module
 
@@ -102,18 +102,18 @@ We have the following modules with the following functionality, defined in [jtr/
 
   ```
 3. Implement your model in `create_output()` up to the predictions, i.e., excluding training related code which is implemented in `create_training_outputs()`.
-  - You can use different predefined model blocks like bidirectional LSTMs over support and question; highway networks, fully connected projection layers and so forth which you can find in [jtr/jack/tf_fun/](jtr/jack/tf_fun/)
+  - You can use different predefined model blocks like bidirectional LSTMs over support and question; highway networks, fully connected projection layers and so forth which you can find in [jtr/jack/tf_fun/](jtr/tf_fun/)
 4. We now implement the `create_training_outputs()` which basically create the loss
-5. To make the model we use in `create_output()` exchangeable, we can abstract the forward pass with another interface. This is demonstrated via the combination of (1) [`AbstractSingleSupportFixedClassModel`](jtr/jack/tasks/mcqa/abstract_multiplechoice.py), (2) [`SingleSupportFixedClassForward`](jtr/jack/tasks/mcqa/abstract_multiplechoice.py) and (3)[`PairOfBiLSTMOverSupportAndQuestionModel`](jtr/jack/tasks/mcqa/simple_mcqa.py):
+5. To make the model we use in `create_output()` exchangeable, we can abstract the forward pass with another interface. This is demonstrated via the combination of (1) [`AbstractSingleSupportFixedClassModel`](jtr/tasks/mcqa/abstract_multiplechoice.py), (2) [`SingleSupportFixedClassForward`](jtr/tasks/mcqa/abstract_multiplechoice.py) and (3)[`PairOfBiLSTMOverSupportAndQuestionModel`](jtr/tasks/mcqa/simple_mcqa.py):
     - (1) Implements everything needed for the `SimpleModelModule` interface, but abstracts the forward pass into an abstract forward method as defined by (2)
     - Thus an instance of (1) needs to implement (2)
     - (3) inherits from (1) and thus implements the model, which in this case is a pair of bidirectional LSTMs over question and support. 
     - To define another model for the same task we do not need to write a new `SimpleModelModule`, but we can inherit from (1) and just implement the forward pass for that new model
-6. If you do not want your model to generalize, just skip 5., it is not mandatory. You can similarly use functional programming for additional abstraction, e.g., by defining factory methods for a certain model types which you only need to feed with existing model implementations of the respective type (see for instance [`fun.py`](jtr/jack/fun.py)). 
+6. If you do not want your model to generalize, just skip 5., it is not mandatory. You can similarly use functional programming for additional abstraction, e.g., by defining factory methods for a certain model types which you only need to feed with existing model implementations of the respective type (see for instance [`fun.py`](jtr/fun.py)). 
 
 ##### Implementing Hooks For Evaluation
 
-1. Look at predefined hooks at [jtr/jack/train/hooks.py](jtr/jack/train/hooks.py#386) and see if you can extend them to support your metric. This depends on whether the input ports of the hook match the output ports of your modules. They are defined in the constructor.
+1. Look at predefined hooks at [jtr/jack/train/hooks.py](jtr/train/hooks.py#386) and see if you can extend them to support your metric. This depends on whether the input ports of the hook match the output ports of your modules. They are defined in the constructor.
 2. Again. Make sure you define your input ports in the constructor of your hook that needs to derive from the `EvalHook` class to support plot and evaluation magic. This is the greatest source of errors when implementing a new evaluation hook
 3. Define the `possible_metrics()` and `preferred_metric_and_best_score()` properties. The best score here means the score which is the lowest possible for your evaluation metric (often zero, or 0.0). This definition of best score is used to define when a model is saved after a cross validation step, that is, if the model improved or not
 4. Implement your metric by implementing the method `apply_metrics()`, make sure to return a dictionary with scores for each of the metrics defined in `possible_metrics()`
@@ -130,7 +130,7 @@ Jack has unit tests and integration test. You can run them by running make comma
 
 ### How to Run Models
 
-You can run models in two different ways: (1) Run the general [/jtr/jack/train/train_reader.py](jtr/jack/train/train_reader.py) script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[notebooks/SNLI.ipynb].
+You can run models in two different ways: (1) Run the general [/jtr/jack/train/train_reader.py](jtr/train/train_reader.py) script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[notebooks/SNLI.ipynb].
 
 In general you can use (1) for quick experiments and running different kind of models quickly on the same data, that is if you need a pipeline that works in general for a dataset you want the general pipeline (1). If you want to work on a specific dataset with a specific models, or if you want to include some special preprocessing steps then (2) is the best solution. If you are working on a project, it often makes sense to use (2) just for the sake for clarity, that is having more succinct, clear code.
 

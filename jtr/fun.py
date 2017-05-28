@@ -1,6 +1,6 @@
 from typing import List
 
-from jtr.jack.core import *
+from jtr.core import *
 
 
 def simple_model_module(input_ports: List[TensorPort],

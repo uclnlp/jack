@@ -3,11 +3,11 @@
 from random import shuffle
 from typing import List, Sequence
 
-from jtr.util.map import numpify, deep_map, notokenize
+from jtr.data_structures import *
 
-from jtr.jack.core import *
-from jtr.jack.data_structures import *
+from jtr.core import *
 from jtr.util.batch import get_batches
+from jtr.util.map import numpify, deep_map, notokenize
 
 
 class ShuffleList:

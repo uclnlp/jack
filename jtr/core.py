@@ -17,7 +17,7 @@ from typing import Mapping, Iterable
 import numpy as np
 import tensorflow as tf
 
-from jtr.jack.data_structures import *
+from jtr.data_structures import *
 from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)
@@ -279,11 +279,12 @@ class SharedVocabAndConfig(SharedResources):
         if not os.path.exists(path):
             os.mkdir(path)
 
-        if not isinstance(self.vocab, Vocab):
+        if self.vocab is not None:
             with open(os.path.join(path, "vocab"), 'wb') as f:
                 pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
-        with open(os.path.join(path, "config"), 'wb') as f:
-            pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
+        if self.config is not None:
+            with open(os.path.join(path, "config"), 'wb') as f:
+                pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
         if os.path.exists(os.path.join(path, 'vocab')):
