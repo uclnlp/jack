@@ -23,20 +23,22 @@ def compute_ranks(scoring_function, triples, entity_set, true_triples=None):
         subject_ranks.append(subject_rank)
         object_ranks.append(object_rank)
 
-        if true_triples:
-            for idx, triple in enumerate(subject_triples):
-                if triple != (s, p, o) and triple in true_triples:
-                    subject_triple_scores[idx] = - np.inf
+        if true_triples is None:
+            true_triples = []
 
-            for idx, triple in enumerate(object_triples):
-                if triple != (s, p, o) and triple in true_triples:
-                    object_triple_scores[idx] = - np.inf
+        for idx, triple in enumerate(subject_triples):
+            if triple != (s, p, o) and triple in true_triples:
+                subject_triple_scores[idx] = - np.inf
 
-            subject_rank_filtered = 1 + np.argsort(np.argsort(- subject_triple_scores))[0]
-            object_rank_filtered = 1 + np.argsort(np.argsort(- object_triple_scores))[0]
+        for idx, triple in enumerate(object_triples):
+            if triple != (s, p, o) and triple in true_triples:
+                object_triple_scores[idx] = - np.inf
 
-            subject_ranks_filtered.append(subject_rank_filtered)
-            object_ranks_filtered.append(object_rank_filtered)
+        subject_rank_filtered = 1 + np.argsort(np.argsort(- subject_triple_scores))[0]
+        object_rank_filtered = 1 + np.argsort(np.argsort(- object_triple_scores))[0]
+
+        subject_ranks_filtered.append(subject_rank_filtered)
+        object_ranks_filtered.append(object_rank_filtered)
 
     return (subject_ranks, object_ranks), (subject_ranks_filtered, object_ranks_filtered)
 

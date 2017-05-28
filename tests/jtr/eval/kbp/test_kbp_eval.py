@@ -18,7 +18,13 @@ def scoring_function(triples):
 
 
 def test_kbp_eval():
-    ranks, ranks_filtered = compute_ranks(scoring_function=scoring_function, triples=triples, entity_set=entity_set)
+    ranks, f_ranks = compute_ranks(scoring_function=scoring_function, triples=triples, entity_set=entity_set)
+
     ranks_l, ranks_r = ranks
+    f_ranks_l, f_ranks_r = f_ranks
+
     assert ranks_l == [1, 1, 1, 1]
     assert ranks_r == [4, 3, 2, 1]
+
+    assert f_ranks_l == ranks_l
+    assert f_ranks_r == ranks_r
