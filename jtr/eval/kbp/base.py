@@ -40,6 +40,7 @@ def compute_ranks(scoring_function, triples, entity_set, true_triples=None):
 
     return (subject_ranks, object_ranks), (subject_ranks_filtered, object_ranks_filtered)
 
+
 def ranking_summary(res, n=10, tag=None):
     dres = dict()
 
@@ -59,7 +60,6 @@ def ranking_summary(res, n=10, tag=None):
     dres['microlmrr'] = np.mean(1. / np.asarray(res[0]))
     dres['micrormrr'] = np.mean(1. / np.asarray(res[1]))
     dres['microgmrr'] = np.mean(1. / np.asarray(resg))
-
 
     logger.info('### MICRO (%s):' % tag)
     logger.info('\t-- left   >> mean: %s, median: %s, mrr: %s, hits@%s: %s%%' %
