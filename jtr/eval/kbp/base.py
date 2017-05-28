@@ -73,7 +73,3 @@ def ranking_summary(res, n=10, tag=None):
     logger.info('\t-- global >> mean: %s, median: %s, mrr: %s, hits@%s: %s%%' %
                 (round(dres['microgmean'], 5), round(dres['microgmedian'], 5),
                  round(dres['microgmrr'], 3), n, round(dres['microghits@n'], 3)))
-
-
-if __name__ == '__main__':
-    pass
