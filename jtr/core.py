@@ -271,7 +271,7 @@ class SharedVocabAndConfig(SharedResources):
     A class to provide and store a vocab shared across some of the reader modules.
     """
 
-    def __init__(self, vocab: Vocab, config: dict = None):
+    def __init__(self, vocab: Vocab = None, config: dict = None):
         self.config = config
         self.vocab = vocab
 
