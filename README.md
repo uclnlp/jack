@@ -10,7 +10,7 @@ All work and no play makes Jack a great framework!
 
 All work and no play makes Jack a great framework!
 
-Read [How to Install and Run Jack the Reader](docs/How_to_install_and_run.md) for more detailed information to install and run a first example using Jack the Reader. For a general overview of Jack the Reader and its high-level components see [Understanding Jack the Reader](docs/Understanding_Jack_the_Reader.md). For an overview of the Jack the Reader API see the [API documentation](https://uclmr.github.io/jtr/).
+Read [How to Install and Run Jack the Reader](docs/How_to_install_and_run.md) for more detailed information to install and run a first example using Jack the Reader. For a general overview of Jack the Reader and its high-level components see [Understanding Jack the Reader](docs/Understanding_Jack_the_Reader.md). For an overview of the Jack the Reader API see the [API documentation](https://uclmr.github.io/jtr/). Checkout our [notebooks](notebooks/) to understand how to interact with our readers.
 
 # Rules
 - [Comply with PEB 8 Style Guide](https://www.python.org/dev/peps/pep-0008/)
@@ -24,6 +24,7 @@ cd data/SQuAD/
 ./download.sh
 cd ../GloVe/
 ./download.sh
+cd ../..
 ```
 
 Convert SQuAD into Jack format
@@ -35,4 +36,12 @@ python3 jtr/convert/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/dev-v1.1.json ./data/SQ
 Train FastQA
 ```shell
 python3 jtr/jack/train/train_sacred_reader.py with config='./conf/extractive_qa.yaml'
+```
+
+Check the model_dir (default in config is `./fastqa_reader`), where the reader is written to after every 
+epoch and can be loaded from with the following command, see e.g., [notebook](notebooks/Showcasing Jack.ipynb).
+
+```python
+fastqa_reader = readers.readers["fastqa_reader"](None, None)
+fastqa_reader.setup_from_file("./fastqa_reader")
 ```
