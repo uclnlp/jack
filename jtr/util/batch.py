@@ -81,7 +81,6 @@ def get_buckets(data, order, structure):
         buckets2ids_new = {bid: bucket for bid, bucket in buckets2ids_new.items() if len(bucket) > 0}
         return buckets2ids_new
 
-
     buckets2ids = _partition({(): list(range(n_tot))}, order, structure)
     buckets2ids = {str(bid): buckets2ids[bid] for bid in buckets2ids}  # make bucket-ids strings (for random.choice)
 
