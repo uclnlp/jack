@@ -1,4 +1,4 @@
-theme: jekyll-theme-minima
+theme: jekyll-theme-minimal
 
 title: Jack the Reader
 description: A knowledge base completion and question answering framework.
