@@ -72,6 +72,12 @@ def test_get_feed_dicts():
     # assert (feed_dicts[2]['X'] == np.array([[3, 3]])).all()
     # assert (feed_dicts[2]['Y'] == np.array([[3, 3, 3]])).all()
 
+    assert feed_dicts[0]['X'].shape == feed_dicts[1]['X'].shape == (2, 2)
+    assert feed_dicts[2]['X'].shape == (1, 2)
+
+    assert feed_dicts[0]['Y'].shape == feed_dicts[1]['Y'].shape == (2, 3)
+    assert feed_dicts[2]['Y'].shape == (1, 3)
+
     assert len(feed_dicts) == 3
 
     feed_dicts_it = batch.get_feed_dicts(data, placeholders, batch_size=2, exact_epoch=False)
