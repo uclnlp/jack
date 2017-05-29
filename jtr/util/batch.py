@@ -5,7 +5,7 @@ from itertools import islice
 import numpy as np
 
 from jtr.util.map import numpify
-from jtr.util.rs import DefaultRandomState
+from jtr.util.random import DefaultRandomState
 
 rs = DefaultRandomState(1337)
 

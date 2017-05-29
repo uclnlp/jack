@@ -3,7 +3,7 @@ import re
 
 import numpy as np
 
-from jtr.util.rs import DefaultRandomState
+from jtr.util.random import DefaultRandomState
 from jtr.util.vocab import Vocab
 
 rs = DefaultRandomState(1337)#new seed ignored if set previously
