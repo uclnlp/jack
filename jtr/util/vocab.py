@@ -207,4 +207,3 @@ class Vocab(object):
             pruned_vocab.freeze()
 
         return pruned_vocab
-

@@ -272,16 +272,15 @@ class SharedResources():
         """
         self.config = config or dict()
         self.vocab = vocab
-        self.answer_vocab = self.vocab
 
     def store(self, path):
         """
         Saves all attributes of this object.
         :param path: path to save shared resources
         """
-        if not os.path.exists(path):
-            os.mkdir(path)
-        with open(os.path.join(path), 'wb') as f:
+        if not os.path.exists(os.path.dirname(path)):
+            os.mkdir(os.path.dirname(path))
+        with open(path, 'wb') as f:
             pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
@@ -289,8 +288,8 @@ class SharedResources():
         Loads this (potentially empty) resource from path (all object attributes).
         :param path: path to shared resources
         """
-        if os.path.exists(os.path.join(path)):
-            with open(os.path.join(path), 'rb') as f:
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
                 self.__dict__.update(pickle.load(f))
 
 
