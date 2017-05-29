@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import argparse
 
 from jtr.tasks.mcqa.simple_mcqa import *
