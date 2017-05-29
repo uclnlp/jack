@@ -18,10 +18,10 @@ want to have a look at the [API documentation][api] or the
 [notebooks][notebooks].  Lastly, for a high-level explanation of the ideas and
 vision, see [Understanding Jack the Reader][understanding].
 
-[install]: docs/How_to_install_and_run.md
+[install]: How_to_install_and_run.md
 [api]: https://uclmr.github.io/jtr/
 [notebooks]: notebooks/
-[understanding]: docs/Understanding_Jack_the_Reader.md
+[understanding]: Understanding_Jack_the_Reader.md
 
 # Quickstart Example: Training a Q&A system #
 
