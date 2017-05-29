@@ -7,7 +7,7 @@ from jtr.util.vocab import Vocab
 
 
 def example_reader(config):
-    resources = SharedVocabAndConfig(Vocab(), config)
+    resources = SharedResources(Vocab(), config)
     input_module = SimpleMCInputModule(resources)
     model_module = SimpleMCModelModule(resources)
     output_module = SimpleMCOutputModule()

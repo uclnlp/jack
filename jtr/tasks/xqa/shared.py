@@ -77,7 +77,7 @@ def _np_softmax(x):
 
 
 class XQAOutputModule(OutputModule):
-    def __init__(self, shared_vocab_confg: SharedVocabAndConfig):
+    def __init__(self, shared_vocab_confg: SharedResources):
         self.vocab = shared_vocab_confg.vocab
         self.setup()
 
@@ -111,7 +111,7 @@ class XQAOutputModule(OutputModule):
 
 
 class XQANoScoreOutputModule(OutputModule):
-    def __init__(self, shared_vocab_confg: SharedVocabAndConfig):
+    def __init__(self, shared_vocab_confg: SharedResources):
         self.vocab = shared_vocab_confg.vocab
         self.setup()
 

@@ -19,7 +19,6 @@ import tensorflow as tf
 
 from jtr.data_structures import *
 from jtr.util.vocab import Vocab
-from jtr.util.global_config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +259,7 @@ class SharedResources():
     """
 
     def __init__(self, vocab: Vocab = None, config: dict = None):
-        self.config = Config() or config
+        self.config = dict() or config
         self.vocab = Vocab() or vocab
         self.answer_vocab = None    # has to be set in input module.
 
