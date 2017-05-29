@@ -1,3 +1,6 @@
+# Jack the Reader
+## A knowledge base completion and question answering framework.
+
 [![Wercker build badge][wercker_badge]][wercker]
 
 ![Here's Joh^H^H^HJack!][heres_johnny]
