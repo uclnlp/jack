@@ -29,17 +29,11 @@ def test_get_batches():
     batch_generator = batch.get_batches(data, batch_size=3, exact_epoch=True)
     batches = list(batch_generator)
 
-    # assert (batches[0]['data0'] == np.array([[6, 6], [3, 3], [0, 0]])).all()
-    # assert (batches[0]['data1'] == np.array([[6, 6, 6], [3, 3, 3], [0, 0, 0]])).all()
+    assert batches[0]['data0'].shape == batches[1]['data0'].shape == batches[2]['data0'].shape == (3, 2)
+    assert batches[0]['data1'].shape == batches[1]['data1'].shape == batches[2]['data1'].shape == (3, 3)
 
-    # assert (batches[1]['data0'] == np.array([[4, 4], [5, 5], [2, 2]])).all()
-    # assert (batches[1]['data1'] == np.array([[4, 4, 4], [5, 5, 5], [2, 2, 2]])).all()
-
-    # assert (batches[2]['data0'] == np.array([[1, 1], [9, 9], [8, 8]])).all()
-    # assert (batches[2]['data1'] == np.array([[1, 1, 1], [9, 9, 9], [8, 8, 8]])).all()
-
-    # assert (batches[3]['data0'] == np.array([[7, 7]])).all()
-    # assert (batches[3]['data1'] == np.array([[7, 7, 7]])).all()
+    assert batches[3]['data0'].shape == (1, 2)
+    assert batches[3]['data1'].shape == (1, 3)
 
     assert len(batches) == 4
 
@@ -62,15 +56,6 @@ def test_get_feed_dicts():
 
     feed_dicts_it = batch.get_feed_dicts(data, placeholders, batch_size=2, exact_epoch=True)
     feed_dicts = list(feed_dicts_it)
-
-    # assert (feed_dicts[0]['X'] == np.array([[1, 1], [2, 2]])).all()
-    # assert (feed_dicts[0]['Y'] == np.array([[1, 1, 1], [2, 2, 2]])).all()
-
-    # assert (feed_dicts[1]['X'] == np.array([[4, 4], [0, 0]])).all()
-    # assert (feed_dicts[1]['Y'] == np.array([[4, 4, 4], [0, 0, 0]])).all()
-
-    # assert (feed_dicts[2]['X'] == np.array([[3, 3]])).all()
-    # assert (feed_dicts[2]['Y'] == np.array([[3, 3, 3]])).all()
 
     assert feed_dicts[0]['X'].shape == feed_dicts[1]['X'].shape == (2, 2)
     assert feed_dicts[2]['X'].shape == (1, 2)
