@@ -712,20 +712,20 @@ class JTReader:
                 sys.stdout.flush()
         return answers
 
-    def train(self, optim,
+    def train(self, optimizer,
               training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
+            optimizer: TF optimizer
             training_set: the training instances.
             max_epochs: maximum number of epochs
             hooks: TrainingHook implementations that are called after epochs and batches
             l2: whether to use l2 regularization
             clip: whether to apply gradient clipping and at which value
             clip_op: operation to perform for clipping
-            device: device that is used during training
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
 
@@ -744,18 +744,18 @@ class JTReader:
                 tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
         if clip:
-            gradients = optim.compute_gradients(loss)
+            gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
                              for grad, var in gradients]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
                              for grad, var in gradients]
-            min_op = optim.apply_gradients(gradients)
+            min_op = optimizer.apply_gradients(gradients)
         else:
-            min_op = optim.minimize(loss)
+            min_op = optimizer.minimize(loss)
 
-        # initialize non model variables like learning rate, optim vars ...
+        # initialize non model variables like learning rate, optimizer vars ...
         self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
         logger.info("Start training...")

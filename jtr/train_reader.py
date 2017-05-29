@@ -150,7 +150,7 @@ def main(batch_size,
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32,
                                     trainable=False)
     lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
-    optim = tf.train.AdamOptimizer(learning_rate)
+    optimizer = tf.train.AdamOptimizer(learning_rate)
 
     if tensorboard_folder is not None:
         if os.path.exists(tensorboard_folder):
@@ -191,7 +191,7 @@ def main(batch_size,
         write_metrics_to=write_metrics_to))
 
     # Train
-    reader.train(optim, training_set=train_data,
+    reader.train(optimizer, training_set=train_data,
                  max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
