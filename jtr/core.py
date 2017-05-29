@@ -265,35 +265,24 @@ class SharedResources():
 
     def store(self, path):
         """
-        Saves this resource from path
+        Saves all attributes of this object.
         :param path: path to save shared resources
         """
         if not os.path.exists(path):
             os.mkdir(path)
 
         if self.vocab is not None:
-            with open(os.path.join(path, "vocab"), 'wb') as f:
-                pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
-        if self.config is not None:
-            with open(os.path.join(path, "config"), 'wb') as f:
-                pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
+            with open(os.path.join(path), 'wb') as f:
+                pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
         """
-        Loads this (potentially empty) resource from path
+        Loads this (potentially empty) resource from path (all object attributes).
         :param path: path to shared resources
         """
-        if os.path.exists(os.path.join(path, 'vocab')):
-            with open(os.path.join(path, "vocab"), 'rb') as f:
-                self.vocab = pickle.load(f)
-        with open(os.path.join(path, "config"), 'rb') as f:
-            config = pickle.load(f)
-            if self.config is None:
-                self.config = config
-            else:
-                for k, v in config.items():
-                    if k not in self.config:
-                        self.config[k] = v
+        if os.path.exists(os.path.join(path)):
+            with open(os.path.join(path), 'rb') as f:
+                self.__dict__.update(pickle.load(f))
 
 
 class InputModule:
