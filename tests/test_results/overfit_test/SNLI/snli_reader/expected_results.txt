@@ -25,6 +25,6 @@
 2017-05-28 14:56:55.160008 ClassificationEvalHook_Accuracy 0.81
 2017-05-28 14:56:55.160192 ClassificationEvalHook_F1_macro 0.80118
 2017-05-28 14:56:55.689927 ClassificationEvalHook_Accuracy 0.86
-2017-05-28 14:56:55.690115 ClassificationEvalHook_F1_macro 0.8635
+2017-05-28 14:56:55.690115 ClassificationEvalHook_F1_macro 0.80182
 2017-05-28 14:56:56.292194 ClassificationEvalHook_Accuracy 0.87
 2017-05-28 14:56:56.292371 ClassificationEvalHook_F1_macro 0.86166
