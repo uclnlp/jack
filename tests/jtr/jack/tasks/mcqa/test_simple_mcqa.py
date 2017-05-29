@@ -15,7 +15,7 @@ def test_simple_mcqa():
     ]
     questions = [q for q, _ in data_set]
 
-    resources = SharedVocabAndConfig(Vocab(), {"repr_dim": 100})
+    resources = SharedResources(Vocab(), {"repr_dim": 100})
     example_reader = JTReader(resources,
                               SimpleMCInputModule(resources),
                               SimpleMCModelModule(resources),
@@ -35,7 +35,7 @@ def test_multi_support_fixed_class_inputs():
     data_set = [
         (QASetting("Where is the cat?", ["the cat is on the mat."]), [Answer("mat")])
     ]
-    shared_resources = SharedVocabAndConfig(Vocab(), {})
+    shared_resources = SharedResources(Vocab(), {})
     input_module = MultiSupportFixedClassInputs(shared_resources)
     input_module.setup_from_data(data_set)
 

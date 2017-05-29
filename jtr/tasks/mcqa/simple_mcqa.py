@@ -16,7 +16,6 @@ class SimpleMCInputModule(InputModule):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
-        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
@@ -110,13 +109,18 @@ class MultiSupportFixedClassInputs(InputModule):
         train_candidate_vocab.freeze()
         self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
         self.shared_vocab_config.vocab = train_vocab
-        self.answer_vocab = train_answer_vocab
+        if sepvocab:
+            self.shared_vocab_config.answer_vocab = train_vocab
+        else:
+            self.shared_vocab_config.answer_vocab = train_answer_vocab
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
-                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
+                        self.shared_vocab_config.vocab,
+                        self.shared_vocab_config.answer_vocab,
+                        use_single_support=True, sepvocab=True)
 
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -152,7 +156,7 @@ class SimpleMCModelModule(SimpleModelModule):
         return [Ports.loss]
 
     def create_training_output(self,
-                               shared_resources: SharedVocabAndConfig,
+                               shared_resources: SharedResources,
                                logits: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
         loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
@@ -160,7 +164,7 @@ class SimpleMCModelModule(SimpleModelModule):
         return loss,
 
     def create_output(self,
-                      shared_resources: SharedVocabAndConfig,
+                      shared_resources: SharedResources,
                       multiple_support: tf.Tensor,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:

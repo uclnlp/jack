@@ -49,7 +49,7 @@ def __genqa_reader(f):
 
 
 @__mcqa_reader
-def example_reader(shared_resources: SharedVocabAndConfig):
+def example_reader(shared_resources: SharedResources):
     """ Creates an example multiple choice reader. """
     from jtr.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
     input_module = SimpleMCInputModule(shared_resources)
@@ -62,7 +62,7 @@ def example_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def modelf_reader(shared_resources: SharedVocabAndConfig):
+def modelf_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
     input_module = ModelFInputModule(shared_resources)
@@ -72,7 +72,7 @@ def modelf_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def distmult_reader(shared_resources: SharedVocabAndConfig):
+def distmult_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
@@ -83,7 +83,7 @@ def distmult_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def complex_reader(shared_resources: SharedVocabAndConfig):
+def complex_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
@@ -94,7 +94,7 @@ def complex_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def transe_reader(shared_resources: SharedVocabAndConfig):
+def transe_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
@@ -105,7 +105,7 @@ def transe_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__xqa_reader
-def fastqa_reader(shared_resources: SharedVocabAndConfig):
+def fastqa_reader(shared_resources: SharedResources):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.tasks.xqa.shared import XQAOutputModule
@@ -117,7 +117,7 @@ def fastqa_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__xqa_reader
-def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
+def cbow_xqa_reader(shared_resources: SharedResources):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.tasks.xqa.cbow_baseline import CBOWXqaInputModule
 
@@ -131,7 +131,7 @@ def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__mcqa_reader
-def snli_reader(shared_resources: SharedVocabAndConfig):
+def snli_reader(shared_resources: SharedResources):
     """ Creates a SNLI reader instance (multiple choice qa model). """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
@@ -142,7 +142,7 @@ def snli_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__mcqa_reader
-def dam_snli_reader(shared_resources: SharedVocabAndConfig):
+def dam_snli_reader(shared_resources: SharedResources):
     """ Creates a SNLI reader instance (multiple choice qa model). """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
     input_module = MultiSupportFixedClassInputs(shared_resources)
