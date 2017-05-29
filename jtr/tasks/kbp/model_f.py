@@ -143,12 +143,12 @@ class ModelFModelModule(SimpleModelModule):
         return [Ports.loss]
 
     def create_training_output(self,
-                               shared_resources: SharedVocabAndConfig,
+                               shared_resources: SharedResources,
                                loss: tf.Tensor) -> Sequence[tf.Tensor]:
         return loss,
 
     def create_output(self,
-                      shared_resources: SharedVocabAndConfig,
+                      shared_resources: SharedResources,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor,
                       target_index: tf.Tensor) -> Sequence[tf.Tensor]:

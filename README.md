@@ -6,7 +6,7 @@
 * All work and no play makes Jack a great frame*work*!
 * All work and no play makes Jack a great frame*work*!
 
-[wercker_badge]: https://app.wercker.com/status/8ed61192a5b16769a41dc24c30a3bc6a/s/master 
+[wercker_badge]: https://app.wercker.com/status/8ed61192a5b16769a41dc24c30a3bc6a/s/master
 [wercker]: https://app.wercker.com/project/byKey/8ed61192a5b16769a41dc24c30a3bc6a
 [heres_johnny]: https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg
 
@@ -57,10 +57,10 @@ training epoch.  These can be loaded using the commands below or see e.g.
 
 ```python
     from jtr import readers
-    from jtr.core import SharedVocabAndConfig
+    from jtr.core import SharedResources
 
-    svac = SharedVocabAndConfig()
-    
+    svac = SharedResources()
+
     fastqa_reader = readers.fastqa_reader(svac)
     fastqa_reader.setup_from_file("./fastqa_reader")
 ```
