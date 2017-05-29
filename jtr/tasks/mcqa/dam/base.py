@@ -6,7 +6,9 @@ from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
 
-from jtr.tasks.mcqa.dam import tfutil
+from jtr.tf_fun.attention import attention_softmax3d
+from jtr.tf_fun.masking import mask_3d
+
 from jtr.tf_fun.activations import prelu
 
 logger = logging.getLogger(__name__)
@@ -137,19 +139,19 @@ class BaseDecomposableAttentionModel:
 
             masked_raw_attentions = self.raw_attentions
             if use_masking:
-                masked_raw_attentions = tfutil.mask_3d(sequences=masked_raw_attentions,
-                                                       sequence_lengths=sequence2_lengths,
-                                                       mask_value=- np.inf, dimension=2)
-            self.attention_sentence1 = tfutil.attention_softmax3d(masked_raw_attentions)
+                masked_raw_attentions = mask_3d(sequences=masked_raw_attentions,
+                                                sequence_lengths=sequence2_lengths,
+                                                mask_value=- np.inf, dimension=2)
+            self.attention_sentence1 = attention_softmax3d(masked_raw_attentions)
 
             # tensor with shape (batch_size, time_steps, time_steps)
             attention_transposed = tf.transpose(self.raw_attentions, [0, 2, 1])
             masked_attention_transposed = attention_transposed
             if use_masking:
-                masked_attention_transposed = tfutil.mask_3d(sequences=masked_attention_transposed,
-                                                             sequence_lengths=sequence1_lengths,
-                                                             mask_value=- np.inf, dimension=2)
-            self.attention_sentence2 = tfutil.attention_softmax3d(masked_attention_transposed)
+                masked_attention_transposed = mask_3d(sequences=masked_attention_transposed,
+                                                      sequence_lengths=sequence1_lengths,
+                                                      mask_value=- np.inf, dimension=2)
+            self.attention_sentence2 = attention_softmax3d(masked_attention_transposed)
 
             # tensors with shape (batch_size, time_steps, num_units)
             alpha = tf.matmul(self.attention_sentence2, sequence1, name='alpha')
@@ -186,8 +188,8 @@ class BaseDecomposableAttentionModel:
         """
         with tf.variable_scope('aggregate', reuse=reuse) as _:
             if use_masking:
-                v1 = tfutil.mask_3d(sequences=v1, sequence_lengths=v1_lengths, mask_value=0, dimension=1)
-                v2 = tfutil.mask_3d(sequences=v2, sequence_lengths=v2_lengths, mask_value=0, dimension=1)
+                v1 = mask_3d(sequences=v1, sequence_lengths=v1_lengths, mask_value=0, dimension=1)
+                v2 = mask_3d(sequences=v2, sequence_lengths=v2_lengths, mask_value=0, dimension=1)
 
             v1_sum, v2_sum = tf.reduce_sum(v1, [1]), tf.reduce_sum(v2, [1])
 
