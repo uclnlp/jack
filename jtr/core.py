@@ -271,8 +271,8 @@ class SharedResources():
             sepvocab=True when calling the setup_from_data() of the InputModule.
         """
         self.config = config or dict()
-        self.vocab = vocab or Vocab()
-        self.answer_vocab = self.vocab    # has to be set in input module.
+        self.vocab = vocab
+        self.answer_vocab = self.vocab
 
     def store(self, path):
         """
