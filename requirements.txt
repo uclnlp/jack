@@ -11,4 +11,5 @@ sklearn
 tensorflow>=1.0
 typing
 sacred
+sqlalchemy
 pyyaml

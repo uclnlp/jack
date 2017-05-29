@@ -122,6 +122,7 @@ def main(batch_size,
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
+            ex.current_run.config["repr_dim_input"] = 50
         else:
             embeddings = Embeddings(None, None)
     else:
@@ -131,6 +132,7 @@ def main(batch_size,
         if pretrain:
             embeddings = load_embeddings(embedding_file, embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(embedding_file))
+            ex.current_run.config["repr_dim_input"] = embeddings.lookup[0].shape[0]
         else:
             embeddings = Embeddings(None, None)
 
