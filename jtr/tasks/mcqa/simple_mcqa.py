@@ -75,8 +75,8 @@ class SimpleMCInputModule(InputModule):
 
 
 class MultiSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_vocab_config):
-        self.shared_vocab_config = shared_vocab_config
+    def __init__(self, shared_resources):
+        self.shared_resources = shared_resources
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -100,26 +100,27 @@ class MultiSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]],
+                        sepvocab=True) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_vocab_config.vocab,
-                        None, sepvocab=True)
+                preprocess_with_pipeline(data, self.shared_resources.vocab,
+                        None, sepvocab=sepvocab)
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
-        self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
-        self.shared_vocab_config.vocab = train_vocab
+        self.shared_resources.config['answer_size'] = len(train_answer_vocab)
+        self.shared_resources.vocab = train_vocab
         if sepvocab:
-            self.shared_vocab_config.answer_vocab = train_vocab
+            self.shared_resources.answer_vocab = train_answer_vocab
         else:
-            self.shared_vocab_config.answer_vocab = train_answer_vocab
+            self.shared_resources.answer_vocab = train_vocab
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
-                        self.shared_vocab_config.vocab,
-                        self.shared_vocab_config.answer_vocab,
+                        self.shared_resources.vocab,
+                        self.shared_resources.answer_vocab,
                         use_single_support=True, sepvocab=True)
 
         xy_dict = {
