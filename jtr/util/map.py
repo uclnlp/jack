@@ -1,11 +1,11 @@
 import pprint
 import re
 
+import nltk
 import numpy as np
 
 from jtr.util.random import DefaultRandomState
 from jtr.util.vocab import Vocab
-from nltk import word_tokenize
 
 rs = DefaultRandomState(1337)#new seed ignored if set previously
 
@@ -24,7 +24,8 @@ def tokenize(xs, pattern=None):
     """ Splits sentences into tokens. If specific regex pattern is provided,
     then it will be used for tokenisation instead. """
     if not pattern:
-        return word_tokenize(xs)
+        nltk.download('punkt')
+        return nltk.word_tokenize(xs)
     else:
         return [x for x in re.split(pattern, xs)
                 if not re.match("\s", x) and x != ""]
