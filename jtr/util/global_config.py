@@ -69,5 +69,3 @@ params2field['batch_size'] = lambda x: setattr(Config, 'batch_size', x)
 params2field['L2'] = lambda x: setattr(Config, 'L2', x)
 params2field['embedding_dim'] = lambda x: setattr(Config, 'embedding_dim', x)
 params2field['hidden_size'] = lambda x: setattr(Config, 'embedding_dim', x)
-
-

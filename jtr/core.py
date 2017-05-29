@@ -19,6 +19,7 @@ import tensorflow as tf
 
 from jtr.data_structures import *
 from jtr.util.vocab import Vocab
+from jtr.util.global_config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -250,33 +251,24 @@ class FlatPorts:
         # -attention, ...
 
 
-class SharedResources:
-    @abstractmethod
-    def load(self, path):
-        """
-        Loads this (potentially empty) resource from path
-        :param path: path to shared resources
-        """
 
-    @abstractmethod
+
+class SharedResources():
+    """
+    A class to provide and store generally shared resources, such as vocabularies,
+    across the reader sub-modules.
+    """
+
+    def __init__(self, vocab: Vocab = None, config: dict = None):
+        self.config = Config() or config
+        self.vocab = Vocab() or vocab
+        self.answer_vocab = None    # has to be set in input module.
+
     def store(self, path):
         """
         Saves this resource from path
         :param path: path to save shared resources
         """
-
-
-class SharedVocabAndConfig(SharedResources):
-    """
-    A class to provide and store a vocab shared across some of the reader modules.
-    """
-
-    def __init__(self, vocab: Vocab = None, config: dict = None):
-        self.config = config
-        self.vocab = vocab
-        #self.answer_vocab = None
-
-    def store(self, path):
         if not os.path.exists(path):
             os.mkdir(path)
 
@@ -288,6 +280,10 @@ class SharedVocabAndConfig(SharedResources):
                 pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
+        """
+        Loads this (potentially empty) resource from path
+        :param path: path to shared resources
+        """
         if os.path.exists(os.path.join(path, 'vocab')):
             with open(os.path.join(path, "vocab"), 'rb') as f:
                 self.vocab = pickle.load(f)

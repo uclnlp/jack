@@ -16,7 +16,7 @@ from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
 import jtr.readers as readers
-from jtr.core import SharedVocabAndConfig
+from jtr.core import SharedResources
 from jtr.data_structures import load_labelled_data
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
@@ -143,7 +143,7 @@ def main(batch_size,
 
     parsed_config = ex.current_run.config
 
-    shared_resources = SharedVocabAndConfig(vocab, parsed_config)
+    shared_resources = SharedResources(vocab, parsed_config)
     reader = readers.readers[model](shared_resources)
     checkpoint()
 
