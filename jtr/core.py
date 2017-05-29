@@ -281,10 +281,8 @@ class SharedResources():
         """
         if not os.path.exists(path):
             os.mkdir(path)
-
-        if self.vocab is not None:
-            with open(os.path.join(path), 'wb') as f:
-                pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
+        with open(os.path.join(path), 'wb') as f:
+            pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
         """
