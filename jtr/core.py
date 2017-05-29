@@ -259,9 +259,20 @@ class SharedResources():
     """
 
     def __init__(self, vocab: Vocab = None, config: dict = None):
+        """
+        Several shared resources are initialised here, even if no arguments
+        are passed when calling __init__.
+        The instantiated objects will be filled by the InputModule.
+        - self.config holds hyperparameter values and general configuration
+            parameters.
+        - self.vocab serves as default Vocabulary object.
+        - self.answer_vocab is by default the same as self.vocab. However,
+            this attribute can be changed by the InputModule, e.g. by setting
+            sepvocab=True when calling the setup_from_data() of the InputModule.
+        """
         self.config = config or dict()
         self.vocab = vocab or Vocab()
-        self.answer_vocab = None    # has to be set in input module.
+        self.answer_vocab = self.vocab    # has to be set in input module.
 
     def store(self, path):
         """
