@@ -274,6 +274,7 @@ class SharedVocabAndConfig(SharedResources):
     def __init__(self, vocab: Vocab = None, config: dict = None):
         self.config = config
         self.vocab = vocab
+        #self.answer_vocab = None
 
     def store(self, path):
         if not os.path.exists(path):
