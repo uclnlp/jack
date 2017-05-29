@@ -259,8 +259,8 @@ class SharedResources():
     """
 
     def __init__(self, vocab: Vocab = None, config: dict = None):
-        self.config = dict() or config
-        self.vocab = Vocab() or vocab
+        self.config = config or dict()
+        self.vocab = vocab or Vocab()
         self.answer_vocab = None    # has to be set in input module.
 
     def store(self, path):
