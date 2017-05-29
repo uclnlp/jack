@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import math
 from collections import defaultdict
 

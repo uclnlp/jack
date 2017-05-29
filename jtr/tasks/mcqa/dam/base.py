@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from jtr.tasks.mcqa.dam import tfutil
+from jtr.tf_fun.activations import prelu
 
 logger = logging.getLogger(__name__)
 
@@ -276,12 +277,12 @@ class FeedForwardDAMP(BaseDecomposableAttentionModel):
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
                                                            weights_initializer=tf.random_normal_initializer(0.0, 0.01),
                                                            biases_initializer=tf.zeros_initializer())
-            projection = tfutil.prelu(projection, name='1')
+            projection = prelu(projection, name='1')
             projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
                                                            weights_initializer=tf.random_normal_initializer(0.0, 0.01),
                                                            biases_initializer=tf.zeros_initializer())
-            projection = tfutil.prelu(projection, name='2')
+            projection = prelu(projection, name='2')
         return projection
 
     def _transform_compare(self, sequence, reuse=False):
@@ -290,12 +291,12 @@ class FeedForwardDAMP(BaseDecomposableAttentionModel):
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
                                                            weights_initializer=tf.random_normal_initializer(0.0, 0.01),
                                                            biases_initializer=tf.zeros_initializer())
-            projection = tfutil.prelu(projection, name='1')
+            projection = prelu(projection, name='1')
             projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
                                                            weights_initializer=tf.random_normal_initializer(0.0, 0.01),
                                                            biases_initializer=tf.zeros_initializer())
-            projection = tfutil.prelu(projection, name='2')
+            projection = prelu(projection, name='2')
         return projection
 
     def _transform_aggregate(self, v1_v2, reuse=False):
@@ -304,10 +305,10 @@ class FeedForwardDAMP(BaseDecomposableAttentionModel):
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
                                                            weights_initializer=tf.random_normal_initializer(0.0, 0.01),
                                                            biases_initializer=tf.zeros_initializer())
-            projection = tfutil.prelu(projection, name='1')
+            projection = prelu(projection, name='1')
             projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
                                                            weights_initializer=tf.random_normal_initializer(0.0, 0.01),
                                                            biases_initializer=tf.zeros_initializer())
-            projection = tfutil.prelu(projection, name='2')
+            projection = prelu(projection, name='2')
         return projection

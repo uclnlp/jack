@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
+
 
 def fully_connected_projection(inputs, output_size):
     """Projects inputs onto target dimension. Returns logits, loss, and argmax.
