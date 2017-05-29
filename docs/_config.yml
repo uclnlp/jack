@@ -1,1 +1,6 @@
 theme: jekyll-theme-hacker
+
+title: Jack the Reader
+description: A knowledge base completion and question answering framework.
+
+show_downloads: true
