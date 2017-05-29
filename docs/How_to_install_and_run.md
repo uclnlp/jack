@@ -14,7 +14,7 @@ The installing procedure currently has three plus one steps:
   - Follow the TensorFlow [installation guide](https://www.tensorflow.org/get_started/os_setup)
 
 #### 2. Run [setup.py](setup.py)
-  - Run in the main directory: `sudo python setup.py install`
+  - Run in the main directory: `sudo python3 setup.py install`
 
 #### 3. If you run in some problems with missing libraries
   - Run in the main directory `make test` to test the core functionality of jtr
