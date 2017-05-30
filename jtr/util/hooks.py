@@ -262,7 +262,6 @@ class EvalHook(TraceHook):
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, dataset_identifier=None):
         super(EvalHook, self).__init__(reader, summary_writer)
-        print(dataset_identifier)
         if dataset_identifier is None:
             dataset = load_labelled_data(data_path)
             self._dataset = dataset
