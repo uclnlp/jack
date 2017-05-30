@@ -10,7 +10,10 @@ SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 
 models = \
     [
-        'snli_reader'
+        'snli_reader',
+        'cbilstm_snli_reader',
+        'dam_snli_reader',
+        'esim_snli_reader'
     ]
 
 # if you add a model here, you need the data in the format of:
