@@ -678,7 +678,6 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
-        self.sess.run([v.initializer for v in self.model_module.variables])
         batch = self.input_module(inputs)
         output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
