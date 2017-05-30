@@ -131,8 +131,13 @@ def cbow_xqa_reader(shared_resources: SharedResources):
 
 
 @__mcqa_reader
-def snli_reader(shared_resources: SharedResources):
-    """ Creates a SNLI reader instance (multiple choice qa model). """
+def cbilstm_snli_reader(shared_resources: SharedVocabAndConfig):
+    """
+    Creates a SNLI reader instance (multiple choice qa model).
+    This particular reader uses a conditional Bidirectional LSTM, as described in [1].
+    
+    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
+    """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
     input_module = MultiSupportFixedClassInputs(shared_resources)
@@ -142,10 +147,36 @@ def snli_reader(shared_resources: SharedResources):
 
 
 @__mcqa_reader
-def dam_snli_reader(shared_resources: SharedResources):
-    """ Creates a SNLI reader instance (multiple choice qa model). """
+def dam_snli_reader(shared_resources: SharedVocabAndConfig):
+    """
+    Creates a SNLI reader instance (multiple choice qa model).
+    This particular reader uses a Decomposable Attention Model, as described in [1].
+    
+    [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
+    """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
+
+
+@__mcqa_reader
+def esim_snli_reader(shared_resources: SharedVocabAndConfig):
+    """
+    Creates a SNLI reader instance (multiple choice qa model).
+    This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
+    
+    [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
+    """
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, ESIMModel, EmptyOutputModule
+    input_module = MultiSupportFixedClassInputs(shared_resources)
+    model_module = ESIMModel(shared_resources)
+    output_module = EmptyOutputModule()
+    return JTReader(shared_resources, input_module, model_module, output_module)
+
+
+# Aliases
+@__mcqa_reader
+def snli_reader(shared_resources: SharedVocabAndConfig):
+    return cbilstm_snli_reader(shared_resources)

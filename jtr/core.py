@@ -743,10 +743,10 @@ class JTReader:
             gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                             for grad, var in gradients]
+                             for grad, var in gradients if grad]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
-                             for grad, var in gradients]
+                             for grad, var in gradients if grad]
             min_op = optimizer.apply_gradients(gradients)
         else:
             min_op = optimizer.minimize(loss)

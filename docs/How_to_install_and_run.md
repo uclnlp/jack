@@ -3,7 +3,7 @@
 ## Install jtr and test your installation
 
 The installing procedure currently has three plus one steps:
-  1. Install Tensorflow
+  1. Install Tensorflow, HDF5 (hdf5-devel)
   2. Run [setup.py](setup.py)
   3. Test your install
   4. (Optional) install missing dependencies
@@ -14,7 +14,7 @@ The installing procedure currently has three plus one steps:
   - Follow the TensorFlow [installation guide](https://www.tensorflow.org/get_started/os_setup)
 
 #### 2. Run [setup.py](setup.py)
-  - Run in the main directory: `sudo python setup.py install`
+  - Run in the main directory: `sudo python3 setup.py install`
 
 #### 3. If you run in some problems with missing libraries
   - Run in the main directory `make test` to test the core functionality of jtr
