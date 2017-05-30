@@ -367,7 +367,6 @@ class InputModule:
         Returns: vocab
         """
         train_data = load_labelled_data(train_path)
-        print('uden', len(train_data))
         self.setup_from_data(train_data)
         return train_data
 

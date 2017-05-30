@@ -24,7 +24,10 @@ models2dataset['esim_snli_reader'] = 'SNLI_stream'
 models2dataset['cbilstm_snli_reader'] = 'SNLI_stream'
 
 overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
-small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 1}
+small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
+
+modelspecifics = {}
+modelspecifics['snli_streaming_reader'] = ' --dataset_identifier=snli --batch_size=50'
 
 ids = []
 testdata = []
@@ -101,6 +104,8 @@ def test_model(model_name, epochs, use_small_data, dataset):
     cmd += ' model={0}'.format(model_name)
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' dataset_identifier={0} learning_rate_decay=1.0'.format('train')
+    if model_name in modelspecifics:
+        cmd += modelspecifics[model_name]
     print('command: '+cmd)
     # Execute command and wait for results
     t0 = time.time()

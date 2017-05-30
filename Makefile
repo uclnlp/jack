@@ -13,8 +13,10 @@ install-user:
 	$(PYTHON) setup.py install --user
 clean:
 	$(PYTHON) setup.py clean --all
+unittest:
+	$(PYTEST) tests -v -m "not (overfit or smalldata)" -k "not test_pipeline"	
 test:
-	$(PYTEST) tests -v -m "not (overfit or smalldata or smalldatagpu or overfitgpu)"	
+	$(PYTEST) tests -v -m "not (smalldata)"
 
 # FIXME: this should probably be test-overfit rather than overfit
 overfit:

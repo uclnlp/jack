@@ -298,24 +298,21 @@ class EvalHook(TraceHook):
         """Returns:
                dict from metric name to float. Per default batch metrics are simply averaged by
                total number of examples"""
-        return {k: np.mean(vs) for k, vs in accumulated_metrics.items()}
+        #return {k: np.mean(vs) for k, vs in accumulated_metrics.items()}
+        return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
             self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
+            if self._dataset_identifier is not None:
+                self._total = self.reader.input_module.batcher.num_samples
 
         metrics = defaultdict(lambda: list())
-        print(self._batches)
-        print('a')
-        for b in self._batches:
-            print(b)
-        print('b')
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.session, batch, self._ports)
             m = self.apply_metrics(predictions)
-            print(m)
             for k in self._metrics:
                 metrics[k].append(m[k])
 
@@ -323,7 +320,6 @@ class EvalHook(TraceHook):
         super().add_to_history(metrics, self._iter, epoch)
 
         printmetrics = sorted(metrics.keys())
-        print(printmetrics)
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
         print(self._write_metrics_to)
         for m in printmetrics:
@@ -336,7 +332,6 @@ class EvalHook(TraceHook):
         res += '\t' + self._info
         logger.info(res)
 
-        print(metrics)
         if self._side_effect is not None:
             self._side_effect_state = self._side_effect(metrics, self._side_effect_state)
 
