@@ -10,6 +10,10 @@ from jtr.util.batch import get_batches
 from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class SimpleMCInputModule(InputModule):
     def __init__(self, shared_resources):
@@ -127,9 +131,9 @@ class MultiSupportFixedClassInputs(InputModule):
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
             Ports.Target.target_index:  corpus["answers"],
-            Ports.Input.question_length : corpus['question_lengths'],
-            Ports.Input.support_length : corpus['support_lengths'],
-            Ports.Input.sample_id : corpus['ids']
+            Ports.Input.question_length: corpus['question_lengths'],
+            Ports.Input.support_length: corpus['support_lengths'],
+            Ports.Input.sample_id: corpus['ids']
         }
 
         return get_batches(xy_dict)
@@ -258,8 +262,38 @@ class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
             'prepend_null_token': True
         }
 
-        from jtr.tasks.mcqa.dam.base import FeedForwardDAMP
+        from jtr.tasks.mcqa.dam import FeedForwardDAMP
         model = FeedForwardDAMP(**model_kwargs)
+        logits = model()
+        return logits
+
+
+class ESIMModel(AbstractSingleSupportFixedClassModel):
+    def forward_pass(self, shared_resources,
+                     question, question_length,
+                     support, support_length,
+                     num_classes):
+        # final states_fw_bw dimensions:
+        # [[[batch, output dim], [batch, output_dim]]
+        support = tf.squeeze(support, 1)
+        support_length = tf.squeeze(support_length, 1)
+
+        question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
+        support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
+
+        model_kwargs = {
+            'sequence1': question_embedding,
+            'sequence1_length': question_length,
+            'sequence2': support_embedding,
+            'sequence2_length': support_length,
+            'representation_size': 200,
+            'dropout_keep_prob': 1.0 - shared_resources.config['dropout'],
+            'use_masking': True,
+            'prepend_null_token': True
+        }
+
+        from jtr.tasks.mcqa.esim import ESIM
+        model = ESIM(**model_kwargs)
         logits = model()
         return logits
 
@@ -332,18 +366,15 @@ class MisclassificationOutputModule(OutputModule):
             if self.i >= self.limit: continue
             if right_idx == predicted_idx: continue
             score = logits[i][right_idx]
-            if score < self.upper and score > self.lower:
+            if self.lower < score < self.upper:
                 self.i += 1
-                print('#'*75)
-                print('Question: {0}'.format(qa.question))
-                print('Support: {0}'.format(qa.support[0]))
-                print('Answer: {0}'.format(answer.text))
-                print('-'*75)
-                print('Predicted class: {0}'.format(
-                    idx2class[predicted_idx]))
-                print('Predictions: {0}'.format(
-                    [(idx2class[b], a) for a,b in zip(logits[i],range(num_classes))]))
-                print('#'*75 + '\n')
+                logger.info('Question: {0}'.format(qa.question))
+                logger.info('Support: {0}'.format(qa.support[0]))
+                logger.info('Answer: {0}'.format(answer.text))
+                logger.info('Predicted class: {0}'.format(idx2class[predicted_idx]))
+
+                predictions_str = str([(idx2class[b], a) for a,b in zip(logits[i], range(num_classes))])
+                logger.info('Predictions: {0}'.format(predictions_str))
 
     def setup(self):
         pass
