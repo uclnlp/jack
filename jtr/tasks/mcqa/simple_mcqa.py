@@ -95,7 +95,6 @@ class GeneratorWithRestart(object):
 class StreamingSingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_resources = shared_vocab_config
-        self.identifier = 'train'
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -122,7 +121,7 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         raise Exception("Can only be setup from files!")
 
-    def setup_from_file(self, train_path, dev_path, test_path):
+    def setup_from_datafile(self, train_path, dev_path, test_path):
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()

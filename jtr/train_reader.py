@@ -185,9 +185,9 @@ def main(batch_size,
         write_metrics_to=write_metrics_to, dataset_identifier=('dev' if use_streaming else None)))
 
     # Train
-    reader.train(optimizer,
+    reader.train(optimizer, train, dev, test,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, use_streaming=use_streaming)
 
     # Test final model
     if test is not None and model_dir is not None:
