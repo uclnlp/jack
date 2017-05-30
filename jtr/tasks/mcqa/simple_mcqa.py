@@ -286,7 +286,7 @@ class ESIMModel(AbstractSingleSupportFixedClassModel):
             'sequence1_length': question_length,
             'sequence2': support_embedding,
             'sequence2_length': support_length,
-            'representation_size': 200,
+            'representation_size': 300,
             'dropout_keep_prob': 1.0 - shared_resources.config['dropout'],
             'use_masking': True,
             'prepend_null_token': True
