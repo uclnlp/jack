@@ -136,7 +136,7 @@ def cbilstm_snli_reader(shared_resources: SharedVocabAndConfig):
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a conditional Bidirectional LSTM, as described in [1].
     
-    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. CoRR abs/1509.06664 (2015)
+    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
