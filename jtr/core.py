@@ -734,7 +734,6 @@ class JTReader:
         self.sess.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
-        batches_dev = self.input_module.dataset_generator(training_set, is_eval=True)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
@@ -759,19 +758,13 @@ class JTReader:
 
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
-            for j, (batch, batch_dev) in enumerate(zip(batches, batches_dev)):
+            for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
 
                 current_loss, _ = self.sess.run([loss, min_op], feed_dict=feed_dict)
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
-
-                feed_dict = self.model_module.convert_to_feed_dict(batch_dev)
-                current_loss = self.sess.run([loss], feed_dict=feed_dict)[0]
-
-                for hook in hooks:
-                    hook.at_iteration_end(i, current_loss, set_name='dev')
 
             # calling post-epoch hooks
             for hook in hooks:
