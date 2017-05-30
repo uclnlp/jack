@@ -90,7 +90,8 @@ def main(batch_size,
          test,
          train,
          vocab_from_embeddings,
-         write_metrics_to):
+         write_metrics_to,
+         dataset_identifier):
     logger.info("TRAINING")
 
     if experiments_db is not None:
@@ -112,12 +113,7 @@ def main(batch_size,
         logger.info('device info: ' + str(device).replace("\n", " "))
 
     if debug:
-        train_data = load_labelled_data(train, debug_examples)
-
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
-
-        dev_data = train_data
-        test_data = train_data
         if pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
@@ -126,8 +122,6 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
-        train_data, dev_data = [load_labelled_data(name) for name in [train, dev]]
-        test_data = load_labelled_data(test) if test else None
         logger.info('loaded train/dev/test data')
         if pretrain:
             embeddings = load_embeddings(embedding_file, embedding_format)
@@ -164,9 +158,7 @@ def main(batch_size,
     # Hooks
     iter_interval = 1 if debug else log_interval
     hooks = [LossHook(reader, iter_interval, summary_writer=sw),
-             ExamplesPerSecHook(reader, batch_size, iter_interval, sw),
-             ETAHook(reader, iter_interval, math.ceil(len(train_data) / batch_size), epochs,
-                     checkpoint(), sw)]
+             ExamplesPerSecHook(reader, batch_size, iter_interval, sw)]
 
     preferred_metric, best_metric = readers.eval_hooks[model].preferred_metric_and_best_score()
 
@@ -187,20 +179,21 @@ def main(batch_size,
 
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
-        reader, dev_data, summary_writer=sw, side_effect=side_effect,
+        reader, dev, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
-        write_metrics_to=write_metrics_to))
+        write_metrics_to=write_metrics_to, dataset_identifier=dataset_identifier))
 
     # Train
-    reader.train(optimizer, training_set=train_data,
+    reader.train(optimizer, train_path=train,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_identifier=dataset_identifier)
 
     # Test final model
-    if test_data is not None and model_dir is not None:
+    if test is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
-            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
+            reader, test, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
+            dataset_identifier=dataset_identifier)
 
         reader.load(model_dir)
         test_eval_hook.at_test_time(1)

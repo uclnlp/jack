@@ -7,7 +7,7 @@ from datetime import datetime
 from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
-from jtr.jack.data_structures import load_labelled_data
+from jtr.data_structures import load_labelled_data
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -320,7 +320,6 @@ class EvalHook(TraceHook):
 
         printmetrics = sorted(metrics.keys())
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
-        print(self._write_metrics_to)
         for m in printmetrics:
             res += '\t%s: %.3f' % (m, metrics[m])
             self.update_summary(self.reader.session, self._iter, self._info + '_' + m, metrics[m])

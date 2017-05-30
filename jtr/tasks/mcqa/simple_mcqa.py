@@ -10,10 +10,10 @@ from jtr.util.batch import get_batches
 from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
-from jtr.preprocess.hdf5_processing.pipeline import Pipeline
-from jtr.preprocess.hdf5_processing.processors import AddToVocab, CreateBinsByNestedLength, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
-from jtr.preprocess.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, RemoveLineOnJsonValueCondition, ToLower
-from jtr.preprocess.hdf5_processing.batching import StreamBatcher
+from jtr.util.hdf5_processing.pipeline import Pipeline
+from jtr.util.hdf5_processing.processors import AddToVocab, CreateBinsByNestedLength, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
+from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, RemoveLineOnJsonValueCondition, ToLower
+from jtr.util.hdf5_processing.batching import StreamBatcher
 
 from typing import List, Tuple, Mapping
 
@@ -147,7 +147,6 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
         state = p.execute()
         p.load_vocabs()
 
-        print(len(state['vocab']['general']))
         self.shared_resources.config['answer_size'] = state['vocab']['general'].num_labels
         self.shared_resources.vocab = state['vocab']['general']
         return self.shared_resources

@@ -27,7 +27,7 @@ overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
 
 modelspecifics = {}
-modelspecifics['snli_streaming_reader'] = ' --dataset_identifier=snli --batch_size=50'
+modelspecifics['snli_streaming_reader'] = ' dataset_identifier=snli batch_size=50'
 
 ids = []
 testdata = []
@@ -38,7 +38,6 @@ def generate_test_data():
     for model, dataset in models2dataset.items():
         for use_small_data in [False, True]:
             epochs = small_data_epochs[dataset] if use_small_data else overfit_epochs[dataset]
-            print(model)
             testdata.append([model, epochs, use_small_data, dataset])
 
 
@@ -59,7 +58,6 @@ def generate_names():
 
 generate_test_data()
 generate_names()
-print(testdata)
 
 
 @pytest.mark.parametrize("model_name, epochs, use_small_data, dataset", testdata, ids=ids)
@@ -82,7 +80,6 @@ def test_model(model_name, epochs, use_small_data, dataset):
     metric_filepath = join(test_result_path, datetime_test_result_filename())
 
     # create dir if it does not exists
-    print(exists(test_result_path))
     if not exists(test_result_path):
         os.makedirs(test_result_path)
 
@@ -98,12 +95,11 @@ def test_model(model_name, epochs, use_small_data, dataset):
 
     # Setup the process call command
     cmd = 'CUDA_VISIBLE_DEVICES=-1 ' # we only test on the CPU
-    cmd += "python3 jtr/jack/train/train_reader.py with train={0} dev={1} \
-    test={2}" .format(train_file, dev_file, test_file,)
+    cmd += "python3 jtr/train_reader.py with train={0} dev={1} test={2}" .format(train_file, dev_file, test_file,)
     cmd += ' write_metrics_to={0}'.format(metric_filepath)
     cmd += ' model={0}'.format(model_name)
     cmd += ' epochs={0}'.format(epochs)
-    cmd += ' dataset_identifier={0} learning_rate_decay=1.0'.format('train')
+    cmd += ' learning_rate_decay=1.0'
     if model_name in modelspecifics:
         cmd += modelspecifics[model_name]
     print('command: '+cmd)

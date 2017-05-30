@@ -748,16 +748,16 @@ class JTReader:
                 tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
         if clip:
-            gradients = optimizer.compute_gradients(loss)
+            gradients = optim.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
                              for grad, var in gradients if grad]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
                              for grad, var in gradients if grad]
-            min_op = optimizer.apply_gradients(gradients)
+            min_op = optim.apply_gradients(gradients)
         else:
-            min_op = optimizer.minimize(loss)
+            min_op = optim.minimize(loss)
 
         # initialize non model variables like learning rate, optimizer vars ...
         self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
