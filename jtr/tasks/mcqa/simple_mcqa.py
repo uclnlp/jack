@@ -107,8 +107,7 @@ class MultiSupportFixedClassInputs(InputModule):
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_vocab_config.vocab,
-                        None, sepvocab=True)
+                preprocess_with_pipeline(data, self.shared_vocab_config.vocab, None, sepvocab=True)
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
