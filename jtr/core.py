@@ -357,7 +357,7 @@ class InputModule:
         """
         raise NotImplementedError
 
-    def setup_from_file(self, train_path, additional_paths=[]):
+    def setup_from_file(self, train_path, dev_path, test_path):
         """
         Takes input path and creates generator used in setup from data.
         Args:
@@ -715,10 +715,8 @@ class JTReader:
 
 
     def train(self, optim,
-              train_path,
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              dataset_identifier=None):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -731,10 +729,18 @@ class JTReader:
             clip_op: operation to perform for clipping
         """
         assert self.is_train, "Reader has to be created for with is_train=True for training."
+        train_path = self.shared_resources.config['train']
+        dev_path = self.shared_resources.config['dev']
+        test_path = self.shared_resources.config['test']
+        use_streaming = self.shared_resources.config['use_streaming']
+        if use_streaming:
+            dataset_identifier = 'train'
+        else:
+            dataset_identifier = None
 
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        training_set = self.input_module.setup_from_file(train_path)
+        training_set = self.input_module.setup_from_file(train_path, dev_path, test_path)
         self.model_module.shared_resources = self.input_module.shared_resources
         self.model_module.setup()
         self.sess.run([v.initializer for v in self.model_module.variables])

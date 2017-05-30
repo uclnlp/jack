@@ -108,4 +108,4 @@ output_dir: './out/'
 experiments_db: './out/experiments.db'
 
 # dataset identifier for stream processing datasets
-dataset_identifier: null
+use_streaming: False

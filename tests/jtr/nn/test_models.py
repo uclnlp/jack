@@ -27,7 +27,7 @@ overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
 
 modelspecifics = {}
-modelspecifics['snli_streaming_reader'] = ' dataset_identifier=snli batch_size=50'
+modelspecifics['snli_streaming_reader'] = ' use_streaming=True batch_size=50'
 
 ids = []
 testdata = []
