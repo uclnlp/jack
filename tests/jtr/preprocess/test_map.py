@@ -22,7 +22,9 @@ tokenized_text = ['Lorem', 'ipsum', 'dolor', 'sit', 'amet', ',', 'consectetur', 
 
 def test_tokenize():
     assert map.tokenize(text) == tokenized_text
-
+    question_text = "where is the cat?"
+    desired_tokenised_question = ["where","is","the","cat","?"]
+    assert map.tokenize(question_text) == desired_tokenised_question
 
 def test_lower():
     lower_text = [word.lower() for word in tokenized_text]

@@ -1,6 +1,7 @@
 import pprint
 import re
 
+import nltk
 import numpy as np
 
 from jtr.util.random import DefaultRandomState
@@ -19,10 +20,15 @@ rs = DefaultRandomState(1337)#new seed ignored if set previously
 # corpus = [hypotheses, premises, support, labels]
 
 
-def tokenize(xs, pattern="([\s'\-\.\,\!\?])"):
-    """Splits sentences into tokens by regex over punctuation: ( -.,!])["""
-    return [x for x in re.split(pattern, xs)
-            if not re.match("\s", x) and x != ""]
+def tokenize(xs, pattern=None):
+    """ Splits sentences into tokens. If specific regex pattern is provided,
+    then it will be used for tokenisation instead. """
+    if not pattern:
+        nltk.download('punkt')
+        return nltk.word_tokenize(xs)
+    else:
+        return [x for x in re.split(pattern, xs)
+                if not re.match("\s", x) and x != ""]
 
 def notokenize(xs):
     """Embeds deepest itemns into a list"""
@@ -377,7 +383,7 @@ class DynamicSubsampledList:
 
     def __len__(self):
         return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
-    
+
     def __getitem__(self, key):
         #todo: verify
         return self.always_in[0]
