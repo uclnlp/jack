@@ -149,3 +149,13 @@ def dam_snli_reader(shared_resources: SharedVocabAndConfig):
     model_module = DecomposableAttentionModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
+
+
+@__mcqa_reader
+def esim_snli_reader(shared_resources: SharedVocabAndConfig):
+    """ Creates a SNLI reader instance (multiple choice qa model). """
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, ESIMModel, EmptyOutputModule
+    input_module = MultiSupportFixedClassInputs(shared_resources)
+    model_module = ESIMModel(shared_resources)
+    output_module = EmptyOutputModule()
+    return JTReader(shared_resources, input_module, model_module, output_module)
