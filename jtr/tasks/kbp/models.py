@@ -6,6 +6,7 @@ from jtr.core import *
 from jtr.data_structures import *
 
 from jtr.util.batch import get_batches
+from jtr.util.map import numpify
 
 
 class KnowledgeGraphEmbeddingInputModule(InputModule):
@@ -58,6 +59,28 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         }
         batches = get_batches(xy_dict)
         return batches
+
+    def __call__(self, dataset: List[Tuple[QASetting, List[Answer]]]) -> Mapping[TensorPort, np.ndarray]:
+        question = []
+        for x, _ in dataset:
+            s, p, o = x.question.split()
+            s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
+            p_idx = self.predicate_to_index[p]
+            question.append([s_idx, p_idx, o_idx])
+
+        corpus = {'support': [0 for _ in dataset],
+                  'question': question,
+                  'candidates': [0 for _ in dataset],
+                  'answers': [],
+                  'targets': [1 for _ in dataset]
+        }
+        xy_dict = {
+            Ports.Input.multiple_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Input.atomic_candidates: corpus["candidates"],
+            Ports.Target.candidate_1hot: corpus["targets"]
+        }
+        return numpify(xy_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
