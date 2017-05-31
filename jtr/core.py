@@ -358,7 +358,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def setup_from_datafile(self, train_path, dev_path, test_path):
+    def setup_from_datafile(self, stream_processor, train_path, dev_path, test_path):
         """
         Takes input paths to datafiles preprocesses them and generates hdf5 files with tensors.
         Args:
@@ -715,7 +715,7 @@ class JTReader:
 
     def train(self, optim, train_path, dev_path, test_path,
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value, use_streaming=False):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value, use_streaming=False, stream_processor=None):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -732,7 +732,7 @@ class JTReader:
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
         if use_streaming:
             dataset_identifier = 'train'
-            training_set = self.input_module.setup_from_datafile(train_path, dev_path, test_path)
+            training_set = self.input_module.setup_from_datafile(stream_processor, train_path, dev_path, test_path)
         else:
             dataset_identifier = None
             training_set = load_labelled_data(train_path)

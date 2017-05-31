@@ -121,23 +121,20 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         raise Exception("Can only be setup from files!")
 
-    def setup_from_datafile(self, train_path, dev_path, test_path):
+    def setup_from_datafile(self, stream_processor, train_path, dev_path, test_path):
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()
+        s = stream_processor
 
         # save vocab and 
-        s = DatasetStreamer()
-        s.add_stream_processor(JsonLoaderProcessors())
-        s.add_stream_processor(RemoveLineOnJsonValueCondition('gold_label', lambda label: label == '-'))
-        s.add_stream_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
         s.set_path(train_path)
 
         p = Pipeline('snli', True)
         p.add_sent_processor(ToLower())
         p.add_sent_processor(Tokenizer(tokenizer.tokenize))
         p.add_token_processor(AddToVocab())
-        p.execute(s)
+        p.execute(s.stream())
         p.save_vocabs()
 
         # 2. Process the data further to stream it to hdf5
@@ -149,7 +146,7 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             # save the lengths of the data
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
             p.add_post_processor(SaveLengthsToState())
-            p.execute(s)
+            p.execute(s.stream())
 
             # convert to indicies and stream to HDF5
             p.clear_processors()
@@ -157,7 +154,7 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
             p.add_post_processor(ConvertTokenToIdx())
             p.add_post_processor(StreamToHDF5(name))
-            p.execute(s)
+            p.execute(s.stream())
 
         self.shared_resources.config['answer_size'] = p.state['vocab']['general'].num_labels
         self.shared_resources.vocab = p.state['vocab']['general']

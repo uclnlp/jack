@@ -3,7 +3,10 @@
 from jtr.core import *
 
 from jtr.util.hooks import XQAEvalHook, ClassificationEvalHook
+from jtr.util.hdf5_processing.pipeline import DatasetStreamer
+from jtr.util.hdf5_processing.processors import RemoveLineOnJsonValueCondition, DictKey2ListMapper, JsonLoaderProcessors
 
+reader2stream_processor = {}
 readers = {}
 eval_hooks = {}
 
@@ -11,6 +14,13 @@ xqa_readers = {}
 genqa_readers = {}
 mcqa_readers = {}
 kbp_readers = {}
+
+def get_snli_stream_processor():
+    s = DatasetStreamer()
+    s.add_stream_processor(JsonLoaderProcessors())
+    s.add_stream_processor(RemoveLineOnJsonValueCondition('gold_label', lambda label: label == '-'))
+    s.add_stream_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
+    return s
 
 
 def __reader(f):
@@ -184,6 +194,7 @@ def cbilstm_snli_streaming_reader(shared_resources: SharedVocabAndConfig):
     input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
     output_module = EmptyOutputModule()
+    reader2stream_processor['cbilstm_snli_streaming_reader'] = get_snli_stream_processor()
 
     return JTReader(shared_resources, input_module, model_module, output_module)
 
@@ -195,4 +206,5 @@ def snli_reader(shared_resources: SharedResources):
 # Aliases
 @__mcqa_reader
 def snli_streaming_reader(shared_resources: SharedVocabAndConfig):
+    reader2stream_processor['snli_streaming_reader'] = get_snli_stream_processor()
     return cbilstm_snli_streaming_reader(shared_resources)

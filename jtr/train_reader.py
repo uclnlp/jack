@@ -7,15 +7,15 @@ import os.path as path
 import random
 import shutil
 import sys
-from time import time
-
 import tensorflow as tf
+
+from time import time
 from sacred import Experiment
 from sacred.arg_parser import parse_args
 from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
-import jtr.readers as readers
+from jtr import readers
 from jtr.core import SharedResources
 from jtr.data_structures import load_labelled_data
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
@@ -184,10 +184,16 @@ def main(batch_size,
         epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to, dataset_identifier=('dev' if use_streaming else None)))
 
+    if model in readers.reader2stream_processor:
+        stream_processor = readers.reader2stream_processor[model]
+    else:
+        stream_processor = None
+
     # Train
     reader.train(optimizer, train, dev, test,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, use_streaming=use_streaming)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, use_streaming=use_streaming,
+                 stream_processor=stream_processor)
 
     # Test final model
     if test is not None and model_dir is not None:
