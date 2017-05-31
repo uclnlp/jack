@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import subprocess
 import time
 from os.path import join, exists
@@ -8,8 +10,7 @@ import numpy as np
 OVERFIT_PATH = './tests/test_results/overfit_test/'
 SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 
-models = \
-    [
+models = [
         'snli_reader',
         'cbilstm_snli_reader',
         'dam_snli_reader',
@@ -110,7 +111,6 @@ def test_model(model_name, epochs, use_small_data, dataset):
         for line in e.output.split(b'\n'):
             print(line)
         assert False, str(e.output)
-    runtime = time.time() - t0
 
     # Load and parse the results and the expected rults for testing
     new_results, runtime = load_and_parse_test_results(metric_filepath)
@@ -132,7 +132,6 @@ def load_and_parse_test_results(filepath):
     runtime = 0
     with open(filepath) as f:
         data = f.readlines()
-        n = len(data)
         for i, line in enumerate(data):
             _date, _time, metric_name, metric_value = line.strip().split(' ')
             name_value_metric_pair.append([metric_name,
