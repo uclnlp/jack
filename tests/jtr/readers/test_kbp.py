@@ -1,25 +1,30 @@
 # -*- coding: utf-8 -*-
 
+import tensorflow as tf
+
 from jtr.core import SharedResources
 import jtr.readers as readers
 from jtr.data_structures import load_labelled_data
 
 
-def test_distmult():
+def test_kbp():
     data = load_labelled_data('tests/test_data/WN18/wn18-snippet.jtr.json')
     questions = [question for question, _ in data]
 
-    config = {
-        'batch_size': 1,
-        'repr_dim': 10
-    }
+    for model_name in ['transe', 'distmult', 'complex']:
 
-    shared_resources = SharedResources(None, config)
-    distmult_reader = readers.readers['distmult_reader'](shared_resources)
-    distmult_reader.setup_from_data(data)
+        with tf.variable_scope(model_name):
+            config = {
+                'batch_size': 1,
+                'repr_dim': 10
+            }
 
-    answers = distmult_reader(questions)
+            shared_resources = SharedResources(None, config)
+            reader = readers.readers['{}_reader'.format(model_name)](shared_resources)
+            reader.setup_from_data(data)
 
-    assert len(answers) == 5000
+            answers = reader(questions)
 
-    assert answers, 'KBP reader should produce answers'
+            assert len(answers) == 5000
+
+            assert answers, 'KBP reader should produce answers'
