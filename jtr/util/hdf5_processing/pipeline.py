@@ -5,6 +5,7 @@ from os.path import join
 
 from jtr.util.hdf5_processing.vocab import Vocab
 from jtr.util.util import Timer
+from jtr.data_structures import QASetting, Answer
 
 t = Timer()
 
@@ -25,10 +26,13 @@ class DatasetStreamer(object):
     def set_path(self, path):
         self.set_paths([path])
 
-    def stream_files(self):
+    def __iter__(self):
+        return self
+
+    def stream(self):
         for path in self.paths:
             with open(path) as f:
-                for line in f:
+                for i, line in enumerate(f):
                     filtered = False
                     for streamp in self.stream_processors:
                         line = streamp.process(line)
@@ -46,7 +50,11 @@ class DatasetStreamer(object):
                         for output_key in self.output_keys:
                             data.append(inputkey2data[output_key])
 
-                        yield data
+
+                        qa = QASetting(question=data[0], support=[data[1]], id=str(i),atomic_candidates=None)
+                        a = Answer(data[2])
+
+                        yield qa, a
 
 class Pipeline(object):
     def __init__(self, name, delete_all_previous_data=False, keys=None):
@@ -129,9 +137,10 @@ class Pipeline(object):
                     variables[i] = textp.process(variables[i], inp_type=key)
         return variables
 
-    def execute(self, data_streamer):
+    def execute(self, generator):
         '''Tokenizes the data, calcs the max length, and creates a vocab.'''
-        for var in data_streamer.stream_files():
+        for qa_settings, answer in generator:
+            var = [qa_settings.question, qa_settings.support[0], answer.text]
             for filter_keys, textp in self.text_processors:
                 for i, key in enumerate(self.keys):
                     if key in filter_keys:
