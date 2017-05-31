@@ -102,7 +102,7 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
                     max_answer = max(max_answer, end)
 
         # cut support whenever there is a maximum allowed length and recompute answer spans
-        if max_support_length is not None and max_support_length > 0 and len(s) > max_support_length:
+        if max_support_length is not None and len(s) > max_support_length > 0:
             if max_answer < max_support_length:
                 s = s[:max_support_length]
                 word_in_question[-1] = word_in_question[-1][:max_support_length]
