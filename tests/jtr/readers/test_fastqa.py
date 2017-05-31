@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from jtr.core import SharedVocabAndConfig
+from jtr.core import SharedResources
 from jtr.data_structures import load_labelled_data
 from jtr.tasks.xqa.util import tokenize
 
@@ -32,7 +32,7 @@ def test_fastqa():
               "with_char_embeddings": True}
 
     # create/setup reader
-    shared_resources = SharedVocabAndConfig(vocab, config)
+    shared_resources = SharedResources(vocab, config)
     fastqa_reader = readers.readers["fastqa_reader"](shared_resources)
     fastqa_reader.setup_from_data(data)
 

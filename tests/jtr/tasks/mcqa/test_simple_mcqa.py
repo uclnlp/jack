@@ -15,7 +15,7 @@ def test_simple_mcqa():
     ]
     questions = [q for q, _ in data_set]
 
-    resources = SharedVocabAndConfig(Vocab(), {"repr_dim": 100})
+    resources = SharedResources(Vocab(), {"repr_dim": 100})
     example_reader = JTReader(resources,
                               SimpleMCInputModule(resources),
                               SimpleMCModelModule(resources),
@@ -35,12 +35,12 @@ def test_multi_support_fixed_class_inputs():
     data_set = [
         (QASetting("Where is the cat?", ["the cat is on the mat."]), [Answer("mat")])
     ]
-    shared_resources = SharedVocabAndConfig(Vocab(), {})
+    shared_resources = SharedResources(Vocab(), {})
     input_module = MultiSupportFixedClassInputs(shared_resources)
-    input_module.setup_from_data(data_set)
+    input_module.setup_from_data(data_set, sepvocab=True)
 
-    assert len(input_module.answer_vocab) == 1
-    assert len(input_module.shared_vocab_config.vocab) == 11
+    assert len(input_module.shared_resources.answer_vocab) == 1
+    assert len(input_module.shared_resources.vocab) == 11
 
     tensor_data_set = list(input_module.dataset_generator(data_set, False))
 
@@ -52,7 +52,7 @@ def test_multi_support_fixed_class_inputs():
     assert first_instance[Ports.Input.support_length][0] == len(expected_support)
 
     actual_answer_ids = first_instance[Ports.Target.target_index]
-    expected_answer = [input_module.answer_vocab.get_id("mat")]
+    expected_answer = [input_module.shared_resources.answer_vocab.get_id("mat")]
     assert np.array_equal(actual_answer_ids, expected_answer)
 
     actual_question_ids = first_instance[Ports.Input.question]
