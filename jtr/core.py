@@ -327,7 +327,7 @@ class InputModule:
     @abstractmethod
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """
-        Converts a list of inputs into a single batch of tensors, consisting with the `output_ports` of this
+        Converts a list of inputs into a single batch of tensors, consistent with the `output_ports` of this
         module.
         Args:
             qa_settings: a list of instances (question, support, optional candidates)

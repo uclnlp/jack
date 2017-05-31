@@ -12,7 +12,6 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        self.vocab = self.shared_resources.vocab
         self.triples = [x[0].question.split() for x in data]
 
         self.entity_set = {s for [s, _, _] in self.triples} | {o for [_, _, o] in self.triples}
@@ -23,8 +22,6 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
 
         self.shared_resources.config['entity_to_index'] = self.entity_to_index
         self.shared_resources.config['predicate_to_index'] = self.predicate_to_index
-
-        self.shared_resources.vocab.freeze()
         return self.shared_resources
 
     def setup(self):
