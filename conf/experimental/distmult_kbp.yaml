@@ -7,13 +7,13 @@ parent_config: './conf/jack.yaml'
 
 
 # jtr training file
-train: 'data/WN18/wn18-snippet.jtr.json'
+train: 'tests/test_data/WN18/wn18-snippet.jtr.json'
 
 # jtr dev file
-dev: 'data/WN18/wn18-snippet.jtr.json'
+dev: 'tests/test_data/WN18/wn18-snippet.jtr.json'
 
 # jtr test file
-test: 'data/WN18/wn18-snippet.jtr.json'
+test: 'tests/test_data/WN18/wn18-snippet.jtr.json'
 
 # Reading model to use
 model: 'distmult_reader'

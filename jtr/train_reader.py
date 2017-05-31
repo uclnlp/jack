@@ -41,7 +41,7 @@ def fetch_parents(current_path, parents=[]):
         return [current_path] + parents
 
 configs = fetch_parents(path)
-logger.info("Loading", configs)
+logger.info("Loading {}".format(configs))
 ex = Experiment('jack')
 for path in configs:
     ex.add_config(path)

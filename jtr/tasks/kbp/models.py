@@ -33,49 +33,36 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        question = []
-        for x, _ in dataset:
-            s, p, o = x.question.split()
+        qa_settings = [qa_setting for qa_setting, _ in dataset]
+        triples = []
+        for qa_setting in qa_settings:
+            s, p, o = qa_setting.question.split()
             s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
             p_idx = self.predicate_to_index[p]
-            question.append([s_idx, p_idx, o_idx])
+            triples.append([s_idx, p_idx, o_idx])
 
-        corpus = {
-            'support': [0 for _ in dataset],
-            'question': question,
-            'candidates': [0 for _ in dataset],
-            'answers': [],
-            'targets': [1 for _ in dataset]
-        }
         xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.candidate_1hot: corpus["targets"]
+            Ports.Input.multiple_support: [0 for _ in qa_settings],
+            Ports.Input.question: triples,
+            Ports.Input.atomic_candidates: [0 for _ in qa_settings],
+            Ports.Target.candidate_1hot: [1 for _ in qa_settings]
         }
         batches = get_batches(xy_dict)
         return batches
 
-    def __call__(self, dataset: List[Tuple[QASetting, List[Answer]]]) -> Mapping[TensorPort, np.ndarray]:
-        question = []
-        for x, _ in dataset:
-            s, p, o = x.question.split()
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        triples = []
+        for qa_setting in qa_settings:
+            s, p, o = qa_setting.question.split()
             s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
             p_idx = self.predicate_to_index[p]
-            question.append([s_idx, p_idx, o_idx])
+            triples.append([s_idx, p_idx, o_idx])
 
-        corpus = {
-            'support': [0 for _ in dataset],
-            'question': question,
-            'candidates': [0 for _ in dataset],
-            'answers': [],
-            'targets': [1 for _ in dataset]
-        }
         xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.candidate_1hot: corpus["targets"]
+            Ports.Input.multiple_support: [0 for _ in qa_settings],
+            Ports.Input.question: triples,
+            Ports.Input.atomic_candidates: [0 for _ in qa_settings],
+            Ports.Target.candidate_1hot: [1 for _ in qa_settings]
         }
         return numpify(xy_dict)
 
