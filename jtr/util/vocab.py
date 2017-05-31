@@ -26,7 +26,7 @@ class Vocab(object):
         self.next_pos = 0
         self.next_neg = -1
         self.unk = unk
-        self.emb = emb if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
+        self.emb = emb #if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
 
         if init_from_embeddings and emb is not None:
             self.sym2id = dict(emb.vocabulary.word2idx)
@@ -56,6 +56,9 @@ class Vocab(object):
             self.emb_length = emb.lookup.shape[1]
         else:
             self.emb_length = None
+
+    def _get_emb(self, word):
+        return self.emb(word) if self.emb is not None else None
 
     def freeze(self):
         """Freeze current Vocab object (set `self.frozen` to True).
@@ -109,7 +112,7 @@ class Vocab(object):
             `sym`: symbol (e.g., token)
         """
         if not self.frozen:
-            vec = self.emb(sym)
+            vec = self._get_emb(sym)
             if self.emb_length is None and vec is not None:
                 self.emb_length = len(vec) if isinstance(vec, list) else vec.shape[0]
             if sym not in self.sym2id:
