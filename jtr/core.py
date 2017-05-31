@@ -250,8 +250,6 @@ class FlatPorts:
         # -attention, ...
 
 
-
-
 class SharedResources():
     """
     A class to provide and store generally shared resources, such as vocabularies,
