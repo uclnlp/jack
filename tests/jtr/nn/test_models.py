@@ -79,7 +79,7 @@ def test_model(model_name, epochs, use_small_data, dataset):
     # Setup paths and filenames for the expected_results file
     if use_small_data:
         test_result_path = join(SMALLDATA_PATH, dataset, model_name)
-    elif not use_small_data:
+    else:
         test_result_path = join(OVERFIT_PATH, dataset, model_name)
 
     metric_filepath = join(test_result_path, datetime_test_result_filename())
