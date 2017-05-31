@@ -395,14 +395,14 @@ class ModelModule:
     and output pairs.
     """
 
-    def __call__(self, sess: tf.Session,
+    def __call__(self, session: tf.Session,
                  batch: Mapping[TensorPort, np.ndarray],
                  goal_ports: List[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
         """
         Runs a batch represented by a mapping from tensorports to numpy arrays and returns value for specified
         goal ports.
         Args:
-            sess: the tf session to use
+            session: the tf session to use
             batch: mapping from ports to values
             goal_ports: optional output ports, defaults to output_ports of this module will be returned
 
@@ -413,7 +413,7 @@ class ModelModule:
         goal_ports = goal_ports or self.output_ports
 
         feed_dict = self.convert_to_feed_dict(batch)
-        outputs = sess.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
+        outputs = session.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
 
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
         for p in goal_ports:
