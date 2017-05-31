@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jtr.core import SharedVocabAndConfig
+from jtr.core import SharedResources
 import jtr.readers as readers
 from jtr.data_structures import load_labelled_data
 
@@ -14,7 +14,7 @@ def test_distmult():
         'repr_dim': 10
     }
 
-    shared_resources = SharedVocabAndConfig(None, config)
+    shared_resources = SharedResources(None, config)
     # distmult_reader = readers.readers['distmult_reader'](shared_resources)
     # distmult_reader.setup_from_data(data)
     # answers = distmult_reader(questions)
