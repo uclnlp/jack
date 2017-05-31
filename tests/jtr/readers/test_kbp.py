@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jtr.core import SharedVocabAndConfig
+from jtr.core import SharedResources
 import jtr.readers as readers
 from jtr.data_structures import load_labelled_data
 

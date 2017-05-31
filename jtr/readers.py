@@ -49,7 +49,7 @@ def __genqa_reader(f):
 
 
 @__mcqa_reader
-def example_reader(shared_resources: SharedVocabAndConfig):
+def example_reader(shared_resources: SharedResources):
     """ Creates an example multiple choice reader. """
     from jtr.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
     input_module = SimpleMCInputModule(shared_resources)
@@ -59,7 +59,7 @@ def example_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def modelf_reader(shared_resources: SharedVocabAndConfig):
+def modelf_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
     input_module = ModelFInputModule(shared_resources)
@@ -69,7 +69,7 @@ def modelf_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def distmult_reader(shared_resources: SharedVocabAndConfig):
+def distmult_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
@@ -80,7 +80,7 @@ def distmult_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def complex_reader(shared_resources: SharedVocabAndConfig):
+def complex_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
@@ -91,7 +91,7 @@ def complex_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__kbp_reader
-def transe_reader(shared_resources: SharedVocabAndConfig):
+def transe_reader(shared_resources: SharedResources):
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
@@ -102,7 +102,7 @@ def transe_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__xqa_reader
-def fastqa_reader(shared_resources: SharedVocabAndConfig):
+def fastqa_reader(shared_resources: SharedResources):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.tasks.xqa.shared import XQAOutputModule
@@ -114,7 +114,7 @@ def fastqa_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__xqa_reader
-def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
+def cbow_xqa_reader(shared_resources: SharedResources):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.tasks.xqa.cbow_baseline import CBOWXqaInputModule
 
@@ -128,11 +128,11 @@ def cbow_xqa_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__mcqa_reader
-def cbilstm_snli_reader(shared_resources: SharedVocabAndConfig):
+def cbilstm_snli_reader(shared_resources: SharedResources):
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a conditional Bidirectional LSTM, as described in [1].
-    
+
     [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
@@ -144,11 +144,11 @@ def cbilstm_snli_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__mcqa_reader
-def dam_snli_reader(shared_resources: SharedVocabAndConfig):
+def dam_snli_reader(shared_resources: SharedResources):
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a Decomposable Attention Model, as described in [1].
-    
+
     [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
@@ -159,11 +159,11 @@ def dam_snli_reader(shared_resources: SharedVocabAndConfig):
 
 
 @__mcqa_reader
-def esim_snli_reader(shared_resources: SharedVocabAndConfig):
+def esim_snli_reader(shared_resources: SharedResources):
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
-    
+
     [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, ESIMModel, EmptyOutputModule
@@ -175,5 +175,5 @@ def esim_snli_reader(shared_resources: SharedVocabAndConfig):
 
 # Aliases
 @__mcqa_reader
-def snli_reader(shared_resources: SharedVocabAndConfig):
+def snli_reader(shared_resources: SharedResources):
     return cbilstm_snli_reader(shared_resources)

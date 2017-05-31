@@ -20,7 +20,6 @@ class SimpleMCInputModule(InputModule):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
-        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
@@ -80,8 +79,8 @@ class SimpleMCInputModule(InputModule):
 
 
 class MultiSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_vocab_config):
-        self.shared_vocab_config = shared_vocab_config
+    def __init__(self, shared_resources):
+        self.shared_resources = shared_resources
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -105,21 +104,28 @@ class MultiSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]],
+                        sepvocab=True) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_vocab_config.vocab, None, sepvocab=True)
+                preprocess_with_pipeline(data, self.shared_resources.vocab,
+                        None, sepvocab=sepvocab)
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
-        self.shared_vocab_config.config['answer_size'] = len(train_answer_vocab)
-        self.shared_vocab_config.vocab = train_vocab
-        self.answer_vocab = train_answer_vocab
+        self.shared_resources.config['answer_size'] = len(train_answer_vocab)
+        self.shared_resources.vocab = train_vocab
+        if sepvocab:
+            self.shared_resources.answer_vocab = train_answer_vocab
+        else:
+            self.shared_resources.answer_vocab = train_vocab
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
-                        self.shared_vocab_config.vocab, self.answer_vocab, use_single_support=True, sepvocab=True)
+                        self.shared_resources.vocab,
+                        self.shared_resources.answer_vocab,
+                        use_single_support=True, sepvocab=True)
 
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -155,7 +161,7 @@ class SimpleMCModelModule(SimpleModelModule):
         return [Ports.loss]
 
     def create_training_output(self,
-                               shared_resources: SharedVocabAndConfig,
+                               shared_resources: SharedResources,
                                logits: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
         loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
@@ -163,7 +169,7 @@ class SimpleMCModelModule(SimpleModelModule):
         return loss,
 
     def create_output(self,
-                      shared_resources: SharedVocabAndConfig,
+                      shared_resources: SharedResources,
                       multiple_support: tf.Tensor,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:

@@ -21,8 +21,8 @@ from jtr.util.map import numpify
 
 class FastQAInputModule(InputModule):
     def __init__(self, shared_vocab_config):
-        assert isinstance(shared_vocab_config, SharedVocabAndConfig), \
-            "shared_resources for FastQAInputModule must be an instance of SharedVocabAndConfig"
+        assert isinstance(shared_vocab_config, SharedResources), \
+            "shared_resources for FastQAInputModule must be an instance of SharedResources"
         self.shared_vocab_config = shared_vocab_config
 
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:

@@ -250,54 +250,45 @@ class FlatPorts:
         # -attention, ...
 
 
-class SharedResources:
-    @abstractmethod
-    def load(self, path):
-        """
-        Loads this (potentially empty) resource from path
-        :param path: path to shared resources
-        """
-
-    @abstractmethod
-    def store(self, path):
-        """
-        Saves this resource from path
-        :param path: path to save shared resources
-        """
-
-
-class SharedVocabAndConfig(SharedResources):
+class SharedResources():
     """
-    A class to provide and store a vocab shared across some of the reader modules.
+    A class to provide and store generally shared resources, such as vocabularies,
+    across the reader sub-modules.
     """
 
     def __init__(self, vocab: Vocab = None, config: dict = None):
-        self.config = config
+        """
+        Several shared resources are initialised here, even if no arguments
+        are passed when calling __init__.
+        The instantiated objects will be filled by the InputModule.
+        - self.config holds hyperparameter values and general configuration
+            parameters.
+        - self.vocab serves as default Vocabulary object.
+        - self.answer_vocab is by default the same as self.vocab. However,
+            this attribute can be changed by the InputModule, e.g. by setting
+            sepvocab=True when calling the setup_from_data() of the InputModule.
+        """
+        self.config = config or dict()
         self.vocab = vocab
 
     def store(self, path):
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-        if self.vocab is not None:
-            with open(os.path.join(path, "vocab"), 'wb') as f:
-                pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
-        if self.config is not None:
-            with open(os.path.join(path, "config"), 'wb') as f:
-                pickle.dump(self.config, f, pickle.HIGHEST_PROTOCOL)
+        """
+        Saves all attributes of this object.
+        :param path: path to save shared resources
+        """
+        if not os.path.exists(os.path.dirname(path)):
+            os.mkdir(os.path.dirname(path))
+        with open(path, 'wb') as f:
+            pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
-        if os.path.exists(os.path.join(path, 'vocab')):
-            with open(os.path.join(path, "vocab"), 'rb') as f:
-                self.vocab = pickle.load(f)
-        with open(os.path.join(path, "config"), 'rb') as f:
-            config = pickle.load(f)
-            if self.config is None:
-                self.config = config
-            else:
-                for k, v in config.items():
-                    if k not in self.config:
-                        self.config[k] = v
+        """
+        Loads this (potentially empty) resource from path (all object attributes).
+        :param path: path to shared resources
+        """
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
+                self.__dict__.update(pickle.load(f))
 
 
 class InputModule:
@@ -413,10 +404,6 @@ class ModelModule:
         goal_ports = goal_ports or self.output_ports
 
         feed_dict = self.convert_to_feed_dict(batch)
-
-        print(feed_dict)
-        print(list(self.tensors[p] for p in goal_ports if p in self.output_ports))
-
         outputs = session.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
 
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
