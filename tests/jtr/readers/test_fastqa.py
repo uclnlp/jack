@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 from jtr.core import SharedVocabAndConfig
 from jtr.data_structures import load_labelled_data
