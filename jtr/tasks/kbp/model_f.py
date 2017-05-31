@@ -241,14 +241,14 @@ class KBPReader(JTReader):
             min_op = optim.minimize(loss)
 
         # initialize non model variables like learning rate, optim vars ...
-        self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
+        self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
         logging.info("Start training...")
         for i in range(1, max_epochs + 1):
             batches = self.input_module.dataset_generator(training_set, is_eval=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
-                _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
+                _, current_loss = self.session.run([min_op, loss], feed_dict=feed_dict)
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss)

@@ -99,7 +99,7 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
         return [self.loss]
 
     def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
-        with tf.variable_scope('kge'):
+        with tf.variable_scope('knowledge_graph_embedding'):
             self.embedding_size = shared_resources.config['repr_dim']
 
             self.entity_to_index = shared_resources.config['entity_to_index']
@@ -175,6 +175,7 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
         results = []
+        print('XXX', len(inputs), logits)
         for index_in_batch, question in enumerate(inputs):
             score = logits[index_in_batch]
             results.append(Answer(None, score=score))
@@ -227,14 +228,14 @@ class KBPReader(JTReader):
             min_op = optimizer.minimize(loss)
 
         # initialize non model variables like learning rate, optim vars ...
-        self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
+        self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
         logger.info("Start training {} ...".format(max_epochs))
         for i in range(1, max_epochs + 1):
             batches = self.input_module.dataset_generator(training_set, is_eval=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
-                _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
+                _, current_loss = self.session.run([min_op, loss], feed_dict=feed_dict)
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss)
