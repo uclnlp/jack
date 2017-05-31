@@ -53,11 +53,8 @@ def example_reader(shared_resources: SharedResources):
     """ Creates an example multiple choice reader. """
     from jtr.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
     input_module = SimpleMCInputModule(shared_resources)
-
     model_module = SimpleMCModelModule(shared_resources)
-
     output_module = SimpleMCOutputModule()
-
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 

@@ -386,14 +386,14 @@ class ModelModule:
     and output pairs.
     """
 
-    def __call__(self, sess: tf.Session,
+    def __call__(self, session: tf.Session,
                  batch: Mapping[TensorPort, np.ndarray],
                  goal_ports: List[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
         """
         Runs a batch represented by a mapping from tensorports to numpy arrays and returns value for specified
         goal ports.
         Args:
-            sess: the tf session to use
+            session: the tf session to use
             batch: mapping from ports to values
             goal_ports: optional output ports, defaults to output_ports of this module will be returned
 
@@ -404,7 +404,7 @@ class ModelModule:
         goal_ports = goal_ports or self.output_ports
 
         feed_dict = self.convert_to_feed_dict(batch)
-        outputs = sess.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
+        outputs = session.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
 
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
         for p in goal_ports:
@@ -605,10 +605,7 @@ class OutputModule:
 
     @abstractmethod
     def setup(self):
-        """
-        Args:
-            shared_resources: sets up this module with shared resources
-        """
+        pass
 
     def store(self, path):
         """
@@ -635,19 +632,19 @@ class JTReader:
                  input_module: InputModule,
                  model_module: ModelModule,
                  output_module: OutputModule,
-                 sess: tf.Session = None,
+                 session: tf.Session = None,
                  is_train: bool = True):
         self.shared_resources = shared_resources
-        self.sess = sess
+        self.session = session
         self.output_module = output_module
         self.model_module = model_module
         self.input_module = input_module
         self.is_train = is_train
 
-        if self.sess is None:
-            sess_config = tf.ConfigProto(allow_soft_placement=True)
-            sess_config.gpu_options.allow_growth = True
-            self.sess = tf.Session(config=sess_config)
+        if self.session is None:
+            session_config = tf.ConfigProto(allow_soft_placement=True)
+            session_config.gpu_options.allow_growth = True
+            self.session = tf.Session(config=session_config)
 
         assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
             "Input Module outputs must include model module inputs"
@@ -670,7 +667,7 @@ class JTReader:
             predicted outputs/answers to a given (labeled) dataset
         """
         batch = self.input_module(inputs)
-        output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
+        output_module_input = self.model_module(self.session, batch, self.output_module.input_ports)
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
@@ -693,13 +690,12 @@ class JTReader:
         answers = list()
         logger.debug("Start answering...")
         for j, batch in enumerate(batches):
-            output_module_input = self.model_module(self.sess, batch, self.output_module.input_ports)
+            output_module_input = self.model_module(self.session, batch, self.output_module.input_ports)
             inputs = [x for x, _ in dataset[j * batch_size:(j + 1) * batch_size]]
             answers.extend(
                 self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
             if debug:
-                sys.stdout.write("\r%d/%d examples processed..." % (len(answers), len(dataset)))
-                sys.stdout.flush()
+                logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
     def train(self, optimizer,
@@ -722,7 +718,7 @@ class JTReader:
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set)
-        self.sess.run([v.initializer for v in self.model_module.variables])
+        self.session.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -745,14 +741,14 @@ class JTReader:
             min_op = optimizer.minimize(loss)
 
         # initialize non model variables like learning rate, optimizer vars ...
-        self.sess.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
+        self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
 
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
 
-                current_loss, _ = self.sess.run([loss, min_op], feed_dict=feed_dict)
+                current_loss, _ = self.session.run([loss, min_op], feed_dict=feed_dict)
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
@@ -770,7 +766,7 @@ class JTReader:
         self.input_module.setup_from_data(data)
         self.model_module.setup(self.is_train)
         self.output_module.setup()
-        self.sess.run([v.initializer for v in self.model_module.variables])
+        self.session.run([v.initializer for v in self.model_module.variables])
 
     def setup_from_file(self, path):
         """
@@ -782,8 +778,8 @@ class JTReader:
         self.input_module.setup()
         self.input_module.load(os.path.join(path, "input_module"))
         self.model_module.setup(self.is_train)
-        self.sess.run([v.initializer for v in self.model_module.variables])
-        self.model_module.load(self.sess, os.path.join(path, "model_module"))
+        self.session.run([v.initializer for v in self.model_module.variables])
+        self.model_module.load(self.session, os.path.join(path, "model_module"))
         self.output_module.setup()
         self.output_module.load(os.path.join(path, "output_module"))
 
@@ -795,7 +791,7 @@ class JTReader:
             path: model directory
         """
         self.input_module.load(os.path.join(path, "input_module"))
-        self.model_module.load(self.sess, os.path.join(path, "model_module"))
+        self.model_module.load(self.session, os.path.join(path, "model_module"))
         self.output_module.load(os.path.join(path, "output_module"))
 
     def store(self, path):
@@ -809,5 +805,5 @@ class JTReader:
         os.makedirs(path)
         self.shared_resources.store(os.path.join(path, "shared_resources"))
         self.input_module.store(os.path.join(path, "input_module"))
-        self.model_module.store(self.sess, os.path.join(path, "model_module"))
+        self.model_module.store(self.session, os.path.join(path, "model_module"))
         self.output_module.store(os.path.join(path, "output_module"))

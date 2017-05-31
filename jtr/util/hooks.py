@@ -123,7 +123,7 @@ class LossHook(TraceHook):
                     self._iter[set_name], epoch, set_name)
             logger.info("Epoch {0}\tIter {1}\t{3} loss {2}".format(epoch,
                 self._iter[set_name], loss, set_name))
-            self.update_summary(self.reader.sess, self._iter[set_name], "{0} loss".format(set_name), loss)
+            self.update_summary(self.reader.session, self._iter[set_name], "{0} loss".format(set_name), loss)
             self._acc_loss[set_name] = 0
 
         ret = (0.0 if self._iter[set_name] == 0 else self._acc_loss[set_name] / self._iter[set_name])
@@ -135,7 +135,7 @@ class LossHook(TraceHook):
             loss = self._acc_loss[set_name] / self._iter_interval[set_name]
             logger.info("Epoch {}\tIter {}\t{3} Loss {}".format(epoch,
                 self._iter, loss, set_name))
-            self.update_summary(self.reader.sess, self._iter[set_name], "Loss", loss)
+            self.update_summary(self.reader.session, self._iter[set_name], "Loss", loss)
             self._epoch_loss[set_name] = 0
             self._iter_epoch[set_name] = 0
 
@@ -172,7 +172,7 @@ class ExamplesPerSecHook(TraceHook):
             diff = time() - self.t0
             speed = "%.2f" % (self.num_examples / diff)
             logger.info("Epoch {}\tIter {}\tExamples/s {}".format(str(epoch), str(self._iter), str(speed)))
-            self.update_summary(self.reader.sess, self._iter, self.__tag__(), float(speed))
+            self.update_summary(self.reader.session, self._iter, self.__tag__(), float(speed))
             self.t0 = time()
 
 
@@ -233,7 +233,7 @@ class ETAHook(TraceHook):
                 elapsed = current_time - start_time
                 eta = elapsed / progress * (1.0 - progress)
                 eta_date = strftime("%y-%m-%d %H:%M:%S", localtime(current_time + eta))
-                self.update_summary(self.reader.sess, self.iter, self.__tag__() + "_" + name, float(eta))
+                self.update_summary(self.reader.session, self.iter, self.__tag__() + "_" + name, float(eta))
 
                 return format_eta(eta), eta_date
 
@@ -298,7 +298,7 @@ class EvalHook(TraceHook):
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
-            predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
+            predictions = self.reader.model_module(self.reader.session, batch, self._ports)
             m = self.apply_metrics(predictions)
             for k in self._metrics:
                 metrics[k].append(m[k])
@@ -311,7 +311,7 @@ class EvalHook(TraceHook):
         print(self._write_metrics_to)
         for m in printmetrics:
             res += '\t%s: %.3f' % (m, metrics[m])
-            self.update_summary(self.reader.sess, self._iter, self._info + '_' + m, metrics[m])
+            self.update_summary(self.reader.session, self._iter, self._info + '_' + m, metrics[m])
             if self._write_metrics_to is not None:
                 with open(self._write_metrics_to, 'a') as f:
                     f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
@@ -499,7 +499,7 @@ class KBPEvalHook(EvalHook):
         qa_scores=[]
         qa_ids=[]
         for i, batch in enumerate(self._batches):
-            predictions = self.reader.model_module(self.reader.sess, batch, self._ports)
+            predictions = self.reader.model_module(self.reader.session, batch, self._ports)
             correct_answers =  predictions[Ports.Target.target_index]
             logits = predictions[Ports.Prediction.logits]
             candidate_ids =    predictions[Ports.Input.atomic_candidates]
@@ -551,7 +551,7 @@ class KBPEvalHook(EvalHook):
         wmap = wmap / md if md else 0
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
         res += '\t%s: %.3f' % ("Mean Average Precision", mean_ap)
-        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Mean Average Precision", mean_ap)
+        self.update_summary(self.reader.session, self._iter, self._info + '_' + "Mean Average Precision", mean_ap)
         if self._write_metrics_to is not None:
             with open(self._write_metrics_to, 'a') as f:
                 f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Mean Average Precision",
@@ -560,7 +560,7 @@ class KBPEvalHook(EvalHook):
         logger.info(res)
         res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
         res += '\t%s: %.3f' % ("Weighted Mean Average Precision", wmap)
-        self.update_summary(self.reader.sess, self._iter, self._info + '_' + "Weighted Mean Average Precision", wmap)
+        self.update_summary(self.reader.session, self._iter, self._info + '_' + "Weighted Mean Average Precision", wmap)
         if self._write_metrics_to is not None:
             with open(self._write_metrics_to, 'a') as f:
                 f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Weighted Mean Average Precision",

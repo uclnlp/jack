@@ -8,7 +8,7 @@ pycorenlp
 pytest
 scipy
 sklearn
-tensorflow>=1.0
+tensorflow>=1.1
 typing
 sacred
 sqlalchemy
