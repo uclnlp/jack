@@ -14,10 +14,10 @@ def test_distmult():
         'repr_dim': 10
     }
 
-    #shared_resources = SharedVocabAndConfig(None, config)
-    #distmult_reader = readers.readers['distmult_reader'](shared_resources)
-    #distmult_reader.setup_from_data(data)
+    shared_resources = SharedVocabAndConfig(None, config)
+    distmult_reader = readers.readers['distmult_reader'](shared_resources)
+    distmult_reader.setup_from_data(data)
 
-    #answers = distmult_reader(questions)
+    answers = distmult_reader(questions)
 
-    #assert answers, 'KBP reader should produce answers'
+    assert answers, 'KBP reader should produce answers'

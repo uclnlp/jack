@@ -78,7 +78,7 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, Ports.loss]
+        return [Ports.Prediction.logits]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
@@ -138,7 +138,7 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
 
             losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
             self.loss = tf.reduce_mean(losses, axis=0)
-        return [self.loss, logits]
+        return logits,
 
     def forward_pass(self, shared_resources, question):
         subject_idx = question[:, 0]
@@ -175,7 +175,6 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
         results = []
-        print('XXX', len(inputs), logits)
         for index_in_batch, question in enumerate(inputs):
             score = logits[index_in_batch]
             results.append(Answer(None, score=score))

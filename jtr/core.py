@@ -413,6 +413,10 @@ class ModelModule:
         goal_ports = goal_ports or self.output_ports
 
         feed_dict = self.convert_to_feed_dict(batch)
+
+        print(feed_dict)
+        print(list(self.tensors[p] for p in goal_ports if p in self.output_ports))
+
         outputs = session.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
 
         ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
