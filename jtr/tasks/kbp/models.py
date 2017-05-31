@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Sequence
-
 from jtr.core import *
 from jtr.data_structures import *
 
@@ -45,11 +43,12 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
             p_idx = self.predicate_to_index[p]
             question.append([s_idx, p_idx, o_idx])
 
-        corpus = {'support': [0 for _ in dataset],
-                  'question': question,
-                  'candidates': [0 for _ in dataset],
-                  'answers': [],
-                  'targets': [1 for _ in dataset]
+        corpus = {
+            'support': [0 for _ in dataset],
+            'question': question,
+            'candidates': [0 for _ in dataset],
+            'answers': [],
+            'targets': [1 for _ in dataset]
         }
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -68,11 +67,12 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
             p_idx = self.predicate_to_index[p]
             question.append([s_idx, p_idx, o_idx])
 
-        corpus = {'support': [0 for _ in dataset],
-                  'question': question,
-                  'candidates': [0 for _ in dataset],
-                  'answers': [],
-                  'targets': [1 for _ in dataset]
+        corpus = {
+            'support': [0 for _ in dataset],
+            'question': question,
+            'candidates': [0 for _ in dataset],
+            'answers': [],
+            'targets': [1 for _ in dataset]
         }
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
