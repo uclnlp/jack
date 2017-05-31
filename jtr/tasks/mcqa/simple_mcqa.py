@@ -10,8 +10,8 @@ from jtr.util.batch import get_batches
 from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
-from jtr.util.hdf5_processing.pipeline import Pipeline
-from jtr.util.hdf5_processing.processors import AddToVocab, CreateBinsByNestedLength, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
+from jtr.util.hdf5_processing.pipeline import Pipeline, DatasetStreamer
+from jtr.util.hdf5_processing.processors import AddToVocab, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
 from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, RemoveLineOnJsonValueCondition, ToLower
 from jtr.util.hdf5_processing.batching import StreamBatcher
 
@@ -127,28 +127,29 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
         tokenizer = nltk.tokenize.WordPunctTokenizer()
 
         # save vocab and 
+        s = DatasetStreamer()
+        s.add_stream_processor(JsonLoaderProcessors())
+        s.add_stream_processor(RemoveLineOnJsonValueCondition('gold_label', lambda label: label == '-'))
+        s.add_stream_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
+        s.set_path(train_path)
+
         p = Pipeline('snli', True)
-        p.add_path(train_path)
-        p.add_line_processor(JsonLoaderProcessors())
-        p.add_line_processor(RemoveLineOnJsonValueCondition('gold_label', lambda label: label == '-'))
-        p.add_line_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
         p.add_sent_processor(ToLower())
         p.add_sent_processor(Tokenizer(tokenizer.tokenize))
         p.add_token_processor(AddToVocab())
-        p.execute()
+        p.execute(s)
         p.save_vocabs()
 
         # 2. Process the data further to stream it to hdf5
         for name, path in zip(['train', 'dev', 'test'], [train_path, dev_path, test_path]):
+            s.set_path(path)
             # cleanup
-            p.clear_paths()
             p.clear_processors()
 
             # save the lengths of the data
-            p.add_path(path)
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
             p.add_post_processor(SaveLengthsToState())
-            p.execute()
+            p.execute(s)
 
             # convert to indicies and stream to HDF5
             p.clear_processors()
@@ -156,7 +157,7 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
             p.add_post_processor(ConvertTokenToIdx())
             p.add_post_processor(StreamToHDF5(name))
-            p.execute()
+            p.execute(s)
 
         self.shared_resources.config['answer_size'] = p.state['vocab']['general'].num_labels
         self.shared_resources.vocab = p.state['vocab']['general']
