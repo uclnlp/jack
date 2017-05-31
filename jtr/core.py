@@ -707,8 +707,7 @@ class JTReader:
             answers.extend(
                 self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
             if debug:
-                sys.stdout.write("\r%d/%d examples processed..." % (len(answers), len(dataset)))
-                sys.stdout.flush()
+                logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
     def train(self, optimizer,
