@@ -614,10 +614,7 @@ class OutputModule:
 
     @abstractmethod
     def setup(self):
-        """
-        Args:
-            shared_resources: sets up this module with shared resources
-        """
+        pass
 
     def store(self, path):
         """
