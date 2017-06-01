@@ -181,7 +181,7 @@ def main(batch_size,
             if prev_metric is None:  # store whole model only at beginning of training
                 reader.store(model_dir)
             else:
-                reader.model_module.store(reader.sess, os.path.join(model_dir, "model_module"))
+                reader.model_module.store(reader.session, os.path.join(model_dir, "model_module"))
             logger.info("Saving model to: %s" % model_dir)
         return m
 
