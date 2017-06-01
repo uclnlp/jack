@@ -206,8 +206,8 @@ class MultiSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]],
-                        sepvocab=True) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_name=None) -> SharedResources:
+        sepvocab=True
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
                 preprocess_with_pipeline(data, self.shared_resources.vocab,
                         None, sepvocab=sepvocab)
@@ -220,7 +220,6 @@ class MultiSupportFixedClassInputs(InputModule):
             self.shared_resources.answer_vocab = train_answer_vocab
         else:
             self.shared_resources.answer_vocab = train_vocab
-        print(len(self.shared_resources.answer_vocab),sepvocab)
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool, dataset_name=None, dataset_identifier= None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
