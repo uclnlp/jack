@@ -330,7 +330,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool, identifier=None) -> \
+    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None, identifier=None) -> \
             Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -346,7 +346,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_identifier=None) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_name=None, dataset_identifier=None) -> SharedResources:
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other
         resources.
@@ -703,7 +703,8 @@ class JTReader:
 
     def train(self, optim, training_set,
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value,
+              dataset_name=None):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -718,12 +719,12 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.input_module.setup_from_data(training_set)
+        self.input_module.setup_from_data(training_set, dataset_name)
         self.model_module.shared_resources = self.input_module.shared_resources
         self.model_module.setup()
-        self.sess.run([v.initializer for v in self.model_module.variables])
+        self.session.run([v.initializer for v in self.model_module.variables])
 
-        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_identifier='train')
+        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_name=dataset_name, dataset_identifier='train')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
@@ -760,13 +761,13 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]]):
+    def setup_from_data(self, data: Sequence[Tuple[QASetting, Answer]], dataset_name=None):
         """
         Sets up modules given a training dataset if necessary.
         Args:
             data: training dataset
         """
-        self.input_module.setup_from_data(data)
+        self.input_module.setup_from_data(data, dataset_name)
         self.model_module.setup(self.is_train)
         self.output_module.setup()
         self.session.run([v.initializer for v in self.model_module.variables])

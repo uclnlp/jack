@@ -60,7 +60,7 @@ class SimpleMCInputModule(InputModule):
         return corpus
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+                          is_eval: bool, dataset_name=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -118,11 +118,11 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_identifier='train') -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_name, dataset_identifier='train') -> SharedResources:
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()
-        p = Pipeline('snli', delete_all_previous_data=dataset_identifier=='train')
+        p = Pipeline(dataset_name, delete_all_previous_data=dataset_identifier=='train')
         print(dataset_identifier)
         if dataset_identifier == 'train':
             p.add_sent_processor(ToLower())
@@ -155,10 +155,10 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
         return self.shared_resources
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool, dataset_identifier) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+                          is_eval: bool, dataset_name, dataset_identifier) -> Iterable[Mapping[TensorPort, np.ndarray]]:
 
         batch_size = self.shared_resources.config['batch_size']
-        batcher = StreamBatcher('snli', dataset_identifier, batch_size)
+        batcher = StreamBatcher(dataset_name, dataset_identifier, batch_size)
         self.batcher = batcher
 
         def gen():
@@ -210,7 +210,7 @@ class MultiSupportFixedClassInputs(InputModule):
                         sepvocab=True) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
                 preprocess_with_pipeline(data, self.shared_resources.vocab,
-                        None, sepvocab=sepvocab)
+                        None, sepvocab=True)
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
@@ -219,10 +219,10 @@ class MultiSupportFixedClassInputs(InputModule):
         if sepvocab:
             self.shared_resources.answer_vocab = train_answer_vocab
         else:
-            self.shared_resources.answer_vocab = train_vocab
+            self.answer_vocab = train_vocab
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool, dataset_identifier= None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+                          is_eval: bool, dataset_name=None, dataset_identifier= None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,

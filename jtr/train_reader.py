@@ -94,7 +94,8 @@ def main(batch_size,
          train,
          vocab_from_embeddings,
          write_metrics_to,
-         use_streaming):
+         use_streaming,
+         dataset_name):
     logger.info("TRAINING")
 
     if experiments_db is not None:
@@ -205,18 +206,21 @@ def main(batch_size,
         reader, dev_set, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
-        write_metrics_to=write_metrics_to, dataset_identifier=('dev' if use_streaming else None)))
+        write_metrics_to=write_metrics_to,
+        dataset_name=dataset_name,
+        dataset_identifier=('dev' if use_streaming else None)))
 
 
     # Train
     reader.train(optimizer, training_set,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
 
     # Test final model
     if test is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
             reader, test_set, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
+            dataset_name=dataset_name,
             dataset_identifier=('test' if use_streaming else None))
 
         reader.load(model_dir)

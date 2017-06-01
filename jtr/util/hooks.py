@@ -260,8 +260,12 @@ class ETAHook(TraceHook):
 class EvalHook(TraceHook):
     def __init__(self, reader: JTReader, dataset, ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, dataset_identifier=None):
+                 write_metrics_to=None, info="", side_effect=None, dataset_name=None,
+                 dataset_identifier=None):
         super(EvalHook, self).__init__(reader, summary_writer)
+        print(info, side_effect, dataset_name, dataset_identifier)
+
+
         if dataset_identifier is None:
             self._total = len(dataset)
         else:
@@ -280,6 +284,7 @@ class EvalHook(TraceHook):
         self._side_effect = side_effect
         self._side_effect_state = None
         self._dataset_identifier = dataset_identifier
+        self._dataset_name = dataset_name
 
     @abstractmethod
     def possible_metrics(self) -> List[str]:
@@ -303,11 +308,11 @@ class EvalHook(TraceHook):
 
         if self._batches is None:
             if self._dataset_identifier is not None:
-                self.reader.input_module.setup_from_data(self._dataset, self._dataset_identifier)
-                self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
+                self.reader.input_module.setup_from_data(self._dataset, self._dataset_name, self._dataset_identifier)
+                self._batches = self.reader.input_module.dataset_generator(self._dataset, True, self._dataset_name, self._dataset_identifier)
                 self._total = self.reader.input_module.batcher.num_samples
             else:
-                self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
+                self._batches = self.reader.input_module.dataset_generator(self._dataset, True, self._dataset_name, self._dataset_identifier)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
@@ -408,14 +413,14 @@ class XQAEvalHook(EvalHook):
 class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, dataset_identifier=None, **kwargs):
+                 write_metrics_to=None, info="", side_effect=None, dataset_name=None, dataset_identifier=None, **kwargs):
 
         ports = [Ports.Prediction.logits,
                  Ports.Prediction.candidate_index,
                  Ports.Target.target_index]
 
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
-                         write_metrics_to, info, side_effect, dataset_identifier)
+                         write_metrics_to, info, side_effect, dataset_name, dataset_identifier)
 
     @property
     def possible_metrics(self) -> List[str]:
@@ -437,7 +442,9 @@ class ClassificationEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
+        print(labels, predictions)
         acc_exact = np.sum(np.equal(labels, predictions))
+        print(acc_exact/128.)
         acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}

@@ -183,7 +183,7 @@ def esim_snli_reader(shared_resources: SharedResources):
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 @__mcqa_reader
-def cbilstm_snli_streaming_reader(shared_resources: SharedVocabAndConfig):
+def cbilstm_snli_streaming_reader(shared_resources: SharedResources):
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a conditional Bidirectional LSTM, as described in [1].
@@ -205,6 +205,6 @@ def snli_reader(shared_resources: SharedResources):
 
 # Aliases
 @__mcqa_reader
-def snli_streaming_reader(shared_resources: SharedVocabAndConfig):
+def snli_streaming_reader(shared_resources: SharedResources):
     reader2stream_processor['snli_streaming_reader'] = get_snli_stream_processor()
     return cbilstm_snli_streaming_reader(shared_resources)

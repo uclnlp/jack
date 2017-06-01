@@ -19,15 +19,15 @@ SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 models2dataset = {}
 models2dataset['snli_reader'] = 'SNLI'
 models2dataset['snli_streaming_reader'] = 'SNLI_stream'
-models2dataset['dam_snli_reader'] = 'SNLI_stream'
-models2dataset['esim_snli_reader'] = 'SNLI_stream'
-models2dataset['cbilstm_snli_reader'] = 'SNLI_stream'
+models2dataset['dam_snli_reader'] = 'SNLI'
+models2dataset['esim_snli_reader'] = 'SNLI'
+models2dataset['cbilstm_snli_reader'] = 'SNLI'
 
 overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
 
 modelspecifics = {}
-modelspecifics['snli_streaming_reader'] = ' use_streaming=True batch_size=50'
+modelspecifics['snli_streaming_reader'] = ' use_streaming=True batch_size=50 dataset_name=snli'
 
 ids = []
 testdata = []
