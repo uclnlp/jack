@@ -7,7 +7,9 @@ import os.path as path
 import random
 import shutil
 import sys
+import copy
 import tensorflow as tf
+
 
 from time import time
 from sacred import Experiment
@@ -21,6 +23,7 @@ from jtr.data_structures import load_labelled_data
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.util.vocab import Vocab
+from jtr.util.hdf5_processing.pipeline import GeneratorWithRestart
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -177,28 +180,43 @@ def main(batch_size,
             logger.info("Saving model to: %s" % model_dir)
         return m
 
+
+    if use_streaming:
+        s = readers.reader2stream_processor[model]
+        train_processor = copy.deepcopy(s)
+        dev_processor = copy.deepcopy(s)
+        test_processor = copy.deepcopy(s)
+
+        train_processor.set_path(train)
+        dev_processor.set_path(dev)
+        test_processor.set_path(test)
+
+        training_set = GeneratorWithRestart(train_processor.stream)
+        dev_set = GeneratorWithRestart(dev_processor.stream)
+#        test_set = GeneratorWithRestart(test_processor.stream)
+        test_set = training_set
+    else:
+        training_set = load_labelled_data(train)
+        dev_set = load_labelled_data(dev)
+        test_set = load_labelled_data(test)
+
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
-        reader, dev, summary_writer=sw, side_effect=side_effect,
+        reader, dev_set, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to, dataset_identifier=('dev' if use_streaming else None)))
 
-    if model in readers.reader2stream_processor:
-        stream_processor = readers.reader2stream_processor[model]
-    else:
-        stream_processor = None
 
     # Train
-    reader.train(optimizer, train, dev, test,
+    reader.train(optimizer, training_set,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, use_streaming=use_streaming,
-                 stream_processor=stream_processor)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model
     if test is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
-            reader, test, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
+            reader, test_set, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
             dataset_identifier=('test' if use_streaming else None))
 
         reader.load(model_dir)

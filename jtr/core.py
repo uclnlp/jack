@@ -346,7 +346,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_identifier=None) -> SharedResources:
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other
         resources.
@@ -356,18 +356,6 @@ class InputModule:
         Returns: vocab
         """
         raise NotImplementedError
-
-    @abstractmethod
-    def setup_from_datafile(self, stream_processor, train_path, dev_path, test_path):
-        """
-        Takes input paths to datafiles preprocesses them and generates hdf5 files with tensors.
-        Args:
-            train_path: Path to the train file.
-            dev_path: Path to the dev file.
-            test_path: Path to the test file.
-
-        Returns: None
-        """
 
     @abstractmethod
     def setup(self):
@@ -713,9 +701,9 @@ class JTReader:
         return answers
 
 
-    def train(self, optim, train_path, dev_path, test_path,
+    def train(self, optim, training_set,
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value, use_streaming=False, stream_processor=None):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -730,18 +718,12 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        if use_streaming:
-            dataset_identifier = 'train'
-            training_set = self.input_module.setup_from_datafile(stream_processor, train_path, dev_path, test_path)
-        else:
-            dataset_identifier = None
-            training_set = load_labelled_data(train_path)
-            self.input_module.setup_from_data(training_set)
+        self.input_module.setup_from_data(training_set)
         self.model_module.shared_resources = self.input_module.shared_resources
         self.model_module.setup()
         self.sess.run([v.initializer for v in self.model_module.variables])
 
-        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_identifier=dataset_identifier)
+        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_identifier='train')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 

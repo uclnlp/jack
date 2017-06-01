@@ -9,6 +9,13 @@ from jtr.data_structures import QASetting, Answer
 
 t = Timer()
 
+class GeneratorWithRestart(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return self.iterator()
+
 class DatasetStreamer(object):
     def __init__(self, input_keys=None, output_keys=None):
         self.stream_processors = []

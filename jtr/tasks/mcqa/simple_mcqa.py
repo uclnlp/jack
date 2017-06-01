@@ -118,46 +118,40 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
-        raise Exception("Can only be setup from files!")
-
-    def setup_from_datafile(self, stream_processor, train_path, dev_path, test_path):
+    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_identifier='train') -> SharedResources:
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()
-        s = stream_processor
-
-        # save vocab and 
-        s.set_path(train_path)
-
-        p = Pipeline('snli', True)
-        p.add_sent_processor(ToLower())
-        p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-        p.add_token_processor(AddToVocab())
-        p.execute(s.stream())
-        p.save_vocabs()
-
-        # 2. Process the data further to stream it to hdf5
-        for name, path in zip(['train', 'dev', 'test'], [train_path, dev_path, test_path]):
-            s.set_path(path)
-            # cleanup
-            p.clear_processors()
-
-            # save the lengths of the data
-            p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-            p.add_post_processor(SaveLengthsToState())
-            p.execute(s.stream())
-
-            # convert to indicies and stream to HDF5
-            p.clear_processors()
+        p = Pipeline('snli', delete_all_previous_data=dataset_identifier=='train')
+        print(dataset_identifier)
+        if dataset_identifier == 'train':
             p.add_sent_processor(ToLower())
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-            p.add_post_processor(ConvertTokenToIdx())
-            p.add_post_processor(StreamToHDF5(name))
-            p.execute(s.stream())
+            p.add_token_processor(AddToVocab())
+            p.execute(data)
+            p.save_vocabs()
+        else:
+            p.load_vocabs()
 
-        self.shared_resources.config['answer_size'] = p.state['vocab']['general'].num_labels
-        self.shared_resources.vocab = p.state['vocab']['general']
+        # 2. Process the data further to stream it to hdf5
+        p.clear_processors()
+
+        # save the lengths of the data
+        p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+        p.add_post_processor(SaveLengthsToState())
+        p.execute(data)
+
+        # convert to indicies and stream to HDF5
+        p.clear_processors()
+        p.add_sent_processor(ToLower())
+        p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+        p.add_post_processor(ConvertTokenToIdx())
+        p.add_post_processor(StreamToHDF5(dataset_identifier))
+        p.execute(data)
+
+        if dataset_identifier == 'train':
+            self.shared_resources.config['answer_size'] = p.state['vocab']['general'].num_labels
+            self.shared_resources.vocab = p.state['vocab']['general']
         return self.shared_resources
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
@@ -169,7 +163,6 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
 
         def gen():
             for str2var in batcher:
-                str2var.keys()
                 feed_dict = {
                     Ports.Input.multiple_support: str2var['support'].reshape(batch_size, 1, -1),
                     Ports.Input.question: str2var["input"],

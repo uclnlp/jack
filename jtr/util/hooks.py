@@ -258,18 +258,16 @@ class ETAHook(TraceHook):
 
 
 class EvalHook(TraceHook):
-    def __init__(self, reader: JTReader, data_path, ports: List[TensorPort],
+    def __init__(self, reader: JTReader, dataset, ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, dataset_identifier=None):
         super(EvalHook, self).__init__(reader, summary_writer)
         if dataset_identifier is None:
-            dataset = load_labelled_data(data_path)
-            self._dataset = dataset
             self._total = len(dataset)
         else:
-            self._dataset = None
             self._total = 0
 
+        self._dataset = dataset
         self._batches = None
         self._ports = ports
         self._epoch_interval = epoch_interval
@@ -304,9 +302,12 @@ class EvalHook(TraceHook):
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
-            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
             if self._dataset_identifier is not None:
+                self.reader.input_module.setup_from_data(self._dataset, self._dataset_identifier)
+                self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
                 self._total = self.reader.input_module.batcher.num_samples
+            else:
+                self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_identifier=self._dataset_identifier)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
