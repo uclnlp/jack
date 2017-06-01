@@ -135,7 +135,7 @@ def cbilstm_snli_reader(shared_resources: SharedResources):
 
     [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
-    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel,\
         EmptyOutputModule
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)

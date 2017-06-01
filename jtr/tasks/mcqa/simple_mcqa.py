@@ -257,7 +257,7 @@ class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
             'sequence2': support_embedding,
             'sequence2_length': support_length,
             'representation_size': 200,
-            'dropout_keep_prob': 1.0 - shared_resources.config['dropout'],
+            'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
             'use_masking': True,
             'prepend_null_token': True
         }
@@ -286,10 +286,9 @@ class ESIMModel(AbstractSingleSupportFixedClassModel):
             'sequence1_length': question_length,
             'sequence2': support_embedding,
             'sequence2_length': support_length,
-            'representation_size': 300,
-            'dropout_keep_prob': 1.0 - shared_resources.config['dropout'],
-            'use_masking': True,
-            'prepend_null_token': True
+            'representation_size': shared_resources.config.get('repr_dim', 300),
+            'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
+            'use_masking': True
         }
 
         from jtr.tasks.mcqa.esim import ESIM
