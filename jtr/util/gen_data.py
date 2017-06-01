@@ -205,7 +205,7 @@ class Log():
 class Action(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def do_action(self, grammar, proposal_queue):
-        pass
+        raise NotImplementedError
 
 
 class ProposeNextActions(Action):
