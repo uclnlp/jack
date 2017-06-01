@@ -174,14 +174,14 @@ def main(batch_size,
         """Returns: a state (in this case a metric) that is used as input for the next call"""
         m = metrics[preferred_metric]
         if prev_metric is not None and m < prev_metric:
-            reader.sess.run(lr_decay_op)
-            logger.info("Decayed learning rate to: %.5f" % reader.sess.run(learning_rate))
+            reader.session.run(lr_decay_op)
+            logger.info("Decayed learning rate to: %.5f" % reader.session.run(learning_rate))
         elif m > best_metric[0] and model_dir is not None:
             best_metric[0] = m
             if prev_metric is None:  # store whole model only at beginning of training
                 reader.store(model_dir)
             else:
-                reader.model_module.store(reader.sess, os.path.join(model_dir, "model_module"))
+                reader.model_module.store(reader.session, os.path.join(model_dir, "model_module"))
             logger.info("Saving model to: %s" % model_dir)
         return m
 
