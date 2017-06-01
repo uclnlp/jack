@@ -311,7 +311,7 @@ class EvalHook(TraceHook):
                 self._batches = self.reader.input_module.dataset_generator(self._dataset, True, self._dataset_name, self._dataset_identifier)
                 self._total = self.reader.input_module.batcher.num_samples
             else:
-                self._batches = self.reader.input_module.dataset_generator(self._dataset, True, self._dataset_name, self._dataset_identifier)
+                self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True, dataset_name=self._dataset_name, dataset_identifier=self._dataset_identifier)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
@@ -441,7 +441,9 @@ class ClassificationEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
+        print(labels, predictions)
         acc_exact = np.sum(np.equal(labels, predictions))
+        print(acc_exact)
         acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}

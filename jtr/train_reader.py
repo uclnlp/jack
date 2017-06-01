@@ -117,7 +117,13 @@ def main(batch_size,
         logger.info('device info: ' + str(device).replace("\n", " "))
 
     if debug:
-        logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
+        if not use_streaming:
+            train_data = load_labelled_data(train, debug_examples)
+
+            logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
+
+            dev_data = train_data
+            test_data = train_data
         if pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
@@ -126,6 +132,9 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
+        if not use_streaming:
+            train_data, dev_data = [load_labelled_data(name) for name in [train, dev]]
+            test_data = load_labelled_data(test) if test else None
         logger.info('loaded train/dev/test data')
         if pretrain:
             embeddings = load_embeddings(embedding_file, embedding_format)
@@ -192,22 +201,13 @@ def main(batch_size,
         dev_processor.set_path(dev)
         test_processor.set_path(test)
 
-        training_set = GeneratorWithRestart(train_processor.stream)
-        dev_set = GeneratorWithRestart(dev_processor.stream)
-#        test_set = GeneratorWithRestart(test_processor.stream)
-        test_set = training_set
-    else:
-        training_set = load_labelled_data(train)
-        if debug:
-            dev_set = training_set
-            test_set = training_set
-        else:
-            dev_set = load_labelled_data(dev)
-            test_set = load_labelled_data(test)
+        training_data = GeneratorWithRestart(train_processor.stream)
+        dev_data = GeneratorWithRestart(dev_processor.stream)
+        test_set = GeneratorWithRestart(test_processor.stream)
 
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
-        reader, dev_set, summary_writer=sw, side_effect=side_effect,
+        reader, dev_data, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to,
@@ -216,14 +216,14 @@ def main(batch_size,
 
 
     # Train
-    reader.train(optimizer, training_set,
+    reader.train(optimizer, training_set=train_data,
                  max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
 
     # Test final model
-    if test is not None and model_dir is not None:
+    if test_data is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
-            reader, test_set, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
+            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
             dataset_name=dataset_name,
             dataset_identifier=('test' if use_streaming else None))
 

@@ -700,8 +700,8 @@ class JTReader:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
-
-    def train(self, optim, training_set,
+    def train(self, optimizer,
+              training_set: Sequence[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value,
               dataset_name=None):
@@ -719,9 +719,7 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.input_module.setup_from_data(training_set, dataset_name)
-        self.model_module.shared_resources = self.input_module.shared_resources
-        self.model_module.setup()
+        self.setup_from_data(training_set, dataset_name)
         self.session.run([v.initializer for v in self.model_module.variables])
 
         batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_name=dataset_name, dataset_identifier='train')
@@ -733,16 +731,16 @@ class JTReader:
                 tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
 
         if clip:
-            gradients = optim.compute_gradients(loss)
+            gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
                              for grad, var in gradients if grad]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
                              for grad, var in gradients if grad]
-            min_op = optim.apply_gradients(gradients)
+            min_op = optimizer.apply_gradients(gradients)
         else:
-            min_op = optim.minimize(loss)
+            min_op = optimizer.minimize(loss)
 
         # initialize non model variables like learning rate, optimizer vars ...
         self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
