@@ -21,7 +21,7 @@ The installing procedure currently has three plus one steps:
   - Run in the main directory `make overfit` to test the functionality of the integration between TensorFlow and jtr
 
 #### 4. (Optional) Install missing requirements
-  - In some cases you might to manually install some requirements to fix some errors during the `make overfit` procedure. You can install these requirements with `pip3 install -r requirement.txt` in the main directory
+  - In some cases you might to manually install some requirements to fix some errors during the `make overfit` procedure. You can install these requirements with `pip3 install -r requirements.txt` in the main directory
 
 ## Run an example in jtr
 
