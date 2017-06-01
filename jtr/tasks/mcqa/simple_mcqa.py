@@ -210,7 +210,7 @@ class MultiSupportFixedClassInputs(InputModule):
                         sepvocab=True) -> SharedResources:
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
                 preprocess_with_pipeline(data, self.shared_resources.vocab,
-                        None, sepvocab=True)
+                        None, sepvocab=sepvocab)
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
@@ -219,7 +219,8 @@ class MultiSupportFixedClassInputs(InputModule):
         if sepvocab:
             self.shared_resources.answer_vocab = train_answer_vocab
         else:
-            self.answer_vocab = train_vocab
+            self.shared_resources.answer_vocab = train_vocab
+        print(len(self.shared_resources.answer_vocab),sepvocab)
 
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
                           is_eval: bool, dataset_name=None, dataset_identifier= None) -> Iterable[Mapping[TensorPort, np.ndarray]]:

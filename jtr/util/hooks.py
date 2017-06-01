@@ -263,7 +263,6 @@ class EvalHook(TraceHook):
                  write_metrics_to=None, info="", side_effect=None, dataset_name=None,
                  dataset_identifier=None):
         super(EvalHook, self).__init__(reader, summary_writer)
-        print(info, side_effect, dataset_name, dataset_identifier)
 
 
         if dataset_identifier is None:
@@ -442,9 +441,7 @@ class ClassificationEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
-        print(labels, predictions)
         acc_exact = np.sum(np.equal(labels, predictions))
-        print(acc_exact/128.)
         acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
@@ -586,29 +583,9 @@ class KBPEvalHook(EvalHook):
                                                   np.round(wmap, 5)))
         res += '\t' + self._info
         logger.info(res)
-        #lost=set()
-        #with open("data/NYT/predict.txt","w") as w:
-        #    for qa_id, qa_score in qa_sorted:
-        #        q,a=qa_id.split("\t")
-        #        r=vocab.get_sym(int(q))
-        #        try:
-        #            e1,e2=vocab.get_sym(int(a)).lstrip("(").rstrip(")").split("|||")
-        #        except:
-        #            lost.add(r)
-        #        lost.add(r)
-        #        line="\t".join([str(qa_score),e1,e2,"REL$NA",r])+"\n"
-        #        w.write(line)
-        #    for r in lost:
-        #        print(r)
-
 
 
     def at_epoch_end(self, epoch: int, **kwargs):
         self.epoch += 1
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
-
-
-#    def at_epoch_end(self, epoch: int, **kwargs):
-#        if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
-#            self.at_test_time(epoch)

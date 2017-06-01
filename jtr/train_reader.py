@@ -198,8 +198,12 @@ def main(batch_size,
         test_set = training_set
     else:
         training_set = load_labelled_data(train)
-        dev_set = load_labelled_data(dev)
-        test_set = load_labelled_data(test)
+        if debug:
+            dev_set = training_set
+            test_set = training_set
+        else:
+            dev_set = load_labelled_data(dev)
+            test_set = load_labelled_data(test)
 
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
