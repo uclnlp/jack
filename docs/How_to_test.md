@@ -59,7 +59,7 @@ The tests cases are automatically created once you add a model or a dataset, whi
 - Rerun your model, it should now pass the tests
 - Commit your work, you are done!
 
-#### 6. Edit [conftest.py](./tests/conftest.py)
+#### 6. Edit `tests/conftest.py`
 - Explanation: This file is responsible to make it possible to filter test according their name, for example the "test-sentihood" in`pytest -v -m sentihood`
 - If you added a dataset and all test mosts contain the dataset name (they should do) then add it into the filter (take the other data sets as an example)
 - If you added a model you can also create a filter for that (currently no such filter exists as an example)
