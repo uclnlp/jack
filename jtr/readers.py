@@ -3,8 +3,7 @@
 from jtr.core import *
 
 from jtr.util.hooks import XQAEvalHook, ClassificationEvalHook
-from jtr.util.hdf5_processing.pipeline import DatasetStreamer
-from jtr.util.hdf5_processing.processors import RemoveLineOnJsonValueCondition, DictKey2ListMapper, JsonLoaderProcessors
+from jtr.io.stream_processors import get_snli_stream_processor
 
 reader2stream_processor = {}
 readers = {}
@@ -15,12 +14,6 @@ genqa_readers = {}
 mcqa_readers = {}
 kbp_readers = {}
 
-def get_snli_stream_processor():
-    s = DatasetStreamer()
-    s.add_stream_processor(JsonLoaderProcessors())
-    s.add_stream_processor(RemoveLineOnJsonValueCondition('gold_label', lambda label: label == '-'))
-    s.add_stream_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
-    return s
 
 
 def __reader(f):
@@ -190,7 +183,8 @@ def cbilstm_snli_streaming_reader(shared_resources: SharedResources):
 
     [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
-    from jtr.tasks.mcqa.simple_mcqa import StreamingSingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
+    from jtr.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
+    from jtr.tasks.mcqa.streaming_mcqa import StreamingSingleSupportFixedClassInputs
     input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
     output_module = EmptyOutputModule()

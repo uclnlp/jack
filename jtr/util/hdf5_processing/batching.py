@@ -10,7 +10,6 @@ import queue
 
 from jtr.util.util import get_data_path, load_hdf_file, Timer
 from jtr.util.global_config import Config
-from jtr.util.hdf5_processing.hooks import ETAHook
 from jtr.util.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
 
 benchmark = False

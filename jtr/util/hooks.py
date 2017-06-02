@@ -441,9 +441,7 @@ class ClassificationEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
-        print(labels, predictions)
         acc_exact = np.sum(np.equal(labels, predictions))
-        print(acc_exact)
         acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}

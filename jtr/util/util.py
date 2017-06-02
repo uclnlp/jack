@@ -20,6 +20,7 @@ import time
 import logging
 logger = logging.getLogger("tfutil")
 
+
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
     """Switches printoptions temporarily via yield before switching back."""

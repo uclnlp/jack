@@ -297,7 +297,7 @@ class InputModule:
     """
 
     @abstractmethod
-    def output_ports(self) -> List[TensorPort]:
+    def output_ports(self) -> Iterable[TensorPort]:
         """
         Defines what types of tensors the output module produces in each batch.
         Returns: a list of tensor ports that correspond to the tensor ports in the mapping
@@ -307,7 +307,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def training_ports(self) -> List[TensorPort]:
+    def training_ports(self) -> Iterable[TensorPort]:
         """
         Defines what types of tensor are provided in addition to `output_ports` during training
         in the `dataset_generator` function. Typically these will be ports that describe
@@ -316,7 +316,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: Iterable[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """
         Converts a list of inputs into a single batch of tensors, consistent with the `output_ports` of this
         module.
@@ -330,7 +330,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None, identifier=None) -> \
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]], is_eval: bool, dataset_name=None, identifier=None) -> \
             Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -346,7 +346,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]], dataset_name=None, dataset_identifier=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]], dataset_name=None, dataset_identifier=None) -> SharedResources:
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other
         resources.
@@ -388,7 +388,7 @@ class ModelModule:
 
     def __call__(self, session: tf.Session,
                  batch: Mapping[TensorPort, np.ndarray],
-                 goal_ports: List[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
+                 goal_ports: Iterable[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
         """
         Runs a batch represented by a mapping from tensorports to numpy arrays and returns value for specified
         goal ports.
@@ -765,7 +765,7 @@ class JTReader:
         Args:
             data: training dataset
         """
-        self.input_module.setup_from_data(data )
+        self.input_module.setup_from_data(data)
         self.model_module.setup(self.is_train)
         self.output_module.setup()
         self.session.run([v.initializer for v in self.model_module.variables])

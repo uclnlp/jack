@@ -7,7 +7,6 @@ import os.path as path
 import random
 import shutil
 import sys
-import copy
 import tensorflow as tf
 
 
@@ -19,11 +18,10 @@ from tensorflow.python.client import device_lib
 
 from jtr import readers
 from jtr.core import SharedResources
-from jtr.data_structures import load_labelled_data
+from jtr.data_structures import load_labelled_data, load_labelled_data_stream
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.util.vocab import Vocab
-from jtr.util.hdf5_processing.pipeline import GeneratorWithRestart
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -119,11 +117,14 @@ def main(batch_size,
     if debug:
         if not use_streaming:
             train_data = load_labelled_data(train, debug_examples)
+        else:
+            train_data = load_labelled_data_stream(train, readers.reader2stream_processor[model])
 
-            logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
+        logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
 
-            dev_data = train_data
-            test_data = train_data
+        dev_data = train_data
+        test_data = train_data
+
         if pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
@@ -133,8 +134,15 @@ def main(batch_size,
             embeddings = Embeddings(None, None)
     else:
         if not use_streaming:
-            train_data, dev_data = [load_labelled_data(name) for name in [train, dev]]
+            train_data = load_labelled_data(train)
+            dev_data = load_labelled_data(dev)
             test_data = load_labelled_data(test) if test else None
+        else:
+            s = readers.reader2stream_processor[model]
+            train_data = load_labelled_data_stream(train, s)
+            dev_data = load_labelled_data_stream(dev, s)
+            test_data = load_labelled_data_stream(test, s) if test else None
+
         logger.info('loaded train/dev/test data')
         if pretrain:
             embeddings = load_embeddings(embedding_file, embedding_format)
@@ -189,21 +197,6 @@ def main(batch_size,
                 reader.model_module.store(reader.session, os.path.join(model_dir, "model_module"))
             logger.info("Saving model to: %s" % model_dir)
         return m
-
-
-    if use_streaming:
-        s = readers.reader2stream_processor[model]
-        train_processor = copy.deepcopy(s)
-        dev_processor = copy.deepcopy(s)
-        test_processor = copy.deepcopy(s)
-
-        train_processor.set_path(train)
-        dev_processor.set_path(dev)
-        test_processor.set_path(test)
-
-        training_data = GeneratorWithRestart(train_processor.stream)
-        dev_data = GeneratorWithRestart(dev_processor.stream)
-        test_set = GeneratorWithRestart(test_processor.stream)
 
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](

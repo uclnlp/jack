@@ -9,6 +9,12 @@ from jtr.util.random import DefaultRandomState
 
 rs = DefaultRandomState(1337)
 
+class GeneratorWithRestart(object):
+    def __init__(self, iterator):
+        self.iterator = iterator
+
+    def __iter__(self):
+        return self.iterator()
 
 def get_buckets(data, order, structure):
     """
@@ -192,12 +198,3 @@ def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, 
             yield x
 
     return GeneratorWithRestart(generator)
-
-
-class GeneratorWithRestart(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return self.iterator()
-

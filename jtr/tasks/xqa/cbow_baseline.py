@@ -40,7 +40,7 @@ class CBOWXqaInputModule(InputModule):
         self.__nlp = spacy.load('en', parser=False)
         self.setup_from_data(self.shared_vocab_config.train_data)
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]]) -> SharedResources:
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
         # Assumes that vocab and embeddings are given during creation
@@ -93,7 +93,7 @@ class CBOWXqaInputModule(InputModule):
         return [start_id, end_id]
 
     @property
-    def output_ports(self) -> List[TensorPort]:
+    def output_ports(self) -> Iterable[TensorPort]:
         return [XQAPorts.emb_question, XQAPorts.question_length,
                 XQAPorts.emb_support, XQAPorts.support_length,
                 # char
@@ -109,10 +109,10 @@ class CBOWXqaInputModule(InputModule):
                 CBOWXqaPorts.answer_type_span]
 
     @property
-    def training_ports(self) -> List[TensorPort]:
+    def training_ports(self) -> Iterable[TensorPort]:
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) \
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]], is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
@@ -193,7 +193,7 @@ class CBOWXqaInputModule(InputModule):
 
         return GeneratorWithRestart(batch_generator)
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: Iterable[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(qa_settings, self.vocab, self.config.get("lowercase", False), with_answers=False,

@@ -6,15 +6,9 @@ from os.path import join
 from jtr.util.hdf5_processing.vocab import Vocab
 from jtr.util.util import Timer
 from jtr.data_structures import QASetting, Answer
+from jtr.util.batch import GeneratorWithRestart
 
 t = Timer()
-
-class GeneratorWithRestart(object):
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return self.iterator()
 
 class DatasetStreamer(object):
     def __init__(self, input_keys=None, output_keys=None):
