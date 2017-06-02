@@ -29,6 +29,7 @@ def tokenize(xs, pattern=None):
         return [x for x in re.split(pattern, xs)
                 if not re.match("\s", x) and x != ""]
 
+
 def notokenize(xs):
     """Embeds deepest itemns into a list"""
     return [xs]
