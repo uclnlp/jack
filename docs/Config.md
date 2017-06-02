@@ -9,36 +9,36 @@ For instance, `./conf/jack_more_specific.yaml` inherits and overrides parameters
 ## Selecting a Config
 Paths to configs are passed in the command line. For example, the following runs Jack with the `jack_more_specific.yaml` config.
 ```shell
-python3 jtr/jack/train/train_sacred_reader.py with config=‘../conf/jack_more_specific.yaml'
+$ python3 jtr/train_reader.py with config=‘../conf/jack_more_specific.yaml'
 ```
 If no `config` is specified, the default configuration `./conf/jack.yaml` is used.
 
 ## Command Line Arguments
 Config parameters can be overriden by command line arguments. For instance, the following overrides the l2 regularization strength to `0.001`:
 ```shell
-python3 jtr/jack/train/train_sacred_reader.py with config='./conf/jack_more_specific.yaml' l2=0.001
+$ python3 jtr/train_reader.py with config='./conf/jack_more_specific.yaml' l2=0.001
 ```
 
 ## Printing Config
 Passing `print_config` to the reader shows the config that is used.
 ```shell
-python3 jtr/jack/train/train_sacred_reader.py print_config with config='./conf/jack_more_specific.yaml' l2=0.001
+$ python3 jtr/train_reader.py print_config with config='./conf/jack_more_specific.yaml' l2=0.001
 ```
 Note that configuration parameters that are overriden using the command line are highlighted in blue.
 
 ## Saving Config
 Passing `save_config` saves the used config file as YAML in the working directory.
 ```shell
-python3 jtr/jack/train/train_sacred_reader.py save_config with config='./conf/jack_more_specific.yaml' l2=0.001
+$ python3 jtr/train_reader.py save_config with config='./conf/jack_more_specific.yaml' l2=0.001
 ```
 
 ## Example: Extractive Q&A
 Download data and GloVe embeddings
 ```shell
-cd data/SQuAD/
-./download.sh
-cd ../GloVe/
-./download.sh
+$ cd data/SQuAD/
+$ ./download.sh
+$ cd ../GloVe/
+$ ./download.sh
 ```
 
 Convert SQuAD into Jack format
