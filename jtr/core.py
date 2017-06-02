@@ -304,7 +304,7 @@ class InputModule:
         produced by `__call__`. The `dataset_generator` method will return bindings for these
         ports and the ones in `training_ports`.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def training_ports(self) -> List[TensorPort]:
@@ -313,7 +313,7 @@ class InputModule:
         in the `dataset_generator` function. Typically these will be ports that describe
         the target solution at training time.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
@@ -327,7 +327,7 @@ class InputModule:
             A mapping from ports to tensors.
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool) -> \
@@ -343,7 +343,7 @@ class InputModule:
 
         Returns: An iterable/generator that, on each pass through the data, produces a list of batches.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
@@ -355,7 +355,7 @@ class InputModule:
 
         Returns: vocab
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def setup(self):
@@ -363,19 +363,19 @@ class InputModule:
         Args:
             shared_resources:
         """
-        pass
+        raise NotImplementedError
 
     def store(self, path):
         """
         Store the state of this module. Default is that there is no state, so nothing to store.
         """
-        pass
+        raise NotImplementedError
 
     def load(self, path):
         """
         Load the state of this module. Default is that there is no state, so nothing to load.
         """
-        pass
+        raise NotImplementedError
 
 
 class ModelModule:
@@ -418,14 +418,14 @@ class ModelModule:
         """
         Returns: Definition of the output ports of this module.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the input ports.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def training_input_ports(self) -> Sequence[TensorPort]:
@@ -433,28 +433,28 @@ class ModelModule:
         Returns: Definition of the input ports necessary to create the training output ports, i.e., they do not have
         to be provided during eval and they can include output ports of this module.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def training_output_ports(self) -> Sequence[TensorPort]:
         """
         Returns: Definition of the output ports provided during training for this module.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
         """
         Returns: A mapping from ports to the TF placeholders that correspond to them.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def tensors(self) -> Mapping[TensorPort, tf.Tensor]:
         """
         Returns: A mapping from ports to the TF tensors that correspond to them.
         """
-        pass
+        raise NotImplementedError
 
     def convert_to_feed_dict(self, mapping: Mapping[TensorPort, np.ndarray]) -> Mapping[tf.Tensor, np.ndarray]:
         result = {ph: mapping[port] for port, ph in self.placeholders.items() if port in mapping}
@@ -467,27 +467,29 @@ class ModelModule:
         to be called after the input module is set up and shared resources, such as the vocab, config, etc.,
         are prepared already at this point.
         """
-        pass
+        raise NotImplementedError
 
     def store(self, sess, path):
         """
         Store the state of this module. Default is that there is no state, so nothing to store.
         """
-        pass
+        raise NotImplementedError
 
     def load(self, sess, path):
         """
         Load the state of this module. Default is that there is no state, so nothing to load.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def train_variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of training variables """
+        raise NotImplementedError
 
     @abstractmethod
     def variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of variables """
+        raise NotImplementedError
 
 
 class SimpleModelModule(ModelModule):
@@ -511,7 +513,7 @@ class SimpleModelModule(ModelModule):
         Returns:
             mapping from defined output ports to their tensors.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def create_training_output(self, shared_resources: SharedResources,
@@ -526,7 +528,7 @@ class SimpleModelModule(ModelModule):
         Returns:
             mapping from defined training output ports to their tensors.
         """
-        pass
+        raise NotImplementedError
 
     def setup(self, is_training=True):
         old_train_variables = tf.trainable_variables()
@@ -587,7 +589,7 @@ class OutputModule:
         """
         Returns: correspond to a subset of output ports of model module.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, inputs: Sequence[QASetting], *tensor_inputs: np.ndarray) -> Sequence[Answer]:
@@ -601,7 +603,7 @@ class OutputModule:
         Returns:
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def setup(self):
@@ -611,13 +613,13 @@ class OutputModule:
         """
         Store the state of this module. Default is that there is no state, so nothing to store.
         """
-        pass
+        raise NotImplementedError
 
     def load(self, path):
         """
         Load the state of this module. Default is that there is no state, so nothing to load.
         """
-        pass
+        raise NotImplementedError
 
 
 class JTReader:

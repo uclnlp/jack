@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from abc import abstractmethod, ABCMeta
-from typing import List
-
-import tensorflow as tf
-
+from abc import ABCMeta
 from jtr.core import *
 
 
@@ -17,7 +13,7 @@ class SingleSupportFixedClassForward(object):
                      S_embedding_matrix, S_ids, S_lengths,
                      num_classes):
         '''Takes a single support and question and produces logits'''
-        pass
+        raise NotImplementedError
 
 
 class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
@@ -28,7 +24,6 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         self.question_embedding_matrix = question_embedding_matrix
         self.support_embedding_matrix = support_embedding_matrix
         super(AbstractSingleSupportFixedClassModel, self).__init__(shared_resources)
-
 
     @property
     def input_ports(self) -> List[TensorPort]:

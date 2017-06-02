@@ -27,14 +27,15 @@ class TrainingHook(metaclass=ABCMeta):
     @abstractmethod
     def reader(self) -> JTReader:
         """ Returns: JTReader instance"""
+        raise NotImplementedError
 
     @abstractmethod
     def at_epoch_end(self, epoch: int, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def at_iteration_end(self, epoch: int, loss: float, set_name = 'train', **kwargs):
-        pass
+        raise NotImplementedError
 
 
 class TraceHook(TrainingHook):
@@ -277,18 +278,18 @@ class EvalHook(TraceHook):
     @abstractmethod
     def possible_metrics(self) -> List[str]:
         """Returns: list of metric keys this evaluation hook produces. """
+        raise NotImplementedError
 
     @abstractmethod
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         """Returns: dict from metric name to float"""
+        raise NotImplementedError
 
     def combine_metrics(self, accumulated_metrics: Mapping[str, List[float]]) -> Mapping[str, float]:
         """Returns:
                dict from metric name to float. Per default batch metrics are simply averaged by
                total number of examples"""
         return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
-
-
 
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
