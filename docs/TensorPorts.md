@@ -58,66 +58,51 @@ class Ports:
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
 
-        single_support = TensorPort(tf.int32, [None, None], "single_support",
-                                    "Represents instances with a single support document. ",
-                                    "[batch_size, max_num_tokens]")
-
         multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
-                                      "Represents instances with multiple support documents",
+                                      ("Represents instances with multiple support documents",
+                                       " or single instances with extra dimension set to 1"),
                                       "[batch_size, max_num_support, max_num_tokens]")
 
         atomic_candidates = TensorPort(tf.int32, [None, None], "candidates",
-                                       "Represents candidate choices using single symbols",
+                                       ("Represents candidate choices using single symbols. ",
+                                        "This could be a list of entities from global entities ",
+                                        "for example atomic_candidates = [e1, e7, e83] from ",
+                                        "global_entities = [e1, e2, e3, ..., eN-1, eN"),
                                        "[batch_size, num_candidates]")
 
         sample_id = TensorPort(tf.int32, [None], "sample_id",
                                "Maps this sample to the index in the input text data",
                                "[batch_size]")
 
-        candidates1d = TensorPort(tf.int32, [None], "candidates_idx",
-                                  "Represents candidate choices using single symbols",
-                                  "[batch_size]")
+        support_length = TensorPort(tf.int32, [None, None], "support_length",
+                                    "Represents length of supports in each support in batch",
+                                    "[batch_size, num_supports]")
 
-        keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
-                                          "scalar representing keep probability when using dropout",
-                                          "[]")
-
-        is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
-                                        "boolean that determines whether input is eval or training.",
-                                        "[]")
-
-        support_length = TensorPort(tf.int32, [None], "support_length_flat",
-                                    "Represents length of support in batch",
-                                    "[S]")
-
-        question_length = TensorPort(tf.int32, [None], "question_length_flat",
+        question_length = TensorPort(tf.int32, [None], "question_length",
                                      "Represents length of questions in batch",
                                      "[Q]")
 
     class Prediction:
-        candidate_scores = TensorPort(tf.float32, [None, None], "candidate_scores",
-                                      "Represents output scores for each candidate",
-                                      "[batch_size, num_candidates]")
+        logits = TensorPort(tf.float32, [None, None], "candidate_scores",
+                            "Represents output scores for each candidate",
+                            "[batch_size, num_candidates]")
 
-        candidate_index = TensorPort(tf.int32, [None], "candidate_idx",
+        candidate_index = TensorPort(tf.float32, [None], "candidate_idx",
                                      "Represents answer as a single index",
                                      "[batch_size]")
 
-        candidate_idx = TensorPort(tf.float32, [None], "candidate_predictions_flat",
-                                   "Represents groundtruth candidate labels, usually 1 or 0",
-                                   "[C]")
+    class Target:
+        candidate_1hot = TensorPort(tf.float32, [None, None], "candidate_targets",
+                                    "Represents target (0/1) values for each candidate",
+                                    "[batch_size, num_candidates]")
 
-    class Targets:
-        candidate_labels = TensorPort(tf.float32, [None, None], "candidate_targets",
-                                      "Represents target (0/1) values for each candidate",
-                                      "[batch_size, num_candidates]")
         target_index = TensorPort(tf.int32, [None], "target_index",
-                                  "Represents symbol id of target candidate",
+                                  ("Represents symbol id of target candidate. ",
+                                   "This can either be an index into a full list of candidates,",
+                                   " which is fixed, or an index into a partial list of ",
+                                   "candidates, for example a list of potential entities ",
+                                   "from a list of many candiadtes"),
                                   "[batch_size]")
-
-        candidate_idx = TensorPort(tf.int32, [None], "candidate_targets",
-                                   "Represents groundtruth candidate labels, usually 1 or 0",
-                                   "[C]")
 
 
 class FlatPorts:
@@ -225,4 +210,5 @@ class FlatPorts:
         embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question_flat",
                                        "Represents the embedded question",
                                        "[Q, max_num_question_tokens, N]")
+        # -attention, ...
 ```

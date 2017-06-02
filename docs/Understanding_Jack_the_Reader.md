@@ -94,7 +94,7 @@ We have the following modules with the following functionality, defined in [jtr/
                       question_length : tf.Tensor) -> Sequence[tf.Tensor]:
 
       @property
-      def input_ports(self) -> List[TensorPort]:
+      def input_ports(self) -> Sequence[TensorPort]:
           return [Ports.Input.single_support,
                   Ports.Input.question, Ports.Input.support_length,
                   Ports.Input.question_length]
