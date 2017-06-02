@@ -76,31 +76,7 @@ We have the following modules with the following functionality, defined in [jtr/
 ##### Implementing the Simple Model Module
 
 1. Overwrite the `input_ports()`, `output_ports()` and `training_output()` properties so that output from the `create_output()` method is reused in the `create_training_outputs()` 
-2. extend the functional interface from a list, to spell out the actual tensor names, for example:
-  ```
-      # this is the template
-      @abstractmethod
-      def create_output(self, shared_resources: SharedResources,
-                      *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
-                          @abstractmethod
-
-      # this is the spelled out template, we removed the list argument and spelled
-      # out the actual components in this list. Note that the order is the same as in the
-      # input_port property of the SimpleModelModule
-      def create_output(self, shared_resources: SharedResources,
-                      support : tf.Tensor,
-                      question : tf.Tensor,
-                      support_length : tf.Tensor,
-                      question_length : tf.Tensor) -> Sequence[tf.Tensor]:
-
-      @property
-      def input_ports(self) -> Sequence[TensorPort]:
-          return [Ports.Input.single_support,
-                  Ports.Input.question, Ports.Input.support_length,
-                  Ports.Input.question_length]
-
-
-  ```
+2. extend the functional interface from a list, to spell out the actual tensor names.
 3. Implement your model in `create_output()` up to the predictions, i.e., excluding training related code which is implemented in `create_training_outputs()`.
   - You can use different predefined model blocks like bidirectional LSTMs over support and question; highway networks, fully connected projection layers and so forth which you can find in [jtr/jack/tf_fun/](jtr/tf_fun/)
 4. We now implement the `create_training_outputs()` which basically create the loss
