@@ -4,7 +4,7 @@
 
 The installing procedure currently has three plus one steps:
   1. Install Tensorflow, HDF5 (hdf5-devel)
-  2. Run [setup.py](setup.py)
+  2. Run `setup.py`
   3. Test your install
   4. (Optional) install missing dependencies
 
@@ -13,12 +13,12 @@ The installing procedure currently has three plus one steps:
   - GPU requirements: [CUDA 8.0](https://developer.nvidia.com/cuda-downloads) and cuDNN (you need to register with NVIDIA)
   - Follow the TensorFlow [installation guide](https://www.tensorflow.org/get_started/os_setup)
 
-#### 2. Run [setup.py](setup.py)
-  - Run in the main directory: `sudo python3 setup.py install`
+#### 2. Run `setup.py`
+  - Run in the main directory: `$ sudo python3 setup.py install`
 
 #### 3. If you run in some problems with missing libraries
-  - Run in the main directory `make test` to test the core functionality of jtr
-  - Run in the main directory `make overfit` to test the functionality of the integration between TensorFlow and jtr
+  - Run in the main directory `$ make test` to test the core functionality of jtr
+  - Run in the main directory `$ make overfit` to test the functionality of the integration between TensorFlow and jtr
 
 #### 4. (Optional) Install missing requirements
   - In some cases you might to manually install some requirements to fix some errors during the `make overfit` procedure. You can install these requirements with `pip3 install -r requirements.txt` in the main directory
@@ -39,29 +39,42 @@ There are currently four steps to get an example running with jtr:
   - Go to the main jtr directory and execute the preprocessing script located in jtr/load for example for SNLI you can run `python3 jtr/load/SNLI2jtr_v1.py` the data will be converted and rewritten into the jtr/data directory
 
 #### 3. Run training_pipeline.py with parameters for your dataset and the model that you want
-  - The main point of entry to run a model with jtr is [training_pipeline.py](./jtr/training_pipeline.py) we need to pass some parameters for our data into the script along with the model that we want to run. By default we run a pair of conditional bidirectional LSTM readers that make use of a single supporting information (input: Question; support: Supporting document which should be used to answer that question)
-  - For the data the pipeline expects 3 filepath arguments to jtr JSON files: train, dev, and test for the respective data sets. For example for SNLI we have: 
-  ```
-  python3 training_pipeline.py --train=data/SNLI/snli_1.0/snli_1.0_train_jtr_v1.json --dev=data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json --test=data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json
-  ```
-  - At this point we can also add other parameters like learning rate and L2 penalty: 
-  ```
-  python3 training_pipeline.py --train=data/SNLI/snli_1.0/snli_1.0_train_jtr_v1.json --dev=data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json --test=data/SNLI/snli_1.0/snli_1.st_jtr_v1.json --learning_rate=0.001 --l2=0.0001
-  ```
+  - The main point of entry to run a model with jtr is `jtr/train_reader.py` we need to pass some parameters for our data into the script along with the model that we want to run. By default we run a pair of conditional bidirectional LSTM readers that make use of a single supporting information (input: Question; support: Supporting document which should be used to answer that question)
 
 #### 4. You can find the list of available models in the models dictionary in the beginning of the training_pipeline.py file
-  - We can also use different models. You can look up models that are available in the [training_pipeline.py](./jtr/training_pipeline.py) dictionary:
-  ```
-    reader_models = {
-        'bicond_singlesupport_reader': models.conditional_reader_model,
-        'bicond_singlesupport_reader_with_cands': models.conditional_reader_model_with_cands,
-        'bilstm_singlesupport_reader_with_cands': models.bilstm_reader_model_with_cands,
-        'bilstm_nosupport_reader_with_cands': models.bilstm_nosupport_reader_model_with_cands,
-        'boe_support_cands': models.boe_support_cands_reader_model,
-        'boe_nosupport_cands': models.boe_nosupport_cands_reader_model,
-        'boe_support': models.boe_reader_model,
-        'boe_nosupport': models.boenosupport_reader_model,
-    }
-  ```
-  Use the string as an argument for the `model=argument` option, for example `--model=boe_nosupport`
-
+  - We can also use different models. You can look up models that are available in `jtr/readers.py`:
+```shell
+$ cat jtr/readers.py | grep @ -A 1
+@__mcqa_reader
+def example_reader(shared_resources: SharedResources):
+--
+@__kbp_reader
+def modelf_reader(shared_resources: SharedResources):
+--
+@__kbp_reader
+def distmult_reader(shared_resources: SharedResources):
+--
+@__kbp_reader
+def complex_reader(shared_resources: SharedResources):
+--
+@__kbp_reader
+def transe_reader(shared_resources: SharedResources):
+--
+@__xqa_reader
+def fastqa_reader(shared_resources: SharedResources):
+--
+@__xqa_reader
+def cbow_xqa_reader(shared_resources: SharedResources):
+--
+@__mcqa_reader
+def cbilstm_snli_reader(shared_resources: SharedResources):
+--
+@__mcqa_reader
+def dam_snli_reader(shared_resources: SharedResources):
+--
+@__mcqa_reader
+def esim_snli_reader(shared_resources: SharedResources):
+--
+@__mcqa_reader
+def snli_reader(shared_resources: SharedResources):
+```

@@ -1,7 +1,8 @@
-from collections import namedtuple
+# -*- coding: utf-8 -*-
 
 from jtr.util.logger import Logger
 log = Logger('global_config.py.txt')
+
 
 class Backends:
     TENSORFLOW = 'tensorflow'
@@ -20,7 +21,6 @@ class Config:
 
     @staticmethod
     def parse_argv(argv):
-        file_name = argv[0]
         args = argv[1:]
         assert len(args) % 2 == 0, 'Global parser expects an even number of arguments.'
         values = []
@@ -38,34 +38,38 @@ class Config:
 
         for i in range(len(names)):
             name = names[i]
-            if name[:2] == '--': continue
+            if name[:2] == '--':
+                continue
             assert name in params2type, 'Parameter {0} does not exist. Prefix your custom parameters with -- to skip parsing for global config'.format(name)
             values[i] = params2type[name](values[i])
 
         for name, value in zip(names, values):
             print(name, value)
-            if name[:2] == '--': continue
+            if name[:2] == '--':
+                continue
             params2field[name](value)
             log.debug('Set parameter {0} to {1}', name, value)
 
 
-params2type = {}
-params2type['learning_rate'] = lambda x: float(x)
-params2type['dropout'] = lambda x: float(x)
-params2type['batch_size'] = lambda x: int(x)
-params2type['L2'] = lambda x: float(x)
-params2type['embedding_dim'] = lambda x: int(x)
-params2type['hidden_size'] = lambda x: int(x)
+params2type = {
+    'learning_rate': lambda x: float(x),
+    'dropout': lambda x: float(x),
+    'batch_size': lambda x: int(x),
+    'L2': lambda x: float(x),
+    'embedding_dim': lambda x: int(x),
+    'hidden_size': lambda x: int(x)
+}
 
-alias2params = {}
-alias2params['lr'] = 'learning_rate'
-alias2params['l2'] = 'L2'
+alias2params = {
+    'lr': 'learning_rate',
+    'l2': 'L2'
+}
 
-
-params2field = {}
-params2field['learning_rate'] = lambda x: setattr(Config, 'learning_rate', x)
-params2field['dropout'] = lambda x: setattr(Config, 'dropout', x)
-params2field['batch_size'] = lambda x: setattr(Config, 'batch_size', x)
-params2field['L2'] = lambda x: setattr(Config, 'L2', x)
-params2field['embedding_dim'] = lambda x: setattr(Config, 'embedding_dim', x)
-params2field['hidden_size'] = lambda x: setattr(Config, 'embedding_dim', x)
+params2field = {
+    'learning_rate': lambda x: setattr(Config, 'learning_rate', x),
+    'dropout': lambda x: setattr(Config, 'dropout', x),
+    'batch_size': lambda x: setattr(Config, 'batch_size', x),
+    'L2': lambda x: setattr(Config, 'L2', x),
+    'embedding_dim': lambda x: setattr(Config, 'embedding_dim', x),
+    'hidden_size': lambda x: setattr(Config, 'embedding_dim', x)
+}

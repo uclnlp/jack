@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from enum import IntEnum
 from os.path import join
 
@@ -10,11 +12,14 @@ import numpy as np
 # these function also exist in util.py,
 # but since logger is imported everywere these function need to be included here
 
+
 def get_home_path():
     return os.environ['HOME']
 
+
 def get_logger_path():
     return join(get_home_path(), '.data', 'log_files')
+
 
 def make_dirs_if_not_exists(path):
     if not os.path.exists(path):
@@ -22,12 +27,14 @@ def make_dirs_if_not_exists(path):
 
 # util functions end
 
+
 class LogLevel(IntEnum):
     STATISTICAL = 0
     DEBUG = 1
     INFO = 2
     WARNING = 3
     ERROR = 4
+
 
 class Logger:
     GLOBAL_LOG_LEVEL = LogLevel.INFO
