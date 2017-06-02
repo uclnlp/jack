@@ -30,29 +30,29 @@ model.
 First, download SQuAD and GloVe embeddings
 
 ```shell
-    $ cd data/SQuAD/
-    $ ./download.sh
-    $ cd ../GloVe/
-    $ ./download.sh
-    $ cd ../..
+$ cd data/SQuAD/
+$ ./download.sh
+$ cd ../GloVe/
+$ ./download.sh
+$ cd ../..
 ```
 
 Then, convert SQuAD into the Jack data format
 
 ```shell
-    $ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
-    $ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
+$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
+$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
 ```
 
 Lastly, train a [FastQA][fastqa] model
 
 ```shell
-    python3 jtr/train_reader.py with config='./conf/extractive_qa.yaml'
+$ python3 jtr/train_reader.py with config='./conf/extractive_qa.yaml'
 ```
 
 A copy of the model is written into the `model_dir` directory after each
 training epoch.  These can be loaded using the commands below or see e.g.
-[the showcase notebook][showcase].
+the showcase notebook in `notebooks/Showcasing_Jack.ipynb`.
 
 ```python
 from jtr import readers
