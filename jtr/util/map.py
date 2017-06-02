@@ -24,11 +24,11 @@ def tokenize(xs, pattern=None):
     """ Splits sentences into tokens. If specific regex pattern is provided,
     then it will be used for tokenisation instead. """
     if not pattern:
-        nltk.download('punkt')
         return nltk.word_tokenize(xs)
     else:
         return [x for x in re.split(pattern, xs)
                 if not re.match("\s", x) and x != ""]
+
 
 def notokenize(xs):
     """Embeds deepest itemns into a list"""
