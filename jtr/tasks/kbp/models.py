@@ -11,7 +11,7 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None) -> SharedResources:
         self.triples = [x[0].question.split() for x in data]
 
         self.entity_set = {s for [s, _, _] in self.triples} | {o for [_, _, o] in self.triples}
@@ -28,11 +28,11 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         pass
 
     @property
-    def training_ports(self) -> Iterable[TensorPort]:
+    def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool) -> List[Mapping[TensorPort, np.ndarray]]:
         qa_settings = [qa_setting for qa_setting, _ in dataset]
         triples = []
         for qa_setting in qa_settings:
@@ -50,7 +50,7 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         batches = get_batches(xy_dict)
         return batches
 
-    def __call__(self, qa_settings: Iterable[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         triples = []
         for qa_setting in qa_settings:
             s, p, o = qa_setting.question.split()
@@ -67,7 +67,7 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         return numpify(xy_dict)
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         return [Ports.Input.question]
 
 
@@ -77,19 +77,19 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
         self.model_name = model_name
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
     @property
-    def training_output_ports(self) -> Iterable[TensorPort]:
+    def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
     @property
-    def training_input_ports(self) -> Iterable[TensorPort]:
+    def training_input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.Target.target_index]
 
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.question]
 
     def create_training_output(self,
@@ -166,7 +166,7 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
         pass
 
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
     def __call__(self,

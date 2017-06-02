@@ -3,9 +3,7 @@
 from jtr.core import *
 
 from jtr.util.hooks import XQAEvalHook, ClassificationEvalHook
-from jtr.io.stream_processors import get_snli_stream_processor
 
-reader2stream_processor = {}
 readers = {}
 eval_hooks = {}
 
@@ -188,17 +186,5 @@ def cbilstm_snli_streaming_reader(shared_resources: SharedResources):
     input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
     output_module = EmptyOutputModule()
-    reader2stream_processor['cbilstm_snli_streaming_reader'] = get_snli_stream_processor()
 
     return JTReader(shared_resources, input_module, model_module, output_module)
-
-# Aliases
-@__mcqa_reader
-def snli_reader(shared_resources: SharedResources):
-    return cbilstm_snli_reader(shared_resources)
-
-# Aliases
-@__mcqa_reader
-def snli_streaming_reader(shared_resources: SharedResources):
-    reader2stream_processor['snli_streaming_reader'] = get_snli_stream_processor()
-    return cbilstm_snli_streaming_reader(shared_resources)

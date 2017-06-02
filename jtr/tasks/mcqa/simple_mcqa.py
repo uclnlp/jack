@@ -11,7 +11,7 @@ from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
 
-from typing import Iterable, Tuple, Mapping
+from typing import List, Tuple, Mapping, Iterable
 
 import tensorflow as tf
 import numpy as np
@@ -24,7 +24,7 @@ class SimpleMCInputModule(InputModule):
         self.config = shared_resources.config
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
         return self.shared_resources
 
@@ -32,7 +32,7 @@ class SimpleMCInputModule(InputModule):
         pass
 
     @property
-    def training_ports(self) -> Iterable[TensorPort]:
+    def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
 
     def preprocess(self, data, test_time=False):
@@ -55,8 +55,8 @@ class SimpleMCInputModule(InputModule):
                                    test_time=test_time)
         return corpus
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]],
-                          is_eval: bool, dataset_name=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, dataset_name=None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -66,7 +66,7 @@ class SimpleMCInputModule(InputModule):
         }
         return get_batches(xy_dict)
 
-    def __call__(self, qa_settings: Iterable[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
         x_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -76,7 +76,7 @@ class SimpleMCInputModule(InputModule):
         return numpify(x_dict)
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         return [Ports.Input.multiple_support,
                 Ports.Input.question, Ports.Input.atomic_candidates]
 
@@ -86,11 +86,11 @@ class MultiSupportFixedClassInputs(InputModule):
         self.shared_resources = shared_resources
 
     @property
-    def training_ports(self) -> Iterable[TensorPort]:
+    def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         """Defines the outputs of the InputModule
 
         1. Word embedding index tensor of questions of mini-batchs
@@ -103,11 +103,11 @@ class MultiSupportFixedClassInputs(InputModule):
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
-    def __call__(self, qa_settings: Iterable[QASetting]) \
+    def __call__(self, qa_settings: List[QASetting]) \
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]], dataset_name=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None) -> SharedResources:
         sepvocab=True
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
                 preprocess_with_pipeline(data, self.shared_resources.vocab,
@@ -122,8 +122,8 @@ class MultiSupportFixedClassInputs(InputModule):
         else:
             self.shared_resources.answer_vocab = train_vocab
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]],
-                          is_eval: bool, dataset_name=None, dataset_identifier= None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, dataset_name=None, dataset_identifier= None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,
@@ -148,19 +148,19 @@ class MultiSupportFixedClassInputs(InputModule):
 class SimpleMCModelModule(SimpleModelModule):
 
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.multiple_support, Ports.Input.question, Ports.Input.atomic_candidates]
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
     @property
-    def training_input_ports(self) -> Iterable[TensorPort]:
+    def training_input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.Target.candidate_1hot]
 
     @property
-    def training_output_ports(self) -> Iterable[TensorPort]:
+    def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
     def create_training_output(self,
@@ -202,10 +202,10 @@ class SimpleMCOutputModule(OutputModule):
         pass
 
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: Iterable[QASetting], logits: np.ndarray) -> Iterable[Answer]:
+    def __call__(self, inputs: List[QASetting], logits: np.ndarray) -> List[Answer]:
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
         winning_indices = np.argmax(logits, axis=1)
@@ -306,12 +306,12 @@ class EmptyOutputModule(OutputModule):
         self.setup()
 
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits,
                 Ports.Prediction.candidate_index,
                 Ports.Target.target_index]
 
-    def __call__(self, inputs: Iterable[QASetting], *tensor_inputs: np.ndarray) -> Iterable[Answer]:
+    def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
         return tensor_inputs
 
     def setup(self):
@@ -333,17 +333,17 @@ class MisclassificationOutputModule(OutputModule):
         self.setup()
 
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits,
                 Ports.Prediction.candidate_index,
                 Ports.Target.target_index,
                 Ports.Input.sample_id]
 
-    def __call__(self, inputs: Iterable[QASetting],
+    def __call__(self, inputs: List[QASetting],
                  logits,
                  candidate_idx,
                  labels,
-                 sample_ids) -> Iterable[Answer]:
+                 sample_ids) -> List[Answer]:
         if self.i >= self.limit:
             return
 

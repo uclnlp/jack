@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from random import shuffle
-from typing import Iterable, Sequence
+from typing import List, Sequence
 
 from jtr.data_structures import *
 
@@ -10,7 +10,7 @@ from jtr.util.batch import get_batches
 from jtr.util.map import numpify, deep_map, notokenize
 
 
-class ShuffleIterable:
+class ShuffleList:
     def __init__(self,drawlist,qa):
         assert len(drawlist) > 0
         self.qa = qa
@@ -64,7 +64,7 @@ class ModelFInputModule(InputModule):
         self.shared_resources = shared_resources
         self.setup_from_data(self.shared_vocab_config.train_data)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
         self.vocab.freeze()
         return self.shared_resources
@@ -73,7 +73,7 @@ class ModelFInputModule(InputModule):
         pass
 
     @property
-    def training_ports(self) -> Iterable[TensorPort]:
+    def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
     def preprocess(self, data, test_time=False):
@@ -96,13 +96,13 @@ class ModelFInputModule(InputModule):
             a = corpus["answers"][i]
             qanswers[q0].add(a)
         if not test_time:
-            sl = ShuffleIterable(corpus["candidates"][0], qanswers)
+            sl = ShuffleList(corpus["candidates"][0], qanswers)
             corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
             #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]],
-                          is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, test_time=False) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset, test_time=test_time)
         xy_dict = {
             Ports.Input.question: corpus["question"],
@@ -111,7 +111,7 @@ class ModelFInputModule(InputModule):
         }
         return get_batches(xy_dict, batch_size=self.shared_resources.config['batch_size'])
 
-    def __call__(self, qa_settings: Iterable[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
         xy_dict = {
             Ports.Input.question: corpus["question"],
@@ -121,25 +121,25 @@ class ModelFInputModule(InputModule):
         return numpify(xy_dict)
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
 
 class ModelFModelModule(SimpleModelModule):
     @property
-    def input_ports(self) -> Iterable[TensorPort]:
+    def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits, Ports.loss]
 
     @property
-    def training_input_ports(self) -> Iterable[TensorPort]:
+    def training_input_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
     @property
-    def training_output_ports(self) -> Iterable[TensorPort]:
+    def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
     def create_training_output(self,

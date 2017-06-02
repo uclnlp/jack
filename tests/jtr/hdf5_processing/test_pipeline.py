@@ -10,7 +10,6 @@ import nltk
 import numpy as np
 import pytest
 import scipy.stats
-from jtr.util.hdf5_processing.hooks import LossHook, AccuracyHook
 from jtr.util.hdf5_processing.pipeline import Pipeline, DatasetStreamer
 from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, RemoveLineOnJsonValueCondition, \
     DictKey2ListMapper
@@ -829,66 +828,6 @@ def test_abitrary_input_data():
     np.testing.assert_array_equal(np.array(expected_S_ids), S)
     np.testing.assert_array_equal(np.array(expected_answer_ids), A)
     np.testing.assert_array_equal(np.array(expected_pos_ids), pos)
-
-
-names = ['loss', 'accuracy']
-print_every = [20, 7, 13, 2000]
-test_data = [r for r in itertools.product(names, print_every)]
-ids = ['name={0}, print_every={1}'.format(name, print_every) for name, print_every in test_data]
-
-
-@pytest.mark.parametrize("hook_name, print_every", test_data, ids=ids)
-def test_hook(hook_name, print_every):
-    def calc_confidence_interval(expected_loss):
-        mean = np.mean(expected_loss)
-        std = np.std(expected_loss)
-        z = scipy.stats.norm.ppf(0.99)
-        se = z * std / np.sqrt(print_every)
-        lower_expected = mean - se
-        upper_expected = mean + se
-        return lower_expected, upper_expected, mean, n
-
-    def generate_loss():
-        loss = np.random.rand()
-        state = BatcherState()
-        state.loss = loss
-        return loss, state
-
-    def generate_accuracy():
-        target = np.random.randint(0, 3, print_every)
-        argmax = np.random.randint(0, 3, print_every)
-        state = BatcherState()
-        state.targets = target
-        state.argmax = argmax
-        accuracy = np.mean(target == argmax)
-        return accuracy, state
-
-    if hook_name == 'loss':
-        hook = LossHook(print_every_x_batches=print_every)
-        gen_func = generate_loss
-    elif hook_name == 'accuracy':
-        hook = AccuracyHook(print_every_x_batches=print_every)
-        gen_func = generate_accuracy
-
-    expected_loss = []
-    state = BatcherState()
-    for epoch in range(2):
-        for i in range(100):
-            metric, state = gen_func()
-            expected_loss.append(metric)
-            lower, upper, m, n = hook.at_end_of_iter_event(state)
-            if (i + 1) % print_every == 0:
-                lower_expected, upper_expected, mean, n2 = calc_confidence_interval(expected_loss)
-                print(i, epoch)
-                assert n == n2, 'Sample size not equal!'
-                assert np.allclose(m, mean), 'Mean not equal!'
-                assert np.allclose(lower, lower_expected), 'Lower confidence bound not equal!'
-                assert np.allclose(upper, upper_expected), 'Upper confidence bound not equal!'
-                del expected_loss[:]
-
-        lower, upper, m, n = hook.at_end_of_epoch_event(state)
-        lower_expected, upper_expected, mean, n2 = calc_confidence_interval(expected_loss)
-        del expected_loss[:]
 
 
 @pytest.mark.skip(reason='not supported with QASetting generators.')

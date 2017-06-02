@@ -3,19 +3,21 @@ from jtr.data_structures import *
 
 from jtr.util.hdf5_processing.pipeline import Pipeline, DatasetStreamer
 from jtr.util.hdf5_processing.processors import AddToVocab, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
-from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2IterableMapper, RemoveLineOnJsonValueCondition, ToLower
+from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, RemoveLineOnJsonValueCondition, ToLower
 from jtr.util.hdf5_processing.batching import StreamBatcher
+
+import nltk
 
 class StreamingSingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_resources = shared_vocab_config
 
     @property
-    def training_ports(self) -> Iterable[TensorPort]:
+    def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
     @property
-    def output_ports(self) -> Iterable[TensorPort]:
+    def output_ports(self) -> List[TensorPort]:
         """Defines the outputs of the InputModule
 
         1. Word embedding index tensor of questions of mini-batchs
@@ -28,16 +30,15 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
-    def __call__(self, qa_settings: Iterable[QASetting]) \
+    def __call__(self, qa_settings: List[QASetting]) \
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Iterable[Answer]]], dataset_name, dataset_identifier='train') -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name, dataset_identifier='train') -> SharedResources:
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()
         p = Pipeline(dataset_name, delete_all_previous_data=dataset_identifier=='train')
-        print(dataset_identifier)
         if dataset_identifier == 'train':
             p.add_sent_processor(ToLower())
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
@@ -68,8 +69,8 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             self.shared_resources.vocab = p.state['vocab']['general']
         return self.shared_resources
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, Iterable[Answer]]],
-                          is_eval: bool, dataset_name, dataset_identifier) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, dataset_name, dataset_identifier) -> List[Mapping[TensorPort, np.ndarray]]:
 
         batch_size = self.shared_resources.config['batch_size']
         batcher = StreamBatcher(dataset_name, dataset_identifier, batch_size)

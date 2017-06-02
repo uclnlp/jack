@@ -17,8 +17,7 @@ SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 # test_data/dataset-name/overfit.json
 
 models2dataset = {}
-models2dataset['snli_reader'] = 'SNLI'
-models2dataset['snli_streaming_reader'] = 'SNLI_stream'
+models2dataset['cbilstm_snli_streaming_reader'] = 'SNLI_stream'
 models2dataset['dam_snli_reader'] = 'SNLI'
 models2dataset['esim_snli_reader'] = 'SNLI'
 models2dataset['cbilstm_snli_reader'] = 'SNLI'
@@ -27,7 +26,7 @@ overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
 
 modelspecifics = {}
-modelspecifics['snli_streaming_reader'] = ' use_streaming=True batch_size=50 dataset_name=snli'
+modelspecifics['cbilstm_snli_streaming_reader'] = ' use_streaming=True batch_size=50 dataset_name=snli'
 
 ids = []
 testdata = []
@@ -145,4 +144,4 @@ def datetime_test_result_filename():
     return 'testresult_' + timestr
 
 
-test_model("snli_reader",1,False,"SNLI")
+test_model("cbilstm_snli_reader",1,False,"SNLI")
