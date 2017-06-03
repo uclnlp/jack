@@ -17,7 +17,7 @@ from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
 from jtr import readers
-from jtr.io.stream_processors import reader2stream_processor
+from jtr.io.stream_processors import dataset2stream_processor
 from jtr.core import SharedResources
 from jtr.data_structures import load_labelled_data, load_labelled_data_stream
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
@@ -119,7 +119,7 @@ def main(batch_size,
         if not use_streaming:
             train_data = load_labelled_data(train, debug_examples)
         else:
-            train_data = load_labelled_data_stream(train, reader2stream_processor[model])
+            train_data = load_labelled_data_stream(train, dataset2stream_processor[dataset_name])
 
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
 
@@ -139,7 +139,7 @@ def main(batch_size,
             dev_data = load_labelled_data(dev)
             test_data = load_labelled_data(test) if test else None
         else:
-            s = reader2stream_processor[model]
+            s = dataset2stream_processor[dataset_name]
             train_data = load_labelled_data_stream(train, s)
             dev_data = load_labelled_data_stream(dev, s)
             test_data = load_labelled_data_stream(test, s) if test else None

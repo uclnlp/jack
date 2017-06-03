@@ -8,6 +8,6 @@ def get_snli_stream_processor():
     s.add_stream_processor(DictKey2ListMapper(['sentence1', 'sentence2', 'gold_label']))
     return s
 
-reader2stream_processor = {}
-reader2stream_processor['cbilstm_snli_streaming_reader'] = get_snli_stream_processor()
+dataset2stream_processor = {}
+dataset2stream_processor['snli'] = get_snli_stream_processor()
 
