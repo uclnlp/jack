@@ -13,6 +13,7 @@ mcqa_readers = {}
 kbp_readers = {}
 
 
+
 def __reader(f):
     readers.setdefault(f.__name__, f)
     return f
@@ -172,8 +173,18 @@ def esim_snli_reader(shared_resources: SharedResources):
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
 
-
-# Aliases
 @__mcqa_reader
-def snli_reader(shared_resources: SharedResources):
-    return cbilstm_snli_reader(shared_resources)
+def cbilstm_snli_streaming_reader(shared_resources: SharedResources):
+    """
+    Creates a SNLI reader instance (multiple choice qa model).
+    This particular reader uses a conditional Bidirectional LSTM, as described in [1].
+
+    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
+    """
+    from jtr.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
+    from jtr.tasks.mcqa.streaming_mcqa import StreamingSingleSupportFixedClassInputs
+    input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
+    output_module = EmptyOutputModule()
+
+    return JTReader(shared_resources, input_module, model_module, output_module)

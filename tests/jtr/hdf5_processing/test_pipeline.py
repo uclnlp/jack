@@ -10,13 +10,12 @@ import nltk
 import numpy as np
 import pytest
 import scipy.stats
-from jtr.util.hdf5_processing.hooks import LossHook, AccuracyHook
-from jtr.util.hdf5_processing.pipeline import Pipeline
+from jtr.util.hdf5_processing.pipeline import Pipeline, DatasetStreamer
 from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, RemoveLineOnJsonValueCondition, \
     DictKey2ListMapper
-from jtr.util.hdf5_processing.processors import StreamToHDF5, CreateBinsByNestedLength, DeepSeqMap
+from jtr.util.hdf5_processing.processors import StreamToHDF5, DeepSeqMap
 from jtr.util.hdf5_processing.processors import Tokenizer, SaveStateToList, AddToVocab, ToLower, \
-    ConvertTokenToIdx, SaveLengthsToState
+    ConvertTokenToIdx, SaveLengthsToState, StreamToBatch
 from jtr.util.hdf5_processing.vocab import Vocab
 
 from jtr.util.global_config import Config, Backends
@@ -45,12 +44,13 @@ def test_dict2listmapper():
             test_dict['key3'] = str(i + 4)
             f.write(json.dumps(test_dict) + '\n')
 
+    s = DatasetStreamer()
+    s.set_paths([join(get_data_path(), 'test.txt')])
+    s.add_stream_processor(JsonLoaderProcessors())
+    s.add_stream_processor(DictKey2ListMapper(['key3', 'key1', 'key2']))
     p = Pipeline('abc')
-    p.add_path(join(get_data_path(), 'test.txt'))
-    p.add_line_processor(JsonLoaderProcessors())
-    p.add_line_processor(DictKey2ListMapper(['key3', 'key1', 'key2']))
     p.add_text_processor(SaveStateToList('lines'))
-    state = p.execute()
+    state = p.execute(s.stream())
     for i, line in enumerate(state['data']['lines']['input']):
         assert int(line) == i + 4, 'Input values does not correspond to the json key mapping.'
     for i, line in enumerate(state['data']['lines']['support']):
@@ -76,13 +76,15 @@ def test_remove_on_json_condition():
             test_dict['key3'] = 'remove me'
             f.write(json.dumps(test_dict) + '\n')
 
+    s = DatasetStreamer()
+    s.set_paths([join(get_data_path(), 'test.txt')])
+    s.add_stream_processor(JsonLoaderProcessors())
+    s.add_stream_processor(RemoveLineOnJsonValueCondition('key3', lambda inp: inp == 'remove me'))
+    s.add_stream_processor(DictKey2ListMapper(['key3', 'key1', 'key2']))
+
     p = Pipeline('abc')
-    p.add_path(join(get_data_path(), 'test.txt'))
-    p.add_line_processor(JsonLoaderProcessors())
-    p.add_line_processor(RemoveLineOnJsonValueCondition('key3', lambda inp: inp == 'remove me'))
-    p.add_line_processor(DictKey2ListMapper(['key3', 'key1', 'key2']))
     p.add_text_processor(SaveStateToList('lines'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     assert len(state['data']['lines']['input']) == 10, 'Length different from filtered length!'
     for i, line in enumerate(state['data']['lines']['input']):
@@ -99,13 +101,14 @@ def test_remove_on_json_condition():
 def test_tokenization():
     tokenizer = nltk.tokenize.WordPunctTokenizer()
 
+    s = DatasetStreamer()
+    s.set_path(get_test_data_path_dict()['snli'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(get_test_data_path_dict()['snli'])
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_sent_processor(SaveStateToList('tokens'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     inp_sents = state['data']['tokens']['input']
     sup_sents = state['data']['tokens']['support']
@@ -146,13 +149,14 @@ def test_path_creation():
 def test_vocab():
     tokenizer = nltk.tokenize.WordPunctTokenizer()
 
+    s = DatasetStreamer()
+    s.set_path(get_test_data_path_dict()['snli'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(get_test_data_path_dict()['snli'])
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_token_processor(AddToVocab())
-    state = p.execute()
+    state = p.execute(s.stream())
 
     # 1. use Vocab manually and test it against manual vocabulary
     idx2token = {}
@@ -210,13 +214,14 @@ def test_separate_vocabs():
         f.write(json.dumps(['1', 'b', '&']) + '\n')
         f.write(json.dumps(['2', 'c', '#']) + '\n')
 
+    s = DatasetStreamer()
+    s.set_path(file_path)
+    s.add_stream_processor(JsonLoaderProcessors())
     # 2. read test data with pipeline
     p = Pipeline('test_pipeline')
 
-    p.add_path(file_path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_token_processor(AddToVocab())
-    state = p.execute()
+    state = p.execute(s.stream())
     vocab = state['vocab']['general']
     inp_vocab = state['vocab']['input']
     sup_vocab = state['vocab']['support']
@@ -262,13 +267,14 @@ def test_separate_vocabs():
 def test_to_lower_sent():
     path = get_test_data_path_dict()['snli']
 
+    s = DatasetStreamer()
+    s.set_path(path)
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(ToLower())
     p.add_sent_processor(SaveStateToList('sents'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     inp_sents = state['data']['sents']['input']
     sup_sents = state['data']['sents']['support']
@@ -284,14 +290,15 @@ def test_to_lower_token():
     tokenizer = nltk.tokenize.WordPunctTokenizer()
     path = get_test_data_path_dict()['snli']
 
+    s = DatasetStreamer()
+    s.set_path(path)
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_token_processor(ToLower())
     p.add_token_processor(SaveStateToList('tokens'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     inp_tokens = state['data']['tokens']['input']
     sup_tokens = state['data']['tokens']['support']
@@ -305,12 +312,13 @@ def test_to_lower_token():
 def test_save_to_list_text():
     path = get_test_data_path_dict()['wiki']
 
+    s = DatasetStreamer()
+    s.set_path(path)
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_text_processor(SaveStateToList('text'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     inp_texts = state['data']['text']['input']
     sup_texts = state['data']['text']['support']
@@ -327,13 +335,14 @@ def test_save_to_list_sentences():
     path = get_test_data_path_dict()['wiki']
     sent_tokenizer = nltk.tokenize.PunktSentenceTokenizer()
 
+    s = DatasetStreamer()
+    s.set_path(path)
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_text_processor(Tokenizer(sent_tokenizer.tokenize))
     p.add_sent_processor(SaveStateToList('sents'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     # 2. setup manual sentence processing
     inp_sents = state['data']['sents']['input']
@@ -362,14 +371,15 @@ def test_save_to_list_post_process():
     sent_tokenizer = nltk.tokenize.PunktSentenceTokenizer()
     tokenizer = nltk.tokenize.WordPunctTokenizer()
 
+    s = DatasetStreamer()
+    s.set_path(path)
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_text_processor(Tokenizer(sent_tokenizer.tokenize))
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_post_processor(SaveStateToList('samples'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     # 2. setup manual sentence -> token processing
     inp_samples = state['data']['samples']['input']
@@ -407,15 +417,16 @@ def test_save_to_list_post_process():
 def test_convert_token_to_idx_no_sentences():
     tokenizer = nltk.tokenize.WordPunctTokenizer()
 
+    s = DatasetStreamer()
+    s.set_path(get_test_data_path_dict()['snli'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(get_test_data_path_dict()['snli'])
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_token_processor(AddToVocab())
     p.add_post_processor(ConvertTokenToIdx())
     p.add_post_processor(SaveStateToList('idx'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     inp_indices = state['data']['idx']['input']
     label_idx = state['data']['idx']['target']
@@ -481,13 +492,14 @@ def test_convert_to_idx_with_separate_vocabs():
     keys2keys['input'] = 'input'
     keys2keys['support'] = 'support'
 
+    s = DatasetStreamer()
+    s.set_path(file_path)
+    s.add_stream_processor(JsonLoaderProcessors())
     p = Pipeline('test_pipeline')
-    p.add_path(file_path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_token_processor(AddToVocab())
     p.add_post_processor(ConvertTokenToIdx(keys2keys=keys2keys))
     p.add_post_processor(SaveStateToList('idx'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     inp_indices = state['data']['idx']['input']
     sup_indices = state['data']['idx']['input']
@@ -500,13 +512,14 @@ def test_convert_to_idx_with_separate_vocabs():
 def test_save_lengths():
     tokenizer = nltk.tokenize.WordPunctTokenizer()
 
+    s = DatasetStreamer()
+    s.set_path(get_test_data_path_dict()['snli'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. setup pipeline
     p = Pipeline('test_pipeline')
-    p.add_path(get_test_data_path_dict()['snli'])
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_post_processor(SaveLengthsToState())
-    state = p.execute()
+    state = p.execute(s.stream())
 
     lengths_inp = state['data']['lengths']['input']
     lengths_sup = state['data']['lengths']['support']
@@ -540,13 +553,14 @@ def test_stream_to_hdf5():
     if os.path.exists(base_path):
         shutil.rmtree(base_path)
 
+    s = DatasetStreamer()
+    s.set_path(get_test_data_path_dict()['snli'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. Setup pipeline to save lengths and generate vocabulary
     p = Pipeline(pipeline_folder)
-    p.add_path(get_test_data_path_dict()['snli'])
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_post_processor(SaveLengthsToState())
-    p.execute()
+    p.execute(s.stream())
     p.clear_processors()
 
     # 2. Process the data further to stream it to hdf5
@@ -557,7 +571,7 @@ def test_stream_to_hdf5():
     # 2 samples per file -> 50 files
     streamer = StreamToHDF5(data_folder_name, samples_per_file=2, keys=['input', 'support', 'target'])
     p.add_post_processor(streamer)
-    state = p.execute()
+    state = p.execute(s.stream())
 
     # 2. Load data from the SaveStateToList hook
     inp_indices = state['data']['idx']['input']
@@ -657,92 +671,6 @@ def test_stream_to_hdf5():
     # 7. clean up
     shutil.rmtree(base_path)
 
-
-def test_bin_search():
-    tokenizer = nltk.tokenize.WordPunctTokenizer()
-    data_folder_name = 'snli3k_bins'
-    total_samples = 30000.0
-    base_path = join(get_data_path(), 'test_pipeline', data_folder_name)
-    # clean all data from previous failed tests   
-    if os.path.exists(base_path):
-        shutil.rmtree(base_path)
-
-    # 1. Setup pipeline to save lengths and generate vocabulary
-    p = Pipeline('test_pipeline')
-    p.add_path(get_test_data_path_dict()['snli3k'])
-    p.add_line_processor(JsonLoaderProcessors())
-    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-    p.add_post_processor(SaveLengthsToState())
-    p.execute()
-    p.clear_processors()
-
-    # 2. Execute the binning procedure
-    p.add_path(get_test_data_path_dict()['snli3k'])
-    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-    p.add_token_processor(AddToVocab())
-    p.add_post_processor(ConvertTokenToIdx())
-    bin_creator = CreateBinsByNestedLength(data_folder_name, min_batch_size=4)
-    p.add_post_processor(bin_creator)
-    state = p.execute()
-
-    # 3. We proceed to test if the bin sizes are correct, the config is correct, 
-    #    if the calculated fraction of wasted samples is correct.
-    #    This makes use of the state of the CreateBins class itself which
-    #    thus biases this test. Use statiatical logging for 
-    #    additional verification of correctness.
-
-    # 3.1 Test config equality
-    config_path = join(base_path, 'hdf5_config.pkl')
-    assert os.path.exists(base_path), 'Base path for binning does not exist!'
-    assert os.path.exists(config_path), 'Config file for binning not found!'
-    with open(config_path, 'rb') as f:
-        config_dict = pickle.load(f)
-    assert 'paths' in config_dict, 'paths key not found in config dict!'
-    assert 'fractions' in config_dict, 'fractions key not found in config dict!'
-    assert 'counts' in config_dict, 'counts key not found in config dict!'
-    for paths1, paths2 in zip(config_dict['paths'], bin_creator.config['paths']):
-        for path1, path2 in zip(paths1, paths2):
-            assert path1 == path2, 'Paths differ from bin config!'
-    np.testing.assert_array_equal(config_dict['fractions'], bin_creator.config['fractions'],
-                                  'Fractions for HDF5 samples per file not equal!')
-    np.testing.assert_array_equal(config_dict['counts'], bin_creator.config['counts'],
-                                  'Counts for HDF5 samples per file not equal!')
-    assert len(bin_creator.config['counts']) > 0, 'List of counts empty!'
-
-    path_types = ['input', 'support', 'input_length', 'support_length', 'target', 'index']
-    for i, paths in enumerate(bin_creator.config['paths']):
-        assert len(paths) == 6, 'One path type is missing! Required path types {0}, existing paths {1}.'.format(
-            path_types, paths)
-    num_idxs = len(bin_creator.config['paths'])
-    paths_inp = [join(base_path, 'input_bin_{0}.hdf5'.format(i)) for i in range(num_idxs)]
-    paths_sup = [join(base_path, 'support_bin_{0}.hdf5'.format(i)) for i in range(num_idxs)]
-
-    # 3.2 Test length, count and total count equality
-    num_samples_bins = bin_creator.total_bin_count
-    cumulative_count = 0.0
-    for i, (path_inp, path_sup) in enumerate(zip(paths_inp, paths_sup)):
-        inp = load_hdf_file(path_inp)
-        sup = load_hdf_file(path_sup)
-        l1 = bin_creator.config['path2len'][path_inp]
-        l2 = bin_creator.config['path2len'][path_sup]
-        count = bin_creator.config['path2count'][path_sup]
-
-        expected_bin_fraction = count / num_samples_bins
-        actual_bin_fraction = bin_creator.config['fractions'][i]
-
-        assert actual_bin_fraction == expected_bin_fraction, 'Bin fraction for bin {0} not equal'.format(i)
-        assert inp.shape[0] == count, 'Count for input bin at {0} not as expected'.format(path_inp)
-        assert sup.shape[0] == count, 'Count for support bin at {0} not as expected'.format(path_sup)
-        assert inp.shape[1] == l1, 'Input data sequence length for {0} not as expected'.format(path_inp)
-        assert sup.shape[1] == l2, 'Support data sequence length for {0} not as expected'.format(path_sup)
-
-        cumulative_count += count
-
-    assert cumulative_count == num_samples_bins, 'Number of total bin samples not as expected!'
-
-    shutil.rmtree(base_path)
-
-
 batch_size = [17, 128]
 samples_per_file = [500]
 randomize = [True, False]
@@ -763,13 +691,14 @@ def test_non_random_stream_batcher(samples_per_file, randomize, batch_size):
     if os.path.exists(base_path):
         shutil.rmtree(base_path)
 
+    s = DatasetStreamer()
+    s.set_path(get_test_data_path_dict()['snli1k'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. Setup pipeline to save lengths and generate vocabulary
     p = Pipeline(pipeline_folder)
-    p.add_path(get_test_data_path_dict()['snli1k'])
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_post_processor(SaveLengthsToState())
-    p.execute()
+    p.execute(s.stream())
     p.clear_processors()
 
     # 2. Process the data further to stream it to hdf5
@@ -780,7 +709,7 @@ def test_non_random_stream_batcher(samples_per_file, randomize, batch_size):
     # 2 samples per file -> 50 files
     streamer = StreamToHDF5(data_folder_name, samples_per_file=samples_per_file, keys=['input', 'support', 'target'])
     p.add_post_processor(streamer)
-    state = p.execute()
+    state = p.execute(s.stream())
 
     # 2. Load data from the SaveStateToList hook
     inp_indices = state['data']['idx']['input']
@@ -845,41 +774,43 @@ def test_non_random_stream_batcher(samples_per_file, randomize, batch_size):
     # 5. clean up
     shutil.rmtree(base_path)
 
-
+@pytest.mark.skip(reason='not supported with QASetting generators.')
 def test_abitrary_input_data():
     tokenizer = nltk.tokenize.WordPunctTokenizer()
     base_path = join(get_data_path(), 'test_keys')
     # clean all data from previous failed tests   
     if os.path.exists(base_path):
         shutil.rmtree(base_path)
-    file_path = join(get_data_path(), 'test_pipeline', 'test_data.json')
+    file_path = join(get_data_path(), 'test_keys', 'test_data.json')
 
     questions = [['bla bla Q1', 'this is q2', 'q3'], ['q4 set2', 'or is it q1?']]
     support = [['I like', 'multiple supports'], ['yep', 'they are pretty cool', 'yeah, right?']]
     answer = [['yes', 'absolutly', 'not really'], ['you bet', 'yes']]
     pos_tag = [['t1', 't2'], ['t1', 't2', 't3']]
 
-    with open(file_path, 'w') as f:
-        for i in range(2):
-            f.write(json.dumps([questions[i], support[i], answer[i], pos_tag[i]]) + '\n')
-
     keys2keys = {}
     keys2keys['answer'] = 'answer'
     keys2keys['pos'] = 'pos'
     p = Pipeline('test_keys', keys=['question', 'support', 'answer', 'pos'])
-    p.add_path(file_path)
-    p.add_line_processor(JsonLoaderProcessors())
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_token_processor(AddToVocab(general_vocab_keys=['question', 'support']))
     p.add_post_processor(SaveLengthsToState())
-    p.execute()
+    with open(file_path, 'w') as f:
+        for i in range(2):
+            f.write(json.dumps([questions[i], support[i], answer[i], pos_tag[i]]) + '\n')
+
+    s = DatasetStreamer(input_keys=['question', 'support', 'answer', 'pos'])
+    s.set_path(file_path)
+    s.add_stream_processor(JsonLoaderProcessors())
+
+    p.execute(s.stream())
 
     p.clear_processors()
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_token_processor(ConvertTokenToIdx(keys2keys=keys2keys))
     p.add_post_processor(StreamToHDF5('test', keys=['question', 'support', 'answer', 'pos']))
     p.add_post_processor(SaveStateToList('data'))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     Q = state['data']['data']['question']
     S = state['data']['data']['support']
@@ -899,179 +830,27 @@ def test_abitrary_input_data():
     np.testing.assert_array_equal(np.array(expected_pos_ids), pos)
 
 
-def test_bin_streamer():
-    tokenizer = nltk.tokenize.WordPunctTokenizer()
-    data_folder_name = 'bin_snli_test'
-    pipeline_folder = 'test_pipeline'
-    base_path = join(get_data_path(), pipeline_folder, data_folder_name)
-    batch_size = 4
-    # clean all data from previous failed tests   
-    if os.path.exists(base_path):
-        shutil.rmtree(base_path)
-
-    # 1. Setup pipeline to save lengths and generate vocabulary
-    p = Pipeline(pipeline_folder)
-    p.add_path(get_test_data_path_dict()['snli1k'])
-    p.add_line_processor(JsonLoaderProcessors())
-    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-    p.add_post_processor(SaveLengthsToState())
-    p.execute()
-    p.clear_processors()
-
-    # 2. Process the data further to stream it to hdf5
-    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
-    p.add_token_processor(AddToVocab())
-    p.add_post_processor(ConvertTokenToIdx())
-    p.add_post_processor(SaveStateToList('idx'))
-    # 2 samples per file -> 50 files
-    bin_creator = CreateBinsByNestedLength(data_folder_name, min_batch_size=batch_size,
-                                           raise_on_throw_away_fraction=0.5)
-    p.add_post_processor(bin_creator)
-    state = p.execute()
-
-    # 2. Load data from the SaveStateToList hook
-    inp_indices = state['data']['idx']['input']
-    sup_indices = state['data']['idx']['support']
-    t_indices = state['data']['idx']['target']
-    max_inp_len = np.max(state['data']['lengths']['input'])
-    max_sup_len = np.max(state['data']['lengths']['support'])
-    # For SNLI the targets consist of single words'
-    assert np.max(state['data']['lengths']['target']) == 1, 'Max index label length should be 1'
-
-    # 3. parse data to numpy
-    n = len(inp_indices)
-    X = np.zeros((n, max_inp_len), dtype=np.int64)
-    X_len = np.zeros((n), dtype=np.int64)
-    S = np.zeros((n, max_sup_len), dtype=np.int64)
-    S_len = np.zeros((n), dtype=np.int64)
-    T = np.zeros((n), dtype=np.int64)
-
-    for i in range(len(inp_indices)):
-        sample_inp = inp_indices[i][0]
-        sample_sup = sup_indices[i][0]
-        sample_t = t_indices[i][0]
-        l = len(sample_inp)
-        X_len[i] = l
-        X[i, :l] = sample_inp
-
-        l = len(sample_sup)
-        S_len[i] = l
-        S[i, :l] = sample_sup
-
-        T[i] = sample_t[0]
-
-    epochs = 3
-    batcher = StreamBatcher(pipeline_folder, data_folder_name, batch_size, loader_threads=8, randomize=True)
-    del batcher.at_batch_prepared_observers[:]  # we want to test on raw numpy data
-
-    # 4. test data equality
-    for epoch in range(epochs):
-        for x, x_len, s, s_len, t, idx in batcher:
-            assert np.int32 == x_len.dtype, 'Input length type should be int32!'
-            assert np.int32 == s_len.dtype, 'Support length type should be int32!'
-            assert np.int32 == x.dtype, 'Input type should be int32!'
-            assert np.int32 == s.dtype, 'Input type should be int32!'
-            assert np.int32 == t.dtype, 'Target type should be int32!'
-            assert np.int32 == idx.dtype, 'Index type should be int32!'
-            np.testing.assert_array_equal(X[idx, :x_len[0]], x, 'Input data not equal!')
-            np.testing.assert_array_equal(S[idx, :s_len[0]], s, 'Support data not equal!')
-            np.testing.assert_array_equal(X_len[idx], x_len, 'Input length data not equal!')
-            np.testing.assert_array_equal(S_len[idx], s_len, 'Support length data not equal!')
-            np.testing.assert_array_equal(T[idx], t, 'Target data not equal!')
-
-            # if the next tests fail, it means the batches provides the wrong length for the sample
-            np.testing.assert_array_equal(S[idx, s_len[0]:], np.zeros((batch_size, S.shape[1] - s_len[0])),
-                                          'Support tail not padded exclusively with zeros!')
-            np.testing.assert_array_equal(X[idx, x_len[0]:], np.zeros((batch_size, X.shape[1] - x_len[0])),
-                                          'Input tail not padded exclusively with zeros!')
-
-    # 5. clean up
-    shutil.rmtree(base_path)
-
-
-names = ['loss', 'accuracy']
-print_every = [20, 7, 13, 2000]
-test_data = [r for r in itertools.product(names, print_every)]
-ids = ['name={0}, print_every={1}'.format(name, print_every) for name, print_every in test_data]
-
-
-@pytest.mark.parametrize("hook_name, print_every", test_data, ids=ids)
-def test_hook(hook_name, print_every):
-    def calc_confidence_interval(expected_loss):
-        mean = np.mean(expected_loss)
-        std = np.std(expected_loss)
-        z = scipy.stats.norm.ppf(0.99)
-        se = z * std / np.sqrt(print_every)
-        lower_expected = mean - se
-        upper_expected = mean + se
-        return lower_expected, upper_expected, mean, n
-
-    def generate_loss():
-        loss = np.random.rand()
-        state = BatcherState()
-        state.loss = loss
-        return loss, state
-
-    def generate_accuracy():
-        target = np.random.randint(0, 3, print_every)
-        argmax = np.random.randint(0, 3, print_every)
-        state = BatcherState()
-        state.targets = target
-        state.argmax = argmax
-        accuracy = np.mean(target == argmax)
-        return accuracy, state
-
-    if hook_name == 'loss':
-        hook = LossHook(print_every_x_batches=print_every)
-        gen_func = generate_loss
-    elif hook_name == 'accuracy':
-        hook = AccuracyHook(print_every_x_batches=print_every)
-        gen_func = generate_accuracy
-
-    expected_loss = []
-    state = BatcherState()
-    for epoch in range(2):
-        for i in range(100):
-            metric, state = gen_func()
-            expected_loss.append(metric)
-            lower, upper, m, n = hook.at_end_of_iter_event(state)
-            if (i + 1) % print_every == 0:
-                lower_expected, upper_expected, mean, n2 = calc_confidence_interval(expected_loss)
-                print(i, epoch)
-                assert n == n2, 'Sample size not equal!'
-                assert np.allclose(m, mean), 'Mean not equal!'
-                assert np.allclose(lower, lower_expected), 'Lower confidence bound not equal!'
-                assert np.allclose(upper, upper_expected), 'Upper confidence bound not equal!'
-                del expected_loss[:]
-
-        lower, upper, m, n = hook.at_end_of_epoch_event(state)
-        lower_expected, upper_expected, mean, n2 = calc_confidence_interval(expected_loss)
-        del expected_loss[:]
-
-
-@pytest.mark.skip(reason="too slow")
+@pytest.mark.skip(reason='not supported with QASetting generators.')
 def test_variable_duplication():
     nltk.download('averaged_perceptron_tagger')
     tokenizer = nltk.tokenize.WordPunctTokenizer()
     pipeline_folder = 'test_pipeline'
     base_path = join(get_data_path(), pipeline_folder)
     batch_size = 32
-    func = lambda x: [tag for word, tag in nltk.pos_tag(x)]
+    func = lambda x: [word[0:2] for word in x]
     # clean all data from previous failed tests   
     if os.path.exists(base_path):
         shutil.rmtree(base_path)
 
+    s = DatasetStreamer(input_keys=['input', 'support', 'target'], output_keys=['input', 'support', 'target', 'input'])
+    s.set_path(get_test_data_path_dict()['snli'])
+    s.add_stream_processor(JsonLoaderProcessors())
     # 1. Setup pipeline to save lengths and generate vocabulary
     keys = ['input', 'support', 'target', 'input_pos']
-    keys2keys = {'input_pos': 'input'}
-    p = Pipeline(pipeline_folder, keys=keys, keys2keys=keys2keys)
-    p.add_path(get_test_data_path_dict()['snli'])
-    p.add_line_processor(JsonLoaderProcessors())
+    p = Pipeline(pipeline_folder, keys=keys)
     p.add_sent_processor(Tokenizer(tokenizer.tokenize))
     p.add_sent_processor(SaveStateToList('tokens'))
-    p.add_post_processor(SaveLengthsToState())
-    p.add_post_processor(DeepSeqMap(func), keys=['input_pos'])
-    p.execute()
+    p.execute(s.stream())
     p.clear_processors()
 
     # 2. Process the data further to stream it to hdf5
@@ -1081,21 +860,17 @@ def test_variable_duplication():
     p.add_post_processor(ConvertTokenToIdx(keys2keys={'input_pos': 'input_pos'}))
     p.add_post_processor(SaveStateToList('idx'))
     # 2 samples per file -> 50 files
-    # p.add_post_processor(StreamToHDF5(data_folder_name, keys=keys))
-    state = p.execute()
+    state = p.execute(s.stream())
 
     # 2. Load data from the SaveStateToList hook
     inp_sents = state['data']['tokens']['input']
     pos_tags = state['data']['idx']['input_pos']
     vocab = p.state['vocab']['input_pos']
 
-    print(vocab.idx2token)
-    print(pos_tags[0][0])
 
     tags_expected = []
     for sent in inp_sents:
-        tag_tuples = nltk.pos_tag(sent)
-        tag = [tag for word, tag in tag_tuples]
+        tag = [word[:2] for word in sent]
         tags_expected.append(tag)
 
     tags = []
@@ -1103,12 +878,53 @@ def test_variable_duplication():
         tag = [vocab.get_word(idx) for idx in sent]
         tags.append(tag)
 
-    print(tags[0])
-    print(tags_expected[0])
     for tags1, tags2 in zip(tags, tags_expected):
         assert len(tags1) == len(tags2), 'POS tag lengths not the same!'
         for tag1, tag2 in zip(tags1, tags2):
             assert tag1 == tag2, 'POS tags were not the same!'
 
     # 5. clean up
+    shutil.rmtree(base_path)
+
+def test_stream_to_batch():
+    tokenizer = nltk.tokenize.WordPunctTokenizer()
+    path = get_test_data_path_dict()['snli']
+    pipeline_folder = 'test_pipeline'
+    base_path = join(get_data_path(), pipeline_folder)
+    if os.path.exists(base_path):
+        shutil.rmtree(base_path)
+
+    s = DatasetStreamer()
+    s.set_path(path)
+    s.add_stream_processor(JsonLoaderProcessors())
+    # 1. setup pipeline
+    p = Pipeline(pipeline_folder)
+    p.add_sent_processor(Tokenizer(tokenizer.tokenize))
+    p.add_token_processor(AddToVocab())
+    p.add_token_processor(ConvertTokenToIdx())
+    p.add_post_processor(SaveStateToList('samples'))
+    state = p.execute(s.stream())
+    p.save_vocabs()
+
+    # testing if we can pass data through a "pre-trained" pipeline and get the right results
+    p2 = Pipeline(pipeline_folder)
+    p2.load_vocabs()
+    p2.add_sent_processor(Tokenizer(tokenizer.tokenize))
+    p2.add_token_processor(ConvertTokenToIdx())
+
+    batcher = StreamToBatch()
+    p2.add_post_processor(batcher)
+    p2.execute(s.stream())
+
+
+    # 2. setup manual sentence -> token processing
+    inp_samples = state['data']['samples']['input']
+    sup_samples = state['data']['samples']['support']
+    str2var = batcher.get_batch()
+
+    for x1, x2, x2len in zip(inp_samples, str2var['input'], str2var['input_length']):
+        np.testing.assert_array_equal(x1[0], x2[:x2len], 'Array length not equal')
+        assert np.sum(x2[x2len:]) == 0, 'Not padded with zeros!'
+        assert x2len == len(x1[0]), 'Lengths not equal!'
+
     shutil.rmtree(base_path)

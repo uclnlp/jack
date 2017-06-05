@@ -37,7 +37,7 @@ def test_multi_support_fixed_class_inputs():
     ]
     shared_resources = SharedResources(Vocab(), {})
     input_module = MultiSupportFixedClassInputs(shared_resources)
-    input_module.setup_from_data(data_set, sepvocab=True)
+    input_module.setup_from_data(data_set)
 
     assert len(input_module.shared_resources.answer_vocab) == 1
     assert len(input_module.shared_resources.vocab) == 11

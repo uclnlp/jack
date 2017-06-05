@@ -9,9 +9,49 @@ import pickle
 import queue
 
 from jtr.util.util import get_data_path, load_hdf_file, Timer
-from jtr.util.global_config import Config, Backends
+from jtr.util.global_config import Config
+from jtr.util.hdf5_processing.interfaces import IAtIterEndObservable, IAtEpochEndObservable, IAtEpochStartObservable, IAtBatchPreparedObservable
 
 benchmark = False
+
+class TensorFlowConverter(IAtBatchPreparedObservable):
+
+    def at_batch_prepared(self, batch_parts):
+        inp, inp_len, sup, sup_len, t, idx = batch_parts
+        if TensorFlowConfig.inp == None:
+            log.error('You need to initialize the batch size via TensorflowConfig.init_batch_size(batchsize)!')
+        feed_dict = {}
+        feed_dict[TensorFlowConfig.inp] = inp
+        feed_dict[TensorFlowConfig.support] = sup
+        feed_dict[TensorFlowConfig.input_length] = inp_len
+        feed_dict[TensorFlowConfig.support_length] = sup_len
+        feed_dict[TensorFlowConfig.target] = t
+        feed_dict[TensorFlowConfig.index] = idx
+
+        str2var = {}
+        str2var['input'] = TensorFlowConfig.inp
+        str2var['input_length'] = TensorFlowConfig.input_length
+        str2var['support'] = TensorFlowConfig.support
+        str2var['support_length'] = TensorFlowConfig.support_length
+        str2var['target'] = TensorFlowConfig.target
+        str2var['index'] = TensorFlowConfig.index
+
+        return str2var, feed_dict
+
+class DictConverter(IAtBatchPreparedObservable):
+    def at_batch_prepared(self, batch_parts):
+        str2var = {}
+        str2var['input'] = batch_parts[0]
+        str2var['input_length'] = batch_parts[1]
+        str2var['support'] = batch_parts[2]
+        str2var['support_length'] = batch_parts[3]
+        str2var['target'] = batch_parts[4]
+        str2var['index'] = batch_parts[5]
+        if len(batch_parts) > 6:
+            for i in range(6,len(batch_parts)):
+                str2var['var{0}'.format(i-6)] = batch_parts[i]
+
+        return str2var
 
 class BatcherState(object):
     def __init__(self):
@@ -173,13 +213,14 @@ class DataLoaderSlave(Thread):
 
 
 class StreamBatcher(object):
-    def __init__(self, pipeline_name, name, batch_size, loader_threads=4, randomize=False, seed=None):
+    def __init__(self, pipeline_name, name, batch_size, loader_threads=1, randomize=False, seed=None):
         config_path = join(get_data_path(), pipeline_name, name, 'hdf5_config.pkl')
         with open(config_path, 'rb') as f:
             config = pickle.load(f)
         self.paths = config['paths']
         self.fractions = config['fractions']
         self.num_batches = int(np.sum(config['counts']) / batch_size)
+        self.num_samples = np.sum(config['counts'])
         self.batch_size = batch_size
         self.batch_idx = 0
         self.prefetch_batch_idx = 0
@@ -197,14 +238,7 @@ class StreamBatcher(object):
         self.current_epoch = 0
         self.timer = Timer()
         self.loader_threads = loader_threads
-        if Config.backend == Backends.TENSORFLOW:
-            from jtr.util.hdf5_processing.backends.tfbackend import TensorFlowConverter
-            self.subscribe_to_batch_prepared_event(TensorFlowConverter())
-        elif Config.backend == Backends.TEST:
-            pass
-        else:
-            raise Exception('Backend has unsupported value {0}'.format(Config.backend))
-
+        self.subscribe_to_batch_prepared_event(DictConverter())
 
         batchidx2paths, batchidx2start_end, shard2batchidx = self.create_batchidx_maps(config['counts'])
 
@@ -317,10 +351,10 @@ class StreamBatcher(object):
             self.publish_end_of_iter_event()
 
             self.batch_idx += 1
-            self.work.put(self.prefetch_batch_idx)
-            self.prefetch_batch_idx +=1
             if self.prefetch_batch_idx >= self.num_batches:
                 self.prefetch_batch_idx = 0
+            self.work.put(self.prefetch_batch_idx)
+            self.prefetch_batch_idx +=1
 
             return batch_parts
         else:

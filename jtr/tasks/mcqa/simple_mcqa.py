@@ -6,13 +6,16 @@ from jtr.preprocessing import preprocess_with_pipeline
 from jtr.tf_fun import rnn, simple
 
 from jtr.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
-from jtr.util.batch import get_batches
+from jtr.util.batch import get_batches, GeneratorWithRestart
 from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
-import logging
 
-logger = logging.getLogger(__name__)
+from typing import List, Tuple, Mapping, Iterable
+
+import tensorflow as tf
+import numpy as np
+import nltk
 
 
 class SimpleMCInputModule(InputModule):
@@ -21,7 +24,7 @@ class SimpleMCInputModule(InputModule):
         self.config = shared_resources.config
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
         return self.shared_resources
 
@@ -52,8 +55,8 @@ class SimpleMCInputModule(InputModule):
                                    test_time=test_time)
         return corpus
 
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, dataset_name=None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -104,8 +107,8 @@ class MultiSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]],
-                        sepvocab=True) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None) -> SharedResources:
+        sepvocab=True
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
                 preprocess_with_pipeline(data, self.shared_resources.vocab,
                         None, sepvocab=sepvocab)
@@ -119,8 +122,8 @@ class MultiSupportFixedClassInputs(InputModule):
         else:
             self.shared_resources.answer_vocab = train_vocab
 
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, dataset_name=None, dataset_identifier= None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,

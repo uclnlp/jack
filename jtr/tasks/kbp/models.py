@@ -11,7 +11,7 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None) -> SharedResources:
         self.triples = [x[0].question.split() for x in data]
 
         self.entity_set = {s for [s, _, _] in self.triples} | {o for [_, _, o] in self.triples}
@@ -31,8 +31,8 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool) -> List[Mapping[TensorPort, np.ndarray]]:
         qa_settings = [qa_setting for qa_setting, _ in dataset]
         triples = []
         for qa_setting in qa_settings:
@@ -189,7 +189,7 @@ class KBPReader(JTReader):
     """
 
     def train(self, optimizer,
-              training_set: List[Tuple[QASetting, Answer]],
+              training_set: Iterable[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """

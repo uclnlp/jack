@@ -64,7 +64,7 @@ class ModelFInputModule(InputModule):
         self.shared_resources = shared_resources
         self.setup_from_data(self.shared_vocab_config.train_data)
 
-    def setup_from_data(self, data: List[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]) -> SharedResources:
         self.preprocess(data)
         self.vocab.freeze()
         return self.shared_resources
@@ -101,8 +101,8 @@ class ModelFInputModule(InputModule):
             #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
-    def dataset_generator(self, dataset: List[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool, test_time=False) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                          is_eval: bool, test_time=False) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset, test_time=test_time)
         xy_dict = {
             Ports.Input.question: corpus["question"],
@@ -202,7 +202,7 @@ class KBPReader(JTReader):
     """
 
     def train(self, optim,
-              training_set: List[Tuple[QASetting, Answer]],
+              training_set: Iterable[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """

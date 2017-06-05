@@ -1,2 +1,0 @@
-2017-05-28 23:42:40.126357 ClassificationEvalHook_Accuracy 0.32
-2017-05-28 23:42:40.126490 ClassificationEvalHook_F1_macro 0.15779

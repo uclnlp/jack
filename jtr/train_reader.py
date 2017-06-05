@@ -7,17 +7,19 @@ import os.path as path
 import random
 import shutil
 import sys
-from time import time
-
 import tensorflow as tf
+
+
+from time import time
 from sacred import Experiment
 from sacred.arg_parser import parse_args
 from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
-import jtr.readers as readers
+from jtr import readers
+from jtr.io.stream_processors import dataset2stream_processor
 from jtr.core import SharedResources
-from jtr.data_structures import load_labelled_data
+from jtr.data_structures import load_labelled_data, load_labelled_data_stream
 from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.util.vocab import Vocab
@@ -90,7 +92,9 @@ def main(batch_size,
          test,
          train,
          vocab_from_embeddings,
-         write_metrics_to):
+         write_metrics_to,
+         use_streaming,
+         dataset_name):
     logger.info("TRAINING")
 
     if experiments_db is not None:
@@ -112,12 +116,16 @@ def main(batch_size,
         logger.info('device info: ' + str(device).replace("\n", " "))
 
     if debug:
-        train_data = load_labelled_data(train, debug_examples)
+        if not use_streaming:
+            train_data = load_labelled_data(train, debug_examples)
+        else:
+            train_data = load_labelled_data_stream(train, dataset2stream_processor[dataset_name])
 
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
 
         dev_data = train_data
         test_data = train_data
+
         if pretrain:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
@@ -126,8 +134,16 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
-        train_data, dev_data = [load_labelled_data(name) for name in [train, dev]]
-        test_data = load_labelled_data(test) if test else None
+        if not use_streaming:
+            train_data = load_labelled_data(train)
+            dev_data = load_labelled_data(dev)
+            test_data = load_labelled_data(test) if test else None
+        else:
+            s = dataset2stream_processor[dataset_name]
+            train_data = load_labelled_data_stream(train, s)
+            dev_data = load_labelled_data_stream(dev, s)
+            test_data = load_labelled_data_stream(test, s) if test else None
+
         logger.info('loaded train/dev/test data')
         if pretrain:
             embeddings = load_embeddings(embedding_file, embedding_format)
@@ -164,9 +180,7 @@ def main(batch_size,
     # Hooks
     iter_interval = 1 if debug else log_interval
     hooks = [LossHook(reader, iter_interval, summary_writer=sw),
-             ExamplesPerSecHook(reader, batch_size, iter_interval, sw),
-             ETAHook(reader, iter_interval, math.ceil(len(train_data) / batch_size), epochs,
-                     checkpoint(), sw)]
+             ExamplesPerSecHook(reader, batch_size, iter_interval, sw)]
 
     preferred_metric, best_metric = readers.eval_hooks[model].preferred_metric_and_best_score()
 
@@ -190,17 +204,22 @@ def main(batch_size,
         reader, dev_data, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
-        write_metrics_to=write_metrics_to))
+        write_metrics_to=write_metrics_to,
+        dataset_name=dataset_name,
+        dataset_identifier=('dev' if use_streaming else None)))
+
 
     # Train
     reader.train(optimizer, training_set=train_data,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
 
     # Test final model
     if test_data is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
-            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
+            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
+            dataset_name=dataset_name,
+            dataset_identifier=('test' if use_streaming else None))
 
         reader.load(model_dir)
         test_eval_hook.at_test_time(1)

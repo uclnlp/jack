@@ -10,23 +10,23 @@ import numpy as np
 OVERFIT_PATH = './tests/test_results/overfit_test/'
 SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 
-models = [
-        'snli_reader',
-        'cbilstm_snli_reader',
-        'dam_snli_reader',
-        'esim_snli_reader'
-    ]
-
 # if you add a model here, you need the data in the format of:
-
 # test_data/dataset-name/train.json
 # test_data/dataset-name/dev.json
 # test_data/dataset-name/test.json
 # test_data/dataset-name/overfit.json
 
-datasets = ['SNLI']
-overfit_epochs = {'SNLI': 15}
-small_data_epochs = {'SNLI': 5}
+models2dataset = {}
+models2dataset['cbilstm_snli_streaming_reader'] = 'SNLI_stream'
+models2dataset['dam_snli_reader'] = 'SNLI'
+models2dataset['esim_snli_reader'] = 'SNLI'
+models2dataset['cbilstm_snli_reader'] = 'SNLI'
+
+overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
+small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
+
+modelspecifics = {}
+modelspecifics['cbilstm_snli_streaming_reader'] = ' use_streaming=True batch_size=50 dataset_name=snli'
 
 ids = []
 testdata = []
@@ -34,12 +34,10 @@ testdata = []
 
 def generate_test_data():
     '''Creates all permutations of models and datasets as tests.'''
-    for dataset in datasets:
+    for model, dataset in models2dataset.items():
         for use_small_data in [False, True]:
             epochs = small_data_epochs[dataset] if use_small_data else overfit_epochs[dataset]
-            for model in models:
-                print(model)
-                testdata.append([model, epochs, use_small_data, dataset])
+            testdata.append([model, epochs, use_small_data, dataset])
 
 
 def get_string_for_test(model_name, epochs, use_small_data, dataset):
@@ -59,7 +57,6 @@ def generate_names():
 
 generate_test_data()
 generate_names()
-print(testdata)
 
 
 @pytest.mark.parametrize("model_name, epochs, use_small_data, dataset", testdata, ids=ids)
@@ -82,7 +79,6 @@ def test_model(model_name, epochs, use_small_data, dataset):
     metric_filepath = join(test_result_path, datetime_test_result_filename())
 
     # create dir if it does not exists
-    print(exists(test_result_path))
     if not exists(test_result_path):
         os.makedirs(test_result_path)
 
@@ -97,12 +93,15 @@ def test_model(model_name, epochs, use_small_data, dataset):
         test_file = 'tests/test_data/{0}/test.json'.format(dataset)
 
     # Setup the process call command
-    cmd = 'CUDA_VISIBLE_DEVICES=-1 '  # we only test on the CPU
-    cmd += "python3 jtr/train_reader.py with train={0} dev={1} test={2}".format(train_file, dev_file, test_file, )
+    cmd = 'CUDA_VISIBLE_DEVICES=-1 ' # we only test on the CPU
+    cmd += "python3 jtr/train_reader.py with train={0} dev={1} test={2}" .format(train_file, dev_file, test_file,)
     cmd += ' write_metrics_to={0}'.format(metric_filepath)
     cmd += ' model={0}'.format(model_name)
-    cmd += ' epochs={0} learning_rate_decay=1.0'.format(epochs)
-    print('command: ' + cmd)
+    cmd += ' epochs={0}'.format(epochs)
+    cmd += ' learning_rate_decay=1.0'
+    if model_name in modelspecifics:
+        cmd += modelspecifics[model_name]
+    print('command: '+cmd)
     # Execute command and wait for results
     t0 = time.time()
     try:
@@ -145,4 +144,4 @@ def datetime_test_result_filename():
     return 'testresult_' + timestr
 
 
-test_model("snli_reader",1,False,"SNLI")
+test_model("cbilstm_snli_reader",1,False,"SNLI")

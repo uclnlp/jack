@@ -52,7 +52,7 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                       question_length : tf.Tensor) -> Sequence[tf.Tensor]:
         question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
-            vocab_size = len(self.vocab)
+            vocab_size = len(shared_resources.vocab)
             input_size = self.config['repr_dim_input']
             self.question_embedding_matrix = tf.get_variable(
                 "emb_Q", [vocab_size, input_size],
