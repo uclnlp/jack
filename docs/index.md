@@ -52,7 +52,7 @@ $ python3 jtr/train_reader.py with config='./conf/extractive_qa.yaml'
 
 A copy of the model is written into the `model_dir` directory after each
 training epoch.  These can be loaded using the commands below or see e.g.
-the showcase notebook in `notebooks/Showcasing_Jack.ipynb`.
+[the showcase notebook][showcase].
 
 ```python
 from jtr import readers
@@ -70,7 +70,10 @@ fastqa_reader.setup_from_file("./fastqa_reader")
 # Developer guidelines #
 
 - [Comply with the PEP 8 Style Guide][pep8]
-- Make sure all your code runs from the top level directory, e.g.,
-    `$ python3 ./jtr/io/SNLI2jtr_v1.py`
+- Make sure all your code runs from the top level directory, e.g.:
+
+```shell
+$ python3 ./jtr/io/SNLI2jtr_v1.py
+```
 
 [pep8]: https://www.python.org/dev/peps/pep-0008/

@@ -30,24 +30,24 @@ model.
 First, download SQuAD and GloVe embeddings
 
 ```shell
-    $ cd data/SQuAD/
-    $ ./download.sh
-    $ cd ../GloVe/
-    $ ./download.sh
-    $ cd ../..
+$ cd data/SQuAD/
+$ ./download.sh
+$ cd ../GloVe/
+$ ./download.sh
+$ cd ../..
 ```
 
 Then, convert SQuAD into the Jack data format
 
 ```shell
-    $ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
-    $ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
+$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
+$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
 ```
 
 Lastly, train a [FastQA][fastqa] model
 
 ```shell
-    python3 jtr/train_reader.py with config='./conf/extractive_qa.yaml'
+$ python3 jtr/train_reader.py with config='./conf/extractive_qa.yaml'
 ```
 
 A copy of the model is written into the `model_dir` directory after each
@@ -70,7 +70,10 @@ fastqa_reader.setup_from_file("./fastqa_reader")
 # Developer guidelines #
 
 - [Comply with the PEP 8 Style Guide][pep8]
-- Make sure all your code runs from the top level directory, e.g.,
-    `$ python3 ./jtr/io/SNLI2jtr_v1.py`
+- Make sure all your code runs from the top level directory, e.g.:
+
+```shell
+$ python3 ./jtr/io/SNLI2jtr_v1.py
+```
 
 [pep8]: https://www.python.org/dev/peps/pep-0008/
