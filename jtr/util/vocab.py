@@ -45,7 +45,7 @@ class Vocab(object):
             # with pos and neg indices
             self.id2sym = {}
             self.next_pos = 0
-            self.sym2freqs = {}
+            self.sym2freqs = OrderedDict()
             if unk is not None:
                 self.sym2id[unk] = 0
                 # with pos and neg indices
