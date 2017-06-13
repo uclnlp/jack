@@ -40,8 +40,8 @@ $ cd ../..
 Then, convert SQuAD into the Jack data format
 
 ```shell
-$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
-$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
+$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
+$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
 ```
 
 Lastly, train a [FastQA][fastqa] model

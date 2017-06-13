@@ -330,8 +330,8 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None, identifier=None) -> \
-            List[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                          identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
         that when iterated over returns a sequence of batches. These batches map ports to tensors
@@ -346,36 +346,27 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, dataset_identifier=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other
         resources.
         Args:
             data: a set of pairs of input and answer.
-
-        Returns: vocab
         """
         raise NotImplementedError
 
     @abstractmethod
     def setup(self):
-        """
-        Args:
-            shared_resources:
-        """
+        """Sets up the module assuming shared resources are fully setup, either after loading or setup_from_data"""
         raise NotImplementedError
 
     def store(self, path):
-        """
-        Store the state of this module. Default is that there is no state, so nothing to store.
-        """
-        raise NotImplementedError
+        """Store the state of this module. Default is that there is no state, so nothing to store."""
+        pass
 
     def load(self, path):
-        """
-        Load the state of this module. Default is that there is no state, so nothing to load.
-        """
-        raise NotImplementedError
+        """Load the state of this module. Default is that there is no state, so nothing to load."""
+        pass
 
 
 class ModelModule:
@@ -388,7 +379,7 @@ class ModelModule:
 
     def __call__(self, session: tf.Session,
                  batch: Mapping[TensorPort, np.ndarray],
-                 goal_ports: List[TensorPort] = list()) -> Mapping[TensorPort, np.ndarray]:
+                 goal_ports: List[TensorPort] = None) -> Mapping[TensorPort, np.ndarray]:
         """
         Runs a batch represented by a mapping from tensorports to numpy arrays and returns value for specified
         goal ports.
@@ -586,9 +577,7 @@ class OutputModule:
 
     @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
-        """
-        Returns: correspond to a subset of output ports of model module.
-        """
+        """Returns: correspond to a subset of output ports of model module."""
         raise NotImplementedError
 
     @abstractmethod
@@ -610,16 +599,12 @@ class OutputModule:
         pass
 
     def store(self, path):
-        """
-        Store the state of this module. Default is that there is no state, so nothing to store.
-        """
-        raise NotImplementedError
+        """Store the state of this module. Default is that there is no state, so nothing to store."""
+        pass
 
     def load(self, path):
-        """
-        Load the state of this module. Default is that there is no state, so nothing to load.
-        """
-        raise NotImplementedError
+        """Load the state of this module. Default is that there is no state, so nothing to load."""
+        pass
 
 
 class JTReader:
@@ -701,7 +686,7 @@ class JTReader:
         return answers
 
     def train(self, optimizer,
-              training_set: Sequence[Tuple[QASetting, Answer]],
+              training_set: Iterable[Tuple[QASetting, List[Answer]]],
               max_epochs=10, hooks=[],
               l2=0.0, clip=None, clip_op=tf.clip_by_value,
               dataset_name=None):
@@ -722,7 +707,7 @@ class JTReader:
         self.setup_from_data(training_set, dataset_name)
         self.session.run([v.initializer for v in self.model_module.variables])
 
-        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_name=dataset_name, dataset_identifier='train')
+        batches = self.input_module.dataset_generator(training_set, is_eval=False, dataset_name=dataset_name, identifier='train')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 

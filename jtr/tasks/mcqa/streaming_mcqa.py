@@ -34,12 +34,12 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name, dataset_identifier='train') -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()
-        p = Pipeline(dataset_name, delete_all_previous_data=dataset_identifier=='train')
-        if dataset_identifier == 'train':
+        p = Pipeline(dataset_name, delete_all_previous_data=identifier=='train')
+        if identifier == 'train':
             p.add_sent_processor(ToLower())
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
             p.add_token_processor(AddToVocab())
@@ -61,19 +61,20 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
         p.add_sent_processor(ToLower())
         p.add_sent_processor(Tokenizer(tokenizer.tokenize))
         p.add_post_processor(ConvertTokenToIdx())
-        p.add_post_processor(StreamToHDF5(dataset_identifier))
+        p.add_post_processor(StreamToHDF5(identifier))
         p.execute(data)
 
-        if dataset_identifier == 'train':
+        if identifier == 'train':
             self.shared_resources.config['answer_size'] = p.state['vocab']['general'].num_labels
             self.shared_resources.vocab = p.state['vocab']['general']
         return self.shared_resources
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool, dataset_name, dataset_identifier) -> List[Mapping[TensorPort, np.ndarray]]:
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                          identifier=None) -> \
+            List[Mapping[TensorPort, np.ndarray]]:
 
         batch_size = self.shared_resources.config['batch_size']
-        batcher = StreamBatcher(dataset_name, dataset_identifier, batch_size)
+        batcher = StreamBatcher(dataset_name, identifier, batch_size)
         self.batcher = batcher
 
         def gen():

@@ -62,14 +62,13 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
 class ModelFInputModule(InputModule):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
-        self.setup_from_data(self.shared_vocab_config.train_data)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         self.preprocess(data)
-        self.vocab.freeze()
+        self.shared_resources.vocab.freeze()
         return self.shared_resources
 
-    def setup(self, shared_resources: SharedResources):
+    def setup(self):
         pass
 
     @property
@@ -101,9 +100,9 @@ class ModelFInputModule(InputModule):
             #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
-                          is_eval: bool, test_time=False) -> List[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset, test_time=test_time)
+    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                          identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+        corpus = self.preprocess(dataset, test_time=is_eval)
         xy_dict = {
             Ports.Input.question: corpus["question"],
             Ports.Input.atomic_candidates: corpus["candidates"],
