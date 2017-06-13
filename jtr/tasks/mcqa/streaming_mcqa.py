@@ -91,6 +91,3 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
                 yield feed_dict
 
         return GeneratorWithRestart(gen)
-
-    def setup(self):
-        pass

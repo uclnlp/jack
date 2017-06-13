@@ -301,7 +301,7 @@ class InputModule:
     @abstractmethod
     def setup(self):
         """Sets up the module (if needs setup after loading shared resources for instance) assuming shared resources
-        are fully setup, usually called after loading, but potentially probably within `setup_from_data` as well."""
+        are fully setup, usually called after loading and after `setup_from_data` as well."""
         pass
 
     @abstractmethod
@@ -707,10 +707,11 @@ class JTReader:
         assert self.is_train, "Reader has to be created for with is_train=True for training."
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.setup_from_data(training_set, dataset_name)
+        self.setup_from_data(training_set, dataset_name, "train")
         self.session.run([v.initializer for v in self.model_module.variables])
 
-        batches = self.input_module.batch_generator(training_set, is_eval=False, dataset_name=dataset_name, identifier='train')
+        batches = self.input_module.batch_generator(training_set, is_eval=False, dataset_name=dataset_name,
+                                                    identifier='train')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
@@ -754,6 +755,7 @@ class JTReader:
             data: training dataset
         """
         self.input_module.setup_from_data(data, dataset_name, identifier)
+        self.input_module.setup()
         self.model_module.setup(self.is_train)
         self.output_module.setup()
         self.session.run([v.initializer for v in self.model_module.variables])

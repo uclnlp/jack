@@ -68,9 +68,6 @@ class ModelFInputModule(InputModule):
         self.shared_resources.vocab.freeze()
         return self.shared_resources
 
-    def setup(self):
-        pass
-
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]

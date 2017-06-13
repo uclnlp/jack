@@ -41,8 +41,6 @@ class CBOWXqaInputModule(InputModule):
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
-        # Assumes that vocab and embeddings are given during creation
-        self.setup()
 
     def setup(self):
         self.vocab = self.shared_vocab_config.vocab

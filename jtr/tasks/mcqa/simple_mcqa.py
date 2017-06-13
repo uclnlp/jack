@@ -27,9 +27,6 @@ class SimpleMCInputModule(InputModule):
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         self.preprocess(data)
 
-    def setup(self):
-        pass
-
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
@@ -139,9 +136,6 @@ class MultiSupportFixedClassInputs(InputModule):
         }
 
         return get_batches(xy_dict)
-
-    def setup(self):
-        pass
 
 
 class SimpleMCModelModule(SimpleModelModule):

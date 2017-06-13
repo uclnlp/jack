@@ -24,9 +24,6 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         self.shared_resources.config['predicate_to_index'] = self.predicate_to_index
         return self.shared_resources
 
-    def setup(self):
-        pass
-
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
