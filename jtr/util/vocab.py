@@ -3,6 +3,8 @@
 import operator
 import sys
 
+from collections import OrderedDict
+
 import numpy as np
 
 
@@ -168,11 +170,11 @@ class Vocab(object):
         """map original (pos/neg) ids to normalized (non-neg) ids: first new symbols, then those in emb"""
         # e.g. -1 should be mapped to self.next_pos + 0
         # e.g. -3 should be mapped to self.next_pos + 2
-        return id if id >=0 else self.next_pos - id - 1
+        return id if id >= 0 else self.next_pos - id - 1
 
     def _denormalize(self,id):
         # self.next_pos + i is mapped back to  -1-i
-        return id if id < self.next_pos else -1-(id-self.next_pos)
+        return id if id < self.next_pos else - 1 - (id-self.next_pos)
 
     def get_ids_pretrained(self):
         """return internal or normalized id's (depending on frozen/unfrozen state)
@@ -180,7 +182,7 @@ class Vocab(object):
         if self.frozen:
             return list(range(self.next_pos,self.next_pos+self.count_pretrained()))
         else:
-            return list(range(-1,self.next_neg,-1))
+            return list(range(-1, self.next_neg,-1))
 
     def get_ids_oov(self):
         """return out-of-vocab id's (indep. of frozen/unfrozen state)"""
