@@ -29,7 +29,7 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         return [Ports.Target.target_index]
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         qa_settings = [qa_setting for qa_setting, _ in dataset]
         triples = []
         for qa_setting in qa_settings:

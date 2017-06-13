@@ -70,9 +70,7 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
         return self.shared_resources
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> \
-            List[Mapping[TensorPort, np.ndarray]]:
-
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         batch_size = self.shared_resources.config['batch_size']
         batcher = StreamBatcher(dataset_name, identifier, batch_size)
         self.batcher = batcher

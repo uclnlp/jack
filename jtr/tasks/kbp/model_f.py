@@ -98,7 +98,7 @@ class ModelFInputModule(InputModule):
         return corpus
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset, test_time=is_eval)
         xy_dict = {
             Ports.Input.question: corpus["question"],
