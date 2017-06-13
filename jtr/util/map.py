@@ -20,7 +20,6 @@ rs = DefaultRandomState(1337)#new seed ignored if set previously
 #        support (sequence of sequence of sequences)
 #        labels (sequence of symbols)
 # corpus = [hypotheses, premises, support, labels]
-nltk.download('punkt')
 
 
 def tokenize(xs, pattern=None):
