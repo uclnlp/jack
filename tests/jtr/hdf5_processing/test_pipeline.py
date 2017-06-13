@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import itertools
 import json
 import os
@@ -832,7 +834,6 @@ def test_abitrary_input_data():
 
 @pytest.mark.skip(reason='not supported with QASetting generators.')
 def test_variable_duplication():
-    nltk.download('averaged_perceptron_tagger')
     tokenizer = nltk.tokenize.WordPunctTokenizer()
     pipeline_folder = 'test_pipeline'
     base_path = join(get_data_path(), pipeline_folder)
