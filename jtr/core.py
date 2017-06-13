@@ -744,13 +744,13 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Answer]], dataset_name=None):
+ def setup_from_data(self, data: Iterable[Tuple[QASetting, Answer]], dataset_name=None, identifier='train'):
         """
         Sets up modules given a training dataset if necessary.
         Args:
             data: training dataset
         """
-        self.input_module.setup_from_data(data, dataset_name)
+        self.input_module.setup_from_data(data, dataset_name, identifier)
         self.model_module.setup(self.is_train)
         self.output_module.setup()
         self.session.run([v.initializer for v in self.model_module.variables])
