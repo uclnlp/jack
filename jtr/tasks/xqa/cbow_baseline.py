@@ -110,7 +110,7 @@ class CBOWXqaInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None, identifier=None) -> \
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None, identifier=None) -> \
             List[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \

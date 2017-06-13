@@ -42,7 +42,7 @@ def test_multi_support_fixed_class_inputs():
     assert len(input_module.shared_resources.answer_vocab) == 1
     assert len(input_module.shared_resources.vocab) == 11
 
-    tensor_data_set = list(input_module.dataset_generator(data_set, False))
+    tensor_data_set = list(input_module.batch_generator(data_set, False))
 
     expected_support = ["<SOS>", "the", "cat", "is", "on", "the", "mat", ".", "<EOS>"]
     expected_support_ids = [[[shared_resources.vocab.get_id(sym) for sym in expected_support]]]

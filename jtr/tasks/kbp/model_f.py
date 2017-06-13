@@ -100,8 +100,8 @@ class ModelFInputModule(InputModule):
             #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
         return corpus
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                          identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                        identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset, test_time=is_eval)
         xy_dict = {
             Ports.Input.question: corpus["question"],
@@ -244,7 +244,7 @@ class KBPReader(JTReader):
 
         logging.info("Start training...")
         for i in range(1, max_epochs + 1):
-            batches = self.input_module.dataset_generator(training_set, is_eval=False)
+            batches = self.input_module.batch_generator(training_set, is_eval=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.session.run([min_op, loss], feed_dict=feed_dict)
