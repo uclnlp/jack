@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import operator
 import sys
 
 import numpy as np
-import tensorflow as tf
 
 
 class Vocab(object):
@@ -26,7 +26,7 @@ class Vocab(object):
         self.next_pos = 0
         self.next_neg = -1
         self.unk = unk
-        self.emb = emb #if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
+        self.emb = emb  # if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
 
         if init_from_embeddings and emb is not None:
             self.sym2id = dict(emb.vocabulary.word2idx)
