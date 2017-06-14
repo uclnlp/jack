@@ -5,7 +5,6 @@ nltk
 numpy
 parse
 pycorenlp
-pytest
 scipy
 sklearn
 tensorflow>=1.1
