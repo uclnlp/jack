@@ -1,83 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from time import gmtime, strftime
 import os
-import json
 import h5py
 import time
 
 import logging
 logger = logging.getLogger(__name__)
-
-
-def get_timestamped_dir(path, name=None, link_to_latest=False):
-    """Create a directory with the current timestamp."""
-    current_time = strftime("%y-%m-%d/%H-%M-%S", gmtime())
-    folder_path = path + "/" + current_time + "/"
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    if name is not None:
-        if os.path.exists(path + "/" + name):
-            os.remove(path + "/" + name)
-        os.symlink(current_time, path + "/" + name, target_is_directory=True)
-    if link_to_latest:
-        if os.path.exists(path + "/latest"):
-            os.remove(path + "/latest")
-        os.symlink(current_time, path + "/latest", target_is_directory=True)
-    return folder_path
-
-
-def save_conf(path, conf):
-    with open(path, "w") as f_out:
-        splits = path.split("/")
-        folder_path = "/".join(splits[:-1]) + "/"
-        conf["meta"]["experiment_dir"] = folder_path
-        json.dump(conf, f_out, indent=4, sort_keys=True)
-        f_out.close()
-
-
-def deep_merge(dict1, dict2):
-    """
-    overrides entries in dict1 with entries in dict2!
-    """
-    if isinstance(dict1, dict) and isinstance(dict2, dict):
-        tmp = {}
-        for key in dict1:
-            if key not in dict2:
-                tmp[key] = dict1[key]
-            else:
-                tmp[key] = deep_merge(dict1[key], dict2[key])
-        for key in dict2:
-            if key not in dict1:
-                tmp[key] = dict2[key]
-        return tmp
-    else:
-        return dict2
-
-
-def load_conf(path, experiment_dir=None):
-    file_name = path.split("/")[-1]
-
-    with open(path, 'r') as f:
-        conf = eval(f.read())
-
-        if "meta" not in conf:
-            conf["meta"] = {}
-
-        conf["meta"]["conf"] = path
-        conf["meta"]["name"] = file_name.split(".")[0]
-        conf["meta"]["file_name"] = file_name
-
-        if "parent" in conf["meta"] and conf["meta"]["parent"] is not None:
-            parent = load_conf(conf["meta"]["parent"])
-            conf = deep_merge(parent, conf)  # {**parent, **conf}
-
-        if experiment_dir is not None:
-            save_conf(experiment_dir+file_name, conf)
-
-        f.close()
-
-        return conf
 
 
 def write_to_hdf(path, data):
