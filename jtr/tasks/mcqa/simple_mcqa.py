@@ -27,9 +27,6 @@ class SimpleMCInputModule(InputModule):
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         self.preprocess(data)
 
-    def setup(self):
-        pass
-
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
@@ -54,8 +51,8 @@ class SimpleMCInputModule(InputModule):
                                    test_time=test_time)
         return corpus
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                          identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         corpus = self.preprocess(dataset)
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
@@ -121,8 +118,8 @@ class MultiSupportFixedClassInputs(InputModule):
         else:
             self.shared_resources.answer_vocab = train_vocab
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                          identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                        identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,
@@ -139,9 +136,6 @@ class MultiSupportFixedClassInputs(InputModule):
         }
 
         return get_batches(xy_dict)
-
-    def setup(self):
-        pass
 
 
 class SimpleMCModelModule(SimpleModelModule):

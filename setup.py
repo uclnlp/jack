@@ -13,6 +13,7 @@ class Install(_install):
         _install.do_egg_install(self)
         import nltk
         nltk.download('punkt')
+        nltk.download('averaged_perceptron_tagger')
 
 
 with open('requirements.txt', 'r') as f:

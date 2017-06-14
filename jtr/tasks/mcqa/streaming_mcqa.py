@@ -69,10 +69,8 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             self.shared_resources.vocab = p.state['vocab']['general']
         return self.shared_resources
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                          identifier=None) -> \
-            List[Mapping[TensorPort, np.ndarray]]:
-
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         batch_size = self.shared_resources.config['batch_size']
         batcher = StreamBatcher(dataset_name, identifier, batch_size)
         self.batcher = batcher
@@ -91,6 +89,3 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
                 yield feed_dict
 
         return GeneratorWithRestart(gen)
-
-    def setup(self):
-        pass
