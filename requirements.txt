@@ -12,3 +12,4 @@ typing
 sacred
 sqlalchemy
 pyyaml
+pytest
