@@ -51,22 +51,24 @@ def load_hdf5_paths(paths, limit=None):
 
 def get_home_path():
     """
-    
-    :return: 
+    Return the home directory path.
+    :return: path.
     """
     return os.environ['HOME']
 
 
 def get_data_path():
     """
+    Return the data path.
     
-    :return: 
+    :return: path.
     """
     return os.path.join(os.environ['HOME'], '.data')
 
 
 def make_dirs_if_not_exists(path):
     """
+    Creates a directory if it does not exists.
     
     :param path: 
     :return: 
