@@ -1,93 +1,13 @@
 # -*- coding: utf-8 -*-
 
-#         __  _ __
-#  __  __/ /_(_) /
-# / / / / __/ / /
-#/ /_/ / /_/ / /
-#\____/\__/_/_/ v0.2
-#
-#Making useful stuff happen since 2016
-
-import numpy as np
-import contextlib
 from time import gmtime, strftime
 import os
 import json
-import tensorflow as tf
 import h5py
 import time
 
 import logging
-logger = logging.getLogger("tfutil")
-
-
-@contextlib.contextmanager
-def printoptions(*args, **kwargs):
-    """Switches printoptions temporarily via yield before switching back."""
-    original = np.get_printoptions()
-    np.set_printoptions(*args, **kwargs)
-    yield
-    np.set_printoptions(**original)
-
-
-def shape2str(x):
-    """Converts a shape array to a string."""
-    return "[" + " x ".join([str(x) for x in x.shape]) + "]"
-
-
-def nprint(x, prefix="", precision=3, surpress=True, max_list_len=5, show_shape=True):
-    """Prints `x` with given numpy options (default=compact+shape)."""
-    with printoptions(precision=precision, suppress=surpress):
-        if isinstance(x, np.ndarray):
-            print(prefix + "ndarray")
-            print(str(x))
-            if show_shape:
-                print("of shape " + shape2str(x) + "\n")
-        elif isinstance(x, tuple):
-            print(prefix + "tuple")
-            for i, j in enumerate(x):
-                print(str(i))
-                nprint(j, prefix, precision, surpress, max_list_len, show_shape)
-            print()
-        elif isinstance(x, list):
-            # fixme: breaks when list elements are not ndarrays
-            print(prefix + "list of %d elements with shape %s"
-                  % (len(x), shape2str(x[0])))
-            for i in range(min(len(x), max_list_len)):
-                nprint(x[i], prefix + "list[%d] " % i, precision, surpress, max_list_len, show_shape=False)
-            print()
-        # todo: do the same for tensors
-        else:
-            print(x)
-        print()
-
-
-def tfprint(tensor, message="", precision=2, first_n=None, summarize=10000,
-            name=None, print_shape=True):
-    def print_tensor(x):
-        str_val = message
-        str_val += np.array2string(x, precision=precision)
-        if print_shape:
-            str_val += "\n" + str(x.shape)
-        logger.debug(str_val)
-        return x
-
-    log_op = tf.py_func(print_tensor, [tensor], [tensor.dtype])[0]
-    with tf.control_dependencies([log_op]):
-        res = tf.identity(tensor)
-        return res
-
-
-def tfprint_legacy(tensor, message=None, precision=5, first_n=None, summarize=10000,
-            name=None, print_shape=True):
-    def reduce_precision(a, precision=2):
-        return tf.floordiv(a * 100, 1) / 100
-    tmp = tf.Print(tensor, [reduce_precision(tensor, precision=precision)],
-                   message=message, first_n=first_n,
-                   summarize=summarize, name=name)
-    if print_shape:
-        tmp = tf.Print(tmp, [tf.shape(tmp)], message="shape_" + message)
-    return tmp
+logger = logging.getLogger(__name__)
 
 
 def get_timestamped_dir(path, name=None, link_to_latest=False):
@@ -175,6 +95,7 @@ def load_hdf_file(path, keyword='default'):
     h5file.close()
     return data
 
+
 def load_hdf5_paths(paths, limit=None):
     data = []
     for path in paths:
@@ -184,15 +105,19 @@ def load_hdf5_paths(paths, limit=None):
             data.append(load_hdf_file(path))
     return data
 
+
 def get_home_path():
     return os.environ['HOME']
+
 
 def get_data_path():
     return os.path.join(os.environ['HOME'], '.data')
 
+
 def make_dirs_if_not_exists(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
 
 class Timer(object):
     def __init__(self, silent=False):
@@ -203,7 +128,6 @@ class Timer(object):
     def tick(self, name='default'):
         if name not in self.current_ticks:
             self.current_ticks[name] = time.time()
-
             return 0.0
         else:
             if name not in self.cumulative_secs:
@@ -218,10 +142,7 @@ class Timer(object):
         self.tick(name)
         value = self.cumulative_secs[name]
         if not self.silent:
-            print('Time taken for {0}: {1:.1f}s'.format(name, value))
+            logger.info('Time taken for {0}: {1:.1f}s'.format(name, value))
         self.cumulative_secs.pop(name)
         self.current_ticks.pop(name, None)
-
         return value
-
-
