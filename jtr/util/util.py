@@ -9,14 +9,26 @@ logger = logging.getLogger(__name__)
 
 
 def write_to_hdf(path, data):
-    '''Writes a numpy array to a hdf5 file under the given path.'''
+    """
+    Writes a numpy array to a hdf5 file under the given path.
+    
+    :param path: 
+    :param data: 
+    :return: 
+    """
     h5file = h5py.File(path, "w")
     h5file.create_dataset("default", data=data)
     h5file.close()
 
 
 def load_hdf_file(path, keyword='default'):
-    '''Reads and returns a numpy array for a hdf5 file'''
+    """
+    Reads and returns a numpy array for a hdf5 file.
+    
+    :param path: 
+    :param keyword: 
+    :return: 
+    """
     h5file = h5py.File(path, 'r')
     dset = h5file.get(keyword)
     data = dset[:]
@@ -25,24 +37,40 @@ def load_hdf_file(path, keyword='default'):
 
 
 def load_hdf5_paths(paths, limit=None):
+    """
+    
+    :param paths: 
+    :param limit: 
+    :return: 
+    """
     data = []
     for path in paths:
-        if limit != None:
-            data.append(load_hdf_file(path)[:limit])
-        else:
-            data.append(load_hdf_file(path))
+        data.append(load_hdf_file(path)[:limit] if limit else load_hdf_file(path))
     return data
 
 
 def get_home_path():
+    """
+    
+    :return: 
+    """
     return os.environ['HOME']
 
 
 def get_data_path():
+    """
+    
+    :return: 
+    """
     return os.path.join(os.environ['HOME'], '.data')
 
 
 def make_dirs_if_not_exists(path):
+    """
+    
+    :param path: 
+    :return: 
+    """
     if not os.path.exists(path):
         os.makedirs(path)
 
