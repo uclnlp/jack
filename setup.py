@@ -30,5 +30,5 @@ setup(name='jtr',
       cmdclass={'install': Install},
       install_requires=requirements,
       setup_requires=['pytest-runner'] + requirements,
-      tests_require=requirements,
+      tests_require=requirements + ['pytest'],
       packages=find_packages())
