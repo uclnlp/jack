@@ -1,7 +1,7 @@
 # simple makefile to simplify repetitive build env management tasks under posix
 PYTHON := python3
-PIP := pip
-PYTEST := pytest
+PIP := $(PYTHON) -m pip
+PYTEST := $(PYTHON) -m pytest
 
 init:
 	$(PIP) install -r requirements.txt
