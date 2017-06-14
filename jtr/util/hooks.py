@@ -368,11 +368,9 @@ class XQAEvalHook(EvalHook):
     def possible_metrics(self) -> List[str]:
         return ["exact", "f1"]
 
-
     @staticmethod
     def preferred_metric_and_best_score():
         return 'f1', [0.0]
-
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[FlatPorts.Target.answer_span]
@@ -583,7 +581,6 @@ class KBPEvalHook(EvalHook):
                                                   np.round(wmap, 5)))
         res += '\t' + self._info
         logger.info(res)
-
 
     def at_epoch_end(self, epoch: int, **kwargs):
         self.epoch += 1
