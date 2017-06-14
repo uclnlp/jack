@@ -24,15 +24,12 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
         self.shared_resources.config['predicate_to_index'] = self.predicate_to_index
         return self.shared_resources
 
-    def setup(self):
-        pass
-
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def dataset_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                          identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         qa_settings = [qa_setting for qa_setting, _ in dataset]
         triples = []
         for qa_setting in qa_settings:
@@ -231,7 +228,7 @@ class KBPReader(JTReader):
 
         logger.info("Start training {} ...".format(max_epochs))
         for i in range(1, max_epochs + 1):
-            batches = self.input_module.dataset_generator(training_set, is_eval=False)
+            batches = self.input_module.batch_generator(training_set, is_eval=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
                 _, current_loss = self.session.run([min_op, loss], feed_dict=feed_dict)

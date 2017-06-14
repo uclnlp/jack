@@ -308,13 +308,13 @@ class EvalHook(TraceHook):
         if self._batches is None:
             if self._dataset_identifier is not None:
                 self.reader.input_module.setup_from_data(self._dataset, self._dataset_name, self._dataset_identifier)
-                self._batches = self.reader.input_module.dataset_generator(self._dataset, True, self._dataset_name,
-                                                                           self._dataset_identifier)
+                self._batches = self.reader.input_module.batch_generator(self._dataset, True, self._dataset_name,
+                                                                         self._dataset_identifier)
                 self._total = self.reader.input_module.batcher.num_samples
             else:
-                self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True,
-                                                                           dataset_name=self._dataset_name,
-                                                                           identifier=self._dataset_identifier)
+                self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=True,
+                                                                         dataset_name=self._dataset_name,
+                                                                         identifier=self._dataset_identifier)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
@@ -504,7 +504,7 @@ class KBPEvalHook(EvalHook):
         logger.info("Started evaluation %s" % self._info)
 
         if self._batches is None:
-            self._batches = self.reader.input_module.dataset_generator(self._dataset, is_eval=True)
+            self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=True)
 
         def len_np_or_list(v):
             if isinstance(v, list):

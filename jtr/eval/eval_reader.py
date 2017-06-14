@@ -28,7 +28,7 @@ config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_sup
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
 with tf.device(FLAGS.device):
-    reader.setup_from_file(FLAGS.model_dir)
+    reader.load_and_setup(FLAGS.model_dir)
 
 with open(FLAGS.file) as f:
     dataset_jtr = json.load(f)
