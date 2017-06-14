@@ -1,35 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#         __  _ __
-#  __  __/ /_(_) /
-# / / / / __/ / /
-#/ /_/ / /_/ / /
-#\__,_/\__/_/_/ v0.2
-#Making useful stuff happen since 2016
-
 import tensorflow as tf
-
-
-def get_by_index(tensor, index):
-    """
-    :param tensor: [dim1 x dim2 x dim3] tensor
-    :param index: [dim1] tensor of indices for dim2
-    :return: [dim1 x dim3] tensor
-    """
-    dim1, dim2, dim3 = tf.unstack(tf.shape(tensor))
-    flat_index = tf.range(0, dim1) * dim2 + (index - 1)
-    return tf.gather(tf.reshape(tensor, [-1, dim3]), flat_index)
-
-
-def get_last(tensor):
-    """
-    :param tensor: [dim1 x dim2 x dim3] tensor
-    :return: [dim1 x dim3] tensor
-    """
-    shape = tf.shape(tensor)  # [dim1, dim2, dim3]
-    slice_size = shape * [1, 0, 1] + [0, 1, 0]  # [dim1, 1 , dim3]
-    slice_begin = shape * [0, 1, 0] + [0, -1, 0]  # [1, dim2-1, 1]
-    return tf.squeeze(tf.slice(tensor, slice_begin, slice_size), [1])
 
 
 def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
@@ -75,12 +46,6 @@ def tfrunprintshape(tensor, suffix="", prefix=""):
     tfrunprint(tf.shape(tensor), suffix, prefix)
 
 
-def tfprint(tensor, fun=None, prefix=""):
-    if fun is None:
-        fun = lambda x: x
-    return tf.Print(tensor, [fun(tensor)], prefix)
-
-
 def tfprints(tensors, fun=None, prefix=""):
     if fun is None:
         fun = lambda x: x
@@ -92,10 +57,6 @@ def tfprints(tensors, fun=None, prefix=""):
 
 def tfprintshapes(tensors, prefix=""):
     return tfprints(tensors, lambda x: tf.shape(x), prefix)
-
-
-def tfprintshape(tensor, prefix=""):
-    return tfprint(tensor, lambda x: tf.shape(x), prefix)
 
 
 def gather_in_dim(params, indices, dim, name=None):
@@ -123,34 +84,12 @@ def unit_length(tensor):
     l2norm = tf.rsqrt(l2norm_sq)
     return tensor * l2norm
 
-def tfprint(tensor, fun=None, prefix=""):
-    """Prints tensor; optionally applies function first."""
-    if fun is None:
-        fun = lambda x: x
-    return tf.Print(tensor, [fun(tensor)], prefix)
-
-
-def tfprintshape(tensor, prefix=""):
-    """Prints the shape of a tensor."""
-    return tfprint(tensor, lambda x: tf.shape(x), prefix)
-
 
 def tfrun(variables, feed_dict=None):
     """Executes variables in a new TensorFlow session, then returns results."""
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         return sess.run(variables, feed_dict=feed_dict)
-
-
-def get_last(tensor):
-    """
-    :param tensor: [dim1 x dim2 x dim3] tensor
-    :return: [dim1 x dim3] tensor
-    """
-    shape = tf.shape(tensor)  # [dim1, dim2, dim3]
-    slice_size = shape * [1, 0, 1] + [0, 1, 0]  # [dim1, 1 , dim3]
-    slice_begin = shape * [0, 1, 0] + [0, -1, 0]  # [1, dim2-1, 1]
-    return tf.squeeze(tf.slice(tensor, slice_begin, slice_size), [1])
 
 
 def unit_length_transform(x, dim=1):
