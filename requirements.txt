@@ -5,7 +5,6 @@ nltk
 numpy
 parse
 pycorenlp
-pytest
 scipy
 sklearn
 tensorflow>=1.1
@@ -13,3 +12,4 @@ typing
 sacred
 sqlalchemy
 pyyaml
+pytest
