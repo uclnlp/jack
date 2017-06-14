@@ -3,6 +3,17 @@
 import tensorflow as tf
 
 
+def get_by_index(tensor, index):
+    """
+    :param tensor: [dim1 x dim2 x dim3] tensor
+    :param index: [dim1] tensor of indices for dim2
+    :return: [dim1 x dim3] tensor
+    """
+    dim1, dim2, dim3 = tf.unstack(tf.shape(tensor))
+    flat_index = tf.range(0, dim1) * dim2 + (index - 1)
+    return tf.gather(tf.reshape(tensor, [-1, dim3]), flat_index)
+
+
 def get_last(tensor):
     """
     :param tensor: [dim1 x dim2 x dim3] tensor
@@ -14,8 +25,7 @@ def get_last(tensor):
     return tf.squeeze(tf.slice(tensor, slice_begin, slice_size), [1])
 
 
-def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
-                     value=-1000.0):
+def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True, value=-1000.0):
     """
     Creates a [batch_size x max_length] mask.
     :param lengths: int32 1-dim tensor of batch_size lengths
@@ -40,36 +50,6 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
     return mask
 
 
-def tfrun(tensor):
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        return sess.run(tensor)
-
-
-def tfrunprint(tensor, suffix="", prefix=""):
-    if prefix == "":
-        print(tfrun(tensor), suffix)
-    else:
-        print(prefix, tfrun(tensor), suffix)
-
-
-def tfrunprintshape(tensor, suffix="", prefix=""):
-    tfrunprint(tf.shape(tensor), suffix, prefix)
-
-
-def tfprints(tensors, fun=None, prefix=""):
-    if fun is None:
-        fun = lambda x: x
-    prints = []
-    for i in range(0, len(tensors)):
-        prints.append(tf.Print(tensors[i], [fun(tensors[i])], prefix))
-    return prints
-
-
-def tfprintshapes(tensors, prefix=""):
-    return tfprints(tensors, lambda x: tf.shape(x), prefix)
-
-
 def gather_in_dim(params, indices, dim, name=None):
     """
     Gathers slices in a defined dimension. If dim == 0 this is doing the same
@@ -88,19 +68,6 @@ def gather_in_dim(params, indices, dim, name=None):
         reverted = tf.transpose(gathered, to_dims)
 
         return reverted
-
-
-def unit_length(tensor):
-    l2norm_sq = tf.reduce_sum(tensor * tensor, 1, keep_dims=True)
-    l2norm = tf.rsqrt(l2norm_sq)
-    return tensor * l2norm
-
-
-def tfrun(variables, feed_dict=None):
-    """Executes variables in a new TensorFlow session, then returns results."""
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        return sess.run(variables, feed_dict=feed_dict)
 
 
 def unit_length_transform(x, dim=1):
