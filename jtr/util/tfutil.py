@@ -48,23 +48,3 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
         mask = tf.less(mask, tf.expand_dims(lengths, 1))
     mask = tf.cast(mask, tf.float32) * value
     return mask
-
-
-def gather_in_dim(params, indices, dim, name=None):
-    """
-    Gathers slices in a defined dimension. If dim == 0 this is doing the same
-      thing as tf.gather.
-    """
-    if dim == 0:
-        return tf.gather(params, indices, name)
-    else:
-        dims = [i for i in range(0, len(params.get_shape()))]
-        to_dims = list(dims)
-        to_dims[0] = dim
-        to_dims[dim] = 0
-
-        transposed = tf.transpose(params, to_dims)
-        gathered = tf.gather(transposed, indices)
-        reverted = tf.transpose(gathered, to_dims)
-
-        return reverted
