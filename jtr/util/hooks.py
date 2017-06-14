@@ -412,6 +412,7 @@ class XQAEvalHook(EvalHook):
 
         return {"f1": acc_f1, "exact": acc_exact}
 
+
 class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
@@ -432,7 +433,6 @@ class ClassificationEvalHook(EvalHook):
     def preferred_metric_and_best_score():
         return 'Accuracy', [0.0]
 
-
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         labels = tensors[Ports.Target.target_index]
         predictions = tensors[Ports.Prediction.candidate_index]
@@ -448,8 +448,6 @@ class ClassificationEvalHook(EvalHook):
         acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
-
-
 
 
 class KBPEvalHook(EvalHook):
@@ -496,7 +494,6 @@ class KBPEvalHook(EvalHook):
 
         return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
 
-
     def at_test_time(self, epoch, vocab=None):
         from scipy.stats import rankdata
         from numpy import asarray
@@ -512,11 +509,11 @@ class KBPEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
-        q_cand_scores={}
-        q_cand_ids={}
-        q_answers={}
-        qa_scores=[]
-        qa_ids=[]
+        q_cand_scores = {}
+        q_cand_ids = {}
+        q_answers = {}
+        qa_scores = []
+        qa_ids = []
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.session, batch, self._ports)
             correct_answers =  predictions[Ports.Target.target_index]
