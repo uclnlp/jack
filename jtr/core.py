@@ -32,12 +32,14 @@ class TensorPort:
     def __init__(self, dtype, shape, name, doc_string=None, shape_string=None):
         """
         Create a new TensorPort.
-        :param dtype: the (TF) data type of the port.
-        :param shape: the shape of the tensor.
-        :param name: the name of this port (should be a valid TF name)
-        :param doc_string: a documentation string associated with this port
-        :param shape_string: a string of the form [size_1,size_2,size_3] where size_i is a text describing the
-        size of the tensor's dimension i (such as "number of batches").
+        
+        Args:
+            dtype: the (TF) data type of the port.
+            shape: the shape of the tensor.
+            name: the name of this port (should be a valid TF name)
+            doc_string: a documentation string associated with this port
+            shape_string: a string of the form [size_1,size_2,size_3] where size_i is a text describing the
+                size of the tensor's dimension i (such as "number of batches").
         """
         self.dtype = dtype
         self.shape = shape
@@ -48,6 +50,7 @@ class TensorPort:
     def create_placeholder(self):
         """
         Convenience method that produces a placeholder of the type and shape defined by the port.
+        
         Returns: a placeholder of same type, shape and name.
         """
         return tf.placeholder(self.dtype, self.shape, self.name)
@@ -274,7 +277,9 @@ class SharedResources():
     def store(self, path):
         """
         Saves all attributes of this object.
-        :param path: path to save shared resources
+        
+        Args:
+            path: path to save shared resources
         """
         if not os.path.exists(os.path.dirname(path)):
             os.mkdir(os.path.dirname(path))
@@ -284,7 +289,8 @@ class SharedResources():
     def load(self, path):
         """
         Loads this (potentially empty) resource from path (all object attributes).
-        :param path: path to shared resources
+        Args:
+            path: path to shared resources
         """
         if os.path.exists(path):
             with open(path, 'rb') as f:
@@ -309,6 +315,7 @@ class InputModule:
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other resources. This
         should and is only called before training, not before loading a saved model.
+        
         Args:
             data: a set of pairs of input and answer.
         """
@@ -355,6 +362,7 @@ class InputModule:
         that when iterated over returns a sequence of batches. These batches map ports to tensors
         just as `__call__` does, but provides additional bindings for the `training_ports` ports in
         case `is_eval` is `False`.
+        
         Args:
             dataset: a set of pairs of input and answer.
             is_eval: is this dataset generated for evaluation only (not training).
@@ -501,6 +509,7 @@ class SimpleModelModule(ModelModule):
         """
         This function needs to be implemented in order to define how the module produces
         output from input tensors corresponding to `input_ports`.
+        
         Args:
             *input_tensors: a list of input tensors.
 
@@ -516,6 +525,7 @@ class SimpleModelModule(ModelModule):
         This function needs to be implemented in order to define how the module produces tensors only used
         during training given tensors corresponding to the ones defined by `training_input_ports`, which might include
         tensors corresponding to ports defined by `output_ports`. This sub-graph should only be created during training.
+        
         Args:
             *training_input_tensors: a list of input tensors.
 
@@ -666,6 +676,7 @@ class JTReader:
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.dataset_generator are processed in order and do not get shuffled during with
         flag is_eval set to true.
+        
         Args:
             dataset:
             batch_size: note this information is needed here, but does not set the batch_size the model is using.
@@ -695,6 +706,7 @@ class JTReader:
               dataset_name=None):
         """
         This method trains the reader (and changes its state).
+        
         Args:
             optimizer: TF optimizer
             training_set: the training instances.
@@ -751,6 +763,7 @@ class JTReader:
     def setup_from_data(self, data: Iterable[Tuple[QASetting, Answer]], dataset_name=None, identifier='train'):
         """
         Sets up modules given a training dataset if necessary.
+        
         Args:
             data: training dataset
         """
@@ -763,6 +776,7 @@ class JTReader:
     def load_and_setup(self, path):
         """
         Sets up already stored reader from model directory.
+        
         Args:
             path: training dataset
         """
@@ -779,6 +793,7 @@ class JTReader:
         """
         (Re)loads module states on a setup reader (but not shared resources).
         If reader is not setup yet use setup from file instead.
+        
         Args:
             path: model directory
         """
@@ -789,6 +804,7 @@ class JTReader:
     def store(self, path):
         """
         Store module states and shared resources.
+        
         Args:
             path: model directory
         """
