@@ -22,17 +22,16 @@ def create_placeholders(corpus, types={}):
     assert all(t in [tf.int64, tf.float32, tf.float64, tf.int32] for t in types.values()) and all(k in corpus.keys() for k in types.keys()), \
         "Problem with 'types' argument: Please provide correct tf types for keys in the corpus"
 
-    placeholders = {} if isinstance(corpus, dict) else ['' for i in range(len(corpus))]
+    placeholders = {} if isinstance(corpus, dict) else ['' for _ in range(len(corpus))]
     keys = corpus.keys() if isinstance(corpus, dict) else range(len(corpus))
-    #todo: maybe simplify assuming corpus is always dict
+    # TODO: maybe simplify assuming corpus is always dict
 
     dims = get_entry_dims(corpus)
     for key in keys:
         typ = tf.int64 if key not in types else types[key]
         shape = [None]*dims[key]
-        name = key if isinstance(corpus, dict) else None # no name if list
-        placeholders[key] = tf.placeholder(typ, shape, name) #guaranteed same keys as corpus
-
+        name = key if isinstance(corpus, dict) else None  # no name if list
+        placeholders[key] = tf.placeholder(typ, shape, name)  # guaranteed same keys as corpus
     return placeholders
 
 """
@@ -42,7 +41,7 @@ to be used to create custom pipelines
 """
 
 
-#@todo: rewrite such that it works for different types of jtr files / models
+# TODO: rewrite such that it works for different types of jtr files / models
 # this is the general jtr pipeline
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
              emb=None, freeze=False, normalize=False, tokenization=True, lowercase=True,

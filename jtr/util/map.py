@@ -9,7 +9,7 @@ import numpy as np
 from jtr.util.random import DefaultRandomState
 from jtr.util.vocab import Vocab
 
-rs = DefaultRandomState(1337)#new seed ignored if set previously
+rs = DefaultRandomState(1337)
 
 # sym (e.g. token, token id or class label)
 # seq (e.g. sequence of tokens)
