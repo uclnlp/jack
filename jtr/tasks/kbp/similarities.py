@@ -10,10 +10,13 @@ def negative_l1_distance(x1, x2, axis=1):
 
     .. math:: L = - \\sum_i \\abs(x1_i - x2_i)
 
-    :param x1: First term.
-    :param x2: Second term.
-    :param axis: Reduction Indices.
-    :return: Similarity Value.
+    Args:
+        x1: First term.
+        x2: Second term.
+        axis: Reduction Indices.
+
+    Returns:
+        Similarity Value.
     """
     distance = tf.reduce_sum(tf.abs(x1 - x2), axis=axis)
     return - distance
@@ -25,10 +28,13 @@ def negative_l2_distance(x1, x2, axis=1):
 
     .. math:: L = - \\sqrt{\\sum_i (x1_i - x2_i)^2}
 
-    :param x1: First term.
-    :param x2: Second term.
-    :param axis: Reduction Indices.
-    :return: Similarity Value.
+    Args:
+        x1: First term.
+        x2: Second term.
+        axis: Reduction Indices.
+    
+    Returns:
+        Similarity Value.
     """
 
     distance = tf.sqrt(tf.reduce_sum(tf.square(x1 - x2), axis=axis))
@@ -41,10 +47,13 @@ def negative_square_l2_distance(x1, x2, axis=1):
 
     .. math:: L = - \\sum_i (x1_i - x2_i)^2
 
-    :param x1: First term.
-    :param x2: Second term.
-    :param axis: Reduction Indices.
-    :return: Similarity Value.
+    Args:
+        x1: First term.
+        x2: Second term.
+        axis: Reduction Indices.
+    
+    Returns:
+        Similarity Value.
     """
     distance = tf.reduce_sum(tf.square(x1 - x2), axis=axis)
     return - distance
@@ -56,10 +65,13 @@ def dot_product(x1, x2, axis=1):
 
     .. math:: L = \\sum_i x1_i x2_i
 
-    :param x1: First term.
-    :param x2: Second term.
-    :param axis: Reduction Indices.
-    :return: Similarity Value.
+    Args:
+        x1: First term.
+        x2: Second term.
+        axis: Reduction Indices.
+
+    Returns:
+        Similarity Value.
     """
 
     similarity = tf.reduce_sum(x1 * x2, axis=axis)
