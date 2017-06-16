@@ -12,9 +12,9 @@ def write_to_hdf(path, data):
     """
     Writes a numpy array to a hdf5 file under the given path.
     
-    :param path: 
-    :param data: 
-    :return: 
+    Args:
+        path:
+        data:
     """
     h5file = h5py.File(path, "w")
     h5file.create_dataset("default", data=data)
@@ -24,10 +24,12 @@ def write_to_hdf(path, data):
 def load_hdf_file(path, keyword='default'):
     """
     Reads and returns a numpy array for a hdf5 file.
-    
-    :param path: 
-    :param keyword: 
-    :return: 
+
+    Args:
+        path: 
+        keyword: 
+ 
+    Returns:
     """
     h5file = h5py.File(path, 'r')
     dset = h5file.get(keyword)
@@ -39,9 +41,12 @@ def load_hdf_file(path, keyword='default'):
 def load_hdf5_paths(paths, limit=None):
     """
     
-    :param paths: 
-    :param limit: 
-    :return: 
+    Args:
+        paths: 
+        limit: 
+
+    Returns:
+
     """
     data = []
     for path in paths:
@@ -52,7 +57,9 @@ def load_hdf5_paths(paths, limit=None):
 def get_home_path():
     """
     Return the home directory path.
-    :return: path.
+
+    Returns:
+        home directory path
     """
     return os.environ['HOME']
 
@@ -60,8 +67,9 @@ def get_home_path():
 def get_data_path():
     """
     Return the data path.
-    
-    :return: path.
+
+    Returns:
+        data path
     """
     return os.path.join(os.environ['HOME'], '.data')
 
@@ -70,8 +78,11 @@ def make_dirs_if_not_exists(path):
     """
     Creates a directory if it does not exists.
     
-    :param path: 
-    :return: 
+    Args:
+        path: 
+
+    Returns:
+
     """
     if not os.path.exists(path):
         os.makedirs(path)
