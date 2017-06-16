@@ -11,10 +11,12 @@ def hinge_loss(positive_scores, negative_scores, margin=1.0):
 
     [1] http://yann.lecun.com/exdb/publis/pdf/lecun-06.pdf
 
-    :param positive_scores: (N,) Tensor containing scores of positive examples.
-    :param negative_scores: (N,) Tensor containing scores of negative examples.
-    :param margin: Margin.
-    :return: Loss value.
+    Args:
+        positive_scores: (N,) Tensor containing scores of positive examples.
+        negative_scores: (N,) Tensor containing scores of negative examples.
+        margin: Margin.
+    Returns:
+        Loss value.
     """
     hinge_losses = tf.nn.relu(margin - positive_scores + negative_scores)
     loss = tf.reduce_sum(hinge_losses)
@@ -28,9 +30,11 @@ def logistic_loss(positive_scores, negative_scores):
 
     [1] http://yann.lecun.com/exdb/publis/pdf/lecun-06.pdf
 
-    :param positive_scores: (N,) Tensor containing scores of positive examples.
-    :param negative_scores: (N,) Tensor containing scores of negative examples.
-    :return: Loss value.
+    Args:
+        positive_scores: (N,) Tensor containing scores of positive examples.
+        negative_scores: (N,) Tensor containing scores of negative examples.
+    Returns:
+        Loss value.
     """
     logistic_losses = tf.log(1 + tf.exp(1 - positive_scores + negative_scores))
     loss = tf.reduce_sum(logistic_losses)
@@ -44,9 +48,11 @@ def mce_loss(positive_scores, negative_scores):
 
     [1] http://yann.lecun.com/exdb/publis/pdf/lecun-06.pdf
 
-    :param positive_scores: (N,) Tensor containing scores of positive examples.
-    :param negative_scores: (N,) Tensor containing scores of negative examples.
-    :return: Loss value.
+    Args:
+        positive_scores: (N,) Tensor containing scores of positive examples.
+        negative_scores: (N,) Tensor containing scores of negative examples.
+    Returns:
+        Loss value.
     """
     mce_losses = tf.sigmoid(- positive_scores + negative_scores)
     loss = tf.reduce_sum(mce_losses)
@@ -60,10 +66,12 @@ def square_square_loss(positive_scores, negative_scores, margin=1.0):
 
     [1] http://yann.lecun.com/exdb/publis/pdf/lecun-06.pdf
 
-    :param positive_scores: (N,) Tensor containing scores of positive examples.
-    :param negative_scores: (N,) Tensor containing scores of negative examples.
-    :param margin: Margin.
-    :return: Loss value.
+    Args:
+        positive_scores: (N,) Tensor containing scores of positive examples.
+        negative_scores: (N,) Tensor containing scores of negative examples.
+    :   margin: Margin.
+    Returns:
+        Loss value.
     """
     square_square_losses = - positive_scores + tf.nn.relu(margin + negative_scores) ** 2
     loss = tf.reduce_sum(square_square_losses)
@@ -77,10 +85,12 @@ def square_exponential_loss(positive_scores, negative_scores, gamma=1.0):
 
     [1] http://yann.lecun.com/exdb/publis/pdf/lecun-06.pdf
 
-    :param positive_scores: (N,) Tensor containing scores of positive examples.
-    :param negative_scores: (N,) Tensor containing scores of negative examples.
-    :param gamma: Gamma hyper-parameter.
-    :return: Loss value.
+    Args:
+        positive_scores: (N,) Tensor containing scores of positive examples.
+        negative_scores: (N,) Tensor containing scores of negative examples.
+        gamma: Gamma hyper-parameter.
+    Returns:
+        Loss value.
     """
     square_exponential_losses = - positive_scores + gamma * tf.exp(negative_scores)
     loss = tf.reduce_sum(square_exponential_losses)

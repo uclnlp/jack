@@ -11,7 +11,8 @@ class Vocabulary:
     """Manages word2idx and idx2word functionality; manages of word stats."""
     def __init__(self, vocab=None):
         """
-        :param vocab: Word-to-Index dictionary.
+        Args:
+            vocab: Word-to-Index dictionary.
         """
         self.__word2idx = {}
         self.__word2freq = {}

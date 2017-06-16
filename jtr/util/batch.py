@@ -9,12 +9,14 @@ from jtr.util.random import DefaultRandomState
 
 rs = DefaultRandomState(1337)
 
+
 class GeneratorWithRestart(object):
     def __init__(self, iterator):
         self.iterator = iterator
 
     def __iter__(self):
         return self.iterator()
+
 
 def get_buckets(data, order, structure):
     """
@@ -142,8 +144,8 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
     n_buckets = len(buckets2instances)
 
     exact_epoch = True if len(data0) < n_buckets*batch_size else exact_epoch
-    #if average instances/bucket smaller than batch_size: set exact_epoch = True
-    #to avoid empty batches during debugging on small data samples
+    # if average instances/bucket smaller than batch_size: set exact_epoch = True
+    # to avoid empty batches during debugging on small data samples
 
     def bucket_generator():
         buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)

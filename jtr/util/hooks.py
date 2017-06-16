@@ -7,7 +7,6 @@ from datetime import datetime
 from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
-from jtr.data_structures import load_labelled_data
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -20,8 +19,11 @@ from jtr.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
 
 logger = logging.getLogger(__name__)
 
+"""
+TODO -- hooks should also have prefixes so that one can use the same hook with different parameters
+"""
 
-# todo: hooks should also have prefixes so that one can use the same hook with different parameters
+
 class TrainingHook(metaclass=ABCMeta):
     """Serves as Hook interface."""
 
@@ -299,7 +301,6 @@ class EvalHook(TraceHook):
         """Returns:
                dict from metric name to float. Per default batch metrics are simply averaged by
                total number of examples"""
-        #return {k: np.mean(vs) for k, vs in accumulated_metrics.items()}
         return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
@@ -368,11 +369,9 @@ class XQAEvalHook(EvalHook):
     def possible_metrics(self) -> List[str]:
         return ["exact", "f1"]
 
-
     @staticmethod
     def preferred_metric_and_best_score():
         return 'f1', [0.0]
-
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[FlatPorts.Target.answer_span]
@@ -412,6 +411,7 @@ class XQAEvalHook(EvalHook):
 
         return {"f1": acc_f1, "exact": acc_exact}
 
+
 class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
@@ -432,11 +432,9 @@ class ClassificationEvalHook(EvalHook):
     def preferred_metric_and_best_score():
         return 'Accuracy', [0.0]
 
-
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         labels = tensors[Ports.Target.target_index]
         predictions = tensors[Ports.Prediction.candidate_index]
-        #scores = tensors[Ports.Prediction.logits]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -448,8 +446,6 @@ class ClassificationEvalHook(EvalHook):
         acc_f1 = f1_score(labels, predictions, average='macro')*labels.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
-
-
 
 
 class KBPEvalHook(EvalHook):
@@ -475,9 +471,7 @@ class KBPEvalHook(EvalHook):
         correct_answers = tensors[Ports.Target.target_index]
         logits = tensors[Ports.Prediction.logits]
         candidate_ids = tensors[Ports.Input.atomic_candidates]
-        loss = tensors[Ports.loss]
 
-        neg_loss = 0.0
         acc_exact = 0.0
 
         winning_indices = np.argmax(logits, axis=1)
@@ -491,11 +485,7 @@ class KBPEvalHook(EvalHook):
         for i in range(len_np_or_list(winning_indices)):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
-
-        neg_loss = -1*len_np_or_list(winning_indices)*loss
-
         return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
-
 
     def at_test_time(self, epoch, vocab=None):
         from scipy.stats import rankdata
@@ -512,59 +502,58 @@ class KBPEvalHook(EvalHook):
             else:
                 return v.shape[0]
 
-        q_cand_scores={}
-        q_cand_ids={}
-        q_answers={}
-        qa_scores=[]
-        qa_ids=[]
+        q_cand_scores = {}
+        q_cand_ids = {}
+        q_answers = {}
+        qa_scores = []
+        qa_ids = []
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.session, batch, self._ports)
-            correct_answers =  predictions[Ports.Target.target_index]
+            correct_answers = predictions[Ports.Target.target_index]
             logits = predictions[Ports.Prediction.logits]
-            candidate_ids =    predictions[Ports.Input.atomic_candidates]
-            questions        = predictions[Ports.Input.question]
+            candidate_ids = predictions[Ports.Input.atomic_candidates]
+            questions = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
                 q=questions[j][0]
-                q_cand_scores[q]=logits[j]
-                q_cand_ids[q]=candidate_ids[j]
+                q_cand_scores[q] = logits[j]
+                q_cand_ids[q] = candidate_ids[j]
                 if q not in q_answers:
-                    q_answers[q]=set()
+                    q_answers[q] = set()
                 q_answers[q].add(correct_answers[j])
         for q in q_cand_ids:
             for k,c in enumerate(q_cand_ids[q]):
-                qa=str(q)+"\t"+str(c)
+                qa = str(q) + "\t" + str(c)
                 qa_ids.append(qa)
                 qa_scores.append(q_cand_scores[q][k])
-        qa_ranks=rankdata(-1*asarray(qa_scores),method="min")
-        qa_rank={}
-        qa_sorted=sorted(zip(qa_ids,qa_scores),key=lambda x: x[1]*-1)
+        qa_ranks = rankdata(- asarray(qa_scores), method="min")
+        qa_rank = {}
         for i,qa_id in enumerate(qa_ids):
             qa_rank[qa_id]=qa_ranks[i]
-        mean_ap=0
-        wmap=0
-        qd=0
-        md=0
+        mean_ap = 0
+        wmap = 0
+        qd = 0
+        md = 0
         for q in q_answers:
-            cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
+            cand_ranks = rankdata(- q_cand_scores[q], method="min")
             ans_ranks=[]
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
-                    if a==cand and cand_ranks[c]<=100:# and qa_rank[str(q)+"\t"+str(a)]<=1000:
+                    if a == cand and cand_ranks[c] <= 100:
                         ans_ranks.append(cand_ranks[c])
-            av_p=0
-            answers=1
+            av_p = 0
+            answers = 1
             for r in sorted(ans_ranks):
-                p=answers/r
-                av_p=av_p+p
-                answers+=1
-            if len(ans_ranks)>0:
-                wmap=wmap+av_p
-                md=md+len(ans_ranks)
-                av_p=av_p/len(ans_ranks)
-                qd=qd+1
+                p = answers/r
+                av_p = av_p+p
+                answers += 1
+            if len(ans_ranks) > 0:
+                wmap = wmap+av_p
+                md = md+len(ans_ranks)
+                av_p = av_p/len(ans_ranks)
+                qd = qd + 1
             else:
                 pass
-            mean_ap=mean_ap+av_p
+            mean_ap = mean_ap + av_p
         q_answers_len = len(q_answers)
         mean_ap = mean_ap / q_answers_len if q_answers_len else 0
         wmap = wmap / md if md else 0
@@ -586,7 +575,6 @@ class KBPEvalHook(EvalHook):
                                                   np.round(wmap, 5)))
         res += '\t' + self._info
         logger.info(res)
-
 
     def at_epoch_end(self, epoch: int, **kwargs):
         self.epoch += 1

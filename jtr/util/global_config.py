@@ -40,7 +40,8 @@ class Config:
             name = names[i]
             if name[:2] == '--':
                 continue
-            assert name in params2type, 'Parameter {0} does not exist. Prefix your custom parameters with -- to skip parsing for global config'.format(name)
+            assert name in params2type, 'Parameter {0} does not exist. Prefix your custom parameters with -- ' \
+                                        'to skip parsing for global config'.format(name)
             values[i] = params2type[name](values[i])
 
         for name, value in zip(names, values):

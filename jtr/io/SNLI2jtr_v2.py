@@ -26,8 +26,10 @@ def convert_snli(snli_file_jsonl,support=False):
         - support instance = part1 + CONJ + part2 + CONJ + label
     Notes:
         - instances with gold labels '-' are removed from the corpus
-    :param snli_file_json: input file
-    :param support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB' 
+    
+    Args:
+        snli_file_json: input file
+        support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB' 
     """
     assert 'snli_1.0' in snli_file_jsonl and snli_file_jsonl.endswith('.jsonl'), "input should be the snli_1.0_X.jsonl files (X=test/train/dev)"
 
@@ -39,7 +41,6 @@ def convert_snli(snli_file_jsonl,support=False):
                 'globals': {'candidates': __candidates},
                 'instances': instances  # filter out invalid ones
                 }
-        
 
 
 def __convert_snli_instance(instance):
@@ -62,17 +63,16 @@ def __convert_snli_instance(instance):
 
 def __add_support(instances,support):
     """
-    :param instances: list of jtr instances (with or without support)
-    :param support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB'
+    Args:
+        instances: list of jtr instances (with or without support)
+        support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB'
     """
     
-    if support in ['WordNet','SNLItrain','PPDB']:
-        #TODO: add support
+    if support in ['WordNet', 'SNLItrain', 'PPDB']:
+        # TODO: add support
         pass
 
     return instances
-
-
 
 
 def main():
