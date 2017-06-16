@@ -20,13 +20,17 @@ def get_by_index(tensor, index):
 def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True, value=-1000.0):
     """
     Creates a [batch_size x max_length] mask.
-    :param lengths: int32 1-dim tensor of batch_size lengths
-    :param batch_size: int32 0-dim tensor or python int
-    :param max_length: int32 0-dim tensor or python int
-    :param mask_right: if True, everything before "lengths" becomes zero and the
-        rest "value", else vice versa
-    :param value: value for the mask
-    :return: [batch_size x max_length] mask of zeros and "value"s
+
+    Args:
+        lengths: int32 1-dim tensor of batch_size lengths
+        batch_size: int32 0-dim tensor or python int
+        max_length: int32 0-dim tensor or python int
+        mask_right: if True, everything before "lengths" becomes zero and the
+            rest "value", else vice versa
+        value: value for the mask
+
+    Returns:
+        [batch_size x max_length] mask of zeros and "value"s
     """
     if max_length is None:
         max_length = tf.reduce_max(lengths)
