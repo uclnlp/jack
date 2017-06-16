@@ -471,7 +471,6 @@ class KBPEvalHook(EvalHook):
         correct_answers = tensors[Ports.Target.target_index]
         logits = tensors[Ports.Prediction.logits]
         candidate_ids = tensors[Ports.Input.atomic_candidates]
-        loss = tensors[Ports.loss]
 
         acc_exact = 0.0
 
@@ -486,9 +485,6 @@ class KBPEvalHook(EvalHook):
         for i in range(len_np_or_list(winning_indices)):
             if candidate_ids[i,winning_indices[i]]==correct_answers[i]:
                 acc_exact += 1.0
-
-        neg_loss = -1*len_np_or_list(winning_indices)*loss
-
         return {"epoch": self.epoch*len_np_or_list(winning_indices), "exact": acc_exact}
 
     def at_test_time(self, epoch, vocab=None):
@@ -529,9 +525,8 @@ class KBPEvalHook(EvalHook):
                 qa=str(q)+"\t"+str(c)
                 qa_ids.append(qa)
                 qa_scores.append(q_cand_scores[q][k])
-        qa_ranks=rankdata(-1*asarray(qa_scores),method="min")
-        qa_rank={}
-        qa_sorted=sorted(zip(qa_ids,qa_scores),key=lambda x: x[1]*-1)
+        qa_ranks = rankdata(-1*asarray(qa_scores),method="min")
+        qa_rank = {}
         for i,qa_id in enumerate(qa_ids):
             qa_rank[qa_id]=qa_ranks[i]
         mean_ap=0
@@ -539,26 +534,26 @@ class KBPEvalHook(EvalHook):
         qd=0
         md=0
         for q in q_answers:
-            cand_ranks=rankdata(-1*q_cand_scores[q],method="min")
+            cand_ranks = rankdata(- q_cand_scores[q], method="min")
             ans_ranks=[]
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
-                    if a==cand and cand_ranks[c]<=100:# and qa_rank[str(q)+"\t"+str(a)]<=1000:
+                    if a == cand and cand_ranks[c] <= 100:
                         ans_ranks.append(cand_ranks[c])
-            av_p=0
-            answers=1
+            av_p = 0
+            answers = 1
             for r in sorted(ans_ranks):
-                p=answers/r
-                av_p=av_p+p
-                answers+=1
+                p = answers/r
+                av_p = av_p+p
+                answers += 1
             if len(ans_ranks)>0:
-                wmap=wmap+av_p
-                md=md+len(ans_ranks)
-                av_p=av_p/len(ans_ranks)
-                qd=qd+1
+                wmap = wmap+av_p
+                md = md+len(ans_ranks)
+                av_p = av_p/len(ans_ranks)
+                qd = qd+1
             else:
                 pass
-            mean_ap=mean_ap+av_p
+            mean_ap = mean_ap+av_p
         q_answers_len = len(q_answers)
         mean_ap = mean_ap / q_answers_len if q_answers_len else 0
         wmap = wmap / md if md else 0
