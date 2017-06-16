@@ -81,9 +81,10 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
                              for cand in xs[cands_name][i]]
             return xs
         corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
-    #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
-    #todo: there is no guarantee that these are the same)
-    #todo: alternative: use functions in pipeline.py
+    # TODO: verify!!!! (candidates and answers have been replaced by id's, but
+    # if target_vocab differs from candidate_vocab, there is no guarantee that
+    # these are the same). Alternative: use functions in pipeline.py
+
 
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
     if negsamples > 0 and not test_time:#we want this to be the last thing we do to candidates
