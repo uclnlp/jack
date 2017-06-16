@@ -22,17 +22,16 @@ def create_placeholders(corpus, types={}):
     assert all(t in [tf.int64, tf.float32, tf.float64, tf.int32] for t in types.values()) and all(k in corpus.keys() for k in types.keys()), \
         "Problem with 'types' argument: Please provide correct tf types for keys in the corpus"
 
-    placeholders = {} if isinstance(corpus, dict) else ['' for i in range(len(corpus))]
+    placeholders = {} if isinstance(corpus, dict) else ['' for _ in range(len(corpus))]
     keys = corpus.keys() if isinstance(corpus, dict) else range(len(corpus))
-    #todo: maybe simplify assuming corpus is always dict
+    # TODO: maybe simplify assuming corpus is always dict
 
     dims = get_entry_dims(corpus)
     for key in keys:
         typ = tf.int64 if key not in types else types[key]
         shape = [None]*dims[key]
-        name = key if isinstance(corpus, dict) else None # no name if list
-        placeholders[key] = tf.placeholder(typ, shape, name) #guaranteed same keys as corpus
-
+        name = key if isinstance(corpus, dict) else None  # no name if list
+        placeholders[key] = tf.placeholder(typ, shape, name)  # guaranteed same keys as corpus
     return placeholders
 
 """
@@ -42,7 +41,7 @@ to be used to create custom pipelines
 """
 
 
-#@todo: rewrite such that it works for different types of jtr files / models
+# TODO: rewrite such that it works for different types of jtr files / models
 # this is the general jtr pipeline
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
              emb=None, freeze=False, normalize=False, tokenization=True, lowercase=True,
@@ -82,13 +81,14 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
                              for cand in xs[cands_name][i]]
             return xs
         corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
-    #todo: verify!!!! (candidates and answers have been replaced by id's, but if target_vocab differs from candidate_vocab,
-    #todo: there is no guarantee that these are the same)
-    #todo: alternative: use functions in pipeline.py
+    # TODO: verify!!!! (candidates and answers have been replaced by id's, but
+    # if target_vocab differs from candidate_vocab, there is no guarantee that
+    # these are the same). Alternative: use functions in pipeline.py
 
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
-    if negsamples > 0 and not test_time:#we want this to be the last thing we do to candidates
-            corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+    if negsamples > 0 and not test_time:
+        # we want this to be the last thing we do to candidates
+        corpus_ids = dynamic_subsample(corpus_ids, 'candidates', 'answers', how_many=negsamples)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab

@@ -13,9 +13,10 @@ class BaseModel(metaclass=abc.ABCMeta):
         """
         Abstract class inherited by all models.
 
-        :param subject_embeddings: (batch_size, entity_embedding_size) Tensor.
-        :param predicate_embeddings: (batch_size, predicate_embedding_size) Tensor.
-        :param object_embeddings: (batch_size, entity_embedding_size) Tensor.
+        Args:
+            subject_embeddings: (batch_size, entity_embedding_size) Tensor.
+            predicate_embeddings: (batch_size, predicate_embedding_size) Tensor.
+            object_embeddings: (batch_size, entity_embedding_size) Tensor.
         """
         self.subject_embeddings = subject_embeddings
         self.predicate_embeddings = predicate_embeddings
@@ -36,7 +37,8 @@ class TranslatingModel(BaseModel):
         Implementation of the Translating Embeddings model [1].
         [1] Bordes, A. et al. - Translating Embeddings for Modeling Multi-relational Data - NIPS 2013
 
-        :param similarity_function: Similarity function.
+        Args:
+            similarity_function: Similarity function.
         """
         super().__init__(*args, **kwargs)
         self.similarity_function = similarity_function
@@ -55,7 +57,8 @@ class BilinearDiagonalModel(BaseModel):
         Implementation of the Bilinear-Diagonal model [1]
         [1] Yang, B. et al. - Embedding Entities and Relations for Learning and Inference in Knowledge Bases - ICLR 2015
 
-        :param similarity_function: Similarity function.
+        Args:
+            similarity_function: Similarity function.
         """
         super().__init__(*args, **kwargs)
 
@@ -73,7 +76,8 @@ class BilinearModel(BaseModel):
         Implementation of the Bilinear model [1]
         [1] Nickel, M. et al. - A Three-Way Model for Collective Learning on Multi-Relational Data - ICML 2011
 
-        :param similarity_function: Similarity function.
+        ArgS:
+            similarity_function: Similarity function.
         """
         super().__init__(*args, **kwargs)
 
@@ -93,7 +97,8 @@ class ComplexModel(BaseModel):
         Implementation of the ComplEx model [1]
         [1] Trouillon, T. et al. - Complex Embeddings for Simple Link Prediction - ICML 2016
 
-        :param embedding size: Embedding size.
+        Args:
+            embedding size: Embedding size.
         """
         super().__init__(*args, **kwargs)
 

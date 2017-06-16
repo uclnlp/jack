@@ -91,13 +91,16 @@ class BaseESIM:
         """
         Attend phase.
 
-        :param sequence1: tensor with shape (batch_size, time_steps, num_units)
-        :param sequence2: tensor with shape (batch_size, time_steps, num_units)
-        :param sequence1_length: time_steps in sequence1
-        :param sequence2_length: time_steps in sequence2
-        :param use_masking: use masking
-        :param reuse: reuse variables
-        :return: two tensors with shape (batch_size, time_steps, num_units)
+        Args:
+            sequence1: tensor with shape (batch_size, time_steps, num_units)
+            sequence2: tensor with shape (batch_size, time_steps, num_units)
+            sequence1_length: time_steps in sequence1
+            sequence2_length: time_steps in sequence2
+            use_masking: use masking
+            reuse: reuse variables
+        
+        Returns:
+            two tensors with shape (batch_size, time_steps, num_units)
         """
         with tf.variable_scope('attend') as _:
             # tensor with shape (batch_size, time_steps, num_units)
@@ -135,11 +138,14 @@ class BaseESIM:
         """
         Compare phase.
 
-        :param sentence: tensor with shape (batch_size, time_steps, num_units)
-        :param soft_alignment: tensor with shape (batch_size, time_steps, num_units)
-        :param sequence_length: sequence length
-        :param reuse: reuse variables
-        :return: tensor with shape (batch_size, time_steps, num_units)
+        Args:
+            sentence: tensor with shape (batch_size, time_steps, num_units)
+            soft_alignment: tensor with shape (batch_size, time_steps, num_units)
+            sequence_length: sequence length
+            reuse: reuse variables
+        
+        Returns:
+            tensor with shape (batch_size, time_steps, num_units)
         """
         # tensor with shape (batch, time_steps, num_units)
         values = [sentence, soft_alignment, sentence - soft_alignment, sentence * soft_alignment]
@@ -154,14 +160,14 @@ class BaseESIM:
         """
         Aggregate phase.
 
-        :param v1: tensor with shape (batch_size, time_steps, num_units)
-        :param v2: tensor with shape (batch_size, time_steps, num_units)
-        :param num_classes: number of output units
-        :param v1_lengths: time_steps in v1
-        :param v2_lengths: time_steps in v2
-        :param use_masking: use masking
-        :param reuse: reuse variables
-        :return: 
+        Args:
+            v1: tensor with shape (batch_size, time_steps, num_units)
+            v2: tensor with shape (batch_size, time_steps, num_units)
+            num_classes: number of output units
+            v1_lengths: time_steps in v1
+            v2_lengths: time_steps in v2
+            use_masking: use masking
+            reuse: reuse variables 
         """
         with tf.variable_scope('aggregate', reuse=reuse) as _:
             if use_masking:

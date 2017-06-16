@@ -10,12 +10,15 @@ def mask_3d(sequences, sequence_lengths, mask_value, dimension=2):
     This function is supposed to mask the last columns in the raw attention
     matrix (e_{i, j}) in cases where the sentence2 is smaller than the
     maximum.
-    :param sequences: tensor with shape (batch_size, m, n)
-    :param sequence_lengths: tensor with shape (batch_size) containing the sentence sizes that
-        should be limited
-    :param mask_value: scalar value to assign to items after sentence size
-    :param dimension: over which dimension to mask values
-    :return: a tensor with the same shape as `values`
+    
+    Args:
+        sequences: tensor with shape (batch_size, m, n)
+        sequence_lengths: tensor with shape (batch_size) containing the sentence sizes that
+           should be limited
+        mask_value: scalar value to assign to items after sentence size
+        dimension: over which dimension to mask values
+    Returns:
+        A tensor with the same shape as `values`
     """
     if dimension == 1:
         sequences = tf.transpose(sequences, [0, 2, 1])

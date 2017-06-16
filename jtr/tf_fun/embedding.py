@@ -12,11 +12,16 @@ from jtr.util import tfutil
 def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
                          emb_initializer=tf.random_normal_initializer(0.0, 0.1), scope=None):
     """
-    :param vocab: filled Vocab instance
-    :param size: size of embeddings
-    :param word_ids: tf.Tensor[None, None] or list of tensors
-    :param conv_width: int
-    :return: char embedded word ids
+    Args:
+        vocab: filled Vocab instance
+        size: size of embeddings
+        word_ids: tf.Tensor[None, None] or list of tensors
+        conv_width: int
+        emb_initializer: initializer
+        scope: scope
+
+    Returns:
+        char embedded word ids
     """
     if not isinstance(word_ids, list):
         word_ids = [word_ids]
