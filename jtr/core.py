@@ -4,7 +4,7 @@
 Here we define the basic interfaces of jtr. jtr readers consist of 3 layers, one that transform
 jtr data structures into tensors, one that processes predicts the outputs and losses
 using a TensorFlow model into other tensors, and one that converts these tensors back to jtr data structures.
-re"""
+"""
 
 import logging
 import os
