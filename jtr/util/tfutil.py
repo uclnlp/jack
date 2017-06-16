@@ -5,9 +5,12 @@ import tensorflow as tf
 
 def get_by_index(tensor, index):
     """
-    :param tensor: [dim1 x dim2 x dim3] tensor
-    :param index: [dim1] tensor of indices for dim2
-    :return: [dim1 x dim3] tensor
+    Args:
+        tensor: [dim1 x dim2 x dim3] tensor
+        index: [dim1] tensor of indices for dim2
+
+    Returns:
+        [dim1 x dim3] tensor
     """
     dim1, dim2, dim3 = tf.unstack(tf.shape(tensor))
     flat_index = tf.range(0, dim1) * dim2 + (index - 1)
