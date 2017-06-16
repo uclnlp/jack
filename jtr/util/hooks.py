@@ -7,7 +7,6 @@ from datetime import datetime
 from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
-from jtr.data_structures import load_labelled_data
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
