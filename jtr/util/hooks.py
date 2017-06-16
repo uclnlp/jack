@@ -19,8 +19,11 @@ from jtr.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
 
 logger = logging.getLogger(__name__)
 
+"""
+TODO -- hooks should also have prefixes so that one can use the same hook with different parameters
+"""
 
-# todo: hooks should also have prefixes so that one can use the same hook with different parameters
+
 class TrainingHook(metaclass=ABCMeta):
     """Serves as Hook interface."""
 
@@ -298,7 +301,6 @@ class EvalHook(TraceHook):
         """Returns:
                dict from metric name to float. Per default batch metrics are simply averaged by
                total number of examples"""
-        #return {k: np.mean(vs) for k, vs in accumulated_metrics.items()}
         return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
@@ -433,7 +435,6 @@ class ClassificationEvalHook(EvalHook):
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         labels = tensors[Ports.Target.target_index]
         predictions = tensors[Ports.Prediction.candidate_index]
-        #scores = tensors[Ports.Prediction.logits]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -472,7 +473,6 @@ class KBPEvalHook(EvalHook):
         candidate_ids = tensors[Ports.Input.atomic_candidates]
         loss = tensors[Ports.loss]
 
-        neg_loss = 0.0
         acc_exact = 0.0
 
         winning_indices = np.argmax(logits, axis=1)
