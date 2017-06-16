@@ -509,30 +509,30 @@ class KBPEvalHook(EvalHook):
         qa_ids = []
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(self.reader.session, batch, self._ports)
-            correct_answers =  predictions[Ports.Target.target_index]
+            correct_answers = predictions[Ports.Target.target_index]
             logits = predictions[Ports.Prediction.logits]
-            candidate_ids =    predictions[Ports.Input.atomic_candidates]
-            questions        = predictions[Ports.Input.question]
+            candidate_ids = predictions[Ports.Input.atomic_candidates]
+            questions = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
                 q=questions[j][0]
-                q_cand_scores[q]=logits[j]
-                q_cand_ids[q]=candidate_ids[j]
+                q_cand_scores[q] = logits[j]
+                q_cand_ids[q] = candidate_ids[j]
                 if q not in q_answers:
-                    q_answers[q]=set()
+                    q_answers[q] = set()
                 q_answers[q].add(correct_answers[j])
         for q in q_cand_ids:
             for k,c in enumerate(q_cand_ids[q]):
-                qa=str(q)+"\t"+str(c)
+                qa = str(q) + "\t" + str(c)
                 qa_ids.append(qa)
                 qa_scores.append(q_cand_scores[q][k])
-        qa_ranks = rankdata(-1*asarray(qa_scores),method="min")
+        qa_ranks = rankdata(- asarray(qa_scores), method="min")
         qa_rank = {}
         for i,qa_id in enumerate(qa_ids):
             qa_rank[qa_id]=qa_ranks[i]
-        mean_ap=0
-        wmap=0
-        qd=0
-        md=0
+        mean_ap = 0
+        wmap = 0
+        qd = 0
+        md = 0
         for q in q_answers:
             cand_ranks = rankdata(- q_cand_scores[q], method="min")
             ans_ranks=[]
@@ -546,14 +546,14 @@ class KBPEvalHook(EvalHook):
                 p = answers/r
                 av_p = av_p+p
                 answers += 1
-            if len(ans_ranks)>0:
+            if len(ans_ranks) > 0:
                 wmap = wmap+av_p
                 md = md+len(ans_ranks)
                 av_p = av_p/len(ans_ranks)
-                qd = qd+1
+                qd = qd + 1
             else:
                 pass
-            mean_ap = mean_ap+av_p
+            mean_ap = mean_ap + av_p
         q_answers_len = len(q_answers)
         mean_ap = mean_ap / q_answers_len if q_answers_len else 0
         wmap = wmap / md if md else 0
