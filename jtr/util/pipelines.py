@@ -85,10 +85,10 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
     # if target_vocab differs from candidate_vocab, there is no guarantee that
     # these are the same). Alternative: use functions in pipeline.py
 
-
     corpus_ids = deep_seq_map(corpus_ids, lambda xs: len(xs), keys=['question', 'support'], fun_name='lengths', expand=True)
-    if negsamples > 0 and not test_time:#we want this to be the last thing we do to candidates
-            corpus_ids=dynamic_subsample(corpus_ids,'candidates','answers',how_many=negsamples)
+    if negsamples > 0 and not test_time:
+        # we want this to be the last thing we do to candidates
+        corpus_ids=dynamic_subsample(corpus_ids, 'candidates', 'answers', how_many=negsamples)
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
