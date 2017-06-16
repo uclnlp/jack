@@ -1,10 +1,12 @@
 import os
 
-def readAnn(textfolder = "../data/SemEval2017Task10/"):
+
+def readAnn(textfolder="../data/SemEval2017Task10/"):
     '''
     Read .ann files and look up corresponding spans in .txt files
-    :param textfolder:
-    :return:
+    
+    Args:
+        textfolder:
     '''
 
     flist = os.listdir(textfolder)
