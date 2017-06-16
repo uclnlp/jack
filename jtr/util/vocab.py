@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+
 import operator
 import sys
 
+from collections import OrderedDict
+
 import numpy as np
-import tensorflow as tf
 
 
 class Vocab(object):
@@ -26,7 +28,7 @@ class Vocab(object):
         self.next_pos = 0
         self.next_neg = -1
         self.unk = unk
-        self.emb = emb #if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
+        self.emb = emb  # if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
 
         if init_from_embeddings and emb is not None:
             self.sym2id = dict(emb.vocabulary.word2idx)
@@ -43,7 +45,7 @@ class Vocab(object):
             # with pos and neg indices
             self.id2sym = {}
             self.next_pos = 0
-            self.sym2freqs = {}
+            self.sym2freqs = OrderedDict()
             if unk is not None:
                 self.sym2id[unk] = 0
                 # with pos and neg indices
@@ -168,19 +170,19 @@ class Vocab(object):
         """map original (pos/neg) ids to normalized (non-neg) ids: first new symbols, then those in emb"""
         # e.g. -1 should be mapped to self.next_pos + 0
         # e.g. -3 should be mapped to self.next_pos + 2
-        return id if id >=0 else self.next_pos - id - 1
+        return id if id >= 0 else self.next_pos - id - 1
 
-    def _denormalize(self,id):
+    def _denormalize(self, id):
         # self.next_pos + i is mapped back to  -1-i
-        return id if id < self.next_pos else -1-(id-self.next_pos)
+        return id if id < self.next_pos else - 1 - (id - self.next_pos)
 
     def get_ids_pretrained(self):
         """return internal or normalized id's (depending on frozen/unfrozen state)
         for symbols that have an embedding in `self.emb` """
         if self.frozen:
-            return list(range(self.next_pos,self.next_pos+self.count_pretrained()))
+            return list(range(self.next_pos, self.next_pos + self.count_pretrained()))
         else:
-            return list(range(-1,self.next_neg,-1))
+            return list(range(-1, self.next_neg, -1))
 
     def get_ids_oov(self):
         """return out-of-vocab id's (indep. of frozen/unfrozen state)"""
