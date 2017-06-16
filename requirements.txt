@@ -7,7 +7,7 @@ parse
 pycorenlp
 scipy
 sklearn
-tensorflow>=1.2
+tensorflow==1.1
 typing
 sacred
 sqlalchemy
