@@ -103,9 +103,9 @@ def cbow_xqa_reader(vocab, config=dict()):
 @__mcqa_reader
 def snli_reader(vocab, config):
     """ Creates a SNLI reader instance (multiple choice qa model). """
-    from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
+    from jtr.jack.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverQuestionAndSupportModel, EmptyOutputModule
     shared_resources = SharedVocabAndConfig(vocab, config)
     return JTReader(shared_resources,
                     SingleSupportFixedClassInputs(shared_resources),
-                    PairOfBiLSTMOverSupportAndQuestionModel(shared_resources),
+                    PairOfBiLSTMOverQuestionAndSupportModel(shared_resources),
                     EmptyOutputModule())

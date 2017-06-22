@@ -161,7 +161,10 @@ def dynamic_bidirectional_lstm(inputs, lengths, output_size,
 
 
 def dynamic_lstm_decoder(targets, target_lengths, output_size,
-                         input_state, decoder_vocab, max_decoder_seq_len,
+                         input_state,
+                         num_decoder_symbols,
+                         decoder_embedding_matrix,
+                         max_decoder_inference_seq_len, # for inference!
                          start_of_sequence_id, end_of_sequence_id,
                          scope=None, drop_keep_prob=1.0):
     """Dynamic RNN decoder using LSTM, from initial input state.
@@ -173,7 +176,7 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
                                   [batch_size]
         output_size (int):  Size of the LSTM state of the reader.
         decoder_vocab:  Neural vocab of targets
-        max_decoder_seq_len:  Maximum target length
+        max_decoder_inference_seq_len:  Maximum length for inference decoder
         start_of_sequence_id: Set to decoder_vocab.get_id(decoder_symbol_start)
         end_of_sequence_id:  Set to decoder_vocab.get_id(decoder_symbol_end)
         input_state (tensor):  The input state that the decoder starts from.
@@ -189,10 +192,6 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
         decoder_outputs_infer:  Output at inference time
             [batch_size x decoder_sequence_length]  (?)
     """
-    # First get parameters
-    num_decoder_symbols = len(decoder_vocab)
-    decoder_embeddings = decoder_vocab.get_embedding_matrix()
-    decoder_sequence_length = max_decoder_seq_len
 
     # Construct decoder
     with tf.variable_scope(scope or "decoder") as varscope:
@@ -228,6 +227,8 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
             state_is_tuple=True,
             initializer=tf.contrib.layers.xavier_initializer()
         )
+        # Note: it's ok that drop_keep_prob is a unit tensor (vs a float)
+        # TODO are we sure we need both input *and* output drop??
         if (drop_keep_prob != 1.0):
             decoder_cell = tf.contrib.rnn.DropoutWrapper(
                 decoder_cell,
@@ -247,36 +248,41 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
             # scope=scope
         )
 
-        def output_fn(x):
-            layers.linear(x, num_decoder_symbols, scope=scope)
+        # FIXME: why does def instead of lambda not work?
+        # def output_fn(x): 
+        output_fn = lambda x: layers.linear(x, num_decoder_symbols,
+                                            scope=varscope)
         decoder_logits_train = tf.map_fn(output_fn,
                                          decoder_outputs_train)
 
         # Decoder model for testing [not validated yet ;-)]
-        decoder_fn_infer = decoder_fn_lib.simple_decoder_fn_inference(
-            output_fn=output_fn,
-            encoder_state=decoder_input,
-            embeddings=decoder_embeddings,
-            start_of_sequence_id=start_of_sequence_id,
-            end_of_sequence_id=end_of_sequence_id,
-            # TODO: find out why it goes to +1  [comment from seq2seq_test.py]
-            # I.e., no idea why the -1, but we have to, as in seq2seq_test ;-)
-            maximum_length=decoder_sequence_length - 1,
-            num_decoder_symbols=num_decoder_symbols,
-            dtype=dtypes.int32)
-        decoder_outputs_infer, decoder_state_infer, _ = seq2seq.dynamic_rnn_decoder(
-            cell=decoder_cell,
-            decoder_fn=decoder_fn_infer,
-            time_major=True,
-            scope=scope
-        )
+        decoder_outputs_infer = None
+        if (False):
+            decoder_fn_infer = decoder_fn_lib.simple_decoder_fn_inference(
+                output_fn=output_fn,
+                encoder_state=decoder_input,
+                embeddings=decoder_embeddings,
+                start_of_sequence_id=start_of_sequence_id,
+                end_of_sequence_id=end_of_sequence_id,
+                # TODO: find out why it goes to +1  [comment from seq2seq_test.py]
+                # I.e., no idea why the -1, but we have to, as in seq2seq_test ;-)
+                # Maybe because of the <EOS> (or <SOS>) symbol or sth?
+                maximum_length=max_decoder_inference_seq_len - 1,
+                num_decoder_symbols=num_decoder_symbols,
+                dtype=dtypes.int32)
+            decoder_outputs_infer, decoder_state_infer, _ = seq2seq.dynamic_rnn_decoder(
+                cell=decoder_cell,
+                decoder_fn=decoder_fn_infer,
+                time_major=True,
+                scope=scope
+            )
 
         return (decoder_outputs_train,
                 decoder_logits_train,
                 decoder_outputs_infer)
 
 
-def dynamic_lstm_decoder_loss(decoder_logits_train,
+def dynamic_lstm_decoder_loss(decoder_outputs_train,
                               targets,
                               target_lengths,
                               num_decoder_symbols,
@@ -303,6 +309,7 @@ def dynamic_lstm_decoder_loss(decoder_logits_train,
 
     with tf.variable_scope(scope or "decoder-loss") as varscope:
         varscope
+        
         logits_flat = tf.reshape(
             decoder_logits_train, [-1, num_decoder_symbols])
 

@@ -136,7 +136,7 @@ def main():
         for f in splits
     ]
     for s, l in zip([train_set, dev_set, test_set], ['train', 'dev', 'test']):
-        logger.info('loaded %d %s instances' % (len(s), l))
+        logger.info('loaded {:d} {:s} instances'.format(len(s), l))
 
     # load pre-trained embeddings
     embeddings = None
@@ -170,11 +170,11 @@ def main():
         vocab.add_pretrained_for_testing(
             test_tmp['question'], test_tmp['support'])
         logger.debug(
-            'loaded %d filtered pretrained symbols into '
-            'vocab for dev and test data' % len(vocab.symset_pt))
+            'loaded {:d} filtered pretrained symbols into '
+            'vocab for dev and test data'.format(len(vocab.symset_pt)))
 
     # create reader
-    reader = readers.readers["snli_reader"](vocab, config)
+    reader = readers.readers['snli_reader'](vocab, config)
 
     # add hooks
     from jtr.jack.train.hooks import LossHook
@@ -192,7 +192,7 @@ def main():
             reader, train_set, iter_interval=100, info='train',
             summary_writer=sw, write_metrics_to=write_metrics_to))
 
-    # Here we initialise our optimiser
+    # Here we initialize our optimizer
     # we choose Adam with standard momentum values
     optim = tf.train.AdamOptimizer(config['learning_rate'])
 
@@ -204,8 +204,8 @@ def main():
         l2=l2,
         clip=None if abs(clip_value) < 1.e-12 else [-clip_value, clip_value]
     )
-    # todo: check device setup in JTReader.train
-    print('training took %.3f hours' % ((time() - t0) / 3600.))
+    # TODO: check device setup in JTReader.train
+    print('training took {:.3f} hours'.format((time() - t0) / 3600.))
 
 
 if __name__ == "__main__":

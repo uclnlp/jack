@@ -115,7 +115,7 @@ class SingleSupportFixedClassInputs(InputModule):
             else:
                 x, y = xy
             corpus["support"].append((x.support)[0])
-            corpus['ids'].append(i)
+            corpus["ids"].append(i)
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
             assert len(y) == 1
@@ -253,7 +253,7 @@ class SimpleMCOutputModule(OutputModule):
         return result
 
 
-class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
+class PairOfBiLSTMOverQuestionAndSupportModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources, embeddings,
                      Q, S, Q_lengths, S_lengths,
                      num_classes, keep_prob=1):
@@ -273,8 +273,8 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
                                  final_states_fw_bw[1][1]], axis=1)
 
         # [batch, 2*output_dim] -> [batch, num_classes]
-        outputs = simple.fully_connected_projection(final_states,
-                                                         num_classes, name='output_projection')
+        outputs = simple.fully_connected_projection(
+            final_states, num_classes, name='output_projection')
 
         return outputs
 
