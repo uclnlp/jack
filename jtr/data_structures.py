@@ -15,7 +15,7 @@ class Answer:
     Representation of an answer to a question.
     """
 
-    def __init__(self, text: str, span: Tuple[int, int, int] = None, score: float = 1.0):
+    def __init__(self, text: str, span: Tuple[int, int, int]=None, score: float=1.0):
         """
         Create a new answer.
         Args:
@@ -42,7 +42,7 @@ class QASetting:
                  id: str = None,
                  atomic_candidates: Sequence[str] = None,
                  seq_candidates: Sequence[str] = None,
-                 candidate_spans: Sequence[Tuple[int, int, int]] = None):
+                 candidate_spans: Sequence[Tuple[int, int, int]]=None):
         """
         Create a new QASetting.
         Args:
@@ -106,6 +106,7 @@ def convert2qasettings(jtr_data, max_count=None):
     else:
         return result[:max_count]
 
+
 def load_labelled_data_stream(path, dataset_streamer):
         stream_processor = copy.deepcopy(dataset_streamer)
 
@@ -113,6 +114,7 @@ def load_labelled_data_stream(path, dataset_streamer):
 
         data_set = GeneratorWithRestart(stream_processor.stream)
         return data_set
+
 
 def load_labelled_data(path, max_count=None) -> List[Tuple[QASetting, List[Answer]]]:
     """
@@ -126,7 +128,14 @@ def load_labelled_data(path, max_count=None) -> List[Tuple[QASetting, List[Answe
 
     """
     # We load json directly instead
-    with open(path) as f:
-        jtr_data = json.load(f)
-
-    return convert2qasettings(jtr_data, max_count)
+    data = []
+    if isinstance(path, list):
+        for p in path:
+            with open(p) as f:
+                jtr_data = json.load(f)
+            data += convert2qasettings(jtr_data, max_count)
+        return data
+    else:
+        with open(path) as f:
+            jtr_data = json.load(f)
+        return convert2qasettings(jtr_data, max_count)
