@@ -32,6 +32,12 @@ if "config" in parsed_args:
 else:
     path = "./conf/jack.yaml"
 
+def tmp():
+    return 'Pontus'
+
+import platform
+platform.system = tmp
+
 
 def fetch_parents(current_path, parents=[]):
     tmp_ex = Experiment('jack')
