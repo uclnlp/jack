@@ -78,7 +78,7 @@ We have the following modules with the following functionality, defined in [jtr/
 1. Overwrite the `input_ports()`, `output_ports()` and `training_output()` properties so that output from the `create_output()` method is reused in the `create_training_outputs()` 
 2. extend the functional interface from a list, to spell out the actual tensor names.
 3. Implement your model in `create_output()` up to the predictions, i.e., excluding training related code which is implemented in `create_training_outputs()`.
-  - You can use different predefined model blocks like bidirectional LSTMs over support and question; highway networks, fully connected projection layers and so forth which you can find in [/jtr/jack/tf_fun/](jtr/tf_fun/)
+  - You can use different predefined model blocks like bidirectional LSTMs over support and question; highway networks, fully connected projection layers and so forth which you can find in [/jtr/jack/tf_fun/](/jtr/tf_fun/)
 4. We now implement the `create_training_outputs()` which basically create the loss
 5. To make the model we use in `create_output()` exchangeable, we can abstract the forward pass with another interface. This is demonstrated via the combination of (1) [`AbstractSingleSupportFixedClassModel`](/jtr/tasks/mcqa/abstract_multiplechoice.py), (2) [`SingleSupportFixedClassForward`](/jtr/tasks/mcqa/abstract_multiplechoice.py) and (3)[`PairOfBiLSTMOverSupportAndQuestionModel`](/jtr/tasks/mcqa/simple_mcqa.py):
     - (1) Implements everything needed for the `SimpleModelModule` interface, but abstracts the forward pass into an abstract forward method as defined by (2)
@@ -106,7 +106,7 @@ Jack has unit tests and integration test. You can run them by running make comma
 
 ### How to Run Models
 
-You can run models in two different ways: (1) Run the general [/jtr/jack/train/train_reader.py](jtr/train/train_reader.py) script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[notebooks/SNLI.ipynb].
+You can run models in two different ways: (1) Run the general [/jtr/jack/train/train_reader.py](/jtr/train/train_reader.py) script which takes the model, its model parameters and the paths to the data files and embeddings as command line parameters; (2) create your own pipeline. With the help of utility function which also make up most of the code in (1), you can create your own pipeline fairly quickly. See (this SNLI notebook)[notebooks/SNLI.ipynb].
 
 In general you can use (1) for quick experiments and running different kind of models quickly on the same data, that is if you need a pipeline that works in general for a dataset you want the general pipeline (1). If you want to work on a specific dataset with a specific models, or if you want to include some special preprocessing steps then (2) is the best solution. If you are working on a project, it often makes sense to use (2) just for the sake for clarity, that is having more succinct, clear code.
 
