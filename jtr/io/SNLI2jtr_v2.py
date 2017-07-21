@@ -1,6 +1,6 @@
 """
 This files allows creating a jtr datafile for the SNLI corpus,
-whereby 
+whereby
 - questions consist of premise + delim. + hypothesis
 - TODO: support facts can optinally be loaded from Wordnet / SNLItraining / PPDB
 """
@@ -8,7 +8,7 @@ whereby
 
 import json
 
-__candidate_labels = ['entailment','neutral','contradiction']    
+__candidate_labels = ['entailment','neutral','contradiction']
 __candidates = [{'text':cl} for cl in __candidate_labels]
 
 CONJ = '|||||'
@@ -22,21 +22,21 @@ def convert_snli(snli_file_jsonl,support=False):
     (the *.txt files contain the same data in a different format)
 
     Format:
-        - question = the premise + CONJ + the hypothesis  = 'sentence1' + CONJ + 'sentence2' 
+        - question = the premise + CONJ + the hypothesis  = 'sentence1' + CONJ + 'sentence2'
         - support instance = part1 + CONJ + part2 + CONJ + label
     Notes:
         - instances with gold labels '-' are removed from the corpus
-    
+
     Args:
         snli_file_json: input file
-        support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB' 
+        support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB'
     """
     assert 'snli_1.0' in snli_file_jsonl and snli_file_jsonl.endswith('.jsonl'), "input should be the snli_1.0_X.jsonl files (X=test/train/dev)"
 
     with open(snli_file_jsonl,'r') as f:
         data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
         instances = __add_support([d for d in data if d], support)
-        
+
         return {'meta': 'SNLI',
                 'globals': {'candidates': __candidates},
                 'instances': instances  # filter out invalid ones
@@ -67,7 +67,7 @@ def __add_support(instances,support):
         instances: list of jtr instances (with or without support)
         support: False (no support), TODO: 'WordNet', 'SNLItrain', 'PPDB'
     """
-    
+
     if support in ['WordNet', 'SNLItrain', 'PPDB']:
         # TODO: add support
         pass
@@ -79,7 +79,7 @@ def main():
     import sys
     if len(sys.argv) == 2:
         corpus = convert_snli(sys.argv[1])
-        print(json.dump(corpus, indent=2))
+        print(json.dumps(corpus, indent=2))
     else:
         for corpus_name in ["dev","train","test"]:
             corpus = convert_snli("./jtr/data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % corpus_name, support=False)
