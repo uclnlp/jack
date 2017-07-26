@@ -233,6 +233,64 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
         outputs = simple.fully_connected_projection(final_states, num_classes)
         return outputs
 
+class BiLSTMMaxModel(AbstractSingleSupportFixedClassModel):
+    def forward_pass(self, shared_resources,
+                     Q_ids, Q_lengths,
+                     S_ids,  S_lengths,
+                     num_classes):
+
+        S_ids = tf.squeeze(S_ids, 1)
+        S_lengths = tf.squeeze(S_lengths, 1)
+
+        # [bs x n_tokens x repr_dim]
+        Q_seq = tf.nn.embedding_lookup(self.support_embedding_matrix, Q_ids)
+        S_seq = tf.nn.embedding_lookup(self.support_embedding_matrix, S_ids)
+
+        with tf.variable_scope("encoder") as varscope:
+            cell = tf.contrib.rnn.LSTMCell(shared_resources.config['repr_dim'])
+            cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob = 1.0 - shared_resources.config['dropout'])
+
+            Q_sentences_states, _ = tf.nn.bidirectional_dynamic_rnn(
+                cell, cell, 
+                inputs = Q_seq, 
+                sequence_length = Q_lengths, 
+                dtype=tf.float32, 
+                scope = varscope)
+
+            Q_states_fw, Q_states_bw = Q_sentences_states
+            Q_states_h = tf.concat([Q_states_fw, Q_states_bw], axis = 2)
+            self.Q_states_h = tf.reduce_max(Q_states_h, axis=1)
+
+            varscope.reuse_variables()
+
+            S_sentences_states, _ = tf.nn.bidirectional_dynamic_rnn(
+                cell, cell, 
+                inputs = S_seq, 
+                sequence_length = S_lengths, 
+                dtype=tf.float32, 
+                scope = varscope)
+
+            S_states_fw, S_states_bw = S_sentences_states
+            S_states_h = tf.concat([S_states_fw, S_states_bw], axis = 2)
+            self.S_states_h = tf.reduce_max(S_states_h, axis=1)
+
+        with tf.variable_scope("classification_layer") as varscope:
+            features = tf.concat(
+                [self.Q_states_h, 
+                self.S_states_h, 
+                tf.abs(self.Q_states_h - self.S_states_h), 
+                self.Q_states_h * self.S_states_h],
+                axis = 1)
+            hidden = tf.contrib.layers.fully_connected(
+                inputs = features,
+                num_outputs= 512)
+            # XXX TO DO: Could make num_outputs a hyperparameter
+            logits = tf.contrib.layers.fully_connected(
+                inputs = hidden,
+                activation_fn = None,
+                num_outputs= num_classes)
+
+        return logits
 
 class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources,

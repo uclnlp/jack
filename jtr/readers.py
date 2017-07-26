@@ -4,6 +4,7 @@ from jtr.core import *
 
 from jtr.util.hooks import XQAEvalHook, ClassificationEvalHook
 
+
 readers = {}
 eval_hooks = {}
 
@@ -11,8 +12,6 @@ xqa_readers = {}
 genqa_readers = {}
 mcqa_readers = {}
 kbp_readers = {}
-
-
 
 def __reader(f):
     readers.setdefault(f.__name__, f)
@@ -143,6 +142,18 @@ def cbilstm_snli_reader(shared_resources: SharedResources):
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
 
+@__mcqa_reader
+def bilstmmax_snli_reader(shared_resources: SharedResources):
+    """
+    
+    [1] A. Conneau, D. Kiela, H. Schwenk, L. Barrault, A. Bordes, Supervised Learning of Universal Sentence Representations from Natural Language Inference Data
+    """
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, BiLSTMMaxModel,\
+        EmptyOutputModule
+    input_module = MultiSupportFixedClassInputs(shared_resources)
+    model_module = BiLSTMMaxModel(shared_resources)
+    output_module = EmptyOutputModule()
+    return JTReader(shared_resources, input_module, model_module, output_module)
 
 @__mcqa_reader
 def dam_snli_reader(shared_resources: SharedResources):

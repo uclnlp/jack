@@ -168,7 +168,7 @@ def main(batch_size,
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32,
                                     trainable=False)
     lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
-    optimizer = tf.train.AdamOptimizer(learning_rate)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 
     if tensorboard_folder is not None:
         if os.path.exists(tensorboard_folder):
