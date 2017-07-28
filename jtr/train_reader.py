@@ -24,6 +24,13 @@ from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.util.vocab import Vocab
 
+
+def tmp():
+    return 'Pontus'
+
+import platform
+platform.system = tmp
+
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
