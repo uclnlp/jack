@@ -68,7 +68,8 @@ class FastQAInputModule(InputModule):
 
     def get_single_batch(self,
             dataset: List[Union[QASetting, Tuple[QASetting, List[Answer]]]],
-            is_eval: bool) \
+            is_eval: bool,
+            with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
         """Returns a single batch containing all instances in `dataset`."""
 
@@ -76,7 +77,8 @@ class FastQAInputModule(InputModule):
 
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
-            prepare_data(dataset, self.vocab, self.config.get("lowercase", False), with_answers=is_eval,
+            prepare_data(dataset, self.vocab, self.config.get("lowercase", False),
+                         with_answers=with_answers,
                          max_support_length=self.config.get("max_support_length", None))
 
         emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
@@ -146,14 +148,15 @@ class FastQAInputModule(InputModule):
                 todo = todo[self.batch_size:]
                 questions = [dataset[i] for i in indices]
 
-                yield self.get_single_batch(questions, is_eval)
+                yield self.get_single_batch(questions, is_eval,
+                                            with_answers=True)
 
         return GeneratorWithRestart(batch_generator)
 
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
 
-        return self.get_single_batch(qa_settings, is_eval=False)
+        return self.get_single_batch(qa_settings, is_eval=True, with_answers=False)
 
 
 fastqa_like_model_module_factory = simple_model_module(
