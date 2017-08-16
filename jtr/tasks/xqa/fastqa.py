@@ -69,12 +69,12 @@ class FastQAInputModule(InputModule):
     def get_single_batch(self,
             questions: List[QASetting],
             answers: Optional[List[List[Answer]]],
-            is_eval: bool,
-            with_answers: bool) \
+            is_eval: bool) \
             -> Mapping[TensorPort, np.ndarray]:
         """Returns a single batch containing all instances in `dataset`."""
 
-        assert answers is None or len(answers) == len(questions)
+        has_answers = answers is not None
+        assert not has_answers or len(answers) == len(questions)
 
         batch_size = len(questions)
 
@@ -83,7 +83,7 @@ class FastQAInputModule(InputModule):
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(dataset, self.vocab, self.config.get("lowercase", False),
-                         with_answers=with_answers,
+                         with_answers=has_answers,
                          max_support_length=self.config.get("max_support_length", None))
 
         emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
@@ -140,8 +140,11 @@ class FastQAInputModule(InputModule):
         return batch
 
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                        is_eval: bool,
+                        dataset_name=None,
+                        identifier=None)\
+            -> Iterable[Mapping[TensorPort, np.ndarray]]:
 
         dataset = list(dataset)
 
@@ -153,17 +156,17 @@ class FastQAInputModule(InputModule):
 
                 indices = todo[:self.batch_size]
                 todo = todo[self.batch_size:]
-                questions = [dataset[i] for i in indices]
+                questions_answers = [dataset[i] for i in indices]
+                questions, answers = zip(*questions_answers)
 
-                yield self.get_single_batch(questions, is_eval,
-                                            with_answers=True)
+                yield self.get_single_batch(questions, answers, is_eval)
 
         return GeneratorWithRestart(batch_generator)
 
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
 
-        return self.get_single_batch(qa_settings, is_eval=True, with_answers=False)
+        return self.get_single_batch(qa_settings, None, is_eval=True)
 
 
 fastqa_like_model_module_factory = simple_model_module(
