@@ -3,6 +3,7 @@ This file contains FastQA specific modules and ports
 """
 
 import random
+from functools import partial
 from typing import Optional
 
 from jtr.core import *
@@ -16,7 +17,7 @@ from jtr.tf_fun.xqa import xqa_min_crossentropy_loss
 
 from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
-from jtr.util.batch import GeneratorWithRestart
+from jtr.util.batch import batches_from_dataset
 from jtr.util.map import numpify
 
 
@@ -146,22 +147,11 @@ class FastQAInputModule(InputModule):
                         identifier=None)\
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
 
-        dataset = list(dataset)
-
-        def batch_generator():
-            todo = list(range(len(dataset)))
-            if not is_eval:
-                self._rng.shuffle(todo)
-            while todo:
-
-                indices = todo[:self.batch_size]
-                todo = todo[self.batch_size:]
-                questions_answers = [dataset[i] for i in indices]
-                questions, answers = zip(*questions_answers)
-
-                yield self.get_single_batch(questions, answers, is_eval)
-
-        return GeneratorWithRestart(batch_generator)
+        return batches_from_dataset(dataset,
+                                    self.batch_size,
+                                    self._rng,
+                                    self.get_single_batch,
+                                    is_eval)
 
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:

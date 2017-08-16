@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from itertools import islice
+from typing import Iterable, Tuple, List, Mapping, Callable, Optional
 
 import numpy as np
+from jtr.core import TensorPort
+
+from jtr.data_structures import QASetting, Answer
 
 from jtr.util.map import numpify
 from jtr.util.random import DefaultRandomState
@@ -165,6 +169,35 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
                     yield {k: data_np[k][batch_indices] for k in data_np}
 
     return GeneratorWithRestart(bucket_generator)
+
+
+def batches_from_dataset(dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                         batch_size,
+                         rng,
+                         get_single_batch: Callable[[List[QASetting],
+                                                     Optional[List[List[Answer]]],
+                                                     bool],
+                                                    Mapping[TensorPort, np.ndarray]],
+                         is_eval: bool) \
+        -> Iterable[Mapping[TensorPort, np.ndarray]]:
+    """Shuffles the dataset, then infenetely generates batches by calling `get_single_batch`."""
+
+    dataset = list(dataset)
+
+    def batch_generator():
+        todo = list(range(len(dataset)))
+        if not is_eval:
+            rng.shuffle(todo)
+        while todo:
+
+            indices = todo[:batch_size]
+            todo = todo[batch_size:]
+            questions_answers = [dataset[i] for i in indices]
+            questions, answers = zip(*questions_answers)
+
+            yield get_single_batch(questions, answers, is_eval)
+
+    return GeneratorWithRestart(batch_generator)
 
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):
