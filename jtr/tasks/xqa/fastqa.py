@@ -3,7 +3,7 @@ This file contains FastQA specific modules and ports
 """
 
 import random
-from typing import Union
+from typing import Optional
 
 from jtr.core import *
 from jtr.fun import simple_model_module, no_shared_resources
@@ -67,13 +67,18 @@ class FastQAInputModule(InputModule):
 
 
     def get_single_batch(self,
-            dataset: List[Union[QASetting, Tuple[QASetting, List[Answer]]]],
+            questions: List[QASetting],
+            answers: Optional[List[List[Answer]]],
             is_eval: bool,
             with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
         """Returns a single batch containing all instances in `dataset`."""
 
-        batch_size = len(dataset)
+        assert answers is None or len(answers) == len(questions)
+
+        batch_size = len(questions)
+
+        dataset = questions if answers is None else zip(questions, answers)
 
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
@@ -135,8 +140,10 @@ class FastQAInputModule(InputModule):
         return batch
 
 
-    def batch_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
                         identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+
+        dataset = list(dataset)
 
         def batch_generator():
             todo = list(range(len(dataset)))

@@ -1,7 +1,11 @@
 import random
 import re
 
-from jtr.data_structures import QASetting
+from typing import List, Union, Tuple
+
+from jtr.util.vocab import Vocab
+
+from jtr.data_structures import QASetting, Answer
 from jtr.util.map import deep_map
 
 __pattern = re.compile('\w+|[^\w\s]')
@@ -21,8 +25,13 @@ def token_to_char_offsets(text, tokenized_text):
     return offsets
 
 
-def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_contentword=False,
-                 with_spacy=False, max_support_length=-1):
+def prepare_data(dataset: List[Union[QASetting, Tuple[QASetting, List[Answer]]]],
+                 vocab: Vocab,
+                 lowercase: bool = False,
+                 with_answers: bool = False,
+                 wiq_contentword: bool = False,
+                 with_spacy: bool = False,
+                 max_support_length: int = -1):
     if with_spacy:
         import spacy
         nlp = spacy.load("en", parser=False)
@@ -84,7 +93,10 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
 
         spans = []
         if with_answers:
+
             answers = dataset[i][1]
+            assert isinstance(answers, list)
+
             for a in answers:
                 start = 0
                 while start < len(offsets) and offsets[start] < a.span[0]:
