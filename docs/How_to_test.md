@@ -1,7 +1,7 @@
 # How to Test
 
 ## How Integration Tests Are Designed
-Integration tests execute given models and given datasets using the [training_pipeline.py](./jtr/training_pipeline.py) with its default parameters for training. In addition to that however, an extra argument is passed to the training_pipeline method which switches on the [EvalHook](./jtr/util/hooks.py) write-metrics-to-disk behavior. Once a model run is completed the thus created metrics file (with metrics like accuracy or F1-score) is compared to a baseline.txt file which gives the target values for the metrics during a test run. This constitutes the integration test which is currently passed when both the order of the metrics and the metric values are the same (with a small absolute tolerance of 0.015).
+Integration tests execute given models and given datasets using the [training_pipeline.py](/jtr/training_pipeline.py) with its default parameters for training. In addition to that however, an extra argument is passed to the training_pipeline method which switches on the [EvalHook](/jtr/util/hooks.py) write-metrics-to-disk behavior. Once a model run is completed the thus created metrics file (with metrics like accuracy or F1-score) is compared to a baseline.txt file which gives the target values for the metrics during a test run. This constitutes the integration test which is currently passed when both the order of the metrics and the metric values are the same (with a small absolute tolerance of 0.015).
 
 A baseline file is created upon test creation and then serves as the needed model performance.
 
@@ -52,7 +52,7 @@ You can find existing integration test in [test_models.py](/jtr/test_models.py).
 #### 2. Add test cases
 The tests cases are automatically created once you add a model or a dataset, which means if you add a model, it will be tested on all dataset and on both the CPU and GPU. If you add a dataset, then tests for all models and both the CPU and GPU will be created.
 - You can add a new dataset by simply adding a line into the dataset_epochs list; the second entry of the tuple denotes the number of epochs to run the tests, for example to add your dataset with name 'CoolDataset' and run tests for 5 epochs add `('CoolDataset', 5)` to the list
-- You can add a new model by adding it to the models list. In addition to that you will need to add the same model name in the dictionary in the [training_pipeline.py](./jtr/training_pipeline.py) file (search for models)
+- You can add a new model by adding it to the models list. In addition to that you will need to add the same model name in the dictionary in the [training_pipeline.py](/jtr/training_pipeline.py) file (search for models)
   
 #### 5. Create baselines
 - Run your model for both the CPU and GPU, check the generated files in the [test_results](./test_results) folder. If the results seem plausible rename the files to expected_results.txt
