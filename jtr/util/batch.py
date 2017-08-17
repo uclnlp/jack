@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from itertools import islice
-from typing import Iterable, Tuple, List, Mapping, Callable, Optional
+from typing import Iterable, Tuple, List, Mapping, Callable, Optional, TYPE_CHECKING
 
 import numpy as np
-from jtr.core import TensorPort
-
-from jtr.data_structures import QASetting, Answer
 
 from jtr.util.map import numpify
 from jtr.util.random import DefaultRandomState
+
+if TYPE_CHECKING:
+    # Cyclic imports only need for type checking
+    from jtr.core import TensorPort
+    from jtr.data_structures import QASetting, Answer
 
 rs = DefaultRandomState(1337)
 
@@ -171,15 +173,15 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
     return GeneratorWithRestart(bucket_generator)
 
 
-def batches_from_dataset(dataset: Iterable[Tuple[QASetting, List[Answer]]],
+def batches_from_dataset(dataset: Iterable[Tuple['QASetting', List['Answer']]],
                          batch_size,
                          rng,
-                         get_single_batch: Callable[[List[QASetting],
-                                                     Optional[List[List[Answer]]],
+                         get_single_batch: Callable[[List['QASetting'],
+                                                     Optional[List[List['Answer']]],
                                                      bool],
-                                                    Mapping[TensorPort, np.ndarray]],
+                                                    Mapping['TensorPort', np.ndarray]],
                          is_eval: bool) \
-        -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        -> Iterable[Mapping['TensorPort', np.ndarray]]:
     """Shuffles the dataset, then infenetely generates batches by calling `get_single_batch`."""
 
     dataset = list(dataset)
