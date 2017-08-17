@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from itertools import islice
-from typing import Iterable, Tuple, List, Mapping, Callable, Optional, TYPE_CHECKING
+from typing import Callable, TypeVar, Iterable, List
 
 import numpy as np
 
 from jtr.util.map import numpify
 from jtr.util.random import DefaultRandomState
-
-if TYPE_CHECKING:
-    # Cyclic imports only need for type checking
-    from jtr.core import TensorPort
-    from jtr.data_structures import QASetting, Answer
 
 rs = DefaultRandomState(1337)
 
@@ -22,6 +17,16 @@ class GeneratorWithRestart(object):
 
     def __iter__(self):
         return self.iterator()
+
+
+# TODO: GeneratorWithRestart seems to be incorrect?
+T = TypeVar('T')
+def generator_with_restart(epoch_generator: Callable[[], Iterable[T]]) \
+        -> Iterable[T]:
+
+    while True:
+        for element in epoch_generator():
+            yield element
 
 
 def get_buckets(data, order, structure):
@@ -173,33 +178,25 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
     return GeneratorWithRestart(bucket_generator)
 
 
-def batches_from_dataset(dataset: Iterable[Tuple['QASetting', List['Answer']]],
-                         batch_size,
-                         rng,
-                         get_single_batch: Callable[[List['QASetting'],
-                                                     Optional[List[List['Answer']]],
-                                                     bool],
-                                                    Mapping['TensorPort', np.ndarray]],
-                         is_eval: bool) \
-        -> Iterable[Mapping['TensorPort', np.ndarray]]:
-    """Shuffles the dataset, then infenetely generates batches by calling `get_single_batch`."""
-
-    dataset = list(dataset)
+T = TypeVar('T')
+def shuffle_and_batch(items: List[T], batch_size: int,
+                      shuffle: bool = False, rng = None) \
+        -> Callable[[], Iterable[List[T]]]:
+    """Optionally Shuffles and batches items in a list."""
 
     def batch_generator():
-        todo = list(range(len(dataset)))
-        if not is_eval:
+        todo = list(range(len(items)))
+        if shuffle:
             rng.shuffle(todo)
         while todo:
 
             indices = todo[:batch_size]
             todo = todo[batch_size:]
-            questions_answers = [dataset[i] for i in indices]
-            questions, answers = zip(*questions_answers)
+            items_batch = [items[i] for i in indices]
 
-            yield get_single_batch(questions, answers, is_eval)
+            yield items_batch
 
-    return GeneratorWithRestart(batch_generator)
+    return batch_generator
 
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):

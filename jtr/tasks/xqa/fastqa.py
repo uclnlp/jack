@@ -3,7 +3,6 @@ This file contains FastQA specific modules and ports
 """
 
 import random
-from functools import partial
 from typing import Optional
 
 from jtr.core import *
@@ -18,7 +17,7 @@ from jtr.tf_fun.xqa import xqa_min_crossentropy_loss
 
 from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
-from jtr.util.batch import batches_from_dataset
+from jtr.util.batch import shuffle_and_batch, generator_with_restart
 from jtr.util.map import numpify
 
 
@@ -169,35 +168,24 @@ class FastQAInputModule(InputModule):
         return batch
 
 
-    def get_single_batch(self,
-            questions: List[QASetting],
-            answers: Optional[List[List[Answer]]],
-            is_eval: bool) \
-            -> Mapping[TensorPort, np.ndarray]:
-        """Returns a single batch containing all instances in `dataset`."""
-
-        answers_or_nones = answers or [None] * len(questions)
-        annotations = [self.preprocess_instance(q, a)
-                       for q, a in zip(questions, answers_or_nones)]
-        return self.create_batch(annotations, is_eval, answers is not None)
-
-
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
                         is_eval: bool,
                         dataset_name=None,
                         identifier=None)\
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
 
-        return batches_from_dataset(dataset,
-                                    self.batch_size,
-                                    self._rng,
-                                    self.get_single_batch,
-                                    is_eval)
+        annotations = [self.preprocess_instance(q, a) for q, a in dataset]
+        annotation_batch_generator = shuffle_and_batch(
+                annotations, self.batch_size, shuffle=is_eval, rng=self._rng)
+
+        for batch_annotations in generator_with_restart(annotation_batch_generator):
+            yield self.create_batch(batch_annotations, is_eval, True)
 
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
 
-        return self.get_single_batch(qa_settings, None, is_eval=True)
+        annotations = [self.preprocess_instance(q, None) for q in qa_settings]
+        return self.create_batch(annotations, is_eval=True, with_answers=False)
 
 
 fastqa_like_model_module_factory = simple_model_module(
