@@ -9,7 +9,8 @@ from typing import Optional
 from jtr.core import *
 from jtr.fun import simple_model_module, no_shared_resources
 from jtr.tasks.xqa.shared import XQAPorts
-from jtr.tasks.xqa.util import unique_words_with_chars, prepare_data, char_vocab_from_vocab
+from jtr.tasks.xqa.util import unique_words_with_chars, prepare_data, \
+    char_vocab_from_vocab, stack_and_pad
 from jtr.tf_fun.embedding import conv_char_embedding_alt
 from jtr.tf_fun.highway import highway_network
 from jtr.tf_fun.rnn import birnn_with_projection
@@ -67,75 +68,98 @@ class FastQAInputModule(InputModule):
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
 
-    def get_single_batch(self,
-            questions: List[QASetting],
-            answers: Optional[List[List[Answer]]],
-            is_eval: bool) \
-            -> Mapping[TensorPort, np.ndarray]:
-        """Returns a single batch containing all instances in `dataset`."""
+    def preprocess_instance(self, question: QASetting,
+                            answers: Optional[List[Answer]] = None) \
+            -> dict:
+
+        """Preprocesses a single sample, a dict that is passed to the
+        `create_batch` method, containing intermediate results which are
+        aggregated during batching.
+        """
 
         has_answers = answers is not None
-        assert not has_answers or len(answers) == len(questions)
 
-        batch_size = len(questions)
-
-        dataset = questions if answers is None else zip(questions, answers)
-
-        q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
+        q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
         word_in_question, token_offsets, answer_spans = \
-            prepare_data(dataset, self.vocab, self.config.get("lowercase", False),
+            prepare_data(question, answers, self.vocab, self.config.get("lowercase", False),
                          with_answers=has_answers,
                          max_support_length=self.config.get("max_support_length", None))
 
-        emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
-        emb_questions = np.zeros([batch_size, max(q_lengths), self.emb_matrix.shape[1]])
+        emb_support = np.zeros([s_length, self.emb_matrix.shape[1]])
+        emb_question = np.zeros([q_length, self.emb_matrix.shape[1]])
 
-        support_lengths = list()
-        question_lengths = list()
-        wiq = list()
-        spans = list()
-        span2question = []
-        offsets = []
+        for k in range(len(s_ids)):
+            emb_support[k] = self._get_emb(s_ids[k])
+        for k in range(len(q_ids)):
+            emb_question[k] = self._get_emb(q_ids[k])
+
+        output = {
+            "question_tokens": q_tokenized,
+            "question_ids": q_ids,
+            "question_length": q_length,
+            "question_embeddings": emb_question,
+            "support_tokens": s_tokenized,
+            "support_ids": s_ids,
+            "support_length": s_length,
+            "support_embeddings": emb_support,
+            "word_in_question": word_in_question,
+            "token_offsets": token_offsets,
+        }
+
+        if has_answers:
+            output.update({
+                "answer_spans": answer_spans,
+            })
+
+        return output
+
+
+    def create_batch(self, annotations: List[dict], is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+
+        """Creates a batch from a list of preprocessed questions, given by
+        a list of annotations as returned by `preprocess_instance`.
+        """
+
+        batch_size = len(annotations)
+
+        emb_supports = [a["support_embeddings"] for a in annotations]
+        emb_questions = [a["question_embeddings"] for a in annotations]
+
+        support_lengths = [a["support_length"] for a in annotations]
+        question_lengths = [a["question_length"] for a in annotations]
+        wiq = [a["word_in_question"] for a in annotations]
+        offsets = [a["token_offsets"] for a in annotations]
+
+        q_tokenized = [a["question_tokens"] for a in annotations]
+        s_tokenized = [a["support_tokens"] for a in annotations]
 
         unique_words, unique_word_lengths, question2unique, support2unique = \
             unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
-
-        # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
-        for i in range(batch_size):
-            support = s_ids[i]
-            for k in range(len(support)):
-                emb_supports[i, k] = self._get_emb(support[k])
-            question = q_ids[i]
-            for k in range(len(question)):
-                emb_questions[i, k] = self._get_emb(question[k])
-            support_lengths.append(s_lengths[i])
-            question_lengths.append(q_lengths[i])
-            spans.extend(answer_spans[i])
-            span2question.extend(i for _ in answer_spans[i])
-            wiq.append(word_in_question[i])
-            offsets.append(token_offsets[i])
 
         output = {
             XQAPorts.unique_word_chars: unique_words,
             XQAPorts.unique_word_char_length: unique_word_lengths,
             XQAPorts.question_words2unique: question2unique,
             XQAPorts.support_words2unique: support2unique,
-            XQAPorts.emb_support: emb_supports,
+            XQAPorts.emb_support: stack_and_pad(emb_supports),
             XQAPorts.support_length: support_lengths,
-            XQAPorts.emb_question: emb_questions,
+            XQAPorts.emb_question: stack_and_pad(emb_questions),
             XQAPorts.question_length: question_lengths,
             XQAPorts.word_in_question: wiq,
-            XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
-            XQAPorts.answer2question: span2question,
-            XQAPorts.answer2question_training: [] if is_eval else span2question,
             XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_char_offsets: offsets
         }
 
-        if has_answers:
+        if with_answers:
+            spans = [a["answer_spans"] for a in annotations]
+            span2question = [i for i in range(batch_size) for _ in spans[i]]
             output.update({
                 XQAPorts.answer_span: spans,
+                XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
+                XQAPorts.answer2question: span2question,
+                XQAPorts.answer2question_training: [] if is_eval else span2question,
             })
 
         # we can only numpify in here, because bucketing is not possible prior
@@ -143,6 +167,19 @@ class FastQAInputModule(InputModule):
                                       XQAPorts.question_words2unique, XQAPorts.support_words2unique,
                                       XQAPorts.word_in_question, XQAPorts.token_char_offsets])
         return batch
+
+
+    def get_single_batch(self,
+            questions: List[QASetting],
+            answers: Optional[List[List[Answer]]],
+            is_eval: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+        """Returns a single batch containing all instances in `dataset`."""
+
+        answers_or_nones = answers or [None] * len(questions)
+        annotations = [self.preprocess_instance(q, a)
+                       for q, a in zip(questions, answers_or_nones)]
+        return self.create_batch(annotations, is_eval, answers is not None)
 
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
