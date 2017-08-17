@@ -125,7 +125,6 @@ class FastQAInputModule(InputModule):
             XQAPorts.emb_question: emb_questions,
             XQAPorts.question_length: question_lengths,
             XQAPorts.word_in_question: wiq,
-            XQAPorts.answer_span: spans,
             XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
             XQAPorts.answer2question: span2question,
             XQAPorts.answer2question_training: [] if is_eval else span2question,
@@ -133,6 +132,11 @@ class FastQAInputModule(InputModule):
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_char_offsets: offsets
         }
+
+        if has_answers:
+            output.update({
+                XQAPorts.answer_span: spans,
+            })
 
         # we can only numpify in here, because bucketing is not possible prior
         batch = numpify(output, keys=[XQAPorts.unique_word_chars,
