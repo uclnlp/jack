@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from itertools import islice
-from typing import Callable, TypeVar, Iterable, List
+from typing import Callable, TypeVar, Iterable, List, Iterator
 
 import numpy as np
 
@@ -17,17 +17,6 @@ class GeneratorWithRestart(object):
 
     def __iter__(self):
         return self.iterator()
-
-
-# TODO: GeneratorWithRestart seems to be incorrect?
-T = TypeVar('T')
-def generator_with_restart(epoch_generator: Callable[[], Iterable[T]]) \
-        -> Iterable[T]:
-
-    while True:
-        for element in epoch_generator():
-            yield element
-
 
 def get_buckets(data, order, structure):
     """
@@ -181,22 +170,19 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
 T = TypeVar('T')
 def shuffle_and_batch(items: List[T], batch_size: int,
                       shuffle: bool = False, rng = None) \
-        -> Callable[[], Iterable[List[T]]]:
+        -> Iterator[List[T]]:
     """Optionally Shuffles and batches items in a list."""
 
-    def batch_generator():
-        todo = list(range(len(items)))
-        if shuffle:
-            rng.shuffle(todo)
-        while todo:
+    todo = list(range(len(items)))
+    if shuffle:
+        rng.shuffle(todo)
+    while todo:
 
-            indices = todo[:batch_size]
-            todo = todo[batch_size:]
-            items_batch = [items[i] for i in indices]
+        indices = todo[:batch_size]
+        todo = todo[batch_size:]
+        items_batch = [items[i] for i in indices]
 
-            yield items_batch
-
-    return batch_generator
+        yield items_batch
 
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):

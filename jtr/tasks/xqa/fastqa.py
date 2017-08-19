@@ -175,11 +175,15 @@ class FastQAInputModule(InputModule):
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
 
         annotations = [self.preprocess_instance(q, a) for q, a in dataset]
-        annotation_batch_generator = shuffle_and_batch(
-                annotations, self.batch_size, shuffle=is_eval, rng=self._rng)
 
-        for batch_annotations in generator_with_restart(annotation_batch_generator):
-            yield self.create_batch(batch_annotations, is_eval, True)
+        def make_generator():
+            for annotation_batch in shuffle_and_batch(annotations,
+                                                      self.batch_size,
+                                                      shuffle=is_eval,
+                                                      rng=self._rng):
+                yield self.create_batch(annotation_batch, is_eval, True)
+
+        return GeneratorWithRestart(make_generator)
 
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
