@@ -1,7 +1,7 @@
 import random
 import re
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from jtr.util.vocab import Vocab
 
@@ -33,7 +33,15 @@ def prepare_data(qa_setting: QASetting,
                  with_answers: bool = False,
                  wiq_contentword: bool = False,
                  with_spacy: bool = False,
-                 max_support_length: int = -1):
+                 max_support_length: int = -1) \
+            -> Tuple[List[str], List[int], int,
+                     List[str], List[int], int,
+                     List[float], List[int], List[Tuple[int, int]]]:
+    """Preprocesses a question and (optionally) answers:
+    The steps include tokenization, lower-casing, translation to IDs,
+    computing the word-in-question feature, computing token offsets,
+    truncating supports, and computing answer spans.
+    """
 
     if with_spacy:
         import spacy
@@ -165,7 +173,8 @@ def char_vocab_from_vocab(vocab):
     return char_vocab
 
 
-def stack_and_pad(values: List[np.ndarray], pad = 0):
+def stack_and_pad(values: List[np.ndarray], pad = 0) -> np.ndarray:
+    """Pads a list of numpy arrays so that they have equal dimensions, then stacks them."""
 
     dims = len(values[0].shape)
     max_shape = [max(sizes) for sizes in zip(*[v.shape for v in values])]
