@@ -9,6 +9,7 @@ using a TensorFlow model into other tensors, and one that converts these tensors
 import logging
 import os
 import pickle
+import random
 import shutil
 import sys
 from abc import abstractmethod
@@ -433,6 +434,25 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         raise NotImplementedError
 
+    def batch_annotations(self,
+                          annotations: List[AnnotationType],
+                          batch_size: int,
+                          rng : Optional[random.Random] = None):
+        """Optionally shuffles and batches annotations.
+
+        By default, all annotations are shuffled (unless rng is None) and then
+        batched. Override this method if you want to customize the batching,
+        e.g. to do stratified sampling, sampling with replacement, etc.
+
+        Args:
+            - annotations: List of annotations to shuffle & batch.
+            - batch_size: size of batches.
+            - rng: random number generator if items should be shuffles, else None.
+
+        Returns: Batch iterator
+        """
+        return shuffle_and_batch(annotations, batch_size, rng)
+
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """Preprocesses all qa_settings, returns a single batch with all instances."""
 
@@ -450,10 +470,8 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         annotations = [self.preprocess_instance(q, a) for q, a in dataset]
 
         def make_generator():
-            for annotation_batch in shuffle_and_batch(annotations,
-                                                      self.batch_size,
-                                                      shuffle=(not is_eval),
-                                                      rng=self._rng):
+            for annotation_batch in self.batch_annotations(
+                    annotations, self.batch_size, rng=(None if is_eval else self._rng)):
                 yield self.create_batch(annotation_batch, is_eval, True)
 
         return GeneratorWithRestart(make_generator)

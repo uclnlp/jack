@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
+import random
 from itertools import islice
-from typing import Callable, TypeVar, Iterable, List, Iterator
+from typing import Callable, TypeVar, Iterable, List, Iterator, Optional
 
 import numpy as np
 
@@ -170,12 +170,20 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
 
 T = TypeVar('T')
 def shuffle_and_batch(items: List[T], batch_size: int,
-                      shuffle: bool = False, rng = None) \
+                      rng : Optional[random.Random] = None) \
         -> Iterator[List[T]]:
-    """Optionally Shuffles and batches items in a list."""
+    """Optionally shuffles and batches items in a list.
+
+    Args:
+        - items: List of items to shuffle & batch.
+        - batch_size: size of batches.
+        - rng: random number generator if items should be shuffles, else None.
+
+    Returns: Batch iterator
+    """
 
     todo = list(range(len(items)))
-    if shuffle:
+    if rng is not None:
         rng.shuffle(todo)
     while todo:
 
