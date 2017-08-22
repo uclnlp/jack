@@ -83,7 +83,8 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
 
 
     def preprocess_instance(self, question: QASetting,
-                            answers: Optional[List[Answer]] = None) \
+                            answers: Optional[List[Answer]] = None,
+                            is_eval: bool = False) \
             -> FastQAAnnotation:
 
         has_answers = answers is not None

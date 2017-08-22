@@ -399,7 +399,8 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
     @abstractmethod
     def preprocess_instance(self, question: QASetting,
-                            answers: Optional[List[Answer]] = None) \
+                            answers: Optional[List[Answer]] = None,
+                            is_eval: bool = False) \
             -> AnnotationType:
 
         """
@@ -408,6 +409,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         Args:
             question: The instance to preprocess
             answers: (Optional) answers associated with the instance
+            is_eval: Whether this preprocessing is done for evaluation data
 
         Returns:
             An annotation of the instance.
@@ -456,7 +458,8 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """Preprocesses all qa_settings, returns a single batch with all instances."""
 
-        annotations = [self.preprocess_instance(q, answers=None) for q in qa_settings]
+        annotations = [self.preprocess_instance(q, answers=None, is_eval=True)
+                       for q in qa_settings]
         return self.create_batch(annotations, is_eval=True, with_answers=False)
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],

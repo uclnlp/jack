@@ -6,69 +6,72 @@ from jtr.preprocessing import preprocess_with_pipeline
 from jtr.tf_fun import rnn, simple
 
 from jtr.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
-from jtr.util.batch import get_batches, GeneratorWithRestart
+from jtr.util.batch import get_batches
 from jtr.util.map import numpify
 from jtr.util.pipelines import pipeline
 
 
-from typing import List, Tuple, Mapping, Iterable
+from typing import List, Tuple, Mapping, Iterable, Any
 
 import tensorflow as tf
 import numpy as np
-import nltk
 
 
-class SimpleMCInputModule(InputModule):
+class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
     def __init__(self, shared_resources):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
-        self.preprocess(data)
+
+        # Run preprocessing once for all data in order to populate the vocabulary.
+        for qa_setting, answers in data:
+            self.preprocess_instance(qa_setting, answers)
 
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
 
-    def preprocess(self, data, test_time=False):
-        corpus = {"support": [], "question": [], "candidates": []}
-        if not test_time:
-            corpus["answers"] = []
-        for xy in data:
-            if test_time:
-                x = xy
-                y = None
-            else:
-                x, y = xy
-            corpus["support"].append(x.support)
-            corpus["question"].append(x.question)
-            corpus["candidates"].append(x.atomic_candidates)
-            assert len(y) == 1
-            if not test_time:
-                corpus["answers"].append([y[0].text])
+    @abstractmethod
+    def preprocess_instance(self, question: QASetting,
+                            answers: Optional[List[Answer]] = None,
+                            is_eval: bool = False) \
+            -> Mapping[str, Any]:
+
+        corpus = {
+            "support": question.support,
+            "question": question.question,
+            "candidates": question.atomic_candidates
+        }
+
+        if answers is not None:
+            assert len(answers) == 1
+            corpus["answers"] = [answers[0].text]
+
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=test_time)
+                                   test_time=is_eval)
         return corpus
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset)
-        xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.candidate_1hot: corpus["targets"]
-        }
-        return get_batches(xy_dict)
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = self.preprocess(qa_settings, test_time=True)
+
+    @abstractmethod
+    def create_batch(self, annotations: List[Mapping[str, Any]],
+                     is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+
         x_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"]
+            Ports.Input.multiple_support: [a["support"] for a in annotations],
+            Ports.Input.question: [a["question"] for a in annotations],
+            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations]
         }
+
+        if not is_eval:
+
+            x_dict.update({
+                Ports.Target.candidate_1hot: [a["targets"] for a in annotations]
+            })
+
         return numpify(x_dict)
 
     @property
