@@ -22,6 +22,8 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
+        self.batch_size = 32
+        self._rng = random.Random(self.config.get("seed", 123))
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
 
@@ -33,43 +35,39 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
 
-    @abstractmethod
     def preprocess_instance(self, question: QASetting,
                             answers: Optional[List[Answer]] = None,
                             is_eval: bool = False) \
             -> Mapping[str, Any]:
 
         corpus = {
-            "support": question.support,
-            "question": question.question,
-            "candidates": question.atomic_candidates
+            "support": [question.support],
+            "question": [question.question],
+            "candidates": [question.atomic_candidates]
         }
 
         if answers is not None:
             assert len(answers) == 1
-            corpus["answers"] = [answers[0].text]
+            corpus["answers"] = [[answers[0].text]]
 
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
                                    test_time=is_eval)
         return corpus
 
-
-
-    @abstractmethod
     def create_batch(self, annotations: List[Mapping[str, Any]],
                      is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
 
         x_dict = {
-            Ports.Input.multiple_support: [a["support"] for a in annotations],
-            Ports.Input.question: [a["question"] for a in annotations],
-            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations]
+            Ports.Input.multiple_support: [a["support"][0] for a in annotations],
+            Ports.Input.question: [a["question"][0] for a in annotations],
+            Ports.Input.atomic_candidates: [a["candidates"][0] for a in annotations]
         }
 
         if not is_eval:
 
             x_dict.update({
-                Ports.Target.candidate_1hot: [a["targets"] for a in annotations]
+                Ports.Target.candidate_1hot: [a["targets"][0] for a in annotations]
             })
 
         return numpify(x_dict)
