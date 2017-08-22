@@ -18,6 +18,7 @@ class GeneratorWithRestart(object):
     def __iter__(self):
         return self.iterator()
 
+
 def get_buckets(data, order, structure):
     """
     Generates mapping between data instances and bucket-ID's.

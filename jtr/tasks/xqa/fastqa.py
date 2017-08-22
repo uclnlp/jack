@@ -3,7 +3,8 @@ This file contains FastQA specific modules and ports
 """
 
 import random
-from typing import Optional
+
+from typing import Optional, NamedTuple
 
 from jtr.core import *
 from jtr.fun import simple_model_module, no_shared_resources
@@ -17,17 +18,32 @@ from jtr.tf_fun.xqa import xqa_min_crossentropy_loss
 
 from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
-from jtr.util.batch import shuffle_and_batch, generator_with_restart
+from jtr.util.batch import shuffle_and_batch
 from jtr.util.map import numpify
 
 
+class FastQAAnnotation(NamedTuple):
+    question_tokens: List[str]
+    question_ids: List[int]
+    question_length: int
+    question_embeddings: np.ndarray
+    support_tokens: List[str]
+    support_ids: List[int]
+    support_length: int
+    support_embeddings: np.ndarray
+    word_in_question: List[float]
+    token_offsets: List[int]
+    answer_spans: Optional[List[Tuple[int, int]]]
+
+
 class FastQAInputModule(InputModule):
+
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
             "shared_resources for FastQAInputModule must be an instance of SharedResources"
         self.shared_vocab_config = shared_vocab_config
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 
@@ -69,7 +85,7 @@ class FastQAInputModule(InputModule):
 
     def preprocess_instance(self, question: QASetting,
                             answers: Optional[List[Answer]] = None) \
-            -> dict:
+            -> FastQAAnnotation:
 
         """Preprocesses a single sample, a dict that is passed to the
         `create_batch` method, containing intermediate results which are
@@ -92,28 +108,25 @@ class FastQAInputModule(InputModule):
         for k in range(len(q_ids)):
             emb_question[k] = self._get_emb(q_ids[k])
 
-        output = {
-            "question_tokens": q_tokenized,
-            "question_ids": q_ids,
-            "question_length": q_length,
-            "question_embeddings": emb_question,
-            "support_tokens": s_tokenized,
-            "support_ids": s_ids,
-            "support_length": s_length,
-            "support_embeddings": emb_support,
-            "word_in_question": word_in_question,
-            "token_offsets": token_offsets,
-        }
 
-        if has_answers:
-            output.update({
-                "answer_spans": answer_spans,
-            })
+        output = FastQAAnnotation(
+            question_tokens=q_tokenized,
+            question_ids=q_ids,
+            question_length=q_length,
+            question_embeddings=emb_question,
+            support_tokens=s_tokenized,
+            support_ids=s_ids,
+            support_length=s_length,
+            support_embeddings=emb_support,
+            word_in_question=word_in_question,
+            token_offsets=token_offsets,
+            answer_spans=answer_spans if has_answers else None,
+        )
 
         return output
 
 
-    def create_batch(self, annotations: List[dict], is_eval: bool, with_answers: bool) \
+    def create_batch(self, annotations: List[FastQAAnnotation], is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
 
         """Creates a batch from a list of preprocessed questions, given by
@@ -122,16 +135,16 @@ class FastQAInputModule(InputModule):
 
         batch_size = len(annotations)
 
-        emb_supports = [a["support_embeddings"] for a in annotations]
-        emb_questions = [a["question_embeddings"] for a in annotations]
+        emb_supports = [a.support_embeddings for a in annotations]
+        emb_questions = [a.question_embeddings for a in annotations]
 
-        support_lengths = [a["support_length"] for a in annotations]
-        question_lengths = [a["question_length"] for a in annotations]
-        wiq = [a["word_in_question"] for a in annotations]
-        offsets = [a["token_offsets"] for a in annotations]
+        support_lengths = [a.support_length for a in annotations]
+        question_lengths = [a.question_length for a in annotations]
+        wiq = [a.word_in_question for a in annotations]
+        offsets = [a.token_offsets for a in annotations]
 
-        q_tokenized = [a["question_tokens"] for a in annotations]
-        s_tokenized = [a["support_tokens"] for a in annotations]
+        q_tokenized = [a.question_tokens for a in annotations]
+        s_tokenized = [a.support_tokens for a in annotations]
 
         unique_words, unique_word_lengths, question2unique, support2unique = \
             unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
@@ -152,7 +165,7 @@ class FastQAInputModule(InputModule):
         }
 
         if with_answers:
-            spans = [a["answer_spans"] for a in annotations]
+            spans = [a.answer_spans for a in annotations]
             span2question = [i for i in range(batch_size) for _ in spans[i]]
             output.update({
                 XQAPorts.answer_span: spans,
