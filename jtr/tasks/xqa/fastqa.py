@@ -4,7 +4,7 @@ This file contains FastQA specific modules and ports
 
 import random
 
-from typing import Optional, NamedTuple
+from typing import NamedTuple
 
 from jtr.core import *
 from jtr.fun import simple_model_module, no_shared_resources
@@ -18,7 +18,6 @@ from jtr.tf_fun.xqa import xqa_min_crossentropy_loss
 
 from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
-from jtr.util.batch import shuffle_and_batch
 from jtr.util.map import numpify
 
 
@@ -36,7 +35,7 @@ class FastQAAnnotation(NamedTuple):
     answer_spans: Optional[List[Tuple[int, int]]]
 
 
-class FastQAInputModule(InputModule):
+class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
 
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
@@ -87,11 +86,6 @@ class FastQAInputModule(InputModule):
                             answers: Optional[List[Answer]] = None) \
             -> FastQAAnnotation:
 
-        """Preprocesses a single sample, a dict that is passed to the
-        `create_batch` method, containing intermediate results which are
-        aggregated during batching.
-        """
-
         has_answers = answers is not None
 
         q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
@@ -128,10 +122,6 @@ class FastQAInputModule(InputModule):
 
     def create_batch(self, annotations: List[FastQAAnnotation], is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
-
-        """Creates a batch from a list of preprocessed questions, given by
-        a list of annotations as returned by `preprocess_instance`.
-        """
 
         batch_size = len(annotations)
 
@@ -179,30 +169,6 @@ class FastQAInputModule(InputModule):
                                       XQAPorts.question_words2unique, XQAPorts.support_words2unique,
                                       XQAPorts.word_in_question, XQAPorts.token_char_offsets])
         return batch
-
-
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
-                        is_eval: bool,
-                        dataset_name=None,
-                        identifier=None)\
-            -> Iterable[Mapping[TensorPort, np.ndarray]]:
-
-        annotations = [self.preprocess_instance(q, a) for q, a in dataset]
-
-        def make_generator():
-            for annotation_batch in shuffle_and_batch(annotations,
-                                                      self.batch_size,
-                                                      shuffle=is_eval,
-                                                      rng=self._rng):
-                yield self.create_batch(annotation_batch, is_eval, True)
-
-        return GeneratorWithRestart(make_generator)
-
-
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-
-        annotations = [self.preprocess_instance(q, None) for q in qa_settings]
-        return self.create_batch(annotations, is_eval=True, with_answers=False)
 
 
 fastqa_like_model_module_factory = simple_model_module(

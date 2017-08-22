@@ -12,12 +12,13 @@ import pickle
 import shutil
 import sys
 from abc import abstractmethod
-from typing import Mapping, List, Iterable
+from typing import Mapping, Iterable, Generic, TypeVar, Optional
 
 import numpy as np
 import tensorflow as tf
 
 from jtr.data_structures import *
+from jtr.util.batch import shuffle_and_batch
 from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)
@@ -355,7 +356,8 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                        is_eval: bool, dataset_name=None,
                         identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -378,6 +380,83 @@ class InputModule:
     def load(self, path):
         """Load the state of this module. Default is that there is no state, so nothing to load."""
         pass
+
+
+AnnotationType = TypeVar('AnnotationType')
+class OnlineInputModule(InputModule, Generic[AnnotationType]):
+    """InputModule that preprocessed instances on the fly.
+
+    It provides implementations for `create_batch()` and `__call__()` and
+    introduces two abstract methods:
+    - `preprocess_instance()`: Converts a single instance to an annotation.
+    - `create_batch()`: Converts a list of annotations to a batch.
+
+    Both of these methods are parameterized by `AnnotationType`. In the simplest
+    case, this could be a `dict`, but you could also define a separate class
+    for your annotation.
+    """
+
+    @abstractmethod
+    def preprocess_instance(self, question: QASetting,
+                            answers: Optional[List[Answer]] = None) \
+            -> AnnotationType:
+
+        """
+        Preprocesses a single sample, returning an annotation that is passed to
+        the `create_batch` method.
+        Args:
+            question: The instance to preprocess
+            answers: (Optional) answers associated with the instance
+
+        Returns:
+            An annotation of the instance.
+        """
+
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_batch(self, annotations: List[AnnotationType],
+                     is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+
+        """
+        Creates a batch from a list of preprocessed questions, given by
+        a list of annotations as returned by `preprocess_instance`.
+        Args:
+            annotations: a list of annotations to be included in the batch
+            is_eval: whether the method is called for evaluation data
+            with_answers: whether answers are included in the annotations
+
+        Returns:
+            A mapping from ports to numpy arrays.
+        """
+
+        raise NotImplementedError
+
+    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
+        """Preprocesses all qa_settings, returns a single batch with all instances."""
+
+        annotations = [self.preprocess_instance(q, answers=None) for q in qa_settings]
+        return self.create_batch(annotations, is_eval=True, with_answers=False)
+
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                        is_eval: bool, dataset_name=None,
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        """Preprocesses all instances, batches shuffles them and generates batches."""
+
+        # TODO: rng parameter to batch_generator, shuffle if not None
+        # TODO: batch size parameter
+
+        annotations = [self.preprocess_instance(q, a) for q, a in dataset]
+
+        def make_generator():
+            for annotation_batch in shuffle_and_batch(annotations,
+                                                      self.batch_size,
+                                                      shuffle=(not is_eval),
+                                                      rng=self._rng):
+                yield self.create_batch(annotation_batch, is_eval, True)
+
+        return GeneratorWithRestart(make_generator)
 
 
 class ModelModule:
