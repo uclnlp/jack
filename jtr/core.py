@@ -588,6 +588,7 @@ class ModelModule:
         """ Returns: A list of training variables """
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of variables """
@@ -860,7 +861,7 @@ class JTReader:
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, Answer]], dataset_name=None, identifier='train'):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier='train'):
         """
         Sets up modules given a training dataset if necessary.
         
