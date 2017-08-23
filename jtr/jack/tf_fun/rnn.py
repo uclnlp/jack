@@ -282,7 +282,7 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
                 decoder_outputs_infer)
 
 
-def dynamic_lstm_decoder_loss(decoder_outputs_train,
+def dynamic_lstm_decoder_loss(decoder_logits_train,
                               targets,
                               target_lengths,
                               num_decoder_symbols,
@@ -302,14 +302,14 @@ def dynamic_lstm_decoder_loss(decoder_outputs_train,
         scope (string):  The TensorFlow scope for the loss
 
     Returns:
-        decoder_loss:  Loss for the decoder, based on 
+        decoder_loss:  Loss for the decoder, based on
             tf.losses.sparse_softmax_cross_entropy
         decoder_probs:  Simply the sigmoid of the input logits
     """
 
     with tf.variable_scope(scope or "decoder-loss") as varscope:
         varscope
-        
+       
         logits_flat = tf.reshape(
             decoder_logits_train, [-1, num_decoder_symbols])
 
@@ -326,7 +326,8 @@ def dynamic_lstm_decoder_loss(decoder_outputs_train,
         )
         labels_flat = tf.reshape(labels_trunc, [-1])
 
-        # Now get weight matrix
+        # Now get weight matrix...
+        # symbol of item i should be given weight 1/sequence_length(item i)
         ones = tf.ones_like(target_lengths, dtype=tf.float32)
         label_weights = tf.where(
             tf.not_equal(target_lengths, 0),
@@ -338,7 +339,7 @@ def dynamic_lstm_decoder_loss(decoder_outputs_train,
             tf.cast(target_lengths, tf.float32),
             ones)
         # Thanks https://stackoverflow.com/questions/35361467/tensorflow-numpy-repeat-alternative
-        label_weights = tf.div(label_weights, label_divisors)
+        label_weights = tf.div(label_weights, label_divisors)  # shape = batch size x 1
         label_weights = tf.tile(label_weights, [max_interpr_seq_len_batch])
         label_weights = tf.transpose(tf.reshape(label_weights, [-1, 2]))
         label_weights_flat = tf.reshape(label_weights, [-1])
