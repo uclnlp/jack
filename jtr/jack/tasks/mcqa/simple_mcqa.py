@@ -146,7 +146,7 @@ class SingleSupportFixedClassInputs(InputModule):
         self.answer_vocab = Vocab(unk=None)
         self.answer_vocab.add(corpus["candidates"])
         self.answer_vocab.build()
-        logger.debug('answer_vocab: '+str(self.answer_vocab.sym2id))
+        logger.debug('answer_vocab: ' + str(self.answer_vocab.sym2id))
         self.config['answer_size'] = len(self.answer_vocab)
 
 
@@ -157,9 +157,9 @@ class SingleSupportFixedClassInputs(InputModule):
         corpus = self.answer_vocab.encode(corpus, keys=['candidates', 'answers'])
 
         xy_dict = {
-            Ports.Input.single_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Targets.candidate_idx:  corpus["answers"],
+            Ports.Input.single_support: corpus['support'],
+            Ports.Input.question: corpus['question'],
+            Ports.Targets.candidate_idx:  corpus['answers'],
             Ports.Input.question_length: corpus['question_lengths'],
             Ports.Input.support_length: corpus['support_lengths'],
             Ports.Input.sample_id: corpus['ids']
