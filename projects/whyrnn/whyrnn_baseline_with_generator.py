@@ -14,7 +14,8 @@ from jtr.jack.data_structures import load_labelled_data
 from jtr.preprocess.vocabulary import Vocab
 from jtr.jack.tasks.mcqa.simple_mcqa import \
     SingleSupportFixedClassInputs, PairOfBiLSTMOverQuestionAndSupportModel
-from jtr.jack.core import SharedVocabAndConfig, JTReader
+from jtr.jack.core import \
+    SharedVocabAndConfig, JTReader, SharedResources, Sequence
 from jtr.jack.tf_fun import rnn, simple
 
 
@@ -30,8 +31,13 @@ decoder_symbols = {
 class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
         PairOfBiLSTMOverQuestionAndSupportModel):
 
-    def __init__(self, shared_resources):
+    def __init__(self, shared_resources, mcqa_input_module):
         super().__init__(shared_resources)
+        # We store input module only to get to its .answer_vocab.id2sym.
+        # We can only access that after input module has been set up from
+        # data, so there is no way to directly get the id2sym table upon
+        # creation of the current model.
+        self.input_module = mcqa_input_module
         self.decoder_outputs_train = {}
         self.decoder_logits_train = {}
         self.decoder_outputs_infer = {}
@@ -41,6 +47,7 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
                      num_classes, keep_prob=1):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
+        self.answer_id2sym = self.input_module.answer_vocab.id2sym
 
         Q_seq = tf.nn.embedding_lookup(embeddings, Q)
         S_seq = tf.nn.embedding_lookup(embeddings, S)
@@ -67,8 +74,10 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
         # Add decoder for each target class
         # 1. Get parameters
         self.decoder_outputs_train = {}
-        # self.decoder_logits_train = {}
+        self.decoder_logits_train = {}
         self.decoder_outputs_infer = {}
+        self.decoder_targets = Q  # vocab indices, no embeddings (no Q_seq)!
+        self.decoder_target_lengths = Q_lengths
         sos_id = shared_resources.vocab.sym2id[decoder_symbols['SOS']]
         eos_id = shared_resources.vocab.sym2id[decoder_symbols['EOS']]
         num_decoder_symbols = len(shared_resources.vocab)
@@ -83,8 +92,11 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
 
         # 2. Construct the decoders
         logger.debug("Constructing decoders")
-        for i in range(1, num_classes):
-            decoder_name = "decoder_class_{:d}".format(i)
+        for i in range(0, num_classes):
+            decoder_name = "decoder_class_{:d}_{}".format(
+                i, self.answer_id2sym[i])
+            # In decoder, the 'targets', which will serve as inputs
+            # are the embeddings of the input sequence tokens
             outputs_train, logits_train, outputs_infer = \
                 rnn.dynamic_lstm_decoder(
                     targets=Q_seq, target_lengths=Q_lengths,
@@ -98,11 +110,57 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
                     scope=decoder_name,
                     drop_keep_prob=keep_prob
                 )
-            self.decoder_outputs_train[decoder_name] = outputs_train
-            self.decoder_logits_train[decoder_name] = logits_train
-            self.decoder_outputs_infer[decoder_name] = outputs_infer
+            self.decoder_outputs_train[i] = outputs_train
+            self.decoder_logits_train[i] = logits_train
+            self.decoder_outputs_infer[i] = outputs_infer
 
         return outputs
+
+    def create_training_output(self, shared_resources: SharedResources,
+                               logits: tf.Tensor,
+                               labels: tf.Tensor) -> Sequence[tf.Tensor]:
+
+        # PART 1. Label prediction loss
+        loss = tf.reduce_mean(
+            tf.nn.sparse_softmax_cross_entropy_with_logits(
+                logits=logits,
+                labels=labels
+            ), name='predictor_loss')
+
+        # PART 2. Interpretation loss from decoder
+        print("### Whoa! What's all this about? (Need to add loss...)")
+        print("### labels = {}".format(shared_resources.vocab))
+        num_decoder_symbols = len(shared_resources.vocab)
+        self.interpretation_loss = {}
+        for x in self.decoder_outputs_train:
+            answer = self.answer_id2sym[x]
+            print("### Loss for {} (answer = {}) is created here...".format(
+                x, answer))
+            # wrong: these are scalars!!!
+            self.interpretation_loss[x], _ = rnn.dynamic_lstm_decoder_loss(
+                self.decoder_logits_train[x],
+                self.decoder_targets, #targets[x],
+                self.decoder_target_lengths, #target_lengths[x],
+                num_decoder_symbols,
+                scope='interpretation_loss_{}'.format(answer)
+            )
+            print("tf.shape(interpretation_loss[{}]) = {}".format(
+                x,
+                tf.shape(self.interpretation_loss[x])))
+        # (a) convert labels to one hot vector
+        labels_hot = tf.one_hot(
+            indices=labels,
+            depth=3,
+            on_value=1.0,
+            off_value=0.0,
+            axis=-1)
+        # (b) get the different label decoder losses as tensor
+        interpretation_losses = tf.stack([self.interpretation_loss[i] for i in range(2)])
+        # Now, get vector product of (a) x (b)
+        print("tf.shape(labels_hot) = {}".format(tf.shape(labels_hot)))
+        print("tf.shape(interpretation_losses) = {}".format(tf.shape(interpretation_losses)))
+        interpretation_loss = tf.reduce_sum(labels_hot * interpretation_losses)
+        return [loss + 0.1 * interpretation_loss]
 
 
 # not anymore: @__mcqa_reader
@@ -112,10 +170,11 @@ def snli_reader_with_generator(vocab, config):
     from jtr.jack.tasks.mcqa.simple_mcqa import \
         SingleSupportFixedClassInputs, EmptyOutputModule
     shared_resources = SharedVocabAndConfig(vocab, config)
+    input_module = SingleSupportFixedClassInputs(shared_resources)
     return JTReader(
         shared_resources,
-        SingleSupportFixedClassInputs(shared_resources),
-        PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(shared_resources),
+        input_module,
+        PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(shared_resources, input_module),
         EmptyOutputModule()
     )
 
