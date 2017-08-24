@@ -49,12 +49,15 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
     def setup(self):
         self.vocab = self.shared_vocab_config.vocab
         self.config = self.shared_vocab_config.config
-        self.batch_size = self.config.get("batch_size", 1)
         self.dropout = self.config.get("dropout", 1)
         self._rng = random.Random(self.config.get("seed", 123))
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+
+    @property
+    def batch_size(self):
+        return self.config.get("batch_size", 1)
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:

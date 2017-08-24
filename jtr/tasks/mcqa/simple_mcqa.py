@@ -21,7 +21,6 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
         self.shared_resources = shared_resources
-        self.batch_size = 32
         self._rng = random.Random(self.config.get("seed", 123))
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):

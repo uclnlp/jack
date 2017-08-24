@@ -25,6 +25,9 @@ from jtr.util.vocab import Vocab
 logger = logging.getLogger(__name__)
 
 
+_rng = random.Random(1234)
+
+
 class TensorPort:
     """
     A TensorPort defines an input or output tensor for a ModelModule. This subsumes a
@@ -456,6 +459,14 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         """
         return shuffle_and_batch(annotations, batch_size, rng)
 
+    @property
+    def batch_size(self):
+        return 32
+
+    def shuffle(self, is_eval):
+        """Whether to shuffle the dataset in batch_generator()."""
+        return not is_eval
+
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """Preprocesses all qa_settings, returns a single batch with all instances."""
 
@@ -467,15 +478,13 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
                         identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """Preprocesses all instances, batches shuffles them and generates batches."""
 
-        # TODO: rng parameter to batch_generator, shuffle if not None
-        # TODO: batch size parameter
-
         questions, answers = zip(*dataset)
         annotations = self.preprocess(questions, answers)
 
         def make_generator():
+            rng = _rng if self.shuffle(is_eval) else None
             for annotation_batch in self.batch_annotations(
-                    annotations, self.batch_size, rng=(None if is_eval else self._rng)):
+                    annotations, self.batch_size, rng=rng):
                 yield self.create_batch(annotation_batch, is_eval, True)
 
         return GeneratorWithRestart(make_generator)
