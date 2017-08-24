@@ -118,7 +118,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
             emb_question[k] = self._get_emb(q_ids[k])
 
 
-        output = FastQAAnnotation(
+        return FastQAAnnotation(
             question_tokens=q_tokenized,
             question_ids=q_ids,
             question_length=q_length,
@@ -131,8 +131,6 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
             token_offsets=token_offsets,
             answer_spans=answer_spans if has_answers else None,
         )
-
-        return output
 
 
     def create_batch(self, annotations: List[FastQAAnnotation], is_eval: bool, with_answers: bool) \
