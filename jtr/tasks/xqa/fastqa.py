@@ -173,7 +173,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
             spans = [a.answer_spans for a in annotations]
             span2question = [i for i in range(batch_size) for _ in spans[i]]
             output.update({
-                XQAPorts.answer_span: spans,
+                XQAPorts.answer_span: [span for span_list in spans for span in span_list],
                 XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
                 XQAPorts.answer2question: span2question,
                 XQAPorts.answer2question_training: [] if is_eval else span2question,
