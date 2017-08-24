@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-
 from jtr.core import *
 from jtr.data_structures import *
 
-from jtr.util.batch import get_batches
 from jtr.util.map import numpify
 
 
-class KnowledgeGraphEmbeddingInputModule(InputModule):
+class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
@@ -28,38 +26,32 @@ class KnowledgeGraphEmbeddingInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        qa_settings = [qa_setting for qa_setting, _ in dataset]
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+            -> List[List[int]]:
+        """Converts questions to triples."""
+
         triples = []
-        for qa_setting in qa_settings:
+        for qa_setting in questions:
             s, p, o = qa_setting.question.split()
             s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
             p_idx = self.predicate_to_index[p]
             triples.append([s_idx, p_idx, o_idx])
 
-        xy_dict = {
-            Ports.Input.multiple_support: [0 for _ in qa_settings],
-            Ports.Input.question: triples,
-            Ports.Input.atomic_candidates: [0 for _ in qa_settings],
-            Ports.Target.candidate_1hot: [1 for _ in qa_settings]
-        }
-        batches = get_batches(xy_dict)
-        return batches
+        return triples
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-        triples = []
-        for qa_setting in qa_settings:
-            s, p, o = qa_setting.question.split()
-            s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
-            p_idx = self.predicate_to_index[p]
-            triples.append([s_idx, p_idx, o_idx])
+    def create_batch(self, triples: List[List[int]],
+                     is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+
+        batch_size = len(triples)
 
         xy_dict = {
-            Ports.Input.multiple_support: [0 for _ in qa_settings],
+            Ports.Input.multiple_support: [0] * batch_size,
             Ports.Input.question: triples,
-            Ports.Input.atomic_candidates: [0 for _ in qa_settings],
-            Ports.Target.candidate_1hot: [1 for _ in qa_settings]
+            Ports.Input.atomic_candidates: [0] * batch_size,
+            Ports.Target.candidate_1hot: [1] * batch_size
         }
         return numpify(xy_dict)
 
