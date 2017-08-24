@@ -129,37 +129,34 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
 
         # PART 2. Interpretation loss from decoder
         print("### Whoa! What's all this about? (Need to add loss...)")
-        print("### labels = {}".format(shared_resources.vocab))
-        num_decoder_symbols = len(shared_resources.vocab)
-        self.interpretation_loss = {}
-        for x in self.decoder_outputs_train:
-            answer = self.answer_id2sym[x]
-            print("### Loss for {} (answer = {}) is created here...".format(
-                x, answer))
-            # wrong: these are scalars!!!
-            self.interpretation_loss[x], _ = rnn.dynamic_lstm_decoder_loss(
-                self.decoder_logits_train[x],
-                self.decoder_targets, #targets[x],
-                self.decoder_target_lengths, #target_lengths[x],
-                num_decoder_symbols,
-                scope='interpretation_loss_{}'.format(answer)
-            )
-            print("tf.shape(interpretation_loss[{}]) = {}".format(
-                x,
-                tf.shape(self.interpretation_loss[x])))
+        num_classes = len(self.decoder_outputs_train)
         # (a) convert labels to one hot vector
         labels_hot = tf.one_hot(
             indices=labels,
-            depth=3,
+            depth=num_classes,
             on_value=1.0,
             off_value=0.0,
             axis=-1)
-        # (b) get the different label decoder losses as tensor
-        interpretation_losses = tf.stack([self.interpretation_loss[i] for i in range(2)])
-        # Now, get vector product of (a) x (b)
-        print("tf.shape(labels_hot) = {}".format(tf.shape(labels_hot)))
-        print("tf.shape(interpretation_losses) = {}".format(tf.shape(interpretation_losses)))
-        interpretation_loss = tf.reduce_sum(labels_hot * interpretation_losses)
+        # (c) get the different label decoder logits as single tensor,
+        # taking the correct decoder output depending on the labels
+        decoder_logits_stacked = tf.stack(
+            [self.decoder_logits_train[i] for i in range(num_classes)],
+            axis=-1)
+        print("labels_hot.get_shape() = {}".format(labels_hot.get_shape()))
+        print("decoder_logits_stacked.get_shape() = {}".format(decoder_logits_stacked.get_shape()))
+        # b = batch, t = time (symbol), l = logit, j = the label index
+        self.decoder_logits_merged = tf.einsum(
+            'bj,btlj->btl', labels_hot, decoder_logits_stacked)
+        print("decoder_logits_merged.get_shape() = {}".format(self.decoder_logits_merged.get_shape()))
+        # (d) now calculate the interpretation loss
+        num_decoder_symbols = len(shared_resources.vocab)
+        interpretation_loss, _ = rnn.dynamic_lstm_decoder_loss(
+            self.decoder_logits_merged,
+            self.decoder_targets,
+            self.decoder_target_lengths,
+            num_decoder_symbols,
+            scope='interpretation_loss'
+        )
         return [loss + 0.1 * interpretation_loss]
 
 
