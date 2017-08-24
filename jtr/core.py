@@ -398,21 +398,22 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
     """
 
     @abstractmethod
-    def preprocess_instance(self, question: QASetting,
-                            answers: Optional[List[Answer]] = None,
-                            is_eval: bool = False) \
-            -> AnnotationType:
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+            -> List[AnnotationType]:
 
         """
-        Preprocesses a single sample, returning an annotation that is passed to
+        Preprocesses a list of samples, returning a list of annotations.
+        Batches of these annotation objects are then passed to the
         the `create_batch` method.
         Args:
-            question: The instance to preprocess
-            answers: (Optional) answers associated with the instance
+            questions: The list of instances to preprocess
+            answers: (Optional) answers associated with the instances
             is_eval: Whether this preprocessing is done for evaluation data
 
         Returns:
-            An annotation of the instance.
+            An annotations of the instances.
         """
 
         raise NotImplementedError
@@ -458,8 +459,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """Preprocesses all qa_settings, returns a single batch with all instances."""
 
-        annotations = [self.preprocess_instance(q, answers=None, is_eval=True)
-                       for q in qa_settings]
+        annotations = self.preprocess(qa_settings, answers=None, is_eval=True)
         return self.create_batch(annotations, is_eval=True, with_answers=False)
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
@@ -470,7 +470,8 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         # TODO: rng parameter to batch_generator, shuffle if not None
         # TODO: batch size parameter
 
-        annotations = [self.preprocess_instance(q, a) for q, a in dataset]
+        questions, answers = zip(*dataset)
+        annotations = self.preprocess(questions, answers)
 
         def make_generator():
             for annotation_batch in self.batch_annotations(

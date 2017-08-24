@@ -8,8 +8,7 @@ from jtr.tf_fun import rnn, simple
 from jtr.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
 from jtr.util.batch import get_batches
 from jtr.util.map import numpify
-from jtr.util.pipelines import pipeline
-
+from jtr.util.pipelines import pipeline, transpose_dict_of_lists
 
 from typing import List, Tuple, Mapping, Iterable, Any
 
@@ -28,46 +27,52 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
 
         # Run preprocessing once for all data in order to populate the vocabulary.
-        for qa_setting, answers in data:
-            self.preprocess_instance(qa_setting, answers)
+        questions, answers = zip(*data)
+        self.preprocess(questions, answers)
 
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
 
-    def preprocess_instance(self, question: QASetting,
-                            answers: Optional[List[Answer]] = None,
-                            is_eval: bool = False) \
-            -> Mapping[str, Any]:
 
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+            -> List[Mapping[str, Any]]:
+
+        output_keys = ["support", "question", "candidates"]
         corpus = {
-            "support": [question.support],
-            "question": [question.question],
-            "candidates": [question.atomic_candidates]
+            "support": [q.support for q in questions],
+            "question": [q.question for q in questions],
+            "candidates": [q.atomic_candidates for q in questions]
         }
 
-        if answers is not None:
-            assert len(answers) == 1
-            corpus["answers"] = [[answers[0].text]]
+        if answers:
+            assert len(answers) == len(questions)
+            assert all(len(a) == 1 for a in answers)
+
+            corpus["answers"] = [a[0] for a in answers]
+            output_keys += ["targets"]
 
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=is_eval)
-        return corpus
+                                   test_time=(answers is None))
+
+        return transpose_dict_of_lists(corpus, output_keys)
 
     def create_batch(self, annotations: List[Mapping[str, Any]],
                      is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
 
         x_dict = {
-            Ports.Input.multiple_support: [a["support"][0] for a in annotations],
-            Ports.Input.question: [a["question"][0] for a in annotations],
-            Ports.Input.atomic_candidates: [a["candidates"][0] for a in annotations]
+            Ports.Input.multiple_support: [a["support"] for a in annotations],
+            Ports.Input.question: [a["question"] for a in annotations],
+            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations]
         }
 
         if not is_eval:
 
             x_dict.update({
-                Ports.Target.candidate_1hot: [a["targets"][0] for a in annotations]
+                Ports.Target.candidate_1hot: [a["targets"] for a in annotations]
             })
 
         return numpify(x_dict)
@@ -125,7 +130,7 @@ class MultiSupportFixedClassInputs(InputModule):
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,
                         self.shared_resources.answer_vocab,
-                        use_single_support=True, sepvocab=True)
+                        sepvocab=True)
 
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],

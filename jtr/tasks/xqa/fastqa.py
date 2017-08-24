@@ -82,9 +82,20 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
 
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+            -> List[FastQAAnnotation]:
+
+        if answers is None:
+            answers = [None] * len(questions)
+
+        return [self.preprocess_instance(q, a)
+                for q, a in zip(questions, answers)]
+
+
     def preprocess_instance(self, question: QASetting,
-                            answers: Optional[List[Answer]] = None,
-                            is_eval: bool = False) \
+                            answers: Optional[List[Answer]] = None) \
             -> FastQAAnnotation:
 
         has_answers = answers is not None
