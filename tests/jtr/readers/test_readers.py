@@ -40,18 +40,18 @@ def smoke_test(reader_name):
             support=["While b seems plausible, answer a is correct."],
             id="1",
             atomic_candidates=["a", "b", "c"]),
-         [Answer("a")])
+         [Answer("a", (0, 6, 6))])
     ]
     questions = [q for q, _ in data_set]
 
     shared_resources = SharedResources(build_vocab(questions), {"repr_dim": 10,
                                                                 "repr_dim_input": 10,
-                                                                "dropout": 0.5})
+                                                                "dropout": 0.5,
+                                                                "batch_size": 1})
 
     reader = readers.readers[reader_name](shared_resources)
-    reader.setup_from_data(data_set)
 
-    # TODO: Test training too
+    reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=1, dataset_name="test")
 
     answers = reader(questions)
 
