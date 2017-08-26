@@ -75,23 +75,31 @@ class ModelFInputModule(InputModule):
     def preprocess(self, data, test_time=False):
         corpus = { "question": [], "candidates": [], "answers":[]}
         for xy in data:
-            x, y = xy
+            if test_time:
+                x = xy
+                y = None
+            else:
+                x, y = xy
+
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
-            assert len(y) == 1
-            corpus["answers"].append(y[0].text)
+
+            if not test_time:
+                assert len(y) == 1
+                corpus["answers"].append(y[0].text)
         corpus = deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
         corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
-        qanswers = {}
-        for i,q in enumerate(corpus['question']):
-            q0=q[0]
-            if q0 not in qanswers:
-                qanswers[q0] = set()
-            a = corpus["answers"][i]
-            qanswers[q0].add(a)
+
         if not test_time:
+            qanswers = {}
+            for i,q in enumerate(corpus['question']):
+                q0=q[0]
+                if q0 not in qanswers:
+                    qanswers[q0] = set()
+                a = corpus["answers"][i]
+                qanswers[q0].add(a)
             sl = ShuffleList(corpus["candidates"][0], qanswers)
             corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
             #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)

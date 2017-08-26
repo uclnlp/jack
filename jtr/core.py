@@ -59,6 +59,11 @@ class TensorPort:
         return self.name > port.name
 
 
+    def __repr__(self):
+
+        return "<TensorPort (%s)>" % self.name
+
+
 class TensorPortWithDefault(TensorPort):
     """
     TensorPort that also defines a default value.

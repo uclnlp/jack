@@ -15,8 +15,8 @@ def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamp
         corpus['ids'].append(i)
         corpus["question"].append(x.question)
         corpus["candidates"].append(x.atomic_candidates)
-        assert len(y) == 1
         if not test_time:
+            assert len(y) == 1
             corpus["answers"].append(y[0].text)
 
     corpus, train_vocab, answer_vocab, train_candidates_vocab =\
