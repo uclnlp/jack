@@ -145,7 +145,7 @@ class MultiSupportFixedClassInputs(InputModule):
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            Ports.Target.target_index:  corpus["answers"],
+            Ports.Target.target_index:  [a[0] for a in corpus["answers"]],
             Ports.Input.question_length: corpus['question_lengths'],
             Ports.Input.support_length: corpus['support_lengths'],
             Ports.Input.sample_id: corpus['ids']
