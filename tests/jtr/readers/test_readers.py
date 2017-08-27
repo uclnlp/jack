@@ -51,7 +51,7 @@ def smoke_test(reader_name):
 
     reader = readers.readers[reader_name](shared_resources)
 
-    reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=1, dataset_name="test")
+    reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=1)
 
     answers = reader(questions)
 
