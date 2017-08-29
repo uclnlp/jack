@@ -92,12 +92,12 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
             if y is not None:
                 assert len(y) == 1
                 corpus["answers"].append([y[0].text])
-                corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
         corpus = deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
 
         if has_answers:
+            corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
             qanswers = {}
             for i,q in enumerate(corpus['question']):
                 q0=q[0]

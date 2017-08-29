@@ -420,7 +420,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
             is_eval: Whether this preprocessing is done for evaluation data
 
         Returns:
-            An annotations of the instances.
+            List of annotations of the instances.
         """
 
         raise NotImplementedError
@@ -449,7 +449,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         By default, all annotations are shuffled (if self.shuffle(is_eval) and
         then batched. Override this method if you want to customize the
-        batching, e.g. to do stratified sampling, sampling with replacement,
+        batching, e.g., to do stratified sampling, sampling with replacement,
         etc.
 
         Args:
@@ -466,7 +466,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         return 32
 
     def shuffle(self, is_eval):
-        """Whether to shuffle the dataset in shuffle_and_batch()."""
+        """Whether to shuffle the dataset in batch_annotations()."""
         return not is_eval
 
     def __call__(self, qa_settings: List[QASetting]) \
@@ -482,10 +482,10 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
                         dataset_name=None,
                         identifier=None) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        """Preprocesses all instances, batches shuffles them and generates batches."""
+        """Preprocesses all instances, batches & shuffles them and generates batches."""
 
         questions, answers = zip(*dataset)
-        annotations = self.preprocess(questions, answers)
+        annotations = self.preprocess(questions, answers, is_eval=is_eval)
 
         def make_generator():
             for annotation_batch in self.batch_annotations(annotations, is_eval):
