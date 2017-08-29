@@ -50,7 +50,6 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         self.vocab = self.shared_vocab_config.vocab
         self.config = self.shared_vocab_config.config
         self.dropout = self.config.get("dropout", 1)
-        self._rng = random.Random(self.config.get("seed", 123))
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]

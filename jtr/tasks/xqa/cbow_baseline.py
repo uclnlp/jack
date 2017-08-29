@@ -52,7 +52,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 
@@ -60,7 +60,6 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         self.vocab = self.shared_vocab_config.vocab
         self.config = self.shared_vocab_config.config
         self.dropout = self.config.get("dropout", 1)
-        self._rng = random.Random(self.config.get("seed", 123))
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
