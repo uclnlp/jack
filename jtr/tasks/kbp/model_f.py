@@ -80,7 +80,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
                    is_eval: bool = False) \
             -> List[Mapping[str, Any]]:
 
-        has_answers = answers is None
+        has_answers = answers is not None
         answers = answers or [None] * len(questions)
 
         corpus = { "question": [], "candidates": [], "answers":[]}
@@ -103,7 +103,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
                 q0=q[0]
                 if q0 not in qanswers:
                     qanswers[q0] = set()
-                a = corpus["answers"][i]
+                a = corpus["answers"][i][0]
                 qanswers[q0].add(a)
             if not is_eval:
                 sl = ShuffleList(corpus["candidates"][0], qanswers)
@@ -125,7 +125,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
 
         if with_answers:
             output.update({
-                Ports.Target.target_index: [a["answers"] for a in annotations]
+                Ports.Target.target_index: [a["answers"][0] for a in annotations]
             })
         return numpify(output)
 

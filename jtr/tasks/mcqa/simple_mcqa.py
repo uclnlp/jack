@@ -49,7 +49,7 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
             assert len(answers) == len(questions)
             assert all(len(a) == 1 for a in answers)
 
-            corpus["answers"] = answers
+            corpus["answers"] = [[a[0].text] for a in answers]
             output_keys += ["targets"]
 
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,

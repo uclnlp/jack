@@ -154,7 +154,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         not_allowed = all(end - start > _max_span_size
                           for start, end in answer_spans)
 
-        if is_eval and not_allowed:
+        if has_answers and not_allowed:
             return None
 
         emb_support = np.zeros([s_length, self.emb_matrix.shape[1]])
