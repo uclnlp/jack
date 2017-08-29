@@ -64,6 +64,11 @@ class TensorPort:
         return self.name > port.name
 
 
+    def __repr__(self):
+
+        return "<TensorPort (%s)>" % self.name
+
+
 class TensorPortWithDefault(TensorPort):
     """
     TensorPort that also defines a default value.
@@ -331,7 +336,7 @@ class InputModule:
         """
         Defines what types of tensors the output module produces in each batch.
         Returns: a list of tensor ports that correspond to the tensor ports in the mapping
-        produced by `__call__`. The `dataset_generator` method will return bindings for these
+        produced by `__call__`. The `batch_generator` method will return bindings for these
         ports and the ones in `training_ports`.
         """
         raise NotImplementedError
@@ -340,7 +345,7 @@ class InputModule:
     def training_ports(self) -> List[TensorPort]:
         """
         Defines what types of tensor are provided in addition to `output_ports` during training
-        in the `dataset_generator` function. Typically these will be ports that describe
+        in the `batch_generator` function. Typically these will be ports that describe
         the target solution at training time.
         """
         raise NotImplementedError
@@ -784,7 +789,7 @@ class JTReader:
     def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
-        that batches in input_module.dataset_generator are processed in order and do not get shuffled during with
+        that batches in input_module.batch_generator are processed in order and do not get shuffled during with
         flag is_eval set to true.
         
         Args:

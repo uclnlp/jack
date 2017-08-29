@@ -80,31 +80,39 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
                    is_eval: bool = False) \
             -> List[Mapping[str, Any]]:
 
-        assert answers is not None
+        has_answers = answers is None
+        answers = answers or [None] * len(questions)
 
         corpus = { "question": [], "candidates": [], "answers":[]}
         for x, y in zip(questions, answers):
+
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
-            assert len(y) == 1
-            corpus["answers"].append(y[0].text)
+
+            if y is not None:
+                assert len(y) == 1
+                corpus["answers"].append([y[0].text])
+                corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
         corpus = deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
-        qanswers = {}
-        for i,q in enumerate(corpus['question']):
-            q0=q[0]
-            if q0 not in qanswers:
-                qanswers[q0] = set()
-            a = corpus["answers"][i]
-            qanswers[q0].add(a)
-        if not is_eval:
-            sl = ShuffleList(corpus["candidates"][0], qanswers)
-            corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
-            #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
 
-        return transpose_dict_of_lists(corpus, ["question", "candidates", "answers"])
+        if has_answers:
+            qanswers = {}
+            for i,q in enumerate(corpus['question']):
+                q0=q[0]
+                if q0 not in qanswers:
+                    qanswers[q0] = set()
+                a = corpus["answers"][i]
+                qanswers[q0].add(a)
+            if not is_eval:
+                sl = ShuffleList(corpus["candidates"][0], qanswers)
+                corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
+                #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
+
+        return transpose_dict_of_lists(corpus,
+                                       ["question", "candidates"] +
+                                       (["answers"] if has_answers else []))
 
     def create_batch(self, annotations: List[Mapping[str, Any]],
                      is_eval: bool, with_answers: bool) \
@@ -112,9 +120,13 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
 
         output = {
             Ports.Input.question: [a["question"] for a in annotations],
-            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations],
-            Ports.Target.target_index: [a["answers"] for a in annotations]
+            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations]
         }
+
+        if with_answers:
+            output.update({
+                Ports.Target.target_index: [a["answers"] for a in annotations]
+            })
         return numpify(output)
 
     @property

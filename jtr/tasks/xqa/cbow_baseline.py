@@ -51,7 +51,6 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
-        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
         # create character vocab + word lengths + char ids per word
@@ -217,8 +216,8 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
             spans = [a.answer_spans for a in annotations]
             span2question = [i for i in range(batch_size) for _ in spans[i]]
             output.update({
-                XQAPorts.answer_span: spans,
-                XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
+                XQAPorts.answer_span: [s for s_list in spans for s in s_list],
+                XQAPorts.correct_start_training: [] if is_eval else [s[0] for s_list in spans for s in s_list],
                 XQAPorts.answer2question: span2question,
                 XQAPorts.answer2question_training: [] if is_eval else span2question,
                 XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
@@ -329,8 +328,8 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
                                                                     keep_prob, dropout_shape))
 
         # question encoding
-        answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]))
-        answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]))
+        answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]), axis=0)
+        answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]), axis=0)
         answer_type_mask = tfutil.mask_for_lengths(answer_type_start, batch_size, max_question_length, value=1.0) * \
                            tfutil.mask_for_lengths(answer_type_end + 1, batch_size, max_question_length,
                                                    mask_right=False, value=1.0)

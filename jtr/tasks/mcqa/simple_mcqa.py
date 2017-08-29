@@ -33,7 +33,6 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.candidate_1hot]
 
-
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) \
@@ -50,7 +49,7 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
             assert len(answers) == len(questions)
             assert all(len(a) == 1 for a in answers)
 
-            corpus["answers"] = [a[0] for a in answers]
+            corpus["answers"] = answers
             output_keys += ["targets"]
 
         corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
@@ -106,7 +105,23 @@ class MultiSupportFixedClassInputs(InputModule):
 
     def __call__(self, qa_settings: List[QASetting]) \
             -> Mapping[TensorPort, np.ndarray]:
-        pass
+        corpus, _, _, _ = \
+            preprocess_with_pipeline(qa_settings,
+                                     self.shared_resources.vocab,
+                                     self.shared_resources.answer_vocab,
+                                     sepvocab=True,
+                                     test_time=True)
+
+        xy_dict = {
+            Ports.Input.multiple_support: corpus["support"],
+            Ports.Input.question: corpus["question"],
+            Ports.Input.question_length: corpus['question_lengths'],
+            Ports.Input.support_length: corpus['support_lengths'],
+            Ports.Input.sample_id: corpus['ids']
+        }
+
+        return numpify(xy_dict)
+
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         sepvocab=True
@@ -134,7 +149,7 @@ class MultiSupportFixedClassInputs(InputModule):
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            Ports.Target.target_index:  corpus["answers"],
+            Ports.Target.target_index:  [a[0] for a in corpus["answers"]],
             Ports.Input.question_length: corpus['question_lengths'],
             Ports.Input.support_length: corpus['support_lengths'],
             Ports.Input.sample_id: corpus['ids']
@@ -306,8 +321,7 @@ class EmptyOutputModule(OutputModule):
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits,
-                Ports.Prediction.candidate_index,
-                Ports.Target.target_index]
+                Ports.Prediction.candidate_index]
 
     def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
         return tensor_inputs
