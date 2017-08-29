@@ -1,4 +1,5 @@
 """Smoke test: train all readers for one iteration & run inference."""
+from functools import partial
 
 from jtr import readers
 from jtr.core import SharedResources, JTReader
@@ -58,18 +59,14 @@ def smoke_test(reader_name):
     assert answers, "%s should produce answers" % reader_name
 
 
-# Dynamically generate one test for each reader
-def make_testfunc(reader_name):
-
-    return lambda: smoke_test(reader_name)
-
 # TODO: Make streaming work as well.
 BLACKLIST = ["cbilstm_snli_streaming_reader"]
 READERS = [r for r in readers.readers.keys()
            if r not in BLACKLIST]
 
+# Dynamically generate one test for each reader
 current_module = __import__(__name__)
-for reader_name in READERS:
 
+for reader_name in READERS:
     setattr(current_module, "test_%s" % reader_name,
-            make_testfunc(reader_name))
+            partial(smoke_test, reader_name))
