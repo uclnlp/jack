@@ -393,7 +393,7 @@ class InputModule:
 
 AnnotationType = TypeVar('AnnotationType')
 class OnlineInputModule(InputModule, Generic[AnnotationType]):
-    """InputModule that preprocesses instances on the fly.
+    """InputModule that preprocesses datasets on the fly.
 
     It provides implementations for `create_batch()` and `__call__()` and
     introduces two abstract methods:
