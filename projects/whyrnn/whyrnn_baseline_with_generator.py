@@ -144,7 +144,10 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
             axis=-1)
         print("labels_hot.get_shape() = {}".format(labels_hot.get_shape()))
         print("decoder_logits_stacked.get_shape() = {}".format(decoder_logits_stacked.get_shape()))
-        # b = batch, t = time (symbol), l = logit, j = the label index
+        # b = batch, t = time (symbol), l = logit index, j = the label index
+        # for now, with TF r1.0 I get an error ...
+        # seems similar to https://github.com/tensorflow/tensorflow/issues/6824
+        # TODO FIXME
         self.decoder_logits_merged = tf.einsum(
             'bj,btlj->btl', labels_hot, decoder_logits_stacked)
         print("decoder_logits_merged.get_shape() = {}".format(self.decoder_logits_merged.get_shape()))
