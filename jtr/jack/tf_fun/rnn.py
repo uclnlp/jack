@@ -1,9 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from tensorflow.contrib.rnn.python.ops import core_rnn_cell_impl
 from tensorflow.contrib import seq2seq
-from tensorflow.contrib.seq2seq.python.ops import decoder_fn as decoder_fn_lib
 from tensorflow.contrib import layers
 
 
@@ -170,7 +168,7 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
     """Dynamic RNN decoder using LSTM, from initial input state.
 
     Args:
-        targets (tensor):  The decoder targets, of size
+        targets (tensor):  The decoder targets (embeddings), of size
                            [batch_size x max_target_length x output_size]
         target_lengths (tensor):  The lengths of the targets sentences, of size
                                   [batch_size]
@@ -219,7 +217,7 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
                 weights_initializer=init_c,
                 activation_fn=None
             )
-            decoder_input = core_rnn_cell_impl.LSTMStateTuple(
+            decoder_input = tf.contrib.rnn.LSTMStateTuple(
                 decoder_init_state_c, decoder_init_state_h)
 
         decoder_cell = tf.contrib.rnn.LSTMCell(
@@ -237,19 +235,26 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
             )
 
         # Decoder model for training
-        decoder_fn_train = decoder_fn_lib.simple_decoder_fn_train(
-            encoder_state=decoder_input)
-        decoder_outputs_train, decoder_state_train, _ = seq2seq.dynamic_rnn_decoder(
-            cell=decoder_cell,
-            decoder_fn=decoder_fn_train,
+        decoder_helper_train = tf.contrib.seq2seq.TrainingHelper(
             inputs=targets,
             sequence_length=target_lengths,
-            time_major=False  # batch major!
-            # scope=scope
+            time_major=False
         )
+        decoder_train = tf.contrib.seq2seq.BasicDecoder(
+            cell=decoder_cell,
+            helper=decoder_helper_train,
+            initial_state=decoder_input
+        )
+        decoder_outputs_train, decoder_state_train, _ = tf.contrib.seq2seq.dynamic_decode(
+            decoder=decoder_train,
+            output_time_major=False,
+            impute_finished=True,
+            maximum_iterations=max_decoder_inference_seq_len
+        )
+        decoder_outputs_train = decoder_outputs_train.rnn_output
 
         # FIXME: why does def instead of lambda not work?
-        # def output_fn(x): 
+        # def output_fn(x):
         output_fn = lambda x: layers.linear(x, num_decoder_symbols,
                                             scope=varscope)
         decoder_logits_train = tf.map_fn(output_fn,
@@ -258,23 +263,21 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
         # Decoder model for testing [not validated yet ;-)]
         decoder_outputs_infer = None
         if (False):
-            decoder_fn_infer = decoder_fn_lib.simple_decoder_fn_inference(
-                output_fn=output_fn,
-                encoder_state=decoder_input,
-                embeddings=decoder_embeddings,
-                start_of_sequence_id=start_of_sequence_id,
-                end_of_sequence_id=end_of_sequence_id,
-                # TODO: find out why it goes to +1  [comment from seq2seq_test.py]
-                # I.e., no idea why the -1, but we have to, as in seq2seq_test ;-)
-                # Maybe because of the <EOS> (or <SOS>) symbol or sth?
-                maximum_length=max_decoder_inference_seq_len - 1,
-                num_decoder_symbols=num_decoder_symbols,
-                dtype=dtypes.int32)
-            decoder_outputs_infer, decoder_state_infer, _ = seq2seq.dynamic_rnn_decoder(
+            decoder_helper_infer = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                embedding=decoder_embedding_matrix,
+                start_tokens=tf.tile([start_of_sequence_id], [tf.shape(targets)[0]]),
+                end_token=end_of_sequence_id
+            )
+            decoder_infer = tf.contrib.seq2seq.BasicDecoder(
                 cell=decoder_cell,
-                decoder_fn=decoder_fn_infer,
-                time_major=True,
-                scope=scope
+                helper=decoder_helper_infer,
+                initial_state=decoder_input
+            )
+            decoder_outputs_infer, decoder_state_infer, _ = tf.contrib.seq2seq.dynamic_decode(
+                decoder=decoder_infer,
+                output_time_major=False,
+                impute_finished=True,
+                maximum_iterations=max_decoder_inference_seq_len
             )
 
         return (decoder_outputs_train,
@@ -306,6 +309,8 @@ def dynamic_lstm_decoder_loss(decoder_logits_train,
             tf.losses.sparse_softmax_cross_entropy
         decoder_probs:  Simply the sigmoid of the input logits
     """
+    # TODO(cdevelder): refactor based on TF1.3 seq2seq tutorial?
+    # see https://github.com/tensorflow/nmt#training--how-to-build-our-first-nmt-system
 
     with tf.variable_scope(scope or "decoder-loss") as varscope:
         varscope
