@@ -36,7 +36,6 @@ class CBOWXqaInputModule(InputModule):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
-        self.setup_from_data(self.shared_vocab_config.train_data)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
         # create character vocab + word lengths + char ids per word
@@ -109,7 +108,7 @@ class CBOWXqaInputModule(InputModule):
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> sIterable[Mapping[TensorPort, np.ndarray]]:
+                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(dataset, self.vocab, self.config.get("lowercase", False), with_answers=True,
@@ -330,8 +329,8 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
                                                                     keep_prob, dropout_shape))
 
         # question encoding
-        answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]))
-        answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]))
+        answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]), axis=0)
+        answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]), axis=0)
         answer_type_mask = tfutil.mask_for_lengths(answer_type_start, batch_size, max_question_length, value=1.0) * \
                            tfutil.mask_for_lengths(answer_type_end + 1, batch_size, max_question_length,
                                                    mask_right=False, value=1.0)

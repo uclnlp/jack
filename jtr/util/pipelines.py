@@ -76,9 +76,11 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
             Create cand-length vector for each training instance with 1.0s for cands which are the correct answ and 0.0s for cands which are the wrong answ
             #@todo: integrate this function with the one below - the pipeline() method only works with this function
             """
-            xs["targets"] = [1.0 if xs[ans_name][i] == cand else 0.0
-                             for i in range(len(xs[ans_name]))
-                             for cand in xs[cands_name][i]]
+            # `targets` is a list of lists. Each inner list indicated whether candidate
+            # i corresponds to the *first* answer.
+            xs["targets"] = [[1.0 if xs[ans_name][i][0] == cand else 0.0
+                              for cand in xs[cands_name][i]]
+                             for i in range(len(xs[ans_name]))]
             return xs
         corpus_ids = jtr_map_to_targets(corpus_ids, 'candidates', 'answers')
     # TODO: verify!!!! (candidates and answers have been replaced by id's, but

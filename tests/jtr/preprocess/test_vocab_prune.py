@@ -8,7 +8,7 @@ from jtr.util.pipelines import pipeline
 def test_vocab():
     train_data = {
         'candidates': [['entailment', 'neutral', 'contradiction']],
-        'answers': ['neutral'],
+        'answers': [['neutral']],
         'question': ['A person is training his horse for a competition.'],
         'support': ['A person on a horse jumps over a broken down airplane.']}
 
