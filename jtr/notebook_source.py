@@ -17,15 +17,15 @@ In this tutorial, we focus on the minimal steps required to implement a new mode
 
 We will implement a simple Bi-LSTM baseline for extractive question answering.
 The architecture is as follows:
-- Words of question and support are embedded using a [GloVe embeddings](https://nlp.stanford.edu/projects/glove/)
+- Words of question and support are embedded random embeddings (not trained)
 - Both word and question are encoded using a bi-directional LSTM
 - The question is summarized by averaging its token representations
 - A feedforward NN scores each of the support tokens to be the start of the answer
 - A feedforward NN scores each of the support tokens to be the end of the answer
 
 In order to implement a Jack reader, we define three modules:
-- **Input Module**: Responsible for mapping `QASetting`s to `TensorPort`s
-- **Model Module**: The TensorFlow graph
+- **Input Module**: Responsible for mapping `QASetting`s to numpy array assoicated with `TensorPort`s
+- **Model Module**: Defined the TensorFlow graph
 - **Output Module**: Converting the network output to the output of the system. In our case, this involves extracting the answer string from the context.
 
 ## Input Module
