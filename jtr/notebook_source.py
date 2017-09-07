@@ -25,7 +25,7 @@ The architecture is as follows:
 
 In order to implement a Jack reader, we define three modules:
 - **Input Module**: Responsible for mapping `QASetting`s to numpy array assoicated with `TensorPort`s
-- **Model Module**: Defined the TensorFlow graph
+- **Model Module**: Defines the TensorFlow graph
 - **Output Module**: Converting the network output to the output of the system. In our case, this involves extracting the answer string from the context.
 
 ## Input Module
