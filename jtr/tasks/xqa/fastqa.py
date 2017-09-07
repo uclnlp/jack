@@ -21,18 +21,19 @@ from jtr.util import tfutil
 from jtr.util.map import numpify
 
 
-class FastQAAnnotation(NamedTuple):
-    question_tokens: List[str]
-    question_ids: List[int]
-    question_length: int
-    question_embeddings: np.ndarray
-    support_tokens: List[str]
-    support_ids: List[int]
-    support_length: int
-    support_embeddings: np.ndarray
-    word_in_question: List[float]
-    token_offsets: List[int]
-    answer_spans: Optional[List[Tuple[int, int]]]
+FastQAAnnotation = NamedTuple('FastQAAnnotation', [
+    ('question_tokens', List[str]),
+    ('question_ids', List[int]),
+    ('question_length', int),
+    ('question_embeddings', np.ndarray),
+    ('support_tokens', List[str]),
+    ('support_ids', List[int]),
+    ('support_length', int),
+    ('support_embeddings', np.ndarray),
+    ('word_in_question', List[float]),
+    ('token_offsets', List[int]),
+    ('answer_spans', Optional[List[Tuple[int, int]]]),
+])
 
 
 class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):

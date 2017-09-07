@@ -19,20 +19,20 @@ from jtr.util.map import numpify
 
 _max_span_size = 10
 
-
-class CBowAnnotation(NamedTuple):
-    question_tokens: List[str]
-    question_ids: List[int]
-    question_length: int
-    question_embeddings: np.ndarray
-    support_tokens: List[str]
-    support_ids: List[int]
-    support_length: int
-    support_embeddings: np.ndarray
-    word_in_question: List[float]
-    token_offsets: List[int]
-    answertype_span: Tuple[int, int]
-    answer_spans: Optional[List[Tuple[int, int]]]
+CBowAnnotation = NamedTuple('CBowAnnotation', [
+    ('question_tokens', List[str]),
+    ('question_ids', List[int]),
+    ('question_length', int),
+    ('question_embeddings', np.ndarray),
+    ('support_tokens', List[str]),
+    ('support_ids', List[int]),
+    ('support_length', int),
+    ('support_embeddings', np.ndarray),
+    ('word_in_question', List[float]),
+    ('token_offsets', List[int]),
+    ('answertype_span', Tuple[int, int]),
+    ('answer_spans', Optional[List[Tuple[int, int]]]),
+])
 
 
 class CBOWXqaPorts:
