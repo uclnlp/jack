@@ -322,13 +322,11 @@ class InputModule:
     external variables/states, like `SharedResources`.
     """
 
-    @abstractmethod
     def setup(self):
         """Sets up the module (if needs setup after loading shared resources for instance) assuming shared resources
         are fully setup, usually called after loading and after `setup_from_data` as well."""
         pass
 
-    @abstractmethod
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other resources. This
@@ -337,7 +335,7 @@ class InputModule:
         Args:
             data: a set of pairs of input and answer.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def output_ports(self) -> List[TensorPort]:

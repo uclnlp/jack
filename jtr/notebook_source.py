@@ -105,14 +105,6 @@ class MyInputModule(OnlineInputModule):
         self.vocab = shared_resources.vocab
         self.emb_matrix = self.vocab.emb.lookup
 
-    def setup_from_data(self, data, dataset_name=None, identifier=None):
-        # Nothing to do
-        pass
-
-    def setup(self):
-        # Nothing to do
-        pass
-
     # We will now define the input and output TensorPorts of our model.
     # Our models uses only ports which are pre-defined for the extractive QA task.
     # If we needed any special features, we could easily define our own ports and
