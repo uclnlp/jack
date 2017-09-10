@@ -170,43 +170,35 @@ class MyInputModule(OnlineInputModule):
         for k in range(len(q_ids)):
             emb_question[k] = self._get_emb(q_ids[k])
 
+        # Now, we build the annotation for the question instance. We'll use a
+        # dict that maps from `TensorPort` to numpy array, but this could be
+        # any data type, like a custom class, or a named tuple.
+
+        annotation = {
+            question_length: q_length,
+            embedded_question: emb_question,
+            support_length: s_length,
+            embedded_support: emb_support,
+            XQAPorts.token_char_offsets: token_offsets
+        }
+
         if has_answers:
             # For the purpose of this tutorial, we'll only use the first answer, such
             # that we will have exactly as many answers as questions.
-            answer_span = answer_spans[0]
-        else:
-            answer_span = None
+            annotation[answer_span] = list(answer_spans[0])
 
-        return {
-            "question_length": q_length,
-            "question_embeddings": emb_question,
-            "support_length": s_length,
-            "support_embeddings": emb_support,
-            "token_offsets": token_offsets,
-            "answer_span": answer_span,
-        }
+        return numpify(annotation, keys=[support_length, question_length,
+                                         XQAPorts.token_char_offsets, answer_span])
 
     def create_batch(self, annotations, is_eval, with_answers):
-        """Now, we need to implement the mapping of a list of annotations to a TensorPorts.
+        """Now, we need to implement the mapping of a list of annotations to a feed dict.
         
-        This involves padding & conversion to numpy arrays.
+        Because our annotations already are dicts mapping TensorPorts to numpy
+        arrays, we only need to do padding here.
         """
 
-        output = {
-            embedded_support: stack_and_pad([a["support_embeddings"] for a in annotations]),
-            support_length: [a["support_length"] for a in annotations],
-            embedded_question: stack_and_pad([a["question_embeddings"] for a in annotations]),
-            question_length: [a["question_length"] for a in annotations],
-            XQAPorts.token_char_offsets: [a["token_offsets"] for a in annotations]
-        }
-
-        if with_answers:
-            output.update({
-                answer_span: [list(a["answer_span"]) for a in annotations],
-            })
-
-        return numpify(output, keys=[XQAPorts.support_length, XQAPorts.question_length,
-                                     XQAPorts.token_char_offsets, XQAPorts.answer_span])
+        return {key: stack_and_pad([a[key] for a in annotations])
+                for key in annotations[0].keys()}
 
 
 """

@@ -1,7 +1,7 @@
 import random
 import re
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from jtr.util.vocab import Vocab
 
@@ -173,8 +173,11 @@ def char_vocab_from_vocab(vocab):
     return char_vocab
 
 
-def stack_and_pad(values: List[np.ndarray], pad = 0) -> np.ndarray:
+def stack_and_pad(values: List[Union[np.ndarray, int, float]], pad = 0) -> np.ndarray:
     """Pads a list of numpy arrays so that they have equal dimensions, then stacks them."""
+
+    if isinstance(values[0], int) or isinstance(values[0], float):
+        return np.array(values)
 
     dims = len(values[0].shape)
     max_shape = [max(sizes) for sizes in zip(*[v.shape for v in values])]
