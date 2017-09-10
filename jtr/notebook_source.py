@@ -17,7 +17,7 @@ In this tutorial, we focus on the minimal steps required to implement a new mode
 
 We will implement a simple Bi-LSTM baseline for extractive question answering.
 The architecture is as follows:
-- Words of question and support are embedded random embeddings (not trained)
+- Words of question and support are embedded using random embeddings (not trained)
 - Both word and question are encoded using a bi-directional LSTM
 - The question is summarized by averaging its token representations
 - A feedforward NN scores each of the support tokens to be the start of the answer
@@ -26,7 +26,7 @@ The architecture is as follows:
 In order to implement a Jack reader, we define three modules:
 - **Input Module**: Responsible for mapping `QASetting`s to numpy array assoicated with `TensorPort`s
 - **Model Module**: Defines the TensorFlow graph
-- **Output Module**: Converting the network output to the output of the system. In our case, this involves extracting the answer string from the context.
+- **Output Module**: Converting the network output to the output of the system. In our case, this involves extracting the answer string from the context. We will use the existing `XQAOutputModule`.
 
 
 """
@@ -87,7 +87,7 @@ feed dict used for training and inference.
 You could implement the `InputModule` interface, but in many cases it'll be
 easier to inherit from `OnlineInputModule`. Doing this, we need to:
 - Define the output `TensorPort`s of our input module
-- Implement the preprocessing (e.g. tokenization, mapping to token IDs, ...). The result of this step is one *annotation* per instance, e.g. a `dict`.
+- Implement the preprocessing (e.g. tokenization, mapping to embedding vectors, ...). The result of this step is one *annotation* per instance, e.g. a `dict`.
 - Implement batching. Given a list of annotations, you need to define how to build the feed dict.
 
 """
@@ -99,16 +99,13 @@ class MyInputModule(OnlineInputModule):
         """The module is initialized with a `shared_resources`.
 
         For the purpose of this tutorial, we will only use the `vocab` property
-        which provides the embeddings. you could also pass arbitrary
+        which provides the embeddings. You could also pass arbitrary
         configuration parameters in the `shared_resources.config` dict.
         """
         self.vocab = shared_resources.vocab
         self.emb_matrix = self.vocab.emb.lookup
 
     # We will now define the input and output TensorPorts of our model.
-    # Our models uses only ports which are pre-defined for the extractive QA task.
-    # If we needed any special features, we could easily define our own ports and
-    # use them here.
 
     @property
     def output_ports(self):
