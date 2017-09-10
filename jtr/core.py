@@ -60,9 +60,17 @@ class TensorPort:
         """
         return tf.placeholder(self.dtype, self.shape, self.name)
 
+    def get_description(self):
+        """Returns a multi-line description string of the TensorPort."""
+
+        return "Tensorport '%s'" % self.name + "\n" + \
+               "  dtype: " + str(self.dtype) + "\n" + \
+               "  shape: " + str(self.shape) + "\n" + \
+               "  doc_string: " + str(self.__doc__) + "\n" + \
+               "  shape_string: " + str(self.shape_string)
+
     def __gt__(self, port):
         return self.name > port.name
-
 
     def __repr__(self):
 
@@ -99,7 +107,7 @@ class Ports:
     to define their input or output, respectively.
     """
 
-    loss = TensorPort(tf.float32, [None],
+    loss = TensorPort(tf.float32, [None], "loss",
                       "Represents loss on each instance in the batch",
                       "[batch_size]")
 

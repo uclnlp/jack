@@ -28,6 +28,56 @@ In order to implement a Jack reader, we define three modules:
 - **Model Module**: Defines the TensorFlow graph
 - **Output Module**: Converting the network output to the output of the system. In our case, this involves extracting the answer string from the context.
 
+
+"""
+
+
+"""
+
+## Ports
+
+All communication between input, model and output modules happens via `TensorPort`s.
+Normally, you should try to reuse ports wherever possible to be able to reuse modules as well.
+If you need a new port, however, it is also straight-forward to define one.
+For this tutorial, we will define most ports here.
+
+"""
+
+embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question_flat",
+                               "Represents the embedded question",
+                               "[Q, max_num_question_tokens, N]")
+
+question_length = TensorPort(tf.int32, [None], "question_length_flat",
+                             "Represents length of questions in batch",
+                             "[Q]")
+
+embedded_support = TensorPort(tf.float32, [None, None, None], "embedded_support_flat",
+                              "Represents the embedded support",
+                              "[S, max_num_tokens, N]")
+
+support_length = TensorPort(tf.int32, [None], "support_length_flat",
+                            "Represents length of support in batch",
+                            "[S]")
+
+answer_span = TensorPort(tf.int32, [None, 2], "answer_span_target_flat",
+                         "Represents answer as a (start, end) span", "[A, 2]")
+
+"""
+In order to reuse the `XQAOutputModule`, we'll use existing ports defined in `XQAPorts` for the `char_token_offset` and the predictions.
+We'll also use the `Ports.loss` port, because the the JTR training code expects this port as output of the model module.
+
+"""
+
+print(XQAPorts.token_char_offsets.get_description())
+print(XQAPorts.start_scores.get_description())
+print(XQAPorts.end_scores.get_description())
+print(XQAPorts.span_prediction.get_description())
+
+print(Ports.loss.get_description())
+
+
+
+"""
 ## Input Module
 
 The input module is responsible for converting `QASetting` instances to numpy
@@ -41,6 +91,7 @@ easier to inherit from `OnlineInputModule`. Doing this, we need to:
 - Implement batching. Given a list of annotations, you need to define how to build the feed dict.
 
 """
+
 
 class MyInputModule(OnlineInputModule):
 
@@ -69,16 +120,16 @@ class MyInputModule(OnlineInputModule):
 
     @property
     def output_ports(self):
-        return [XQAPorts.emb_question,       # Question embeddings
-                XQAPorts.question_length,    # Lengths of the questions
-                XQAPorts.emb_support,        # Support embeddings
-                XQAPorts.support_length,     # Lengths of the supports
+        return [embedded_question,           # Question embeddings
+                question_length,             # Lengths of the questions
+                embedded_support,            # Support embeddings
+                support_length,              # Lengths of the supports
                 XQAPorts.token_char_offsets  # Character offsets of tokens in support, used for in ouput module
                ]
 
     @property
     def training_ports(self):
-        return [XQAPorts.answer_span]        # Answer span, one for each question
+        return [answer_span]                 # Answer span, one for each question
 
     # Now, we implement our preprocessing. This involves tokenization,
     # mapping to token IDs, mapping to to token embeddings,
@@ -153,16 +204,16 @@ class MyInputModule(OnlineInputModule):
         """
 
         output = {
-            XQAPorts.emb_support: stack_and_pad([a["support_embeddings"] for a in annotations]),
-            XQAPorts.support_length: [a["support_length"] for a in annotations],
-            XQAPorts.emb_question: stack_and_pad([a["question_embeddings"] for a in annotations]),
-            XQAPorts.question_length: [a["question_length"] for a in annotations],
+            embedded_support: stack_and_pad([a["support_embeddings"] for a in annotations]),
+            support_length: [a["support_length"] for a in annotations],
+            embedded_question: stack_and_pad([a["question_embeddings"] for a in annotations]),
+            question_length: [a["question_length"] for a in annotations],
             XQAPorts.token_char_offsets: [a["token_offsets"] for a in annotations]
         }
 
         if with_answers:
             output.update({
-                XQAPorts.answer_span: [list(a["answer_span"]) for a in annotations],
+                answer_span: [list(a["answer_span"]) for a in annotations],
             })
 
         return numpify(output, keys=[XQAPorts.support_length, XQAPorts.question_length,
@@ -189,8 +240,8 @@ class MyModelModule(SimpleModelModule):
 
     @property
     def input_ports(self) -> Sequence[TensorPort]:
-        return [XQAPorts.emb_question, XQAPorts.question_length,
-                XQAPorts.emb_support, XQAPorts.support_length]
+        return [embedded_question, question_length,
+                embedded_support, support_length]
 
     @property
     def output_ports(self) -> Sequence[TensorPort]:
@@ -199,8 +250,7 @@ class MyModelModule(SimpleModelModule):
 
     @property
     def training_input_ports(self) -> Sequence[TensorPort]:
-        return [XQAPorts.start_scores, XQAPorts.end_scores,
-                XQAPorts.answer_span]
+        return [XQAPorts.start_scores, XQAPorts.end_scores, answer_span]
 
     @property
     def training_output_ports(self) -> Sequence[TensorPort]:
