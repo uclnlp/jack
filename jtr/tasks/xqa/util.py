@@ -1,8 +1,13 @@
 import random
 import re
 
-from jtr.data_structures import QASetting
-from jtr.util.map import deep_map
+from typing import List, Optional, Tuple, Union
+
+from jtr.util.vocab import Vocab
+
+from jtr.data_structures import QASetting, Answer
+
+import numpy as np
 
 __pattern = re.compile('\w+|[^\w\s]')
 
@@ -21,8 +26,23 @@ def token_to_char_offsets(text, tokenized_text):
     return offsets
 
 
-def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_contentword=False,
-                 with_spacy=False, max_support_length=-1):
+def prepare_data(qa_setting: QASetting,
+                 answers: Optional[List[Answer]],
+                 vocab: Vocab,
+                 lowercase: bool = False,
+                 with_answers: bool = False,
+                 wiq_contentword: bool = False,
+                 with_spacy: bool = False,
+                 max_support_length: int = -1) \
+            -> Tuple[List[str], List[int], int,
+                     List[str], List[int], int,
+                     List[float], List[int], List[Tuple[int, int]]]:
+    """Preprocesses a question and (optionally) answers:
+    The steps include tokenization, lower-casing, translation to IDs,
+    computing the word-in-question feature, computing token offsets,
+    truncating supports, and computing answer spans.
+    """
+
     if with_spacy:
         import spacy
         nlp = spacy.load("en", parser=False)
@@ -30,106 +50,82 @@ def prepare_data(dataset, vocab, lowercase=False, with_answers=False, wiq_conten
     else:
         thistokenize = tokenize
 
-    corpus = {"support": [], "question": []}
-    for d in dataset:
-        if isinstance(d, QASetting):
-            qa_setting = d
-        else:
-            qa_setting, answer = d
+    support = " ".join(qa_setting.support)
+    question = qa_setting.question
 
-        if lowercase:
-            corpus["support"].append(" ".join(qa_setting.support).lower())
-            corpus["question"].append(qa_setting.question.lower())
-        else:
-            corpus["support"].append(" ".join(qa_setting.support))
-            corpus["question"].append(qa_setting.question)
+    if lowercase:
+        support = support.lower()
+        question = question.lower()
 
-    corpus_tokenized = deep_map(corpus, thistokenize, ['question', 'support'])
-
-    word_in_question = []
-    question_lengths = []
-    support_lengths = []
-    token_offsets = []
-    answer_spans = []
+    support_tokens, question_tokens = thistokenize(support), thistokenize(question)
 
     rng = random.Random(12345)
 
-    for i, (q, s) in enumerate(zip(corpus_tokenized["question"], corpus_tokenized["support"])):
-        # word in question feature
-        wiq = []
-        for token in s:
-            if with_spacy:
-                wiq.append(float(any(token.lemma == t2.lemma for t2 in q) and
-                                 (not wiq_contentword or (token.orth_.isalnum() and not token.is_stop))))
-            else:
-                wiq.append(float(token in q and (not wiq_contentword or token.isalnum())))
-        word_in_question.append(wiq)
-
+    word_in_question = []
+    for token in support_tokens:
         if with_spacy:
-            offsets = [t.idx for t in s]
-            s = [t.orth_ for t in s]
-            q = [t.orth_ for t in q]
-            corpus_tokenized["question"][i] = q
-            corpus_tokenized["support"][i] = s
+            word_in_question.append(float(any(token.lemma == t2.lemma for t2 in question_tokens) and
+                             (not wiq_contentword or (token.orth_.isalnum() and not token.is_stop))))
         else:
-            # char to token offsets
-            support = corpus["support"][i]
-            offsets = token_to_char_offsets(support, s)
+            word_in_question.append(float(token in question_tokens and (not wiq_contentword or token.isalnum())))
 
-        token_offsets.append(offsets)
-        question_lengths.append(len(q))
+    if with_spacy:
+        token_offsets = [t.idx for t in support_tokens]
+        support_tokens = [t.orth_ for t in support_tokens]
+        question_tokens = [t.orth_ for t in question_tokens]
+    else:
+        # char to token offsets
+        token_offsets = token_to_char_offsets(support, support_tokens)
 
-        min_answer = len(s)
-        max_answer = 0
+    question_length = len(question_tokens)
 
-        spans = []
-        if with_answers:
-            answers = dataset[i][1]
-            for a in answers:
-                start = 0
-                while start < len(offsets) and offsets[start] < a.span[0]:
-                    start += 1
+    min_answer = len(support_tokens)
+    max_answer = 0
 
-                if start == len(offsets):
-                    continue
+    answer_spans = []
+    if with_answers:
 
-                end = start
-                while end + 1 < len(offsets) and offsets[end + 1] < a.span[1]:
-                    end += 1
-                if (start, end) not in spans:
-                    spans.append((start, end))
-                    min_answer = min(min_answer, start)
-                    max_answer = max(max_answer, end)
+        assert isinstance(answers, list)
 
-        # cut support whenever there is a maximum allowed length and recompute answer spans
-        if max_support_length is not None and len(s) > max_support_length > 0:
-            if max_answer < max_support_length:
-                s = s[:max_support_length]
-                word_in_question[-1] = word_in_question[-1][:max_support_length]
-            else:
-                offset = rng.randint(1, 11)
-                new_end = max_answer + offset
+        for a in answers:
+            start = 0
+            while start < len(token_offsets) and token_offsets[start] < a.span[0]:
+                start += 1
+
+            if start == len(token_offsets):
+                continue
+
+            end = start
+            while end + 1 < len(token_offsets) and token_offsets[end + 1] < a.span[1]:
+                end += 1
+            if (start, end) not in answer_spans:
+                answer_spans.append((start, end))
+                min_answer = min(min_answer, start)
+                max_answer = max(max_answer, end)
+
+    # cut support whenever there is a maximum allowed length and recompute answer spans
+    if max_support_length is not None and len(support_tokens) > max_support_length > 0:
+        if max_answer < max_support_length:
+            support_tokens = support_tokens[:max_support_length]
+            word_in_question = word_in_question[:max_support_length]
+        else:
+            offset = rng.randint(1, 11)
+            new_end = max_answer + offset
+            new_start = max(0, min(min_answer - offset, new_end - max_support_length))
+            while new_end - new_start > max_support_length:
+                answer_spans = [(s, e) for s, e in answer_spans if e < (new_end - offset)]
+                new_end = max(answer_spans, key=lambda span: span[1])[1] + offset
                 new_start = max(0, min(min_answer - offset, new_end - max_support_length))
-                while new_end - new_start > max_support_length:
-                    spans = [(s, e) for s, e in spans if e < (new_end - offset)]
-                    new_end = max(spans, key=lambda span: span[1])[1] + offset
-                    new_start = max(0, min(min_answer - offset, new_end - max_support_length))
-                s = s[new_start:new_end]
-                spans = [(s - new_start, e - new_start) for s, e in spans]
-                word_in_question[-1] = word_in_question[-1][new_start:new_end]
+            support_tokens = support_tokens[new_start:new_end]
+            answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
+            word_in_question = word_in_question[new_start:new_end]
 
-            corpus_tokenized["support"][i] = s
-            answer_spans.append(spans)
+    support_length = len(support_tokens)
 
-        else:
-            answer_spans.append(spans)
+    support_ids, question_ids = vocab(support_tokens), vocab(question_tokens)
 
-        support_lengths.append(len(s))
-
-    corpus_ids = deep_map(corpus_tokenized, vocab, ['question', 'support'])
-
-    return corpus_tokenized["question"], corpus_ids["question"], question_lengths, \
-           corpus_tokenized["support"], corpus_ids["support"], support_lengths, \
+    return question_tokens, question_ids, question_length, \
+           support_tokens, support_ids, support_length, \
            word_in_question, token_offsets, answer_spans
 
 
@@ -175,3 +171,26 @@ def char_vocab_from_vocab(vocab):
                 if c not in char_vocab:
                     char_vocab[c] = len(char_vocab)
     return char_vocab
+
+
+def stack_and_pad(values: List[Union[np.ndarray, int, float]], pad = 0) -> np.ndarray:
+    """Pads a list of numpy arrays so that they have equal dimensions, then stacks them."""
+
+    if isinstance(values[0], int) or isinstance(values[0], float):
+        return np.array(values)
+
+    dims = len(values[0].shape)
+    max_shape = [max(sizes) for sizes in zip(*[v.shape for v in values])]
+
+    padded_values = []
+
+    for value in values:
+
+        pad_width = [(0, max_shape[i] - value.shape[i])
+                     for i in range(dims)]
+        padded_value = np.lib.pad(value, pad_width, mode='constant',
+                                  constant_values=pad)
+        padded_values.append(padded_value)
+
+    return np.stack(padded_values)
+

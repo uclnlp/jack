@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from random import shuffle
-from typing import List, Sequence
-
-from jtr.data_structures import *
+from typing import Any
 
 from jtr.core import *
-from jtr.util.batch import get_batches
 from jtr.util.map import numpify, deep_map, notokenize
+from jtr.util.pipelines import transpose_dict_of_lists
 
 
 class ShuffleList:
@@ -59,12 +57,13 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
     return result
 
 
-class ModelFInputModule(InputModule):
+class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
-        self.preprocess(data)
+        questions, answers = zip(*data)
+        self.preprocess(questions, answers)
         self.shared_resources.vocab.freeze()
         return self.shared_resources
 
@@ -72,57 +71,63 @@ class ModelFInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    def preprocess(self, data, test_time=False):
+    @property
+    def batch_size(self):
+        return self.shared_resources.config['batch_size']
+
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+            -> List[Mapping[str, Any]]:
+
+        has_answers = answers is not None
+        answers = answers or [None] * len(questions)
+
         corpus = { "question": [], "candidates": [], "answers":[]}
-        for xy in data:
-            if test_time:
-                x = xy
-                y = None
-            else:
-                x, y = xy
+        for x, y in zip(questions, answers):
 
             corpus["question"].append(x.question)
             corpus["candidates"].append(x.atomic_candidates)
 
-            if not test_time:
+            if y is not None:
                 assert len(y) == 1
-                corpus["answers"].append(y[0].text)
+                corpus["answers"].append([y[0].text])
         corpus = deep_map(corpus, notokenize, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
 
-        if not test_time:
+        if has_answers:
+            corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
             qanswers = {}
             for i,q in enumerate(corpus['question']):
                 q0=q[0]
                 if q0 not in qanswers:
                     qanswers[q0] = set()
-                a = corpus["answers"][i]
+                a = corpus["answers"][i][0]
                 qanswers[q0].add(a)
-            sl = ShuffleList(corpus["candidates"][0], qanswers)
-            corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
-            #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
-        return corpus
+            if not is_eval:
+                sl = ShuffleList(corpus["candidates"][0], qanswers)
+                corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
+                #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        corpus = self.preprocess(dataset, test_time=is_eval)
-        xy_dict = {
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.target_index: corpus["answers"]
-        }
-        return get_batches(xy_dict, batch_size=self.shared_resources.config['batch_size'])
+        return transpose_dict_of_lists(corpus,
+                                       ["question", "candidates"] +
+                                       (["answers"] if has_answers else []))
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-        corpus = self.preprocess(qa_settings, test_time=True)
-        xy_dict = {
-            Ports.Input.question: corpus["question"],
-            Ports.Input.atomic_candidates: corpus["candidates"],
-            Ports.Target.target_index: corpus["answers"]
+    def create_batch(self, annotations: List[Mapping[str, Any]],
+                     is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+
+        output = {
+            Ports.Input.question: [a["question"] for a in annotations],
+            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations]
         }
-        return numpify(xy_dict)
+
+        if with_answers:
+            output.update({
+                Ports.Target.target_index: [a["answers"][0] for a in annotations]
+            })
+        return numpify(output)
 
     @property
     def output_ports(self) -> List[TensorPort]:

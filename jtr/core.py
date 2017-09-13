@@ -9,18 +9,23 @@ using a TensorFlow model into other tensors, and one that converts these tensors
 import logging
 import os
 import pickle
+import random
 import shutil
 import sys
 from abc import abstractmethod
-from typing import Mapping, List, Iterable
+from typing import Mapping, Iterable, Generic, TypeVar, Optional
 
 import numpy as np
 import tensorflow as tf
 
 from jtr.data_structures import *
+from jtr.util.batch import shuffle_and_batch
 from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)
+
+
+_rng = random.Random(1234)
 
 
 class TensorPort:
@@ -55,9 +60,17 @@ class TensorPort:
         """
         return tf.placeholder(self.dtype, self.shape, self.name)
 
+    def get_description(self):
+        """Returns a multi-line description string of the TensorPort."""
+
+        return "Tensorport '%s'" % self.name + "\n" + \
+               "  dtype: " + str(self.dtype) + "\n" + \
+               "  shape: " + str(self.shape) + "\n" + \
+               "  doc_string: " + str(self.__doc__) + "\n" + \
+               "  shape_string: " + str(self.shape_string)
+
     def __gt__(self, port):
         return self.name > port.name
-
 
     def __repr__(self):
 
@@ -94,7 +107,7 @@ class Ports:
     to define their input or output, respectively.
     """
 
-    loss = TensorPort(tf.float32, [None],
+    loss = TensorPort(tf.float32, [None], "loss",
                       "Represents loss on each instance in the batch",
                       "[batch_size]")
 
@@ -309,13 +322,11 @@ class InputModule:
     external variables/states, like `SharedResources`.
     """
 
-    @abstractmethod
     def setup(self):
         """Sets up the module (if needs setup after loading shared resources for instance) assuming shared resources
         are fully setup, usually called after loading and after `setup_from_data` as well."""
         pass
 
-    @abstractmethod
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         """
         Sets up the module based on input data. This usually involves setting up vocabularies and other resources. This
@@ -324,7 +335,7 @@ class InputModule:
         Args:
             data: a set of pairs of input and answer.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def output_ports(self) -> List[TensorPort]:
@@ -360,7 +371,8 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                        is_eval: bool, dataset_name=None,
                         identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -383,6 +395,109 @@ class InputModule:
     def load(self, path):
         """Load the state of this module. Default is that there is no state, so nothing to load."""
         pass
+
+
+AnnotationType = TypeVar('AnnotationType')
+class OnlineInputModule(InputModule, Generic[AnnotationType]):
+    """InputModule that preprocesses datasets on the fly.
+
+    It provides implementations for `create_batch()` and `__call__()` and
+    introduces two abstract methods:
+    - `preprocess()`: Converts a list of instances to annotations.
+    - `create_batch()`: Converts a list of annotations to a batch.
+
+    Both of these methods are parameterized by `AnnotationType`. In the simplest
+    case, this could be a `dict`, but you could also define a separate class
+    for your annotation, in order to get stronger typing.
+    """
+
+    @abstractmethod
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+            -> List[AnnotationType]:
+        """
+        Preprocesses a list of samples, returning a list of annotations.
+        Batches of these annotation objects are then passed to the
+        the `create_batch` method.
+        Args:
+            questions: The list of instances to preprocess
+            answers: (Optional) answers associated with the instances
+            is_eval: Whether this preprocessing is done for evaluation data
+
+        Returns:
+            List of annotations of the instances.
+        """
+
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_batch(self, annotations: List[AnnotationType],
+                     is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
+        """
+        Creates a batch from a list of preprocessed questions, given by
+        a list of annotations as returned by `preprocess_instance`.
+        Args:
+            annotations: a list of annotations to be included in the batch
+            is_eval: whether the method is called for evaluation data
+            with_answers: whether answers are included in the annotations
+
+        Returns:
+            A mapping from ports to numpy arrays.
+        """
+
+        raise NotImplementedError
+
+    def batch_annotations(self, annotations: List[AnnotationType],
+                          is_eval: bool):
+        """Optionally shuffles and batches annotations.
+
+        By default, all annotations are shuffled (if self.shuffle(is_eval) and
+        then batched. Override this method if you want to customize the
+        batching, e.g., to do stratified sampling, sampling with replacement,
+        etc.
+
+        Args:
+            - annotations: List of annotations to shuffle & batch.
+            - is_eval: Whether batches are generated for evaluation.
+
+        Returns: Batch iterator
+        """
+        rng = _rng if self.shuffle(is_eval) else None
+        return shuffle_and_batch(annotations, self.batch_size, rng)
+
+    @property
+    def batch_size(self):
+        return 32
+
+    def shuffle(self, is_eval):
+        """Whether to shuffle the dataset in batch_annotations()."""
+        return not is_eval
+
+    def __call__(self, qa_settings: List[QASetting]) \
+            -> Mapping[TensorPort, np.ndarray]:
+        """Preprocesses all qa_settings, returns a single batch with all instances."""
+
+        annotations = self.preprocess(qa_settings, answers=None, is_eval=True)
+        return self.create_batch(annotations, is_eval=True, with_answers=False)
+
+    def batch_generator(self,
+                        dataset: Iterable[Tuple[QASetting, List[Answer]]],
+                        is_eval: bool,
+                        dataset_name=None,
+                        identifier=None) \
+            -> Iterable[Mapping[TensorPort, np.ndarray]]:
+        """Preprocesses all instances, batches & shuffles them and generates batches."""
+
+        questions, answers = zip(*dataset)
+        annotations = self.preprocess(questions, answers, is_eval=is_eval)
+
+        def make_generator():
+            for annotation_batch in self.batch_annotations(annotations, is_eval):
+                yield self.create_batch(annotation_batch, is_eval, True)
+
+        return GeneratorWithRestart(make_generator)
 
 
 class ModelModule:
@@ -493,6 +608,7 @@ class ModelModule:
         """ Returns: A list of training variables """
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def variables(self) -> Sequence[tf.Variable]:
         """ Returns: A list of variables """

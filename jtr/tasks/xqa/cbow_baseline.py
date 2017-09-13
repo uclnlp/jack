@@ -2,22 +2,37 @@
 This file contains CBOW baseline specific modules and ports
 """
 
-import random
+from typing import NamedTuple
 
 import spacy
 from jtr.core import *
 from jtr.fun import simple_model_module, no_shared_resources
 from jtr.tasks.xqa.fastqa import XQAPorts
-from jtr.tasks.xqa.util import char_vocab_from_vocab, prepare_data, unique_words_with_chars
+from jtr.tasks.xqa.util import char_vocab_from_vocab, prepare_data, \
+    unique_words_with_chars, stack_and_pad
 from jtr.tf_fun.embedding import conv_char_embedding_alt
 from jtr.tf_fun.xqa import xqa_min_crossentropy_span_loss
 
 from jtr.tf_fun.dropout import fixed_dropout
 from jtr.util import tfutil
-from jtr.util.batch import GeneratorWithRestart
 from jtr.util.map import numpify
 
 _max_span_size = 10
+
+CBowAnnotation = NamedTuple('CBowAnnotation', [
+    ('question_tokens', List[str]),
+    ('question_ids', List[int]),
+    ('question_length', int),
+    ('question_embeddings', np.ndarray),
+    ('support_tokens', List[str]),
+    ('support_ids', List[int]),
+    ('support_length', int),
+    ('support_embeddings', np.ndarray),
+    ('word_in_question', List[float]),
+    ('token_offsets', List[int]),
+    ('answertype_span', Tuple[int, int]),
+    ('answer_spans', Optional[List[Tuple[int, int]]]),
+])
 
 
 class CBOWXqaPorts:
@@ -32,24 +47,26 @@ class CBOWXqaPorts:
                              "[Q, SP]")
 
 
-class CBOWXqaInputModule(InputModule):
+class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 
     def setup(self):
         self.vocab = self.shared_vocab_config.vocab
         self.config = self.shared_vocab_config.config
-        self.batch_size = self.config.get("batch_size", 1)
         self.dropout = self.config.get("dropout", 1)
-        self._rng = random.Random(self.config.get("seed", 123))
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+
+    @property
+    def batch_size(self):
+        return self.config.get("batch_size", 1)
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -57,7 +74,7 @@ class CBOWXqaInputModule(InputModule):
         else:
             return self.default_vec
 
-    def __extract_answertype_span(self, tokens):
+    def __extract_answertype_span(self, tokens: List[str]) -> Tuple[int, int]:
         question = " ".join(tokens)
         doc = self.__nlp(question)
         start_id = -1
@@ -85,7 +102,7 @@ class CBOWXqaInputModule(InputModule):
         if end_id < start_id:
             end_id = len(doc) - 1
 
-        return [start_id, end_id]
+        return (start_id, end_id)
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -107,129 +124,110 @@ class CBOWXqaInputModule(InputModule):
     def training_ports(self) -> List[TensorPort]:
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> Iterable[Mapping[TensorPort, np.ndarray]]:
-        q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) \
+                -> List[CBowAnnotation]:
+
+        if answers is None:
+            answers = [None] * len(questions)
+
+        annotations = [self.preprocess_instance(q, a, is_eval)
+                       for q, a in zip(questions, answers)]
+        return [a for a in annotations if a is not None]
+
+
+    def preprocess_instance(self, question: QASetting,
+                            answers: Optional[List[Answer]],
+                            is_eval: bool) \
+            -> Optional[CBowAnnotation]:
+
+        has_answers = answers is not None
+
+        q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
         word_in_question, token_offsets, answer_spans = \
-            prepare_data(dataset, self.vocab, self.config.get("lowercase", False), with_answers=True,
-                         wiq_contentword=True, with_spacy=True,
+            prepare_data(question, answers, self.vocab, self.config.get("lowercase", False),
+                         with_answers=has_answers, wiq_contentword=True, with_spacy=True,
                          max_support_length=self.config.get("max_support_length", None))
 
-        not_allowed = set(i for i, ss in enumerate(answer_spans)
-                          if not is_eval and all(s[1] - s[0] > _max_span_size for s in ss))
+        not_allowed = all(end - start > _max_span_size
+                          for start, end in answer_spans)
 
-        answertype_spans = []
-        for qs in q_tokenized:
-            answertype_spans.append(self.__extract_answertype_span(qs))
+        if has_answers and not_allowed:
+            return None
 
-        emb_supports = np.zeros([self.batch_size, max(s_lengths), self.emb_matrix.shape[1]])
-        emb_questions = np.zeros([self.batch_size, max(q_lengths), self.emb_matrix.shape[1]])
+        emb_support = np.zeros([s_length, self.emb_matrix.shape[1]])
+        emb_question = np.zeros([q_length, self.emb_matrix.shape[1]])
 
-        def batch_generator():
-            todo = list(i for i in range(len(q_ids)) if is_eval or i not in not_allowed)
-            if not is_eval:
-                self._rng.shuffle(todo)
-            while todo:
-                support_lengths = list()
-                question_lengths = list()
-                wiq = list()
-                spans = list()
-                span2question = []
-                offsets = []
-                at_spans = []
+        answertype_span = self.__extract_answertype_span(q_tokenized)
 
-                unique_words, unique_word_lengths, question2unique, support2unique = \
-                    unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab, todo[:self.batch_size])
+        for k in range(len(s_ids)):
+            emb_support[k] = self._get_emb(s_ids[k])
+        for k in range(len(q_ids)):
+            emb_question[k] = self._get_emb(q_ids[k])
 
-                # we have to create batches here and cannot precompute them because of the batch-specific wiq feature
-                for i, j in enumerate(todo[:self.batch_size]):
-                    support = s_ids[j]
-                    for k in range(len(support)):
-                        emb_supports[i, k] = self._get_emb(support[k])
-                    question = q_ids[j]
-                    for k in range(len(question)):
-                        emb_questions[i, k] = self._get_emb(question[k])
-                    support_lengths.append(s_lengths[j])
-                    question_lengths.append(q_lengths[j])
-                    aps = [s for s in answer_spans[j] if s[1] - s[0] <= _max_span_size or is_eval]
-                    spans.extend(aps)
-                    span2question.extend(i for _ in aps)
-                    wiq.append(word_in_question[j])
-                    offsets.append(token_offsets[j])
-                    at_spans.append(answertype_spans[j])
+        return CBowAnnotation(
+            question_tokens=q_tokenized,
+            question_ids=q_ids,
+            question_length=q_length,
+            question_embeddings=emb_question,
+            support_tokens=s_tokenized,
+            support_ids=s_ids,
+            support_length=s_length,
+            support_embeddings=emb_support,
+            word_in_question=word_in_question,
+            token_offsets=token_offsets,
+            answertype_span=answertype_span,
+            answer_spans=answer_spans if has_answers else None,
+        )
 
-                batch_size = len(question_lengths)
-                output = {
-                    XQAPorts.unique_word_chars: unique_words,
-                    XQAPorts.unique_word_char_length: unique_word_lengths,
-                    XQAPorts.question_words2unique: question2unique,
-                    XQAPorts.support_words2unique: support2unique,
-                    XQAPorts.emb_support: emb_supports[:batch_size, :max(support_lengths), :],
-                    XQAPorts.support_length: support_lengths,
-                    XQAPorts.emb_question: emb_questions[:batch_size, :max(question_lengths), :],
-                    XQAPorts.question_length: question_lengths,
-                    XQAPorts.word_in_question: wiq,
-                    XQAPorts.answer_span: spans,
-                    XQAPorts.correct_start_training: [] if is_eval else [s[0] for s in spans],
-                    XQAPorts.answer2question: span2question,
-                    XQAPorts.answer2question_training: [] if is_eval else span2question,
-                    XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
-                    XQAPorts.is_eval: is_eval,
-                    XQAPorts.token_char_offsets: offsets,
-                    CBOWXqaPorts.answer_type_span: at_spans
-                }
 
-                # we can only numpify in here, because bucketing is not possible prior
-                batch = numpify(output, keys=[XQAPorts.unique_word_chars,
-                                              XQAPorts.question_words2unique, XQAPorts.support_words2unique,
-                                              XQAPorts.word_in_question, XQAPorts.token_char_offsets])
-                todo = todo[self.batch_size:]
-                yield batch
+    def create_batch(self, annotations: List[CBowAnnotation],
+                     is_eval: bool, with_answers: bool) \
+            -> Mapping[TensorPort, np.ndarray]:
 
-        return GeneratorWithRestart(batch_generator)
+        batch_size = len(annotations)
 
-    def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
-        q_tokenized, q_ids, q_lengths, s_tokenized, s_ids, s_lengths, \
-        word_in_question, token_offsets, answer_spans = \
-            prepare_data(qa_settings, self.vocab, self.config.get("lowercase", False), with_answers=False,
-                         wiq_contentword=True, with_spacy=True)
+        emb_supports = [a.support_embeddings for a in annotations]
+        emb_questions = [a.question_embeddings for a in annotations]
 
-        answertype_spans = []
-        for qs in q_tokenized:
-            answertype_spans.append(self.__extract_answertype_span(qs))
+        q_tokenized = [a.question_tokens for a in annotations]
+        s_tokenized = [a.support_tokens for a in annotations]
 
         unique_words, unique_word_lengths, question2unique, support2unique = \
             unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
-
-        batch_size = len(qa_settings)
-        emb_supports = np.zeros([batch_size, max(s_lengths), self.emb_matrix.shape[1]])
-        emb_questions = np.zeros([batch_size, max(q_lengths), self.emb_matrix.shape[1]])
-
-        for i, q in enumerate(q_ids):
-            for k, v in enumerate(s_ids[i]):
-                emb_supports[i, k] = self._get_emb(v)
-            for k, v in enumerate(q):
-                emb_questions[i, k] = self._get_emb(v)
 
         output = {
             XQAPorts.unique_word_chars: unique_words,
             XQAPorts.unique_word_char_length: unique_word_lengths,
             XQAPorts.question_words2unique: question2unique,
             XQAPorts.support_words2unique: support2unique,
-            XQAPorts.emb_support: emb_supports,
-            XQAPorts.support_length: s_lengths,
-            XQAPorts.emb_question: emb_questions,
-            XQAPorts.question_length: q_lengths,
-            XQAPorts.word_in_question: word_in_question,
-            XQAPorts.token_char_offsets: token_offsets,
-            CBOWXqaPorts.answer_type_span: answertype_spans
+            XQAPorts.emb_support: stack_and_pad(emb_supports),
+            XQAPorts.support_length: [a.support_length for a in annotations],
+            XQAPorts.emb_question: stack_and_pad(emb_questions),
+            XQAPorts.question_length: [a.question_length for a in annotations],
+            XQAPorts.word_in_question: [a.word_in_question for a in annotations],
+            XQAPorts.token_char_offsets: [a.token_offsets for a in annotations],
+            CBOWXqaPorts.answer_type_span: [list(a.answertype_span) for a in annotations]
         }
 
-        output = numpify(output, keys=[XQAPorts.unique_word_chars, XQAPorts.question_words2unique,
-                                       XQAPorts.support_words2unique, XQAPorts.word_in_question,
-                                       XQAPorts.token_char_offsets])
+        if with_answers:
+            spans = [a.answer_spans for a in annotations]
+            span2question = [i for i in range(batch_size) for _ in spans[i]]
+            output.update({
+                XQAPorts.answer_span: [s for s_list in spans for s in s_list],
+                XQAPorts.correct_start_training: [] if is_eval else [s[0] for s_list in spans for s in s_list],
+                XQAPorts.answer2question: span2question,
+                XQAPorts.answer2question_training: [] if is_eval else span2question,
+                XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
+                XQAPorts.is_eval: is_eval,
+            })
 
-        return output
+        # we can only numpify in here, because bucketing is not possible prior
+        batch = numpify(output, keys=[XQAPorts.unique_word_chars,
+                                      XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                                      XQAPorts.word_in_question, XQAPorts.token_char_offsets])
+        return batch
 
 
 cbow_xqa_like_model_module_factory = simple_model_module(

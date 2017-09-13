@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Mapping, List, Any
 
 import tensorflow as tf
 from jtr.util.map import get_entry_dims
@@ -94,3 +95,11 @@ def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
     if normalize:
         corpus_ids = deep_map(corpus_ids, vocab._normalize, keys=['question', 'support'])
     return corpus_ids, vocab, target_vocab, candidate_vocab
+
+
+def transpose_dict_of_lists(dict_of_lists: Mapping[str, list], keys: List[str]) \
+        -> List[Mapping[str, Any]]:
+    """Takes a dict of lists, and turns it into a list of dicts."""
+
+    return [{key: dict_of_lists[key][i] for key in keys}
+            for i in range(len(dict_of_lists[keys[0]]))]
