@@ -9,7 +9,7 @@
 [wercker]: https://app.wercker.com/project/byKey/8ed61192a5b16769a41dc24c30a3bc6a
 [heres_johnny]: https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg
 
-**Jack the Reader** -- or **jtr**, for short -- is a knowledge base completion
+**Jack the Reader** -- or **jack**, for short -- is a knowledge base completion
 and question answering framework.
 
 To get started, please see [How to Install and Run][install] and then you may
