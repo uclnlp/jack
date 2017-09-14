@@ -491,7 +491,7 @@ class KBPEvalHook(EvalHook):
         from scipy.stats import rankdata
         from numpy import asarray
 
-        logger.info("Started evaluation %s" % self._info)
+        logger.info("Started test evaluation %s" % self._info)
 
         if self._batches is None:
             self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=True)
@@ -515,12 +515,14 @@ class KBPEvalHook(EvalHook):
             questions = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
                 q=questions[j][0]
+                #print(q)
                 q_cand_scores[q] = logits[j]
                 q_cand_ids[q] = candidate_ids[j]
                 if q not in q_answers:
                     q_answers[q] = set()
                 q_answers[q].add(correct_answers[j])
         for q in q_cand_ids:
+            print(q)
             for k,c in enumerate(q_cand_ids[q]):
                 qa = str(q) + "\t" + str(c)
                 qa_ids.append(qa)
@@ -538,7 +540,8 @@ class KBPEvalHook(EvalHook):
             ans_ranks=[]
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
-                    if a == cand and cand_ranks[c] <= 100:
+                    qa = str(q) + "\t" + str(cand)
+                    if a == cand and cand_ranks[c] <= 100:# and qa_rank[qa] <= 1000:
                         ans_ranks.append(cand_ranks[c])
             av_p = 0
             answers = 1
@@ -550,6 +553,8 @@ class KBPEvalHook(EvalHook):
                 wmap = wmap+av_p
                 md = md+len(ans_ranks)
                 av_p = av_p/len(ans_ranks)
+                res = '\t%s\t%s: %.3f (%d)' % (self.reader.shared_resources.vocab.get_sym(q),"Average Precision", av_p,len(q_answers[q]))
+                logger.info(res)
                 qd = qd + 1
             else:
                 pass
@@ -580,3 +585,42 @@ class KBPEvalHook(EvalHook):
         self.epoch += 1
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
+
+    def __call__(self, epoch):
+        logger.info("Started evaluation %s" % self._info)
+
+        if self._batches is None:
+            if self._dataset_identifier is not None:
+                self.reader.input_module.setup_from_data(self._dataset, self._dataset_name, self._dataset_identifier)
+                self._batches = self.reader.input_module.batch_generator(self._dataset, False, self._dataset_name,
+                                                                         self._dataset_identifier)
+                self._total = self.reader.input_module.batcher.num_samples
+            else:
+                self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=False,
+                                                                         dataset_name=self._dataset_name,
+                                                                         identifier=self._dataset_identifier)
+
+        metrics = defaultdict(lambda: list())
+        for i, batch in enumerate(self._batches):
+            predictions = self.reader.model_module(self.reader.session, batch, self._ports)
+            m = self.apply_metrics(predictions)
+            for k in self._metrics:
+                metrics[k].append(m[k])
+
+        metrics = self.combine_metrics(metrics)
+        super().add_to_history(metrics, self._iter, epoch)
+
+        printmetrics = sorted(metrics.keys())
+        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
+        for m in printmetrics:
+            res += '\t%s: %.3f' % (m, metrics[m])
+            self.update_summary(self.reader.session, self._iter, self._info + '_' + m, metrics[m])
+            if self._write_metrics_to is not None:
+                with open(self._write_metrics_to, 'a') as f:
+                    f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + m,
+                                                      np.round(metrics[m], 5)))
+        res += '\t' + self._info
+        logger.info(res)
+
+        if self._side_effect is not None:
+            self._side_effect_state = self._side_effect(metrics, self._side_effect_state)

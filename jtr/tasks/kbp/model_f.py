@@ -105,7 +105,7 @@ class ModelFInputModule(InputModule):
             Ports.Input.atomic_candidates: corpus["candidates"],
             Ports.Target.target_index: corpus["answers"]
         }
-        return get_batches(xy_dict, batch_size=self.shared_resources.config['batch_size'])
+        return get_batches(xy_dict, batch_size=self.shared_resources.config['batch_size'],exact_epoch=True)
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         corpus = self.preprocess(qa_settings, test_time=True)
@@ -197,10 +197,10 @@ class KBPReader(JTReader):
     (output_model). These layers are called in-turn on a given input (list).
     """
 
-    def train(self, optim,
+    def train2(self, optim,
               training_set: Iterable[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value, dataset_name=None):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -248,6 +248,68 @@ class KBPReader(JTReader):
 
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss)
+
+            # calling post-epoch hooks
+            for hook in hooks:
+                hook.at_epoch_end(i)
+                
+    def train(self, optimizer,
+              training_set: Iterable[Tuple[QASetting, List[Answer]]],
+              max_epochs=10, hooks=[],
+              l2=0.0, clip=None, clip_op=tf.clip_by_value,
+              dataset_name=None):
+        """
+        This method trains the reader (and changes its state).
+        
+        Args:
+            optimizer: TF optimizer
+            training_set: the training instances.
+            max_epochs: maximum number of epochs
+            hooks: TrainingHook implementations that are called after epochs and batches
+            l2: whether to use l2 regularization
+            clip: whether to apply gradient clipping and at which value
+            clip_op: operation to perform for clipping
+        """
+        assert self.is_train, "Reader has to be created for with is_train=True for training."
+        logger.info("Setting up data and model...")
+        # First setup shared resources, e.g., vocabulary. This depends on the input module.
+        self.setup_from_data(training_set, dataset_name, "train")
+        self.session.run([v.initializer for v in self.model_module.variables])
+
+        
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+        loss = self.model_module.tensors[Ports.loss]
+
+        if l2:
+            loss += \
+                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+
+        if clip:
+            gradients = optimizer.compute_gradients(loss)
+            if clip_op == tf.clip_by_value:
+                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
+                             for grad, var in gradients if grad]
+            elif clip_op == tf.clip_by_norm:
+                gradients = [(tf.clip_by_norm(grad, clip), var)
+                             for grad, var in gradients if grad]
+            min_op = optimizer.apply_gradients(gradients)
+        else:
+            min_op = optimizer.minimize(loss)
+
+        # initialize non model variables like learning rate, optimizer vars ...
+        self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
+
+        logger.info("Start training...")
+        for i in range(1, max_epochs + 1):
+            batches = self.input_module.batch_generator(training_set, is_eval=False, dataset_name=dataset_name,
+                                                    identifier='train')
+            for j, batch in enumerate(batches):
+                feed_dict = self.model_module.convert_to_feed_dict(batch)
+
+                current_loss, _ = self.session.run([loss, min_op], feed_dict=feed_dict)
+
+                for hook in hooks:
+                    hook.at_iteration_end(i, current_loss, set_name='train')
 
             # calling post-epoch hooks
             for hook in hooks:

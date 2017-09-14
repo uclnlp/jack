@@ -2,6 +2,7 @@
 
 from jtr.io.embeddings.word_to_vec import load_word2vec
 from jtr.io.embeddings.glove import load_glove
+from jtr.io.embeddings.fasttext import load_fasttext
 import zipfile
 
 
@@ -42,7 +43,7 @@ def load_embeddings(file, typ='glove', **options):
     Returns:
         Embeddings object, wrapper class around Vocabulary embedding matrix.
     """
-    assert typ in {"word2vec", "glove"}, "so far only 'word2vec' and 'glove' foreseen"
+    assert typ in {"word2vec", "glove", "fasttext"}, "so far only 'word2vec' and 'glove' foreseen"
 
     if typ.lower() == "word2vec":
         return Embeddings(*load_word2vec(file, **options))
@@ -58,3 +59,7 @@ def load_embeddings(file, typ='glove', **options):
                     return Embeddings(*load_glove(f))
         else:
             raise NotImplementedError
+            
+    elif typ.lower() == "fasttext":
+        with open(file, 'rb') as f:
+            return Embeddings(*load_fasttext(f))
