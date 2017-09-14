@@ -107,14 +107,6 @@ def main(batch_size,
     if clip_value != 0.0:
         clip_value = - abs(clip_value), abs(clip_value)
 
-    # Get information about available CPUs and GPUs:
-    # to set specific device, add CUDA_VISIBLE_DEVICES environment variable, e.g.
-    # $ CUDA_VISIBLE_DEVICES=0 ./jtr_script.py
-
-    logger.info('available devices:')
-    for device in device_lib.list_local_devices():
-        logger.info('device info: ' + str(device).replace("\n", " "))
-
     if debug:
         if not use_streaming:
             train_data = load_labelled_data(train, debug_examples)

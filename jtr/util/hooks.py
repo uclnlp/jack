@@ -515,14 +515,12 @@ class KBPEvalHook(EvalHook):
             questions = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
                 q=questions[j][0]
-                #print(q)
                 q_cand_scores[q] = logits[j]
                 q_cand_ids[q] = candidate_ids[j]
                 if q not in q_answers:
                     q_answers[q] = set()
                 q_answers[q].add(correct_answers[j])
         for q in q_cand_ids:
-            print(q)
             for k,c in enumerate(q_cand_ids[q]):
                 qa = str(q) + "\t" + str(c)
                 qa_ids.append(qa)

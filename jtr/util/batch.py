@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
+import random
 from itertools import islice
+from typing import Callable, TypeVar, Iterable, List, Iterator, Optional
 
 import numpy as np
 
@@ -165,6 +166,32 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
                     yield {k: data_np[k][batch_indices] for k in data_np}
 
     return GeneratorWithRestart(bucket_generator)
+
+
+T = TypeVar('T')
+def shuffle_and_batch(items: List[T], batch_size: int,
+                      rng : Optional[random.Random] = None) \
+        -> Iterator[List[T]]:
+    """Optionally shuffles and batches items in a list.
+
+    Args:
+        - items: List of items to shuffle & batch.
+        - batch_size: size of batches.
+        - rng: random number generator if items should be shuffles, else None.
+
+    Returns: Batch iterator
+    """
+
+    todo = list(range(len(items)))
+    if rng is not None:
+        rng.shuffle(todo)
+    while todo:
+
+        indices = todo[:batch_size]
+        todo = todo[batch_size:]
+        items_batch = [items[i] for i in indices]
+
+        yield items_batch
 
 
 def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):
