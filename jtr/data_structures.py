@@ -8,9 +8,10 @@ import json
 import copy
 from typing import List, Tuple, Sequence
 from jtr.util.batch import GeneratorWithRestart
+from case_class import CaseClass
 
 
-class Answer:
+class Answer(CaseClass):
     """
     Representation of an answer to a question.
     """
@@ -30,7 +31,7 @@ class Answer:
         self.text = text
 
 
-class QASetting:
+class QASetting(CaseClass):
     """
     Representation of a single question answering problem. It primarily consists of a question,
     a list of support documents, and optionally, some set of candidate answers.
@@ -106,13 +107,15 @@ def convert2qasettings(jtr_data, max_count=None):
     else:
         return result[:max_count]
 
+
 def load_labelled_data_stream(path, dataset_streamer):
-        stream_processor = copy.deepcopy(dataset_streamer)
+    stream_processor = copy.deepcopy(dataset_streamer)
 
-        stream_processor.set_path(path)
+    stream_processor.set_path(path)
 
-        data_set = GeneratorWithRestart(stream_processor.stream)
-        return data_set
+    data_set = GeneratorWithRestart(stream_processor.stream)
+    return data_set
+
 
 def load_labelled_data(path, max_count=None) -> List[Tuple[QASetting, List[Answer]]]:
     """
