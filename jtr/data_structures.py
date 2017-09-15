@@ -4,14 +4,14 @@
 Here we define light data structures to store the input to jtr readers, and their output.
 """
 
-import json
 import copy
+import json
 from typing import List, Tuple, Sequence
+
 from jtr.util.batch import GeneratorWithRestart
-from case_class import CaseClass
 
 
-class Answer(CaseClass):
+class Answer:
     """
     Representation of an answer to a question.
     """
@@ -31,7 +31,7 @@ class Answer(CaseClass):
         self.text = text
 
 
-class QASetting(CaseClass):
+class QASetting:
     """
     Representation of a single question answering problem. It primarily consists of a question,
     a list of support documents, and optionally, some set of candidate answers.
