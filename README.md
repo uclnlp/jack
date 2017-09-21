@@ -47,8 +47,11 @@ $ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
 Lastly, train a [FastQA][fastqa] model
 
 ```shell
-$ python3 jtr/train_reader.py with config='./conf/extractive_qa.yaml'
+$ python3 jtr/train_reader.py with config='./conf/fastqa.yaml'
 ```
+
+Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
+summaries to a provided path (here ".tb/fastqa").
 
 A copy of the model is written into the `model_dir` directory after each
 training epoch.  These can be loaded using the commands below or see e.g.
