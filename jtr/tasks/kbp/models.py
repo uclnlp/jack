@@ -6,9 +6,6 @@ from jtr.util.map import numpify
 
 
 class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
-    def __init__(self, shared_resources):
-        self.shared_resources = shared_resources
-
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         self.triples = [x[0].question.split() for x in data]
 
@@ -44,7 +41,6 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
     def create_batch(self, triples: List[List[int]],
                      is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
-
         batch_size = len(triples)
 
         xy_dict = {
@@ -61,8 +57,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
 
 
 class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
-    def __init__(self, *args, model_name='DistMult', **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, model_name='DistMult'):
+        super().__init__()
         self.model_name = model_name
 
     @property
@@ -81,18 +77,16 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.question]
 
-    def create_training_output(self,
-                               shared_resources: SharedResources,
-                               logits: tf.Tensor,
+    def create_training_output(self, logits: tf.Tensor,
                                target_index: tf.Tensor) -> Sequence[tf.Tensor]:
         return [self.loss]
 
-    def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_output(self, question: tf.Tensor) -> Sequence[tf.Tensor]:
         with tf.variable_scope('knowledge_graph_embedding'):
-            self.embedding_size = shared_resources.config['repr_dim']
+            self.embedding_size = self.shared_resources.config['repr_dim']
 
-            self.entity_to_index = shared_resources.config['entity_to_index']
-            self.predicate_to_index = shared_resources.config['predicate_to_index']
+            self.entity_to_index = self.shared_resources.config['entity_to_index']
+            self.predicate_to_index = self.shared_resources.config['predicate_to_index']
 
             nb_entities = len(self.entity_to_index)
             nb_predicates = len(self.predicate_to_index)
@@ -106,7 +100,7 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
                                                         initializer=tf.contrib.layers.xavier_initializer(),
                                                         dtype='float32')
 
-            positive_logits = self.forward_pass(shared_resources, question)
+            positive_logits = self.forward_pass(question)
             positive_labels = tf.ones_like(positive_logits)
 
             random_subject_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
@@ -118,8 +112,8 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
             question_corrupted_subjects = tf.concat(values=[random_subject_indices, question[:, 1:]], axis=1)
             question_corrupted_objects = tf.concat(values=[question[:, :2], random_object_indices], axis=1)
 
-            negative_subject_logits = self.forward_pass(shared_resources, question_corrupted_subjects)
-            negative_object_logits = self.forward_pass(shared_resources, question_corrupted_objects)
+            negative_subject_logits = self.forward_pass(question_corrupted_subjects)
+            negative_object_logits = self.forward_pass(question_corrupted_objects)
             negative_labels = tf.zeros_like(negative_subject_logits)
 
             logits = tf.concat(values=[positive_logits, negative_subject_logits, negative_object_logits], axis=0)
@@ -129,7 +123,7 @@ class KnowledgeGraphEmbeddingModelModule(SimpleModelModule):
             self.loss = tf.reduce_mean(losses, axis=0)
         return logits,
 
-    def forward_pass(self, shared_resources, question):
+    def forward_pass(self, question):
         subject_idx = question[:, 0]
         predicate_idx = question[:, 1]
         object_idx = question[:, 2]

@@ -48,21 +48,21 @@ class CBOWXqaPorts:
 
 
 class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
-    def __init__(self, shared_vocab_config):
-        self.shared_vocab_config = shared_vocab_config
+    def __init__(self):
+        super().__init__()
         self.__nlp = spacy.load('en', parser=False)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         # create character vocab + word lengths + char ids per word
-        self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        self.shared_resources.config["char_vocab"] = char_vocab_from_vocab(self.shared_resources.vocab)
 
     def setup(self):
-        self.vocab = self.shared_vocab_config.vocab
-        self.config = self.shared_vocab_config.config
+        self.vocab = self.shared_resources.vocab
+        self.config = self.shared_resources.config
         self.dropout = self.config.get("dropout", 1)
-        self.emb_matrix = self.shared_vocab_config.embeddings.lookup
-        self.default_vec = np.zeros([self.shared_vocab_config.embeddings.lookup.shape[1]])
-        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+        self.emb_matrix = self.shared_resources.embeddings.lookup
+        self.default_vec = np.zeros([self.shared_resources.embeddings.lookup.shape[1]])
+        self.char_vocab = self.shared_resources.config["char_vocab"]
 
     @property
     def batch_size(self):
@@ -247,13 +247,13 @@ cbow_xqa_like_model_module_factory = simple_model_module(
     training_output_ports=[Ports.loss])
 
 
-def cbow_xqa_like_with_min_crossentropy_loss_factory(shared_resources, f):
-    return cbow_xqa_like_model_module_factory(shared_resources, f, no_shared_resources(xqa_min_crossentropy_span_loss))
+def cbow_xqa_like_with_min_crossentropy_loss_factory(f):
+    return cbow_xqa_like_model_module_factory(f, no_shared_resources(xqa_min_crossentropy_span_loss))
 
 
 # Very specialized and therefore not sharable  TF code for fast qa model.
-def cbow_xqa_model_module(shared_vocab_config):
-    return cbow_xqa_like_with_min_crossentropy_loss_factory(shared_vocab_config, cbow_xqa_model)
+def cbow_xqa_model_module():
+    return cbow_xqa_like_with_min_crossentropy_loss_factory(cbow_xqa_model)
 
 
 def cbow_xqa_model(shared_vocab_config, emb_question, question_length,

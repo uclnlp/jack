@@ -13,15 +13,13 @@ mcqa_readers = {}
 kbp_readers = {}
 
 
-def __reader(f):
-    def uses_no_shared_resources(shared_resources=None):
-        if shared_resources is None:
-            return f(SharedResources())
-        else:
-            return f(shared_resources)
+def get_reader_by_name(reader_name) -> JTReader:
+    return readers[reader_name]()
 
-    readers.setdefault(f.__name__, uses_no_shared_resources)
-    return uses_no_shared_resources
+
+def __reader(f):
+    readers.setdefault(f.__name__, f)
+    return f
 
 
 def __xqa_reader(f):
@@ -55,86 +53,86 @@ def __genqa_reader(f):
 
 
 @__mcqa_reader
-def example_reader(shared_resources: SharedResources):
+def example_reader():
     """ Creates an example multiple choice reader. """
     from jtr.tasks.mcqa.simple_mcqa import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
-    input_module = SimpleMCInputModule(shared_resources)
-    model_module = SimpleMCModelModule(shared_resources)
+    input_module = SimpleMCInputModule()
+    model_module = SimpleMCModelModule()
     output_module = SimpleMCOutputModule()
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    return JTReader(input_module, model_module, output_module)
 
 
 @__kbp_reader
-def modelf_reader(shared_resources: SharedResources):
+def modelf_reader():
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule, KBPReader
-    input_module = ModelFInputModule(shared_resources)
-    model_module = ModelFModelModule(shared_resources)
+    input_module = ModelFInputModule()
+    model_module = ModelFModelModule()
     output_module = ModelFOutputModule()
-    return KBPReader(shared_resources, input_module, model_module, output_module)
+    return KBPReader(input_module, model_module, output_module)
 
 
 @__kbp_reader
-def distmult_reader(shared_resources: SharedResources):
+def distmult_reader():
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
-    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='DistMult')
+    input_module = KnowledgeGraphEmbeddingInputModule()
+    model_module = KnowledgeGraphEmbeddingModelModule(model_name='DistMult')
     output_module = KnowledgeGraphEmbeddingOutputModule()
-    return KBPReader(shared_resources, input_module, model_module, output_module)
+    return KBPReader(input_module, model_module, output_module)
 
 
 @__kbp_reader
-def complex_reader(shared_resources: SharedResources):
+def complex_reader():
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
-    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='ComplEx')
+    input_module = KnowledgeGraphEmbeddingInputModule()
+    model_module = KnowledgeGraphEmbeddingModelModule(model_name='ComplEx')
     output_module = KnowledgeGraphEmbeddingOutputModule()
-    return KBPReader(shared_resources, input_module, model_module, output_module)
+    return KBPReader(input_module, model_module, output_module)
 
 
 @__kbp_reader
-def transe_reader(shared_resources: SharedResources):
+def transe_reader():
     """ Creates a simple kbp reader. """
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
-    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='TransE')
+    input_module = KnowledgeGraphEmbeddingInputModule()
+    model_module = KnowledgeGraphEmbeddingModelModule(model_name='TransE')
     output_module = KnowledgeGraphEmbeddingOutputModule()
-    return KBPReader(shared_resources, input_module, model_module, output_module)
+    return KBPReader(input_module, model_module, output_module)
 
 
 @__xqa_reader
-def fastqa_reader(shared_resources: SharedResources = SharedResources()):
+def fastqa_reader():
     """ Creates a FastQA reader instance (extractive qa model). """
-    from jtr.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
+    from jtr.tasks.xqa.fastqa import FastQAInputModule, fastqa_model_module
     from jtr.tasks.xqa.shared import XQAOutputModule
 
-    input_module = FastQAInputModule(shared_resources)
-    model_module = fatqa_model_module(shared_resources)
-    output_module = XQAOutputModule(shared_resources)
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    input_module = FastQAInputModule()
+    model_module = fastqa_model_module()
+    output_module = XQAOutputModule()
+    return JTReader(input_module, model_module, output_module)
 
 
 @__xqa_reader
-def cbow_xqa_reader(shared_resources: SharedResources):
+def cbow_xqa_reader():
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.tasks.xqa.cbow_baseline import CBOWXqaInputModule
 
     from jtr.tasks.xqa.cbow_baseline import cbow_xqa_model_module
     from jtr.tasks.xqa.shared import XQANoScoreOutputModule
 
-    input_module = CBOWXqaInputModule(shared_resources)
-    model_module = cbow_xqa_model_module(shared_resources)
-    output_module = XQANoScoreOutputModule(shared_resources)
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    input_module = CBOWXqaInputModule()
+    model_module = cbow_xqa_model_module()
+    output_module = XQANoScoreOutputModule()
+    return JTReader(input_module, model_module, output_module)
 
 
 @__mcqa_reader
-def cbilstm_snli_reader(shared_resources: SharedResources):
+def cbilstm_snli_reader():
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a conditional Bidirectional LSTM, as described in [1].
@@ -143,14 +141,14 @@ def cbilstm_snli_reader(shared_resources: SharedResources):
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
-    input_module = MultiSupportFixedClassInputs(shared_resources)
-    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
+    input_module = MultiSupportFixedClassInputs()
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel()
     output_module = EmptyOutputModule()
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    return JTReader(input_module, model_module, output_module)
 
 
 @__mcqa_reader
-def dam_snli_reader(shared_resources: SharedResources):
+def dam_snli_reader():
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a Decomposable Attention Model, as described in [1].
@@ -158,14 +156,14 @@ def dam_snli_reader(shared_resources: SharedResources):
     [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
-    input_module = MultiSupportFixedClassInputs(shared_resources)
-    model_module = DecomposableAttentionModel(shared_resources)
+    input_module = MultiSupportFixedClassInputs()
+    model_module = DecomposableAttentionModel()
     output_module = EmptyOutputModule()
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    return JTReader(input_module, model_module, output_module)
 
 
 @__mcqa_reader
-def esim_snli_reader(shared_resources: SharedResources):
+def esim_snli_reader():
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
@@ -173,14 +171,14 @@ def esim_snli_reader(shared_resources: SharedResources):
     [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
     """
     from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, ESIMModel, EmptyOutputModule
-    input_module = MultiSupportFixedClassInputs(shared_resources)
-    model_module = ESIMModel(shared_resources)
+    input_module = MultiSupportFixedClassInputs()
+    model_module = ESIMModel()
     output_module = EmptyOutputModule()
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    return JTReader(input_module, model_module, output_module)
 
 
 @__mcqa_reader
-def cbilstm_snli_streaming_reader(shared_resources: SharedResources):
+def cbilstm_snli_streaming_reader():
     """
     Creates a SNLI reader instance (multiple choice qa model).
     This particular reader uses a conditional Bidirectional LSTM, as described in [1].
@@ -189,8 +187,8 @@ def cbilstm_snli_streaming_reader(shared_resources: SharedResources):
     """
     from jtr.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
     from jtr.tasks.mcqa.streaming_mcqa import StreamingSingleSupportFixedClassInputs
-    input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
-    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
+    input_module = StreamingSingleSupportFixedClassInputs()
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel()
     output_module = EmptyOutputModule()
 
-    return JTReader(shared_resources, input_module, model_module, output_module)
+    return JTReader(input_module, model_module, output_module)

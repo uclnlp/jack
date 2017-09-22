@@ -17,11 +17,6 @@ import numpy as np
 
 
 class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
-    def __init__(self, shared_resources):
-        self.vocab = shared_resources.vocab
-        self.config = shared_resources.config
-        self.shared_resources = shared_resources
-
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
 
         # Run preprocessing once for all data in order to populate the vocabulary.
@@ -67,7 +62,6 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
         }
 
         if not is_eval:
-
             x_dict.update({
                 Ports.Target.candidate_1hot: [a["targets"] for a in annotations]
             })
@@ -81,9 +75,6 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
 
 
 class MultiSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_resources):
-        self.shared_resources = shared_resources
-
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
@@ -121,12 +112,11 @@ class MultiSupportFixedClassInputs(InputModule):
 
         return numpify(xy_dict)
 
-
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
-        sepvocab=True
+        sepvocab = True
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_resources.vocab,
-                        None, sepvocab=sepvocab)
+            preprocess_with_pipeline(data, self.shared_resources.vocab,
+                                     None, sepvocab=sepvocab)
         train_vocab.freeze()
         train_answer_vocab.freeze()
         train_candidate_vocab.freeze()
@@ -140,15 +130,15 @@ class MultiSupportFixedClassInputs(InputModule):
     def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
                         identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
-                preprocess_with_pipeline(dataset,
-                        self.shared_resources.vocab,
-                        self.shared_resources.answer_vocab,
-                        sepvocab=True)
+            preprocess_with_pipeline(dataset,
+                                     self.shared_resources.vocab,
+                                     self.shared_resources.answer_vocab,
+                                     sepvocab=True)
 
         xy_dict = {
             Ports.Input.multiple_support: corpus["support"],
             Ports.Input.question: corpus["question"],
-            Ports.Target.target_index:  [a[0] for a in corpus["answers"]],
+            Ports.Target.target_index: [a[0] for a in corpus["answers"]],
             Ports.Input.question_length: corpus['question_lengths'],
             Ports.Input.support_length: corpus['support_lengths'],
             Ports.Input.sample_id: corpus['ids']
@@ -158,7 +148,6 @@ class MultiSupportFixedClassInputs(InputModule):
 
 
 class SimpleMCModelModule(SimpleModelModule):
-
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Input.multiple_support, Ports.Input.question, Ports.Input.atomic_candidates]
@@ -176,19 +165,17 @@ class SimpleMCModelModule(SimpleModelModule):
         return [Ports.loss]
 
     def create_training_output(self,
-                               shared_resources: SharedResources,
                                logits: tf.Tensor,
                                candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
         loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
-                labels=candidate_labels)
+                                                       labels=candidate_labels)
         return loss,
 
     def create_output(self,
-                      shared_resources: SharedResources,
                       multiple_support: tf.Tensor,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
-        emb_dim = shared_resources.config["repr_dim"]
+        emb_dim = self.shared_resources.config["repr_dim"]
         with tf.variable_scope("simplce_mcqa"):
             # varscope.reuse_variables()
             embeddings = tf.get_variable(
@@ -208,6 +195,7 @@ class SimpleMCModelModule(SimpleModelModule):
 
 class SimpleMCOutputModule(OutputModule):
     def __init__(self):
+        super().__init__()
         self.setup()
 
     def setup(self):
@@ -232,7 +220,7 @@ class SimpleMCOutputModule(OutputModule):
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources,
                      Q_ids, Q_lengths,
-                     S_ids,  S_lengths,
+                     S_ids, S_lengths,
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
@@ -247,7 +235,7 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
             drop_keep_prob=1.0 - shared_resources.config['dropout'],
             conditional_encoding=True)
         # ->  [batch, 2*output_dim]
-        final_states = tf.concat([final_states_fw_bw[0][1], final_states_fw_bw[1][1]],axis=1)
+        final_states = tf.concat([final_states_fw_bw[0][1], final_states_fw_bw[1][1]], axis=1)
         # [batch, 2*output_dim] -> [batch, num_classes]
         outputs = simple.fully_connected_projection(final_states, num_classes)
         return outputs
@@ -313,7 +301,6 @@ class ESIMModel(AbstractSingleSupportFixedClassModel):
 
 
 class EmptyOutputModule(OutputModule):
-
     def __init__(self):
         self.setup()
 
@@ -336,7 +323,6 @@ class EmptyOutputModule(OutputModule):
 
 
 class MisclassificationOutputModule(OutputModule):
-
     def __init__(self, interval, limit=100):
         self.lower, self.upper = interval
         self.limit = limit
@@ -386,7 +372,7 @@ class MisclassificationOutputModule(OutputModule):
                 logger.info('Answer: {0}'.format(answer.text))
                 logger.info('Predicted class: {0}'.format(idx2class[predicted_idx]))
 
-                predictions_str = str([(idx2class[b], a) for a,b in zip(logits[i], range(num_classes))])
+                predictions_str = str([(idx2class[b], a) for a, b in zip(logits[i], range(num_classes))])
                 logger.info('Predictions: {0}'.format(predictions_str))
 
     def setup(self):

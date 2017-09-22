@@ -6,14 +6,15 @@ from jtr.core import *
 
 
 class ParameterTensorPorts:
-        # remove?
-        keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
-                                          "scalar representing keep probability when using dropout",
-                                          "[]")
+    # remove?
+    keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
+                                      "scalar representing keep probability when using dropout",
+                                      "[]")
 
-        is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
-                                        "boolean that determines whether input is eval or training.",
-                                        "[]")
+    is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
+                                    "boolean that determines whether input is eval or training.",
+                                    "[]")
+
 
 class XQAPorts:
     # When feeding embeddings directly
@@ -68,8 +69,6 @@ class XQAPorts:
     answer_span = FlatPorts.Target.answer_span
 
 
-
-
 def _np_softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
@@ -77,8 +76,8 @@ def _np_softmax(x):
 
 
 class XQAOutputModule(OutputModule):
-    def __init__(self, shared_vocab_confg: SharedResources):
-        self.vocab = shared_vocab_confg.vocab
+    def __init__(self):
+        super().__init__()
         self.setup()
 
     def __call__(self, questions, span_prediction, token_char_offsets, start_scores, end_scores) -> List[Answer]:
@@ -111,8 +110,8 @@ class XQAOutputModule(OutputModule):
 
 
 class XQANoScoreOutputModule(OutputModule):
-    def __init__(self, shared_vocab_confg: SharedResources):
-        self.vocab = shared_vocab_confg.vocab
+    def __init__(self):
+        super().__init__()
         self.setup()
 
     def __call__(self, questions, span_prediction, token_char_offsets) -> List[Answer]:

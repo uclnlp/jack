@@ -152,7 +152,8 @@ def main(batch_size,
     parsed_config = ex.current_run.config
 
     shared_resources = SharedResources(vocab, parsed_config, embeddings)
-    reader = readers.readers[model](shared_resources)
+    reader = readers.get_reader_by_name(model)
+    reader.configure_with_shared_resources(shared_resources)
     checkpoint()
 
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32,

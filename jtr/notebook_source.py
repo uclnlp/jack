@@ -31,7 +31,6 @@ In order to implement a Jack reader, we define three modules:
 
 """
 
-
 """
 
 ## Ports
@@ -75,8 +74,6 @@ print(XQAPorts.span_prediction.get_description())
 
 print(Ports.loss.get_description())
 
-
-
 """
 ## Input Module
 
@@ -94,7 +91,6 @@ easier to inherit from `OnlineInputModule`. Doing this, we need to:
 
 
 class MyInputModule(OnlineInputModule):
-
     def __init__(self, shared_resources):
         """The module is initialized with a `shared_resources`.
 
@@ -109,16 +105,16 @@ class MyInputModule(OnlineInputModule):
 
     @property
     def output_ports(self):
-        return [embedded_question,           # Question embeddings
-                question_length,             # Lengths of the questions
-                embedded_support,            # Support embeddings
-                support_length,              # Lengths of the supports
+        return [embedded_question,  # Question embeddings
+                question_length,  # Lengths of the questions
+                embedded_support,  # Support embeddings
+                support_length,  # Lengths of the supports
                 XQAPorts.token_char_offsets  # Character offsets of tokens in support, used for in ouput module
-               ]
+                ]
 
     @property
     def training_ports(self):
-        return [answer_span]                 # Answer span, one for each question
+        return [answer_span]  # Answer span, one for each question
 
     # Now, we implement our preprocessing. This involves tokenization,
     # mapping to token IDs, mapping to to token embeddings,
@@ -212,9 +208,7 @@ and outputs required by hte output module.
 """
 
 
-
 class MyModelModule(SimpleModelModule):
-
     # We'll define a constant here for the hidden size. You could also pass this
     # as part of the `shared_config.config` dict.
     HIDDEN_SIZE = 50
@@ -237,7 +231,7 @@ class MyModelModule(SimpleModelModule):
     def training_output_ports(self) -> Sequence[TensorPort]:
         return [Ports.loss]
 
-    def create_output(self, _, emb_question, question_length,
+    def create_output(self, emb_question, question_length,
                       emb_support, support_length):
         """
         Implements the "core" model: The TensorFlow subgraph which computes the
@@ -253,7 +247,6 @@ class MyModelModule(SimpleModelModule):
         """
 
         with tf.variable_scope("fast_qa", initializer=tf.contrib.layers.xavier_initializer()):
-
             # set shapes for inputs
             emb_question.set_shape([None, None, self.HIDDEN_SIZE])
             emb_support.set_shape([None, None, self.HIDDEN_SIZE])
@@ -268,14 +261,14 @@ class MyModelModule(SimpleModelModule):
 
             start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
                 self._output_layer(encoded_question, question_length,
-                                  encoded_support, support_length)
+                                   encoded_support, support_length)
 
             span = tf.concat([tf.expand_dims(predicted_start_pointer, 1), tf.expand_dims(predicted_end_pointer, 1)], 1)
 
             return start_scores, end_scores, span
 
     def _output_layer(self, encoded_question, question_length, encoded_support,
-                     support_length):
+                      support_length):
         """Output layer of our network:
         - The question is summarized using an attention mechanism (`question_state`).
         - The start scores are predicted via a two-layer NN with the element-wise
@@ -331,7 +324,7 @@ class MyModelModule(SimpleModelModule):
 
         return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer
 
-    def create_training_output(self, _, start_scores, end_scores, answer_span) \
+    def create_training_output(self, start_scores, end_scores, answer_span) \
             -> Sequence[TensorPort]:
         """Compute loss from start & end scores and the gold-standard `answer_span`."""
 
@@ -353,7 +346,6 @@ Since our model is a standard extractive QA model and since we used the standard
 our own.
 
 """
-
 
 """
 
@@ -378,6 +370,7 @@ we could load pre-trained embeddings here, such as GloVe.
 
 """
 
+
 def build_vocab(questions):
     """Build a vocabulary of random vectors."""
 
@@ -392,6 +385,7 @@ def build_vocab(questions):
 
     vocab = Vocab(emb=embeddings, init_from_embeddings=True)
     return vocab
+
 
 questions = [q for q, _ in data_set]
 shared_resources = SharedResources(build_vocab(questions))

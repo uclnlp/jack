@@ -9,13 +9,14 @@ from jtr.util.pipelines import transpose_dict_of_lists
 
 
 class ShuffleList:
-    def __init__(self,drawlist,qa):
+    def __init__(self, drawlist, qa):
         assert len(drawlist) > 0
         self.qa = qa
         self.drawlist = drawlist
         shuffle(self.drawlist)
         self.iter = self.drawlist.__iter__()
-    def next(self,q):
+
+    def next(self, q):
         try:
             avoided = False
             trial, max_trial = 0, 50
@@ -31,7 +32,7 @@ class ShuffleList:
             return next(self.iter)
 
 
-def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
+def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
     question_dataset = corpus[question_key]
     candidate_dataset = corpus[candidate_key]
     answer_dataset = corpus[answer_key]
@@ -40,7 +41,7 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
     for i in range(0, len(candidate_dataset)):
         question = question_dataset[i][0]
         candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
+        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
         posneg = [] + answers
         avoided = False
         trial, max_trial = 0, 50
@@ -58,9 +59,6 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
 
 
 class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
-    def __init__(self, shared_resources):
-        self.shared_resources = shared_resources
-
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         questions, answers = zip(*data)
         self.preprocess(questions, answers)
@@ -83,7 +81,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
         has_answers = answers is not None
         answers = answers or [None] * len(questions)
 
-        corpus = { "question": [], "candidates": [], "answers":[]}
+        corpus = {"question": [], "candidates": [], "answers": []}
         for x, y in zip(questions, answers):
 
             corpus["question"].append(x.question)
@@ -96,12 +94,11 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
 
-
         if has_answers:
             corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
             qanswers = {}
-            for i,q in enumerate(corpus['question']):
-                q0=q[0]
+            for i, q in enumerate(corpus['question']):
+                q0 = q[0]
                 if q0 not in qanswers:
                     qanswers[q0] = set()
                 a = corpus["answers"][i][0]
@@ -109,7 +106,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
             if not is_eval:
                 sl = ShuffleList(corpus["candidates"][0], qanswers)
                 corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
-                #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
+                # corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
 
         return transpose_dict_of_lists(corpus,
                                        ["question", "candidates"] +
@@ -152,37 +149,38 @@ class ModelFModelModule(SimpleModelModule):
     def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
-    def create_training_output(self,
-                               shared_resources: SharedResources,
-                               loss: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_training_output(self, loss: tf.Tensor) -> Sequence[tf.Tensor]:
         return loss,
 
     def create_output(self,
-                      shared_resources: SharedResources,
                       question: tf.Tensor,
                       atomic_candidates: tf.Tensor,
                       target_index: tf.Tensor) -> Sequence[tf.Tensor]:
-        repr_dim = shared_resources.config["repr_dim"]
+        repr_dim = self.shared_resources.config["repr_dim"]
         with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
                 "embeddings",
                 trainable=True, dtype="float32",
-                initializer=tf.random_uniform([len(shared_resources.vocab), repr_dim],-.1,.1))
+                initializer=tf.random_uniform([len(self.shared_resources.vocab), repr_dim], -.1, .1))
 
             embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
-            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, atomic_candidates))  # [batch_size, num_candidates, repr_dim]
-            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),1)  # [batch_size, 1, repr_dim]
-            #embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
-            #embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
-            logits = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
-            answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(logits-answer_score))
+            embedded_candidates = tf.nn.sigmoid(
+                tf.gather(embeddings, atomic_candidates))  # [batch_size, num_candidates, repr_dim]
+            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),
+                                             1)  # [batch_size, 1, repr_dim]
+            # embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
+            # embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
+            logits = tf.reduce_sum(tf.multiply(embedded_candidates, embedded_question),
+                                   2)  # [batch_size, num_candidates]
+            answer_score = tf.reduce_sum(tf.multiply(embedded_question, embedded_answer), 2)  # [batch_size, 1]
+            loss = tf.reduce_sum(tf.nn.softplus(logits - answer_score))
 
             return logits, loss
 
 
 class ModelFOutputModule(OutputModule):
     def __init__(self):
+        super().__init__()
         self.setup()
 
     def setup(self):
@@ -212,9 +210,9 @@ class KBPReader(JTReader):
     """
 
     def train2(self, optim,
-              training_set: Iterable[Tuple[QASetting, Answer]],
-              max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value, dataset_name=None):
+               training_set: Iterable[Tuple[QASetting, Answer]],
+               max_epochs=10, hooks=[],
+               l2=0.0, clip=None, clip_op=tf.clip_by_value, dataset_name=None):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -266,7 +264,7 @@ class KBPReader(JTReader):
             # calling post-epoch hooks
             for hook in hooks:
                 hook.at_epoch_end(i)
-                
+
     def train(self, optimizer,
               training_set: Iterable[Tuple[QASetting, List[Answer]]],
               max_epochs=10, hooks=[],
@@ -290,7 +288,6 @@ class KBPReader(JTReader):
         self.setup_from_data(training_set, dataset_name, "train")
         self.session.run([v.initializer for v in self.model_module.variables])
 
-        
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
@@ -316,7 +313,7 @@ class KBPReader(JTReader):
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             batches = self.input_module.batch_generator(training_set, is_eval=False, dataset_name=dataset_name,
-                                                    identifier='train')
+                                                        identifier='train')
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
 

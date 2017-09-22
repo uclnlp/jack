@@ -33,7 +33,8 @@ def test_fastqa():
 
     # create/setup reader
     shared_resources = SharedResources(vocab, config, embeddings)
-    fastqa_reader = readers.readers["fastqa_reader"](shared_resources)
+    fastqa_reader = readers.fastqa_reader()
+    fastqa_reader.configure_with_shared_resources(shared_resources)
     fastqa_reader.setup_from_data(data)
 
     answers = fastqa_reader(questions)

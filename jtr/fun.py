@@ -18,7 +18,7 @@ def simple_model_module(input_ports: Sequence[TensorPort],
 
     Returns: a decorator that turns functions into ModelModules.
     """
-    def create(shared_vocab_config, f, g):
+    def create(output_creator, training_output_creator):
         class MyModelModule(SimpleModelModule):
             @property
             def output_ports(self) -> Sequence[TensorPort]:
@@ -36,14 +36,14 @@ def simple_model_module(input_ports: Sequence[TensorPort],
             def training_output_ports(self) -> Sequence[TensorPort]:
                 return training_output_ports
 
-            def create_output(self, shared_resources: SharedResources, *tensors: tf.Tensor) -> Sequence[TensorPort]:
-                return f(shared_resources, *tensors)
+            def create_output(self, *tensors: tf.Tensor) -> Sequence[TensorPort]:
+                return output_creator(self.shared_resources, *tensors)
 
-            def create_training_output(self, shared_resources: SharedResources, *tensors: tf.Tensor)\
+            def create_training_output(self, *tensors: tf.Tensor)\
                     -> Sequence[TensorPort]:
-                return g(shared_resources, *tensors)
+                return training_output_creator(self.shared_resources, *tensors)
 
-        return MyModelModule(shared_vocab_config)
+        return MyModelModule()
 
     return create
 

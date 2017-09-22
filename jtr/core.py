@@ -334,6 +334,18 @@ class SharedResources:
             vocab = Vocab()
         return SharedResources(vocab, config, embeddings)
 
+    @staticmethod
+    def from_yaml(yaml_path: str) -> 'SharedResources':
+        """
+        Create a shared resources object based on a yaml file alone.
+        Args:
+            yaml_path: file path of the yaml file.
+
+        Returns:
+            SharedResources object configured based on yaml file.
+        """
+        return SharedResources.from_config(parent_config=yaml_path)
+
     def store(self, path):
         """
         Saves all attributes of this object.
@@ -378,7 +390,38 @@ class SharedResources:
                 self.embeddings = pickle.load(f)
 
 
-class InputModule:
+class ReaderModule:
+    """
+    Base class for modules in a reader. The primary functionality of this base class is to handle
+    shared resources.
+    """
+
+    def __init__(self):
+        self._shared_resources = None
+        self.vocab = None
+        self.config = None
+
+    @property
+    def shared_resources(self) -> SharedResources:
+        """
+        Each module has access to resources that are shared across modules in the reader, such as a vocab.
+        Returns: the shared resources.
+        """
+        return self._shared_resources
+
+    @shared_resources.setter
+    def shared_resources(self, shared_resources: SharedResources):
+        """
+        Sets the shared resources object for this module.
+        Args:
+            shared_resources: resources to be shared across modules.
+        """
+        self._shared_resources = shared_resources
+        self.vocab = shared_resources.vocab
+        self.config = shared_resources.config
+
+
+class InputModule(ReaderModule):
     """
     An input module processes inputs and turns them into tensors to be processed by the model module. Note that all
     setting up should be done in the setup method, NOT in the constructor. Only use the constructor to hand over
@@ -565,7 +608,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         return GeneratorWithRestart(make_generator)
 
 
-class ModelModule:
+class ModelModule(ReaderModule):
     """
     A model module encapsulates two tensorflow trees (possibly overlapping): a tree representing
     the answer prediction (to be processed by the outout module) and a tree representing the loss.
@@ -686,12 +729,8 @@ class SimpleModelModule(ModelModule):
     produce the TF graphs to create predictions and the training outputs, and define the ports.
     """
 
-    def __init__(self, shared_resources: SharedResources):
-        self.shared_resources = shared_resources
-
     @abstractmethod
-    def create_output(self, shared_resources: SharedResources,
-                      *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_output(self, *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output from input tensors corresponding to `input_ports`.
@@ -705,8 +744,7 @@ class SimpleModelModule(ModelModule):
         raise NotImplementedError
 
     @abstractmethod
-    def create_training_output(self, shared_resources: SharedResources,
-                               *training_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_training_output(self, *training_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces tensors only used
         during training given tensors corresponding to the ones defined by `training_input_ports`, which might include
@@ -725,16 +763,16 @@ class SimpleModelModule(ModelModule):
         old_variables = tf.global_variables()
         self._tensors = {d: d.create_placeholder() for d in self.input_ports}
         self._placeholders = dict(self._tensors)
-        output_tensors = self.create_output(self.shared_resources, *[self._tensors[port] for port in self.input_ports])
+        output_tensors = self.create_output(*[self._tensors[port] for port in self.input_ports])
         self._tensors.update(zip(self.output_ports, output_tensors))
         if is_training:
             self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
                                       if p not in self._placeholders and p not in self._tensors)
             self._tensors.update(self._placeholders)
             input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
-            training_output_tensors = self.create_training_output(self.shared_resources, *[input_target_tensors[port]
-                                                                                           for port in
-                                                                                           self.training_input_ports])
+            training_output_tensors = self.create_training_output(*[input_target_tensors[port]
+                                                                    for port in
+                                                                    self.training_input_ports])
             self._tensors.update(zip(self.training_output_ports, training_output_tensors))
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
@@ -768,7 +806,7 @@ class SimpleModelModule(ModelModule):
         return self._variables
 
 
-class OutputModule:
+class OutputModule(ReaderModule):
     """
     An output module takes the output (numpy) tensors of the model module and turns them into
     jack data structures.
@@ -814,18 +852,18 @@ class JTReader:
     """
 
     def __init__(self,
-                 shared_resources: SharedResources,
                  input_module: InputModule,
                  model_module: ModelModule,
                  output_module: OutputModule,
                  session: tf.Session = None,
                  is_train: bool = True):
-        self.shared_resources = shared_resources
+        self.shared_resources = None
         self.session = session
         self.output_module = output_module
         self.model_module = model_module
         self.input_module = input_module
         self.is_train = is_train
+        self.configuration = dict()
 
         if self.session is None:
             session_config = tf.ConfigProto(allow_soft_placement=True)
@@ -842,6 +880,19 @@ class JTReader:
         assert all(port in self.model_module.output_ports or port in self.input_module.output_ports
                    for port in self.output_module.input_ports), \
             "Module model output must match output module inputs"
+
+    def configure(self, **configuration):
+        self.configuration = configuration
+        assert self.shared_resources is None
+        self.shared_resources = SharedResources.from_config(**self.configuration)
+
+    def configure_with_shared_resources(self, shared_resources: SharedResources):
+        assert self.shared_resources is None
+        self.shared_resources = shared_resources
+
+    def configure_with_yaml(self, yaml_file_path: str):
+        assert self.shared_resources is None
+        self.shared_resources = SharedResources.from_yaml(yaml_file_path)
 
     def __call__(self, inputs: Sequence[QASetting]) -> Sequence[Answer]:
         """
@@ -953,6 +1004,9 @@ class JTReader:
         Args:
             data: training dataset
         """
+        self.input_module.shared_resources = self.shared_resources
+        self.model_module.shared_resources = self.shared_resources
+        self.output_module.shared_resources = self.shared_resources
         self.input_module.setup_from_data(data, dataset_name, identifier)
         self.input_module.setup()
         self.model_module.setup(self.is_train)

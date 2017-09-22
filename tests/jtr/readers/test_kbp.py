@@ -12,7 +12,6 @@ def test_kbp():
     questions = [question for question, _ in data]
 
     for model_name in ['transe', 'distmult', 'complex']:
-
         with tf.variable_scope(model_name):
             config = {
                 'batch_size': 1,
@@ -20,7 +19,8 @@ def test_kbp():
             }
 
             shared_resources = SharedResources(None, config)
-            reader = readers.readers['{}_reader'.format(model_name)](shared_resources)
+            reader = readers.get_reader_by_name('{}_reader'.format(model_name))
+            reader.configure_with_shared_resources(shared_resources)
             reader.setup_from_data(data)
 
             answers = reader(questions)

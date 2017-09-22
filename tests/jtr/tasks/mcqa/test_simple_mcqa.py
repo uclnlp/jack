@@ -36,7 +36,8 @@ def test_multi_support_fixed_class_inputs():
         (QASetting("Where is the cat?", ["the cat is on the mat."]), [Answer("mat")])
     ]
     shared_resources = SharedResources(Vocab(), {})
-    input_module = MultiSupportFixedClassInputs(shared_resources)
+    input_module = MultiSupportFixedClassInputs()
+    input_module.shared_resources = shared_resources
     input_module.setup_from_data(data_set)
 
     assert len(input_module.shared_resources.answer_vocab) == 1

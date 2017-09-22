@@ -12,8 +12,6 @@ import nltk
 
 
 class StreamingSingleSupportFixedClassInputs(InputModule):
-    def __init__(self, shared_vocab_config):
-        self.shared_resources = shared_vocab_config
 
     @property
     def training_ports(self) -> List[TensorPort]:

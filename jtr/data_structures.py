@@ -30,6 +30,9 @@ class Answer:
         self.span = span
         self.text = text
 
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class QASetting:
     """

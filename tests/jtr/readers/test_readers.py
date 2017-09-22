@@ -50,7 +50,8 @@ def smoke_test(reader_name):
                                                "dropout": 0.5,
                                                "batch_size": 1}, embeddings=embeddings)
 
-    reader = readers.readers[reader_name](shared_resources)
+    reader = readers.get_reader_by_name(reader_name)
+    reader.configure_with_shared_resources(shared_resources)
 
     reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=1)
 

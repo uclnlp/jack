@@ -36,22 +36,18 @@ FastQAAnnotation = NamedTuple('FastQAAnnotation', [
 
 
 class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
-    def __init__(self, shared_vocab_config):
-        assert isinstance(shared_vocab_config, SharedResources), \
-            "shared_resources for FastQAInputModule must be an instance of SharedResources"
-        self.shared_vocab_config = shared_vocab_config
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
         # create character vocab + word lengths + char ids per word
-        self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        self.shared_resources.config["char_vocab"] = char_vocab_from_vocab(self.shared_resources.vocab)
 
     def setup(self):
-        self.vocab = self.shared_vocab_config.vocab
-        self.config = self.shared_vocab_config.config
+        self.vocab = self.shared_resources.vocab
+        self.config = self.shared_resources.config
         self.dropout = self.config.get("dropout", 1)
-        self.emb_matrix = self.shared_vocab_config.embeddings.lookup
+        self.emb_matrix = self.shared_resources.embeddings.lookup
         self.default_vec = np.zeros([self.emb_matrix.shape[1]])
-        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+        self.char_vocab = self.shared_resources.config["char_vocab"]
 
     @property
     def batch_size(self):
@@ -197,13 +193,13 @@ fastqa_like_model_module_factory = simple_model_module(
     training_output_ports=[Ports.loss])
 
 
-def fastqa_like_with_min_crossentropy_loss_factory(shared_resources, f):
-    return fastqa_like_model_module_factory(shared_resources, f, no_shared_resources(xqa_min_crossentropy_loss))
+def fastqa_like_with_min_crossentropy_loss_factory(f):
+    return fastqa_like_model_module_factory(f, no_shared_resources(xqa_min_crossentropy_loss))
 
 
 # Very specialized and therefore not sharable  TF code for fast qa model.
-def fatqa_model_module(shared_vocab_config):
-    return fastqa_like_with_min_crossentropy_loss_factory(shared_vocab_config, fastqa_model)
+def fastqa_model_module():
+    return fastqa_like_with_min_crossentropy_loss_factory(fastqa_model)
 
 
 def fastqa_model(shared_vocab_config, emb_question, question_length,
