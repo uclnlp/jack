@@ -17,6 +17,7 @@ from typing import Mapping, Iterable, Generic, TypeVar, Optional
 
 import numpy as np
 import tensorflow as tf
+from sacred.optional import yaml
 
 from jtr.data_structures import *
 from jtr.input_output.embeddings import Embeddings
@@ -273,7 +274,8 @@ class FlatPorts:
 class SharedResources:
     """
     A class to provide and store generally shared resources, such as vocabularies,
-    across the reader sub-modules.
+    across the reader sub-modules. This should be the only object that is shared across
+    the sub-modules.
     """
 
     def __init__(self, vocab: Vocab = None, config: dict = None, embeddings: Embeddings = None):
@@ -291,6 +293,47 @@ class SharedResources:
         self.config = config or dict()
         self.vocab = vocab
 
+    @staticmethod
+    def from_config(embedding_file: str = None, embedding_format: str = "glove",
+                    vocab_from_embeddings: bool = False, parent_config: str = None, **parameters):
+        """
+        Creates a SharedResources object based on configuration parameters. If `embedding_file` is
+        provided, this also loads the corresponding embeddings.
+        Args:
+            parent_config: a yaml configuration file to inherit other configuration items from.
+            vocab_from_embeddings: should the vocab be determined by what's in the embeddings.
+            embedding_file: if specified, defines where the embeddings object should be loaded for.
+            embedding_format: determines the embedding file format.
+            **parameters: other parameters the reader will need.
+
+        Returns:
+            A SharedResources object with embeddings loaded if given, and a configuration object
+            that represents the arguments of this function.
+
+        """
+        config = {}
+        if parent_config is not None:
+            import jtr.util.util as util
+            config.update(util.load_yaml_recursively(parent_config))
+        config.update({
+            "embedding_file": embedding_file,
+            "embedding_format": embedding_format,
+            "vocab_from_embeddings": vocab_from_embeddings,
+            "parent_config": parent_config,
+            **parameters
+        })
+        config = {k: config[k] for k in config if config[k] is not None}
+        from jtr.input_output.embeddings import load_embeddings
+        if embedding_file is not None:
+            embeddings = load_embeddings(file=embedding_file, typ=embedding_format)
+        else:
+            embeddings = None
+        if vocab_from_embeddings:
+            vocab = Vocab.create_from_embeddings(embeddings)
+        else:
+            vocab = Vocab()
+        return SharedResources(vocab, config, embeddings)
+
     def store(self, path):
         """
         Saves all attributes of this object.
@@ -305,6 +348,9 @@ class SharedResources:
             yaml.dump(self.config, f)
         with open(path + "_vocab", 'wb') as f:
             pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
+        if "embedding_file" not in self.config:
+            with open(path + "_embeddings", 'wb') as f:
+                pickle.dump(self.embeddings, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
         """
@@ -314,6 +360,7 @@ class SharedResources:
         """
         config_path = path + "_config.yaml"
         vocab_path = path + "_vocab"
+        embeddings_path = path + "_embeddings"
         if os.path.exists(config_path):
             with open(config_path, 'rb') as f:
                 from sacred.optional import yaml
@@ -326,6 +373,9 @@ class SharedResources:
             if os.path.exists(embeddings_file):
                 from jtr.input_output.embeddings import load_embeddings
                 self.embeddings = load_embeddings(embeddings_file, embeddings_format)
+        else:
+            with open(embeddings_path, 'rb') as f:
+                self.embeddings = pickle.load(f)
 
 
 class InputModule:

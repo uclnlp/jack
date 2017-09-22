@@ -13,22 +13,27 @@ mcqa_readers = {}
 kbp_readers = {}
 
 
-
 def __reader(f):
-    readers.setdefault(f.__name__, f)
-    return f
+    def uses_no_shared_resources(shared_resources=None):
+        if shared_resources is None:
+            return f(SharedResources())
+        else:
+            return f(shared_resources)
+
+    readers.setdefault(f.__name__, uses_no_shared_resources)
+    return uses_no_shared_resources
 
 
 def __xqa_reader(f):
-    __reader(f)
-    xqa_readers.setdefault(f.__name__, f)
+    constructor = __reader(f)
+    xqa_readers.setdefault(f.__name__, constructor)
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
     return f
 
 
 def __mcqa_reader(f):
-    __reader(f)
-    mcqa_readers.setdefault(f.__name__, f)
+    constructor = __reader(f)
+    mcqa_readers.setdefault(f.__name__, constructor)
     eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
     # TODO eval hook
     return f
@@ -36,15 +41,15 @@ def __mcqa_reader(f):
 
 def __kbp_reader(f):
     from jtr.util.hooks import KBPEvalHook
-    __reader(f)
-    kbp_readers.setdefault(f.__name__, f)
+    constructor = __reader(f)
+    kbp_readers.setdefault(f.__name__, constructor)
     eval_hooks.setdefault(f.__name__, KBPEvalHook)
     return f
 
 
 def __genqa_reader(f):
-    __reader(f)
-    genqa_readers.setdefault(f.__name__, f)
+    constructor = __reader(f)
+    genqa_readers.setdefault(f.__name__, constructor)
     # TODO eval hook
     return f
 
@@ -103,7 +108,7 @@ def transe_reader(shared_resources: SharedResources):
 
 
 @__xqa_reader
-def fastqa_reader(shared_resources: SharedResources):
+def fastqa_reader(shared_resources: SharedResources = SharedResources()):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jtr.tasks.xqa.fastqa import FastQAInputModule, fatqa_model_module
     from jtr.tasks.xqa.shared import XQAOutputModule
@@ -136,7 +141,7 @@ def cbilstm_snli_reader(shared_resources: SharedResources):
 
     [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
-    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel,\
+    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
         EmptyOutputModule
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
@@ -172,6 +177,7 @@ def esim_snli_reader(shared_resources: SharedResources):
     model_module = ESIMModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
+
 
 @__mcqa_reader
 def cbilstm_snli_streaming_reader(shared_resources: SharedResources):

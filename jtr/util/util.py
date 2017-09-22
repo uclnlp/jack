@@ -5,6 +5,7 @@ import h5py
 import time
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -115,3 +116,16 @@ class Timer(object):
         self.cumulative_secs.pop(name)
         self.current_ticks.pop(name, None)
         return value
+
+
+def load_yaml_recursively(conf_file):
+    from sacred.optional import yaml
+    with open(conf_file, "rb") as f:
+        loaded = yaml.load(f)
+    if "parent_config" in loaded:
+        return {
+            **load_yaml_recursively(loaded["parent_config"]),
+            **loaded
+        }
+    else:
+        return loaded
