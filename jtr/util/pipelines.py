@@ -47,7 +47,7 @@ to be used to create custom pipelines
 def pipeline(corpus, vocab=None, target_vocab=None, candidate_vocab=None,
              emb=None, freeze=False, normalize=False, tokenization=True, lowercase=True,
              negsamples=0, sepvocab=True, test_time=False, cache_fun=False, map_to_target=True):
-    vocab = vocab or Vocab(emb=emb)
+    vocab = vocab or Vocab()
     if sepvocab:
         target_vocab = target_vocab or Vocab(unk=None)
         candidate_vocab = candidate_vocab or Vocab(unk=None)

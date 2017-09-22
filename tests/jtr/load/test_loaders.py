@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jtr.io import SNLI2jtr_v1
+from jtr.input_output import SNLI2jtr_v1
 
 import subprocess
 import pytest
@@ -16,11 +16,11 @@ def pytest_collection_modifyitems(items):
 
 def get_pipeline_script_cmdcall_snli_converter():
     """
-    Creates a bash cmd to io the SNLI data into our format
+    Creates a bash cmd to input_output the SNLI data into our format
     :return:
     """
-    # io snli files into jtr format
-    cmd = "python3 jtr/io/SNLI2jtr_v1.py"
+    # input_output snli files into jtr format
+    cmd = "python3 jtr/input_output/SNLI2jtr_v1.py"
     return cmd
 
 

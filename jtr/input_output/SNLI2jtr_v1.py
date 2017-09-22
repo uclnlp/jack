@@ -10,8 +10,8 @@ __candidate_labels = ['entailment', 'neutral', 'contradiction']
 __candidates = [{'text': cl} for cl in __candidate_labels]
 
 
-def convert_snli(multisnli_file):
-    """ io SNLI files into jtr format.
+def convert_snli(snli_file_jsonl):
+    """ input_output SNLI files into jtr format.
     Data source: http://nlp.stanford.edu/projects/snli/snli_1.0.zip
     Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
     (the *.txt files contain the same data in a different format)
@@ -22,38 +22,31 @@ def convert_snli(multisnli_file):
     Notes:
         - instances with gold labels '-' are removed from the corpus
     """
-    assert 'multinli_0.9' in multisnli_file and multisnli_file.endswith('.txt'),\
-        "input should be the multinli_0.9_X.txt files (X=test/train/dev)"
+    assert 'snli_1.0' in snli_file_jsonl and snli_file_jsonl.endswith('.jsonl'),\
+        "input should be the snli_1.0_X.jsonl files (X=test/train/dev)"
 
-    with open(multisnli_file, 'r') as f:
-        data = [__convert_snli_instance(line.strip().strip("\n").split("\t")) for line in f.readlines()]
+    with open(snli_file_jsonl, 'r') as f:
+        data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
 
-        return {'meta': 'MultiSNLI',
+        return {'meta': 'SNLI',
                 'globals': {'candidates': __candidates},
                 'instances': [d for d in data if d]  # filter out invalid ones
                 }
 
 
-def __convert_snli_instance(lspl):
-    if len(lspl) != 15:
-        return None
+def __convert_snli_instance(instance):
     try:
-        gold_label, _, _, _, _, sentence1, sentence2, promptID, pairID, genre, _, _, _, _, _ = lspl
-        if gold_label == "gold_label":
-            return None
-
-        if not gold_label in __candidate_labels:
+        if not instance['gold_label'] in __candidate_labels:
             raise IOError('invalid gold label')
         queb = {}
-        queb['id'] = pairID
-        queb['genre'] = genre,
+        queb['id'] = instance['pairID']
         queb['support'] = [
-            {'id': promptID, 'text': sentence1}]
+            {'id': instance['captionID'], 'text': instance['sentence1']}]
         queb['questions'] = [
-            {'question': sentence2,
+            {'question': instance['sentence2'],
              'answers': [
                  # {'index': __candidate_labels.index(instance['gold_label'])},
-                 {'text': __candidate_labels[__candidate_labels.index(gold_label)]}]}]
+                 {'text': __candidate_labels[__candidate_labels.index(instance['gold_label'])]}]}]
 
         return queb
 
@@ -66,41 +59,40 @@ def main():
     if len(sys.argv) == 2:
         corpus = convert_snli(sys.argv[1])
     else:
-        for corpus_name in ["dev_matched", "train"]:
-            corpus = convert_snli("../../data/MultiNLI/multinli_0.9_%s.txt" % corpus_name)
-            with open("../../data/MultiNLI/multinli_0.9_%s_jtr.json" % corpus_name, 'w') as outfile:
-                print("Create file snli_0.9_%s_jtr.txt" % corpus_name)
+        for corpus_name in ["dev", "train", "test"]:
+            corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_%s.jsonl" % corpus_name)
+            with open("./data/SNLI/snli_1.0/snli_1.0_%s_jtr_v1.json" % corpus_name, 'w') as outfile:
+                print("Create file snli_1.0_%s_jtr.json" % corpus_name)
                 json.dump(corpus, outfile, indent=2)
 
         # create train set test data
-        corpus = convert_snli("../../data/MultiNLI/multinli_0.9_train.txt")
+        corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_train.jsonl")
         corpus['instances'] = corpus['instances'][:2000]
-        with open("../../tests/test_data/MultiNLI/2000_samples_train_jtr.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/2000_samples_train_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         corpus['instances'] = corpus['instances'][:100]
-        with open("../../tests/test_data/MultiNLI/overfit.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/overfit.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create snippets and overfit test data
         corpus['instances'] = corpus['instances'][:10]
-        with open("../../data/MultiNLI/multinli_0.9_debug_jtr.json", 'w') as outfile:
+        with open("./data/SNLI/snli_1.0/snli_1.0_debug_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-        with open("../../data/MultiNLI/snippet.jtr.json", 'w') as outfile:
+        with open("./data/SNLI/snippet.jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create dev set test data
-        corpus = convert_snli("../../data/MultiNLI/multinli_0.9_dev_matched.txt")
+        corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_dev.jsonl")
         corpus['instances'] = corpus['instances'][:1000]
-        with open("../../tests/test_data/MultiNLI/1000_samples_dev_jtr.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/1000_samples_dev_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
 
         # create dev set test data
-        corpus = convert_snli("../../data/MultiNLI/multinli_0.9_train.txt")
+        corpus = convert_snli("./data/SNLI/snli_1.0/snli_1.0_test.jsonl")
         corpus['instances'] = corpus['instances'][:2000]
-        with open("../../tests/test_data/MultiNLI/2000_samples_train_jtr.json", 'w') as outfile:
+        with open("./tests/test_data/SNLI/2000_samples_test_jtr_v1.json", 'w') as outfile:
             json.dump(corpus, outfile, indent=2)
-
 
 if __name__ == "__main__":
     main()

@@ -19,11 +19,11 @@ import numpy as np
 import tensorflow as tf
 
 from jtr.data_structures import *
+from jtr.input_output.embeddings import Embeddings
 from jtr.util.batch import shuffle_and_batch
 from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)
-
 
 _rng = random.Random(1234)
 
@@ -73,7 +73,6 @@ class TensorPort:
         return self.name > port.name
 
     def __repr__(self):
-
         return "<TensorPort (%s)>" % self.name
 
 
@@ -277,18 +276,18 @@ class SharedResources:
     across the reader sub-modules.
     """
 
-    def __init__(self, vocab: Vocab = None, config: dict = None):
+    def __init__(self, vocab: Vocab = None, config: dict = None, embeddings: Embeddings = None):
         """
         Several shared resources are initialised here, even if no arguments
         are passed when calling __init__.
         The instantiated objects will be filled by the InputModule.
-        - self.config holds hyperparameter values and general configuration
+        Args:
+            vocab: serves as default Vocabulary object.
+            config: holds hyperparameter values and general configuration
             parameters.
-        - self.vocab serves as default Vocabulary object.
-        - self.answer_vocab is by default the same as self.vocab. However,
-            this attribute can be changed by the InputModule, e.g. by setting
-            sepvocab=True when calling the setup_from_data() of the InputModule.
+            embeddings: embeddings for the input module (todo: is this really ever used outside of the input module?)
         """
+        self.embeddings = embeddings
         self.config = config or dict()
         self.vocab = vocab
 
@@ -398,6 +397,8 @@ class InputModule:
 
 
 AnnotationType = TypeVar('AnnotationType')
+
+
 class OnlineInputModule(InputModule, Generic[AnnotationType]):
     """InputModule that preprocesses datasets on the fly.
 

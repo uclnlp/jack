@@ -298,7 +298,7 @@
     return low;
   };
 
-  // Safely io anything iterable into a real, live array.
+  // Safely input_output anything iterable into a real, live array.
   _.toArray = function(iterable) {
     if (!iterable)                return [];
     if (iterable.toArray)         return iterable.toArray();

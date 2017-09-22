@@ -1,7 +1,7 @@
 import re
 
 from jtr.core import *
-from jtr.io.embeddings import Vocabulary, Embeddings
+from jtr.input_output.embeddings import Vocabulary, Embeddings
 from jtr.tasks.xqa.shared import XQAPorts, XQAOutputModule
 from jtr.tasks.xqa.util import prepare_data, stack_and_pad
 from jtr.tf_fun.rnn import birnn_with_projection

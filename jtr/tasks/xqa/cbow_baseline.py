@@ -60,8 +60,8 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         self.vocab = self.shared_vocab_config.vocab
         self.config = self.shared_vocab_config.config
         self.dropout = self.config.get("dropout", 1)
-        self.emb_matrix = self.vocab.emb.lookup
-        self.default_vec = np.zeros([self.vocab.emb_length])
+        self.emb_matrix = self.shared_vocab_config.embeddings.lookup
+        self.default_vec = np.zeros([self.shared_vocab_config.embeddings.lookup.shape[1]])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
 
     @property
@@ -127,7 +127,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) \
-                -> List[CBowAnnotation]:
+            -> List[CBowAnnotation]:
 
         if answers is None:
             answers = [None] * len(questions)
@@ -135,7 +135,6 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         annotations = [self.preprocess_instance(q, a, is_eval)
                        for q, a in zip(questions, answers)]
         return [a for a in annotations if a is not None]
-
 
     def preprocess_instance(self, question: QASetting,
                             answers: Optional[List[Answer]],
@@ -180,7 +179,6 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
             answertype_span=answertype_span,
             answer_spans=answer_spans if has_answers else None,
         )
-
 
     def create_batch(self, annotations: List[CBowAnnotation],
                      is_eval: bool, with_answers: bool) \

@@ -16,7 +16,7 @@ CONJ = '|||||'
 
 
 def convert_snli(snli_file_jsonl,support=False):
-    """ io SNLI files into jtr format.
+    """ input_output SNLI files into jtr format.
     Data source: http://nlp.stanford.edu/projects/snli/snli_1.0.zip
     Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
     (the *.txt files contain the same data in a different format)

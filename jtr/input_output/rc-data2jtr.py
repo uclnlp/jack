@@ -153,7 +153,7 @@ def main():
     parser.add_argument('dataset', choices=['cnn', 'dailymail'],
                         help="which dataset to access: cnn or dailymail")
     parser.add_argument('split', choices=['train', 'dev', 'test'],
-                        help="which split of the dataset to io: train, dev or test")
+                        help="which split of the dataset to input_output: train, dev or test")
     parser.add_argument('-s', '--snippet', action="store_true",
                         help="Export a snippet (first 5 instances) instead of the full file")
     args = parser.parse_args()

@@ -9,7 +9,6 @@ import shutil
 import sys
 import tensorflow as tf
 
-
 from time import time
 from sacred import Experiment
 from sacred.arg_parser import parse_args
@@ -17,10 +16,10 @@ from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
 from jtr import readers
-from jtr.io.stream_processors import dataset2stream_processor
+from jtr.input_output.stream_processors import dataset2stream_processor
 from jtr.core import SharedResources
 from jtr.data_structures import load_labelled_data, load_labelled_data_stream
-from jtr.io.embeddings.embeddings import load_embeddings, Embeddings
+from jtr.input_output.embeddings.embeddings import load_embeddings, Embeddings
 from jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 from jtr.util.vocab import Vocab
 
@@ -41,6 +40,7 @@ def fetch_parents(current_path, parents=[]):
         return fetch_parents(tmp_ex.current_run.config["parent_config"], [current_path] + parents)
     else:
         return [current_path] + parents
+
 
 configs = fetch_parents(path)
 logger.info("Loading {}".format(configs))
@@ -144,16 +144,14 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
 
-    emb = embeddings
-
-    vocab = Vocab(emb=emb, init_from_embeddings=vocab_from_embeddings)
+    vocab = Vocab()
 
     # build JTReader
     checkpoint()
 
     parsed_config = ex.current_run.config
 
-    shared_resources = SharedResources(vocab, parsed_config)
+    shared_resources = SharedResources(vocab, parsed_config, embeddings)
     reader = readers.readers[model](shared_resources)
     checkpoint()
 
@@ -199,7 +197,6 @@ def main(batch_size,
         write_metrics_to=write_metrics_to,
         dataset_name=dataset_name,
         dataset_identifier=('dev' if use_streaming else None)))
-
 
     # Train
     reader.train(optimizer, training_set=train_data,

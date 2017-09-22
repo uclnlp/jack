@@ -2,11 +2,14 @@ from jtr.core import *
 from jtr.data_structures import *
 
 from jtr.util.hdf5_processing.pipeline import Pipeline, DatasetStreamer
-from jtr.util.hdf5_processing.processors import AddToVocab, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, Tokenizer, NaiveNCharTokenizer
-from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, RemoveLineOnJsonValueCondition, ToLower
+from jtr.util.hdf5_processing.processors import AddToVocab, SaveLengthsToState, ConvertTokenToIdx, StreamToHDF5, \
+    Tokenizer, NaiveNCharTokenizer
+from jtr.util.hdf5_processing.processors import JsonLoaderProcessors, DictKey2ListMapper, \
+    RemoveLineOnJsonValueCondition, ToLower
 from jtr.util.hdf5_processing.batching import StreamBatcher
 
 import nltk
+
 
 class StreamingSingleSupportFixedClassInputs(InputModule):
     def __init__(self, shared_vocab_config):
@@ -34,11 +37,12 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
             -> Mapping[TensorPort, np.ndarray]:
         pass
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None) -> SharedResources:
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None,
+                        identifier=None) -> SharedResources:
         # tokenize and convert to hdf5
         # 1. Setup pipeline to save lengths and generate vocabulary
         tokenizer = nltk.tokenize.WordPunctTokenizer()
-        p = Pipeline(dataset_name, delete_all_previous_data=identifier=='train')
+        p = Pipeline(dataset_name, delete_all_previous_data=identifier == 'train')
         if identifier == 'train':
             p.add_sent_processor(ToLower())
             p.add_sent_processor(Tokenizer(tokenizer.tokenize))
@@ -80,10 +84,10 @@ class StreamingSingleSupportFixedClassInputs(InputModule):
                 feed_dict = {
                     Ports.Input.multiple_support: str2var['support'].reshape(batch_size, 1, -1),
                     Ports.Input.question: str2var["input"],
-                    Ports.Target.target_index:  str2var["target"],
-                    Ports.Input.question_length : str2var['input_length'],
-                    Ports.Input.support_length : str2var['support_length'].reshape(batch_size, 1),
-                    Ports.Input.sample_id : str2var['index']
+                    Ports.Target.target_index: str2var["target"],
+                    Ports.Input.question_length: str2var['input_length'],
+                    Ports.Input.support_length: str2var['support_length'].reshape(batch_size, 1),
+                    Ports.Input.sample_id: str2var['index']
                 }
 
                 yield feed_dict

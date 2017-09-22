@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from jtr.io.embeddings.vocabulary import Vocabulary
+from jtr.input_output.embeddings.vocabulary import Vocabulary
 
 import logging
 

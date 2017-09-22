@@ -25,3 +25,10 @@ def test_vocab():
 
     assert v.get_ids_pretrained() == []
     assert v.get_ids_oov() == [0, 1, 2, 3, 4, 5]
+
+# def test_store_vocab_without_embeddings():
+#     from jtr.input_output.embeddings import load_embeddings
+#     embeddings = load_embeddings("responder/data/GloVe/glove.6B.50d.zip")
+#     v = vocab.Vocab(=embeddings)
+#     pass
+

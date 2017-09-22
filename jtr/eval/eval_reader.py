@@ -3,7 +3,7 @@ import json
 import tensorflow as tf
 from jtr.data_structures import convert2qasettings
 
-from jtr.io.embeddings import load_embeddings
+from jtr.input_output.embeddings import load_embeddings
 from jtr.readers import readers, eval_hooks
 from jtr.util.vocab import Vocab
 

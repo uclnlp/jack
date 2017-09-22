@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from jtr.io.embeddings.word_to_vec import load_word2vec
-from jtr.io.embeddings.glove import load_glove
-from jtr.io.embeddings.fasttext import load_fasttext
+from jtr.input_output.embeddings.word_to_vec import load_word2vec
+from jtr.input_output.embeddings.glove import load_glove
+from jtr.input_output.embeddings.fasttext import load_fasttext
 import zipfile
 
 

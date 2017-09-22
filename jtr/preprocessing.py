@@ -4,8 +4,7 @@ from jtr.util.pipelines import pipeline
 
 
 def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamples=0,
-                             tokenization=True, sepvocab=True):
-
+                             tokenization=True, sepvocab=True, emb=None):
     corpus = {"support": [], "question": [], "candidates": [], "ids": []}
     if not test_time:
         corpus["answers"] = []
@@ -20,8 +19,8 @@ def preprocess_with_pipeline(data, vocab, target_vocab, test_time=False, negsamp
             assert len(y) == 1
             corpus["answers"].append([y[0].text])
 
-    corpus, train_vocab, answer_vocab, train_candidates_vocab =\
-        pipeline(corpus, vocab, target_vocab, sepvocab=sepvocab, test_time=test_time,
+    corpus, train_vocab, answer_vocab, train_candidates_vocab = \
+        pipeline(corpus, vocab, target_vocab, sepvocab=sepvocab, test_time=test_time, emb=emb,
                  tokenization=tokenization, cache_fun=True, map_to_target=False, normalize=True,
                  **({'negsamples': negsamples} if not test_time else {}))
 

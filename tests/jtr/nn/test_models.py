@@ -22,8 +22,8 @@ models2dataset['dam_snli_reader'] = 'SNLI'
 models2dataset['esim_snli_reader'] = 'SNLI'
 models2dataset['cbilstm_snli_reader'] = 'SNLI'
 
-overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15}
-small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5}
+overfit_epochs = {'SNLI': 15, 'SNLI_stream': 15}
+small_data_epochs = {'SNLI': 5, 'SNLI_stream': 5}
 
 modelspecifics = {}
 modelspecifics['cbilstm_snli_streaming_reader'] = ' use_streaming=True batch_size=50 dataset_name=snli'
@@ -61,7 +61,8 @@ generate_names()
 
 @pytest.mark.parametrize("model_name, epochs, use_small_data, dataset", testdata, ids=ids)
 def test_model(model_name, epochs, use_small_data, dataset):
-    '''Tests a model via training_pipeline.py by comparing with expected_result.txt
+    """
+    Tests a model via training_pipeline.py by comparing with expected_result.txt
     Args:
         model_name (string): The model name as defined in the
                    training_pipeline.py dictionary.
@@ -73,7 +74,7 @@ def test_model(model_name, epochs, use_small_data, dataset):
                 DATASET_TO_CMD_CALL_STRING. This value is also used as the name
                 to the test_result folder.
     Returns: None
-    '''
+    """
     # Setup paths and filenames for the expected_results file
     test_result_path = join(SMALLDATA_PATH if use_small_data else OVERFIT_PATH, dataset, model_name)
     metric_filepath = join(test_result_path, datetime_test_result_filename())
@@ -93,15 +94,15 @@ def test_model(model_name, epochs, use_small_data, dataset):
         test_file = 'tests/test_data/{0}/test.json'.format(dataset)
 
     # Setup the process call command
-    cmd = 'CUDA_VISIBLE_DEVICES=-1 ' # we only test on the CPU
-    cmd += "python3 jtr/train_reader.py with train={0} dev={1} test={2}" .format(train_file, dev_file, test_file,)
+    cmd = 'CUDA_VISIBLE_DEVICES=-1 '  # we only test on the CPU
+    cmd += "python3 jtr/train_reader.py with train={0} dev={1} test={2}".format(train_file, dev_file, test_file, )
     cmd += ' write_metrics_to={0}'.format(metric_filepath)
     cmd += ' model={0}'.format(model_name)
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' learning_rate_decay=1.0'
     if model_name in modelspecifics:
         cmd += modelspecifics[model_name]
-    print('command: '+cmd)
+    print('command: ' + cmd)
     # Execute command and wait for results
     t0 = time.time()
     try:
@@ -126,7 +127,7 @@ def test_model(model_name, epochs, use_small_data, dataset):
 
 
 def load_and_parse_test_results(filepath):
-    '''This method loads and parses a metric file writen by EvalHook.'''
+    """This method loads and parses a metric file writen by EvalHook."""
     name_value_metric_pair = []
     runtime = 0
     with open(filepath) as f:
@@ -139,9 +140,9 @@ def load_and_parse_test_results(filepath):
 
 
 def datetime_test_result_filename():
-    '''Generates a string of the format testresult_CURRENT_DATE-TIME'''
+    """Generates a string of the format testresult_CURRENT_DATE-TIME"""
     timestr = time.strftime("%Y%m%d-%H%M%S")
     return 'testresult_' + timestr
 
 
-test_model("cbilstm_snli_reader",1,False,"SNLI")
+test_model("cbilstm_snli_reader", 1, False, "SNLI")
