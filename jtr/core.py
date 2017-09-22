@@ -285,7 +285,7 @@ class SharedResources:
             vocab: serves as default Vocabulary object.
             config: holds hyperparameter values and general configuration
             parameters.
-            embeddings: embeddings for the input module (todo: is this really ever used outside of the input module?)
+            embeddings: embeddings for the input module
         """
         self.embeddings = embeddings
         self.config = config or dict()
@@ -300,8 +300,11 @@ class SharedResources:
         """
         if not os.path.exists(os.path.dirname(path)):
             os.mkdir(os.path.dirname(path))
-        with open(path, 'wb') as f:
-            pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
+        with open(path + "_config.yaml", 'w') as f:
+            from sacred.optional import yaml
+            yaml.dump(self.config, f)
+        with open(path + "_vocab", 'wb') as f:
+            pickle.dump(self.vocab, f, pickle.HIGHEST_PROTOCOL)
 
     def load(self, path):
         """
@@ -309,9 +312,20 @@ class SharedResources:
         Args:
             path: path to shared resources
         """
-        if os.path.exists(path):
-            with open(path, 'rb') as f:
-                self.__dict__.update(pickle.load(f))
+        config_path = path + "_config.yaml"
+        vocab_path = path + "_vocab"
+        if os.path.exists(config_path):
+            with open(config_path, 'rb') as f:
+                from sacred.optional import yaml
+                self.config = yaml.load(f)
+        with open(vocab_path, 'rb') as f:
+            self.vocab = pickle.load(f)
+        if 'embedding_file' in self.config:
+            embeddings_file = self.config['embedding_file']
+            embeddings_format = self.config['embedding_format']
+            if os.path.exists(embeddings_file):
+                from jtr.input_output.embeddings import load_embeddings
+                self.embeddings = load_embeddings(embeddings_file, embeddings_format)
 
 
 class InputModule:

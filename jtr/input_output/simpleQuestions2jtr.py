@@ -1,5 +1,5 @@
 import json
-import io
+import input_output
 
 
 def create_snippet(file_path, first_n=5):
@@ -13,7 +13,7 @@ def create_jtr_snippet(file_path):
 
 def convert_simplequestions(file_path, first_n=None):
     instances = []
-    f = io.open(file_path, "r")
+    f = input_output.open(file_path, "r")
     i = 0
     for l in f:
         i += 1

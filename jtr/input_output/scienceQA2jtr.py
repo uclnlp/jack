@@ -1,12 +1,12 @@
 import json
-import io
+import input_output
 import random
 
 def convert_scienceCloze_to_jtr(scienceQAFile):
 
     instances = []
 
-    f = io.open(scienceQAFile, "r", encoding="utf-8")
+    f = input_output.open(scienceQAFile, "r", encoding="utf-8")
 
     for l in f:
         l = l.strip().lower().split("\t")  # do the lower case preprocessing here
