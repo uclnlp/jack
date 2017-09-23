@@ -402,6 +402,6 @@ model_module = MyModelModule(shared_resources)
 output_module = XQAOutputModule(shared_resources)
 reader = JTReader(shared_resources, input_module, model_module, output_module)
 
-reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=1)
+reader.train_basic(tf.train.AdamOptimizer(), data_set, max_epochs=1)
 
 answers = reader(questions)

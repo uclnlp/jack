@@ -118,6 +118,17 @@ class Timer(object):
         return value
 
 
+class Duration(object):
+
+    def __init__(self):
+        self.t0 = time.time()
+        self.t = time.time()
+
+    def __call__(self):
+        logger.info('Time since last checkpoint : {0:.2g}min'.format((time.time() - self.t) / 60.))
+        self.t = time.time()
+
+
 def load_yaml_recursively(conf_file):
     from sacred.optional import yaml
     with open(conf_file, "rb") as f:

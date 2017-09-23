@@ -17,7 +17,6 @@ from typing import Mapping, Iterable, Generic, TypeVar, Optional
 
 import numpy as np
 import tensorflow as tf
-from sacred.optional import yaml
 
 from jtr.data_structures import *
 from jtr.input_output.embeddings import Embeddings
@@ -643,6 +642,7 @@ class ModelModule(ReaderModule):
 
         return ret
 
+    @property
     @abstractmethod
     def output_ports(self) -> Sequence[TensorPort]:
         """
@@ -650,6 +650,7 @@ class ModelModule(ReaderModule):
         """
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """
@@ -657,6 +658,7 @@ class ModelModule(ReaderModule):
         """
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def training_input_ports(self) -> Sequence[TensorPort]:
         """
@@ -812,6 +814,7 @@ class OutputModule(ReaderModule):
     jack data structures.
     """
 
+    @property
     @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """Returns: correspond to a subset of output ports of model module."""
@@ -908,7 +911,7 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+    def process_outputs(self, dataset: Sequence[Tuple[QASetting, List[Answer]]], batch_size: int, debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.batch_generator are processed in order and do not get shuffled during with
@@ -936,11 +939,35 @@ class JTReader:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
-    def train(self, optimizer,
+    def train(self,
               training_set: Iterable[Tuple[QASetting, List[Answer]]],
-              max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              dataset_name=None):
+              dev_set: Iterable[Tuple[QASetting, List[Answer]]],
+              test_set: Iterable[Tuple[QASetting, List[Answer]]] = None):
+        """
+        Trains the reader, using parameters in the configuration in shared resources.
+        Args:
+            training_set: the training set.
+            dev_set: the development set. Used for early stopping.
+            test_set: an optional test set.
+        """
+        from jtr.train_tools import train_reader
+        arguments = {
+            'train_data': training_set,
+            'dev_data': dev_set,
+            'test_data': test_set,
+            **self.shared_resources.config,
+            'reader': self,
+        }
+        import inspect
+        arg_names = inspect.signature(train_reader).parameters.keys()
+        filtered_arguments = {name: (arguments[name] if name in arguments else None) for name in arg_names}
+        train_reader(**filtered_arguments)
+
+    def train_basic(self, optimizer,
+                    training_set: Iterable[Tuple[QASetting, List[Answer]]],
+                    max_epochs=10, hooks=[],
+                    l2=0.0, clip=None, clip_op=tf.clip_by_value,
+                    dataset_name=None):
         """
         This method trains the reader (and changes its state).
         

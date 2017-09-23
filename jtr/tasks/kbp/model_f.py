@@ -265,11 +265,11 @@ class KBPReader(JTReader):
             for hook in hooks:
                 hook.at_epoch_end(i)
 
-    def train(self, optimizer,
-              training_set: Iterable[Tuple[QASetting, List[Answer]]],
-              max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              dataset_name=None):
+    def train_basic(self, optimizer,
+                    training_set: Iterable[Tuple[QASetting, List[Answer]]],
+                    max_epochs=10, hooks=[],
+                    l2=0.0, clip=None, clip_op=tf.clip_by_value,
+                    dataset_name=None):
         """
         This method trains the reader (and changes its state).
         
