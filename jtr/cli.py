@@ -29,7 +29,7 @@ def main():
         dev_data = None
         test_data = None
         # todo: train should accept train and dev and maybe test data
-        reader.train_basic(train_data, dev_data, test_data, train_params=config)
+        reader.train(train_data, dev_data, test_data, train_params=config)
         reader.store()
 
 

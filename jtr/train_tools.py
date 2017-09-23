@@ -59,9 +59,9 @@ def train_reader(reader, train_data, dev_data, test_data, batch_size, clip_value
         dataset_name=dataset_name,
         dataset_identifier=('dev' if use_streaming else None)))
     # Train
-    reader.train_basic(optimizer, training_set=train_data,
-                       max_epochs=epochs, hooks=hooks,
-                       l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
+    reader.train(optimizer, training_set=train_data,
+                 max_epochs=epochs, hooks=hooks,
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
     # Test final model
     if test_data is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](

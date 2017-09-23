@@ -24,7 +24,7 @@ def test_simple_mcqa():
     # example_reader.setup_from_data(data_set)
 
     # todo: chose optimizer based on config
-    example_reader.train_basic(tf.train.AdamOptimizer(), data_set, max_epochs=10)
+    example_reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=10)
 
     answers = example_reader(questions)
 

@@ -939,10 +939,10 @@ class JTReader:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
-    def train(self,
-              training_set: Iterable[Tuple[QASetting, List[Answer]]],
-              dev_set: Iterable[Tuple[QASetting, List[Answer]]],
-              test_set: Iterable[Tuple[QASetting, List[Answer]]] = None):
+    def auto_train(self,
+                   training_set: Iterable[Tuple[QASetting, List[Answer]]],
+                   dev_set: Iterable[Tuple[QASetting, List[Answer]]],
+                   test_set: Iterable[Tuple[QASetting, List[Answer]]] = None):
         """
         Trains the reader, using parameters in the configuration in shared resources.
         Args:
@@ -963,11 +963,11 @@ class JTReader:
         filtered_arguments = {name: (arguments[name] if name in arguments else None) for name in arg_names}
         train_reader(**filtered_arguments)
 
-    def train_basic(self, optimizer,
-                    training_set: Iterable[Tuple[QASetting, List[Answer]]],
-                    max_epochs=10, hooks=[],
-                    l2=0.0, clip=None, clip_op=tf.clip_by_value,
-                    dataset_name=None):
+    def train(self, optimizer,
+              training_set: Iterable[Tuple[QASetting, List[Answer]]],
+              max_epochs=10, hooks=[],
+              l2=0.0, clip=None, clip_op=tf.clip_by_value,
+              dataset_name=None):
         """
         This method trains the reader (and changes its state).
         

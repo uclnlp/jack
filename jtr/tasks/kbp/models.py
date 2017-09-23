@@ -171,10 +171,10 @@ class KBPReader(JTReader):
     (output_model). These layers are called in-turn on a given input (list).
     """
 
-    def train_basic(self, optimizer,
-                    training_set: Iterable[Tuple[QASetting, Answer]],
-                    max_epochs=10, hooks=[],
-                    l2=0.0, clip=None, clip_op=tf.clip_by_value):
+    def train(self, optimizer,
+              training_set: Iterable[Tuple[QASetting, Answer]],
+              max_epochs=10, hooks=[],
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:

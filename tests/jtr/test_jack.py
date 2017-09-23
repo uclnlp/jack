@@ -24,7 +24,7 @@ def test_example_reader_overfit():
     dev_data = train_data
     test_data = train_data
 
-    reader.train_basic(train_data, dev_data, test_data)
+    reader.train(train_data, dev_data, test_data)
 
     answer = reader([example_input])
 
