@@ -399,6 +399,7 @@ class ReaderModule:
         self._shared_resources = None
         self.vocab = None
         self.config = None
+        self.embeddings = None
 
     @property
     def shared_resources(self) -> SharedResources:
@@ -418,6 +419,7 @@ class ReaderModule:
         self._shared_resources = shared_resources
         self.vocab = shared_resources.vocab
         self.config = shared_resources.config
+        self.embeddings = shared_resources.embeddings
 
 
 class InputModule(ReaderModule):
