@@ -6,6 +6,8 @@ import tensorflow as tf
 import numpy as np
 from time import time
 import logging
+import random
+import pandas as pd
 
 # jack
 import jtr.jack.readers as readers
@@ -18,6 +20,7 @@ from jtr.jack.core import \
     SharedVocabAndConfig, JTReader, SharedResources, Sequence
 from jtr.jack.tf_fun import rnn, simple
 
+from jtr.jack.train.hooks import TrainingHook
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
@@ -26,6 +29,137 @@ decoder_symbols = {
     'EOS': "<EOS>",
     'SOS': "<SOS>",
 }
+
+
+class MyDecoderTestHook(TrainingHook):
+    def __init__(self, reader, model_path):
+        self._reader = reader
+        self.saver = None
+        self.model_path = model_path
+        self.iteration = 0
+        self.decode_session = None
+
+    def saveTrainingModel(self):
+        if (self.saver is None):
+            self.saver = tf.train.Saver(tf.global_variables())
+        self.saver.save(
+            self.reader.sess,
+            os.path.join(self.model_path, "tf_global_variables.ckpt"),
+            global_step=self.iteration
+        )
+
+    def buildInferenceModel(self):
+        # We won't be using this -- keeping it for now, but
+        # throwing an error to make sure we do not use it ;-)
+        ckpt = tf.train.latest_checkpoint(self.model_path)
+        self.saver.restore()
+        raise NotImplementedError
+
+    def __decode_sentence(self, s):
+        id2sym = self.reader.shared_resources.vocab.id2sym
+        x = [id2sym[i] for i in s]
+        return x
+
+    def __get_decoded_sentence(self, coded_array, index):
+        s = self.__decode_sentence(coded_array[index])
+        try:
+            eos_position = s.index('<EOS>')
+        except ValueError:  # no <EOS> found
+            eos_position = len(s) - 2
+        str = ' '.join(s[0:eos_position + 1])
+        return str
+
+    def __printRandomInstanceDecoding(self, rand_i,
+                                      question, support, target, sample_eval):
+        model = self.reader.model_module
+        print("### SAMPLE TEST DECODING RESULT @ iteration {}".format(
+            self.iteration))
+        print("### sample question: {}".format(
+            self.__get_decoded_sentence(question, rand_i))
+        )
+        print("### sample support: {}".format(
+            self.__get_decoded_sentence(support, rand_i))
+        )
+        target_str = model.answer_id2sym[target[rand_i]]
+        print("### sample target: {}".format(
+            target_str)
+        )
+        for i in sample_eval:
+            print("### decoder: {} --> {})".format(
+                model.decoder_name[i],
+                self.__get_decoded_sentence(sample_eval[i], rand_i)
+            ))
+
+    def saveLatestBatchDecoding(self, epoch):
+        # 1. get current batch as feed dict
+        # 2. eval decoder outputs with feed dict
+        model = self.reader.model_module
+        decoder_sample_ids = model.decoder_outputs_infer_sample_id
+        decoder_outputs = model.decoder_outputs_infer
+        # 'support' =  the sentence
+        # 'question' = the test sentence
+        # ...
+        feed_dict = self.reader.latest_feed_dict
+        keylist = list(feed_dict.keys())
+        tensornames = [x.name for x in feed_dict.keys()]
+        support_index = [
+            i for i, s in enumerate(tensornames) if 'support:' in s][0]
+        question_index = [
+            i for i, s in enumerate(tensornames) if 'question:' in s][0]
+        target_index = [
+            i for i, s in enumerate(tensornames) if 'targets:' in s][0]
+        support = feed_dict.get(keylist[support_index])
+        question = feed_dict.get(keylist[question_index])
+        target = feed_dict.get(keylist[target_index])
+
+        assert(
+            len(support) == len(question)), \
+            "support and question array have different lengths " \
+            "(question: {}, support: {}".format(len(question), len(support))
+
+        sample_eval = {}
+        for i in decoder_sample_ids:
+            # 1. eval outputs.sample_id
+            sample_eval[i] = decoder_sample_ids[i].eval(
+                session=self.reader.sess,
+                feed_dict=self.reader.latest_feed_dict)
+
+        # just for fun, print a random instance's decodings
+        n = len(support) - 1
+        rand_i = random.randint(0, n)
+        self.__printRandomInstanceDecoding(
+            rand_i, question, support, target, sample_eval)
+
+        # now do the really useful stuff: write all batch decodings to a file
+        batch_decoded = [{"question": self.__get_decoded_sentence(question, i),
+                          "support": self.__get_decoded_sentence(support, i),
+                          "target": model.answer_id2sym[target[i]]}
+                         for i in range(0, n)]
+        batch_decoded_df = pd.DataFrame(batch_decoded)
+        for i in sample_eval:
+            decoded_samples = [self.__get_decoded_sentence(sample_eval[i], j)
+                               for j in range(0, n)]
+            batch_decoded_df[model.decoder_name[i]] = pd.Series(decoded_samples)
+        output_fname = os.path.join(self.model_path,
+                                    "decoded_batch_at_epoch_{:03d}.json".format(epoch))
+        batch_decoded_df.to_json(output_fname, orient='records')
+
+
+
+    def at_iteration_end(self, epoch: int, loss: float, **kwargs):
+        self.iteration += 1
+
+    def at_epoch_end(self, epoch: int, **kwargs):
+        # Save model so we can reconstruct later
+        self.saveTrainingModel()
+        self.saveLatestBatchDecoding(epoch)
+        # TODO(chris): save test batch result in full as JSON
+        # TODO(chris): show a real *test* result, not the train data?
+
+    @property
+    def reader(self) -> JTReader:
+        return self._reader
+
 
 
 class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
@@ -73,9 +207,11 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
 
         # Add decoder for each target class
         # 1. Get parameters
+        self.decoder_name = {}
         self.decoder_outputs_train = {}
         self.decoder_logits_train = {}
         self.decoder_outputs_infer = {}
+        self.decoder_outputs_infer_sample_id = {}
         self.decoder_targets = Q  # vocab indices, no embeddings (no Q_seq)!
         self.decoder_target_lengths = Q_lengths
         sos_id = shared_resources.vocab.sym2id[decoder_symbols['SOS']]
@@ -97,7 +233,7 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
                 i, self.answer_id2sym[i])
             # In decoder, the 'targets', which will serve as inputs
             # are the embeddings of the input sequence tokens
-            outputs_train, logits_train, outputs_infer = \
+            outputs_train, logits_train, outputs_infer, outputs_infer_sample_id = \
                 rnn.dynamic_lstm_decoder(
                     targets=Q_seq, target_lengths=Q_lengths,
                     output_size=shared_resources.config['repr_dim'],
@@ -110,9 +246,11 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
                     scope=decoder_name,
                     drop_keep_prob=keep_prob
                 )
+            self.decoder_name[i] = decoder_name
             self.decoder_outputs_train[i] = outputs_train
             self.decoder_logits_train[i] = logits_train
             self.decoder_outputs_infer[i] = outputs_infer
+            self.decoder_outputs_infer_sample_id[i] = outputs_infer_sample_id
 
         return outputs
 
@@ -128,7 +266,6 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
             ), name='predictor_loss')
 
         # PART 2. Interpretation loss from decoder
-        print("### Whoa! What's all this about? (Need to add loss...)")
         num_classes = len(self.decoder_outputs_train)
         # (a) convert labels to one hot vector
         labels_hot = tf.one_hot(
@@ -160,6 +297,7 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
             num_decoder_symbols,
             scope='interpretation_loss'
         )
+        # TODO(chris) make hyperparameter 0.1
         return [loss + 0.1 * interpretation_loss]
 
 
@@ -247,6 +385,8 @@ def main():
     parser.add_argument('--seed', default=1337, type=int, help='random seed')
     parser.add_argument('--write_metrics_to', default=None, type=str,
                         help='Filename to log the metrics of the EvalHooks')
+    parser.add_argument('--model_path', default=None, type=str,
+                        help='Path (dir) where to write model checkpoint')
 
     args = parser.parse_args()
 
@@ -267,6 +407,7 @@ def main():
     dropout, l2, clip_value = args.dropout, args.l2, args.clip_value
     epochs = args.epochs
     write_metrics_to = args.write_metrics_to
+    model_path = args.model_path
 
     tf.set_random_seed(args.seed)
     np.random.seed(args.seed)
@@ -350,7 +491,8 @@ def main():
             summary_writer=sw, write_metrics_to=write_metrics_to),
         readers.eval_hooks['snli_reader'](
             reader, test_set, epoch_interval=args.epochs,
-            info='test', write_metrics_to=write_metrics_to)
+            info='test', write_metrics_to=write_metrics_to),
+        MyDecoderTestHook(reader, model_path)
     ]
     if args.debug:
         hooks.append(readers.eval_hooks['snli_reader'](

@@ -771,6 +771,7 @@ class JTReader:
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
+                self.latest_feed_dict = feed_dict
                 _, current_loss = self.sess.run([min_op, loss], feed_dict=feed_dict)
 
                 for hook in hooks:

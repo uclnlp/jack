@@ -173,7 +173,7 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
         target_lengths (tensor):  The lengths of the targets sentences, of size
                                   [batch_size]
         output_size (int):  Size of the LSTM state of the reader.
-        decoder_vocab:  Neural vocab of targets
+        decoder_embedding_matrix:  This is TODO(chris)
         max_decoder_inference_seq_len:  Maximum length for inference decoder
         start_of_sequence_id: Set to decoder_vocab.get_id(decoder_symbol_start)
         end_of_sequence_id:  Set to decoder_vocab.get_id(decoder_symbol_end)
@@ -251,38 +251,46 @@ def dynamic_lstm_decoder(targets, target_lengths, output_size,
             impute_finished=True,
             maximum_iterations=max_decoder_inference_seq_len
         )
+        # we actually only need the decoder output sequences
         decoder_outputs_train = decoder_outputs_train.rnn_output
 
         # FIXME: why does def instead of lambda not work?
+        # TODO(chris): rather use output_layer directly in dynamic_decode()?
         # def output_fn(x):
         output_fn = lambda x: layers.linear(x, num_decoder_symbols,
                                             scope=varscope)
         decoder_logits_train = tf.map_fn(output_fn,
                                          decoder_outputs_train)
 
-        # Decoder model for testing [not validated yet ;-)]
-        decoder_outputs_infer = None
-        if (False):
-            decoder_helper_infer = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                embedding=decoder_embedding_matrix,
-                start_tokens=tf.tile([start_of_sequence_id], [tf.shape(targets)[0]]),
-                end_token=end_of_sequence_id
-            )
-            decoder_infer = tf.contrib.seq2seq.BasicDecoder(
-                cell=decoder_cell,
-                helper=decoder_helper_infer,
-                initial_state=decoder_input
-            )
-            decoder_outputs_infer, decoder_state_infer, _ = tf.contrib.seq2seq.dynamic_decode(
-                decoder=decoder_infer,
-                output_time_major=False,
-                impute_finished=True,
-                maximum_iterations=max_decoder_inference_seq_len
-            )
+        # Decoder model for testing
+        # start_tokens =  array of length of target sequence,
+        #                 filled with start of sequence id
+        decoder_helper_infer = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+            embedding=decoder_embedding_matrix,
+            start_tokens=tf.tile([start_of_sequence_id], [tf.shape(targets)[0]]),
+            end_token=end_of_sequence_id
+        )
+        decoder_infer = tf.contrib.seq2seq.BasicDecoder(
+            cell=decoder_cell,
+            helper=decoder_helper_infer,
+            initial_state=decoder_input
+        )
+        # TODO(chris): should we add projection layer, like for training?
+        decoder_outputs_infer, decoder_state_infer, _ = tf.contrib.seq2seq.dynamic_decode(
+            decoder=decoder_infer,
+            output_time_major=False,
+            impute_finished=True,
+            maximum_iterations=max_decoder_inference_seq_len
+        )
+        # we will save the decoder output token ID sequences as well
+        decoder_outputs_infer_sample_id = decoder_outputs_infer.sample_id
+        # we again need the decoder output sequences
+        decoder_outputs_infer = decoder_outputs_infer.rnn_output
 
         return (decoder_outputs_train,
                 decoder_logits_train,
-                decoder_outputs_infer)
+                decoder_outputs_infer,
+                decoder_outputs_infer_sample_id)
 
 
 def dynamic_lstm_decoder_loss(decoder_logits_train,
@@ -332,7 +340,10 @@ def dynamic_lstm_decoder_loss(decoder_logits_train,
         labels_flat = tf.reshape(labels_trunc, [-1])
 
         # Now get weight matrix...
-        # symbol of item i should be given weight 1/sequence_length(item i)
+        # Symbol of item i should be given weight 1/sequence_length(item i):
+        # eventually, each training *instance* will be given equal weight,
+        # rather than each *symbol* from every training instance (which may
+        # obviously vary in length).
         ones = tf.ones_like(target_lengths, dtype=tf.float32)
         label_weights = tf.where(
             tf.not_equal(target_lengths, 0),
