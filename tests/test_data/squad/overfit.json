@@ -1,0 +1,3382 @@
+{
+  "meta": {
+    "source": "dev-v1.1.json"
+  },
+  "instances": [
+    {
+      "support": [
+        {
+          "text": "The right to create private schools in Germany is in Article 7, Paragraph 4 of the Grundgesetz and cannot be suspended even in a state of emergency. It is also not possible to abolish these rights. This unusual protection of private schools was implemented to protect these schools from a second Gleichschaltung or similar event in the future. Still, they are less common than in many other countries. Overall, between 1992 and 2008 the percent of pupils in such schools in Germany increased from 6.1% to 7.8% (including rise from 0.5% to 6.1% in the former GDR). Percent of students in private high schools reached 11.1%."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What article of the Grundgesetz grants the right to make private schools?",
+            "id": "57274a1edd62a815002e9a9a"
+          },
+          "answers": [
+            {
+              "text": "7",
+              "span": [
+                61,
+                62
+              ]
+            },
+            {
+              "text": "7",
+              "span": [
+                61,
+                62
+              ]
+            },
+            {
+              "text": "7",
+              "span": [
+                61,
+                62
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The prospect of what event compelled the protection of German private schools?",
+            "id": "57274a1edd62a815002e9a9b"
+          },
+          "answers": [
+            {
+              "text": "second Gleichschaltung",
+              "span": [
+                289,
+                311
+              ]
+            },
+            {
+              "text": "a second Gleichschaltung",
+              "span": [
+                287,
+                311
+              ]
+            },
+            {
+              "text": "a second Gleichschaltung",
+              "span": [
+                287,
+                311
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What percentage of German students attended private schools in 2008?",
+            "id": "57274a1edd62a815002e9a9c"
+          },
+          "answers": [
+            {
+              "text": "7.8",
+              "span": [
+                505,
+                508
+              ]
+            },
+            {
+              "text": "7.8%",
+              "span": [
+                505,
+                509
+              ]
+            },
+            {
+              "text": "7.8",
+              "span": [
+                505,
+                508
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was the percentage of Germans attending private high schools in 2008?",
+            "id": "57274a1edd62a815002e9a9d"
+          },
+          "answers": [
+            {
+              "text": "11.1",
+              "span": [
+                616,
+                620
+              ]
+            },
+            {
+              "text": "11.1%",
+              "span": [
+                616,
+                621
+              ]
+            },
+            {
+              "text": "11.1",
+              "span": [
+                616,
+                620
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In 1992, what percentage of East German students attended private schools?",
+            "id": "57274a1edd62a815002e9a9e"
+          },
+          "answers": [
+            {
+              "text": "0.5",
+              "span": [
+                531,
+                534
+              ]
+            },
+            {
+              "text": "0.5%",
+              "span": [
+                531,
+                535
+              ]
+            },
+            {
+              "text": "6.1",
+              "span": [
+                497,
+                500
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Hospital pharmacies can often be found within the premises of the hospital. Hospital pharmacies usually stock a larger range of medications, including more specialized medications, than would be feasible in the community setting. Most hospital medications are unit-dose, or a single dose of medicine. Hospital pharmacists and trained pharmacy technicians compound sterile products for patients including total parenteral nutrition (TPN), and other medications given intravenously. This is a complex process that requires adequate training of personnel, quality assurance of products, and adequate facilities. Several hospital pharmacies have decided to outsource high risk preparations and some other compounding functions to companies who specialize in compounding. The high cost of medications and drug-related technology, combined with the potential impact of medications and pharmacy services on patient-care outcomes and patient safety, make it imperative that hospital pharmacies perform at the highest level possible."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Where are many hospital pharmacies located?",
+            "id": "5726e313f1498d1400e8eeb2"
+          },
+          "answers": [
+            {
+              "text": "within the premises of the hospital",
+              "span": [
+                39,
+                74
+              ]
+            },
+            {
+              "text": "premises of the hospital",
+              "span": [
+                50,
+                74
+              ]
+            },
+            {
+              "text": "within the premises of the hospital",
+              "span": [
+                39,
+                74
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In what form are most hospital medications?",
+            "id": "5726e313f1498d1400e8eeb3"
+          },
+          "answers": [
+            {
+              "text": "unit-dose, or a single dose of medicine",
+              "span": [
+                260,
+                299
+              ]
+            },
+            {
+              "text": "unit-dose",
+              "span": [
+                260,
+                269
+              ]
+            },
+            {
+              "text": "unit-dose, or a single dose of medicine",
+              "span": [
+                260,
+                299
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What types of pharmacy functions have begun to be outsourced?",
+            "id": "5726e313f1498d1400e8eeb4"
+          },
+          "answers": [
+            {
+              "text": "high risk preparations and some other compounding functions",
+              "span": [
+                663,
+                722
+              ]
+            },
+            {
+              "text": "high risk preparations and some other compounding functions",
+              "span": [
+                663,
+                722
+              ]
+            },
+            {
+              "text": "high risk preparations and some other compounding functions",
+              "span": [
+                663,
+                722
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is one factor that increases the importance of the pharmacy performing at a high level?",
+            "id": "5726e313f1498d1400e8eeb5"
+          },
+          "answers": [
+            {
+              "text": "The high cost of medications and drug-related technology",
+              "span": [
+                767,
+                823
+              ]
+            },
+            {
+              "text": "high cost of medications",
+              "span": [
+                771,
+                795
+              ]
+            },
+            {
+              "text": "high cost of medications and drug-related technology",
+              "span": [
+                771,
+                823
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What are some advantages of hospital pharmacies?",
+            "id": "5726e313f1498d1400e8eeb6"
+          },
+          "answers": [
+            {
+              "text": "Hospital pharmacies usually stock a larger range of medications, including more specialized medications",
+              "span": [
+                76,
+                179
+              ]
+            },
+            {
+              "text": "more specialized medications",
+              "span": [
+                151,
+                179
+              ]
+            },
+            {
+              "text": "stock a larger range of medications, including more specialized medications",
+              "span": [
+                104,
+                179
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Luther's translation used the variant of German spoken at the Saxon chancellery, intelligible to both northern and southern Germans. He intended his vigorous, direct language to make the Bible accessible to everyday Germans, \"for we are removing impediments and difficulties so that other people may read it without hindrance.\""
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Where was the language Luther used in his translations spoken?",
+            "id": "56f86d30a6d7ea1400e17605"
+          },
+          "answers": [
+            {
+              "text": "Saxon chancellery",
+              "span": [
+                62,
+                79
+              ]
+            },
+            {
+              "text": "Saxon chancellery",
+              "span": [
+                62,
+                79
+              ]
+            },
+            {
+              "text": "variant of German spoken at the Saxon chancellery,",
+              "span": [
+                30,
+                80
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Which Germans could understand the language Luther used?",
+            "id": "56f86d30a6d7ea1400e17606"
+          },
+          "answers": [
+            {
+              "text": "northern and southern",
+              "span": [
+                102,
+                123
+              ]
+            },
+            {
+              "text": "northern and southern",
+              "span": [
+                102,
+                123
+              ]
+            },
+            {
+              "text": "both northern and southern Germans",
+              "span": [
+                97,
+                131
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What group did Luther want to understand his works?",
+            "id": "56f86d30a6d7ea1400e17607"
+          },
+          "answers": [
+            {
+              "text": "everyday Germans",
+              "span": [
+                207,
+                223
+              ]
+            },
+            {
+              "text": "everyday Germans",
+              "span": [
+                207,
+                223
+              ]
+            },
+            {
+              "text": "everyday Germans",
+              "span": [
+                207,
+                223
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Why did he want to make the language accessible to people?",
+            "id": "56f86d30a6d7ea1400e17608"
+          },
+          "answers": [
+            {
+              "text": "read it without hindrance",
+              "span": [
+                300,
+                325
+              ]
+            },
+            {
+              "text": "may read it without hindrance",
+              "span": [
+                296,
+                325
+              ]
+            },
+            {
+              "text": "removing impediments and difficulties so that other people may read it without hindrance",
+              "span": [
+                237,
+                325
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "To promote accessibility of the works, what did Luther remove?",
+            "id": "56f86d30a6d7ea1400e17609"
+          },
+          "answers": [
+            {
+              "text": "impediments and difficulties",
+              "span": [
+                246,
+                274
+              ]
+            },
+            {
+              "text": "impediments and difficulties",
+              "span": [
+                246,
+                274
+              ]
+            },
+            {
+              "text": "impediments",
+              "span": [
+                246,
+                257
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "While many homes in the neighborhood date back to the 1930s or before, the neighborhood is also home to several public housing developments built between the 1960s and 1990s by the Fresno Housing Authority. The US Department of Housing and Urban Development has also built small subdivisions of single-family homes in the area for purchase by low-income working families. There have been numerous attempts to revitalize the neighborhood, including the construction of a modern shopping center on the corner of Fresno and B streets, an aborted attempt to build luxury homes and a golf course on the western edge of the neighborhood, and some new section 8 apartments have been built along Church Ave west of Elm St. Cargill Meat Solutions and Foster Farms both have large processing facilities in the neighborhood, and the stench from these (and other small industrial facilities) has long plagued area residents. The Fresno Chandler Executive Airport is also on the West Side. Due to its position on the edge of the city and years of neglect by developers, is not a true \"inner-city\" neighborhood, and there are many vacant lots, strawberry fields and vineyards throughout the neighborhood. The neighborhood has very little retail activity, aside from the area near Fresno Street and State Route 99 Freeway (Kearney Palm Shopping Center, built in the late 1990s) and small corner markets scattered throughout."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "When were the public housing developments built in the neighborhood?",
+            "id": "5725f190ec44d21400f3d76f"
+          },
+          "answers": [
+            {
+              "text": "between the 1960s and 1990s",
+              "span": [
+                146,
+                173
+              ]
+            },
+            {
+              "text": "between the 1960s and 1990s",
+              "span": [
+                146,
+                173
+              ]
+            },
+            {
+              "text": "between the 1960s and 1990s",
+              "span": [
+                146,
+                173
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "On which corner is the shopping center located?",
+            "id": "5725f190ec44d21400f3d770"
+          },
+          "answers": [
+            {
+              "text": "Fresno and B streets",
+              "span": [
+                510,
+                530
+              ]
+            },
+            {
+              "text": "Fresno and B streets",
+              "span": [
+                510,
+                530
+              ]
+            },
+            {
+              "text": "Fresno and B streets",
+              "span": [
+                510,
+                530
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What are the two processing facilities in the neighborhood?",
+            "id": "5725f190ec44d21400f3d771"
+          },
+          "answers": [
+            {
+              "text": "Cargill Meat Solutions and Foster Farms",
+              "span": [
+                715,
+                754
+              ]
+            },
+            {
+              "text": "Cargill Meat Solutions and Foster Farms",
+              "span": [
+                715,
+                754
+              ]
+            },
+            {
+              "text": "Cargill Meat Solutions and Foster Farms",
+              "span": [
+                715,
+                754
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where is the airport located?",
+            "id": "5725f190ec44d21400f3d772"
+          },
+          "answers": [
+            {
+              "text": "the West Side",
+              "span": [
+                962,
+                975
+              ]
+            },
+            {
+              "text": "West Side",
+              "span": [
+                966,
+                975
+              ]
+            },
+            {
+              "text": "on the West Side",
+              "span": [
+                959,
+                975
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How much retail activity does the neighborhood have?",
+            "id": "5725f190ec44d21400f3d773"
+          },
+          "answers": [
+            {
+              "text": "very little",
+              "span": [
+                1212,
+                1223
+              ]
+            },
+            {
+              "text": "very little",
+              "span": [
+                1212,
+                1223
+              ]
+            },
+            {
+              "text": "very little",
+              "span": [
+                1212,
+                1223
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The flora of the city may be considered very rich in species. The species richness is mainly due to the location of Warsaw within the border region of several big floral regions comprising substantial proportions of close-to-wilderness areas (natural forests, wetlands along the Vistula) as well as arable land, meadows and forests. Bielany Forest, located within the borders of Warsaw, is the remaining part of the Masovian Primeval Forest. Bielany Forest nature reserve is connected with Kampinos Forest. It is home to rich fauna and flora. Within the forest there are three cycling and walking trails. Other big forest area is Kabaty Forest by the southern city border. Warsaw has also two botanic gardens: by the \u0141azienki park (a didactic-research unit of the University of Warsaw) as well as by the Park of Culture and Rest in Powsin (a unit of the Polish Academy of Science)."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Why is Warsaw's flora very rich in species?",
+            "id": "573368e54776f41900660a53"
+          },
+          "answers": [
+            {
+              "text": "location of Warsaw",
+              "span": [
+                104,
+                122
+              ]
+            },
+            {
+              "text": "location of Warsaw",
+              "span": [
+                104,
+                122
+              ]
+            },
+            {
+              "text": "location",
+              "span": [
+                104,
+                112
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where is Bielany Forest located?",
+            "id": "573368e54776f41900660a54"
+          },
+          "answers": [
+            {
+              "text": "within the borders of Warsaw",
+              "span": [
+                357,
+                385
+              ]
+            },
+            {
+              "text": "Warsaw",
+              "span": [
+                379,
+                385
+              ]
+            },
+            {
+              "text": "within the borders of Warsaw",
+              "span": [
+                357,
+                385
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the Bielany Forest the last remnant of?",
+            "id": "573368e54776f41900660a55"
+          },
+          "answers": [
+            {
+              "text": "Masovian Primeval Forest",
+              "span": [
+                416,
+                440
+              ]
+            },
+            {
+              "text": "Masovian Primeval Forest",
+              "span": [
+                416,
+                440
+              ]
+            },
+            {
+              "text": "Masovian Primeval Forest",
+              "span": [
+                416,
+                440
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What forest is by Warsaw's southern border?",
+            "id": "573368e54776f41900660a56"
+          },
+          "answers": [
+            {
+              "text": "Kabaty",
+              "span": [
+                630,
+                636
+              ]
+            },
+            {
+              "text": "Kabaty Forest",
+              "span": [
+                630,
+                643
+              ]
+            },
+            {
+              "text": "Kabaty",
+              "span": [
+                630,
+                636
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many botanical gardens does Warsaw have?",
+            "id": "573368e54776f41900660a57"
+          },
+          "answers": [
+            {
+              "text": "two",
+              "span": [
+                689,
+                692
+              ]
+            },
+            {
+              "text": "two",
+              "span": [
+                689,
+                692
+              ]
+            },
+            {
+              "text": "two",
+              "span": [
+                689,
+                692
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The complexity class P is often seen as a mathematical abstraction modeling those computational tasks that admit an efficient algorithm. This hypothesis is called the Cobham\u2013Edmonds thesis. The complexity class NP, on the other hand, contains many problems that people would like to solve efficiently, but for which no efficient algorithm is known, such as the Boolean satisfiability problem, the Hamiltonian path problem and the vertex cover problem. Since deterministic Turing machines are special non-deterministic Turing machines, it is easily observed that each problem in P is also member of the class NP."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What complexity class is characterized by a computational tasks and efficient algorithms?",
+            "id": "56e1dc62cd28a01900c67bca"
+          },
+          "answers": [
+            {
+              "text": "P",
+              "span": [
+                21,
+                22
+              ]
+            },
+            {
+              "text": "P",
+              "span": [
+                21,
+                22
+              ]
+            },
+            {
+              "text": "P",
+              "span": [
+                21,
+                22
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What hypothesis is associated with the complexity class of P viewed as a mathematical abstraction with efficient algorithmic functionality?",
+            "id": "56e1dc62cd28a01900c67bcb"
+          },
+          "answers": [
+            {
+              "text": "Cobham\u2013Edmonds thesis",
+              "span": [
+                167,
+                188
+              ]
+            },
+            {
+              "text": "Cobham\u2013Edmonds thesis",
+              "span": [
+                167,
+                188
+              ]
+            },
+            {
+              "text": "Cobham\u2013Edmonds thesis",
+              "span": [
+                167,
+                188
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What complexity class is commonly characterized by unknown algorithms to enhance solvability?",
+            "id": "56e1dc62cd28a01900c67bcc"
+          },
+          "answers": [
+            {
+              "text": "NP",
+              "span": [
+                211,
+                213
+              ]
+            },
+            {
+              "text": "NP",
+              "span": [
+                211,
+                213
+              ]
+            },
+            {
+              "text": "NP",
+              "span": [
+                211,
+                213
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is an example of a problem that rests within the NP complexity class?",
+            "id": "56e1dc62cd28a01900c67bcd"
+          },
+          "answers": [
+            {
+              "text": "Boolean satisfiability problem",
+              "span": [
+                361,
+                391
+              ]
+            },
+            {
+              "text": "Boolean satisfiability problem",
+              "span": [
+                361,
+                391
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In what theoretical machine is it confirmed that a problem in P belies membership in the NP class?",
+            "id": "56e1dc62cd28a01900c67bce"
+          },
+          "answers": [
+            {
+              "text": "Turing machines",
+              "span": [
+                472,
+                487
+              ]
+            },
+            {
+              "text": "deterministic Turing machines",
+              "span": [
+                458,
+                487
+              ]
+            },
+            {
+              "text": "deterministic Turing machines",
+              "span": [
+                458,
+                487
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Western medicine was also practiced in China by the Nestorian Christians of the Yuan court, where it was sometimes labeled as huihui or Muslim medicine. The Nestorian physician Jesus the Interpreter founded the Office of Western Medicine in 1263 during the reign of Kublai. Huihui doctors staffed at two imperial hospitals were responsible for treating the imperial family and members of the court. Chinese physicians opposed Western medicine because its humoral system contradicted the yin-yang and wuxing philosophy underlying traditional Chinese medicine. No Chinese translation of Western medical works is known, but it is possible that the Chinese had access to Avicenna's The Canon of Medicine."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What was huihui?",
+            "id": "572881d34b864d1900164a5a"
+          },
+          "answers": [
+            {
+              "text": "Muslim medicine",
+              "span": [
+                136,
+                151
+              ]
+            },
+            {
+              "text": "Muslim medicine",
+              "span": [
+                136,
+                151
+              ]
+            },
+            {
+              "text": "Muslim medicine",
+              "span": [
+                136,
+                151
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who founded the Office of Western Medicine?",
+            "id": "572881d34b864d1900164a5b"
+          },
+          "answers": [
+            {
+              "text": "Jesus the Interpreter",
+              "span": [
+                177,
+                198
+              ]
+            },
+            {
+              "text": "Jesus the Interpreter",
+              "span": [
+                177,
+                198
+              ]
+            },
+            {
+              "text": "Jesus the Interpreter",
+              "span": [
+                177,
+                198
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When was the Office of Western Medicine founded?",
+            "id": "572881d34b864d1900164a5c"
+          },
+          "answers": [
+            {
+              "text": "1263",
+              "span": [
+                241,
+                245
+              ]
+            },
+            {
+              "text": "1263",
+              "span": [
+                241,
+                245
+              ]
+            },
+            {
+              "text": "1263",
+              "span": [
+                241,
+                245
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What aspect of Western medicine did the Chinese dislike?",
+            "id": "572881d34b864d1900164a5d"
+          },
+          "answers": [
+            {
+              "text": "its humoral system",
+              "span": [
+                451,
+                469
+              ]
+            },
+            {
+              "text": "its humoral system",
+              "span": [
+                451,
+                469
+              ]
+            },
+            {
+              "text": "humoral system",
+              "span": [
+                455,
+                469
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What philosophies underlay Chinese medicine?",
+            "id": "572881d34b864d1900164a5e"
+          },
+          "answers": [
+            {
+              "text": "yin-yang and wuxing",
+              "span": [
+                487,
+                506
+              ]
+            },
+            {
+              "text": "yin-yang and wuxing",
+              "span": [
+                487,
+                506
+              ]
+            },
+            {
+              "text": "yin-yang and wuxing philosophy",
+              "span": [
+                487,
+                517
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The Lobata have a pair of lobes, which are muscular, cuplike extensions of the body that project beyond the mouth. Their inconspicuous tentacles originate from the corners of the mouth, running in convoluted grooves and spreading out over the inner surface of the lobes (rather than trailing far behind, as in the Cydippida). Between the lobes on either side of the mouth, many species of lobates have four auricles, gelatinous projections edged with cilia that produce water currents that help direct microscopic prey toward the mouth. This combination of structures enables lobates to feed continuously on suspended planktonic prey."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What does the lobata have pair of?",
+            "id": "57265aaf5951b619008f706b"
+          },
+          "answers": [
+            {
+              "text": "lobes",
+              "span": [
+                26,
+                31
+              ]
+            },
+            {
+              "text": "lobes",
+              "span": [
+                26,
+                31
+              ]
+            },
+            {
+              "text": "lobes",
+              "span": [
+                26,
+                31
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What are auricles?",
+            "id": "57265aaf5951b619008f706c"
+          },
+          "answers": [
+            {
+              "text": "gelatinous projections edged with cilia that produce water currents",
+              "span": [
+                417,
+                484
+              ]
+            },
+            {
+              "text": "gelatinous projections edged with cilia",
+              "span": [
+                417,
+                456
+              ]
+            },
+            {
+              "text": "gelatinous projections edged with cilia",
+              "span": [
+                417,
+                456
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many auricles do most species have?",
+            "id": "57265aaf5951b619008f706d"
+          },
+          "answers": [
+            {
+              "text": "four",
+              "span": [
+                402,
+                406
+              ]
+            },
+            {
+              "text": "four",
+              "span": [
+                402,
+                406
+              ]
+            },
+            {
+              "text": "four",
+              "span": [
+                402,
+                406
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do the auricles do?",
+            "id": "57265aaf5951b619008f706e"
+          },
+          "answers": [
+            {
+              "text": "help direct microscopic prey toward the mouth",
+              "span": [
+                490,
+                535
+              ]
+            },
+            {
+              "text": "produce water currents that help direct microscopic prey toward the mouth",
+              "span": [
+                462,
+                535
+              ]
+            },
+            {
+              "text": "produce water currents that help direct microscopic prey toward the mouth",
+              "span": [
+                462,
+                535
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do lobates feed on?",
+            "id": "57265aaf5951b619008f706f"
+          },
+          "answers": [
+            {
+              "text": "suspended planktonic prey",
+              "span": [
+                608,
+                633
+              ]
+            },
+            {
+              "text": "suspended planktonic prey",
+              "span": [
+                608,
+                633
+              ]
+            },
+            {
+              "text": "planktonic prey",
+              "span": [
+                618,
+                633
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The academic bodies of the University of Chicago consist of the College, four divisions of graduate research and seven professional schools. The university also contains a library system, the University of Chicago Press, the University of Chicago Laboratory Schools, and the University of Chicago Medical Center, and holds ties with a number of independent academic institutions, including Fermilab, Argonne National Laboratory, and the Marine Biological Laboratory. The university is accredited by The Higher Learning Commission."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who is the university accredited by?",
+            "id": "5728510f4b864d1900164936"
+          },
+          "answers": [
+            {
+              "text": "The Higher Learning Commission",
+              "span": [
+                499,
+                529
+              ]
+            },
+            {
+              "text": "The Higher Learning Commission",
+              "span": [
+                499,
+                529
+              ]
+            },
+            {
+              "text": "The Higher Learning Commission",
+              "span": [
+                499,
+                529
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The academic body of the university is made up of how many divisions of graduate?",
+            "id": "5728510f4b864d1900164937"
+          },
+          "answers": [
+            {
+              "text": "four",
+              "span": [
+                73,
+                77
+              ]
+            },
+            {
+              "text": "four",
+              "span": [
+                73,
+                77
+              ]
+            },
+            {
+              "text": "four",
+              "span": [
+                73,
+                77
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The academic body of the university is made up of how many professional schools?",
+            "id": "5728510f4b864d1900164938"
+          },
+          "answers": [
+            {
+              "text": "seven",
+              "span": [
+                113,
+                118
+              ]
+            },
+            {
+              "text": "seven",
+              "span": [
+                113,
+                118
+              ]
+            },
+            {
+              "text": "seven",
+              "span": [
+                113,
+                118
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Of course, some complexity classes have complicated definitions that do not fit into this framework. Thus, a typical complexity class has a definition like the following:"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What has complicated definitions that prevent classification into a framework?",
+            "id": "56e1c0f6cd28a01900c67b2c"
+          },
+          "answers": [
+            {
+              "text": "complexity classes",
+              "span": [
+                16,
+                34
+              ]
+            },
+            {
+              "text": "complexity classes",
+              "span": [
+                16,
+                34
+              ]
+            },
+            {
+              "text": "some complexity classes",
+              "span": [
+                11,
+                34
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Complexity classes are generally classified into what?",
+            "id": "56e1c0f6cd28a01900c67b2d"
+          },
+          "answers": [
+            {
+              "text": "framework",
+              "span": [
+                90,
+                99
+              ]
+            },
+            {
+              "text": "framework",
+              "span": [
+                90,
+                99
+              ]
+            },
+            {
+              "text": "framework",
+              "span": [
+                90,
+                99
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Difficulty in establishing a framework for complexity classes can be caused by what variable?",
+            "id": "56e1c0f6cd28a01900c67b2e"
+          },
+          "answers": [
+            {
+              "text": "complicated definitions",
+              "span": [
+                40,
+                63
+              ]
+            },
+            {
+              "text": "complicated definitions",
+              "span": [
+                40,
+                63
+              ]
+            },
+            {
+              "text": "definitions",
+              "span": [
+                52,
+                63
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The tapestry collection includes a fragment of the Cloth of St Gereon, the oldest known surviving European tapestry. A highlight of the collection is the four Devonshire Hunting Tapestries, very rare 15th-century tapestries, woven in the Netherlands, depicting the hunting of various animals; not just their age but their size make these unique. Both of the major English centres of tapestry weaving of the 16th and 17th centuries respectively, Sheldon & Mortlake are represented in the collection by several examples. Also included are tapestries from John Vanderbank's workshop which was the leading English tapestry manufactory in the late 17th century and early 18th century. Some of the finest tapestries are examples from the Gobelins workshop, including a set of 'Jason and the Argonauts' dating from the 1750s. Other continental centres of tapestry weaving with work in the collection include Brussels, Tournai, Beauvais, Strasbourg and Florence."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What is the oldest surviving European tapestry in the V&A collection?",
+            "id": "57270541dd62a815002e97c8"
+          },
+          "answers": [
+            {
+              "text": "Cloth of St Gereon",
+              "span": [
+                51,
+                69
+              ]
+            },
+            {
+              "text": "Cloth of St Gereon",
+              "span": [
+                51,
+                69
+              ]
+            },
+            {
+              "text": "a fragment of the Cloth of St Gereon",
+              "span": [
+                33,
+                69
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In which century were the four Devonshire Hunting Tapestries woven?",
+            "id": "57270541dd62a815002e97c9"
+          },
+          "answers": [
+            {
+              "text": "15th",
+              "span": [
+                200,
+                204
+              ]
+            },
+            {
+              "text": "15th-century",
+              "span": [
+                200,
+                212
+              ]
+            },
+            {
+              "text": "15th",
+              "span": [
+                200,
+                204
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where were the Devonshire Hunting Tapestries made?",
+            "id": "57270541dd62a815002e97ca"
+          },
+          "answers": [
+            {
+              "text": "the Netherlands",
+              "span": [
+                234,
+                249
+              ]
+            },
+            {
+              "text": "Netherlands",
+              "span": [
+                238,
+                249
+              ]
+            },
+            {
+              "text": "the Netherlands",
+              "span": [
+                234,
+                249
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do the Devonshire Hunting Tapestries depict?",
+            "id": "57270541dd62a815002e97cb"
+          },
+          "answers": [
+            {
+              "text": "hunting of various animals",
+              "span": [
+                265,
+                291
+              ]
+            },
+            {
+              "text": "hunting of various animals",
+              "span": [
+                265,
+                291
+              ]
+            },
+            {
+              "text": "the hunting of various animals",
+              "span": [
+                261,
+                291
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Which leading English tapestry workshop in the late 17th century and early 18th century is represented in the V&A collection?",
+            "id": "57270541dd62a815002e97cc"
+          },
+          "answers": [
+            {
+              "text": "John Vanderbank's workshop",
+              "span": [
+                553,
+                579
+              ]
+            },
+            {
+              "text": "John Vanderbank's",
+              "span": [
+                553,
+                570
+              ]
+            },
+            {
+              "text": "John Vanderbank",
+              "span": [
+                553,
+                568
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Subject Committees are established at the beginning of each parliamentary session, and again the members on each committee reflect the balance of parties across Parliament. Typically each committee corresponds with one (or more) of the departments (or ministries) of the Scottish Government. The current Subject Committees in the fourth Session are: Economy, Energy and Tourism; Education and Culture; Health and Sport; Justice; Local Government and Regeneration; Rural Affairs, Climate Change and Environment; Welfare Reform; and Infrastructure and Capital Investment."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "When are subject committees established?",
+            "id": "572fc80b04bcaa1900d76d11"
+          },
+          "answers": [
+            {
+              "text": "beginning of each parliamentary session",
+              "span": [
+                42,
+                81
+              ]
+            },
+            {
+              "text": "beginning of each parliamentary session",
+              "span": [
+                42,
+                81
+              ]
+            },
+            {
+              "text": "at the beginning of each parliamentary session",
+              "span": [
+                35,
+                81
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many ministries of the Scottish government does a committee typically correspond to?",
+            "id": "572fc80b04bcaa1900d76d12"
+          },
+          "answers": [
+            {
+              "text": "one",
+              "span": [
+                215,
+                218
+              ]
+            },
+            {
+              "text": "one (or more",
+              "span": [
+                215,
+                227
+              ]
+            },
+            {
+              "text": "one (or more) of the departments (or ministries) of the Scottish Government",
+              "span": [
+                215,
+                290
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Economy, Energy and Tourism is one of the what?",
+            "id": "572fc80b04bcaa1900d76d13"
+          },
+          "answers": [
+            {
+              "text": "current Subject Committees",
+              "span": [
+                296,
+                322
+              ]
+            },
+            {
+              "text": "Subject Committees",
+              "span": [
+                304,
+                322
+              ]
+            },
+            {
+              "text": "Subject Committees",
+              "span": [
+                304,
+                322
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the Scottish Parliament currently in the fourth of?",
+            "id": "572fc80b04bcaa1900d76d14"
+          },
+          "answers": [
+            {
+              "text": "Session",
+              "span": [
+                337,
+                344
+              ]
+            },
+            {
+              "text": "Session",
+              "span": [
+                337,
+                344
+              ]
+            },
+            {
+              "text": "Session",
+              "span": [
+                337,
+                344
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "2013 Economics Nobel prize winner Robert J. Shiller said that rising inequality in the United States and elsewhere is the most important problem. Increasing inequality harms economic growth. High and persistent unemployment, in which inequality increases, has a negative effect on subsequent long-run economic growth. Unemployment can harm growth not only because it is a waste of resources, but also because it generates redistributive pressures and subsequent distortions, drives people to poverty, constrains liquidity limiting labor mobility, and erodes self-esteem promoting social dislocation, unrest and conflict. Policies aiming at controlling unemployment and in particular at reducing its inequality-associated effects support economic growth."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What year did Robert J. Shiller win an Economics Nobel prize?",
+            "id": "572a05eb3f37b31900478653"
+          },
+          "answers": [
+            {
+              "text": "2013",
+              "span": [
+                0,
+                4
+              ]
+            },
+            {
+              "text": "2013",
+              "span": [
+                0,
+                4
+              ]
+            },
+            {
+              "text": "2013",
+              "span": [
+                0,
+                4
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the most important problem in the United States and elsewhere?",
+            "id": "572a05eb3f37b31900478654"
+          },
+          "answers": [
+            {
+              "text": "rising inequality",
+              "span": [
+                62,
+                79
+              ]
+            },
+            {
+              "text": "rising inequality",
+              "span": [
+                62,
+                79
+              ]
+            },
+            {
+              "text": "rising inequality",
+              "span": [
+                62,
+                79
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Persistent unemployment has what effect on long-term economic growth?",
+            "id": "572a05eb3f37b31900478655"
+          },
+          "answers": [
+            {
+              "text": "negative",
+              "span": [
+                262,
+                270
+              ]
+            },
+            {
+              "text": "negative effect",
+              "span": [
+                262,
+                277
+              ]
+            },
+            {
+              "text": "negative",
+              "span": [
+                262,
+                270
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What's one factor in eroding self-esteem?",
+            "id": "572a05eb3f37b31900478656"
+          },
+          "answers": [
+            {
+              "text": "Unemployment",
+              "span": [
+                318,
+                330
+              ]
+            },
+            {
+              "text": "Unemployment",
+              "span": [
+                318,
+                330
+              ]
+            },
+            {
+              "text": "Unemployment",
+              "span": [
+                318,
+                330
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Policies which reduce the inequality associated effects of unemployment support what type of growth?",
+            "id": "572a05eb3f37b31900478657"
+          },
+          "answers": [
+            {
+              "text": "economic",
+              "span": [
+                737,
+                745
+              ]
+            },
+            {
+              "text": "economic",
+              "span": [
+                737,
+                745
+              ]
+            },
+            {
+              "text": "economic",
+              "span": [
+                737,
+                745
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "During the Southern Song dynasty the descendant of Confucius at Qufu, the Duke Yansheng Kong Duanyou fled south with the Song Emperor to Quzhou, while the newly established Jin dynasty (1115\u20131234) in the north appointed Kong Duanyou's brother Kong Duancao who remained in Qufu as Duke Yansheng. From that time up until the Yuan dynasty, there were two Duke Yanshengs, once in the north in Qufu and the other in the south at Quzhou. During the Yuan dynasty, the Emperor Kublai Khan invited the southern Duke Yansheng Kong Zhu to return to Qufu. Kong Zhu refused, and gave up the title, so the northern branch of the family kept the title of Duke Yansheng. The southern branch still remained in Quzhou where they lived to this day. Confucius's descendants in Quzhou alone number 30,000. During the Yuan dynasty, one of Confucius' descendants moved from China to Goryeo era Korea and established a branch of the family there after marrying a Korean woman."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who did Duke Yansheng Kong Duanyou flee with?",
+            "id": "57286c8cff5b5019007da218"
+          },
+          "answers": [
+            {
+              "text": "the Song Emperor",
+              "span": [
+                117,
+                133
+              ]
+            },
+            {
+              "text": "Song Emperor",
+              "span": [
+                121,
+                133
+              ]
+            },
+            {
+              "text": "the Song Emperor to Quzhou",
+              "span": [
+                117,
+                143
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did the Jin dynasty begin?",
+            "id": "57286c8cff5b5019007da219"
+          },
+          "answers": [
+            {
+              "text": "1115",
+              "span": [
+                186,
+                190
+              ]
+            },
+            {
+              "text": "1115",
+              "span": [
+                186,
+                190
+              ]
+            },
+            {
+              "text": "1115",
+              "span": [
+                186,
+                190
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did the Jin dynasty end?",
+            "id": "57286c8cff5b5019007da21a"
+          },
+          "answers": [
+            {
+              "text": "1234",
+              "span": [
+                191,
+                195
+              ]
+            },
+            {
+              "text": "1234",
+              "span": [
+                191,
+                195
+              ]
+            },
+            {
+              "text": "1234",
+              "span": [
+                191,
+                195
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who was appointed as the replacement for Duke Yansheng Kong Duanyou?",
+            "id": "57286c8cff5b5019007da21b"
+          },
+          "answers": [
+            {
+              "text": "Kong Duancao",
+              "span": [
+                243,
+                255
+              ]
+            },
+            {
+              "text": "Kong Duancao",
+              "span": [
+                243,
+                255
+              ]
+            },
+            {
+              "text": "Kong Duancao",
+              "span": [
+                243,
+                255
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many people in Quzhou are descended from Confucius?",
+            "id": "57286c8cff5b5019007da21c"
+          },
+          "answers": [
+            {
+              "text": "30,000",
+              "span": [
+                777,
+                783
+              ]
+            },
+            {
+              "text": "30,000",
+              "span": [
+                777,
+                783
+              ]
+            },
+            {
+              "text": "30,000",
+              "span": [
+                777,
+                783
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Britain's imperialist ambitions can be seen as early as the sixteenth century. In 1599 the British East India Company was established and was chartered by Queen Elizabeth in the following year. With the establishment of trading posts in India, the British were able to maintain strength relative to others empires such as the Portuguese who already had set up trading posts in India. In 1767 political activity caused exploitation of the East India Company causing the plundering of the local economy, almost bringing the company into bankruptcy."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "When is the earliest Britain had an imperialist policy?",
+            "id": "5730a40f396df91900096234"
+          },
+          "answers": [
+            {
+              "text": "the sixteenth century",
+              "span": [
+                56,
+                77
+              ]
+            },
+            {
+              "text": "sixteenth century",
+              "span": [
+                60,
+                77
+              ]
+            },
+            {
+              "text": "sixteenth century",
+              "span": [
+                60,
+                77
+              ]
+            },
+            {
+              "text": "sixteenth century",
+              "span": [
+                60,
+                77
+              ]
+            },
+            {
+              "text": "sixteenth century",
+              "span": [
+                60,
+                77
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When was the British East India Company established?",
+            "id": "5730a40f396df91900096235"
+          },
+          "answers": [
+            {
+              "text": "1599",
+              "span": [
+                82,
+                86
+              ]
+            },
+            {
+              "text": "1599",
+              "span": [
+                82,
+                86
+              ]
+            },
+            {
+              "text": "1599",
+              "span": [
+                82,
+                86
+              ]
+            },
+            {
+              "text": "1599",
+              "span": [
+                82,
+                86
+              ]
+            },
+            {
+              "text": "1599",
+              "span": [
+                82,
+                86
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who chartered the British East India Company?",
+            "id": "5730a40f396df91900096236"
+          },
+          "answers": [
+            {
+              "text": "Queen Elizabeth",
+              "span": [
+                155,
+                170
+              ]
+            },
+            {
+              "text": "Queen Elizabeth",
+              "span": [
+                155,
+                170
+              ]
+            },
+            {
+              "text": "Queen Elizabeth",
+              "span": [
+                155,
+                170
+              ]
+            },
+            {
+              "text": "Queen Elizabeth",
+              "span": [
+                155,
+                170
+              ]
+            },
+            {
+              "text": "Queen Elizabeth",
+              "span": [
+                155,
+                170
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What happened to the East India Trading Company in 1767?",
+            "id": "5730a40f396df91900096237"
+          },
+          "answers": [
+            {
+              "text": "exploitation",
+              "span": [
+                418,
+                430
+              ]
+            },
+            {
+              "text": "political activity caused exploitation",
+              "span": [
+                392,
+                430
+              ]
+            },
+            {
+              "text": "political activity caused exploitation",
+              "span": [
+                392,
+                430
+              ]
+            },
+            {
+              "text": "exploitation",
+              "span": [
+                418,
+                430
+              ]
+            },
+            {
+              "text": "exploitation",
+              "span": [
+                418,
+                430
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Which country had trading posts in India before Britain?",
+            "id": "5730a40f396df91900096238"
+          },
+          "answers": [
+            {
+              "text": "the Portuguese",
+              "span": [
+                322,
+                336
+              ]
+            },
+            {
+              "text": "Portuguese",
+              "span": [
+                326,
+                336
+              ]
+            },
+            {
+              "text": "Portuguese",
+              "span": [
+                326,
+                336
+              ]
+            },
+            {
+              "text": "Portuguese",
+              "span": [
+                326,
+                336
+              ]
+            },
+            {
+              "text": "Portuguese",
+              "span": [
+                326,
+                336
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Some episodes have been returned to the BBC from the archives of other countries who bought prints for broadcast, or by private individuals who acquired them by various means. Early colour videotape recordings made off-air by fans have also been retrieved, as well as excerpts filmed from the television screen onto 8 mm cine film and clips that were shown on other programmes. Audio versions of all of the lost episodes exist from home viewers who made tape recordings of the show. Short clips from every story with the exception of Marco Polo, \"Mission to the Unknown\" and The Massacre of St Bartholomew's Eve also exist."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "How did other countries have copies of the show?",
+            "id": "572804522ca10214002d9b94"
+          },
+          "answers": [
+            {
+              "text": "bought prints for broadcast",
+              "span": [
+                85,
+                112
+              ]
+            },
+            {
+              "text": "bought prints for broadcast",
+              "span": [
+                85,
+                112
+              ]
+            },
+            {
+              "text": "bought prints for broadcast",
+              "span": [
+                85,
+                112
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who made early colour videos of the show?",
+            "id": "572804522ca10214002d9b95"
+          },
+          "answers": [
+            {
+              "text": "fans",
+              "span": [
+                226,
+                230
+              ]
+            },
+            {
+              "text": "fans",
+              "span": [
+                226,
+                230
+              ]
+            },
+            {
+              "text": "fans",
+              "span": [
+                226,
+                230
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was the name of the Marco Polo episode?",
+            "id": "572804522ca10214002d9b97"
+          },
+          "answers": [
+            {
+              "text": "Mission to the Unknown",
+              "span": [
+                547,
+                569
+              ]
+            },
+            {
+              "text": "Mission to the Unknown",
+              "span": [
+                547,
+                569
+              ]
+            },
+            {
+              "text": "Mission to the Unknown",
+              "span": [
+                547,
+                569
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What type of film were excerpts from the show film on?",
+            "id": "572804522ca10214002d9b96"
+          },
+          "answers": [
+            {
+              "text": "8 mm cine film",
+              "span": [
+                316,
+                330
+              ]
+            },
+            {
+              "text": "8 mm cine film and clips that were shown on other programmes",
+              "span": [
+                316,
+                376
+              ]
+            },
+            {
+              "text": "8 mm cine film",
+              "span": [
+                316,
+                330
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How did the BBC get audio versions of the lost episodes?",
+            "id": "572804522ca10214002d9b98"
+          },
+          "answers": [
+            {
+              "text": "home viewers who made tape recordings of the show",
+              "span": [
+                432,
+                481
+              ]
+            },
+            {
+              "text": "home viewers who made tape recordings of the show",
+              "span": [
+                432,
+                481
+              ]
+            },
+            {
+              "text": "home viewers who made tape recordings",
+              "span": [
+                432,
+                469
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The Panthers offense, which led the NFL in scoring (500 points), was loaded with talent, boasting six Pro Bowl selections. Pro Bowl quarterback Cam Newton had one of his best seasons, throwing for 3,837 yards and rushing for 636, while recording a career-high and league-leading 45 total touchdowns (35 passing, 10 rushing), a career-low 10 interceptions, and a career-best quarterback rating of 99.4. Newton's leading receivers were tight end Greg Olsen, who caught a career-high 77 passes for 1,104 yards and seven touchdowns, and wide receiver Ted Ginn, Jr., who caught 44 passes for 739 yards and 10 touchdowns; Ginn also rushed for 60 yards and returned 27 punts for 277 yards. Other key receivers included veteran Jerricho Cotchery (39 receptions for 485 yards), rookie Devin Funchess (31 receptions for 473 yards and five touchdowns), and second-year receiver Corey Brown (31 receptions for 447 yards). The Panthers backfield featured Pro Bowl running back Jonathan Stewart, who led the team with 989 rushing yards and six touchdowns in 13 games, along with Pro Bowl fullback Mike Tolbert, who rushed for 256 yards and caught 18 passes for another 154 yards. Carolina's offensive line also featured two Pro Bowl selections: center Ryan Kalil and guard Trai Turner."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "How many Pro Bowlers were on the Panthers offense?",
+            "id": "56beb3a03aeaaa14008c9247"
+          },
+          "answers": [
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many total touchdowns did Cam Newton score?",
+            "id": "56beb3a03aeaaa14008c9248"
+          },
+          "answers": [
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many interceptions did Cam Newton throw?",
+            "id": "56beb3a03aeaaa14008c9249"
+          },
+          "answers": [
+            {
+              "text": "10",
+              "span": [
+                312,
+                314
+              ]
+            },
+            {
+              "text": "10",
+              "span": [
+                338,
+                340
+              ]
+            },
+            {
+              "text": "10",
+              "span": [
+                338,
+                340
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many punts did Ted Ginn Jr. return?",
+            "id": "56beb3a03aeaaa14008c924a"
+          },
+          "answers": [
+            {
+              "text": "27",
+              "span": [
+                659,
+                661
+              ]
+            },
+            {
+              "text": "27",
+              "span": [
+                659,
+                661
+              ]
+            },
+            {
+              "text": "27",
+              "span": [
+                659,
+                661
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who started at tight end for the Panthers?",
+            "id": "56beb3a03aeaaa14008c924b"
+          },
+          "answers": [
+            {
+              "text": "Greg Olsen",
+              "span": [
+                444,
+                454
+              ]
+            },
+            {
+              "text": "Greg Olsen",
+              "span": [
+                444,
+                454
+              ]
+            },
+            {
+              "text": "Olsen",
+              "span": [
+                449,
+                454
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the record number of touchdowns Cam Newton has had? ",
+            "id": "56bf6b303aeaaa14008c960b"
+          },
+          "answers": [
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the best QB ranking that Cam Newton holds?",
+            "id": "56bf6b303aeaaa14008c960c"
+          },
+          "answers": [
+            {
+              "text": "99.4",
+              "span": [
+                396,
+                400
+              ]
+            },
+            {
+              "text": "99.4",
+              "span": [
+                396,
+                400
+              ]
+            },
+            {
+              "text": "99.4.",
+              "span": [
+                396,
+                401
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What are the most passes that Greg Olsen has had?",
+            "id": "56bf6b303aeaaa14008c960d"
+          },
+          "answers": [
+            {
+              "text": "77 passes",
+              "span": [
+                481,
+                490
+              ]
+            },
+            {
+              "text": "77",
+              "span": [
+                481,
+                483
+              ]
+            },
+            {
+              "text": "77",
+              "span": [
+                481,
+                483
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What position does Jerricho Cotchery play?",
+            "id": "56bf6b303aeaaa14008c960e"
+          },
+          "answers": [
+            {
+              "text": "receivers",
+              "span": [
+                419,
+                428
+              ]
+            },
+            {
+              "text": "receivers",
+              "span": [
+                693,
+                702
+              ]
+            },
+            {
+              "text": "receivers",
+              "span": [
+                693,
+                702
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Which Panthers RB scored 6 TDs in the 13 games leading up to Super Bowl 50?",
+            "id": "56bf6b303aeaaa14008c960f"
+          },
+          "answers": [
+            {
+              "text": "Jonathan Stewart",
+              "span": [
+                964,
+                980
+              ]
+            },
+            {
+              "text": "Jonathan Stewart",
+              "span": [
+                964,
+                980
+              ]
+            },
+            {
+              "text": "Jonathan Stewart",
+              "span": [
+                964,
+                980
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many Offensive players from the Panthers were selected to play in the Pro Bowl?",
+            "id": "56d6f2960d65d21400198286"
+          },
+          "answers": [
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who is the quarterback for the Carolina Panthers?",
+            "id": "56d6f2960d65d21400198287"
+          },
+          "answers": [
+            {
+              "text": "Cam Newton",
+              "span": [
+                144,
+                154
+              ]
+            },
+            {
+              "text": "Cam Newton",
+              "span": [
+                144,
+                154
+              ]
+            },
+            {
+              "text": "Cam Newton",
+              "span": [
+                144,
+                154
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many yards did Newton throw for in 2015?",
+            "id": "56d6f2960d65d21400198288"
+          },
+          "answers": [
+            {
+              "text": "3,837",
+              "span": [
+                197,
+                202
+              ]
+            },
+            {
+              "text": "3,837",
+              "span": [
+                197,
+                202
+              ]
+            },
+            {
+              "text": "3,837",
+              "span": [
+                197,
+                202
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many touchdowns did Newton have in 2015?",
+            "id": "56d6f2960d65d21400198289"
+          },
+          "answers": [
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many touchdowns did Jonathan Stewart have in 13 games?",
+            "id": "56d6f2960d65d2140019828a"
+          },
+          "answers": [
+            {
+              "text": "six",
+              "span": [
+                98,
+                101
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                1026,
+                1029
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                1026,
+                1029
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many points did Carolina lead the NFL in scoring for offensive plays?",
+            "id": "56d997cddc89441400fdb586"
+          },
+          "answers": [
+            {
+              "text": "500",
+              "span": [
+                52,
+                55
+              ]
+            },
+            {
+              "text": "500",
+              "span": [
+                52,
+                55
+              ]
+            },
+            {
+              "text": "500",
+              "span": [
+                52,
+                55
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "how many yards did Newton get for passes in the 2015 season?",
+            "id": "56d997cddc89441400fdb587"
+          },
+          "answers": [
+            {
+              "text": "3,837",
+              "span": [
+                197,
+                202
+              ]
+            },
+            {
+              "text": "3,837",
+              "span": [
+                197,
+                202
+              ]
+            },
+            {
+              "text": "3,837",
+              "span": [
+                197,
+                202
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many touchdowns did Newton get in the 2015 season?",
+            "id": "56d997cddc89441400fdb588"
+          },
+          "answers": [
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            },
+            {
+              "text": "45",
+              "span": [
+                279,
+                281
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was Newton's quarterback rating for 2015?",
+            "id": "56d997cddc89441400fdb589"
+          },
+          "answers": [
+            {
+              "text": "99.4.",
+              "span": [
+                396,
+                401
+              ]
+            },
+            {
+              "text": "99.4",
+              "span": [
+                396,
+                400
+              ]
+            },
+            {
+              "text": "99.4.",
+              "span": [
+                396,
+                401
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many receptions did Cotchery  get for the 2015 season?",
+            "id": "56d997cddc89441400fdb58a"
+          },
+          "answers": [
+            {
+              "text": "39",
+              "span": [
+                588,
+                590
+              ]
+            },
+            {
+              "text": "39",
+              "span": [
+                739,
+                741
+              ]
+            },
+            {
+              "text": "39",
+              "span": [
+                739,
+                741
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In July 2013, the English High Court of Justice found that Microsoft\u2019s use of the term \"SkyDrive\" infringed on Sky\u2019s right to the \"Sky\" trademark. On 31 July 2013, BSkyB and Microsoft announced their settlement, in which Microsoft will not appeal the ruling, and will rename its SkyDrive cloud storage service after an unspecified \"reasonable period of time to allow for an orderly transition to a new brand,\" plus \"financial and other terms, the details of which are confidential\". On 27 January 2014, Microsoft announced \"that SkyDrive will soon become OneDrive\" and \"SkyDrive Pro\" becomes \"OneDrive for Business\"."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "when did the English High court find Microsoft's use of the term \"SkyDrive\" infringed on Sky's right?",
+            "id": "570960cf200fba1400367f01"
+          },
+          "answers": [
+            {
+              "text": "July 2013",
+              "span": [
+                3,
+                12
+              ]
+            },
+            {
+              "text": "In July 2013",
+              "span": [
+                0,
+                12
+              ]
+            },
+            {
+              "text": "July 2013",
+              "span": [
+                3,
+                12
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What year did BSkyB and Microsoft announce their settlement?",
+            "id": "570960cf200fba1400367f02"
+          },
+          "answers": [
+            {
+              "text": "2013",
+              "span": [
+                158,
+                162
+              ]
+            },
+            {
+              "text": "2013",
+              "span": [
+                158,
+                162
+              ]
+            },
+            {
+              "text": "31 July 2013",
+              "span": [
+                150,
+                162
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What did Microsoft announce that it would rename Sky Drive to?",
+            "id": "570960cf200fba1400367f03"
+          },
+          "answers": [
+            {
+              "text": "OneDrive",
+              "span": [
+                555,
+                563
+              ]
+            },
+            {
+              "text": "OneDrive",
+              "span": [
+                555,
+                563
+              ]
+            },
+            {
+              "text": "OneDrive",
+              "span": [
+                555,
+                563
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What did Microsoft announce that it would rename Sky Drive Pro to?",
+            "id": "570960cf200fba1400367f04"
+          },
+          "answers": [
+            {
+              "text": "OneDrive for Business",
+              "span": [
+                593,
+                614
+              ]
+            },
+            {
+              "text": "OneDrive for Business",
+              "span": [
+                593,
+                614
+              ]
+            },
+            {
+              "text": "OneDrive for Business",
+              "span": [
+                593,
+                614
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What kind of service is the SkyDrive Service?",
+            "id": "570960cf200fba1400367f05"
+          },
+          "answers": [
+            {
+              "text": "cloud storage",
+              "span": [
+                288,
+                301
+              ]
+            },
+            {
+              "text": "cloud storage",
+              "span": [
+                288,
+                301
+              ]
+            },
+            {
+              "text": "cloud storage service",
+              "span": [
+                288,
+                309
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "A revised version of the ABC logo was introduced for promotions for the 2013\u201314 season during the network's upfront presentation on May 14, 2013, and officially introduced on-air on June 17 (although some affiliates implemented the new design prior to then), as part of an overhaul of ABC's identity by design agency LoyalKaspar. The updated logo carries a simpler gloss design than the previous version, and contains lettering more closely resembling Paul Rand's original version of the circle logo. The logo is displayed on-air, online and in print advertising in four variants shading the respective color used with the circle design's native black coloring: a gold version is primarily used on entertainment-oriented outlets (such as ABC.com, WATCH ABC, and by ABC Studios) and the on-screen bug; steel blue and dark grey versions are used primarily by ABC News; a red version is used for ESPN on ABC, while all four variants are used selectively in advertising and by affiliates. A new custom typeface, \"ABC Modern\" (which was inspired by the logotype), was also created for use in advertising and other promotional materials."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "In 2013, ABC's identity was revamped by what design agency?",
+            "id": "57276a8f5951b619008f8995"
+          },
+          "answers": [
+            {
+              "text": "LoyalKaspar",
+              "span": [
+                317,
+                328
+              ]
+            },
+            {
+              "text": "LoyalKaspar",
+              "span": [
+                317,
+                328
+              ]
+            },
+            {
+              "text": "LoyalKaspar",
+              "span": [
+                317,
+                328
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many variants is the new ABC logo currently displayed in?",
+            "id": "57276a8f5951b619008f8996"
+          },
+          "answers": [
+            {
+              "text": "four variants",
+              "span": [
+                566,
+                579
+              ]
+            },
+            {
+              "text": "four",
+              "span": [
+                566,
+                570
+              ]
+            },
+            {
+              "text": "four",
+              "span": [
+                566,
+                570
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What new typeface was created for ABC for use in advertising?",
+            "id": "57276a8f5951b619008f8997"
+          },
+          "answers": [
+            {
+              "text": "ABC Modern",
+              "span": [
+                1009,
+                1019
+              ]
+            },
+            {
+              "text": "ABC Modern",
+              "span": [
+                1009,
+                1019
+              ]
+            },
+            {
+              "text": "ABC Modern",
+              "span": [
+                1009,
+                1019
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What network uses a red version of the new ABC logo?",
+            "id": "57276a8f5951b619008f8998"
+          },
+          "answers": [
+            {
+              "text": "ESPN",
+              "span": [
+                893,
+                897
+              ]
+            },
+            {
+              "text": "ESPN on ABC",
+              "span": [
+                893,
+                904
+              ]
+            },
+            {
+              "text": "ESPN",
+              "span": [
+                893,
+                897
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Tesla claimed to have developed his own physical principle regarding matter and energy that he started working on in 1892, and in 1937, at age 81, claimed in a letter to have completed a \"dynamic theory of gravity\" that \"[would] put an end to idle speculations and false conceptions, as that of curved space.\" He stated that the theory was \"worked out in all details\" and that he hoped to soon give it to the world. Further elucidation of his theory was never found in his writings.:309"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What \"dynamic theory\" did Tesla say he finished in 1937?",
+            "id": "56e121b7e3433e1400422c50"
+          },
+          "answers": [
+            {
+              "text": "gravity",
+              "span": [
+                206,
+                213
+              ]
+            },
+            {
+              "text": "gravity",
+              "span": [
+                206,
+                213
+              ]
+            },
+            {
+              "text": "of gravity",
+              "span": [
+                203,
+                213
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did Tesla start working on the problem of energy and matter?",
+            "id": "56e121b7e3433e1400422c51"
+          },
+          "answers": [
+            {
+              "text": "1892",
+              "span": [
+                117,
+                121
+              ]
+            },
+            {
+              "text": "1892, and in 1937",
+              "span": [
+                117,
+                134
+              ]
+            },
+            {
+              "text": "1892",
+              "span": [
+                117,
+                121
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What shape of space did Tesla consider a \"false conception\"?",
+            "id": "56e121b7e3433e1400422c52"
+          },
+          "answers": [
+            {
+              "text": "curved",
+              "span": [
+                295,
+                301
+              ]
+            },
+            {
+              "text": "curved",
+              "span": [
+                295,
+                301
+              ]
+            },
+            {
+              "text": "curved",
+              "span": [
+                295,
+                301
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How old was Tesla when he wrote that he'd completed his dynamic theory of gravity?",
+            "id": "56e121b7e3433e1400422c53"
+          },
+          "answers": [
+            {
+              "text": "81",
+              "span": [
+                143,
+                145
+              ]
+            },
+            {
+              "text": "81",
+              "span": [
+                143,
+                145
+              ]
+            },
+            {
+              "text": "81",
+              "span": [
+                143,
+                145
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

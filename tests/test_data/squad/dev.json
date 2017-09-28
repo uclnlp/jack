@@ -1,0 +1,3180 @@
+{
+  "meta": {
+    "source": "dev-v1.1.json"
+  },
+  "instances": [
+    {
+      "support": [
+        {
+          "text": "The fundamental theorem of arithmetic continues to hold in unique factorization domains. An example of such a domain is the Gaussian integers Z[i], that is, the set of complex numbers of the form a + bi where i denotes the imaginary unit and a and b are arbitrary integers. Its prime elements are known as Gaussian primes. Not every prime (in Z) is a Gaussian prime: in the bigger ring Z[i], 2 factors into the product of the two Gaussian primes (1 + i) and (1 \u2212 i). Rational primes (i.e. prime elements in Z) of the form 4k + 3 are Gaussian primes, whereas rational primes of the form 4k + 1 are not."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What theorem remains valid in unique factorization domains?",
+            "id": "57299d1c1d04691400779581"
+          },
+          "answers": [
+            {
+              "text": "The fundamental theorem of arithmetic",
+              "span": [
+                0,
+                37
+              ]
+            },
+            {
+              "text": "theorem of arithmetic",
+              "span": [
+                16,
+                37
+              ]
+            },
+            {
+              "text": "fundamental theorem of arithmetic",
+              "span": [
+                4,
+                37
+              ]
+            },
+            {
+              "text": "The fundamental theorem of arithmetic",
+              "span": [
+                0,
+                37
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is one example of a unique factorization domain?",
+            "id": "57299d1c1d04691400779582"
+          },
+          "answers": [
+            {
+              "text": "the Gaussian integers Z[i]",
+              "span": [
+                120,
+                146
+              ]
+            },
+            {
+              "text": "Gaussian integers",
+              "span": [
+                124,
+                141
+              ]
+            },
+            {
+              "text": "Gaussian integers Z[i],",
+              "span": [
+                124,
+                147
+              ]
+            },
+            {
+              "text": "Gaussian integers Z[i]",
+              "span": [
+                124,
+                146
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What form do complex Gaussian integers have? ",
+            "id": "57299d1c1d04691400779583"
+          },
+          "answers": [
+            {
+              "text": "a + bi",
+              "span": [
+                196,
+                202
+              ]
+            },
+            {
+              "text": "a + bi",
+              "span": [
+                196,
+                202
+              ]
+            },
+            {
+              "text": "a + bi",
+              "span": [
+                196,
+                202
+              ]
+            },
+            {
+              "text": "a + bi",
+              "span": [
+                196,
+                202
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do a and b represent in a Gaussian integer expression? ",
+            "id": "57299d1c1d04691400779584"
+          },
+          "answers": [
+            {
+              "text": "arbitrary integers",
+              "span": [
+                254,
+                272
+              ]
+            },
+            {
+              "text": "arbitrary integers",
+              "span": [
+                254,
+                272
+              ]
+            },
+            {
+              "text": "arbitrary integers",
+              "span": [
+                254,
+                272
+              ]
+            },
+            {
+              "text": "arbitrary integers",
+              "span": [
+                254,
+                272
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Of what form are rational primes?",
+            "id": "57299d1c1d04691400779585"
+          },
+          "answers": [
+            {
+              "text": "4k + 3",
+              "span": [
+                522,
+                528
+              ]
+            },
+            {
+              "text": "4k + 3",
+              "span": [
+                522,
+                528
+              ]
+            },
+            {
+              "text": "Z",
+              "span": [
+                507,
+                508
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In Europe there are old pharmacies still operating in Dubrovnik, Croatia, located inside the Franciscan monastery, opened in 1317; and in the Town Hall Square of Tallinn, Estonia, dating from at least 1422. The oldest is claimed to have been set up in 1221 in the Church of Santa Maria Novella in Florence, Italy, which now houses a perfume museum. The medieval Esteve Pharmacy, located in Ll\u00edvia, a Catalan enclave close to Puigcerd\u00e0, also now a museum, dates back to the 15th century, keeping albarellos from the 16th and 17th centuries, old prescription books and antique drugs."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "How far does one pharmacy in Croatia date back to?",
+            "id": "5726deed5951b619008f80c5"
+          },
+          "answers": [
+            {
+              "text": "1317",
+              "span": [
+                125,
+                129
+              ]
+            },
+            {
+              "text": "1317",
+              "span": [
+                125,
+                129
+              ]
+            },
+            {
+              "text": "1317",
+              "span": [
+                125,
+                129
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where is the oldest pharmacy stated to be located?",
+            "id": "5726deed5951b619008f80c6"
+          },
+          "answers": [
+            {
+              "text": "Church of Santa Maria Novella in Florence, Italy",
+              "span": [
+                264,
+                312
+              ]
+            },
+            {
+              "text": "Church of Santa Maria Novella in Florence, Italy",
+              "span": [
+                264,
+                312
+              ]
+            },
+            {
+              "text": "Florence, Italy",
+              "span": [
+                297,
+                312
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the medieval Esteve Pharmacy used as at present?",
+            "id": "5726deed5951b619008f80c7"
+          },
+          "answers": [
+            {
+              "text": "museum",
+              "span": [
+                447,
+                453
+              ]
+            },
+            {
+              "text": "a museum",
+              "span": [
+                445,
+                453
+              ]
+            },
+            {
+              "text": "museum",
+              "span": [
+                447,
+                453
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What sorts of items are displayed in the Esteve Pharmacy museum?",
+            "id": "5726deed5951b619008f80c8"
+          },
+          "answers": [
+            {
+              "text": "albarellos from the 16th and 17th centuries, old prescription books and antique drugs",
+              "span": [
+                495,
+                580
+              ]
+            },
+            {
+              "text": "albarellos from the 16th and 17th centuries, old prescription books and antique drugs",
+              "span": [
+                495,
+                580
+              ]
+            },
+            {
+              "text": "old prescription books and antique drugs",
+              "span": [
+                540,
+                580
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In what year is the oldest pharmacy said to have been established?",
+            "id": "5726deed5951b619008f80c9"
+          },
+          "answers": [
+            {
+              "text": "1221",
+              "span": [
+                252,
+                256
+              ]
+            },
+            {
+              "text": "1221",
+              "span": [
+                252,
+                256
+              ]
+            },
+            {
+              "text": "1221",
+              "span": [
+                252,
+                256
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "East and Central Africa's biggest economy has posted tremendous growth in the service sector, boosted by rapid expansion in telecommunication and financial activity over the last decade, and now[when?] contributes 62% of GDP. 22% of GDP still comes from the unreliable agricultural sector which employs 75% of the labour force (a consistent characteristic of under-developed economies that have not attained food security \u2013 an important catalyst of economic growth) A small portion of the population relies on food aid.[citation needed] Industry and manufacturing is the smallest sector, accounting for 16% of GDP. The service, industry and manufacturing sectors only employ 25% of the labour force but contribute 75% of GDP."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What was East and Central Africa's economy boosted by?",
+            "id": "572917743f37b3190047800d"
+          },
+          "answers": [
+            {
+              "text": "rapid expansion in telecommunication and financial activity",
+              "span": [
+                105,
+                164
+              ]
+            },
+            {
+              "text": "rapid expansion in telecommunication and financial activity",
+              "span": [
+                105,
+                164
+              ]
+            },
+            {
+              "text": "rapid expansion in telecommunication and financial activity",
+              "span": [
+                105,
+                164
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is an important catalyst of economic growth?",
+            "id": "572917743f37b3190047800f"
+          },
+          "answers": [
+            {
+              "text": "food security",
+              "span": [
+                408,
+                421
+              ]
+            },
+            {
+              "text": "food security",
+              "span": [
+                408,
+                421
+              ]
+            },
+            {
+              "text": "food security",
+              "span": [
+                408,
+                421
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the smalled work force sector?",
+            "id": "572917743f37b31900478010"
+          },
+          "answers": [
+            {
+              "text": "Industry and manufacturing",
+              "span": [
+                537,
+                563
+              ]
+            },
+            {
+              "text": "Industry and manufacturing",
+              "span": [
+                537,
+                563
+              ]
+            },
+            {
+              "text": "Industry and manufacturing",
+              "span": [
+                537,
+                563
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What percent of the labor force work in agriculture?",
+            "id": "572917743f37b3190047800e"
+          },
+          "answers": [
+            {
+              "text": "75% of the labour force",
+              "span": [
+                303,
+                326
+              ]
+            },
+            {
+              "text": "75%",
+              "span": [
+                303,
+                306
+              ]
+            },
+            {
+              "text": "75%",
+              "span": [
+                303,
+                306
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Orange County is a rapidly developing business center that includes Downtown Santa Ana, the South Coast Metro and Newport Center districts; as well as the Irvine business centers of The Irvine Spectrum, West Irvine, and international corporations headquartered at the University of California, Irvine. West Irvine includes the Irvine Tech Center and Jamboree Business Parks."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Which county is developing its business center?",
+            "id": "57060eaf75f01819005e7910"
+          },
+          "answers": [
+            {
+              "text": "Orange",
+              "span": [
+                0,
+                6
+              ]
+            },
+            {
+              "text": "Orange County",
+              "span": [
+                0,
+                13
+              ]
+            },
+            {
+              "text": "Orange County",
+              "span": [
+                0,
+                13
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where are international corporations headquartered?",
+            "id": "57060eaf75f01819005e7911"
+          },
+          "answers": [
+            {
+              "text": "University of California, Irvine",
+              "span": [
+                268,
+                300
+              ]
+            },
+            {
+              "text": "the University of California, Irvine",
+              "span": [
+                264,
+                300
+              ]
+            },
+            {
+              "text": "University of California",
+              "span": [
+                268,
+                292
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Jamboree Business Parks belongs to which business center?",
+            "id": "57060eaf75f01819005e7912"
+          },
+          "answers": [
+            {
+              "text": "West Irvine",
+              "span": [
+                302,
+                313
+              ]
+            },
+            {
+              "text": "West Irvine",
+              "span": [
+                302,
+                313
+              ]
+            },
+            {
+              "text": "West Irvine",
+              "span": [
+                302,
+                313
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What other business district does Orange County envelop outside of Downtown Santa Ana and Newport Center?",
+            "id": "57060eaf75f01819005e7913"
+          },
+          "answers": [
+            {
+              "text": "South Coast Metro",
+              "span": [
+                92,
+                109
+              ]
+            },
+            {
+              "text": "the South Coast Metro",
+              "span": [
+                88,
+                109
+              ]
+            },
+            {
+              "text": "South Coast Metro",
+              "span": [
+                92,
+                109
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "At what rate is Orange County developing its business centers?",
+            "id": "57060eaf75f01819005e7914"
+          },
+          "answers": [
+            {
+              "text": "rapidly",
+              "span": [
+                19,
+                26
+              ]
+            },
+            {
+              "text": "rapidly",
+              "span": [
+                19,
+                26
+              ]
+            },
+            {
+              "text": "rapidly",
+              "span": [
+                19,
+                26
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "People who climb mountains or fly in non-pressurized fixed-wing aircraft sometimes have supplemental O\n2 supplies.[h] Passengers traveling in (pressurized) commercial airplanes have an emergency supply of O\n2 automatically supplied to them in case of cabin depressurization. Sudden cabin pressure loss activates chemical oxygen generators above each seat, causing oxygen masks to drop. Pulling on the masks \"to start the flow of oxygen\" as cabin safety instructions dictate, forces iron filings into the sodium chlorate inside the canister. A steady stream of oxygen gas is then produced by the exothermic reaction."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What event would necessitate airline passengers to need a supplemental supply of oxygen? ",
+            "id": "571cd88ddd7acb1400e4c18d"
+          },
+          "answers": [
+            {
+              "text": "cabin depressurization",
+              "span": [
+                251,
+                273
+              ]
+            },
+            {
+              "text": "cabin depressurization",
+              "span": [
+                251,
+                273
+              ]
+            },
+            {
+              "text": "cabin depressurization",
+              "span": [
+                251,
+                273
+              ]
+            },
+            {
+              "text": "cabin depressurization",
+              "span": [
+                251,
+                273
+              ]
+            },
+            {
+              "text": "depressurization",
+              "span": [
+                257,
+                273
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the type of oxygen production for emergency oxygen in airlines?",
+            "id": "571cd88ddd7acb1400e4c18e"
+          },
+          "answers": [
+            {
+              "text": "chemical",
+              "span": [
+                312,
+                320
+              ]
+            },
+            {
+              "text": "chemical oxygen",
+              "span": [
+                312,
+                327
+              ]
+            },
+            {
+              "text": "chemical",
+              "span": [
+                312,
+                320
+              ]
+            },
+            {
+              "text": "chemical oxygen generators",
+              "span": [
+                312,
+                338
+              ]
+            },
+            {
+              "text": "chemical",
+              "span": [
+                312,
+                320
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What type of reaction is present in the emergency oxygen generator of an airplane?",
+            "id": "571cd88ddd7acb1400e4c18f"
+          },
+          "answers": [
+            {
+              "text": "exothermic",
+              "span": [
+                595,
+                605
+              ]
+            },
+            {
+              "text": "exothermic",
+              "span": [
+                595,
+                605
+              ]
+            },
+            {
+              "text": "exothermic",
+              "span": [
+                595,
+                605
+              ]
+            },
+            {
+              "text": "exothermic",
+              "span": [
+                595,
+                605
+              ]
+            },
+            {
+              "text": "exothermic reaction",
+              "span": [
+                595,
+                614
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What gas does the airline exothermic reaction produce?",
+            "id": "571cd88ddd7acb1400e4c190"
+          },
+          "answers": [
+            {
+              "text": "oxygen gas",
+              "span": [
+                560,
+                570
+              ]
+            },
+            {
+              "text": "oxygen",
+              "span": [
+                560,
+                566
+              ]
+            },
+            {
+              "text": "oxygen",
+              "span": [
+                560,
+                566
+              ]
+            },
+            {
+              "text": "oxygen",
+              "span": [
+                560,
+                566
+              ]
+            },
+            {
+              "text": "oxygen",
+              "span": [
+                560,
+                566
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Some Normans joined Turkish forces to aid in the destruction of the Armenians vassal-states of Sassoun and Taron in far eastern Anatolia. Later, many took up service with the Armenian state further south in Cilicia and the Taurus Mountains. A Norman named Oursel led a force of \"Franks\" into the upper Euphrates valley in northern Syria. From 1073 to 1074, 8,000 of the 20,000 troops of the Armenian general Philaretus Brachamius were Normans\u2014formerly of Oursel\u2014led by Raimbaud. They even lent their ethnicity to the name of their castle: Afranji, meaning \"Franks.\" The known trade between Amalfi and Antioch and between Bari and Tarsus may be related to the presence of Italo-Normans in those cities while Amalfi and Bari were under Norman rule in Italy."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What was the name of the Norman castle?",
+            "id": "56de10b44396321400ee2593"
+          },
+          "answers": [
+            {
+              "text": "Afranji",
+              "span": [
+                539,
+                546
+              ]
+            },
+            {
+              "text": "Afranji",
+              "span": [
+                539,
+                546
+              ]
+            },
+            {
+              "text": "Afranji",
+              "span": [
+                539,
+                546
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who was the leader when the Franks entered the Euphrates valley?",
+            "id": "56de10b44396321400ee2594"
+          },
+          "answers": [
+            {
+              "text": "Oursel",
+              "span": [
+                256,
+                262
+              ]
+            },
+            {
+              "text": "Oursel",
+              "span": [
+                256,
+                262
+              ]
+            },
+            {
+              "text": "Oursel",
+              "span": [
+                256,
+                262
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who did the Normans team up with in Anatolia?",
+            "id": "56de10b44396321400ee2595"
+          },
+          "answers": [
+            {
+              "text": "Turkish forces",
+              "span": [
+                20,
+                34
+              ]
+            },
+            {
+              "text": "Turkish forces",
+              "span": [
+                20,
+                34
+              ]
+            },
+            {
+              "text": "Turkish forces",
+              "span": [
+                20,
+                34
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "When a person\u2019s capabilities are lowered, they are in some way deprived of earning as much income as they would otherwise. An old, ill man cannot earn as much as a healthy young man; gender roles and customs may prevent a woman from receiving an education or working outside the home. There may be an epidemic that causes widespread panic, or there could be rampant violence in the area that prevents people from going to work for fear of their lives. As a result, income and economic inequality increases, and it becomes more difficult to reduce the gap without additional aid. To prevent such inequality, this approach believes it\u2019s important to have political freedom, economic facilities, social opportunities, transparency guarantees, and protective security to ensure that people aren\u2019t denied their functionings, capabilities, and agency and can thus work towards a better relevant income."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What happens when a person's capabilities aer lowered, as it relates to their income?",
+            "id": "572a2224af94a219006aa823"
+          },
+          "answers": [
+            {
+              "text": "deprived of earning as much",
+              "span": [
+                63,
+                90
+              ]
+            },
+            {
+              "text": "deprived of earning as much income",
+              "span": [
+                63,
+                97
+              ]
+            },
+            {
+              "text": "deprived of earning as much income as they would otherwise",
+              "span": [
+                63,
+                121
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What can and old, ill man not do?",
+            "id": "572a2224af94a219006aa824"
+          },
+          "answers": [
+            {
+              "text": "earn as much as a healthy young man",
+              "span": [
+                146,
+                181
+              ]
+            },
+            {
+              "text": "earn as much as a healthy young man",
+              "span": [
+                146,
+                181
+              ]
+            },
+            {
+              "text": "earn as much as a healthy young man",
+              "span": [
+                146,
+                181
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What issues may prevent women from working outside the home or receiving education?",
+            "id": "572a2224af94a219006aa825"
+          },
+          "answers": [
+            {
+              "text": "gender roles and customs",
+              "span": [
+                183,
+                207
+              ]
+            },
+            {
+              "text": "gender roles and customs",
+              "span": [
+                183,
+                207
+              ]
+            },
+            {
+              "text": "gender roles and customs",
+              "span": [
+                183,
+                207
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Why would rampant violence prevent people from going to work?",
+            "id": "572a2224af94a219006aa826"
+          },
+          "answers": [
+            {
+              "text": "for fear of their lives",
+              "span": [
+                427,
+                450
+              ]
+            },
+            {
+              "text": "fear of their lives",
+              "span": [
+                431,
+                450
+              ]
+            },
+            {
+              "text": "fear of their lives",
+              "span": [
+                431,
+                450
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What can people work towards if they aren't denied their functionings, capabilities and agency?",
+            "id": "572a2224af94a219006aa827"
+          },
+          "answers": [
+            {
+              "text": "a better relevant income.",
+              "span": [
+                871,
+                896
+              ]
+            },
+            {
+              "text": "better relevant income",
+              "span": [
+                873,
+                895
+              ]
+            },
+            {
+              "text": "a better relevant income",
+              "span": [
+                871,
+                895
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Since then, and so far, general relativity has been acknowledged as the theory that best explains gravity. In GR, gravitation is not viewed as a force, but rather, objects moving freely in gravitational fields travel under their own inertia in straight lines through curved space-time \u2013 defined as the shortest space-time path between two space-time events. From the perspective of the object, all motion occurs as if there were no gravitation whatsoever. It is only when observing the motion in a global sense that the curvature of space-time can be observed and the force is inferred from the object's curved path. Thus, the straight line path in space-time is seen as a curved line in space, and it is called the ballistic trajectory of the object. For example, a basketball thrown from the ground moves in a parabola, as it is in a uniform gravitational field. Its space-time trajectory (when the extra ct dimension is added) is almost a straight line, slightly curved (with the radius of curvature of the order of few light-years). The time derivative of the changing momentum of the object is what we label as \"gravitational force\"."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What theory best explains gravity?",
+            "id": "57378b141c4567190057449f"
+          },
+          "answers": [
+            {
+              "text": "general relativity",
+              "span": [
+                24,
+                42
+              ]
+            },
+            {
+              "text": "general relativity",
+              "span": [
+                24,
+                42
+              ]
+            },
+            {
+              "text": "general relativity",
+              "span": [
+                24,
+                42
+              ]
+            },
+            {
+              "text": "general relativity",
+              "span": [
+                24,
+                42
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What space-time path is seen as a curved line in space?",
+            "id": "57378b141c456719005744a0"
+          },
+          "answers": [
+            {
+              "text": "ballistic trajectory",
+              "span": [
+                716,
+                736
+              ]
+            },
+            {
+              "text": "path between two space-time events",
+              "span": [
+                322,
+                356
+              ]
+            },
+            {
+              "text": "straight lines",
+              "span": [
+                244,
+                258
+              ]
+            },
+            {
+              "text": "the shortest space-time path between two space-time events.",
+              "span": [
+                298,
+                357
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the derivative of an object's changing momentum called?",
+            "id": "57378b141c456719005744a1"
+          },
+          "answers": [
+            {
+              "text": "gravitational force",
+              "span": [
+                1117,
+                1136
+              ]
+            },
+            {
+              "text": "gravitational force",
+              "span": [
+                1117,
+                1136
+              ]
+            },
+            {
+              "text": "gravitational force",
+              "span": [
+                1117,
+                1136
+              ]
+            },
+            {
+              "text": "gravitational force",
+              "span": [
+                1117,
+                1136
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In what sense must you be observing the curvature of space-time?",
+            "id": "57378b141c456719005744a2"
+          },
+          "answers": [
+            {
+              "text": "global",
+              "span": [
+                498,
+                504
+              ]
+            },
+            {
+              "text": "a global sense",
+              "span": [
+                496,
+                510
+              ]
+            },
+            {
+              "text": "in space",
+              "span": [
+                685,
+                693
+              ]
+            },
+            {
+              "text": "the perspective of the object",
+              "span": [
+                363,
+                392
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The Rhine emerges from Lake Constance, flows generally westward, as the Hochrhein, passes the Rhine Falls, and is joined by its major tributary, the river Aare. The Aare more than doubles the Rhine's water discharge, to an average of nearly 1,000 m3/s (35,000 cu ft/s), and provides more than a fifth of the discharge at the Dutch border. The Aare also contains the waters from the 4,274 m (14,022 ft) summit of Finsteraarhorn, the highest point of the Rhine basin. The Rhine roughly forms the German-Swiss border from Lake Constance with the exceptions of the canton of Schaffhausen and parts of the cantons of Z\u00fcrich and Basel-Stadt, until it turns north at the so-called Rhine knee at Basel, leaving Switzerland."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "After the Rhine emerges from Lake Constance, what direction does it flow?",
+            "id": "572f609ca23a5019007fc5af"
+          },
+          "answers": [
+            {
+              "text": "westward",
+              "span": [
+                55,
+                63
+              ]
+            },
+            {
+              "text": "westward",
+              "span": [
+                55,
+                63
+              ]
+            },
+            {
+              "text": "westward",
+              "span": [
+                55,
+                63
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the major tributary of the Rhine?",
+            "id": "572f609ca23a5019007fc5b0"
+          },
+          "answers": [
+            {
+              "text": "river Aare",
+              "span": [
+                149,
+                159
+              ]
+            },
+            {
+              "text": "Aare",
+              "span": [
+                155,
+                159
+              ]
+            },
+            {
+              "text": "river Aare",
+              "span": [
+                149,
+                159
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How much water does the Aare give to the Rhine?",
+            "id": "572f609ca23a5019007fc5b1"
+          },
+          "answers": [
+            {
+              "text": "1,000 m3/s (35,000 cu ft/s)",
+              "span": [
+                241,
+                268
+              ]
+            },
+            {
+              "text": "1,000 m3/s",
+              "span": [
+                241,
+                251
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where is the highest point of the Rhine basin?",
+            "id": "572f609ca23a5019007fc5b2"
+          },
+          "answers": [
+            {
+              "text": "Finsteraarhorn",
+              "span": [
+                412,
+                426
+              ]
+            },
+            {
+              "text": "summit of Finsteraarhorn",
+              "span": [
+                402,
+                426
+              ]
+            },
+            {
+              "text": "Finsteraarhorn, t",
+              "span": [
+                412,
+                429
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where is the so-called Rhine Knee?",
+            "id": "572f609ca23a5019007fc5b3"
+          },
+          "answers": [
+            {
+              "text": "Basel",
+              "span": [
+                688,
+                693
+              ]
+            },
+            {
+              "text": "Basel",
+              "span": [
+                688,
+                693
+              ]
+            },
+            {
+              "text": "Basel, leaving Switzerland",
+              "span": [
+                688,
+                714
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When the Rhine emerges from Lake Constance which way does it flow?",
+            "id": "572fe9b3947a6a140053cde0"
+          },
+          "answers": [
+            {
+              "text": "westward",
+              "span": [
+                55,
+                63
+              ]
+            },
+            {
+              "text": "westward",
+              "span": [
+                55,
+                63
+              ]
+            },
+            {
+              "text": "westward",
+              "span": [
+                55,
+                63
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the major tributary for the Rhine? ",
+            "id": "572fe9b3947a6a140053cde1"
+          },
+          "answers": [
+            {
+              "text": "Aare",
+              "span": [
+                155,
+                159
+              ]
+            },
+            {
+              "text": "Aare",
+              "span": [
+                155,
+                159
+              ]
+            },
+            {
+              "text": "river Aare",
+              "span": [
+                149,
+                159
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The Rhine gets how much water from the Aare?",
+            "id": "572fe9b3947a6a140053cde2"
+          },
+          "answers": [
+            {
+              "text": "1,000 m3/s (35,000 cu ft/s),",
+              "span": [
+                241,
+                269
+              ]
+            },
+            {
+              "text": "1,000 m3/s",
+              "span": [
+                241,
+                251
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the highest point of the Rhine basin called?",
+            "id": "572fe9b3947a6a140053cde3"
+          },
+          "answers": [
+            {
+              "text": "Finsteraarhorn",
+              "span": [
+                412,
+                426
+              ]
+            },
+            {
+              "text": "summit of Finsteraarhorn",
+              "span": [
+                402,
+                426
+              ]
+            },
+            {
+              "text": "Finsteraarhorn",
+              "span": [
+                412,
+                426
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "There's a rough border between Switzerland and what other country formed by the Rhine?",
+            "id": "572fe9b3947a6a140053cde4"
+          },
+          "answers": [
+            {
+              "text": "German",
+              "span": [
+                494,
+                500
+              ]
+            },
+            {
+              "text": "German-Swiss border",
+              "span": [
+                494,
+                513
+              ]
+            },
+            {
+              "text": "German",
+              "span": [
+                494,
+                500
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Since teachers can affect how students perceive the course materials, it has been found that teachers who showed enthusiasm towards the course materials and students can affect a positive learning experience towards the course materials. On teacher/course evaluations, it was found that teachers who have a positive disposition towards the course content tend to transfer their passion to receptive students. These teachers do not teach by rote but attempt to find new invigoration for the course materials on a daily basis. One of the difficulties in this approach is that teachers may have repeatedly covered a curriculum until they begin to feel bored with the subject which in turn bores the students as well. Students who had enthusiastic teachers tend to rate them higher than teachers who didn't show much enthusiasm for the course materials."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What must a teacher show towards the course materials for increase learning?",
+            "id": "56e761d037bdd419002c3f13"
+          },
+          "answers": [
+            {
+              "text": "enthusiasm",
+              "span": [
+                113,
+                123
+              ]
+            },
+            {
+              "text": "enthusiasm",
+              "span": [
+                113,
+                123
+              ]
+            },
+            {
+              "text": "enthusiasm",
+              "span": [
+                113,
+                123
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What gets transferred to students who are receptive to the teacher?",
+            "id": "56e761d037bdd419002c3f14"
+          },
+          "answers": [
+            {
+              "text": "passion",
+              "span": [
+                378,
+                385
+              ]
+            },
+            {
+              "text": "passion",
+              "span": [
+                378,
+                385
+              ]
+            },
+            {
+              "text": "passion",
+              "span": [
+                378,
+                385
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do these teachers NOT do?",
+            "id": "56e761d037bdd419002c3f15"
+          },
+          "answers": [
+            {
+              "text": "teach by rote",
+              "span": [
+                431,
+                444
+              ]
+            },
+            {
+              "text": "teach by rote",
+              "span": [
+                431,
+                444
+              ]
+            },
+            {
+              "text": "teach by rote",
+              "span": [
+                431,
+                444
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How do students rate teachers that they feel are enthusiastic?",
+            "id": "56e761d037bdd419002c3f17"
+          },
+          "answers": [
+            {
+              "text": "higher",
+              "span": [
+                771,
+                777
+              ]
+            },
+            {
+              "text": "higher",
+              "span": [
+                771,
+                777
+              ]
+            },
+            {
+              "text": "higher than teachers who didn't show much enthusiasm",
+              "span": [
+                771,
+                823
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The capture of War\u0169hi\u0169 Itote (aka General China) on 15 January 1954 and the subsequent interrogation led to a better understanding of the Mau Mau command structure. Operation Anvil opened on 24 April 1954, after weeks of planning by the army with the approval of the War Council. The operation effectively placed Nairobi under military siege, and the occupants were screened and the Mau Mau supporters moved to detention camps. The Home Guard formed the core of the government's strategy as it was composed of loyalist Africans, not foreign forces like the British Army and King's African Rifles. By the end of the emergency, the Home Guard had killed 4,686 Mau Mau, amounting to 42% of the total insurgents. The capture of Dedan Kimathi on 21 October 1956 in Nyeri signified the ultimate defeat of the Mau Mau and essentially ended the military offensive. During this period, substantial governmental changes to land tenure occurred. The most important of these was the Swynnerton Plan, which was used to both reward loyalists and punish Mau Mau."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "When was Waruhiu Itote captured?",
+            "id": "5729046aaf94a219006a9f4d"
+          },
+          "answers": [
+            {
+              "text": "15 January 1954",
+              "span": [
+                52,
+                67
+              ]
+            },
+            {
+              "text": "15 January 1954",
+              "span": [
+                52,
+                67
+              ]
+            },
+            {
+              "text": "15 January 1954",
+              "span": [
+                52,
+                67
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What did this help accomplish?",
+            "id": "5729046aaf94a219006a9f4e"
+          },
+          "answers": [
+            {
+              "text": "the subsequent interrogation led to a better understanding of the Mau Mau command structure",
+              "span": [
+                72,
+                163
+              ]
+            },
+            {
+              "text": "better understanding of the Mau Mau command structure",
+              "span": [
+                110,
+                163
+              ]
+            },
+            {
+              "text": "a better understanding of the Mau Mau command structure",
+              "span": [
+                108,
+                163
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did Operation Anvil open?",
+            "id": "5729046aaf94a219006a9f4f"
+          },
+          "answers": [
+            {
+              "text": "24 April 1954",
+              "span": [
+                191,
+                204
+              ]
+            },
+            {
+              "text": "24 April 1954",
+              "span": [
+                191,
+                204
+              ]
+            },
+            {
+              "text": "24 April 1954",
+              "span": [
+                191,
+                204
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many of the Mau Mau did Home Gaurd kill?",
+            "id": "5729046aaf94a219006a9f50"
+          },
+          "answers": [
+            {
+              "text": "4,686 Mau Mau",
+              "span": [
+                652,
+                665
+              ]
+            },
+            {
+              "text": "4,686",
+              "span": [
+                652,
+                657
+              ]
+            },
+            {
+              "text": "4,686",
+              "span": [
+                652,
+                657
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was the most important governmental change to land tenure?",
+            "id": "5729046aaf94a219006a9f51"
+          },
+          "answers": [
+            {
+              "text": "the Swynnerton Plan, which was used to both reward loyalists and punish Mau Mau.",
+              "span": [
+                967,
+                1047
+              ]
+            },
+            {
+              "text": "Swynnerton Plan",
+              "span": [
+                971,
+                986
+              ]
+            },
+            {
+              "text": "Swynnerton Plan",
+              "span": [
+                971,
+                986
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The central garden was redesigned by Kim Wilkie and opened as the John Madejski Garden, on 5 July 2005. The design is a subtle blend of the traditional and modern, the layout is formal; there is an elliptical water feature lined in stone with steps around the edge which may be drained to use the area for receptions, gatherings or exhibition purposes. This is in front of the bronze doors leading to the refreshment rooms, a central path flanked by lawns leads to the sculpture gallery; the north, east and west sides have herbaceous borders along the museum walls with paths in front which continues along the south fa\u00e7ade; in the two corners by the north fa\u00e7ade there is planted an American Sweetgum tree; the southern, eastern and western edges of the lawns have glass planters which contain orange and lemon trees in summer, these are replaced by bay trees in winter."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who redesigned the central garden?",
+            "id": "5726b12f5951b619008f7aaf"
+          },
+          "answers": [
+            {
+              "text": "Kim Wilkie",
+              "span": [
+                37,
+                47
+              ]
+            },
+            {
+              "text": "Kim Wilkie",
+              "span": [
+                37,
+                47
+              ]
+            },
+            {
+              "text": "Kim Wilkie",
+              "span": [
+                37,
+                47
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The redesigned central garden opened in 2005 with what new moniker?",
+            "id": "5726b12f5951b619008f7ab0"
+          },
+          "answers": [
+            {
+              "text": "John Madejski Garden",
+              "span": [
+                66,
+                86
+              ]
+            },
+            {
+              "text": "the John Madejski Garden",
+              "span": [
+                62,
+                86
+              ]
+            },
+            {
+              "text": "John Madejski Garden",
+              "span": [
+                66,
+                86
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What shape is the water feature in the John Madejski Garden?",
+            "id": "5726b12f5951b619008f7ab1"
+          },
+          "answers": [
+            {
+              "text": "elliptical",
+              "span": [
+                198,
+                208
+              ]
+            },
+            {
+              "text": "elliptical",
+              "span": [
+                198,
+                208
+              ]
+            },
+            {
+              "text": "elliptical",
+              "span": [
+                198,
+                208
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The steps around the water feature can be drained for what uses?",
+            "id": "5726b12f5951b619008f7ab2"
+          },
+          "answers": [
+            {
+              "text": "receptions, gatherings or exhibition purposes",
+              "span": [
+                306,
+                351
+              ]
+            },
+            {
+              "text": "receptions, gatherings or exhibition purposes",
+              "span": [
+                306,
+                351
+              ]
+            },
+            {
+              "text": "receptions, gatherings or exhibition purposes",
+              "span": [
+                306,
+                351
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Which tree species is planted in the two corners by the north facade?",
+            "id": "5726b12f5951b619008f7ab3"
+          },
+          "answers": [
+            {
+              "text": "American Sweetgum",
+              "span": [
+                685,
+                702
+              ]
+            },
+            {
+              "text": "orange and lemon trees",
+              "span": [
+                796,
+                818
+              ]
+            },
+            {
+              "text": "American Sweetgum",
+              "span": [
+                685,
+                702
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Emperor Gegeen Khan, Ayurbarwada's son and successor, ruled for only two years, from 1321 to 1323. He continued his father's policies to reform the government based on the Confucian principles, with the help of his newly appointed grand chancellor Baiju. During his reign, the Da Yuan Tong Zhi (Chinese: \u5927\u5143\u901a\u5236, \"the comprehensive institutions of the Great Yuan\"), a huge collection of codes and regulations of the Yuan dynasty begun by his father, was formally promulgated. Gegeen was assassinated in a coup involving five princes from a rival faction, perhaps steppe elite opposed to Confucian reforms. They placed Yes\u00fcn Tem\u00fcr (or Taidingdi) on the throne, and, after an unsuccessful attempt to calm the princes, he also succumbed to regicide."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who was Ayurbarwada's son?",
+            "id": "57286fa83acd2414000df9e5"
+          },
+          "answers": [
+            {
+              "text": "Gegeen Khan",
+              "span": [
+                8,
+                19
+              ]
+            },
+            {
+              "text": "Gegeen Khan",
+              "span": [
+                8,
+                19
+              ]
+            },
+            {
+              "text": "Gegeen Khan",
+              "span": [
+                8,
+                19
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When was Geegen the emperor?",
+            "id": "57286fa83acd2414000df9e6"
+          },
+          "answers": [
+            {
+              "text": "1321 to 1323",
+              "span": [
+                85,
+                97
+              ]
+            },
+            {
+              "text": "1321 to 1323",
+              "span": [
+                85,
+                97
+              ]
+            },
+            {
+              "text": "from 1321 to 1323",
+              "span": [
+                80,
+                97
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who did Gegeen appoint as grand chancellor?",
+            "id": "57286fa83acd2414000df9e7"
+          },
+          "answers": [
+            {
+              "text": "Baiju",
+              "span": [
+                248,
+                253
+              ]
+            },
+            {
+              "text": "Baiju",
+              "span": [
+                248,
+                253
+              ]
+            },
+            {
+              "text": "Baiju",
+              "span": [
+                248,
+                253
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What did 'Da Yuan Tong Zhi' mean?",
+            "id": "57286fa83acd2414000df9e8"
+          },
+          "answers": [
+            {
+              "text": "\"the comprehensive institutions of the Great Yuan\"",
+              "span": [
+                310,
+                360
+              ]
+            },
+            {
+              "text": "the comprehensive institutions of the Great Yuan",
+              "span": [
+                311,
+                359
+              ]
+            },
+            {
+              "text": "the comprehensive institutions of the Great Yuan",
+              "span": [
+                311,
+                359
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many rival princes were involved in assassinating Gegeen?",
+            "id": "57286fa83acd2414000df9e9"
+          },
+          "answers": [
+            {
+              "text": "five",
+              "span": [
+                517,
+                521
+              ]
+            },
+            {
+              "text": "five",
+              "span": [
+                517,
+                521
+              ]
+            },
+            {
+              "text": "five",
+              "span": [
+                517,
+                521
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In general, there are three sectors of construction: buildings, infrastructure and industrial. Building construction is usually further divided into residential and non-residential (commercial/institutional). Infrastructure is often called heavy/highway, heavy civil or heavy engineering. It includes large public works, dams, bridges, highways, water/wastewater and utility distribution. Industrial includes refineries, process chemical, power generation, mills and manufacturing plants. There are other ways to break the industry into sectors or markets."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What are the three sectors of construction?",
+            "id": "57273d8bf1498d1400e8f4fe"
+          },
+          "answers": [
+            {
+              "text": "buildings, infrastructure and industrial",
+              "span": [
+                53,
+                93
+              ]
+            },
+            {
+              "text": "buildings, infrastructure and industrial",
+              "span": [
+                53,
+                93
+              ]
+            },
+            {
+              "text": "buildings, infrastructure and industrial",
+              "span": [
+                53,
+                93
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Building construction is usually further divided into what categories?",
+            "id": "57273d8bf1498d1400e8f4ff"
+          },
+          "answers": [
+            {
+              "text": "residential and non-residential",
+              "span": [
+                149,
+                180
+              ]
+            },
+            {
+              "text": "residential and non-residential (commercial/institutional)",
+              "span": [
+                149,
+                207
+              ]
+            },
+            {
+              "text": "residential and non-residential (commercial/institutional)",
+              "span": [
+                149,
+                207
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Infrastructure is often called what?",
+            "id": "57273d8bf1498d1400e8f500"
+          },
+          "answers": [
+            {
+              "text": "heavy/highway, heavy civil or heavy engineering",
+              "span": [
+                240,
+                287
+              ]
+            },
+            {
+              "text": "heavy/highway, heavy civil or heavy engineering",
+              "span": [
+                240,
+                287
+              ]
+            },
+            {
+              "text": "heavy/highway, heavy civil or heavy engineering",
+              "span": [
+                240,
+                287
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Large public works, dams, bridges, highways, water/wastewater and utility distribution are under what construction sector?",
+            "id": "57273d8bf1498d1400e8f501"
+          },
+          "answers": [
+            {
+              "text": "Infrastructure",
+              "span": [
+                209,
+                223
+              ]
+            },
+            {
+              "text": "Infrastructure",
+              "span": [
+                209,
+                223
+              ]
+            },
+            {
+              "text": "Infrastructure",
+              "span": [
+                209,
+                223
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Refineries, process chemical, power generation, mills and manufacturing plants are under what sector of construction?",
+            "id": "57273d8bf1498d1400e8f502"
+          },
+          "answers": [
+            {
+              "text": "Industrial",
+              "span": [
+                389,
+                399
+              ]
+            },
+            {
+              "text": "heavy civil or heavy engineering",
+              "span": [
+                255,
+                287
+              ]
+            },
+            {
+              "text": "Industrial",
+              "span": [
+                389,
+                399
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Philosophers in antiquity used the concept of force in the study of stationary and moving objects and simple machines, but thinkers such as Aristotle and Archimedes retained fundamental errors in understanding force. In part this was due to an incomplete understanding of the sometimes non-obvious force of friction, and a consequently inadequate view of the nature of natural motion. A fundamental error was the belief that a force is required to maintain motion, even at a constant velocity. Most of the previous misunderstandings about motion and force were eventually corrected by Galileo Galilei and Sir Isaac Newton. With his mathematical insight, Sir Isaac Newton formulated laws of motion that were not improved-on for nearly three hundred years. By the early 20th century, Einstein developed a theory of relativity that correctly predicted the action of forces on objects with increasing momenta near the speed of light, and also provided insight into the forces produced by gravitation and inertia."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What concept did philosophers in antiquity use to study simple machines?",
+            "id": "573735e8c3c5551400e51e71"
+          },
+          "answers": [
+            {
+              "text": "force",
+              "span": [
+                46,
+                51
+              ]
+            },
+            {
+              "text": "force",
+              "span": [
+                46,
+                51
+              ]
+            },
+            {
+              "text": "the concept of force",
+              "span": [
+                31,
+                51
+              ]
+            },
+            {
+              "text": "the concept of force",
+              "span": [
+                31,
+                51
+              ]
+            },
+            {
+              "text": "force",
+              "span": [
+                46,
+                51
+              ]
+            },
+            {
+              "text": "force",
+              "span": [
+                46,
+                51
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was the belief that maintaining motion required force?",
+            "id": "573735e8c3c5551400e51e72"
+          },
+          "answers": [
+            {
+              "text": "fundamental error",
+              "span": [
+                387,
+                404
+              ]
+            },
+            {
+              "text": "A fundamental error",
+              "span": [
+                385,
+                404
+              ]
+            },
+            {
+              "text": "A fundamental error",
+              "span": [
+                385,
+                404
+              ]
+            },
+            {
+              "text": "A fundamental error",
+              "span": [
+                385,
+                404
+              ]
+            },
+            {
+              "text": "A fundamental error",
+              "span": [
+                385,
+                404
+              ]
+            },
+            {
+              "text": "A fundamental error",
+              "span": [
+                385,
+                404
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who had mathmatical insite?",
+            "id": "573735e8c3c5551400e51e73"
+          },
+          "answers": [
+            {
+              "text": "Sir Isaac Newton",
+              "span": [
+                654,
+                670
+              ]
+            },
+            {
+              "text": "Sir Isaac Newton",
+              "span": [
+                654,
+                670
+              ]
+            },
+            {
+              "text": "Sir Isaac Newton",
+              "span": [
+                654,
+                670
+              ]
+            },
+            {
+              "text": "Sir Isaac Newton",
+              "span": [
+                654,
+                670
+              ]
+            },
+            {
+              "text": "Sir Isaac Newton",
+              "span": [
+                654,
+                670
+              ]
+            },
+            {
+              "text": "Sir Isaac Newton",
+              "span": [
+                654,
+                670
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How long did it take to improve on Sir Isaac Newton's laws of motion?",
+            "id": "573735e8c3c5551400e51e74"
+          },
+          "answers": [
+            {
+              "text": "nearly three hundred years",
+              "span": [
+                727,
+                753
+              ]
+            },
+            {
+              "text": "nearly three hundred years",
+              "span": [
+                727,
+                753
+              ]
+            },
+            {
+              "text": "nearly three hundred years",
+              "span": [
+                727,
+                753
+              ]
+            },
+            {
+              "text": "nearly three hundred years",
+              "span": [
+                727,
+                753
+              ]
+            },
+            {
+              "text": "nearly three hundred years",
+              "span": [
+                727,
+                753
+              ]
+            },
+            {
+              "text": "three hundred years",
+              "span": [
+                734,
+                753
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who develped the theory of relativity?",
+            "id": "573735e8c3c5551400e51e75"
+          },
+          "answers": [
+            {
+              "text": "Einstein",
+              "span": [
+                782,
+                790
+              ]
+            },
+            {
+              "text": "Einstein",
+              "span": [
+                782,
+                790
+              ]
+            },
+            {
+              "text": "Einstein",
+              "span": [
+                782,
+                790
+              ]
+            },
+            {
+              "text": "Einstein",
+              "span": [
+                782,
+                790
+              ]
+            },
+            {
+              "text": "Einstein",
+              "span": [
+                782,
+                790
+              ]
+            },
+            {
+              "text": "Einstein",
+              "span": [
+                782,
+                790
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The Calvin cycle starts by using the enzyme Rubisco to fix CO2 into five-carbon Ribulose bisphosphate (RuBP) molecules. The result is unstable six-carbon molecules that immediately break down into three-carbon molecules called 3-phosphoglyceric acid, or 3-PGA. The ATP and NADPH made in the light reactions is used to convert the 3-PGA into glyceraldehyde-3-phosphate, or G3P sugar molecules. Most of the G3P molecules are recycled back into RuBP using energy from more ATP, but one out of every six produced leaves the cycle\u2014the end product of the dark reactions."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What cycle starts with rubisco?",
+            "id": "572975a3af94a219006aa465"
+          },
+          "answers": [
+            {
+              "text": "The Calvin cycle",
+              "span": [
+                0,
+                16
+              ]
+            },
+            {
+              "text": "The Calvin cycle",
+              "span": [
+                0,
+                16
+              ]
+            },
+            {
+              "text": "Calvin cycle",
+              "span": [
+                4,
+                16
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the result of the Calvin cycle?",
+            "id": "572975a3af94a219006aa466"
+          },
+          "answers": [
+            {
+              "text": "unstable six-carbon molecules that immediately break down",
+              "span": [
+                134,
+                191
+              ]
+            },
+            {
+              "text": "unstable six-carbon molecules",
+              "span": [
+                134,
+                163
+              ]
+            },
+            {
+              "text": "unstable six-carbon molecules",
+              "span": [
+                134,
+                163
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do unstable 6-carbon molecules become?",
+            "id": "572975a3af94a219006aa467"
+          },
+          "answers": [
+            {
+              "text": "three-carbon molecules called 3-phosphoglyceric acid",
+              "span": [
+                197,
+                249
+              ]
+            },
+            {
+              "text": "three-carbon molecules",
+              "span": [
+                197,
+                219
+              ]
+            },
+            {
+              "text": "three-carbon molecules called 3-phosphoglyceric acid, or 3-PGA",
+              "span": [
+                197,
+                259
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many G3P molecules leave the cycle?",
+            "id": "572975a3af94a219006aa468"
+          },
+          "answers": [
+            {
+              "text": "one out of every six",
+              "span": [
+                479,
+                499
+              ]
+            },
+            {
+              "text": "out of every six",
+              "span": [
+                483,
+                499
+              ]
+            },
+            {
+              "text": "one out of every six",
+              "span": [
+                479,
+                499
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Kenya's inclusion among the beneficiaries of the US Government's African Growth and Opportunity Act (AGOA) has given a boost to manufacturing in recent years. Since AGOA took effect in 2000, Kenya's clothing sales to the United States increased from US$44 million to US$270 million (2006).[citation needed] Other initiatives to strengthen manufacturing have been the new government's favourable tax measures, including the removal of duty on capital equipment and other raw materials.[citation needed]"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What has given a boost to manufacturing in recent years?",
+            "id": "57291d9e3f37b31900478035"
+          },
+          "answers": [
+            {
+              "text": "Kenya's inclusion among the beneficiaries of the US Government's African Growth and Opportunity Act (AGOA)",
+              "span": [
+                0,
+                106
+              ]
+            },
+            {
+              "text": "AGOA",
+              "span": [
+                101,
+                105
+              ]
+            },
+            {
+              "text": "African Growth and Opportunity Act",
+              "span": [
+                65,
+                99
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What year did AGOA take effect?",
+            "id": "57291d9e3f37b31900478036"
+          },
+          "answers": [
+            {
+              "text": "2000",
+              "span": [
+                185,
+                189
+              ]
+            },
+            {
+              "text": "2000",
+              "span": [
+                185,
+                189
+              ]
+            },
+            {
+              "text": "2000",
+              "span": [
+                185,
+                189
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The first commercial steam-powered device was a water pump, developed in 1698 by Thomas Savery. It used condensing steam to create a vacuum which was used to raise water from below, then it used steam pressure to raise it higher. Small engines were effective though larger models were problematic. They proved only to have a limited lift height and were prone to boiler explosions. It received some use in mines, pumping stations and for supplying water wheels used to power textile machinery. An attractive feature of the Savery engine was its low cost. Bento de Moura Portugal introduced an ingenious improvement of Savery's construction \"to render it capable of working itself\", as described by John Smeaton in the Philosophical Transactions published in 1751. It continued to be manufactured until the late 18th century. One engine was still known to be operating in 1820."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who developed the first commercial steam powered device?",
+            "id": "57115b2850c2381900b54a7f"
+          },
+          "answers": [
+            {
+              "text": "Thomas Savery",
+              "span": [
+                81,
+                94
+              ]
+            },
+            {
+              "text": "Thomas Savery.",
+              "span": [
+                81,
+                95
+              ]
+            },
+            {
+              "text": "Thomas Savery",
+              "span": [
+                81,
+                94
+              ]
+            },
+            {
+              "text": "Thomas Savery",
+              "span": [
+                81,
+                94
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was the first steam powered device used commercially?",
+            "id": "57115b2850c2381900b54a80"
+          },
+          "answers": [
+            {
+              "text": "water pump",
+              "span": [
+                48,
+                58
+              ]
+            },
+            {
+              "text": "water pump",
+              "span": [
+                48,
+                58
+              ]
+            },
+            {
+              "text": "vacuum",
+              "span": [
+                133,
+                139
+              ]
+            },
+            {
+              "text": "water pump",
+              "span": [
+                48,
+                58
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In what year was the first commercial steam powered device invented?",
+            "id": "57115b2850c2381900b54a81"
+          },
+          "answers": [
+            {
+              "text": "1698",
+              "span": [
+                73,
+                77
+              ]
+            },
+            {
+              "text": "1698",
+              "span": [
+                73,
+                77
+              ]
+            },
+            {
+              "text": "1698",
+              "span": [
+                73,
+                77
+              ]
+            },
+            {
+              "text": "1698",
+              "span": [
+                73,
+                77
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who notably improved the Savery water pump?",
+            "id": "57115b2850c2381900b54a82"
+          },
+          "answers": [
+            {
+              "text": "Bento de Moura Portugal",
+              "span": [
+                555,
+                578
+              ]
+            },
+            {
+              "text": "Bento de Moura Portugal",
+              "span": [
+                555,
+                578
+              ]
+            },
+            {
+              "text": "Bento de Moura Portugal",
+              "span": [
+                555,
+                578
+              ]
+            },
+            {
+              "text": "Bento de Moura Portugal",
+              "span": [
+                555,
+                578
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who wrote of the Savery water pump in 1751's Philosophical Transactions?",
+            "id": "57115b2850c2381900b54a83"
+          },
+          "answers": [
+            {
+              "text": "John Smeaton",
+              "span": [
+                698,
+                710
+              ]
+            },
+            {
+              "text": "John Smeaton",
+              "span": [
+                698,
+                710
+              ]
+            },
+            {
+              "text": "John Smeaton",
+              "span": [
+                698,
+                710
+              ]
+            },
+            {
+              "text": "John Smeaton",
+              "span": [
+                698,
+                710
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Much of the work of the Scottish Parliament is done in committee. The role of committees is stronger in the Scottish Parliament than in other parliamentary systems, partly as a means of strengthening the role of backbenchers in their scrutiny of the government and partly to compensate for the fact that there is no revising chamber. The principal role of committees in the Scottish Parliament is to take evidence from witnesses, conduct inquiries and scrutinise legislation. Committee meetings take place on Tuesday, Wednesday and Thursday morning when Parliament is sitting. Committees can also meet at other locations throughout Scotland."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Where is much of the work of the Scottish Parliament done?",
+            "id": "572fc6f204bcaa1900d76cf5"
+          },
+          "answers": [
+            {
+              "text": "committee",
+              "span": [
+                55,
+                64
+              ]
+            },
+            {
+              "text": "committee",
+              "span": [
+                55,
+                64
+              ]
+            },
+            {
+              "text": "in committee",
+              "span": [
+                52,
+                64
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What are committees in the Scottish Parliament compared to other systems?",
+            "id": "572fc6f204bcaa1900d76cf6"
+          },
+          "answers": [
+            {
+              "text": "stronger",
+              "span": [
+                92,
+                100
+              ]
+            },
+            {
+              "text": "stronger",
+              "span": [
+                92,
+                100
+              ]
+            },
+            {
+              "text": "stronger in the Scottish Parliament than in other parliamentary systems",
+              "span": [
+                92,
+                163
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is one avenue being compensated for by having committees serve such a large role?",
+            "id": "572fc6f204bcaa1900d76cf7"
+          },
+          "answers": [
+            {
+              "text": "no revising chamber",
+              "span": [
+                313,
+                332
+              ]
+            },
+            {
+              "text": "no revising chamber",
+              "span": [
+                313,
+                332
+              ]
+            },
+            {
+              "text": "take evidence from witnesses, conduct inquiries and scrutinise legislation",
+              "span": [
+                400,
+                474
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Taking evidence from witnesses is one of committees' what?",
+            "id": "572fc6f204bcaa1900d76cf8"
+          },
+          "answers": [
+            {
+              "text": "principal role",
+              "span": [
+                338,
+                352
+              ]
+            },
+            {
+              "text": "principal role",
+              "span": [
+                338,
+                352
+              ]
+            },
+            {
+              "text": "principal role",
+              "span": [
+                338,
+                352
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where might committees meet outside of Parliament?",
+            "id": "572fc6f204bcaa1900d76cf9"
+          },
+          "answers": [
+            {
+              "text": "other locations throughout Scotland",
+              "span": [
+                605,
+                640
+              ]
+            },
+            {
+              "text": "other locations throughout Scotland",
+              "span": [
+                605,
+                640
+              ]
+            },
+            {
+              "text": "other locations throughout Scotland",
+              "span": [
+                605,
+                640
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Chloroplasts are one of many types of organelles in the plant cell. They are considered to have originated from cyanobacteria through endosymbiosis\u2014when a eukaryotic cell engulfed a photosynthesizing cyanobacterium that became a permanent resident in the cell. Mitochondria are thought to have come from a similar event, where an aerobic prokaryote was engulfed. This origin of chloroplasts was first suggested by the Russian biologist Konstantin Mereschkowski in 1905 after Andreas Schimper observed in 1883 that chloroplasts closely resemble cyanobacteria. Chloroplasts are only found in plants and algae."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Which organisms have chloroplasts?",
+            "id": "572956c86aef051400154d1a"
+          },
+          "answers": [
+            {
+              "text": "plants and algae",
+              "span": [
+                590,
+                606
+              ]
+            },
+            {
+              "text": "plants and algae",
+              "span": [
+                590,
+                606
+              ]
+            },
+            {
+              "text": "plants and algae.",
+              "span": [
+                590,
+                607
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What nationality was Konstantin Mereschkowski?",
+            "id": "572956c86aef051400154d1b"
+          },
+          "answers": [
+            {
+              "text": "Russian",
+              "span": [
+                418,
+                425
+              ]
+            },
+            {
+              "text": "Russian",
+              "span": [
+                418,
+                425
+              ]
+            },
+            {
+              "text": "Russian",
+              "span": [
+                418,
+                425
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was Konstantin Mereschkowski's career?",
+            "id": "572956c86aef051400154d1c"
+          },
+          "answers": [
+            {
+              "text": "biologist",
+              "span": [
+                426,
+                435
+              ]
+            },
+            {
+              "text": "biologist",
+              "span": [
+                426,
+                435
+              ]
+            },
+            {
+              "text": "biologist",
+              "span": [
+                426,
+                435
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did Konstantin Mereschkowski suggest the origin of chloroplasts?",
+            "id": "572956c86aef051400154d1d"
+          },
+          "answers": [
+            {
+              "text": "1905",
+              "span": [
+                464,
+                468
+              ]
+            },
+            {
+              "text": "1905",
+              "span": [
+                464,
+                468
+              ]
+            },
+            {
+              "text": "1905",
+              "span": [
+                464,
+                468
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who said chloroplasts are similar to cyanobacteria?",
+            "id": "572956c86aef051400154d1e"
+          },
+          "answers": [
+            {
+              "text": "Andreas Schimper",
+              "span": [
+                475,
+                491
+              ]
+            },
+            {
+              "text": "Andreas Schimper",
+              "span": [
+                475,
+                491
+              ]
+            },
+            {
+              "text": "Andreas Schimper",
+              "span": [
+                475,
+                491
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
