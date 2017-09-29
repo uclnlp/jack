@@ -8,14 +8,18 @@ import zipfile
 
 class Embeddings:
     """Wraps Vocabulary and embedding matrix to do lookups"""
-    def __init__(self, vocabulary, lookup):
+
+    def __init__(self, vocabulary, lookup, filename: str = None, emb_format: str = None):
         """
         Args:
             vocabulary:
             lookup:
+            filename:
         """
+        self.filename = filename
         self.vocabulary = vocabulary
         self.lookup = lookup
+        self.emb_format = emb_format
 
     def get(self, word):
         _id = None
@@ -51,15 +55,15 @@ def load_embeddings(file, typ='glove', **options):
     elif typ.lower() == "glove":
         if file.endswith('.txt'):
             with open(file, 'rb') as f:
-                return Embeddings(*load_glove(f))
+                return Embeddings(*load_glove(f), filename=file, emb_format=typ)
         elif file.endswith('.zip'):
             with zipfile.ZipFile(file) as zf:
-                txtfile = file.split('/')[-1][:-4]+'.txt'
+                txtfile = file.split('/')[-1][:-4] + '.txt'
                 with zf.open(txtfile, 'r') as f:
-                    return Embeddings(*load_glove(f))
+                    return Embeddings(*load_glove(f), filename=file, emb_format=typ)
         else:
             raise NotImplementedError
-            
+
     elif typ.lower() == "fasttext":
         with open(file, 'rb') as f:
-            return Embeddings(*load_fasttext(f))
+            return Embeddings(*load_fasttext(f), filename=file, emb_format=typ)
