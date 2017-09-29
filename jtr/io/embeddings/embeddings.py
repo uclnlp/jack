@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import logging
 import pickle
+
+import sys
 
 from jtr.io.embeddings.word_to_vec import load_word2vec
 from jtr.io.embeddings.glove import load_glove
@@ -106,3 +109,13 @@ def save_as_memory_map(file_prefix: str, emb: Embeddings):
     mem_map[:] = emb.lookup[:]
     mem_map.flush()
     del mem_map
+
+
+if __name__ == "__main__":
+    input_name = sys.argv[1]
+    output_prefix = sys.argv[2]
+    embeddings = load_embeddings(input_name)
+    logging.info("Loaded embeddings from {}".format(input_name))
+    save_as_memory_map(output_prefix, embeddings)
+    logging.info("Stored embeddings to {}".format(output_prefix))
+
