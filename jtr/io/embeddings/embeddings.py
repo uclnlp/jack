@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import pickle
 
 from jtr.io.embeddings.word_to_vec import load_word2vec
 from jtr.io.embeddings.glove import load_glove
 from jtr.io.embeddings.fasttext import load_fasttext
 import zipfile
+import numpy as np
 
 
 class Embeddings:
@@ -67,3 +69,40 @@ def load_embeddings(file, typ='glove', **options):
     elif typ.lower() == "fasttext":
         with open(file, 'rb') as f:
             return Embeddings(*load_fasttext(f), filename=file, emb_format=typ)
+
+    elif typ.lower() == "mem_map":
+        return load_memory_map(file)
+
+
+def load_memory_map(file_prefix: str) -> Embeddings:
+    """
+    Loads embeddings from a memory map file to allow lazy loading (and reduce the memory usage).
+    Args:
+        file_prefix: a file prefix. This function stores several files, and they will all start with this prefix.
+
+    Returns:
+        Embeddings object with a lookup matrix that is backed by a memory map.
+
+    """
+    meta_file = file_prefix + "_meta.pkl"
+    mem_map_file = file_prefix + "_memmap"
+    with open(meta_file, "rb") as f:
+        meta = pickle.load(f)
+    shape = meta['shape']
+    mem_map = np.memmap(mem_map_file, dtype='float32', mode='r+', shape=shape)
+    result = Embeddings(meta['vocab'], mem_map, filename=file_prefix, emb_format="mem_map")
+    return result
+
+
+def save_as_memory_map(file_prefix: str, emb: Embeddings):
+    meta_file = file_prefix + "_meta.pkl"
+    mem_map_file = file_prefix + "_memmap"
+    with open(meta_file, "wb") as f:
+        pickle.dump({
+            "vocab": emb.vocabulary,
+            "shape": emb.shape
+        }, f)
+    mem_map = np.memmap(mem_map_file, dtype='float32', mode='w+', shape=emb.shape)
+    mem_map[:] = emb.lookup[:]
+    mem_map.flush()
+    del mem_map
