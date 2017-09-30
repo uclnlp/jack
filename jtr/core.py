@@ -24,7 +24,6 @@ from jtr.util.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 
-
 _rng = random.Random(1234)
 
 
@@ -73,7 +72,6 @@ class TensorPort:
         return self.name > port.name
 
     def __repr__(self):
-
         return "<TensorPort (%s)>" % self.name
 
 
@@ -271,7 +269,7 @@ class FlatPorts:
         # -attention, ...
 
 
-class SharedResources():
+class SharedResources:
     """
     A class to provide and store generally shared resources, such as vocabularies,
     across the reader sub-modules.
@@ -302,7 +300,9 @@ class SharedResources():
         if not os.path.exists(os.path.dirname(path)):
             os.mkdir(os.path.dirname(path))
         with open(path, 'wb') as f:
-            pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
+            remaining = {k: self.__dict__[k] for k in self.__dict__ if k != "vocab"}
+            pickle.dump(remaining, f, pickle.HIGHEST_PROTOCOL)
+        self.vocab.store(path + "_vocab")
 
     def load(self, path):
         """
@@ -313,6 +313,9 @@ class SharedResources():
         if os.path.exists(path):
             with open(path, 'rb') as f:
                 self.__dict__.update(pickle.load(f))
+
+        self.vocab = Vocab()
+        self.vocab.load(path + "_vocab")
 
 
 class InputModule:
@@ -398,6 +401,8 @@ class InputModule:
 
 
 AnnotationType = TypeVar('AnnotationType')
+
+
 class OnlineInputModule(InputModule, Generic[AnnotationType]):
     """InputModule that preprocesses datasets on the fly.
 

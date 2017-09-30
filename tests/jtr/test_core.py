@@ -1,22 +1,33 @@
 # -*- coding: utf-8 -*-
 from jtr.core import SharedResources
+from jtr.io.embeddings import load_embeddings
 from jtr.util.vocab import Vocab
+import numpy as np
 
 
+def test_shared_resources_store():
+    embeddings_file = "data/GloVe/glove.the.50d.txt"
+    embeddings = load_embeddings(embeddings_file, 'glove')
+    config = {
+        "embedding_file": embeddings_file,
+        "embedding_format": "glove"
+    }
+    some_vocab = Vocab(emb=embeddings)
+    some_vocab('foo')
+    shared_resources = SharedResources(some_vocab, config)
 
-def test_SharedResources():
-    shared_resources = SharedResources()
-    assert shared_resources
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        path = tmp_dir + "_resources"
+        shared_resources.store(path)
 
-    some_vocab = Vocab()
-    some_vocab('someword')
-    shared_resources.vocab = some_vocab
+        new_shared_resources = SharedResources()
+        new_shared_resources.load(path)
 
-    shared_resources.store('tmp/somedummy.pickle')
-
-    new_shared_resources = SharedResources()
-    new_shared_resources.load('tmp/somedummy.pickle')
-
-    assert type(new_shared_resources.vocab) == type(shared_resources.vocab)
-    assert new_shared_resources.vocab.__dict__ == shared_resources.vocab.__dict__
-    assert new_shared_resources.config == shared_resources.config
+        assert type(new_shared_resources.vocab) == type(shared_resources.vocab)
+        for k in new_shared_resources.vocab.__dict__:
+            if k != "emb":
+                assert new_shared_resources.vocab.__dict__[k] == shared_resources.vocab.__dict__[k]
+        assert new_shared_resources.config == shared_resources.config
+        assert new_shared_resources.vocab.emb.lookup.shape == embeddings.lookup.shape
+        assert np.array_equal(new_shared_resources.vocab.emb.get(b"the"), embeddings.get(b"the"))
