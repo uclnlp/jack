@@ -6,15 +6,21 @@ import sys
 from collections import OrderedDict
 
 import numpy as np
+import os
+import pickle
+
+from sacred.optional import yaml
+
+from jtr.io.embeddings import Embeddings, load_embeddings
 
 
-class Vocab(object):
+class Vocab:
     """
     Vocab objects for use in jtr pipelines.
     """
     DEFAULT_UNK = "<UNK>"
 
-    def __init__(self, unk=DEFAULT_UNK, emb=None, init_from_embeddings=False):
+    def __init__(self, unk=DEFAULT_UNK, emb: Embeddings = None, init_from_embeddings=False):
         """
         Creates Vocab object.
 
@@ -39,7 +45,7 @@ class Vocab(object):
             self.sym2freqs = {w: emb.vocabulary.get_word_count(w) for w in self.sym2id}
             self.frozen = True
             self.next_pos = 0
-            self.next_neg = -1*len(self.sym2id)
+            self.next_neg = -1 * len(self.sym2id)
         else:
             self.sym2id = {}
             # with pos and neg indices
@@ -74,8 +80,8 @@ class Vocab(object):
         """
         # if any pretrained have been encountered
         if not self.frozen and self.next_neg < -1:
-            sym2id = {sym: self._normalize(id) for sym,id in self.sym2id.items()}
-            id2sym = {self._normalize(id): sym for id,sym in self.id2sym.items()}
+            sym2id = {sym: self._normalize(id) for sym, id in self.sym2id.items()}
+            id2sym = {self._normalize(id): sym for id, sym in self.id2sym.items()}
             self.sym2id = sym2id
             self.id2sym = id2sym
         self.frozen = True
@@ -212,3 +218,38 @@ class Vocab(object):
             pruned_vocab.freeze()
 
         return pruned_vocab
+
+    def store(self, path: str):
+        if not os.path.exists(os.path.dirname(path)):
+            os.mkdir(os.path.dirname(path))
+        conf_file = path + "_conf.yaml"
+        emb_file = path + "_emb.pkl"
+        remainder_file = path + ".pkl"
+        with open(conf_file, "w") as f:
+            yaml.dump({"embedding_file": self.emb.filename, "emb_format": self.emb.emb_format}, f)
+
+        if self.emb.filename is None:
+            with open(emb_file, "wb") as f:
+                pickle.dump(self.emb, f)
+        remaining = {k: self.__dict__[k] for k in self.__dict__ if k != "emb"}
+        with open(remainder_file, "wb") as f:
+            pickle.dump(remaining, f)
+
+    def load(self, path: str):
+        conf_file = path + "_conf.yaml"
+        emb_file = path + "_emb.pkl"
+        remainder_file = path + ".pkl"
+        with open(conf_file, "r") as f:
+            config = yaml.load(f)
+
+        if config["embedding_file"] is not None:
+            emb = load_embeddings(config["embedding_file"])
+        else:
+            with open(emb_file, "rb") as f:
+                emb = pickle.load(f)
+
+        with open(remainder_file, "rb") as f:
+            remaining = pickle.load(f)
+
+        self.__dict__ = remaining
+        self.__dict__["emb"] = emb

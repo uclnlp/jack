@@ -11,7 +11,7 @@ def example_reader(config):
     input_module = SimpleMCInputModule(resources)
     model_module = SimpleMCModelModule(resources)
     output_module = SimpleMCOutputModule()
-    reader = JTReader(input_module, model_module, output_module, resources)
+    reader = JTReader(resources,input_module, model_module, output_module)
     return reader
 
 
