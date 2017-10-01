@@ -47,12 +47,12 @@ def load_embeddings(file, typ='glove', **options):
 
     Args:
         file: string, path to a file like "GoogleNews-vectors-negative300.bin.gz" or "glove.42B.300d.zip"
-        typ: string, either "word2vec" or "glove"
+        typ: string, either "word2vec", "glove", "fasttext" or "mem_map"
         options: dict, other options.
     Returns:
         Embeddings object, wrapper class around Vocabulary embedding matrix.
     """
-    assert typ in {"word2vec", "glove", "fasttext"}, "so far only 'word2vec' and 'glove' foreseen"
+    assert typ in {"word2vec", "glove", "fasttext", "mem_map"}, "so far only 'word2vec' and 'glove' foreseen"
 
     if typ.lower() == "word2vec":
         return Embeddings(*load_word2vec(file, **options))
