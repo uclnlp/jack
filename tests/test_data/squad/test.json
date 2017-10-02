@@ -1,0 +1,3032 @@
+{
+  "meta": {
+    "source": "dev-v1.1.json"
+  },
+  "instances": [
+    {
+      "support": [
+        {
+          "text": "In the Sandgate area, to the east of the city and beside the river, resided the close-knit community of keelmen and their families. They were so called because they worked on the keels, boats that were used to transfer coal from the river banks to the waiting colliers, for export to London and elsewhere. In the 1630s about 7,000 out of 20,000 inhabitants of Newcastle died of plague, more than one-third of the population. Specifically within the year 1636, it is roughly estimated with evidence held by the Society of Antiquaries that 47% of the then population of Newcastle died from the epidemic; this may also have been the most devastating loss in any British City in this period."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who did the keelmen live with in a tight-knight community east of Newcastle?",
+            "id": "57266a15f1498d1400e8def6"
+          },
+          "answers": [
+            {
+              "text": "their families",
+              "span": [
+                116,
+                130
+              ]
+            },
+            {
+              "text": "their families",
+              "span": [
+                116,
+                130
+              ]
+            },
+            {
+              "text": "their families",
+              "span": [
+                116,
+                130
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How was coal transferred from the river banks to colliers? ",
+            "id": "57266a15f1498d1400e8def7"
+          },
+          "answers": [
+            {
+              "text": "boats",
+              "span": [
+                186,
+                191
+              ]
+            },
+            {
+              "text": "keels",
+              "span": [
+                179,
+                184
+              ]
+            },
+            {
+              "text": "keels",
+              "span": [
+                179,
+                184
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many folks died of plague in Newcastle in the 1630s?",
+            "id": "57266a15f1498d1400e8def8"
+          },
+          "answers": [
+            {
+              "text": "7,000",
+              "span": [
+                325,
+                330
+              ]
+            },
+            {
+              "text": "7,000",
+              "span": [
+                325,
+                330
+              ]
+            },
+            {
+              "text": "7,000",
+              "span": [
+                325,
+                330
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What percentage of Newcastle's population was culled by the plague?",
+            "id": "57266a15f1498d1400e8def9"
+          },
+          "answers": [
+            {
+              "text": "47%",
+              "span": [
+                538,
+                541
+              ]
+            },
+            {
+              "text": "more than one-third",
+              "span": [
+                386,
+                405
+              ]
+            },
+            {
+              "text": "47%",
+              "span": [
+                538,
+                541
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The epidemic in Newcastle was the most what in any British city at the time?",
+            "id": "57266a15f1498d1400e8defa"
+          },
+          "answers": [
+            {
+              "text": "devastating loss",
+              "span": [
+                635,
+                651
+              ]
+            },
+            {
+              "text": "devastating loss",
+              "span": [
+                635,
+                651
+              ]
+            },
+            {
+              "text": "devastating loss",
+              "span": [
+                635,
+                651
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The country's literacy level stands at 85% of the whole population. Preschool, which targets children from age three to five, is an integral component of the education system and is a key requirement for admission to Standard One (First Grade). At the end of primary education, pupils sit the Kenya Certificate of Primary Education (KCPE), which determines those who proceed to secondary school or vocational training. The result of this examination is needed for placement at secondary school. Primary school age is 6/7-13/14 years. For those who proceed to secondary level, there is a national examination at the end of Form Four \u2013 the Kenya Certificate of Secondary Education (KCSE), which determines those proceeding to the universities, other professional training or employment. Students sit examinations in eight subjects of their choosing. However, English, Kiswahili (languages) and mathematics are compulsory subjects."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What is Kenya's literacy rate?",
+            "id": "5729276c1d046914007790d7"
+          },
+          "answers": [
+            {
+              "text": "85%",
+              "span": [
+                39,
+                42
+              ]
+            },
+            {
+              "text": "85%",
+              "span": [
+                39,
+                42
+              ]
+            },
+            {
+              "text": "85%",
+              "span": [
+                39,
+                42
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Preschool targest what age children?",
+            "id": "5729276c1d046914007790d8"
+          },
+          "answers": [
+            {
+              "text": "age three to five",
+              "span": [
+                107,
+                124
+              ]
+            },
+            {
+              "text": "three to five",
+              "span": [
+                111,
+                124
+              ]
+            },
+            {
+              "text": "age three to five",
+              "span": [
+                107,
+                124
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is preschool required for?",
+            "id": "5729276c1d046914007790d9"
+          },
+          "answers": [
+            {
+              "text": "a key requirement for admission to Standard One (First Grade)",
+              "span": [
+                182,
+                243
+              ]
+            },
+            {
+              "text": "admission to Standard One",
+              "span": [
+                204,
+                229
+              ]
+            },
+            {
+              "text": "admission to Standard One",
+              "span": [
+                204,
+                229
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What does the KCPE determine?",
+            "id": "5729276c1d046914007790da"
+          },
+          "answers": [
+            {
+              "text": "those who proceed to secondary school or vocational training",
+              "span": [
+                357,
+                417
+              ]
+            },
+            {
+              "text": "those who proceed to secondary school or vocational training",
+              "span": [
+                357,
+                417
+              ]
+            },
+            {
+              "text": "those who proceed to secondary school or vocational training",
+              "span": [
+                357,
+                417
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the exam at the end of Form Four?",
+            "id": "5729276c1d046914007790db"
+          },
+          "answers": [
+            {
+              "text": "the Kenya Certificate of Secondary Education",
+              "span": [
+                634,
+                678
+              ]
+            },
+            {
+              "text": "Kenya Certificate of Secondary Education",
+              "span": [
+                638,
+                678
+              ]
+            },
+            {
+              "text": "determines those proceeding to the universities",
+              "span": [
+                693,
+                740
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Advances in polynomial algebra were made by mathematicians during the Yuan era. The mathematician Zhu Shijie (1249\u20131314) solved simultaneous equations with up to four unknowns using a rectangular array of coefficients, equivalent to modern matrices. Zhu used a method of elimination to reduce the simultaneous equations to a single equation with only one unknown. His method is described in the Jade Mirror of the Four Unknowns, written in 1303. The opening pages contain a diagram of Pascal's triangle. The summation of a finite arithmetic series is also covered in the book."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "When was Zhu Shijie born?",
+            "id": "5728804b4b864d1900164a46"
+          },
+          "answers": [
+            {
+              "text": "1249",
+              "span": [
+                110,
+                114
+              ]
+            },
+            {
+              "text": "1249",
+              "span": [
+                110,
+                114
+              ]
+            },
+            {
+              "text": "1249",
+              "span": [
+                110,
+                114
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did Zhu Shijie die?",
+            "id": "5728804b4b864d1900164a47"
+          },
+          "answers": [
+            {
+              "text": "1314",
+              "span": [
+                115,
+                119
+              ]
+            },
+            {
+              "text": "1314",
+              "span": [
+                115,
+                119
+              ]
+            },
+            {
+              "text": "1314",
+              "span": [
+                115,
+                119
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What modern math concept did Zhu Shijie do work similar to?",
+            "id": "5728804b4b864d1900164a48"
+          },
+          "answers": [
+            {
+              "text": "matrices",
+              "span": [
+                240,
+                248
+              ]
+            },
+            {
+              "text": "matrices",
+              "span": [
+                240,
+                248
+              ]
+            },
+            {
+              "text": "matrices",
+              "span": [
+                240,
+                248
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What type of math was advanced during the Yuan?",
+            "id": "5728804b4b864d1900164a49"
+          },
+          "answers": [
+            {
+              "text": "polynomial algebra",
+              "span": [
+                12,
+                30
+              ]
+            },
+            {
+              "text": "polynomial algebra",
+              "span": [
+                12,
+                30
+              ]
+            },
+            {
+              "text": "polynomial algebra",
+              "span": [
+                12,
+                30
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did Zhu publish 'Jade Mirror of the Four Unknowns'?",
+            "id": "5728804b4b864d1900164a4a"
+          },
+          "answers": [
+            {
+              "text": "1303",
+              "span": [
+                440,
+                444
+              ]
+            },
+            {
+              "text": "1303",
+              "span": [
+                440,
+                444
+              ]
+            },
+            {
+              "text": "1303",
+              "span": [
+                440,
+                444
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The 1970s were highlighted by several successful comedy, fantasy, action and superhero-themed series for the network including Kung Fu, The Six Million Dollar Man, Wonder Woman, Starsky & Hutch, Charlie's Angels, The Bionic Woman, Fantasy Island and Battlestar Galactica. Many of these series were greenlit by Silverman, who left ABC in 1978 to become president of NBC's entertainment division. The rousing success of Happy Days also led to a successful spin-off series, Laverne & Shirley, which debuted in 1976. Charlie's Angels and Three's Company (which debuted in 1977) were two prime examples of a trend among the major networks during the 1970s known as \"jiggle TV\", featuring attractive, often buxom, women in main and guest roles."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What position did Fred Silverman leave ABC to take in 1978?",
+            "id": "5727492f708984140094dbb5"
+          },
+          "answers": [
+            {
+              "text": "president of NBC's entertainment division",
+              "span": [
+                352,
+                393
+              ]
+            },
+            {
+              "text": "president of NBC's entertainment division",
+              "span": [
+                352,
+                393
+              ]
+            },
+            {
+              "text": "president of NBC",
+              "span": [
+                352,
+                368
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What spinoff of Happy Days debuted in 1976?",
+            "id": "5727492f708984140094dbb6"
+          },
+          "answers": [
+            {
+              "text": "Laverne & Shirley",
+              "span": [
+                471,
+                488
+              ]
+            },
+            {
+              "text": "Laverne & Shirley",
+              "span": [
+                471,
+                488
+              ]
+            },
+            {
+              "text": "Laverne & Shirley",
+              "span": [
+                471,
+                488
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What television trend are Charlies Angels and Three's Company an example of?",
+            "id": "5727492f708984140094dbb7"
+          },
+          "answers": [
+            {
+              "text": "jiggle TV",
+              "span": [
+                661,
+                670
+              ]
+            },
+            {
+              "text": "\"jiggle TV\"",
+              "span": [
+                660,
+                671
+              ]
+            },
+            {
+              "text": "\"jiggle TV\"",
+              "span": [
+                660,
+                671
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In this equation, a dimensional constant  is used to describe the relative strength of gravity. This constant has come to be known as Newton's Universal Gravitation Constant, though its value was unknown in Newton's lifetime. Not until 1798 was Henry Cavendish able to make the first measurement of  using a torsion balance; this was widely reported in the press as a measurement of the mass of the Earth since knowing  could allow one to solve for the Earth's mass given the above equation. Newton, however, realized that since all celestial bodies followed the same laws of motion, his law of gravity had to be universal. Succinctly stated, Newton's Law of Gravitation states that the force on a spherical object of mass  due to the gravitational pull of mass  is"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What is used to figure the relative strengh of gravity?",
+            "id": "57378862c3c5551400e51f21"
+          },
+          "answers": [
+            {
+              "text": "Newton's Universal Gravitation Constant,",
+              "span": [
+                134,
+                174
+              ]
+            },
+            {
+              "text": "dimensional constant",
+              "span": [
+                20,
+                40
+              ]
+            },
+            {
+              "text": "a dimensional constant",
+              "span": [
+                18,
+                40
+              ]
+            },
+            {
+              "text": "a dimensional constant",
+              "span": [
+                18,
+                40
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who made the first to measure value of the Newton Universal Gravitation Constant?",
+            "id": "57378862c3c5551400e51f22"
+          },
+          "answers": [
+            {
+              "text": "Henry Cavendish",
+              "span": [
+                245,
+                260
+              ]
+            },
+            {
+              "text": "Henry Cavendish",
+              "span": [
+                245,
+                260
+              ]
+            },
+            {
+              "text": "Henry Cavendish",
+              "span": [
+                245,
+                260
+              ]
+            },
+            {
+              "text": "Henry Cavendish",
+              "span": [
+                245,
+                260
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When was the first measurement of the value of the Newton Universal Gravitation Constant?",
+            "id": "57378862c3c5551400e51f23"
+          },
+          "answers": [
+            {
+              "text": "1798",
+              "span": [
+                236,
+                240
+              ]
+            },
+            {
+              "text": "1798",
+              "span": [
+                236,
+                240
+              ]
+            },
+            {
+              "text": "1798",
+              "span": [
+                236,
+                240
+              ]
+            },
+            {
+              "text": "1798",
+              "span": [
+                236,
+                240
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who figured out that his law of gravity had to be universal?",
+            "id": "57378862c3c5551400e51f24"
+          },
+          "answers": [
+            {
+              "text": "Newton",
+              "span": [
+                492,
+                498
+              ]
+            },
+            {
+              "text": "Newton",
+              "span": [
+                643,
+                649
+              ]
+            },
+            {
+              "text": "Newton",
+              "span": [
+                492,
+                498
+              ]
+            },
+            {
+              "text": "Newton",
+              "span": [
+                492,
+                498
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The first buildings of the University of Chicago campus, which make up what is now known as the Main Quadrangles, were part of a \"master plan\" conceived by two University of Chicago trustees and plotted by Chicago architect Henry Ives Cobb. The Main Quadrangles consist of six quadrangles, each surrounded by buildings, bordering one larger quadrangle. The buildings of the Main Quadrangles were designed by Cobb, Shepley, Rutan and Coolidge, Holabird & Roche, and other architectural firms in a mixture of the Victorian Gothic and Collegiate Gothic styles, patterned on the colleges of the University of Oxford. (Mitchell Tower, for example, is modeled after Oxford's Magdalen Tower, and the university Commons, Hutchinson Hall, replicates Christ Church Hall.)"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What are the first buildings the university built knows as today?",
+            "id": "57284b904b864d19001648e2"
+          },
+          "answers": [
+            {
+              "text": "the Main Quadrangles",
+              "span": [
+                92,
+                112
+              ]
+            },
+            {
+              "text": "Main Quadrangles",
+              "span": [
+                96,
+                112
+              ]
+            },
+            {
+              "text": "the Main Quadrangles",
+              "span": [
+                92,
+                112
+              ]
+            },
+            {
+              "text": "the Main Quadrangles",
+              "span": [
+                92,
+                112
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many quadrangles does the Main Quadrangles have?",
+            "id": "57284b904b864d19001648e3"
+          },
+          "answers": [
+            {
+              "text": "six",
+              "span": [
+                273,
+                276
+              ]
+            },
+            {
+              "text": "six quadrangles",
+              "span": [
+                273,
+                288
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                273,
+                276
+              ]
+            },
+            {
+              "text": "six",
+              "span": [
+                273,
+                276
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who helped designed the Main Quadrangles?",
+            "id": "57284b904b864d19001648e4"
+          },
+          "answers": [
+            {
+              "text": "Cobb, Shepley, Rutan and Coolidge, Holabird & Roche,",
+              "span": [
+                408,
+                460
+              ]
+            },
+            {
+              "text": "Henry Ives Cobb",
+              "span": [
+                224,
+                239
+              ]
+            },
+            {
+              "text": "Cobb, Shepley, Rutan and Coolidge, Holabird & Roche, and other architectural firms",
+              "span": [
+                408,
+                490
+              ]
+            },
+            {
+              "text": "Cobb, Shepley, Rutan and Coolidge, Holabird & Roche, and other architectural firms",
+              "span": [
+                408,
+                490
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "The Mitchell Tower is designed to look like what Oxford tower?",
+            "id": "57284b904b864d19001648e5"
+          },
+          "answers": [
+            {
+              "text": "Oxford's Magdalen Tower",
+              "span": [
+                660,
+                683
+              ]
+            },
+            {
+              "text": "Magdalen Tower",
+              "span": [
+                669,
+                683
+              ]
+            },
+            {
+              "text": "Magdalen Tower",
+              "span": [
+                669,
+                683
+              ]
+            },
+            {
+              "text": "Magdalen Tower",
+              "span": [
+                669,
+                683
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Hutchinson Hall was designed to look like what Oxford hall?",
+            "id": "57284b904b864d19001648e6"
+          },
+          "answers": [
+            {
+              "text": "Christ Church Hall",
+              "span": [
+                741,
+                759
+              ]
+            },
+            {
+              "text": "Christ Church Hall",
+              "span": [
+                741,
+                759
+              ]
+            },
+            {
+              "text": "Christ Church Hall",
+              "span": [
+                741,
+                759
+              ]
+            },
+            {
+              "text": "Christ Church Hall",
+              "span": [
+                741,
+                759
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Britain gained control of French Canada and Acadia, colonies containing approximately 80,000 primarily French-speaking Roman Catholic residents. The deportation of Acadians beginning in 1755 resulted in land made available to migrants from Europe and the colonies further south. The British resettled many Acadians throughout its North American provinces, but many went to France, and some went to New Orleans, which they had expected to remain French. Some were sent to colonize places as diverse as French Guiana and the Falkland Islands; these latter efforts were unsuccessful. Others migrated to places like Saint-Domingue, and fled to New Orleans after the Haitian Revolution. The Louisiana population contributed to the founding of the modern Cajun population. (The French word \"Acadien\" evolved to \"Cadien\", then to \"Cajun\".)"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "How many French colonists were gained by British?",
+            "id": "57340a094776f4190066177d"
+          },
+          "answers": [
+            {
+              "text": "80,000",
+              "span": [
+                86,
+                92
+              ]
+            },
+            {
+              "text": "80,000",
+              "span": [
+                86,
+                92
+              ]
+            },
+            {
+              "text": "80,000",
+              "span": [
+                86,
+                92
+              ]
+            },
+            {
+              "text": "80,000",
+              "span": [
+                86,
+                92
+              ]
+            },
+            {
+              "text": "80,000",
+              "span": [
+                86,
+                92
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When was the deportation of Acadians?",
+            "id": "57340a094776f4190066177e"
+          },
+          "answers": [
+            {
+              "text": "1755",
+              "span": [
+                186,
+                190
+              ]
+            },
+            {
+              "text": "1755",
+              "span": [
+                186,
+                190
+              ]
+            },
+            {
+              "text": "1755",
+              "span": [
+                186,
+                190
+              ]
+            },
+            {
+              "text": "1755",
+              "span": [
+                186,
+                190
+              ]
+            },
+            {
+              "text": "1755",
+              "span": [
+                186,
+                190
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where did British resettle many Acadians?",
+            "id": "57340a094776f4190066177f"
+          },
+          "answers": [
+            {
+              "text": "throughout its North American provinces",
+              "span": [
+                315,
+                354
+              ]
+            },
+            {
+              "text": "throughout its North American provinces",
+              "span": [
+                315,
+                354
+              ]
+            },
+            {
+              "text": "North American provinces",
+              "span": [
+                330,
+                354
+              ]
+            },
+            {
+              "text": "North American provinces",
+              "span": [
+                330,
+                354
+              ]
+            },
+            {
+              "text": "its North American provinces",
+              "span": [
+                326,
+                354
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Although some Acadians went to France and other destiantions, what North American city did many move to?",
+            "id": "57340a094776f41900661780"
+          },
+          "answers": [
+            {
+              "text": "New Orleans",
+              "span": [
+                640,
+                651
+              ]
+            },
+            {
+              "text": "New Orleans",
+              "span": [
+                398,
+                409
+              ]
+            },
+            {
+              "text": "New Orleans",
+              "span": [
+                398,
+                409
+              ]
+            },
+            {
+              "text": "New Orleans",
+              "span": [
+                640,
+                651
+              ]
+            },
+            {
+              "text": "New Orleans",
+              "span": [
+                398,
+                409
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The Dalek race, which first appeared in the show's second serial in 1963, are Doctor Who's oldest villains. The Daleks are Kaleds from the planet Skaro, mutated by the scientist Davros and housed in mechanical armour shells for mobility. The actual creatures resemble octopi with large, pronounced brains. Their armour shells have a single eye-stalk, a sink-plunger-like device that serves the purpose of a hand, and a directed-energy weapon. Their main weakness is their eyestalk; attacks upon them using various weapons can blind a Dalek, making it go mad. Their chief role in the series plot, as they frequently remark in their instantly recognisable metallic voices, is to \"exterminate\" all non-Dalek beings. They even attack the Time Lords in the Time War, as shown during the 50th Anniversary of the show. They continue to be a recurring 'monster' within the Doctor Who franchise, their most recent appearances being in the 2015 episodes \"The Witch's Familiar\" and \"Hell Bent\". Davros has also been a recurring figure since his debut in Genesis of the Daleks, although played by several different actors."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Who are the oldest villains from the Doctor Who series? ",
+            "id": "572812eaff5b5019007d9c80"
+          },
+          "answers": [
+            {
+              "text": "The Dalek race",
+              "span": [
+                0,
+                14
+              ]
+            },
+            {
+              "text": "The Dalek race",
+              "span": [
+                0,
+                14
+              ]
+            },
+            {
+              "text": "The Dalek race",
+              "span": [
+                0,
+                14
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What planet do the Daleks come from?",
+            "id": "572812eaff5b5019007d9c81"
+          },
+          "answers": [
+            {
+              "text": "Skaro",
+              "span": [
+                146,
+                151
+              ]
+            },
+            {
+              "text": "Skaro",
+              "span": [
+                146,
+                151
+              ]
+            },
+            {
+              "text": "Skaro",
+              "span": [
+                146,
+                151
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the primary mission of the Daleks?",
+            "id": "572812eaff5b5019007d9c82"
+          },
+          "answers": [
+            {
+              "text": "to \"exterminate\" all non-Dalek beings",
+              "span": [
+                674,
+                711
+              ]
+            },
+            {
+              "text": "to \"exterminate\" all non-Dalek beings",
+              "span": [
+                674,
+                711
+              ]
+            },
+            {
+              "text": "to \"exterminate\" all non-Dalek beings",
+              "span": [
+                674,
+                711
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What scientist created the Daleks, by mutation?",
+            "id": "572812eaff5b5019007d9c83"
+          },
+          "answers": [
+            {
+              "text": "Davros",
+              "span": [
+                178,
+                184
+              ]
+            },
+            {
+              "text": "Davros",
+              "span": [
+                178,
+                184
+              ]
+            },
+            {
+              "text": "Davros",
+              "span": [
+                178,
+                184
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the Daleks' main weakness?",
+            "id": "572812eaff5b5019007d9c84"
+          },
+          "answers": [
+            {
+              "text": "their eyestalk",
+              "span": [
+                466,
+                480
+              ]
+            },
+            {
+              "text": "their eyestalk",
+              "span": [
+                466,
+                480
+              ]
+            },
+            {
+              "text": "their eyestalk",
+              "span": [
+                466,
+                480
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "If the input size is n, the time taken can be expressed as a function of n. Since the time taken on different inputs of the same size can be different, the worst-case time complexity T(n) is defined to be the maximum time taken over all inputs of size n. If T(n) is a polynomial in n, then the algorithm is said to be a polynomial time algorithm. Cobham's thesis says that a problem can be solved with a feasible amount of resources if it admits a polynomial time algorithm."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Whose thesis states that the solution to a problem is solvable with reasonable resources assuming it allows for a polynomial time algorithm?",
+            "id": "56e1a564cd28a01900c67a48"
+          },
+          "answers": [
+            {
+              "text": "Cobham's thesis",
+              "span": [
+                347,
+                362
+              ]
+            },
+            {
+              "text": "Cobham's",
+              "span": [
+                347,
+                355
+              ]
+            },
+            {
+              "text": "Cobham",
+              "span": [
+                347,
+                353
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "If input size is is equal to n, what can respectively be assumed is the function of n?",
+            "id": "56e1a564cd28a01900c67a49"
+          },
+          "answers": [
+            {
+              "text": "the time taken",
+              "span": [
+                24,
+                38
+              ]
+            },
+            {
+              "text": "the time taken",
+              "span": [
+                24,
+                38
+              ]
+            },
+            {
+              "text": "the time taken",
+              "span": [
+                24,
+                38
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What term corresponds to the maximum measurement of time across all functions of n? ",
+            "id": "56e1a564cd28a01900c67a4a"
+          },
+          "answers": [
+            {
+              "text": "worst-case time complexity",
+              "span": [
+                156,
+                182
+              ]
+            },
+            {
+              "text": "worst-case time complexity",
+              "span": [
+                156,
+                182
+              ]
+            },
+            {
+              "text": "the worst-case time complexity",
+              "span": [
+                152,
+                182
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How is worst-case time complexity written as an expression?",
+            "id": "56e1a564cd28a01900c67a4b"
+          },
+          "answers": [
+            {
+              "text": "T(n)",
+              "span": [
+                183,
+                187
+              ]
+            },
+            {
+              "text": "T(n)",
+              "span": [
+                183,
+                187
+              ]
+            },
+            {
+              "text": "T(n)",
+              "span": [
+                183,
+                187
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Assuming that T represents a polynomial in T(n), what is the term given to the corresponding algorithm?",
+            "id": "56e1a564cd28a01900c67a4c"
+          },
+          "answers": [
+            {
+              "text": "polynomial time algorithm",
+              "span": [
+                320,
+                345
+              ]
+            },
+            {
+              "text": "polynomial time",
+              "span": [
+                320,
+                335
+              ]
+            },
+            {
+              "text": "polynomial time algorithm",
+              "span": [
+                320,
+                345
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "While BSkyB had been excluded from being a part of the ONdigital consortium, thereby making them a competitor by default, BSkyB was able to join ITV Digital's free-to-air replacement, Freeview, in which it holds an equal stake with the BBC, ITV, Channel 4 and National Grid Wireless. Prior to October 2005, three BSkyB channels were available on this platform: Sky News, Sky Three, and Sky Sports News. Initially BSkyB provided Sky Travel to the service. However, this was replaced by Sky Three on 31 October 2005, which was itself later re-branded as 'Pick TV' in 2011."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What consortium was BSkyB excluded from?",
+            "id": "57094b4f9928a814004714f6"
+          },
+          "answers": [
+            {
+              "text": "ONdigital",
+              "span": [
+                55,
+                64
+              ]
+            },
+            {
+              "text": "ONdigital",
+              "span": [
+                55,
+                64
+              ]
+            },
+            {
+              "text": "ONdigital",
+              "span": [
+                55,
+                64
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who did BSkyB team up with because it was not part of the consortium?",
+            "id": "57094b4f9928a814004714f7"
+          },
+          "answers": [
+            {
+              "text": "Freeview",
+              "span": [
+                184,
+                192
+              ]
+            },
+            {
+              "text": "ITV Digital",
+              "span": [
+                145,
+                156
+              ]
+            },
+            {
+              "text": "ITV Digital",
+              "span": [
+                145,
+                156
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How many BSkyB channels were available to customers prior to October 2005?",
+            "id": "57094b4f9928a814004714f8"
+          },
+          "answers": [
+            {
+              "text": "three",
+              "span": [
+                307,
+                312
+              ]
+            },
+            {
+              "text": "three",
+              "span": [
+                307,
+                312
+              ]
+            },
+            {
+              "text": "three",
+              "span": [
+                307,
+                312
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What channel replaced Sky Travel?",
+            "id": "57094b4f9928a814004714f9"
+          },
+          "answers": [
+            {
+              "text": "Sky Three",
+              "span": [
+                485,
+                494
+              ]
+            },
+            {
+              "text": "Sky Three",
+              "span": [
+                485,
+                494
+              ]
+            },
+            {
+              "text": "Sky Three",
+              "span": [
+                485,
+                494
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was Sky Travel later rebranded as?",
+            "id": "57094b4f9928a814004714fa"
+          },
+          "answers": [
+            {
+              "text": "Pick TV",
+              "span": [
+                553,
+                560
+              ]
+            },
+            {
+              "text": "Pick TV",
+              "span": [
+                553,
+                560
+              ]
+            },
+            {
+              "text": "Pick TV",
+              "span": [
+                553,
+                560
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In order to compete with CNN, ABC proposed a 24-hour news channel called ABC Cable News, with plans to launch the network in 1995; however, the plan would ultimately be shelved by company management. ABC would reattempt such a concept in July 2004 with the launch of ABC News Now, a 24-hour news channel distributed for viewing on the Internet and mobile phones. On August 29, 1994, ABC purchased Flint, Michigan affiliate WJRT-TV and WTVG in Toledo, Ohio (which was previously affiliated with ABC from 1958 to 1970) from SJL Broadcast Management, with the latter switching to ABC once its contract with NBC expired two months after the purchase was finalized in early 1995. Both stations were acquired as a contingency plan in the event that CBS reached an affiliation deal with WXYZ-TV (to replace WJBK, which switched to Fox as a result of that network's group affiliation agreement with New World Communications) in order to allow the network to retain some over-the-air presence in the Detroit market (the E.W. Scripps Company and ABC would reach a group affiliation deal that renewed affiliation agreements with WXYZ and WEWS, and switch four other stations, including two whose Fox affiliations were displaced by the New World deal, with the network)."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What channel did ABC proposed to compete with cable news company CNN?",
+            "id": "57274cac708984140094dbdd"
+          },
+          "answers": [
+            {
+              "text": "ABC Cable News",
+              "span": [
+                73,
+                87
+              ]
+            },
+            {
+              "text": "ABC Cable News",
+              "span": [
+                73,
+                87
+              ]
+            },
+            {
+              "text": "ABC Cable News",
+              "span": [
+                73,
+                87
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What news network did ABC launch in July 2004?",
+            "id": "57274cac708984140094dbde"
+          },
+          "answers": [
+            {
+              "text": "ABC News Now",
+              "span": [
+                267,
+                279
+              ]
+            },
+            {
+              "text": "ABC News Now",
+              "span": [
+                267,
+                279
+              ]
+            },
+            {
+              "text": "ABC News Now",
+              "span": [
+                267,
+                279
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In August 1994, which Flint, Michigan affiliate did ABC purchase?",
+            "id": "57274cac708984140094dbdf"
+          },
+          "answers": [
+            {
+              "text": "WJRT-TV",
+              "span": [
+                423,
+                430
+              ]
+            },
+            {
+              "text": "WJRT-TV",
+              "span": [
+                423,
+                430
+              ]
+            },
+            {
+              "text": "WJRT-TV",
+              "span": [
+                423,
+                430
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "In August 1994, what Toledo, Ohio affiliate did ABC purchase?",
+            "id": "57274cac708984140094dbe0"
+          },
+          "answers": [
+            {
+              "text": "WTVG",
+              "span": [
+                435,
+                439
+              ]
+            },
+            {
+              "text": "WTVG",
+              "span": [
+                435,
+                439
+              ]
+            },
+            {
+              "text": "WTVG",
+              "span": [
+                435,
+                439
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The Book of Discipline is the guidebook for local churches and pastors and describes in considerable detail the organizational structure of local United Methodist churches. All UM churches must have a board of trustees with at least three members and no more than nine members and it is recommended that no gender should hold more than a 2/3 majority. All churches must also have a nominations committee, a finance committee and a church council or administrative council. Other committees are suggested but not required such as a missions committee, or evangelism or worship committee. Term limits are set for some committees but not for all. The church conference is an annual meeting of all the officers of the church and any interested members. This committee has the exclusive power to set pastors' salaries (compensation packages for tax purposes) and to elect officers to the committees."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What is the guidebook for local churches and pastors?",
+            "id": "5730cb8df6cb411900e244c2"
+          },
+          "answers": [
+            {
+              "text": "The Book of Discipline",
+              "span": [
+                0,
+                22
+              ]
+            },
+            {
+              "text": "The Book of Discipline",
+              "span": [
+                0,
+                22
+              ]
+            },
+            {
+              "text": "The Book of Discipline",
+              "span": [
+                0,
+                22
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the least number of members a board of trustees can have?",
+            "id": "5730cb8df6cb411900e244c3"
+          },
+          "answers": [
+            {
+              "text": "three",
+              "span": [
+                233,
+                238
+              ]
+            },
+            {
+              "text": "three members",
+              "span": [
+                233,
+                246
+              ]
+            },
+            {
+              "text": "three",
+              "span": [
+                233,
+                238
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is the greatest number of members a board of trustees can have?",
+            "id": "5730cb8df6cb411900e244c4"
+          },
+          "answers": [
+            {
+              "text": "nine",
+              "span": [
+                264,
+                268
+              ]
+            },
+            {
+              "text": "no more than nine members",
+              "span": [
+                251,
+                276
+              ]
+            },
+            {
+              "text": "nine",
+              "span": [
+                264,
+                268
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is an annual meeting of all the officers of the church and any interested members?",
+            "id": "5730cb8df6cb411900e244c5"
+          },
+          "answers": [
+            {
+              "text": "church conference",
+              "span": [
+                648,
+                665
+              ]
+            },
+            {
+              "text": "church conference",
+              "span": [
+                648,
+                665
+              ]
+            },
+            {
+              "text": "The church conference",
+              "span": [
+                644,
+                665
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Which committee has the exclusive power to set pastors' salaries?",
+            "id": "5730cb8df6cb411900e244c6"
+          },
+          "answers": [
+            {
+              "text": "church conference",
+              "span": [
+                648,
+                665
+              ]
+            },
+            {
+              "text": "church conference",
+              "span": [
+                648,
+                665
+              ]
+            },
+            {
+              "text": "The church conference",
+              "span": [
+                644,
+                665
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Each sitting day, normally at 5 pm, MSPs decide on all the motions and amendments that have been moved that day. This \"Decision Time\" is heralded by the sounding of the division bell, which is heard throughout the Parliamentary campus and alerts MSPs who are not in the chamber to return and vote. At Decision Time, the Presiding Officer puts questions on the motions and amendments by reading out the name of the motion or amendment as well as the proposer and asking \"Are we all agreed?\", to which the chamber first votes orally. If there is audible dissent, the Presiding Officer announces \"There will be a division\" and members vote by means of electronic consoles on their desks. Each MSP has a unique access card with a microchip which, when inserted into the console, identifies them and allows them to vote. As a result, the outcome of each division is known in seconds."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What time do the MSPs normally decide on the motions and amendments from that day?",
+            "id": "572fc49d04bcaa1900d76ccb"
+          },
+          "answers": [
+            {
+              "text": "5 pm",
+              "span": [
+                30,
+                34
+              ]
+            },
+            {
+              "text": "5 pm",
+              "span": [
+                30,
+                34
+              ]
+            },
+            {
+              "text": "5 pm",
+              "span": [
+                30,
+                34
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What is heralded by the sounding of the division bell?",
+            "id": "572fc49d04bcaa1900d76ccc"
+          },
+          "answers": [
+            {
+              "text": "\"Decision Time\"",
+              "span": [
+                118,
+                133
+              ]
+            },
+            {
+              "text": "Decision Time",
+              "span": [
+                119,
+                132
+              ]
+            },
+            {
+              "text": "\"Decision Time\"",
+              "span": [
+                118,
+                133
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do MSPs who are not in the chamber when the division bell rings return to do?",
+            "id": "572fc49d04bcaa1900d76ccd"
+          },
+          "answers": [
+            {
+              "text": "vote",
+              "span": [
+                292,
+                296
+              ]
+            },
+            {
+              "text": "vote",
+              "span": [
+                292,
+                296
+              ]
+            },
+            {
+              "text": "vote",
+              "span": [
+                292,
+                296
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How do members vote when there is a division?",
+            "id": "572fc49d04bcaa1900d76cce"
+          },
+          "answers": [
+            {
+              "text": "electronic consoles on their desks",
+              "span": [
+                649,
+                683
+              ]
+            },
+            {
+              "text": "electronic consoles",
+              "span": [
+                649,
+                668
+              ]
+            },
+            {
+              "text": "electronic consoles on their desks",
+              "span": [
+                649,
+                683
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How long does it take to know the outcome of a division?",
+            "id": "572fc49d04bcaa1900d76ccf"
+          },
+          "answers": [
+            {
+              "text": "seconds",
+              "span": [
+                870,
+                877
+              ]
+            },
+            {
+              "text": "seconds",
+              "span": [
+                870,
+                877
+              ]
+            },
+            {
+              "text": "seconds",
+              "span": [
+                870,
+                877
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "In contrast to the views of John Calvin and Philipp Melanchthon, throughout his life Luther maintained that it was not false doctrine to believe that a Christian's soul sleeps after it is separated from the body in death; and, accordingly, he disputed traditional interpretations of some Bible passages, such as the parable of the rich man and Lazarus. This also led Luther to reject the idea of torments for the saints: \"It is enough for us to know that souls do not leave their bodies to be threatened by the torments and punishments of hell, but enter a prepared bedchamber in which they sleep in peace.\" He also rejected the existence of Purgatory, which involved Christian souls undergoing penitential suffering after death. He affirmed the continuity of one's personal identity beyond death. In his Smalcald Articles, he described the saints as currently residing \"in their graves and in heaven.\""
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What did Luther believe that the soul does after death?",
+            "id": "56f8837aa6d7ea1400e176fd"
+          },
+          "answers": [
+            {
+              "text": "sleeps",
+              "span": [
+                169,
+                175
+              ]
+            },
+            {
+              "text": "sleeps",
+              "span": [
+                169,
+                175
+              ]
+            },
+            {
+              "text": "sleeps",
+              "span": [
+                169,
+                175
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What other doctrines did Luther disavow about saints?",
+            "id": "56f8837aa6d7ea1400e176fe"
+          },
+          "answers": [
+            {
+              "text": "idea of torments",
+              "span": [
+                388,
+                404
+              ]
+            },
+            {
+              "text": "torments",
+              "span": [
+                396,
+                404
+              ]
+            },
+            {
+              "text": "Bible",
+              "span": [
+                288,
+                293
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What did Luther expound happened to souls after death?",
+            "id": "56f8837aa6d7ea1400e176ff"
+          },
+          "answers": [
+            {
+              "text": "sleep in peace",
+              "span": [
+                591,
+                605
+              ]
+            },
+            {
+              "text": "enter a prepared bedchamber in which they sleep in peace.",
+              "span": [
+                549,
+                606
+              ]
+            },
+            {
+              "text": "sleeps",
+              "span": [
+                169,
+                175
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What did Luther think of Purgatory?",
+            "id": "56f8837aa6d7ea1400e17700"
+          },
+          "answers": [
+            {
+              "text": "rejected the existence",
+              "span": [
+                616,
+                638
+              ]
+            },
+            {
+              "text": "rejected the existence of",
+              "span": [
+                616,
+                641
+              ]
+            },
+            {
+              "text": "rejected",
+              "span": [
+                616,
+                624
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where did Luther describe the resting place of the saints?",
+            "id": "56f8837aa6d7ea1400e17701"
+          },
+          "answers": [
+            {
+              "text": "Smalcald Articles",
+              "span": [
+                805,
+                822
+              ]
+            },
+            {
+              "text": "in their graves and in heaven",
+              "span": [
+                871,
+                900
+              ]
+            },
+            {
+              "text": "Smalcald Articles",
+              "span": [
+                805,
+                822
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "During the 1960s, ABC continued on the same path that it began to take in the mid-1950s, by consolidating the network as part of its effort to gain loyalty from the public. The network's finances improved and allowed it to invest in other properties and programming. In May 1960, ABC purchased Chicago radio station WLS, which had shared airtime with WENR since the 1920s. This acquisition allowed ABC to consolidate its presence in the market. On May 9, 1960, WLS launched a new lineup consisting of ABC Radio programming. In 1960, Canadian entrepreneur John Bassett, who was trying to establish a television station in Toronto, sought the help of ABC to launch the station. Leonard Goldenson agreed to acquire a 25% interest in CFTO-TV; however, legislation by the Canadian Radio-Television Commission prohibited ABC's involvement, resulting in the company withdrawing from the project before the station's launch."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What radio station did ABC purchase in May 1960?",
+            "id": "57275e125951b619008f88d7"
+          },
+          "answers": [
+            {
+              "text": "WLS",
+              "span": [
+                316,
+                319
+              ]
+            },
+            {
+              "text": "WLS",
+              "span": [
+                316,
+                319
+              ]
+            },
+            {
+              "text": "WLS",
+              "span": [
+                316,
+                319
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did WLS launch a lineup of ABC radio programs?",
+            "id": "57275e125951b619008f88d8"
+          },
+          "answers": [
+            {
+              "text": "May 9, 1960",
+              "span": [
+                448,
+                459
+              ]
+            },
+            {
+              "text": "May 9, 1960",
+              "span": [
+                448,
+                459
+              ]
+            },
+            {
+              "text": "May 9, 1960",
+              "span": [
+                448,
+                459
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What Canadian investor sought ABC's help in launching a station in 1960?",
+            "id": "57275e125951b619008f88d9"
+          },
+          "answers": [
+            {
+              "text": "John Bassett",
+              "span": [
+                555,
+                567
+              ]
+            },
+            {
+              "text": "John Bassett",
+              "span": [
+                555,
+                567
+              ]
+            },
+            {
+              "text": "John Bassett",
+              "span": [
+                555,
+                567
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What project did Leonard Goldenson offer to invest in before the Canadian Radio-Television Commission ruled against ABC?",
+            "id": "57275e125951b619008f88da"
+          },
+          "answers": [
+            {
+              "text": "CFTO-TV",
+              "span": [
+                730,
+                737
+              ]
+            },
+            {
+              "text": "CFTO-TV",
+              "span": [
+                730,
+                737
+              ]
+            },
+            {
+              "text": "CFTO-TV",
+              "span": [
+                730,
+                737
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "The reason for the majority rule is the high risk of a conflict of interest and/or the avoidance of absolute powers. Otherwise, the physician has a financial self-interest in \"diagnosing\" as many conditions as possible, and in exaggerating their seriousness, because he or she can then sell more medications to the patient. Such self-interest directly conflicts with the patient's interest in obtaining cost-effective medication and avoiding the unnecessary use of medication that may have side-effects. This system reflects much similarity to the checks and balances system of the U.S. and many other governments.[citation needed]"
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "Why is majority rule used?",
+            "id": "5726f7715951b619008f838d"
+          },
+          "answers": [
+            {
+              "text": "the high risk of a conflict of interest and/or the avoidance of absolute powers",
+              "span": [
+                36,
+                115
+              ]
+            },
+            {
+              "text": "high risk of a conflict of interest",
+              "span": [
+                40,
+                75
+              ]
+            },
+            {
+              "text": "high risk of a conflict of interest and/or the avoidance of absolute powers",
+              "span": [
+                40,
+                115
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Why might a physician diagnose a large number of conditions?",
+            "id": "5726f7715951b619008f838e"
+          },
+          "answers": [
+            {
+              "text": "because he or she can then sell more medications to the patient",
+              "span": [
+                259,
+                322
+              ]
+            },
+            {
+              "text": "sell more medications to the patient",
+              "span": [
+                286,
+                322
+              ]
+            },
+            {
+              "text": "sell more medications to the patient",
+              "span": [
+                286,
+                322
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What do rules about conflict of interest involving doctors diagnosing patients resemble?",
+            "id": "5726f7715951b619008f838f"
+          },
+          "answers": [
+            {
+              "text": "the checks and balances system of the U.S. and many other governments.",
+              "span": [
+                544,
+                614
+              ]
+            },
+            {
+              "text": "checks and balances system of the U.S. and many other governments",
+              "span": [
+                548,
+                613
+              ]
+            },
+            {
+              "text": "similarity to the checks and balances system of the U.S. and many other governments",
+              "span": [
+                530,
+                613
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "How else might a physician take advantage of self-interest?",
+            "id": "5726f7715951b619008f8391"
+          },
+          "answers": [
+            {
+              "text": "exaggerating their seriousness",
+              "span": [
+                227,
+                257
+              ]
+            },
+            {
+              "text": "avoiding the unnecessary use of medication that may have side-effects",
+              "span": [
+                433,
+                502
+              ]
+            },
+            {
+              "text": "because he or she can then sell more medications to the patient",
+              "span": [
+                259,
+                322
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where might the doctor's self-interest be at odds with the patient's self-interest?",
+            "id": "5726f7715951b619008f8390"
+          },
+          "answers": [
+            {
+              "text": "in obtaining cost-effective medication and avoiding the unnecessary use of medication that may have side-effects",
+              "span": [
+                390,
+                502
+              ]
+            },
+            {
+              "text": "obtaining cost-effective medication",
+              "span": [
+                393,
+                428
+              ]
+            },
+            {
+              "text": "the physician has a financial self-interest in \"diagnosing\" as many conditions as possible",
+              "span": [
+                128,
+                218
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Luther's final journey, to Mansfeld, was taken because of his concern for his siblings' families continuing in their father Hans Luther's copper mining trade. Their livelihood was threatened by Count Albrecht of Mansfeld bringing the industry under his own control. The controversy that ensued involved all four Mansfeld counts: Albrecht, Philip, John George, and Gerhard. Luther journeyed to Mansfeld twice in late 1545 to participate in the negotiations for a settlement, and a third visit was needed in early 1546 for their completion."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "To where was Luther's final journey?",
+            "id": "56f8c7029e9bad19000a04a0"
+          },
+          "answers": [
+            {
+              "text": "Mansfeld",
+              "span": [
+                27,
+                35
+              ]
+            },
+            {
+              "text": "Mansfeld",
+              "span": [
+                27,
+                35
+              ]
+            },
+            {
+              "text": "Mansfeld",
+              "span": [
+                27,
+                35
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was Luther involved in dealing with the minds in Mansfeld?",
+            "id": "56f8c7029e9bad19000a04a1"
+          },
+          "answers": [
+            {
+              "text": "negotiations",
+              "span": [
+                443,
+                455
+              ]
+            },
+            {
+              "text": "negotiations for a settlement",
+              "span": [
+                443,
+                472
+              ]
+            },
+            {
+              "text": "siblings' families continuing in their father Hans Luther's copper mining",
+              "span": [
+                78,
+                151
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When did Luther travel to Mansfeld twice?",
+            "id": "56f8c7029e9bad19000a04a2"
+          },
+          "answers": [
+            {
+              "text": "late 1545",
+              "span": [
+                411,
+                420
+              ]
+            },
+            {
+              "text": "1545",
+              "span": [
+                416,
+                420
+              ]
+            },
+            {
+              "text": "1545",
+              "span": [
+                416,
+                420
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "When was a third visit to Mnafeld scheduled? ",
+            "id": "56f8c7029e9bad19000a04a3"
+          },
+          "answers": [
+            {
+              "text": "early 1546",
+              "span": [
+                506,
+                516
+              ]
+            },
+            {
+              "text": "1546",
+              "span": [
+                512,
+                516
+              ]
+            },
+            {
+              "text": "1546",
+              "span": [
+                512,
+                516
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "For whom was Luther concerned about in Mansfeld?",
+            "id": "56f8c7029e9bad19000a04a4"
+          },
+          "answers": [
+            {
+              "text": "his siblings' families",
+              "span": [
+                74,
+                96
+              ]
+            },
+            {
+              "text": "his siblings",
+              "span": [
+                74,
+                86
+              ]
+            },
+            {
+              "text": "siblings' families",
+              "span": [
+                78,
+                96
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "At the time of the Marburg Colloquy, Suleiman the Magnificent was besieging Vienna with a vast Ottoman army. Luther had argued against resisting the Turks in his 1518 Explanation of the Ninety-five Theses, provoking accusations of defeatism. He saw the Turks as a scourge sent to punish Christians by God, as agents of the Biblical apocalypse that would destroy the antichrist, whom Luther believed to be the papacy, and the Roman Church. He consistently rejected the idea of a Holy War, \"as though our people were an army of Christians against the Turks, who were enemies of Christ. This is absolutely contrary to Christ's doctrine and name\". On the other hand, in keeping with his doctrine of the two kingdoms, Luther did support non-religious war against the Turks. In 1526, he argued in Whether Soldiers can be in a State of Grace that national defence is reason for a just war. By 1529, in On War against the Turk, he was actively urging Emperor Charles V and the German people to fight a secular war against the Turks. He made clear, however, that the spiritual war against an alien faith was separate, to be waged through prayer and repentance. Around the time of the Siege of Vienna, Luther wrote a prayer for national deliverance from the Turks, asking God to \"give to our emperor perpetual victory over our enemies\"."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "How did Luther view the Ottoman Turks?",
+            "id": "56f8989f9e9bad19000a01a5"
+          },
+          "answers": [
+            {
+              "text": "as a scourge",
+              "span": [
+                259,
+                271
+              ]
+            },
+            {
+              "text": "scourge",
+              "span": [
+                264,
+                271
+              ]
+            },
+            {
+              "text": "argued against resisting",
+              "span": [
+                120,
+                144
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What was the purpose of the Turks in Luther's mind?",
+            "id": "56f8989f9e9bad19000a01a6"
+          },
+          "answers": [
+            {
+              "text": "to punish Christians",
+              "span": [
+                277,
+                297
+              ]
+            },
+            {
+              "text": "punish Christians by God",
+              "span": [
+                280,
+                304
+              ]
+            },
+            {
+              "text": "scourge sent to punish Christians",
+              "span": [
+                264,
+                297
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Since Luther believed that the Turks were sent by God, what was their purpose?",
+            "id": "56f8989f9e9bad19000a01a7"
+          },
+          "answers": [
+            {
+              "text": "destroy the antichrist",
+              "span": [
+                354,
+                376
+              ]
+            },
+            {
+              "text": "destroy the antichrist",
+              "span": [
+                354,
+                376
+              ]
+            },
+            {
+              "text": "punish",
+              "span": [
+                280,
+                286
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who did Luther view to be the Antichrist?",
+            "id": "56f8989f9e9bad19000a01a8"
+          },
+          "answers": [
+            {
+              "text": "the papacy",
+              "span": [
+                405,
+                415
+              ]
+            },
+            {
+              "text": "papacy",
+              "span": [
+                409,
+                415
+              ]
+            },
+            {
+              "text": "papacy",
+              "span": [
+                409,
+                415
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What kind of war did Luther support against the Turks, even if he did not oppose a religious war?",
+            "id": "56f8989f9e9bad19000a01a9"
+          },
+          "answers": [
+            {
+              "text": "secular war",
+              "span": [
+                994,
+                1005
+              ]
+            },
+            {
+              "text": "non-religious",
+              "span": [
+                732,
+                745
+              ]
+            },
+            {
+              "text": "non-religious war",
+              "span": [
+                732,
+                749
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "Frederick William, Elector of Brandenburg, invited Huguenots to settle in his realms, and a number of their descendants rose to positions of prominence in Prussia. Several prominent German military, cultural, and political figures were ethnic Huguenot, including poet Theodor Fontane, General Hermann von Fran\u00e7ois, the hero of the First World War Battle of Tannenberg, Luftwaffe General and fighter ace Adolf Galland, Luftwaffe flying ace Hans-Joachim Marseille, and famed U-boat captain Lothar von Arnauld de la Peri\u00e8re. The last Prime Minister of the (East) German Democratic Republic, Lothar de Maizi\u00e8re, is also a descendant of a Huguenot family, as is the German Federal Minister of the Interior, Thomas de Maizi\u00e8re."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "What German ruler invited Huguenot immigration?",
+            "id": "57111b95a58dae1900cd6c50"
+          },
+          "answers": [
+            {
+              "text": "Frederick William",
+              "span": [
+                0,
+                17
+              ]
+            },
+            {
+              "text": "Frederick William",
+              "span": [
+                0,
+                17
+              ]
+            },
+            {
+              "text": "Frederick William",
+              "span": [
+                0,
+                17
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What German poet was descended from Huguenots?",
+            "id": "57111b95a58dae1900cd6c51"
+          },
+          "answers": [
+            {
+              "text": "Theodor Fontane",
+              "span": [
+                268,
+                283
+              ]
+            },
+            {
+              "text": "Theodor Fontane",
+              "span": [
+                268,
+                283
+              ]
+            },
+            {
+              "text": "Theodor Fontane",
+              "span": [
+                268,
+                283
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What German general and fighter pilot was of Huguenot ancestry?",
+            "id": "57111b95a58dae1900cd6c52"
+          },
+          "answers": [
+            {
+              "text": "Adolf Galland",
+              "span": [
+                403,
+                416
+              ]
+            },
+            {
+              "text": "Adolf Galland",
+              "span": [
+                403,
+                416
+              ]
+            },
+            {
+              "text": "Adolf Galland",
+              "span": [
+                403,
+                416
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Who was the final Prime Minister of East Germany?",
+            "id": "57111b95a58dae1900cd6c53"
+          },
+          "answers": [
+            {
+              "text": "Lothar de Maizi\u00e8re",
+              "span": [
+                588,
+                606
+              ]
+            },
+            {
+              "text": "Lothar de Maizi\u00e8re",
+              "span": [
+                588,
+                606
+              ]
+            },
+            {
+              "text": "Lothar de Maizi\u00e8re",
+              "span": [
+                588,
+                606
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Thomas de Maiziere serves what role in the German cabinet?",
+            "id": "57111b95a58dae1900cd6c54"
+          },
+          "answers": [
+            {
+              "text": "Federal Minister of the Interior",
+              "span": [
+                668,
+                700
+              ]
+            },
+            {
+              "text": "Minister of the Interior",
+              "span": [
+                676,
+                700
+              ]
+            },
+            {
+              "text": "Federal Minister of the Interior",
+              "span": [
+                668,
+                700
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support": [
+        {
+          "text": "\"Bairn\" and \"hyem\", meaning \"child\" and \"home\", respectively, are examples of Geordie words with origins in Scandinavia; barn and hjem are the corresponding modern Norwegian and Danish words. Some words used in the Geordie dialect are used elsewhere in the Northern United Kingdom. The words \"bonny\" (meaning \"pretty\"), \"howay\" (\"come on\"), \"stot\" (\"bounce\") and \"hadaway\" (\"go away\" or \"you're kidding\"), all appear to be used in Scots; \"aye\" (\"yes\") and \"nowt\" (IPA://na\u028at/, rhymes with out,\"nothing\") are used elsewhere in Northern England. Many words, however, appear to be used exclusively in Newcastle and the surrounding area, such as \"Canny\" (a versatile word meaning \"good\", \"nice\" or \"very\"), \"hacky\" (\"dirty\"), \"netty\" (\"toilet\"), \"hoy\" (\"throw\", from the Dutch gooien, via West Frisian), \"hockle\" (\"spit\")."
+        }
+      ],
+      "questions": [
+        {
+          "question": {
+            "text": "\"Bairn\" and \"hyem\" have origins from what culture?",
+            "id": "57267c63dd62a815002e86d6"
+          },
+          "answers": [
+            {
+              "text": "Scandinavia",
+              "span": [
+                108,
+                119
+              ]
+            },
+            {
+              "text": "Scandinavia",
+              "span": [
+                108,
+                119
+              ]
+            },
+            {
+              "text": "Scandinavia",
+              "span": [
+                108,
+                119
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "Where are some words from the Geordia dialect used?",
+            "id": "57267c63dd62a815002e86d7"
+          },
+          "answers": [
+            {
+              "text": "Northern United Kingdom",
+              "span": [
+                257,
+                280
+              ]
+            },
+            {
+              "text": "elsewhere in the Northern United Kingdom",
+              "span": [
+                240,
+                280
+              ]
+            },
+            {
+              "text": "the Northern United Kingdom",
+              "span": [
+                253,
+                280
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What folks are likely to use words like \"howay\" and \"hadaway\"?",
+            "id": "57267c63dd62a815002e86d8"
+          },
+          "answers": [
+            {
+              "text": "Scots",
+              "span": [
+                431,
+                436
+              ]
+            },
+            {
+              "text": "Scots",
+              "span": [
+                431,
+                436
+              ]
+            },
+            {
+              "text": "Scots",
+              "span": [
+                431,
+                436
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What appears to be used exclusively in Newcastle and surrounding areas?",
+            "id": "57267c63dd62a815002e86d9"
+          },
+          "answers": [
+            {
+              "text": "Many words",
+              "span": [
+                544,
+                554
+              ]
+            },
+            {
+              "text": "Many words",
+              "span": [
+                544,
+                554
+              ]
+            },
+            {
+              "text": "Canny",
+              "span": [
+                643,
+                648
+              ]
+            }
+          ]
+        },
+        {
+          "question": {
+            "text": "What language does \"hoy\" originate from?",
+            "id": "57267c63dd62a815002e86da"
+          },
+          "answers": [
+            {
+              "text": "Dutch",
+              "span": [
+                767,
+                772
+              ]
+            },
+            {
+              "text": "Dutch",
+              "span": [
+                767,
+                772
+              ]
+            },
+            {
+              "text": "the Dutch gooien",
+              "span": [
+                763,
+                779
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
