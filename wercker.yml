@@ -1,7 +1,7 @@
-box: python:3.6.1
+box: python:3
 
-no-response-timeout: 30
-command-timeout: 30
+no-response-timeout: 60
+command-timeout: 60
 build:
   steps:
     - pip-install
