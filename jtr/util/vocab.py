@@ -243,7 +243,7 @@ class Vocab:
             config = yaml.load(f)
 
         if config["embedding_file"] is not None:
-            emb = load_embeddings(config["embedding_file"])
+            emb = load_embeddings(config["embedding_file"], typ=config.get("emb_format", None))
         else:
             with open(emb_file, "rb") as f:
                 emb = pickle.load(f)

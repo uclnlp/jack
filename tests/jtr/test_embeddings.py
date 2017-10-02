@@ -4,7 +4,7 @@ import numpy as np
 
 def test_memory_maps():
     import tempfile
-    from jtr.io.embeddings.embeddings import save_as_memory_map, load_memory_map
+    from jtr.io.embeddings.memory_map import save_as_memory_map, load_memory_map
     embeddings_file = "data/GloVe/glove.the.50d.txt"
     embeddings = load_embeddings(embeddings_file, 'glove')
     with tempfile.TemporaryDirectory() as tmp_dir:
