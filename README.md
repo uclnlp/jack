@@ -58,12 +58,9 @@ training epoch.  These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
 ```python
-from jtr import readers
-from jtr.core import SharedResources
+from jack import readers
 
-svac = SharedResources()
-
-fastqa_reader = readers.fastqa_reader(svac)
+fastqa_reader = readers.fastqa_reader()
 fastqa_reader.setup_from_file("./fastqa_reader")
 ```
 
