@@ -1,4 +1,4 @@
-# Jack the Reader [![Wercker build badge][wercker_badge]][wercker]
+# Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage)
 ##### A knowledge base completion and question answering framework.
 
 * All work and no play makes Jack a great frame*work*!
