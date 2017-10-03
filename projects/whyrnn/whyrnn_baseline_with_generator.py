@@ -72,20 +72,20 @@ class MyDecoderTestHook(TrainingHook):
     def __printRandomInstanceDecoding(self, rand_i,
                                       question, support, target, sample_eval):
         model = self.reader.model_module
-        print("### SAMPLE TEST DECODING RESULT @ iteration {}".format(
+        logger.debug("### SAMPLE TEST DECODING RESULT @ iteration {}".format(
             self.iteration))
-        print("### sample question: {}".format(
+        logger.debug("### sample question: {}".format(
             self.__get_decoded_sentence(question, rand_i))
         )
-        print("### sample support: {}".format(
+        logger.debug("### sample support: {}".format(
             self.__get_decoded_sentence(support, rand_i))
         )
         target_str = model.answer_id2sym[target[rand_i]]
-        print("### sample target: {}".format(
+        logger.debug("### sample target: {}".format(
             target_str)
         )
         for i in sample_eval:
-            print("### decoder: {} --> {})".format(
+            logger.debug("### decoder: {} --> {})".format(
                 model.decoder_name[i],
                 self.__get_decoded_sentence(sample_eval[i], rand_i)
             ))
@@ -145,7 +145,6 @@ class MyDecoderTestHook(TrainingHook):
         batch_decoded_df.to_json(output_fname, orient='records')
 
 
-
     def at_iteration_end(self, epoch: int, loss: float, **kwargs):
         self.iteration += 1
 
@@ -153,7 +152,6 @@ class MyDecoderTestHook(TrainingHook):
         # Save model so we can reconstruct later
         self.saveTrainingModel()
         self.saveLatestBatchDecoding(epoch)
-        # TODO(chris): save test batch result in full as JSON
         # TODO(chris): show a real *test* result, not the train data?
 
     @property
@@ -279,15 +277,15 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
         decoder_logits_stacked = tf.stack(
             [self.decoder_logits_train[i] for i in range(num_classes)],
             axis=-1)
-        print("labels_hot.get_shape() = {}".format(labels_hot.get_shape()))
-        print("decoder_logits_stacked.get_shape() = {}".format(decoder_logits_stacked.get_shape()))
+        ### DEBUG ### print("labels_hot.get_shape() = {}".format(labels_hot.get_shape()))
+        ### DEBUG ### print("decoder_logits_stacked.get_shape() = {}".format(decoder_logits_stacked.get_shape()))
         # b = batch, t = time (symbol), l = logit index, j = the label index
         # for now, with TF r1.0 I get an error ...
         # seems similar to https://github.com/tensorflow/tensorflow/issues/6824
-        # TODO FIXME
+        # DONE - solved with TF r1.3 :-D
         self.decoder_logits_merged = tf.einsum(
             'bj,btlj->btl', labels_hot, decoder_logits_stacked)
-        print("decoder_logits_merged.get_shape() = {}".format(self.decoder_logits_merged.get_shape()))
+        ### DEBUG ### print("decoder_logits_merged.get_shape() = {}".format(self.decoder_logits_merged.get_shape()))
         # (d) now calculate the interpretation loss
         num_decoder_symbols = len(shared_resources.vocab)
         interpretation_loss, _ = rnn.dynamic_lstm_decoder_loss(
@@ -297,8 +295,11 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
             num_decoder_symbols,
             scope='interpretation_loss'
         )
-        # TODO(chris) make hyperparameter 0.1
-        return [loss + 0.1 * interpretation_loss]
+        # DONE(chris) make hyperparameter 0.1
+        decoder_loss_weight = shared_resources.config.get(
+            "decoder_loss_weight", 0.1)
+        logger.debug("Using decoder_loss_weight = {}".format(decoder_loss_weight))
+        return [loss + decoder_loss_weight * interpretation_loss]
 
 
 # not anymore: @__mcqa_reader
@@ -318,7 +319,7 @@ def snli_reader_with_generator(vocab, config):
 
 
 def main():
-    # input
+    # *default* input
     train_file = "data/SNLI/snli_1.0/snli_1.0_train_jtr_v1.json"
     dev_file = "data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json"
     test_file = "data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json"
@@ -327,7 +328,11 @@ def main():
         description='Baseline SNLI model experiments')
 
     # data files
-    parser.add_argument('--jtr_path', default='.', help='path to jtr base')
+    parser.add_argument('--jtr_path', default='.', help="path to jtr base")
+
+    parser.add_argument('--trainfile', default=train_file, help="train file")
+    parser.add_argument('--devfile', default=dev_file, help="development file")
+    parser.add_argument('--testfile', default=test_file, help="test file")
 
     # debug mode
     parser.add_argument('--debug', action='store_true',
@@ -380,6 +385,10 @@ def main():
                         "(default 0.0 for no dropout)")
     parser.add_argument('--epochs', default=30, type=int,
                         help="Number of train epochs, default 30")
+    decoder_loss_weight = 0.1
+    parser.add_argument('--decoder_loss_weight', default=decoder_loss_weight,
+                        type=float,
+                        help="Weight factor for decoder loss (default = {})".format(decoder_loss_weight))
 
     # misc
     parser.add_argument('--seed', default=1337, type=int, help='random seed')
@@ -408,6 +417,11 @@ def main():
     epochs = args.epochs
     write_metrics_to = args.write_metrics_to
     model_path = args.model_path
+    train_file = args.trainfile
+    dev_file = args.devfile
+    test_file = args.testfile
+    decoder_loss_weight = args.decoder_loss_weight
+
 
     tf.set_random_seed(args.seed)
     np.random.seed(args.seed)
@@ -425,6 +439,7 @@ def main():
         'dropout': dropout,
         'init_embeddings': init_embeddings,
         'normalize_embeddings': normalize_embeddings,
+        'decoder_loss_weight': decoder_loss_weight
     }
 
     # logging
@@ -513,7 +528,7 @@ def main():
         clip=None if abs(clip_value) < 1.e-12 else [-clip_value, clip_value]
     )
     # TODO: check device setup in JTReader.train
-    print('training took {:.3f} hours'.format((time() - t0) / 3600.))
+    logger.info('training took {:.3f} hours'.format((time() - t0) / 3600.))
 
 
 if __name__ == "__main__":
