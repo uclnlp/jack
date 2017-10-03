@@ -47,6 +47,6 @@ repr_dim: 300
 
 max_epochs: 20
 
-dropout: 0.2
+dropout: 0.5
 
 batch_size: 64
