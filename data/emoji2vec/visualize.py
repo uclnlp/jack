@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-dir = "./jtr/data/emoji2vec/"
+dir = "./jack/data/emoji2vec/"
 emojis = []
 vecs = []
 with open(dir + "metadata.tsv", "w") as f_out:

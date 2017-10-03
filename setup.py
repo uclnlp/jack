@@ -19,12 +19,12 @@ class Install(_install):
 with open('requirements.txt', 'r') as f:
     requirements = f.readlines()
 
-setup(name='jtr',
+setup(name='jack',
       version='0.1.0',
       description='Jack the Reader is a Python framework for Machine Reading',
       author='UCL Machine Reading',
       author_email='s.riedel@cs.ucl.ac.uk',
-      url='https://github.com/uclmr/jtr',
+      url='https://github.com/uclmr/jack',
       test_suite='tests',
       license='MIT',
       cmdclass={'install': Install},

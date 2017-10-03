@@ -14,13 +14,13 @@ max_support_length: -1
 # Use also character based embeddings in readers which support it
 with_char_embeddings: False
 
-# jtr training file
+# jack training file
 train: 'data/SQuAD/train.json'
 
-# jtr dev file
+# jack dev file
 dev: 'data/SQuAD/dev.json'
 
-# jtr test file
+# jack test file
 test: null
 
 # Reading model to use

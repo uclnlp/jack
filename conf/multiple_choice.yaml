@@ -6,13 +6,13 @@ description: >
 parent_config: './conf/jack.yaml'
 
 
-# jtr training file
+# jack training file
 train: 'tests/test_data/SNLI/train.json'
 
-# jtr dev file
+# jack dev file
 dev: 'tests/test_data/SNLI/dev.json'
 
-# jtr test file
+# jack test file
 test: 'tests/test_data/SNLI/test.json'
 
 # Reading model to use
@@ -41,4 +41,4 @@ negsamples: 0
 embedding_format: 'word2vec'
 
 # format of embeddings to be loaded
-embedding_file: 'jtr/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'
+embedding_file: 'jack/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'
