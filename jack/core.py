@@ -846,8 +846,6 @@ class JTReader:
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set, dataset_name, "train")
-        self.session.run([v.initializer for v in self.model_module.variables])
-
         batches = self.input_module.batch_generator(training_set, is_eval=False, dataset_name=dataset_name,
                                                     identifier='train')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
