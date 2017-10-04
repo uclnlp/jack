@@ -161,7 +161,20 @@ def main(batch_size,
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32,
                                     trainable=False)
     lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
-    optimizer = tf.train.AdamOptimizer(learning_rate)
+
+    name_to_optimizer = {
+        'gd': tf.train.GradientDescent,
+        'adam': tf.train.AdamOptimizer,
+        'adagrad': tf.train.AdagradOptimizer,
+        'adadelta': tf.train.AdadeltaOptimizer,
+        'rmsprop': tf.train.RMSPropOptimizer
+    }
+
+    if optimizer not in name_to_optimizer:
+        raise ValueError('Unknown optimizer: {}'.format(optimizer))
+
+    tf_optimizer_class = name_to_optimizer[optimizer]
+    tf_optimizer = tf_optimizer_class(learning_rate=learning_rate)
 
     if tensorboard_folder is not None:
         if os.path.exists(tensorboard_folder):
@@ -203,7 +216,7 @@ def main(batch_size,
 
 
     # Train
-    reader.train(optimizer, training_set=train_data,
+    reader.train(tf_optimizer, training_set=train_data,
                  max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
 
