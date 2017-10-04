@@ -2,7 +2,7 @@
 from functools import partial
 
 from jack import readers
-from jack.core import SharedResources, JTReader
+from jack.core import SharedResources
 from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Vocabulary, Embeddings
 from jack.tasks.xqa.util import tokenize
@@ -13,12 +13,11 @@ import numpy as np
 
 
 def teardown_function(_):
-
     tf.reset_default_graph()
 
 
 def build_vocab(questions):
-    """Since some readers require an initilized vocabulary, initialize it here."""
+    """Since some readers require an initialized vocabulary, initialize it here."""
 
     vocab = dict()
     for question in questions:
@@ -56,7 +55,7 @@ def smoke_test(reader_name):
 
     answers = reader(questions)
 
-    assert answers, "%s should produce answers" % reader_name
+    assert answers, "{} should produce answers".format(reader_name)
 
 
 # TODO: Make streaming work as well.
@@ -68,5 +67,4 @@ READERS = [r for r in readers.readers.keys()
 current_module = __import__(__name__)
 
 for reader_name in READERS:
-    setattr(current_module, "test_%s" % reader_name,
-            partial(smoke_test, reader_name))
+    setattr(current_module, "test_{}".format(reader_name), partial(smoke_test, reader_name))
