@@ -163,7 +163,7 @@ def main(batch_size,
     lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
 
     name_to_optimizer = {
-        'gd': tf.train.GradientDescent,
+        'gd': tf.train.GradientDescentOptimizer,
         'adam': tf.train.AdamOptimizer,
         'adagrad': tf.train.AdagradOptimizer,
         'adadelta': tf.train.AdadeltaOptimizer,
