@@ -56,7 +56,7 @@ def smoke_test(reader_name):
 
     answers = reader(questions)
 
-    assert answers, "%s should produce answers" % reader_name
+    assert answers, "{} should produce answers".format(reader_name)
 
 
 # TODO: Make streaming work as well.
