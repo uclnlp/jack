@@ -1,3 +1,5 @@
+config: './conf/jack.yaml'
+
 config_filename: jack.yaml
 
 description: >
