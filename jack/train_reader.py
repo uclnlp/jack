@@ -214,7 +214,6 @@ def main(batch_size,
         dataset_name=dataset_name,
         dataset_identifier=('dev' if use_streaming else None)))
 
-
     # Train
     reader.train(tf_optimizer, training_set=train_data,
                  max_epochs=epochs, hooks=hooks,
