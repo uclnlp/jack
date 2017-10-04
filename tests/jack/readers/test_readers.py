@@ -68,5 +68,4 @@ READERS = [r for r in readers.readers.keys()
 current_module = __import__(__name__)
 
 for reader_name in READERS:
-    setattr(current_module, "test_%s" % reader_name,
-            partial(smoke_test, reader_name))
+    setattr(current_module, "test_{}".format(reader_name), partial(smoke_test, reader_name))
