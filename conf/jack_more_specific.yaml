@@ -1,5 +1,3 @@
-config_filename: jack_more_specific.yaml
-
 description: >
   A more specific configuration inheriting from jack_specific.yaml
 

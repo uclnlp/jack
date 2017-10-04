@@ -1,5 +1,3 @@
-config_filename: snli_small_test.yaml
-
 parent_config: 'conf/jack.yaml'
 
 model: 'dam_snli_reader'

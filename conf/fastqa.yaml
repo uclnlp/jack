@@ -1,5 +1,3 @@
-config_filename: extractive_qa.yaml
-
 description: >
   A configuration inheriting from the default jack.yaml
 
