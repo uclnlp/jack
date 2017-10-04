@@ -2,7 +2,7 @@
 from functools import partial
 
 from jack import readers
-from jack.core import SharedResources, JTReader
+from jack.core import SharedResources
 from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Vocabulary, Embeddings
 from jack.tasks.xqa.util import tokenize
@@ -18,7 +18,7 @@ def teardown_function(_):
 
 
 def build_vocab(questions):
-    """Since some readers require an initilized vocabulary, initialize it here."""
+    """Since some readers require an initialized vocabulary, initialize it here."""
 
     vocab = dict()
     for question in questions:
