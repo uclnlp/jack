@@ -62,6 +62,9 @@ vocab_sep: True
 # Reading model to use
 model: null
 
+# Optimizer, default Adam
+optimizer: 'adam'
+
 # Learning rate, default 0.001
 learning_rate: 0.001
 
