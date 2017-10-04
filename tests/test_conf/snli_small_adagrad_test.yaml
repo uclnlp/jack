@@ -1,0 +1,17 @@
+config_filename: snli_small_test.yaml
+
+parent_config: 'conf/jack.yaml'
+
+model: 'dam_snli_reader'
+
+train: 'data/SNLI/snippet.jtr_v1.json'
+dev: 'data/SNLI/snippet.jtr_v1.json'
+test: 'data/SNLI/snippet.jtr_v1.json'
+
+epochs: 20
+repr_dim_input: 200
+learning_rate: 0.001
+batch_size: 32
+learning_rate_decay: 0.99
+l2: 0.0
+dev_batch_size: 32
