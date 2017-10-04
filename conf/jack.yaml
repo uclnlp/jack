@@ -1,7 +1,5 @@
 config: './conf/jack.yaml'
 
-config_filename: jack.yaml
-
 description: >
   Train and Evaluate a Machine Reader
 
