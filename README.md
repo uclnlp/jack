@@ -18,13 +18,13 @@ want to have a look at the [API documentation][api] or the
 vision, see [Understanding Jack the Reader][understanding].
 
 [install]: docs/How_to_install_and_run.md
-[api]: https://uclmr.github.io/jtr/
+[api]: https://uclmr.github.io/jack/
 [notebooks]: notebooks/
 [understanding]: docs/Understanding_Jack_the_Reader.md
 
 # Quickstart Example: Training a Q&A system #
 
-To illustrate how jtr works, we will show how to train a question answering
+To illustrate how jack works, we will show how to train a question answering
 model.
 
 First, download SQuAD and GloVe embeddings
@@ -40,14 +40,14 @@ $ cd ../..
 Then, convert SQuAD into the Jack data format
 
 ```shell
-$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
-$ python3 jtr/io/SQuAD2jtr.py ./data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
+$ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
+$ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
 ```
 
 Lastly, train a [FastQA][fastqa] model
 
 ```shell
-$ python3 jtr/train_reader.py with config='./conf/fastqa.yaml'
+$ python3 jack/train_reader.py with config='./conf/fastqa.yaml'
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
@@ -73,7 +73,7 @@ fastqa_reader.setup_from_file("./fastqa_reader")
 - Make sure all your code runs from the top level directory, e.g.:
 
 ```shell
-$ python3 ./jtr/io/SNLI2jtr_v1.py
+$ python3 ./jack/io/SNLI2jtr_v1.py
 ```
 
 [pep8]: https://www.python.org/dev/peps/pep-0008/
