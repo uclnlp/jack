@@ -13,7 +13,6 @@ import numpy as np
 
 
 def teardown_function(_):
-
     tf.reset_default_graph()
 
 
