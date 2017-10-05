@@ -2,6 +2,7 @@ parent_config: 'conf/jack.yaml'
 
 model: 'dam_snli_reader'
 
+seed: 1337
 train: 'data/SNLI/snippet.jtr_v1.json'
 dev: 'data/SNLI/snippet.jtr_v1.json'
 test: 'data/SNLI/snippet.jtr_v1.json'

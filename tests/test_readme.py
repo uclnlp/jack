@@ -22,7 +22,7 @@ def test_readme():
         if 'Iter 4' in line:
             assert 'f1: 0.113' in line
         if 'Iter 5' in line:
-            assert 'f1: 0.153' in line
+            assert 'f1: 0.146' in line
 
     tf.reset_default_graph()
 

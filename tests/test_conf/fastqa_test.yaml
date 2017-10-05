@@ -3,6 +3,8 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+seed: 1337
+
 # where to store the reader
 model_dir: './tests/test_results/fastqa_reader_test'
 

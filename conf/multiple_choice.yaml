@@ -3,6 +3,7 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+seed: 1337
 
 # jack training file
 train: 'tests/test_data/SNLI/train.json'
