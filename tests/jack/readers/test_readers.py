@@ -4,7 +4,7 @@ from functools import partial
 from jack import readers
 from jack.core import SharedResources
 from jack.data_structures import QASetting, Answer
-from jack.io.embeddings import Vocabulary, Embeddings
+from jack.io.embeddings import Embeddings
 from jack.tasks.xqa.util import tokenize
 from jack.util.vocab import Vocab
 
@@ -24,7 +24,6 @@ def build_vocab(questions):
         for t in tokenize(question.question):
             if t not in vocab:
                 vocab[t] = len(vocab)
-    vocab = Vocabulary(vocab)
     embeddings = Embeddings(vocab, np.random.random([len(vocab), 10]))
 
     vocab = Vocab(emb=embeddings, init_from_embeddings=True)

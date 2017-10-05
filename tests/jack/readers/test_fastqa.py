@@ -7,7 +7,6 @@ from jack.tasks.xqa.util import tokenize
 
 import jack.readers as readers
 from jack.io.embeddings.embeddings import Embeddings
-from jack.io.embeddings.vocabulary import Vocabulary
 from jack.util.vocab import Vocab
 
 
@@ -21,7 +20,6 @@ def test_fastqa():
         for t in tokenize(question.question):
             if t not in vocab:
                 vocab[t] = len(vocab)
-    vocab = Vocabulary(vocab)
     embeddings = Embeddings(vocab, np.random.random([len(vocab), 10]))
 
     # we need a vocabulary (with embeddings for our fastqa_reader, but this is not always necessary)
