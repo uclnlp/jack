@@ -52,7 +52,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         self.shared_vocab_config = shared_vocab_config
         self.__nlp = spacy.load('en', parser=False)
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 

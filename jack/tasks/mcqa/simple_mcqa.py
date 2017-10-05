@@ -22,7 +22,7 @@ class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
         self.config = shared_resources.config
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
 
         # Run preprocessing once for all data in order to populate the vocabulary.
         questions, answers = zip(*data)
@@ -122,7 +122,7 @@ class MultiSupportFixedClassInputs(InputModule):
         return numpify(xy_dict)
 
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         sepvocab=True
         corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
                 preprocess_with_pipeline(data, self.shared_resources.vocab,
@@ -137,8 +137,8 @@ class MultiSupportFixedClassInputs(InputModule):
         else:
             self.shared_resources.answer_vocab = train_vocab
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool, dataset_name=None,
-                        identifier=None) -> List[Mapping[TensorPort, np.ndarray]]:
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool)\
+            -> List[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
                         self.shared_resources.vocab,

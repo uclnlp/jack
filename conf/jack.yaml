@@ -107,9 +107,3 @@ output_dir: './out/'
 
 # path to SQLite DB for storing experiments
 experiments_db: './out/experiments.db'
-
-# dataset identifier for stream processing datasets
-use_streaming: False
-
-# dataset name used as id to hdf5 streaming pipeline
-dataset_name: null

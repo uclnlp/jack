@@ -9,7 +9,7 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         self.triples = [x[0].question.split() for x in data]
 
         self.entity_set = {s for [s, _, _] in self.triples} | {o for [_, _, o] in self.triples}
