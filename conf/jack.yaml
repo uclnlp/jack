@@ -3,6 +3,7 @@ config: './conf/jack.yaml'
 description: >
   Train and Evaluate a Machine Reader
 
+# seed will not be inherited (because of sacred) so you need to set it for all child configs
 seed: 1337
 
 # Run in debug mode, in which case the training file is also used for testing
