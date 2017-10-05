@@ -3,10 +3,6 @@
 import subprocess
 
 from jack import readers
-from jack.core import SharedResources
-from jack.io.embeddings import load_embeddings
-from jack.util.vocab import Vocab
-import numpy as np
 
 
 def test_readme():
@@ -27,4 +23,4 @@ def test_readme():
             assert 'f1: 0.153' in line
 
     fastqa_reader = readers.fastqa_reader()
-    fastqa_reader.setup_from_file("tests/test_results/fastqa_reader_test")
+    fastqa_reader.load("tests/test_results/fastqa_reader_test")
