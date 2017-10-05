@@ -16,12 +16,15 @@ def test_readme():
 
     for line in str(err).split('\\n'):
         if 'Iter 1' in line:
-            assert 'f1: 0.065' in line
+            assert 'f1: 0.106' in line
         if 'Iter 2' in line:
-            assert 'f1: 0.098' in line
+            assert 'f1: 0.077' in line
         if 'Iter 3' in line:
-            assert 'f1: 0.098' in line
+            assert 'f1: 0.112' in line
         if 'Iter 4' in line:
-            assert 'f1: 0.108' in line
+            assert 'f1: 0.113' in line
+        if 'Iter 5' in line:
+            assert 'f1: 0.153' in line
+
     # fastqa_reader = readers.fastqa_reader()
     # fastqa_reader.setup_from_file("./fastqa_reader")
