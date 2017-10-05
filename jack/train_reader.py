@@ -17,7 +17,6 @@ from sacred.observers import SqlObserver
 from tensorflow.python.client import device_lib
 
 from jack import readers
-from jack.io.stream_processors import dataset2stream_processor
 from jack.core import SharedResources
 from jack.data_structures import load_labelled_data, load_labelled_data_stream
 from jack.io.embeddings.embeddings import load_embeddings, Embeddings
@@ -93,9 +92,7 @@ def main(batch_size,
          test,
          train,
          vocab_from_embeddings,
-         write_metrics_to,
-         use_streaming,
-         dataset_name):
+         write_metrics_to):
     logger.info("TRAINING")
 
     if experiments_db is not None:
@@ -109,10 +106,7 @@ def main(batch_size,
         clip_value = - abs(clip_value), abs(clip_value)
 
     if debug:
-        if not use_streaming:
-            train_data = load_labelled_data(train, debug_examples)
-        else:
-            train_data = load_labelled_data_stream(train, dataset2stream_processor[dataset_name])
+        train_data = load_labelled_data(train, debug_examples)
 
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
 
@@ -127,15 +121,9 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
-        if not use_streaming:
-            train_data = load_labelled_data(train)
-            dev_data = load_labelled_data(dev)
-            test_data = load_labelled_data(test) if test else None
-        else:
-            s = dataset2stream_processor[dataset_name]
-            train_data = load_labelled_data_stream(train, s)
-            dev_data = load_labelled_data_stream(dev, s)
-            test_data = load_labelled_data_stream(test, s) if test else None
+        train_data = load_labelled_data(train)
+        dev_data = load_labelled_data(dev)
+        test_data = load_labelled_data(test) if test else None
 
         logger.info('loaded train/dev/test data')
         if pretrain:
@@ -209,21 +197,17 @@ def main(batch_size,
         reader, dev_data, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
-        write_metrics_to=write_metrics_to,
-        dataset_name=dataset_name,
-        dataset_identifier=('dev' if use_streaming else None)))
+        write_metrics_to=write_metrics_to))
 
     # Train
     reader.train(tf_optimizer, training_set=train_data,
                  max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, dataset_name=dataset_name)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model
     if test_data is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
-            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to,
-            dataset_name=dataset_name,
-            dataset_identifier=('test' if use_streaming else None))
+            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
         reader.load(model_dir)
         test_eval_hook.at_test_time(1)

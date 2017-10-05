@@ -61,7 +61,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         questions, answers = zip(*data)
         self.preprocess(questions, answers)
         self.shared_resources.vocab.freeze()
@@ -214,7 +214,7 @@ class KBPReader(JTReader):
     def train2(self, optim,
               training_set: Iterable[Tuple[QASetting, Answer]],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value, dataset_name=None):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         Args:
@@ -270,8 +270,7 @@ class KBPReader(JTReader):
     def train(self, optimizer,
               training_set: Iterable[Tuple[QASetting, List[Answer]]],
               max_epochs=10, hooks=[],
-              l2=0.0, clip=None, clip_op=tf.clip_by_value,
-              dataset_name=None):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
         
@@ -287,7 +286,7 @@ class KBPReader(JTReader):
         assert self.is_train, "Reader has to be created for with is_train=True for training."
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.setup_from_data(training_set, dataset_name, "train")
+        self.setup_from_data(training_set)
         self.session.run([v.initializer for v in self.model_module.variables])
 
         
@@ -315,8 +314,7 @@ class KBPReader(JTReader):
 
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
-            batches = self.input_module.batch_generator(training_set, is_eval=False, dataset_name=dataset_name,
-                                                    identifier='train')
+            batches = self.input_module.batch_generator(training_set, is_eval=False)
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
 

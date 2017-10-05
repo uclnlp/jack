@@ -43,7 +43,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
             "shared_resources for FastQAInputModule must be an instance of SharedResources"
         self.shared_vocab_config = shared_vocab_config
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], dataset_name=None, identifier=None):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
         self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 
