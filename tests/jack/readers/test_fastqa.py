@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import tensorflow as tf
+
 from jack.core import SharedResources
 from jack.data_structures import load_labelled_data
 from jack.tasks.xqa.util import tokenize
@@ -11,6 +13,8 @@ from jack.util.vocab import Vocab
 
 
 def test_fastqa():
+    tf.reset_default_graph()
+
     data = load_labelled_data('tests/test_data/squad/snippet_jtr.json')
     questions = []
     # fast qa must be initialized with existing embeddings, so we create some

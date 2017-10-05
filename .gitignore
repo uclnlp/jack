@@ -110,3 +110,4 @@ data/WN18/*.tgz
 data/WN18/wordnet-mlj12
 
 tmp/
+tests/test_results/fastqa_reader_test/
