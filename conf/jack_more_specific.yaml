@@ -3,4 +3,6 @@ description: >
 
 parent_config: './conf/jack_specific.yaml'
 
+seed: 1337
+
 epochs: 2
