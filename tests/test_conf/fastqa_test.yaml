@@ -1,0 +1,50 @@
+description: >
+  A configuration inheriting from the default jack.yaml
+
+parent_config: './conf/jack.yaml'
+
+# where to store the reader
+model_dir: './fastqa_reader'
+
+# How large the support should be. Can be used for cutting or filtering QA examples
+max_support_length: -1
+
+# Use also character based embeddings in readers which support it
+with_char_embeddings: True
+
+# jack training file
+train: 'data/SQuAD/snippet.jtr.json'
+
+# jack dev file
+dev: 'data/SQuAD/snippet.jtr.json'
+
+# jack test file
+test: null
+
+# Reading model to use
+model: 'fastqa_reader'
+
+# [word2vec] or [glove] format of embeddings to be loaded
+embedding_format: 'glove'
+
+# format of embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.txt'
+
+# Use fixed vocab of pretrained embeddings
+vocab_from_embeddings: True
+
+# Use pretrained embeddings, by default the initialisation is random
+pretrain: True
+
+# Size of the input representation (embeddings),
+# default 128 (embeddings cut off or extended if not,
+# matched with pretrained embeddings)
+repr_dim_input: 300
+
+repr_dim: 300
+
+max_epochs: 20
+
+dropout: 0.5
+
+batch_size: 64
