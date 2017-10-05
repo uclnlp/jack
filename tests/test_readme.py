@@ -26,5 +26,5 @@ def test_readme():
         if 'Iter 5' in line:
             assert 'f1: 0.153' in line
 
-    # fastqa_reader = readers.fastqa_reader()
-    # fastqa_reader.setup_from_file("./fastqa_reader")
+    fastqa_reader = readers.fastqa_reader()
+    fastqa_reader.setup_from_file("tests/test_results/fastqa_reader_test")
