@@ -61,7 +61,7 @@ training epoch.  These can be loaded using the commands below or see e.g.
 from jack import readers
 
 fastqa_reader = readers.fastqa_reader()
-fastqa_reader.setup_from_file("./fastqa_reader")
+fastqa_reader.load_and_setup("./fastqa_reader")
 ```
 
 [fastqa]: https://arxiv.org/abs/1703.04816
