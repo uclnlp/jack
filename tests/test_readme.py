@@ -23,4 +23,4 @@ def test_readme():
             assert 'f1: 0.153' in line
 
     fastqa_reader = readers.fastqa_reader()
-    fastqa_reader.load("tests/test_results/fastqa_reader_test")
+    fastqa_reader.load_and_setup("tests/test_results/fastqa_reader_test")
