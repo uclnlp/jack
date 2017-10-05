@@ -2,6 +2,8 @@
 
 import subprocess
 
+import tensorflow as tf
+
 from jack import readers
 
 
@@ -21,6 +23,8 @@ def test_readme():
             assert 'f1: 0.113' in line
         if 'Iter 5' in line:
             assert 'f1: 0.153' in line
+
+    tf.reset_default_graph()
 
     fastqa_reader = readers.fastqa_reader()
     fastqa_reader.load_and_setup("tests/test_results/fastqa_reader_test")
