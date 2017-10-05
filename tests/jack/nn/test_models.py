@@ -17,7 +17,6 @@ SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 # test_data/dataset-name/overfit.json
 
 models2dataset = {}
-models2dataset['cbilstm_snli_streaming_reader'] = 'SNLI_stream'
 models2dataset['dam_snli_reader'] = 'SNLI'
 models2dataset['esim_snli_reader'] = 'SNLI'
 models2dataset['cbilstm_snli_reader'] = 'SNLI'
@@ -27,7 +26,6 @@ overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15, 'squad': 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5, 'squad': 10}
 
 modelspecifics = {
-    'cbilstm_snli_streaming_reader': ' use_streaming=True batch_size=50 dataset_name=snli',
     'fastqa_reader': (' repr_dim=32 repr_dim_input=50 pretrain=true' +
                       ' embedding_file=tests/test_data/glove.500.50d.txt' +
                       ' embedding_format=glove')
@@ -147,6 +145,3 @@ def datetime_test_result_filename():
     '''Generates a string of the format testresult_CURRENT_DATE-TIME'''
     timestr = time.strftime("%Y%m%d-%H%M%S")
     return 'testresult_' + timestr
-
-
-test_model("cbilstm_snli_reader",1,False,"SNLI")

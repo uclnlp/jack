@@ -262,15 +262,11 @@ class ETAHook(TraceHook):
 class EvalHook(TraceHook):
     def __init__(self, reader: JTReader, dataset, ports: List[TensorPort],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, dataset_name=None,
-                 dataset_identifier=None):
+                 write_metrics_to=None, info="", side_effect=None):
         super(EvalHook, self).__init__(reader, summary_writer)
 
 
-        if dataset_identifier is None:
-            self._total = len(dataset)
-        else:
-            self._total = 0
+        self._total = len(dataset)
 
         self._dataset = dataset
         self._batches = None
@@ -284,8 +280,6 @@ class EvalHook(TraceHook):
         self._metrics = metrics or self.possible_metrics
         self._side_effect = side_effect
         self._side_effect_state = None
-        self._dataset_identifier = dataset_identifier
-        self._dataset_name = dataset_name
 
     @abstractmethod
     def possible_metrics(self) -> List[str]:
@@ -306,16 +300,7 @@ class EvalHook(TraceHook):
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
 
-        if self._batches is None:
-            if self._dataset_identifier is not None:
-                self.reader.input_module.setup_from_data(self._dataset, self._dataset_name, self._dataset_identifier)
-                self._batches = self.reader.input_module.batch_generator(self._dataset, True, self._dataset_name,
-                                                                         self._dataset_identifier)
-                self._total = self.reader.input_module.batcher.num_samples
-            else:
-                self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=True,
-                                                                         dataset_name=self._dataset_name,
-                                                                         identifier=self._dataset_identifier)
+        self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=True)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
@@ -415,14 +400,14 @@ class XQAEvalHook(EvalHook):
 class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, dataset_name=None, dataset_identifier=None, **kwargs):
+                 write_metrics_to=None, info="", side_effect=None, **kwargs):
 
         ports = [Ports.Prediction.logits,
                  Ports.Prediction.candidate_index,
                  Ports.Target.target_index]
 
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
-                         write_metrics_to, info, side_effect, dataset_name, dataset_identifier)
+                         write_metrics_to, info, side_effect)
 
     @property
     def possible_metrics(self) -> List[str]:
@@ -587,16 +572,7 @@ class KBPEvalHook(EvalHook):
     def __call__(self, epoch):
         logger.info("Started evaluation %s" % self._info)
 
-        if self._batches is None:
-            if self._dataset_identifier is not None:
-                self.reader.input_module.setup_from_data(self._dataset, self._dataset_name, self._dataset_identifier)
-                self._batches = self.reader.input_module.batch_generator(self._dataset, False, self._dataset_name,
-                                                                         self._dataset_identifier)
-                self._total = self.reader.input_module.batcher.num_samples
-            else:
-                self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=False,
-                                                                         dataset_name=self._dataset_name,
-                                                                         identifier=self._dataset_identifier)
+        self._batches = self.reader.input_module.batch_generator(self._dataset, is_eval=False)
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
