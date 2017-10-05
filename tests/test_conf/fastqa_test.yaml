@@ -28,7 +28,7 @@ model: 'fastqa_reader'
 embedding_format: 'glove'
 
 # format of embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.txt'
+embedding_file: 'tests/test_data/glove.840B.300d_top256.txt'
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
