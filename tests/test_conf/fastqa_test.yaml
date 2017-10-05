@@ -3,9 +3,6 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
-# where to store the reader
-model_dir: './fastqa_reader'
-
 # How large the support should be. Can be used for cutting or filtering QA examples
 max_support_length: -1
 
