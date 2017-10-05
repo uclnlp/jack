@@ -3,6 +3,9 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+# where to store the reader
+model_dir: './tests/test_results/fastqa_reader_test'
+
 # How large the support should be. Can be used for cutting or filtering QA examples
 max_support_length: -1
 
@@ -42,6 +45,6 @@ repr_dim: 300
 
 max_epochs: 20
 
-dropout: 0.5
+dropout: 0
 
 batch_size: 64
