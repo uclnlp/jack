@@ -37,12 +37,12 @@ class Vocab:
         self.emb = emb  # if emb is not None else lambda _:None #if emb is None: same behavior as for o-o-v words
 
         if init_from_embeddings and emb is not None:
-            self.sym2id = dict(emb.vocabulary.word2idx)
-            self.id2sym = {v: k for k, v in emb.vocabulary.word2idx.items()}
+            self.sym2id = dict(emb.vocabulary)
+            self.id2sym = {v: k for k, v in emb.vocabulary.items()}
             if unk is not None and unk not in self.sym2id:
                 self.sym2id[unk] = len(self.sym2id)
                 self.id2sym[len(self.id2sym)] = unk
-            self.sym2freqs = {w: emb.vocabulary.get_word_count(w) for w in self.sym2id}
+            self.sym2freqs = {w: None for w in self.sym2id}
             self.frozen = True
             self.next_pos = 0
             self.next_neg = -1 * len(self.sym2id)

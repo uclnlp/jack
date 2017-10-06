@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
-
-from jack.io.embeddings.vocabulary import Vocabulary
-
 import logging
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +28,14 @@ def load_fasttext(stream, vocab=None):
             word = word.decode('utf-8')
             idx = len(word2idx)
             word2idx[word] = idx
-            #if idx > np.size(lookup, axis=0) - 1:
+            # if idx > np.size(lookup, axis=0) - 1:
             #    lookup.resize([lookup.shape[0] + 500000, lookup.shape[1]])
             lookup[idx] = np.fromstring(vec, sep=' ')
         n += 1
-    #lookup.resize([len(word2idx), dim])
-    return_vocab = Vocabulary(word2idx)
+    # lookup.resize([len(word2idx), dim])
     logger.info('Loading fastText vectors completed.')
-    return return_vocab, lookup
+    return word2idx, lookup
+
 
 if __name__ == "__main__":
     pickle_tokens = False
@@ -46,10 +44,13 @@ if __name__ == "__main__":
 
     with zipfile.ZipFile('../data/GloVe/glove.840B.300d.zip') as zf:
         with zf.open('glove.840B.300d.txt', 'r') as f:
+            from jack.io.embeddings import load_glove
+
             vocab, lookup = load_glove(f)
 
             # pickle token set
             if pickle_tokens:
                 import pickle
+
                 glove_words = set(vocab.get_all_words())
                 pickle.dump(glove_words, open('./data/glove_tokens.pickle', 'wb'))

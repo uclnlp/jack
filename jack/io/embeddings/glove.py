@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
-
-from jack.io.embeddings.vocabulary import Vocabulary
-
 import logging
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +36,8 @@ def load_glove(stream, vocab=None):
             lookup[idx] = np.fromstring(vec, sep=' ')
         n += 1
     lookup.resize([len(word2idx), dim])
-    return_vocab = Vocabulary(word2idx)
     logger.info('Loading GloVe vectors completed.')
-    return return_vocab, lookup
+    return word2idx, lookup
 
 if __name__ == "__main__":
     pickle_tokens = False

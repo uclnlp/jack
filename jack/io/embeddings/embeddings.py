@@ -10,7 +10,7 @@ from jack.io.embeddings.word_to_vec import load_word2vec
 class Embeddings:
     """Wraps Vocabulary and embedding matrix to do lookups"""
 
-    def __init__(self, vocabulary, lookup, filename: str = None, emb_format: str = None):
+    def __init__(self, vocabulary: dict, lookup, filename: str = None, emb_format: str = None):
         """
         Args:
             vocabulary:
@@ -25,7 +25,7 @@ class Embeddings:
     def get(self, word):
         _id = None
         if self.vocabulary is not None:
-            _id = self.vocabulary.get_idx_by_word(word)
+            _id = self.vocabulary.get(word, None)
         # Handling OOV words - Note: lookup[None] would return entire lookup table
         return self.lookup[_id] if _id is not None else None
 
@@ -72,5 +72,3 @@ def load_embeddings(file, typ='glove', **options):
     elif typ.lower() == "mem_map":
         from jack.io.embeddings.memory_map import load_memory_map
         return load_memory_map(file)
-
-
