@@ -111,3 +111,4 @@ data/WN18/wordnet-mlj12
 
 tmp/
 tests/test_results/fastqa_reader_test/
+tests/test_results/dam_reader_test/

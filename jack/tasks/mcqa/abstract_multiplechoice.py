@@ -46,14 +46,14 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         return [Ports.loss]
 
     def create_output(self, shared_resources: SharedResources,
-                      support : tf.Tensor,
-                      question : tf.Tensor,
-                      support_length : tf.Tensor,
-                      question_length : tf.Tensor) -> Sequence[tf.Tensor]:
+                      support: tf.Tensor,
+                      question: tf.Tensor,
+                      support_length: tf.Tensor,
+                      question_length: tf.Tensor) -> Sequence[tf.Tensor]:
         question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
             vocab_size = len(shared_resources.vocab)
-            input_size = self.config['repr_dim_input']
+            input_size = shared_resources.config['repr_dim_input']
             self.question_embedding_matrix = tf.get_variable(
                 "emb_Q", [vocab_size, input_size],
                 initializer=tf.contrib.layers.xavier_initializer(),
@@ -68,7 +68,7 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
                                    support_ids, support_length,
                                    shared_resources.config['answer_size'])
 
-        predictions = tf.arg_max(logits, 1, name='prediction')
+        predictions = tf.argmax(logits, 1, name='prediction')
 
         return [logits, predictions]
 

@@ -8,7 +8,7 @@ from jack import readers
 from jack.data_structures import QASetting
 
 
-def test_readme():
+def test_readme_fastqa():
     args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/fastqa_test.yaml']
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
@@ -34,3 +34,21 @@ def test_readme():
     )])
 
     assert answers[0].text is not None
+
+
+def test_readme_dam():
+    args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/dam_test.yaml']
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+
+    tf.reset_default_graph()
+
+    dam_reader = readers.dam_snli_reader()
+    dam_reader.load_and_setup("tests/test_results/dam_reader_test")
+
+    answers = dam_reader([QASetting(
+        question="The boy plays with the ball.",
+        support=["The boy plays with the ball."]
+    )])
+
+    assert answers[0] is not None

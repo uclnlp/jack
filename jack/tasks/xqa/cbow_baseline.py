@@ -442,7 +442,7 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         with tf.variable_scope("scoring"):
             span_scores = tf.squeeze(tf.layers.dense(h, 1, activation=None), 2)
 
-        best_span = tf.arg_max(span_scores, 1)
+        best_span = tf.argmax(span_scores, 1)
         predicted_span = tf.gather(spans, best_span)
 
         return span_scores, tf.tile(tf.expand_dims(spans, 0), tf.stack([batch_size, 1, 1])), predicted_span
