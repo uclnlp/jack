@@ -1,7 +1,12 @@
 description: >
-  Basic multiple choice configuration.
+  A configuration inheriting from the default jack.yaml
 
 parent_config: './conf/jack.yaml'
+
+seed: 1337
+
+# where to store the reader
+model_dir: './tests/test_results/dam_reader_test'
 
 
 # jack training file
