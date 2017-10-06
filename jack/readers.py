@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+
 from typing import Union
 
 from jack.core import *
-
 from jack.util.hooks import XQAEvalHook, ClassificationEvalHook
 
 readers = {}
@@ -198,22 +198,4 @@ def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = ESIMModel(shared_resources)
     output_module = EmptyOutputModule()
-    return JTReader(shared_resources, input_module, model_module, output_module)
-
-
-@__mcqa_reader
-def cbilstm_snli_streaming_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
-    This particular reader uses a conditional Bidirectional LSTM, as described in [1].
-
-    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
-    """
-    from jack.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel, EmptyOutputModule
-    from jack.tasks.mcqa.streaming_mcqa import StreamingSingleSupportFixedClassInputs
-    shared_resources = create_shared_resources(resources_or_conf)
-    input_module = StreamingSingleSupportFixedClassInputs(shared_resources)
-    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-    output_module = EmptyOutputModule()
-
     return JTReader(shared_resources, input_module, model_module, output_module)
