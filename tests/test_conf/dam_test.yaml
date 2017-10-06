@@ -45,3 +45,16 @@ embedding_format: 'word2vec'
 
 # format of embeddings to be loaded
 embedding_file: 'jack/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'
+
+# Size of the input representation (embeddings),
+# default 128 (embeddings cut off or extended if not,
+# matched with pretrained embeddings)
+repr_dim_input: 300
+
+repr_dim: 300
+
+max_epochs: 20
+
+dropout: 0
+
+batch_size: 64
