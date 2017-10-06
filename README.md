@@ -21,10 +21,12 @@ vision, see [Understanding Jack the Reader][understanding].
 [notebooks]: notebooks/
 [understanding]: docs/Understanding_Jack_the_Reader.md
 
-# Quickstart Example: Training a Q&A system #
+# Quickstart Examples - Training and Usage of a Question Answering System
 
 To illustrate how jack works, we will show how to train a question answering
 model.
+
+### Extractive Question Answering on SQuAD
 
 First, download SQuAD and GloVe embeddings
 
@@ -77,7 +79,26 @@ answers = fastqa_reader([QASetting(
 [fastqa]: https://arxiv.org/abs/1703.04816
 [showcase]: notebooks/Showcasing_Jack.ipynb
 
-# Developer guidelines #
+### Recognizing Textual Entailment on SNLI
+
+```bash
+$ python3 jack/train_reader.py with config=tests/test_conf/dam_test.yaml
+```
+
+```python
+from jack import readers
+from jack.core import QASetting
+
+dam_reader = readers.dam_snli_reader()
+dam_reader.load_and_setup("tests/test_results/dam_reader_test")
+
+answers = dam_reader([QASetting(
+    question="The boy plays with the ball.",
+    support=["The boy plays with the ball."]
+)])
+```
+
+# Developer guidelines
 
 - [Comply with the PEP 8 Style Guide][pep8]
 - Make sure all your code runs from the top level directory, e.g.:
