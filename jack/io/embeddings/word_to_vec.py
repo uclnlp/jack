@@ -2,7 +2,6 @@
 
 import gzip
 import numpy as np
-from jack.io.embeddings.vocabulary import Vocabulary
 
 import logging
 
@@ -45,9 +44,8 @@ def load_word2vec(filename, vocab=None, normalise=True):
                 idx += 1
 
     lookup.resize([idx, vec_size])
-    return_vocab = Vocabulary(vocab=word2idx)
     logger.info('Loading word2vec vectors completed.')
-    return return_vocab, lookup
+    return word2idx, lookup
 
 
 def _normalise(x):

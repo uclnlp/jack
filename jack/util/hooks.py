@@ -8,11 +8,8 @@ from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
 
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from pylab import subplot
 from sklearn.metrics import f1_score
 
 from jack.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
@@ -68,6 +65,9 @@ class TraceHook(TrainingHook):
             self._summary_writer.add_summary(summary, current_step)
 
     def plot(self, ylim=None):
+        import matplotlib.patches as mpatches
+        import matplotlib.pyplot as plt
+        from pylab import subplot
         number_of_subplots=len(self.scores.keys())
         colors = ['blue', 'green', 'orange']
         patches = []

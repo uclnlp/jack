@@ -13,6 +13,6 @@ def test_memory_maps():
         loaded_embeddings = load_memory_map(prefix)
         assert loaded_embeddings.shape == embeddings.shape
         assert len(loaded_embeddings.vocabulary) == 1
-        assert loaded_embeddings.vocabulary.get_idx_by_word(b"the") == 0
-        assert loaded_embeddings.vocabulary.get_idx_by_word(b"foo") is None
+        assert loaded_embeddings.vocabulary[b"the"] == 0
+        assert b"foo" not in loaded_embeddings.vocabulary
         assert np.isclose(loaded_embeddings.get(b"the"), embeddings.get(b"the"), 1.e-5).all()
