@@ -48,7 +48,7 @@ def test_readme_dam():
 
     answers = dam_reader([QASetting(
         question="The boy plays with the ball.",
-        support="The boy plays with the ball."
+        support=["The boy plays with the ball."]
     )])
 
     assert answers[0].text is not None
