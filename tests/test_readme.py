@@ -37,14 +37,14 @@ def test_readme_fastqa():
 
 
 def test_readme_dam():
-    args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/fastqa_test.yaml']
+    args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/dam_test.yaml']
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
 
     tf.reset_default_graph()
 
-    fastqa_reader = readers.fastqa_reader()
-    fastqa_reader.load_and_setup("tests/test_results/fastqa_reader_test")
+    dam_reader = readers.dam_snli_reader()
+    dam_reader.load_and_setup("tests/test_results/fastqa_reader_test")
 
     support = """"Architecturally, the school has a Catholic character. 
     Atop the Main Building's gold dome is a golden statue of the Virgin Mary. 
