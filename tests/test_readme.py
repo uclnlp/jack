@@ -10,7 +10,8 @@ from jack.data_structures import QASetting
 
 def test_readme():
     args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/fastqa_test.yaml']
-    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
 
     tf.reset_default_graph()
 
