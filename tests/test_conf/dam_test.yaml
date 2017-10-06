@@ -53,7 +53,7 @@ repr_dim_input: 300
 
 repr_dim: 300
 
-max_epochs: 20
+max_epochs: 10
 
 dropout: 0
 

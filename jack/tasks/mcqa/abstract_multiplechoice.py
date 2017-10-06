@@ -53,7 +53,7 @@ class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixed
         question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
             vocab_size = len(shared_resources.vocab)
-            input_size = self.config['repr_dim_input']
+            input_size = shared_resources.config['repr_dim_input']
             self.question_embedding_matrix = tf.get_variable(
                 "emb_Q", [vocab_size, input_size],
                 initializer=tf.contrib.layers.xavier_initializer(),
