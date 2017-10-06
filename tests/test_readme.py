@@ -5,6 +5,7 @@ import subprocess
 import tensorflow as tf
 
 from jack import readers
+from jack.data_structures import QASetting
 
 
 def test_readme():
@@ -12,19 +13,24 @@ def test_readme():
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
 
-    # for line in str(err).split('\\n'):
-    #    if 'Iter 1' in line:
-    #        assert 'f1: 0.106' in line
-    #    if 'Iter 2' in line:
-    #        assert 'f1: 0.077' in line
-    #    if 'Iter 3' in line:
-    #        assert 'f1: 0.112' in line
-    #    if 'Iter 4' in line:
-    #        assert 'f1: 0.113' in line
-    #    if 'Iter 5' in line:
-    #        assert 'f1: 0.146' in line
-
     tf.reset_default_graph()
 
     fastqa_reader = readers.fastqa_reader()
     fastqa_reader.load_and_setup("tests/test_results/fastqa_reader_test")
+
+    support = """"Architecturally, the school has a Catholic character. 
+    Atop the Main Building's gold dome is a golden statue of the Virgin Mary. 
+    Immediately in front of the Main Building and facing it, is a copper statue of 
+    Christ with arms upraised with the legend \"Venite Ad Me Omnes\". Next to the 
+    Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, 
+    a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, 
+    France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. 
+    At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), 
+    is a simple, modern stone statue of Mary."""
+
+    answers = fastqa_reader([QASetting(
+        question="To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
+        support=[support]
+    )])
+
+    assert answers[0].text is not None

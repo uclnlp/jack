@@ -59,9 +59,20 @@ training epoch.  These can be loaded using the commands below or see e.g.
 
 ```python
 from jack import readers
+from jack.core import QASetting
 
 fastqa_reader = readers.fastqa_reader()
 fastqa_reader.load_and_setup("./fastqa_reader")
+
+support = """"It is a replica of the grotto at Lourdes, 
+France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. 
+At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), 
+is a simple, modern stone statue of Mary."""
+
+answers = fastqa_reader([QASetting(
+    question="To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
+    support=[support]
+)])
 ```
 
 [fastqa]: https://arxiv.org/abs/1703.04816
