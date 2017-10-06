@@ -1,5 +1,5 @@
 # Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage)
-##### A knowledge base completion and question answering framework.
+##### A reading comprehension framework.
 
 * All work and no play makes Jack a great frame*work*!
 * All work and no play makes Jack a great frame*work*!
@@ -9,8 +9,7 @@
 [wercker]: https://app.wercker.com/project/byKey/8ed61192a5b16769a41dc24c30a3bc6a
 [heres_johnny]: https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg
 
-**Jack the Reader** -- or **jack**, for short -- is a knowledge base completion
-and question answering framework.
+**Jack the Reader** -- or **jack**, for short -- is a framework for building an testing models on a variety of tasks that require *reading comprehension*.
 
 To get started, please see [How to Install and Run][install] and then you may
 want to have a look at the [API documentation][api] or the
