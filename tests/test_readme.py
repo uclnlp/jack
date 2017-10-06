@@ -51,4 +51,4 @@ def test_readme_dam():
         support=["The boy plays with the ball."]
     )])
 
-    assert answers[0].text is not None
+    assert answers[0] is not None
