@@ -47,7 +47,7 @@ def test_readme_dam():
     dam_reader = readers.dam_snli_reader()
     dam_reader.load_and_setup("tests/test_results/dam_reader_test")
 
-    atomic_candidates = ["a", "b", "c"]
+    atomic_candidates = ['entailment', 'neutral', 'contradiction']
     answers = dam_reader([QASetting(
         question="The boy plays with the ball.",
         support=["The boy plays with the ball."],
@@ -55,7 +55,6 @@ def test_readme_dam():
     )])
 
     assert answers[0] is not None
-    # print(type(answers[0].score))
     assert isinstance(answers[0].score, np.float32)
     assert answers[0].text in atomic_candidates
 
