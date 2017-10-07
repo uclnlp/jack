@@ -141,7 +141,6 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a FastQA reader instance (extractive qa model). """
     from jack.tasks.xqa.cbow_baseline import CBOWXqaInputModule
-
     from jack.tasks.xqa.cbow_baseline import cbow_xqa_model_module
     from jack.tasks.xqa.shared import XQANoScoreOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
@@ -160,12 +159,14 @@ def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
-    from jack.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel, \
-        EmptyOutputModule
+    from jack.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs
+    from jack.tasks.mcqa.simple_mcqa import PairOfBiLSTMOverSupportAndQuestionModel
+    from jack.tasks.mcqa.simple_mcqa import SimpleMCOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
+
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-    output_module = EmptyOutputModule()
+    output_module = SimpleMCOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -177,11 +178,14 @@ def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
     """
-    from jack.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
+    from jack.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs
+    from jack.tasks.mcqa.simple_mcqa import DecomposableAttentionModel
+    from jack.tasks.mcqa.simple_mcqa import SimpleMCOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
+
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
-    output_module = EmptyOutputModule()
+    output_module = SimpleMCOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -193,9 +197,12 @@ def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
     """
-    from jack.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, ESIMModel, EmptyOutputModule
+    from jack.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs
+    from jack.tasks.mcqa.simple_mcqa import ESIMModel
+    from jack.tasks.mcqa.simple_mcqa import SimpleMCOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
+
     input_module = MultiSupportFixedClassInputs(shared_resources)
     model_module = ESIMModel(shared_resources)
-    output_module = EmptyOutputModule()
+    output_module = SimpleMCOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
