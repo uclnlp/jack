@@ -54,5 +54,7 @@ def test_readme_dam():
 
     assert answers[0] is not None
 
+    print(answers[0])
+
 if __name__ == '__main__':
     test_readme_dam()
