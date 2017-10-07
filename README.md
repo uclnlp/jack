@@ -28,7 +28,7 @@ model.
 
 ### Extractive Question Answering on SQuAD
 
-First, download SQuAD and GloVe embeddings
+First, download SQuAD and GloVe embeddings:
 
 ```shell
 $ cd data/SQuAD/
@@ -38,7 +38,7 @@ $ ./download.sh
 $ cd ../..
 ```
 
-Then, convert SQuAD into the Jack data format
+Then, convert SQuAD into the Jack data format:
 
 ```shell
 $ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
@@ -84,12 +84,10 @@ answers = fastqa_reader([QASetting(
 First, download SNLI
 
 ```shell
-$ cd data/SNLI/
-$ ./download.sh
-$ cd ../..
+$ ./data/SNLI/download.sh
 ```
 
-Then, convert SNLI into the Jack data format
+Then, convert SNLI into the Jack data format:
 
 ```shell
 $ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
