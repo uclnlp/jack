@@ -14,8 +14,7 @@ __candidates = [{'text':cl} for cl in __candidate_labels]
 CONJ = '|||||'
 
 
-
-def convert_snli(snli_file_jsonl,support=False):
+def convert_snli(snli_file_jsonl, support=False):
     """ io SNLI files into jack format.
     Data source: http://nlp.stanford.edu/projects/snli/snli_1.0.zip
     Files to be converted: snli_1.0_dev.jsonl, snli_1.0_train.jsonl, snli_1.0_test.jsonl
@@ -61,7 +60,7 @@ def __convert_snli_instance(instance):
         return None
 
 
-def __add_support(instances,support):
+def __add_support(instances, support):
     """
     Args:
         instances: list of jack instances (with or without support)
