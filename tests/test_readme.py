@@ -48,7 +48,11 @@ def test_readme_dam():
 
     answers = dam_reader([QASetting(
         question="The boy plays with the ball.",
-        support=["The boy plays with the ball."]
+        support=["The boy plays with the ball."],
+        atomic_candidates=["a", "b", "c"]
     )])
 
     assert answers[0] is not None
+
+if __name__ == '__main__':
+    test_readme_dam()
