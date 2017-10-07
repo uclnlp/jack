@@ -52,7 +52,7 @@ $ python3 jack/train_reader.py with config='./conf/fastqa.yaml'
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
-summaries to a provided path (here ".tb/fastqa").
+summaries to a provided path (here `.tb/fastqa`).
 
 A copy of the model is written into the `model_dir` directory after each
 training epoch.  These can be loaded using the commands below or see e.g.
@@ -81,7 +81,20 @@ answers = fastqa_reader([QASetting(
 
 ### Recognizing Textual Entailment on SNLI
 
-[..]
+First, download SNLI
+
+```shell
+$ cd data/SNLI/
+$ ./download.sh
+$ cd ../..
+```
+
+Then, convert SNLI into the Jack data format
+
+```shell
+$ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
+$ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
+```
 
 Lastly, train a [Decomposable Attention Model][dam]
 
