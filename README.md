@@ -81,6 +81,10 @@ answers = fastqa_reader([QASetting(
 
 ### Recognizing Textual Entailment on SNLI
 
+[..]
+
+Lastly, train a [Decomposable Attention Model][dam]
+
 ```bash
 $ python3 jack/train_reader.py with config=tests/test_conf/dam_test.yaml
 ```
@@ -97,6 +101,8 @@ answers = dam_reader([QASetting(
     support=["The boy plays with the ball."]
 )])
 ```
+
+[dam]: https://arxiv.org/abs/1703.04816
 
 # Developer guidelines
 
