@@ -2,6 +2,7 @@
 
 import subprocess
 
+import numpy as np
 import tensorflow as tf
 
 from jack import readers
@@ -54,5 +55,8 @@ def test_readme_dam():
     )])
 
     assert answers[0] is not None
-    assert isinstance(answers[0].score, float)
+    # print(type(answers[0].score))
+    assert isinstance(answers[0].score, np.float32)
     assert answers[0].text in atomic_candidates
+
+test_readme_dam()
