@@ -3,6 +3,9 @@ config: './conf/jack.yaml'
 description: >
   Train and Evaluate a Machine Reader
 
+# name of this reader
+name: "jack_reader"
+
 # seed will not be inherited (because of sacred) so you need to set it for all child configs
 seed: 1337
 

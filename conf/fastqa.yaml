@@ -3,6 +3,9 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+# name of this model, defines global scope of variables
+name: "fastqa_reader"
+
 # fixed experiment seed
 seed: 1337
 
