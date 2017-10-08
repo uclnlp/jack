@@ -2,12 +2,12 @@
 
 import numpy as np
 import tensorflow as tf
-from jack.tasks.xqa.util import tokenize
 
 import jack.readers as readers
 from jack.core import SharedResources
 from jack.io.embeddings.embeddings import Embeddings
 from jack.io.load import load_jack
+from jack.readers.extractive_qa.util import tokenize
 from jack.util.vocab import Vocab
 
 
@@ -34,7 +34,7 @@ def test_fastqa():
 
     # create/setup reader
     shared_resources = SharedResources(vocab, config)
-    fastqa_reader = readers.readers["fastqa_reader"](shared_resources)
+    fastqa_reader = readers.fastqa_reader(shared_resources)
     fastqa_reader.setup_from_data(data)
 
     answers = fastqa_reader(questions)

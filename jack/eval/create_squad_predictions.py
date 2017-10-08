@@ -1,11 +1,11 @@
 import json
 
 import tensorflow as tf
-from jack.data_structures import convert2qasettings
 
+from jack.data_structures import convert2qasettings
 from jack.io.SQuAD2jtr import convert_squad
 from jack.io.embeddings import load_embeddings
-from jack.readers import readers
+from jack.readers import impl
 from jack.util.vocab import Vocab
 
 tf.app.flags.DEFINE_string('file', None, 'dataset file')
@@ -29,7 +29,7 @@ vocab = Vocab(emb=emb, init_from_embeddings=True)
 print("Creating and loading reader from %s..." % FLAGS.model_dir)
 config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
 config.update(json.loads(FLAGS.kwargs))
-reader = readers[FLAGS.model](vocab, config)
+reader = impl[FLAGS.model](vocab, config)
 with tf.device(FLAGS.device):
     reader.load_and_setup(FLAGS.model_dir)
 
