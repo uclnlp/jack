@@ -12,7 +12,9 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import f1_score
 
-from jack.core import JTReader, TensorPort, Answer, QASetting, FlatPorts, Ports
+from jack.core.reader import JTReader, TFReader
+from jack.core.tensorport import TensorPort, FlatPorts, Ports
+from jack.data_structures import QASetting, Answer
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,7 @@ TODO -- hooks should also have prefixes so that one can use the same hook with d
 class TrainingHook(metaclass=ABCMeta):
     """Serves as Hook interface."""
 
-    @abstractmethod
+    @abstractproperty
     def reader(self) -> JTReader:
         """ Returns: JTReader instance"""
         raise NotImplementedError
@@ -38,7 +40,16 @@ class TrainingHook(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class TraceHook(TrainingHook):
+class TFTrainingHook(TrainingHook):
+    """Serves as Hook interface."""
+
+    @abstractproperty
+    def reader(self) -> TFReader:
+        """ Returns: JTReader instance"""
+        raise NotImplementedError
+
+
+class TraceHook(TFTrainingHook):
     """Abstract hook class, which implements an update function the summary."""
 
     def __init__(self, reader, summary_writer=None):
@@ -47,7 +58,7 @@ class TraceHook(TrainingHook):
         self.scores = {}
 
     @property
-    def reader(self) -> JTReader:
+    def reader(self) -> TFReader:
         return self._reader
 
     def update_summary(self, sess, current_step, title, value):
@@ -439,7 +450,8 @@ class KBPEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]],
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Input.question, Ports.Target.target_index, Ports.Prediction.logits, Ports.Input.atomic_candidates, Ports.loss]
+        ports = [Ports.Input.question, Ports.Target.target_index, Ports.Prediction.logits,
+                 Ports.Input.atomic_candidates, Ports.loss]
         self.epoch = 0
         super().__init__(reader, dataset, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)

@@ -2,7 +2,6 @@
 
 import tensorflow as tf
 
-from jack.core import SharedResources
 import jack.readers as readers
 from jack.data_structures import load_labelled_data
 
@@ -19,8 +18,7 @@ def test_kbp():
                 'repr_dim': 10
             }
 
-            shared_resources = SharedResources(None, config)
-            reader = readers.readers['{}_reader'.format(model_name)](shared_resources)
+            reader = readers.readers['{}_reader'.format(model_name)](config)
             reader.setup_from_data(data)
 
             answers = reader(questions)

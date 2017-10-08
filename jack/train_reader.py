@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import math
 import os
 import os.path as path
 import random
@@ -9,18 +8,16 @@ import shutil
 import sys
 import tensorflow as tf
 
-
 from time import time
 from sacred import Experiment
 from sacred.arg_parser import parse_args
 from sacred.observers import SqlObserver
-from tensorflow.python.client import device_lib
 
 from jack import readers
-from jack.core import SharedResources
-from jack.data_structures import load_labelled_data, load_labelled_data_stream
+from jack.core.shared_resources import SharedResources
+from jack.data_structures import load_labelled_data
 from jack.io.embeddings.embeddings import load_embeddings, Embeddings
-from jack.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
+from jack.util.hooks import LossHook, ExamplesPerSecHook
 from jack.util.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
@@ -69,7 +66,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
 @ex.automain
 def main(batch_size,
          clip_value,
-         config,
          debug,
          debug_examples,
          dev,

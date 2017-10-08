@@ -157,7 +157,7 @@ class MultiSupportFixedClassInputs(InputModule):
         return get_batches(xy_dict)
 
 
-class SimpleMCModelModule(SimpleModelModule):
+class SimpleMCModelModule(TFModelModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:

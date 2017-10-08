@@ -192,7 +192,7 @@ class MyInputModule(OnlineInputModule):
 
     def create_batch(self, annotations, is_eval, with_answers):
         """Now, we need to implement the mapping of a list of annotations to a feed dict.
-        
+
         Because our annotations already are dicts mapping TensorPorts to numpy
         arrays, we only need to do padding here.
         """
@@ -213,7 +213,7 @@ and outputs required by hte output module.
 
 
 
-class MyModelModule(SimpleModelModule):
+class MyModelModule(TFModelModule):
 
     # We'll define a constant here for the hidden size. You could also pass this
     # as part of the `shared_config.config` dict.

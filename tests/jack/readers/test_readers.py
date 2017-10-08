@@ -2,7 +2,7 @@
 from functools import partial
 
 from jack import readers
-from jack.core import SharedResources
+from jack.core.shared_resources import SharedResources
 from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Embeddings
 from jack.tasks.xqa.util import tokenize

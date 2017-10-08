@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 
-from jack.core import SharedResources
+from jack.core.shared_resources import SharedResources
 from jack.data_structures import load_labelled_data
 from jack.tasks.xqa.util import tokenize
 
