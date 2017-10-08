@@ -6,6 +6,8 @@ import os.path as path
 import random
 import shutil
 import sys
+import tensorflow as tf
+
 from time import time
 
 import tensorflow as tf
