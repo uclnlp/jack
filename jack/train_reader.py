@@ -93,13 +93,6 @@ def main(batch_size,
     if experiments_db is not None:
         ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
 
-    # make everything deterministic
-    random.seed(seed)
-    tf.set_random_seed(seed)
-
-    if clip_value != 0.0:
-        clip_value = - abs(clip_value), abs(clip_value)
-
     if debug:
         train_data = load_labelled_data(train, debug_examples)
 
@@ -139,7 +132,53 @@ def main(batch_size,
 
     shared_resources = SharedResources(vocab, parsed_config)
     reader = readers.readers[model](shared_resources)
+
     checkpoint()
+
+    configuration = {
+        'seed': seed,
+        'clip_value': clip_value,
+        'batch_size': batch_size,
+        'epochs': epochs,
+        'l2': l2,
+        'optimizer': optimizer,
+        'learning_rate': learning_rate,
+        'learning_rate_decay': learning_rate_decay,
+        'log_interval': log_interval,
+        'validation_interval': validation_interval,
+        'tensorboard_folder': tensorboard_folder,
+        'model': model,
+        'model_dir': model_dir
+        'write_metrics_to': write_metrics_to
+    }
+
+    train_reader(reader, train_data, test_data, dev_data, configuration)
+
+
+def train_reader(reader, train_data, test_data, dev_data, configuration: dict):
+
+    seed = configuration.get('seed')
+
+    # make everything deterministic
+    random.seed(seed)
+    tf.set_random_seed(seed)
+
+    clip_value = configuration.get('clip_value')
+    batch_size = configuration.get('batch_size')
+    epochs = configuration.get('epochs')
+    l2 = configuration.get('l2')
+    optimizer = configuration.get('optimizer')
+    learning_rate = configuration.get('learning_rate')
+    learning_rate_decay = configuration.get('learning_rate_decay')
+    log_interval = configuration.get('log_interval')
+    validation_interval = configuration.get('validation_interval')
+    tensorboard_folder = configuration.get('tensorboard_folder')
+    model = configuration.get('model')
+    model_dir = configuration.get('model_dir')
+    write_metrics_to = configuration.get('write_metrics_to')
+
+    if clip_value != 0.0:
+        clip_value = - abs(clip_value), abs(clip_value)
 
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32, trainable=False)
     lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
