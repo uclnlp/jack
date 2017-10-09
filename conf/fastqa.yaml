@@ -3,7 +3,11 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+# fixed experiment seed
 seed: 1337
+
+# loader to use in experiment
+loader: 'squad'
 
 # where to store the reader
 model_dir: './fastqa_reader'
@@ -15,10 +19,10 @@ max_support_length: -1
 with_char_embeddings: True
 
 # jack training file
-train: 'data/SQuAD/train.json'
+train: 'data/SQuAD/train-v1.1.json'
 
 # jack dev file
-dev: 'data/SQuAD/dev.json'
+dev: 'data/SQuAD/dev-v1.1.json'
 
 # jack test file
 test: null

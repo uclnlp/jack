@@ -121,7 +121,8 @@ In general you can use (1) for quick experiments and running different kind of m
 
 This repeats the steps of (the SNLI example notebook)[notebooks/SNLI.ipynb], with some intermediate more general steps:
 
-1. Load your data which is in Jack format by loading it with `jtr.jack.core.load_labelled_data()`. This will convert it to the format the your reader class expects
+1. Load your data which is in Jack format by loading a file with on of the `jtr.jack.io.load.loaders`.
+   This will convert the input file it to the format the your reader class expects.
 2. Create a config dictionary with basic parameters (or special parameters for your model): 
 ```
 config = {"batch_size": 128, "repr_dim": hidden_dim,
