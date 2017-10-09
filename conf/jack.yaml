@@ -108,3 +108,6 @@ output_dir: './out/'
 
 # path to SQLite DB for storing experiments
 experiments_db: './out/experiments.db'
+
+# loader for the dataset, ['jack', 'squad', 'snli'] are supported. For everything else convert to jtr format first.
+loader: 'jack'

@@ -4,12 +4,7 @@
 Here we define light data structures to store the input to jack readers, and their output.
 """
 
-import json
-import copy
-
-from typing import List, Tuple, Sequence
-
-from jack.util.batch import GeneratorWithRestart
+from typing import Tuple, Sequence
 
 
 class Answer:
@@ -67,13 +62,13 @@ class QASetting:
 
 def convert2qasettings(jtr_data, max_count=None):
     """
-    Converts a python dictionary to a QASetting.
+    Converts a python dictionary in JTR format to a QASetting.
     Args:
-        jtr_data: dictionary extracted from jack jason file.
+        jtr_data: dictionary extracted from jack json file.
         max_count: maximal number of instances to load.
 
     Returns:
-
+        list of QASetting
     """
 
     def value(c, key="text"):
@@ -107,30 +102,3 @@ def convert2qasettings(jtr_data, max_count=None):
         return result
     else:
         return result[:max_count]
-
-
-def load_labelled_data_stream(path, dataset_streamer):
-        stream_processor = copy.deepcopy(dataset_streamer)
-
-        stream_processor.set_path(path)
-
-        data_set = GeneratorWithRestart(stream_processor.stream)
-        return data_set
-
-
-def load_labelled_data(path, max_count=None) -> List[Tuple[QASetting, List[Answer]]]:
-    """
-    This function loads a jack json file with labelled answers from a specific location.
-    Args:
-        path: the location to load from.
-        max_count: how many instances to load at most
-
-    Returns:
-        A list of input-answer pairs.
-
-    """
-    # We load json directly instead
-    with open(path) as f:
-        jtr_data = json.load(f)
-
-    return convert2qasettings(jtr_data, max_count)

@@ -10,7 +10,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Iterable
+from typing import Iterable, List
 
 import tensorflow as tf
 

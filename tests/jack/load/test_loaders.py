@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from jack.io import SNLI2jtr_v1
-
 import subprocess
+
 import pytest
+
+from jack.io import SNLI2jtr
 
 
 def pytest_collection_modifyitems(items):
@@ -20,7 +21,7 @@ def get_pipeline_script_cmdcall_snli_converter():
     :return:
     """
     # io snli files into jack format
-    cmd = "python3 jack/io/SNLI2jtr_v1.py"
+    cmd = "python3 jack/io/SNLI2jtr.py"
     return cmd
 
 
@@ -82,7 +83,7 @@ def test_test():
 @pytest.mark.data_loaders
 def test_snli_converter():
     path = 'tests/test_data/SNLI/1000_samples_snli_1.0_train.jsonl'
-    res = SNLI2jtr_v1.convert_snli(snli_file_jsonl=path)
+    res = SNLI2jtr.convert_snli(snli_file_jsonl=path)
     assert len(res) == 3
     assert set(res.keys()) == {'meta', 'instances', 'globals'}
     assert res['meta'] == 'SNLI'

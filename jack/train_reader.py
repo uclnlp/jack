@@ -15,8 +15,8 @@ from sacred.observers import SqlObserver
 
 from jack import readers
 from jack.core.shared_resources import SharedResources
-from jack.data_structures import load_labelled_data
 from jack.io.embeddings.embeddings import load_embeddings, Embeddings
+from jack.io.load import loaders
 from jack.util.hooks import LossHook, ExamplesPerSecHook
 from jack.util.vocab import Vocab
 
@@ -66,6 +66,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
 @ex.automain
 def main(batch_size,
          clip_value,
+         config,
+         loader,
          debug,
          debug_examples,
          dev,
@@ -101,7 +103,7 @@ def main(batch_size,
         clip_value = - abs(clip_value), abs(clip_value)
 
     if debug:
-        train_data = load_labelled_data(train, debug_examples)
+        train_data = loaders[loader](train, debug_examples)
 
         logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
 
@@ -116,9 +118,9 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
-        train_data = load_labelled_data(train)
-        dev_data = load_labelled_data(dev)
-        test_data = load_labelled_data(test) if test else None
+        train_data = loaders[loader](train)
+        dev_data = loaders[loader](dev)
+        test_data = loaders[loader](test) if test else None
 
         logger.info('loaded train/dev/test data')
         if pretrain:
