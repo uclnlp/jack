@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+
 import tensorflow as tf
 
 
@@ -32,7 +33,7 @@ def negative_l2_distance(x1, x2, axis=1):
         x1: First term.
         x2: Second term.
         axis: Reduction Indices.
-    
+
     Returns:
         Similarity Value.
     """
@@ -51,7 +52,7 @@ def negative_square_l2_distance(x1, x2, axis=1):
         x1: First term.
         x2: Second term.
         axis: Reduction Indices.
-    
+
     Returns:
         Similarity Value.
     """

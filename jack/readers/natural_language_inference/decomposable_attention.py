@@ -6,12 +6,41 @@ from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
 
+from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
+from jack.tf_fun.activations import prelu
 from jack.tf_fun.attention import attention_softmax3d
 from jack.tf_fun.masking import mask_3d
 
-from jack.tf_fun.activations import prelu
-
 logger = logging.getLogger(__name__)
+
+
+class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
+    def forward_pass(self, shared_resources,
+                     question, question_length,
+                     support, support_length,
+                     num_classes):
+        # final states_fw_bw dimensions:
+        # [[[batch, output dim], [batch, output_dim]]
+        support = tf.squeeze(support, 1)
+        support_length = tf.squeeze(support_length, 1)
+
+        question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
+        support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
+
+        model_kwargs = {
+            'sequence1': question_embedding,
+            'sequence1_length': question_length,
+            'sequence2': support_embedding,
+            'sequence2_length': support_length,
+            'representation_size': 200,
+            'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
+            'use_masking': True,
+            'prepend_null_token': True
+        }
+
+        model = FeedForwardDAMP(**model_kwargs)
+        logits = model()
+        return logits
 
 
 class BaseDecomposableAttentionModel:
@@ -171,7 +200,7 @@ class BaseDecomposableAttentionModel:
             sentence: tensor with shape (batch_size, time_steps, num_units)
             soft_alignment: tensor with shape (batch_size, time_steps, num_units)
             reuse: reuse variables
-        
+
         Returns:
             tensor with shape (batch_size, time_steps, num_units)
         """

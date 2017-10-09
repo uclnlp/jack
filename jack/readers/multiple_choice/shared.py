@@ -1,18 +1,89 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Tuple, Mapping, Iterable, Any
-
-import numpy as np
-import tensorflow as tf
+from abc import ABCMeta
+from typing import Any
 
 from jack.core import *
 from jack.data_structures import *
 from jack.preprocessing import preprocess_with_pipeline
-from jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
-from jack.tf_fun import rnn, simple
 from jack.util.batch import get_batches
 from jack.util.map import numpify
 from jack.util.pipelines import pipeline, transpose_dict_of_lists
+
+
+class SingleSupportFixedClassForward(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def forward_pass(self, shared_resources,
+                     Q_embedding_matrix, Q_ids, Q_lengths,
+                     S_embedding_matrix, S_ids, S_lengths,
+                     num_classes):
+        '''Takes a single support and question and produces logits'''
+        raise NotImplementedError
+
+
+class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClassForward):
+    def __init__(self, shared_resources, question_embedding_matrix=None, support_embedding_matrix=None):
+        self.shared_resources = shared_resources
+        self.vocab = self.shared_resources.vocab
+        self.config = self.shared_resources.config
+        self.question_embedding_matrix = question_embedding_matrix
+        self.support_embedding_matrix = support_embedding_matrix
+        super(AbstractSingleSupportFixedClassModel, self).__init__(shared_resources)
+
+    @property
+    def input_ports(self) -> List[TensorPort]:
+        return [Ports.Input.multiple_support,
+                Ports.Input.question, Ports.Input.support_length,
+                Ports.Input.question_length]
+
+    @property
+    def output_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.logits,
+                Ports.Prediction.candidate_index]
+
+    @property
+    def training_input_ports(self) -> List[TensorPort]:
+        return [Ports.Prediction.logits,
+                Ports.Target.target_index]
+
+    @property
+    def training_output_ports(self) -> List[TensorPort]:
+        return [Ports.loss]
+
+    def create_output(self, shared_resources: SharedResources,
+                      support: tf.Tensor,
+                      question: tf.Tensor,
+                      support_length: tf.Tensor,
+                      question_length: tf.Tensor) -> Sequence[tf.Tensor]:
+        question_ids, support_ids = question, support
+        if self.question_embedding_matrix is None:
+            vocab_size = len(shared_resources.vocab)
+            input_size = shared_resources.config['repr_dim_input']
+            self.question_embedding_matrix = tf.get_variable(
+                "emb_Q", [vocab_size, input_size],
+                initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=True, dtype="float32")
+            self.support_embedding_matrix = tf.get_variable(
+                "emb_S", [vocab_size, input_size],
+                initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=True, dtype="float32")
+
+        logits = self.forward_pass(shared_resources,
+                                   question_ids, question_length,
+                                   support_ids, support_length,
+                                   shared_resources.config['answer_size'])
+
+        predictions = tf.argmax(logits, 1, name='prediction')
+
+        return [logits, predictions]
+
+    def create_training_output(self, shared_resources: SharedResources,
+                               logits: tf.Tensor, labels: tf.Tensor) -> Sequence[tf.Tensor]:
+        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels),
+                              name='predictor_loss')
+        return [loss]
 
 
 class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
@@ -227,112 +298,6 @@ class SimpleMCOutputModule(OutputModule):
             ans = Answer(question.atomic_candidates[winning_index], score=score)
             result.append(ans)
         return result
-
-
-class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources,
-                     Q_ids, Q_lengths,
-                     S_ids,  S_lengths,
-                     num_classes):
-        # final states_fw_bw dimensions:
-        # [[[batch, output dim], [batch, output_dim]]
-        S_ids = tf.squeeze(S_ids, 1)
-        S_lengths = tf.squeeze(S_lengths, 1)
-
-        Q_seq = tf.nn.embedding_lookup(self.question_embedding_matrix, Q_ids)
-        S_seq = tf.nn.embedding_lookup(self.support_embedding_matrix, S_ids)
-
-        all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
-            Q_seq, Q_lengths, S_seq, S_lengths, shared_resources.config['repr_dim'],
-            drop_keep_prob=1.0 - shared_resources.config['dropout'],
-            conditional_encoding=True)
-        # ->  [batch, 2*output_dim]
-        final_states = tf.concat([final_states_fw_bw[0][1], final_states_fw_bw[1][1]],axis=1)
-        # [batch, 2*output_dim] -> [batch, num_classes]
-        outputs = simple.fully_connected_projection(final_states, num_classes)
-        return outputs
-
-
-class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources,
-                     question, question_length,
-                     support, support_length,
-                     num_classes):
-        # final states_fw_bw dimensions:
-        # [[[batch, output dim], [batch, output_dim]]
-        support = tf.squeeze(support, 1)
-        support_length = tf.squeeze(support_length, 1)
-
-        question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
-        support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
-
-        model_kwargs = {
-            'sequence1': question_embedding,
-            'sequence1_length': question_length,
-            'sequence2': support_embedding,
-            'sequence2_length': support_length,
-            'representation_size': 200,
-            'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
-            'use_masking': True,
-            'prepend_null_token': True
-        }
-
-        from jack.tasks.mcqa.dam import FeedForwardDAMP
-        model = FeedForwardDAMP(**model_kwargs)
-        logits = model()
-        return logits
-
-
-class ESIMModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources,
-                     question, question_length,
-                     support, support_length,
-                     num_classes):
-        # final states_fw_bw dimensions:
-        # [[[batch, output dim], [batch, output_dim]]
-        support = tf.squeeze(support, 1)
-        support_length = tf.squeeze(support_length, 1)
-
-        question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
-        support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
-
-        model_kwargs = {
-            'sequence1': question_embedding,
-            'sequence1_length': question_length,
-            'sequence2': support_embedding,
-            'sequence2_length': support_length,
-            'representation_size': shared_resources.config.get('repr_dim', 300),
-            'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
-            'use_masking': True
-        }
-
-        from jack.tasks.mcqa.esim import ESIM
-        model = ESIM(**model_kwargs)
-        logits = model()
-        return logits
-
-
-class EmptyOutputModule(OutputModule):
-
-    def __init__(self):
-        self.setup()
-
-    @property
-    def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits,
-                Ports.Prediction.candidate_index]
-
-    def __call__(self, inputs: List[QASetting], *tensor_inputs: np.ndarray) -> List[Answer]:
-        return tensor_inputs
-
-    def setup(self):
-        pass
-
-    def store(self, path):
-        pass
-
-    def load(self, path):
-        pass
 
 
 class MisclassificationOutputModule(OutputModule):

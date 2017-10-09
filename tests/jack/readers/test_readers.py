@@ -8,7 +8,7 @@ from jack import readers
 from jack.core.shared_resources import SharedResources
 from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Embeddings
-from jack.tasks.xqa.util import tokenize
+from jack.readers.extractive_qa.util import tokenize
 from jack.util.vocab import Vocab
 
 

@@ -3,7 +3,6 @@
 import tensorflow as tf
 
 import jack.readers as readers
-from jack.core import SharedResources
 from jack.io.load import loaders
 
 

@@ -2,7 +2,8 @@
 
 import argparse
 
-from jack.tasks.mcqa.simple_mcqa import *
+from jack.readers.multiple_choice.simple_mcqa import *
+
 from jack.util.vocab import Vocab
 
 

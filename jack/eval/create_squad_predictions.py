@@ -1,8 +1,8 @@
 import json
 
 import tensorflow as tf
-from jack.data_structures import convert2qasettings
 
+from jack.data_structures import convert2qasettings
 from jack.io.SQuAD2jtr import convert_squad
 from jack.io.embeddings import load_embeddings
 from jack.readers import readers

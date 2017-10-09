@@ -53,7 +53,7 @@ def load_squad(path, max_count=None):
 
 
 @_register('snli')
-def load_squad(path, max_count=None):
+def load_snli(path, max_count=None):
     """
     This function loads a jack json file with labelled answers from a specific location.
     Args:

@@ -2,12 +2,12 @@ import re
 
 from jack.core import *
 from jack.io.embeddings import Vocabulary, Embeddings
-from jack.tasks.xqa.shared import XQAPorts, XQAOutputModule
-from jack.tasks.xqa.util import prepare_data, stack_and_pad
+from jack.readers.extractive_qa.shared import XQAPorts, XQAOutputModule
+from jack.readers.extractive_qa.util import prepare_data, stack_and_pad
+from jack.readers.extractive_qa.util import tokenize
 from jack.tf_fun.rnn import birnn_with_projection
 from jack.util import tfutil
 from jack.util.map import numpify
-from jack.tasks.xqa.util import tokenize
 
 _tokenize_pattern = re.compile('\w+|[^\w\s]')
 

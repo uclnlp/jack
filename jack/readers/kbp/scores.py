@@ -5,7 +5,7 @@ import sys
 
 import tensorflow as tf
 
-from jack.tasks.kbp.similarities import negative_l1_distance
+from jack.readers.kbp.similarities import negative_l1_distance
 
 
 class BaseModel(metaclass=abc.ABCMeta):
