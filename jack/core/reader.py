@@ -13,6 +13,7 @@ import sys
 from typing import Iterable
 
 import tensorflow as tf
+from jack.core.ModelModule import ModelModule
 
 from jack.core.input_module import InputModule
 from jack.core.output_module import OutputModule
