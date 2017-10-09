@@ -48,7 +48,7 @@ def smoke_test(reader_name):
                                                                 "dropout": 0.5,
                                                                 "batch_size": 1})
 
-    reader = readers.impl[reader_name](shared_resources)
+    reader = readers.readers[reader_name](shared_resources)
 
     reader.train(tf.train.AdamOptimizer(), data_set, batch_size=1, max_epochs=1)
 
@@ -59,7 +59,7 @@ def smoke_test(reader_name):
 
 # TODO: Make streaming work as well.
 BLACKLIST = ["cbilstm_snli_streaming_reader"]
-READERS = [r for r in readers.impl.keys()
+READERS = [r for r in readers.readers.keys()
            if r not in BLACKLIST]
 
 # Dynamically generate one test for each reader

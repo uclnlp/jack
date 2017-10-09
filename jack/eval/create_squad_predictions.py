@@ -5,7 +5,7 @@ import tensorflow as tf
 from jack.data_structures import convert2qasettings
 from jack.io.SQuAD2jtr import convert_squad
 from jack.io.embeddings import load_embeddings
-from jack.readers import impl
+from jack.readers import readers
 from jack.util.vocab import Vocab
 
 tf.app.flags.DEFINE_string('file', None, 'dataset file')
@@ -29,9 +29,9 @@ vocab = Vocab(emb=emb, init_from_embeddings=True)
 print("Creating and loading reader from %s..." % FLAGS.model_dir)
 config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
 config.update(json.loads(FLAGS.kwargs))
-reader = impl[FLAGS.model](vocab, config)
+reader = readers[FLAGS.model](vocab, config)
 with tf.device(FLAGS.device):
-    reader.load_and_setup(FLAGS.model_dir)
+    readers.load_and_setup(FLAGS.model_dir)
 
 if FLAGS.dataset_type == "squad":
     dataset_jtr = convert_squad(FLAGS.file)
@@ -42,7 +42,7 @@ else:
 dataset = convert2qasettings(dataset_jtr)
 
 print("Start!")
-answers = reader.process_outputs(dataset, FLAGS.batch_size, debug=True)
+answers = readers.process_outputs(dataset, FLAGS.batch_size, debug=True)
 results = {dataset[i][0].id: a.text for i, a in enumerate(answers)}
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)

@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from jack.data_structures import convert2qasettings
 from jack.io.embeddings import load_embeddings
-from jack.readers import impl, eval_hooks
+from jack.readers import readers, eval_hooks
 from jack.util.vocab import Vocab
 
 tf.app.flags.DEFINE_string('file', None, 'JTR dataset file')
@@ -26,9 +26,9 @@ vocab = Vocab(emb=emb, init_from_embeddings=True)
 print("Creating and loading reader from %s..." % FLAGS.model_dir)
 config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
 config.update(json.loads(FLAGS.kwargs))
-reader = impl[FLAGS.model](vocab, config)
+reader = readers[FLAGS.model](vocab, config)
 with tf.device(FLAGS.device):
-    reader.load_and_setup(FLAGS.model_dir)
+    readers.load_and_setup(FLAGS.model_dir)
 
 with open(FLAGS.file) as f:
     dataset_jtr = json.load(f)
@@ -48,7 +48,7 @@ def side_effect(metrics, prev_metric):
     return 0.0
 
 
-test_eval_hook = eval_hooks[FLAGS.model](reader, dataset, epoch_interval=1, side_effect=side_effect)
+test_eval_hook = eval_hooks[FLAGS.model](readers, dataset, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 
 print("Done!")

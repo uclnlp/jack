@@ -18,7 +18,7 @@ def test_kbp():
                 'repr_dim': 10
             }
 
-            reader = readers.impl['{}_reader'.format(model_name)](config)
+            reader = readers.readers['{}_reader'.format(model_name)](config)
             reader.setup_from_data(data)
 
             answers = reader(questions)

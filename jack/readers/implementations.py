@@ -4,7 +4,7 @@ from jack.core.reader import TFReader
 from jack.core.shared_resources import SharedResources
 from jack.util.hooks import XQAEvalHook, ClassificationEvalHook
 
-impl = {}
+readers = {}
 eval_hooks = {}
 
 extractive_qa_readers = {}
@@ -13,7 +13,7 @@ link_prediction_readers = {}
 
 
 def __reader(f):
-    impl.setdefault(f.__name__, f)
+    readers.setdefault(f.__name__, f)
     return f
 
 
