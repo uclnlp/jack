@@ -8,8 +8,8 @@ import spacy
 
 from jack.core import *
 from jack.fun import simple_model_module, no_shared_resources
-from jack.tasks.xqa.fastqa import XQAPorts
-from jack.tasks.xqa.util import char_vocab_from_vocab, prepare_data, \
+from jack.readers.extractive_qa.fastqa import XQAPorts
+from jack.readers.extractive_qa.util import char_vocab_from_vocab, prepare_data, \
     unique_words_with_chars, stack_and_pad
 from jack.tf_fun.dropout import fixed_dropout
 from jack.tf_fun.embedding import conv_char_embedding_alt

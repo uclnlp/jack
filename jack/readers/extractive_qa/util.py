@@ -1,13 +1,11 @@
 import random
 import re
-
 from typing import List, Optional, Tuple, Union
 
-from jack.util.vocab import Vocab
+import numpy as np
 
 from jack.data_structures import QASetting, Answer
-
-import numpy as np
+from jack.util.vocab import Vocab
 
 __pattern = re.compile('\w+|[^\w\s]')
 

@@ -6,8 +6,8 @@ from typing import NamedTuple
 
 from jack.core import *
 from jack.fun import simple_model_module, no_shared_resources
-from jack.tasks.xqa.shared import XQAPorts
-from jack.tasks.xqa.util import unique_words_with_chars, prepare_data, \
+from jack.readers.extractive_qa.shared import XQAPorts
+from jack.readers.extractive_qa.util import unique_words_with_chars, prepare_data, \
     char_vocab_from_vocab, stack_and_pad
 from jack.tf_fun.dropout import fixed_dropout
 from jack.tf_fun.embedding import conv_char_embedding_alt
@@ -90,10 +90,9 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         has_answers = answers is not None
 
         q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
-        word_in_question, token_offsets, answer_spans = \
-            prepare_data(question, answers, self.vocab, self.config.get("lowercase", False),
-                         with_answers=has_answers,
-                         max_support_length=self.config.get("max_support_length", None))
+        word_in_question, token_offsets, answer_spans = prepare_data(
+            question, answers, self.vocab, self.config.get("lowercase", False),
+            with_answers=has_answers, max_support_length=self.config.get("max_support_length", None))
 
         emb_support = np.zeros([s_length, self.emb_matrix.shape[1]])
         emb_question = np.zeros([q_length, self.emb_matrix.shape[1]])

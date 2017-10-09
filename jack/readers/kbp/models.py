@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from jack.core import *
 from jack.data_structures import *
-from jack.tasks.kbp.shared import KBPPorts
+from jack.readers.kbp.shared import KBPPorts
 from jack.util.map import numpify
 
 
@@ -134,7 +134,7 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
         predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
         object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx, max_norm=1.0)
 
-        from jack.tasks.kbp import scores
+        from jack.readers.kbp import scores
         assert self.model_name is not None
 
         model_class = scores.get_function(self.model_name)
