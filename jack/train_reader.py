@@ -189,14 +189,13 @@ def main(batch_size,
 
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
-        reader, dev_data, summary_writer=sw, side_effect=side_effect,
+        reader, dev_data, batch_size, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to))
 
     # Train
-    reader.train(tf_optimizer, training_set=train_data,
-                 max_epochs=epochs, hooks=hooks,
+    reader.train(tf_optimizer, train_data, batch_size, max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model

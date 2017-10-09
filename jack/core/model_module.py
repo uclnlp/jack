@@ -94,14 +94,15 @@ class TFModelModule(ModelModule):
 
         Returns:
             A mapping from goal ports to tensors.
-
         """
         goal_ports = goal_ports or self.output_ports
-
         feed_dict = self.convert_to_feed_dict(batch)
-        outputs = self.tf_session.run([self.tensors[p] for p in goal_ports if p in self.output_ports], feed_dict)
+        goal_tensors = [self.tensors[p] for p in goal_ports
+                        if p in self.output_ports or p in self.training_output_ports]
+        outputs = self.tf_session.run(goal_tensors, feed_dict)
 
-        ret = dict(zip(filter(lambda p: p in self.output_ports, goal_ports), outputs))
+        ret = dict(zip(filter(lambda p: p in self.output_ports or p in self.training_output_ports, goal_ports),
+                       outputs))
         for p in goal_ports:
             if p not in ret and p in batch:
                 ret[p] = batch[p]

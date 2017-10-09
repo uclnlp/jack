@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import random
 from itertools import islice
-from typing import Callable, TypeVar, Iterable, List, Iterator, Optional
+from typing import TypeVar, List, Iterator, Optional
 
 import numpy as np
 
@@ -144,7 +144,8 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
     buckets2instances, _ = get_buckets(data, bucket_order, bucket_structure)
     n_buckets = len(buckets2instances)
 
-    exact_epoch = True if len(data0) < n_buckets*batch_size else exact_epoch
+    exact_epoch = True if len(data0) < n_buckets * batch_size else exact_epoch
+
     # if average instances/bucket smaller than batch_size: set exact_epoch = True
     # to avoid empty batches during debugging on small data samples
 
@@ -169,8 +170,10 @@ def get_batches(data, batch_size=32, pad=0, bucket_order=None, bucket_structure=
 
 
 T = TypeVar('T')
+
+
 def shuffle_and_batch(items: List[T], batch_size: int,
-                      rng : Optional[random.Random] = None) \
+                      rng: Optional[random.Random] = None) \
         -> Iterator[List[T]]:
     """Optionally shuffles and batches items in a list.
 
@@ -186,15 +189,14 @@ def shuffle_and_batch(items: List[T], batch_size: int,
     if rng is not None:
         rng.shuffle(todo)
     while todo:
-
         indices = todo[:batch_size]
         todo = todo[batch_size:]
         items_batch = [items[i] for i in indices]
-
         yield items_batch
 
 
-def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None, exact_epoch=False):
+def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None,
+                   exact_epoch=False):
     """Creates feed dicts for all batches with a given batch size.
 
     Args:
@@ -222,7 +224,7 @@ def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, 
         # fixme: this is potentially inefficient as it might be called every time we retrieve a batch
         # todo: measure and fix if significant impact
         mapped = map(lambda xs: {placeholders[k]: xs[k] for k in placeholders}, batches)
-        #for each key in placeholders dict, pair the placeholder with the corresponding batch dict value
+        # for each key in placeholders dict, pair the placeholder with the corresponding batch dict value
         for x in mapped:
             yield x
 

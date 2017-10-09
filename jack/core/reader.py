@@ -15,7 +15,7 @@ from typing import Iterable
 import tensorflow as tf
 
 from jack.core.input_module import InputModule
-from jack.core.model_module import ModelModule
+from jack.core.model_module import ModelModule, TFModelModule
 from jack.core.output_module import OutputModule
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import Ports
@@ -114,7 +114,7 @@ class JTReader:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
-    def train(self, optimizer, training_set: Iterable[Tuple[QASetting, List[Answer]]],
+    def train(self, optimizer, training_set: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int,
               max_epochs=10, hooks=tuple(), **kwargs):
         """
         This method trains the reader (and changes its state).
@@ -192,13 +192,17 @@ class TFReader(JTReader):
     """
 
     @property
+    def model_module(self) -> TFModelModule:
+        return super().model_module
+
+    @property
     def session(self) -> tf.Session:
         """Returns: input module"""
         return self.model_module.tf_session
 
     def train(self, optimizer,
               training_set: Iterable[Tuple[QASetting, List[Answer]]],
-              max_epochs=10, hooks=tuple(),
+              batch_size: int, max_epochs=10, hooks=tuple(),
               l2=0.0, clip=None, clip_op=tf.clip_by_value):
         """
         This method trains the reader (and changes its state).
@@ -206,6 +210,7 @@ class TFReader(JTReader):
         Args:
             optimizer: TF optimizer
             training_set: the training instances.
+            batch_size: size of training batches
             max_epochs: maximum number of epochs
             hooks: TrainingHook implementations that are called after epochs and batches
             l2: whether to use l2 regularization
@@ -215,7 +220,7 @@ class TFReader(JTReader):
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
         self.setup_from_data(training_set, is_train=True)
-        batches = self.input_module.batch_generator(training_set, is_eval=False)
+        batches = self.input_module.batch_generator(training_set, batch_size, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 

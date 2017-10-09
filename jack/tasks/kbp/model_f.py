@@ -9,13 +9,14 @@ from jack.util.pipelines import transpose_dict_of_lists
 
 
 class ShuffleList:
-    def __init__(self,drawlist,qa):
+    def __init__(self, drawlist, qa):
         assert len(drawlist) > 0
         self.qa = qa
         self.drawlist = drawlist
         shuffle(self.drawlist)
         self.iter = self.drawlist.__iter__()
-    def next(self,q):
+
+    def next(self, q):
         try:
             avoided = False
             trial, max_trial = 0, 50
@@ -31,7 +32,7 @@ class ShuffleList:
             return next(self.iter)
 
 
-def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
+def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
     question_dataset = corpus[question_key]
     candidate_dataset = corpus[candidate_key]
     answer_dataset = corpus[answer_key]
@@ -40,7 +41,7 @@ def posnegsample(corpus, question_key, answer_key, candidate_key,sl):
     for i in range(0, len(candidate_dataset)):
         question = question_dataset[i][0]
         candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
+        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
         posneg = [] + answers
         avoided = False
         trial, max_trial = 0, 50
@@ -71,10 +72,6 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
 
-    @property
-    def batch_size(self):
-        return self.shared_resources.config['batch_size']
-
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) \
@@ -83,7 +80,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
         has_answers = answers is not None
         answers = answers or [None] * len(questions)
 
-        corpus = { "question": [], "candidates": [], "answers":[]}
+        corpus = {"question": [], "candidates": [], "answers": []}
         for x, y in zip(questions, answers):
 
             corpus["question"].append(x.question)
@@ -96,12 +93,11 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
 
-
         if has_answers:
             corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
             qanswers = {}
-            for i,q in enumerate(corpus['question']):
-                q0=q[0]
+            for i, q in enumerate(corpus['question']):
+                q0 = q[0]
                 if q0 not in qanswers:
                     qanswers[q0] = set()
                 a = corpus["answers"][i][0]
@@ -109,15 +105,14 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
             if not is_eval:
                 sl = ShuffleList(corpus["candidates"][0], qanswers)
                 corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
-                #corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
+                # corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)
 
         return transpose_dict_of_lists(corpus,
                                        ["question", "candidates"] +
                                        (["answers"] if has_answers else []))
 
     def create_batch(self, annotations: List[Mapping[str, Any]],
-                     is_eval: bool, with_answers: bool) \
-            -> Mapping[TensorPort, np.ndarray]:
+                     is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
 
         output = {
             Ports.Input.question: [a["question"] for a in annotations],
@@ -132,53 +127,50 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
+        return [Ports.Input.question, Ports.Input.atomic_candidates]
 
 
 class ModelFModelModule(TFModelModule):
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, Ports.Input.atomic_candidates, Ports.Target.target_index]
+        return [Ports.Input.question, Ports.Input.atomic_candidates]
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, Ports.loss]
+        return [Ports.Prediction.logits, FlatPorts.Misc.embedded_question]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.loss]
+        return [Ports.Prediction.logits, FlatPorts.Misc.embedded_question, Ports.Target.target_index]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
-    def create_training_output(self,
-                               shared_resources: SharedResources,
-                               loss: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_training_output(self, shared_resources, logits, embedded_question, target_index) -> Sequence[tf.Tensor]:
+        with tf.variable_scope("modelf", reuse=True):
+            embeddings = tf.get_variable("embeddings", trainable=True, dtype="float32")
+            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),
+                                             1)  # [batch_size, 1, repr_dim]
+            answer_score = tf.reduce_sum(embedded_question * embedded_answer, 2)  # [batch_size, 1]
+            loss = tf.reduce_sum(tf.nn.softplus(logits - answer_score))
         return loss,
 
-    def create_output(self,
-                      shared_resources: SharedResources,
-                      question: tf.Tensor,
-                      atomic_candidates: tf.Tensor,
-                      target_index: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_output(self, shared_resources, question, atomic_candidates) -> Sequence[tf.Tensor]:
         repr_dim = shared_resources.config["repr_dim"]
         with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
                 "embeddings",
                 trainable=True, dtype="float32",
-                initializer=tf.random_uniform([len(shared_resources.vocab), repr_dim],-.1,.1))
+                initializer=tf.random_uniform([len(shared_resources.vocab), repr_dim], -.1, .1))
+            # [batch_size, 1, repr_dim]
+            embedded_question = tf.gather(embeddings, question)
+            # [batch_size, num_candidates, repr_dim]
+            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, atomic_candidates))
+            # [batch_size, num_candidates]
+            logits = tf.reduce_sum(tf.multiply(embedded_candidates, embedded_question), 2)
 
-            embedded_question = tf.gather(embeddings, question)  # [batch_size, 1, repr_dim]
-            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, atomic_candidates))  # [batch_size, num_candidates, repr_dim]
-            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),1)  # [batch_size, 1, repr_dim]
-            #embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, repr_dim]
-            #embedded_answer = tf.expand_dims(tf.gather(embeddings, target_index),1)  # [batch_size, 1, repr_dim]
-            logits = tf.reduce_sum(tf.multiply(embedded_candidates,embedded_question),2) # [batch_size, num_candidates]
-            answer_score = tf.reduce_sum(tf.multiply(embedded_question,embedded_answer),2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(logits-answer_score))
-
-            return logits, loss
+        return logits, embedded_question
 
 
 class ModelFOutputModule(OutputModule):

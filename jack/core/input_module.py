@@ -1,13 +1,13 @@
-from abc import abstractmethod, abstractproperty
 import logging
-import numpy as np
 import random
+from abc import abstractmethod, abstractproperty
 from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
+
+import numpy as np
 
 from jack.core.tensorport import TensorPort
 from jack.data_structures import QASetting, Answer
 from jack.util.batch import shuffle_and_batch, GeneratorWithRestart
-
 
 _rng = random.Random(1234)
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class InputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]],
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int,
                         is_eval: bool) -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """
         Given a training set of input-answer pairs, this method produces an iterable/generator
@@ -147,7 +147,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         raise NotImplementedError
 
-    def batch_annotations(self, annotations: List[AnnotationType], is_eval: bool):
+    def batch_annotations(self, annotations: List[AnnotationType], batch_size, is_eval: bool):
         """Optionally shuffles and batches annotations.
 
         By default, all annotations are shuffled (if self.shuffle(is_eval) and
@@ -162,11 +162,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         Returns: Batch iterator
         """
         rng = _rng if self.shuffle(is_eval) else None
-        return shuffle_and_batch(annotations, self.batch_size, rng)
-
-    @property
-    def batch_size(self) -> int:
-        return None
+        return shuffle_and_batch(annotations, batch_size, rng)
 
     def shuffle(self, is_eval: bool) -> bool:
         """Whether to shuffle the dataset in batch_annotations(). Default is noe is_eval."""
@@ -178,14 +174,14 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         annotations = self.preprocess(qa_settings, answers=None, is_eval=True)
         return self.create_batch(annotations, is_eval=True, with_answers=False)
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool) \
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
         questions, answers = zip(*dataset)
         annotations = self.preprocess(questions, answers, is_eval=is_eval)
 
         def make_generator():
-            for annotation_batch in self.batch_annotations(annotations, is_eval):
+            for annotation_batch in self.batch_annotations(annotations, batch_size, is_eval):
                 yield self.create_batch(annotation_batch, is_eval, True)
 
         return GeneratorWithRestart(make_generator)
