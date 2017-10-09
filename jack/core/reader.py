@@ -15,7 +15,6 @@ from typing import Iterable
 import tensorflow as tf
 
 from jack.core.input_module import InputModule
-from jack.core.model_module import TFModelModule
 from jack.core.output_module import OutputModule
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import Ports
@@ -34,7 +33,7 @@ class JTReader:
     def __init__(self,
                  shared_resources: SharedResources,
                  input_module: InputModule,
-                 model_module: TFModelModule,
+                 model_module: ModelModule,
                  output_module: OutputModule):
         self._shared_resources = shared_resources
         self._output_module = output_module
@@ -58,7 +57,7 @@ class JTReader:
         return self._input_module
 
     @property
-    def model_module(self) -> TFModelModule:
+    def model_module(self) -> ModelModule:
         """Returns: model module"""
         return self._model_module
 
