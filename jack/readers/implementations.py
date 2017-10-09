@@ -9,7 +9,7 @@ eval_hooks = {}
 
 extractive_qa_readers = {}
 nli_readers = {}
-link_prediction_readers = {}
+kbp_readers = {}
 
 
 def __reader(f):
@@ -34,7 +34,7 @@ def __nli_reader(f):
 def __kbp_reader(f):
     from jack.util.hooks import KBPEvalHook
     __reader(f)
-    link_prediction_readers.setdefault(f.__name__, f)
+    kbp_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, KBPEvalHook)
     return f
 
