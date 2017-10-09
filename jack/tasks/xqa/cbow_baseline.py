@@ -5,15 +5,15 @@ This file contains CBOW baseline specific modules and ports
 from typing import NamedTuple
 
 import spacy
+
 from jack.core import *
 from jack.fun import simple_model_module, no_shared_resources
 from jack.tasks.xqa.fastqa import XQAPorts
 from jack.tasks.xqa.util import char_vocab_from_vocab, prepare_data, \
     unique_words_with_chars, stack_and_pad
+from jack.tf_fun.dropout import fixed_dropout
 from jack.tf_fun.embedding import conv_char_embedding_alt
 from jack.tf_fun.xqa import xqa_min_crossentropy_span_loss
-
-from jack.tf_fun.dropout import fixed_dropout
 from jack.util import tfutil
 from jack.util.map import numpify
 
@@ -63,10 +63,6 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
-
-    @property
-    def batch_size(self):
-        return self.config.get("batch_size", 1)
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:

@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import math
 import os
 import os.path as path
 import random
 import shutil
 import sys
-import tensorflow as tf
-
-
 from time import time
+
+import tensorflow as tf
 from sacred import Experiment
 from sacred.arg_parser import parse_args
 from sacred.observers import SqlObserver
-from tensorflow.python.client import device_lib
 
 from jack import readers
-from jack.core import SharedResources
-from jack.data_structures import load_labelled_data, load_labelled_data_stream
+from jack.core.shared_resources import SharedResources
+from jack.data_structures import load_labelled_data
 from jack.io.embeddings.embeddings import load_embeddings, Embeddings
-from jack.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
+from jack.util.hooks import LossHook, ExamplesPerSecHook
 from jack.util.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
@@ -69,7 +66,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
 @ex.automain
 def main(batch_size,
          clip_value,
-         config,
          debug,
          debug_examples,
          dev,
@@ -85,7 +81,6 @@ def main(batch_size,
          validation_interval,
          model,
          model_dir,
-         output_dir,
          pretrain,
          seed,
          tensorboard_folder,
@@ -188,20 +183,19 @@ def main(batch_size,
             if prev_metric is None:  # store whole model only at beginning of training
                 reader.store(model_dir)
             else:
-                reader.model_module.store(reader.session, os.path.join(model_dir, "model_module"))
+                reader.model_module.store(os.path.join(model_dir, "model_module"))
             logger.info("Saving model to: %s" % model_dir)
         return m
 
     # this is the standard hook for the model
     hooks.append(readers.eval_hooks[model](
-        reader, dev_data, summary_writer=sw, side_effect=side_effect,
+        reader, dev_data, batch_size, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to))
 
     # Train
-    reader.train(tf_optimizer, training_set=train_data,
-                 max_epochs=epochs, hooks=hooks,
+    reader.train(tf_optimizer, train_data, batch_size, max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final model

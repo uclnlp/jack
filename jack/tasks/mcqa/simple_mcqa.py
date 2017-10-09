@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 
+from typing import List, Tuple, Mapping, Iterable, Any
+
+import numpy as np
+import tensorflow as tf
+
 from jack.core import *
 from jack.data_structures import *
 from jack.preprocessing import preprocess_with_pipeline
-from jack.tf_fun import rnn, simple
-
 from jack.tasks.mcqa.abstract_multiplechoice import AbstractSingleSupportFixedClassModel
+from jack.tf_fun import rnn, simple
 from jack.util.batch import get_batches
 from jack.util.map import numpify
 from jack.util.pipelines import pipeline, transpose_dict_of_lists
-
-from typing import List, Tuple, Mapping, Iterable, Any
-
-import tensorflow as tf
-import numpy as np
 
 
 class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
@@ -137,7 +136,7 @@ class MultiSupportFixedClassInputs(InputModule):
         else:
             self.shared_resources.answer_vocab = train_vocab
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], is_eval: bool)\
+    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
             -> List[Mapping[TensorPort, np.ndarray]]:
         corpus, _, _, _ = \
                 preprocess_with_pipeline(dataset,
@@ -154,10 +153,10 @@ class MultiSupportFixedClassInputs(InputModule):
             Ports.Input.sample_id: corpus['ids']
         }
 
-        return get_batches(xy_dict)
+        return get_batches(xy_dict, batch_size)
 
 
-class SimpleMCModelModule(SimpleModelModule):
+class SimpleMCModelModule(TFModelModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:

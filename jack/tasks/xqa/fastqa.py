@@ -2,8 +2,6 @@
 This file contains FastQA specific modules and ports
 """
 
-import random
-
 from typing import NamedTuple
 
 from jack.core import *
@@ -11,15 +9,13 @@ from jack.fun import simple_model_module, no_shared_resources
 from jack.tasks.xqa.shared import XQAPorts
 from jack.tasks.xqa.util import unique_words_with_chars, prepare_data, \
     char_vocab_from_vocab, stack_and_pad
+from jack.tf_fun.dropout import fixed_dropout
 from jack.tf_fun.embedding import conv_char_embedding_alt
 from jack.tf_fun.highway import highway_network
 from jack.tf_fun.rnn import birnn_with_projection
 from jack.tf_fun.xqa import xqa_min_crossentropy_loss
-
-from jack.tf_fun.dropout import fixed_dropout
 from jack.util import tfutil
 from jack.util.map import numpify
-
 
 FastQAAnnotation = NamedTuple('FastQAAnnotation', [
     ('question_tokens', List[str]),
@@ -37,7 +33,6 @@ FastQAAnnotation = NamedTuple('FastQAAnnotation', [
 
 
 class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
-
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
             "shared_resources for FastQAInputModule must be an instance of SharedResources"
@@ -54,10 +49,6 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.config["char_vocab"]
-
-    @property
-    def batch_size(self):
-        return self.config.get("batch_size", 1)
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -84,7 +75,6 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
     def training_ports(self) -> List[TensorPort]:
         return [XQAPorts.answer_span, XQAPorts.answer2question]
 
-
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) \
@@ -96,11 +86,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         return [self.preprocess_instance(q, a)
                 for q, a in zip(questions, answers)]
 
-
-    def preprocess_instance(self, question: QASetting,
-                            answers: Optional[List[Answer]] = None) \
-            -> FastQAAnnotation:
-
+    def preprocess_instance(self, question: QASetting, answers: Optional[List[Answer]] = None) -> FastQAAnnotation:
         has_answers = answers is not None
 
         q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
@@ -117,7 +103,6 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         for k in range(len(q_ids)):
             emb_question[k] = self._get_emb(q_ids[k])
 
-
         return FastQAAnnotation(
             question_tokens=q_tokenized,
             question_ids=q_ids,
@@ -131,7 +116,6 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
             token_offsets=token_offsets,
             answer_spans=answer_spans if has_answers else None,
         )
-
 
     def create_batch(self, annotations: List[FastQAAnnotation], is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
@@ -172,7 +156,8 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
             span2question = [i for i in range(batch_size) for _ in spans[i]]
             output.update({
                 XQAPorts.answer_span: [span for span_list in spans for span in span_list],
-                XQAPorts.correct_start_training: [] if is_eval else [span[0] for span_list in spans for span in span_list],
+                XQAPorts.correct_start_training: [] if is_eval else [span[0] for span_list in spans for span in
+                                                                     span_list],
                 XQAPorts.answer2question: span2question,
                 XQAPorts.answer2question_training: [] if is_eval else span2question,
             })

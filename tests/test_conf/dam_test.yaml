@@ -8,7 +8,6 @@ seed: 1337
 # where to store the reader
 model_dir: './tests/test_results/dam_reader_test'
 
-
 # jack training file
 train: 'tests/test_data/SNLI/train.json'
 

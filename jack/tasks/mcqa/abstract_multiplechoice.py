@@ -16,7 +16,7 @@ class SingleSupportFixedClassForward(object):
         raise NotImplementedError
 
 
-class AbstractSingleSupportFixedClassModel(SimpleModelModule, SingleSupportFixedClassForward):
+class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClassForward):
     def __init__(self, shared_resources, question_embedding_matrix=None, support_embedding_matrix=None):
         self.shared_resources = shared_resources
         self.vocab = self.shared_resources.vocab

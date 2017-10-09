@@ -19,7 +19,7 @@ def simple_model_module(input_ports: Sequence[TensorPort],
     Returns: a decorator that turns functions into ModelModules.
     """
     def create(shared_vocab_config, f, g):
-        class MyModelModule(SimpleModelModule):
+        class MyModelModule(TFModelModule):
             @property
             def output_ports(self) -> Sequence[TensorPort]:
                 return output_ports

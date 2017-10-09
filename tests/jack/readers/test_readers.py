@@ -1,15 +1,15 @@
 """Smoke test: train all readers for one iteration & run inference."""
 from functools import partial
 
+import numpy as np
+import tensorflow as tf
+
 from jack import readers
-from jack.core import SharedResources
+from jack.core.shared_resources import SharedResources
 from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Embeddings
 from jack.tasks.xqa.util import tokenize
 from jack.util.vocab import Vocab
-
-import tensorflow as tf
-import numpy as np
 
 
 def teardown_function(_):
@@ -50,7 +50,7 @@ def smoke_test(reader_name):
 
     reader = readers.readers[reader_name](shared_resources)
 
-    reader.train(tf.train.AdamOptimizer(), data_set, max_epochs=1)
+    reader.train(tf.train.AdamOptimizer(), data_set, batch_size=1, max_epochs=1)
 
     answers = reader(questions)
 
