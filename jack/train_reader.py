@@ -152,6 +152,7 @@ def train_reader(reader, train_data, test_data, dev_data, configuration: dict, d
         reader.load(model_dir)
         test_eval_hook.at_test_time(1)
 
+
 @ex.automain
 def main(batch_size,
          clip_value,
