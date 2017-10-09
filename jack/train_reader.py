@@ -6,9 +6,9 @@ import os.path as path
 import random
 import shutil
 import sys
-import tensorflow as tf
-
 from time import time
+
+import tensorflow as tf
 from sacred import Experiment
 from sacred.arg_parser import parse_args
 from sacred.observers import SqlObserver
@@ -81,7 +81,6 @@ def main(batch_size,
          validation_interval,
          model,
          model_dir,
-         output_dir,
          pretrain,
          seed,
          tensorboard_folder,
@@ -184,7 +183,7 @@ def main(batch_size,
             if prev_metric is None:  # store whole model only at beginning of training
                 reader.store(model_dir)
             else:
-                reader.model_module.store(reader.session, os.path.join(model_dir, "model_module"))
+                reader.model_module.store(os.path.join(model_dir, "model_module"))
             logger.info("Saving model to: %s" % model_dir)
         return m
 

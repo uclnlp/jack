@@ -315,7 +315,7 @@ class EvalHook(TraceHook):
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
-            predictions = self.reader.model_module(self.reader.session, batch, self._ports)
+            predictions = self.reader.model_module(batch, self._ports)
             m = self.apply_metrics(predictions)
             for k in self._metrics:
                 metrics[k].append(m[k])
@@ -505,7 +505,7 @@ class KBPEvalHook(EvalHook):
         qa_scores = []
         qa_ids = []
         for i, batch in enumerate(self._batches):
-            predictions = self.reader.model_module(self.reader.session, batch, self._ports)
+            predictions = self.reader.model_module(batch, self._ports)
             correct_answers = predictions[Ports.Target.target_index]
             logits = predictions[Ports.Prediction.logits]
             candidate_ids = predictions[Ports.Input.atomic_candidates]
@@ -588,7 +588,7 @@ class KBPEvalHook(EvalHook):
 
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
-            predictions = self.reader.model_module(self.reader.session, batch, self._ports)
+            predictions = self.reader.model_module(batch, self._ports)
             m = self.apply_metrics(predictions)
             for k in self._metrics:
                 metrics[k].append(m[k])
