@@ -154,10 +154,10 @@ def main(batch_size,
         'write_metrics_to': write_metrics_to
     }
 
-    train_reader(reader, train_data, test_data, dev_data, configuration)
+    train_reader(reader, train_data, test_data, dev_data, configuration, debug=debug)
 
 
-def train_reader(reader, train_data, test_data, dev_data, configuration: dict):
+def train_reader(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
 
     seed = configuration.get('seed')
 
