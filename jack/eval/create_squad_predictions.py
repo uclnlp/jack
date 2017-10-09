@@ -31,7 +31,7 @@ config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_sup
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
 with tf.device(FLAGS.device):
-    readers.load_and_setup(FLAGS.model_dir)
+    reader.load_and_setup(FLAGS.model_dir)
 
 if FLAGS.dataset_type == "squad":
     dataset_jtr = convert_squad(FLAGS.file)
@@ -42,7 +42,7 @@ else:
 dataset = convert2qasettings(dataset_jtr)
 
 print("Start!")
-answers = readers.process_outputs(dataset, FLAGS.batch_size, debug=True)
+answers = reader.process_outputs(dataset, FLAGS.batch_size, debug=True)
 results = {dataset[i][0].id: a.text for i, a in enumerate(answers)}
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)

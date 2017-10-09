@@ -28,7 +28,7 @@ config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_sup
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
 with tf.device(FLAGS.device):
-    readers.load_and_setup(FLAGS.model_dir)
+    reader.load_and_setup(FLAGS.model_dir)
 
 with open(FLAGS.file) as f:
     dataset_jtr = json.load(f)
@@ -48,7 +48,7 @@ def side_effect(metrics, prev_metric):
     return 0.0
 
 
-test_eval_hook = eval_hooks[FLAGS.model](readers, dataset, epoch_interval=1, side_effect=side_effect)
+test_eval_hook = eval_hooks[FLAGS.model](reader, dataset, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 
 print("Done!")
