@@ -148,7 +148,7 @@ def main(batch_size,
         'validation_interval': validation_interval,
         'tensorboard_folder': tensorboard_folder,
         'model': model,
-        'model_dir': model_dir
+        'model_dir': model_dir,
         'write_metrics_to': write_metrics_to
     }
 
