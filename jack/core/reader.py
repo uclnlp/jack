@@ -6,7 +6,6 @@ jack data structures into tensors, one that processes predicts the outputs and l
 using a TensorFlow model into other tensors, and one that converts these tensors back to jack data structures.
 """
 
-from abc import abstractmethod, abstractproperty
 import logging
 import os
 import shutil
@@ -16,7 +15,7 @@ from typing import Iterable
 import tensorflow as tf
 
 from jack.core.input_module import InputModule
-from jack.core.model_module import ModelModule, TFModelModule
+from jack.core.model_module import TFModelModule
 from jack.core.output_module import OutputModule
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import Ports
@@ -32,27 +31,47 @@ class JTReader:
     (output_model). These layers are called in-turn on a given input (list).
     """
 
-    @abstractproperty
+    def __init__(self,
+                 shared_resources: SharedResources,
+                 input_module: InputModule,
+                 model_module: TFModelModule,
+                 output_module: OutputModule):
+        self._shared_resources = shared_resources
+        self._output_module = output_module
+        self._model_module = model_module
+        self._input_module = input_module
+
+        assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
+            "Input Module outputs must include model module inputs"
+
+        assert all(port in self.input_module.training_ports or port in self.model_module.output_ports or
+                   port in self.input_module.output_ports for port in self.model_module.training_input_ports), \
+            "Input Module (training) outputs and model module outputs must include model module training inputs"
+
+        assert all(port in self.model_module.output_ports or port in self.input_module.output_ports
+                   for port in self.output_module.input_ports), \
+            "Module model output must match output module inputs"
+
+    @property
     def input_module(self) -> InputModule:
         """Returns: input module"""
-        raise NotImplementedError()
+        return self._input_module
 
-    @abstractproperty
-    def model_module(self) -> ModelModule:
+    @property
+    def model_module(self) -> TFModelModule:
         """Returns: model module"""
-        raise NotImplementedError()
+        return self._model_module
 
-    @abstractproperty
+    @property
     def output_module(self) -> OutputModule:
         """Returns: output module"""
-        raise NotImplementedError()
+        return self._output_module
 
-    @abstractproperty
+    @property
     def shared_resources(self) -> SharedResources:
         """Returns: SharedResources object"""
-        raise NotImplementedError()
+        return self._shared_resources
 
-    @abstractmethod
     def __call__(self, inputs: Sequence[QASetting]) -> Sequence[Answer]:
         """
         Answers a list of question settings
@@ -62,9 +81,11 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
-        raise NotImplementedError()
+        batch = self.input_module(inputs)
+        output_module_input = self.model_module(batch, self.output_module.input_ports)
+        answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
+        return answers
 
-    @abstractmethod
     def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
@@ -80,7 +101,18 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
-        raise NotImplementedError
+        logger.debug("Setting up batches...")
+        batches = self.input_module.batch_generator(dataset, is_eval=True)
+        answers = list()
+        logger.debug("Start answering...")
+        for j, batch in enumerate(batches):
+            output_module_input = self.model_module(batch, self.output_module.input_ports)
+            inputs = [x for x, _ in dataset[j * batch_size:(j + 1) * batch_size]]
+            answers.extend(
+                self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
+            if debug:
+                logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
+        return answers
 
     def train(self, optimizer, training_set: Iterable[Tuple[QASetting, List[Answer]]],
               max_epochs=10, hooks=tuple(), **kwargs):
@@ -159,93 +191,10 @@ class TFReader(JTReader):
     (output_model). These layers are called in-turn on a given input (list).
     """
 
-    def __init__(self,
-                 shared_resources: SharedResources,
-                 input_module: InputModule,
-                 model_module: TFModelModule,
-                 output_module: OutputModule):
-        self._shared_resources = shared_resources
-        self._output_module = output_module
-        self._model_module = model_module
-        self._input_module = input_module
-
-        assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
-            "Input Module outputs must include model module inputs"
-
-        assert all(port in self.input_module.training_ports or port in self.model_module.output_ports or
-                   port in self.input_module.output_ports for port in self.model_module.training_input_ports), \
-            "Input Module (training) outputs and model module outputs must include model module training inputs"
-
-        assert all(port in self.model_module.output_ports or port in self.input_module.output_ports
-                   for port in self.output_module.input_ports), \
-            "Module model output must match output module inputs"
-
     @property
     def session(self) -> tf.Session:
         """Returns: input module"""
         return self.model_module.tf_session
-
-    @property
-    def input_module(self) -> InputModule:
-        """Returns: input module"""
-        return self._input_module
-
-    @property
-    def model_module(self) -> TFModelModule:
-        """Returns: model module"""
-        return self._model_module
-
-    @property
-    def output_module(self) -> OutputModule:
-        """Returns: output module"""
-        return self._output_module
-
-    @property
-    def shared_resources(self) -> SharedResources:
-        """Returns: SharedResources object"""
-        return self._shared_resources
-
-    def __call__(self, inputs: Sequence[QASetting]) -> Sequence[Answer]:
-        """
-        Answers a list of question settings
-        Args:
-            inputs: a list of inputs.
-
-        Returns:
-            predicted outputs/answers to a given (labeled) dataset
-        """
-        batch = self.input_module(inputs)
-        output_module_input = self.model_module(batch, self.output_module.input_ports)
-        answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
-        return answers
-
-    def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
-        """
-        Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
-        that batches in input_module.batch_generator are processed in order and do not get shuffled during with
-        flag is_eval set to true.
-
-        Args:
-            dataset:
-            batch_size: note this information is needed here, but does not set the batch_size the model is using.
-            This has to happen during setup/configuration.
-            debug: if true, logging counter
-
-        Returns:
-            predicted outputs/answers to a given (labeled) dataset
-        """
-        logger.debug("Setting up batches...")
-        batches = self.input_module.batch_generator(dataset, is_eval=True)
-        answers = list()
-        logger.debug("Start answering...")
-        for j, batch in enumerate(batches):
-            output_module_input = self.model_module(batch, self.output_module.input_ports)
-            inputs = [x for x, _ in dataset[j * batch_size:(j + 1) * batch_size]]
-            answers.extend(
-                self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
-            if debug:
-                logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
-        return answers
 
     def train(self, optimizer,
               training_set: Iterable[Tuple[QASetting, List[Answer]]],

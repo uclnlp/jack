@@ -81,6 +81,9 @@ class TFModelModule(ModelModule):
             session_config.gpu_options.allow_growth = True
             sess = tf.Session(config=session_config)
         self.tf_session = sess
+        # will be set in setup
+        self._tensors = None
+        self._placeholders = None
 
     def __call__(self, batch: Mapping[TensorPort, np.ndarray],
                  goal_ports: List[TensorPort] = None) -> Mapping[TensorPort, np.ndarray]:
