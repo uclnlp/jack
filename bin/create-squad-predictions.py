@@ -8,7 +8,7 @@ import json
 
 import tensorflow as tf
 
-from jack.data_structures import convert2qasettings
+from jack.data_structures import jtr_to_qasetting
 from jack.io.SQuAD2jtr import convert_squad
 from jack.io.embeddings import load_embeddings
 from jack.readers import readers
@@ -50,7 +50,7 @@ else:
     with open(FLAGS.file) as f:
         dataset_jtr = json.load(f)
 
-dataset = convert2qasettings(dataset_jtr)
+dataset = jtr_to_qasetting(dataset_jtr)
 
 logger.info("Start!")
 answers = reader.process_outputs(dataset, FLAGS.batch_size, debug=True)

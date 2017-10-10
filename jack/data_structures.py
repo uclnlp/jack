@@ -62,7 +62,20 @@ class QASetting:
         self.question = question
 
 
-def convert2qasettings(jtr_data, max_count=None):
+def _jtr_to_qasetting(instance, value, global_candidates):
+    support = [value(s) for s in instance["support"]] if "support" in instance else None
+    for question_instance in instance["questions"]:
+        question = value(question_instance['question'])
+        idd = value(question_instance['question'], 'id')
+        if global_candidates is None:
+            candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
+        else:
+            candidates = global_candidates
+        answers = [Answer(value(c), value(c, 'span'), 1.0) for c in question_instance['answers']] if "answers" in question_instance else None
+        yield QASetting(question, support, atomic_candidates=candidates, id=idd), answers
+
+
+def jtr_to_qasetting(jtr_data, max_count=None):
     """
     Converts a python dictionary in JTR format to a QASetting.
     Args:
@@ -83,22 +96,6 @@ def convert2qasettings(jtr_data, max_count=None):
 
     global_candidates = [value(c) for c in jtr_data['globals']['candidates']] if 'globals' in jtr_data else None
 
-    def convert_instance(instance):
-        support = [value(s) for s in instance["support"]] if "support" in instance else None
-        for question_instance in instance["questions"]:
-            question = value(question_instance['question'])
-            idd = value(question_instance['question'], 'id')
-            if global_candidates is None:
-                candidates = [value(c) for c in
-                              question_instance['candidates']] if "candidates" in question_instance else None
-            else:
-                candidates = global_candidates
-            answers = [Answer(value(c), value(c, 'span'), 1.0)
-                       for c in question_instance['answers']] if "answers" in question_instance else None
-            yield QASetting(question, support, atomic_candidates=candidates, id=idd), answers
-
-    result = [(inp, answer) for i in jtr_data["instances"] for inp, answer in convert_instance(i)][:max_count]
-    if max_count is None:
-        return result
-    else:
-        return result[:max_count]
+    ans = [(inp, answer) for i in jtr_data["instances"]
+           for inp, answer in _jtr_to_qasetting(i, value, global_candidates)][:max_count]
+    return ans[:max_count]
