@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import random
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
 
 import numpy as np
@@ -37,7 +39,7 @@ class InputModule:
         """
         pass
 
-    @abstractproperty
+    @abstractmethod
     def output_ports(self) -> List[TensorPort]:
         """
         Defines what types of tensors the output module produces in each batch.
@@ -47,7 +49,7 @@ class InputModule:
         """
         raise NotImplementedError
 
-    @abstractproperty
+    @abstractmethod
     def training_ports(self) -> List[TensorPort]:
         """
         Defines what types of tensor are provided in addition to `output_ports` during training
