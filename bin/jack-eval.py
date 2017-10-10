@@ -16,6 +16,7 @@ from jack.util.vocab import Vocab
 import logging
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
+logging.basicConfig(level=logging.INFO)
 
 
 tf.app.flags.DEFINE_string('file', None, 'JTR dataset file')
@@ -30,11 +31,13 @@ tf.app.flags.DEFINE_string('kwargs', '{}', 'additional reader-specific configura
 
 FLAGS = tf.app.flags.FLAGS
 
-print("Loading embeddings from %s..." % FLAGS.embedding_path)
+logger.info("Loading embeddings from {}...".format(FLAGS.embedding_path))
+
 emb = load_embeddings(FLAGS.embedding_path, FLAGS.embedding_format)
 vocab = Vocab(emb=emb, init_from_embeddings=True)
 
-print("Creating and loading reader from %s..." % FLAGS.model_dir)
+logger.info("Creating and loading reader from {}...".format(FLAGS.model_dir))
+
 config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
@@ -46,20 +49,20 @@ with open(FLAGS.file) as f:
 
 dataset = convert2qasettings(dataset_jtr)
 
-print("Start!")
+logger.info("Start!")
 
 
 def side_effect(metrics, prev_metric):
     """Returns: a state (in this case a metric) that is used as input for the next call"""
-    print("#####################################")
-    print("Results:")
+    logger.info("#####################################")
+    logger.info("Results:")
     for k, v in metrics.items():
-        print(k + ":", v)
-    print("#####################################")
+        logger.info("{}: {}".format(k, v))
+    logger.info("#####################################")
     return 0.0
 
 
 test_eval_hook = eval_hooks[FLAGS.model](reader, dataset, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 
-print("Done!")
+logger.info("Done!")
