@@ -33,22 +33,26 @@ class ModelModule:
         """
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def output_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the output ports of this module."""
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the input ports."""
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def training_input_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the input ports necessary to create the training output ports, i.e., they do not have
         to be provided during eval and they can include output ports of this module."""
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def training_output_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the output ports provided during training for this module."""

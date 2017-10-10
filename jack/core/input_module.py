@@ -39,6 +39,7 @@ class InputModule:
         """
         pass
 
+    @property
     @abstractmethod
     def output_ports(self) -> List[TensorPort]:
         """
@@ -49,6 +50,7 @@ class InputModule:
         """
         raise NotImplementedError
 
+    @property
     @abstractmethod
     def training_ports(self) -> List[TensorPort]:
         """

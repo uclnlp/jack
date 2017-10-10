@@ -15,6 +15,7 @@ class OutputModule:
     jack data structures.
     """
 
+    @property
     @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """Returns: correspond to a subset of output ports of model module."""
