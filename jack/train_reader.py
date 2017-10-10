@@ -54,12 +54,11 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
     tf_optimizer_class = name_to_optimizer[optimizer]
     tf_optimizer = tf_optimizer_class(learning_rate=learning_rate)
 
+    sw = None
     if tensorboard_folder is not None:
         if os.path.exists(tensorboard_folder):
             shutil.rmtree(tensorboard_folder)
         sw = tf.summary.FileWriter(tensorboard_folder)
-    else:
-        sw = None
 
     # Hooks
     iter_interval = 1 if debug else log_interval
