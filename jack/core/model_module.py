@@ -1,4 +1,6 @@
-from abc import abstractmethod, abstractproperty
+# -*- coding: utf-8 -*-
+
+from abc import abstractmethod
 from typing import Mapping, List, Sequence
 
 import numpy as np
@@ -31,23 +33,27 @@ class ModelModule:
         """
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def output_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the output ports of this module."""
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the input ports."""
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def training_input_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the input ports necessary to create the training output ports, i.e., they do not have
         to be provided during eval and they can include output ports of this module."""
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def training_output_ports(self) -> Sequence[TensorPort]:
         """Returns: Definition of the output ports provided during training for this module."""
         raise NotImplementedError

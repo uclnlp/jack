@@ -97,7 +97,7 @@ def test_model(model_name, epochs, use_small_data, dataset):
 
     # Setup the process call command
     cmd = 'CUDA_VISIBLE_DEVICES=-1 ' # we only test on the CPU
-    cmd += "python3 jack/train_reader.py with train={0} dev={1} test={2}" .format(train_file, dev_file, test_file,)
+    cmd += "python3 ./bin/jack-train.py with train={0} dev={1} test={2}" .format(train_file, dev_file, test_file,)
     cmd += ' write_metrics_to={0}'.format(metric_filepath)
     cmd += ' model={0}'.format(model_name)
     cmd += ' epochs={0}'.format(epochs)

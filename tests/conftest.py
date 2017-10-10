@@ -12,3 +12,5 @@ def pytest_collection_modifyitems(items):
             item.add_marker(pytest.mark.overfit)
         elif "smalldata" in item.nodeid:
             item.add_marker(pytest.mark.smalldata)
+        elif "readme" in item.nodeid:
+            item.add_marker(pytest.mark.readme)

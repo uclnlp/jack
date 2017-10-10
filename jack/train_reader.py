@@ -2,150 +2,40 @@
 
 import logging
 import os
-import os.path as path
 import random
 import shutil
-import sys
-from time import time
 
 import tensorflow as tf
-from sacred import Experiment
-from sacred.arg_parser import parse_args
-from sacred.observers import SqlObserver
 
 from jack import readers
-from jack.core.shared_resources import SharedResources
-from jack.io.embeddings.embeddings import load_embeddings, Embeddings
-from jack.io.load import loaders
 from jack.util.hooks import LossHook, ExamplesPerSecHook
-from jack.util.vocab import Vocab
 
-logger = logging.getLogger(os.path.basename(sys.argv[0]))
-
-parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
-if "config" in parsed_args:
-    path = parsed_args["config"]
-else:
-    path = "./conf/jack.yaml"
+logger = logging.getLogger(__name__)
 
 
-def fetch_parents(current_path, parents=[]):
-    tmp_ex = Experiment('jack')
-    tmp_ex.add_config(current_path)
-    tmp_ex.run("print_config")
-    if tmp_ex.current_run is not None and "parent_config" in tmp_ex.current_run.config:
-        return fetch_parents(tmp_ex.current_run.config["parent_config"], [current_path] + parents)
-    else:
-        return [current_path] + parents
-
-configs = fetch_parents(path)
-logger.info("Loading {}".format(configs))
-ex = Experiment('jack')
-for path in configs:
-    ex.add_config(path)
-
-logger.info(ex.current_run)
-
-
-class Duration(object):
-    def __init__(self):
-        self.t0 = time()
-        self.t = time()
-
-    def __call__(self):
-        logger.info('Time since last checkpoint : {0:.2g}min'.format((time() - self.t) / 60.))
-        self.t = time()
-
-
-checkpoint = Duration()
-
-logging.basicConfig(level=logging.INFO)
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
-
-
-@ex.automain
-def main(batch_size,
-         clip_value,
-         config,
-         loader,
-         debug,
-         debug_examples,
-         dev,
-         embedding_file,
-         embedding_format,
-         experiments_db,
-         epochs,
-         l2,
-         optimizer,
-         learning_rate,
-         learning_rate_decay,
-         log_interval,
-         validation_interval,
-         model,
-         model_dir,
-         pretrain,
-         seed,
-         tensorboard_folder,
-         test,
-         train,
-         vocab_from_embeddings,
-         write_metrics_to):
-    logger.info("TRAINING")
-
-    if experiments_db is not None:
-        ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
+def train(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
+    seed = configuration.get('seed')
 
     # make everything deterministic
     random.seed(seed)
     tf.set_random_seed(seed)
 
+    clip_value = configuration.get('clip_value')
+    batch_size = configuration.get('batch_size')
+    epochs = configuration.get('epochs')
+    l2 = configuration.get('l2')
+    optimizer = configuration.get('optimizer')
+    learning_rate = configuration.get('learning_rate')
+    learning_rate_decay = configuration.get('learning_rate_decay')
+    log_interval = configuration.get('log_interval')
+    validation_interval = configuration.get('validation_interval')
+    tensorboard_folder = configuration.get('tensorboard_folder')
+    model = configuration.get('model')
+    model_dir = configuration.get('model_dir')
+    write_metrics_to = configuration.get('write_metrics_to')
+
     if clip_value != 0.0:
         clip_value = - abs(clip_value), abs(clip_value)
-
-    if debug:
-        train_data = loaders[loader](train, debug_examples)
-
-        logger.info('loaded {} samples as debug train/dev/test dataset '.format(debug_examples))
-
-        dev_data = train_data
-        test_data = train_data
-
-        if pretrain:
-            emb_file = 'glove.6B.50d.txt'
-            embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
-            logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
-            ex.current_run.config["repr_dim_input"] = 50
-        else:
-            embeddings = Embeddings(None, None)
-    else:
-        train_data = loaders[loader](train)
-        dev_data = loaders[loader](dev)
-        test_data = loaders[loader](test) if test else None
-
-        logger.info('loaded train/dev/test data')
-        if pretrain:
-            embeddings = load_embeddings(embedding_file, embedding_format)
-            logger.info('loaded pre-trained embeddings ({})'.format(embedding_file))
-            ex.current_run.config["repr_dim_input"] = embeddings.lookup[0].shape[0]
-        else:
-            embeddings = Embeddings(None, None)
-
-    emb = embeddings
-
-    vocab = Vocab(emb=emb, init_from_embeddings=vocab_from_embeddings)
-
-    # build JTReader
-    checkpoint()
-
-    parsed_config = ex.current_run.config
-
-    # name defaults to name of the model
-    if 'name' not in parsed_config or parsed_config['name'] is None:
-        parsed_config['name'] = model
-
-    shared_resources = SharedResources(vocab, parsed_config)
-    reader = readers.readers[model](shared_resources)
-    checkpoint()
 
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32, trainable=False)
     lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
@@ -164,12 +54,11 @@ def main(batch_size,
     tf_optimizer_class = name_to_optimizer[optimizer]
     tf_optimizer = tf_optimizer_class(learning_rate=learning_rate)
 
+    sw = None
     if tensorboard_folder is not None:
         if os.path.exists(tensorboard_folder):
             shutil.rmtree(tensorboard_folder)
         sw = tf.summary.FileWriter(tensorboard_folder)
-    else:
-        sw = None
 
     # Hooks
     iter_interval = 1 if debug else log_interval

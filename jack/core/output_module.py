@@ -1,4 +1,6 @@
-from abc import abstractmethod, abstractproperty
+# -*- coding: utf-8 -*-
+
+from abc import abstractmethod
 from typing import Sequence
 
 import numpy as np
@@ -13,7 +15,8 @@ class OutputModule:
     jack data structures.
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def input_ports(self) -> Sequence[TensorPort]:
         """Returns: correspond to a subset of output ports of model module."""
         raise NotImplementedError

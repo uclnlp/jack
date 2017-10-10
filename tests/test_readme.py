@@ -10,7 +10,7 @@ from jack.data_structures import QASetting
 
 
 def test_readme_fastqa():
-    args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/fastqa_test.yaml']
+    args = ['python3', './bin/jack-train.py', 'with', 'config=tests/test_conf/fastqa_test.yaml']
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
 
@@ -38,7 +38,7 @@ def test_readme_fastqa():
 
 
 def test_readme_dam():
-    args = ['python3', 'jack/train_reader.py', 'with', 'config=tests/test_conf/dam_test.yaml']
+    args = ['python3', './bin/jack-train.py', 'with', 'config=tests/test_conf/dam_test.yaml']
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
 
