@@ -80,13 +80,6 @@ First, download SNLI
 $ ./data/SNLI/download.sh
 ```
 
-Then, convert SNLI into the Jack data format:
-
-```shell
-$ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/train-v1.1.json ./data/SQuAD/train.json
-$ python3 jack/io/SQuAD2jtr.py ./data/SQuAD/dev-v1.1.json ./data/SQuAD/dev.json
-```
-
 Lastly, train a [Decomposable Attention Model][dam]
 
 ```bash
