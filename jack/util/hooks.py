@@ -26,7 +26,7 @@ TODO -- hooks should also have prefixes so that one can use the same hook with d
 class TrainingHook(metaclass=ABCMeta):
     """Serves as Hook interface."""
 
-    @abstractproperty
+    @abstractmethod
     def reader(self) -> JTReader:
         """ Returns: JTReader instance"""
         raise NotImplementedError
@@ -43,7 +43,7 @@ class TrainingHook(metaclass=ABCMeta):
 class TFTrainingHook(TrainingHook):
     """Serves as Hook interface."""
 
-    @abstractproperty
+    @abstractmethod
     def reader(self) -> TFReader:
         """ Returns: JTReader instance"""
         raise NotImplementedError
