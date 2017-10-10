@@ -10,8 +10,8 @@ JTR download script: data/SQuAD/download.sh
 
 """
 
-import json
 import argparse
+import json
 
 
 def create_snippet(file_path):
@@ -110,7 +110,7 @@ def __parse_answer(answer_dict):
     answer_end = answer_start + len(answer_text)
     return {
         'text': answer_text,
-        'span': [answer_start, answer_end]
+        'span': (answer_start, answer_end)
     }
 
 

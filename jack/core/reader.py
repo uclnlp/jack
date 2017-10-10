@@ -40,6 +40,7 @@ class JTReader:
         self._output_module = output_module
         self._model_module = model_module
         self._input_module = input_module
+        self._is_setup = False
 
         assert all(port in self.input_module.output_ports for port in self.model_module.input_ports), \
             "Input Module outputs must include model module inputs"
@@ -102,14 +103,13 @@ class JTReader:
             predicted outputs/answers to a given (labeled) dataset
         """
         logger.debug("Setting up batches...")
-        batches = self.input_module.batch_generator(dataset, is_eval=True)
+        batches = self.input_module.batch_generator(dataset, batch_size, is_eval=True)
         answers = list()
         logger.debug("Start answering...")
         for j, batch in enumerate(batches):
             output_module_input = self.model_module(batch, self.output_module.input_ports)
-            inputs = [x for x, _ in dataset[j * batch_size:(j + 1) * batch_size]]
-            answers.extend(
-                self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports]))
+            answers.extend(self.output_module(
+                output_module_input, *[output_module_input[p] for p in self.output_module.input_ports]))
             if debug:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
@@ -138,8 +138,9 @@ class JTReader:
         """
         self.input_module.setup_from_data(data)
         self.input_module.setup()
-        self.model_module.setup(is_training=is_training)
+        self.model_module.setup(is_training)
         self.output_module.setup()
+        self._is_setup = True
 
     def load_and_setup(self, path, is_training=False):
         """
@@ -152,10 +153,11 @@ class JTReader:
         self.shared_resources.load(os.path.join(path, "shared_resources"))
         self.input_module.setup()
         self.input_module.load(os.path.join(path, "input_module"))
-        self.model_module.setup(is_training=is_training)
+        self.model_module.setup(is_training)
         self.model_module.load(os.path.join(path, "model_module"))
         self.output_module.setup()
         self.output_module.load(os.path.join(path, "output_module"))
+        self._is_setup = True
 
     def load(self, path):
         """
@@ -220,15 +222,15 @@ class TFReader(JTReader):
             clip_op: operation to perform for clipping
         """
         logger.info("Setting up data and model...")
-        # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.setup_from_data(training_set, is_training=True)
+        if not self._is_setup:
+            # First setup shared resources, e.g., vocabulary. This depends on the input module.
+            self.setup_from_data(training_set, is_training=True)
         batches = self.input_module.batch_generator(training_set, batch_size, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
 
         if l2:
-            loss += \
-                tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()]) * l2
+            loss += tf.add_n([tf.nn.l2_loss(v) for v in self.model_module.train_variables]) * l2
 
         if clip:
             gradients = optimizer.compute_gradients(loss)
