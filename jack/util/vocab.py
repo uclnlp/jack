@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import operator
+import os
+import pickle
 import sys
-
 from collections import OrderedDict
 
 import numpy as np
-import os
-import pickle
-
 from sacred.optional import yaml
 
 from jack.io.embeddings import Embeddings, load_embeddings

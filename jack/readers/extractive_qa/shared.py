@@ -100,7 +100,7 @@ class XQAOutputModule(OutputModule):
             answer = answer.rstrip()
             char_end = char_start + len(answer)
 
-            answers.append(Answer(answer, (char_start, char_end), score=start_probs[start] * end_probs[end]))
+            answers.append(Answer(answer, span=(char_start, char_end), score=start_probs[start] * end_probs[end]))
 
         return answers
 
@@ -131,7 +131,7 @@ class XQANoScoreOutputModule(OutputModule):
             answer = answer.rstrip()
             char_end = char_start + len(answer)
 
-            answers.append(Answer(answer, (char_start, char_end), score=1.0))
+            answers.append(Answer(answer, span=(char_start, char_end), score=1.0))
 
         return answers
 
