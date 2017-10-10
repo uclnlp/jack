@@ -18,7 +18,6 @@ import logging
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 logging.basicConfig(level=logging.INFO)
 
-
 tf.app.flags.DEFINE_string('file', None, 'JTR dataset file')
 tf.app.flags.DEFINE_string('model', None, 'Name of the reader')
 tf.app.flags.DEFINE_string('model_dir', None, 'directory to saved model')
@@ -52,7 +51,7 @@ dataset = convert2qasettings(dataset_jtr)
 logger.info("Start!")
 
 
-def side_effect(metrics, prev_metric):
+def side_effect(metrics, _):
     """Returns: a state (in this case a metric) that is used as input for the next call"""
     logger.info("#####################################")
     logger.info("Results:")

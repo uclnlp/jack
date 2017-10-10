@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+
 import json
 
 import tensorflow as tf
@@ -7,6 +13,11 @@ from jack.io.SQuAD2jtr import convert_squad
 from jack.io.embeddings import load_embeddings
 from jack.readers import readers
 from jack.util.vocab import Vocab
+
+import logging
+
+logger = logging.getLogger(os.path.basename(sys.argv[0]))
+logging.basicConfig(level=logging.INFO)
 
 tf.app.flags.DEFINE_string('file', None, 'dataset file')
 tf.app.flags.DEFINE_string('dataset_type', 'squad', 'either squad or jack')
@@ -22,11 +33,11 @@ tf.app.flags.DEFINE_string('kwargs', '{}', 'additional reader-specific configura
 
 FLAGS = tf.app.flags.FLAGS
 
-print("Loading embeddings from %s..." % FLAGS.embedding_path)
+logger.info("Loading embeddings from {}...".format(FLAGS.embedding_path))
 emb = load_embeddings(FLAGS.embedding_path, FLAGS.embedding_format)
 vocab = Vocab(emb=emb, init_from_embeddings=True)
 
-print("Creating and loading reader from %s..." % FLAGS.model_dir)
+logger.info("Creating and loading reader from {}...".format(FLAGS.model_dir))
 config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
 config.update(json.loads(FLAGS.kwargs))
 reader = readers[FLAGS.model](vocab, config)
@@ -41,10 +52,10 @@ else:
 
 dataset = convert2qasettings(dataset_jtr)
 
-print("Start!")
+logger.info("Start!")
 answers = reader.process_outputs(dataset, FLAGS.batch_size, debug=True)
 results = {dataset[i][0].id: a.text for i, a in enumerate(answers)}
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)
 
-print("Done!")
+logger.info("Done!")
