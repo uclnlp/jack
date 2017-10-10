@@ -128,29 +128,31 @@ class JTReader:
         """
         raise NotImplementedError
 
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], is_train=False):
+    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]], is_training=False):
         """
         Sets up modules given a training dataset if necessary.
 
         Args:
             data: training dataset
+            is_training: indicates whether it's the training phase or not
         """
         self.input_module.setup_from_data(data)
         self.input_module.setup()
-        self.model_module.setup(is_train)
+        self.model_module.setup(is_training=is_training)
         self.output_module.setup()
 
-    def load_and_setup(self, path, is_train=False):
+    def load_and_setup(self, path, is_training=False):
         """
         Sets up already stored reader from model directory.
 
         Args:
             path: training dataset
+            is_training: indicates whether it's the training phase or not
         """
         self.shared_resources.load(os.path.join(path, "shared_resources"))
         self.input_module.setup()
         self.input_module.load(os.path.join(path, "input_module"))
-        self.model_module.setup(is_train)
+        self.model_module.setup(is_training=is_training)
         self.model_module.load(os.path.join(path, "model_module"))
         self.output_module.setup()
         self.output_module.load(os.path.join(path, "output_module"))
@@ -219,7 +221,7 @@ class TFReader(JTReader):
         """
         logger.info("Setting up data and model...")
         # First setup shared resources, e.g., vocabulary. This depends on the input module.
-        self.setup_from_data(training_set, is_train=True)
+        self.setup_from_data(training_set, is_training=True)
         batches = self.input_module.batch_generator(training_set, batch_size, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
