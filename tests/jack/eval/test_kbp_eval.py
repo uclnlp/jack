@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jack.eval.kbp.base import compute_ranks, ranking_summary
+from jack.eval.kbp import compute_ranks
 
 triple_to_score_map = {
     ('a', 'p', 'a'): 1,
