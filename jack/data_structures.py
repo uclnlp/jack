@@ -12,18 +12,20 @@ class Answer:
     Representation of an answer to a question.
     """
 
-    def __init__(self, text: str, span: Tuple[int, int, int] = None, score: float = 1.0):
+    def __init__(self, text: str, span: Tuple[int, int] = None, doc_idx: int = None, score: float = 1.0):
         """
         Create a new answer.
         Args:
             text: The text string of the answer.
-            span: For extractive QA, a span in the support documents. The triple `(doc_index, start, end)`
-            represents a span in support document with index `doc_index` in the ordered sequence of
+            span: For extractive QA, a span in the support documents. The triple `(start, end)`
+                represents a span in support document with index `doc_index` in the ordered sequence of
+            doc_idx: index of document where answer was found
             support documents. The span starts at `start` and ends at `end` (exclusive).
             score: the score a model associates with this answer.
         """
         self.score = score
         self.span = span
+        self.doc_idx = doc_idx
         self.text = text
 
 

@@ -39,8 +39,6 @@ class SharedResources:
         Args:
             path: path to save shared resources
         """
-        if not os.path.exists(os.path.dirname(path)):
-            os.mkdir(os.path.dirname(path))
         with open(path, 'wb') as f:
             remaining = {k: self.__dict__[k] for k in self.__dict__ if k != "vocab"}
             pickle.dump(remaining, f, pickle.HIGHEST_PROTOCOL)

@@ -32,15 +32,8 @@ def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True,
     Returns:
         [batch_size x max_length] mask of zeros and "value"s
     """
-    if max_length is None:
-        max_length = tf.reduce_max(lengths)
-    if batch_size is None:
-        batch_size = tf.shape(lengths)[0]
-    # [batch_size x max_length]
-    mask = tf.reshape(tf.tile(tf.range(0, max_length), [batch_size]), tf.stack([batch_size, -1]))
+    mask = tf.sequence_mask(lengths, max_length, dtype=tf.float32)
     if mask_right:
-        mask = tf.greater_equal(mask, tf.expand_dims(lengths, 1))
-    else:
-        mask = tf.less(mask, tf.expand_dims(lengths, 1))
-    mask = tf.cast(mask, tf.float32) * value
+        mask = 1.0 - mask
+    mask *= value
     return mask
