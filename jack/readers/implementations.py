@@ -68,8 +68,8 @@ def example_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__kbp_reader
 def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a kbp model F. """
-    from jack.readers.kbp.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
+    """ Creates a knowledge_base_population model F. """
+    from jack.readers.knowledge_base_population.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
     input_module = ModelFInputModule(shared_resources)
     model_module = ModelFModelModule(shared_resources)
@@ -79,8 +79,8 @@ def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__kbp_reader
 def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a kbp DistMult model. """
-    from jack.readers.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
+    """ Creates a knowledge_base_population DistMult model. """
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
@@ -91,8 +91,8 @@ def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__kbp_reader
 def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a kbp Complex model. """
-    from jack.readers.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
+    """ Creates a knowledge_base_population Complex model. """
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
@@ -103,8 +103,8 @@ def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__kbp_reader
 def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a kbp TransE model. """
-    from jack.readers.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
+    """ Creates a knowledge_base_population TransE model. """
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 

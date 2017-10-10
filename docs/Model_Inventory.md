@@ -91,7 +91,7 @@ The readers are implemented as follows:
 ```python
 @__kbp_reader
 def MODEL_reader(shared_resources: SharedResources):
-    """ Creates a simple kbp reader. """
+    knowledge_base_population
     from jtr.tasks.kbp.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule, KBPReader
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
