@@ -139,6 +139,10 @@ def main(batch_size,
 
     parsed_config = ex.current_run.config
 
+    # name defaults to name of the model
+    if 'name' not in parsed_config or parsed_config['name'] is None:
+        parsed_config['name'] = model
+
     shared_resources = SharedResources(vocab, parsed_config)
     reader = readers.readers[model](shared_resources)
     checkpoint()

@@ -1,6 +1,0 @@
-description: >
-  A configuration inheriting from the default jack.yaml
-
-parent_config: './conf/jack.yaml'
-
-seed: 0

@@ -3,7 +3,11 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+# fixed seed
 seed: 1337
+
+# Reader model to use, see jack/readers/implementations.py for options
+model: 'cbilstm_snli_reader'
 
 # jack training file
 train: 'tests/test_data/SNLI/train.json'
@@ -13,9 +17,6 @@ dev: 'tests/test_data/SNLI/dev.json'
 
 # jack test file
 test: 'tests/test_data/SNLI/test.json'
-
-# Reading model to use
-model: 'snli_reader'
 
 # [none], [single] (default) or [multiple] supporting statements per instance; multiple_flat reads multiple instances creates
 # a separate instance for every support
