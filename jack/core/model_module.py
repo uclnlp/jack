@@ -148,18 +148,34 @@ class TFModelModule(ModelModule):
         """
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
-        self._tensors = {d: d.create_placeholder() for d in self.input_ports}
+        if "name" in self.shared_resources.config:
+            with tf.variable_scope(self.shared_resources.config["name"]):
+                self._tensors = {d: d.create_placeholder() for d in self.input_ports}
+                output_tensors = self.create_output(
+                    self.shared_resources, *[self._tensors[port] for port in self.input_ports])
+        else:  # backward compability
+            self._tensors = {d: d.create_placeholder() for d in self.input_ports}
+            output_tensors = self.create_output(
+                self.shared_resources, *[self._tensors[port] for port in self.input_ports])
+
         self._placeholders = dict(self._tensors)
-        output_tensors = self.create_output(self.shared_resources, *[self._tensors[port] for port in self.input_ports])
         self._tensors.update(zip(self.output_ports, output_tensors))
         if is_training:
-            self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
-                                      if p not in self._placeholders and p not in self._tensors)
-            self._tensors.update(self._placeholders)
-            input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
-            training_output_tensors = self.create_training_output(self.shared_resources, *[input_target_tensors[port]
-                                                                                           for port in
-                                                                                           self.training_input_ports])
+            if "name" in self.shared_resources.config:
+                with tf.variable_scope(self.shared_resources.config["name"]):
+                    self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
+                                              if p not in self._placeholders and p not in self._tensors)
+                    self._tensors.update(self._placeholders)
+                    input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
+                    training_output_tensors = self.create_training_output(
+                        self.shared_resources, *[input_target_tensors[port] for port in self.training_input_ports])
+            else:  # backward compability
+                self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
+                                          if p not in self._placeholders and p not in self._tensors)
+                self._tensors.update(self._placeholders)
+                input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
+                training_output_tensors = self.create_training_output(
+                    self.shared_resources, *[input_target_tensors[port] for port in self.training_input_ports])
             self._tensors.update(zip(self.training_output_ports, training_output_tensors))
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)

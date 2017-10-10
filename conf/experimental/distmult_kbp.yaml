@@ -3,6 +3,9 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+name: "distmult_kbp_model"
+
+seed: 1337
 
 # jack training file
 train: 'tests/test_data/WN18/wn18-snippet.jack.json'
