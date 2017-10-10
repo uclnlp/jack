@@ -3,6 +3,8 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+name: "dam_nli"
+
 seed: 1337
 
 # where to store the reader

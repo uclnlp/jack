@@ -3,6 +3,9 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+# Reader model to use, see jack/readers/implementations.py for options
+model: 'fastqa_reader'
+
 # fixed experiment seed
 seed: 1337
 
@@ -26,9 +29,6 @@ dev: 'data/SQuAD/dev-v1.1.json'
 
 # jack test file
 test: null
-
-# Reading model to use
-model: 'fastqa_reader'
 
 # [word2vec] or [glove] format of embeddings to be loaded
 embedding_format: 'glove'

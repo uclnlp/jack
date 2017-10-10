@@ -47,7 +47,7 @@ def smoke_test(reader_name):
                                                                 "repr_dim_input": 10,
                                                                 "dropout": 0.5,
                                                                 "batch_size": 1})
-
+    tf.reset_default_graph()
     reader = readers.readers[reader_name](shared_resources)
 
     reader.train(tf.train.AdamOptimizer(), data_set, batch_size=1, max_epochs=1)
@@ -57,8 +57,7 @@ def smoke_test(reader_name):
     assert answers, "{} should produce answers".format(reader_name)
 
 
-# TODO: Make streaming work as well.
-BLACKLIST = ["cbilstm_snli_streaming_reader"]
+BLACKLIST = []
 READERS = [r for r in readers.readers.keys()
            if r not in BLACKLIST]
 
