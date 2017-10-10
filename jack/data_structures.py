@@ -87,12 +87,7 @@ def jtr_to_qasetting(jtr_data, max_count=None):
     """
 
     def value(c, key="text"):
-        if isinstance(c, dict):
-            return c.get(key, None)
-        elif key != "text":
-            return None
-        else:
-            return c
+        return c.get(key, None) if isinstance(c, dict) else c if key == 'text' else None
 
     global_candidates = [value(c) for c in jtr_data['globals']['candidates']] if 'globals' in jtr_data else None
 
