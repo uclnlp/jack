@@ -18,7 +18,7 @@ from jack.io.embeddings.embeddings import load_embeddings, Embeddings
 from jack.io.load import loaders
 from jack.util.vocab import Vocab
 
-from jack.train_reader import train_reader
+from jack import train as jtrain
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -154,4 +154,4 @@ def main(batch_size,
         'write_metrics_to': write_metrics_to
     }
 
-    train_reader(reader, train_data, test_data, dev_data, configuration, debug=debug)
+    jtrain(reader, train_data, test_data, dev_data, configuration, debug=debug)
