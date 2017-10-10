@@ -81,9 +81,7 @@ def convert2qasettings(jtr_data, max_count=None):
         else:
             return c
 
-    global_candidates = None
-    if "globals" in jtr_data:
-        global_candidates = [value(c) for c in jtr_data['globals']['candidates']]
+    global_candidates = [value(c) for c in jtr_data['globals']['candidates']] if 'globals' in jtr_data else None
 
     def convert_instance(instance):
         support = [value(s) for s in instance["support"]] if "support" in instance else None
