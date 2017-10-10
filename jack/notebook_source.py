@@ -378,6 +378,7 @@ we could load pre-trained embeddings here, such as GloVe.
 
 """
 
+
 def build_vocab(questions):
     """Build a vocabulary of random vectors."""
 
