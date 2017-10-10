@@ -71,7 +71,7 @@ def _jtr_to_qasetting(instance, value, global_candidates):
             candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
         else:
             candidates = global_candidates
-        answers = [Answer(value(c), value(c, 'span'), score=1.0) for c in question_instance['answers']] if "answers" in question_instance else None
+        answers = [Answer(value(c), value(c, 'span')) for c in question_instance['answers']] if "answers" in question_instance else None
         yield QASetting(question, support, atomic_candidates=candidates, id=idd), answers
 
 
