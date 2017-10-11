@@ -3,7 +3,7 @@
 import tensorflow as tf
 
 
-def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True, value=-1000.0):
+def mask_for_lengths(lengths, max_length=None, mask_right=True, value=-1000.0):
     """
     Creates a [batch_size x max_length] mask.
 
