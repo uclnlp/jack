@@ -40,7 +40,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
-        self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        self.shared_vocab_config.char_vocab = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 
     def setup(self):
         self.vocab = self.shared_vocab_config.vocab
@@ -48,7 +48,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
         self.dropout = self.config.get("dropout", 1)
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
-        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+        self.char_vocab = self.shared_vocab_config.char_vocab
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -238,11 +238,9 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
 
         if with_char_embeddings:
             # compute combined embeddings
-            [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"],
-                                                                            size,
-                                                                            unique_word_chars, unique_word_char_length,
-                                                                            [question_words2unique,
-                                                                             support_words2unique])
+            [char_emb_question, char_emb_support] = conv_char_embedding_alt(
+                shared_vocab_config.char_vocab, size, unique_word_chars, unique_word_char_length,
+                [question_words2unique, support_words2unique])
 
             emb_question = tf.concat([emb_question, char_emb_question], 2)
             emb_support = tf.concat([emb_support, char_emb_support], 2)

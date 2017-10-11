@@ -54,7 +54,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
-        self.shared_vocab_config.config["char_vocab"] = char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        self.shared_vocab_config.char_vocab = char_vocab_from_vocab(self.shared_vocab_config.vocab)
 
     def setup(self):
         self.vocab = self.shared_vocab_config.vocab
@@ -62,7 +62,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         self.dropout = self.config.get("dropout", 1)
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
-        self.char_vocab = self.shared_vocab_config.config["char_vocab"]
+        self.char_vocab = self.shared_vocab_config.char_vocab
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:

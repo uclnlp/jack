@@ -41,7 +41,7 @@ class SharedResources:
         """
         vocabs = [(k, v) for k, v in self.__dict__.items() if isinstance(v, Vocab)]
         with open(path, 'wb') as f:
-            remaining = {k: v for k, v in self.__dict__.items() if isinstance(v, Vocab)}
+            remaining = {k: v for k, v in self.__dict__.items() if not isinstance(v, Vocab)}
             pickle.dump(remaining, f, pickle.HIGHEST_PROTOCOL)
         for k, v in vocabs:
             v.store(path + '_' + k)
