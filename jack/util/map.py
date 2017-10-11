@@ -454,13 +454,14 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
                 x_np[0:shape[0]] = x
             elif dims == 2:
                 for j, y in enumerate(x):
-                    x_np[j, 0:len(y)] = [ys for ys in y]#this comprehension turns DynamicSubsampledList into a list
+                    # this comprehension turns DynamicSubsampledList into a list
+                    x_np[j, 0:len(y)] = [ys for ys in y]
             elif dims == 3:
                 for j, ys in enumerate(x):
                     for k, y in enumerate(ys):
                         x_np[j, k, 0:len(y)] = y
             else:
-                raise (NotImplementedError)
+                raise NotImplementedError
                 # todo: extend to general case
                 pass
             xs_np[key] = x_np
