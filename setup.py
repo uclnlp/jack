@@ -5,6 +5,7 @@ from setuptools import find_packages
 from setuptools.command.install import install as _install
 from setuptools.command.develop import develop as _develop
 
+
 class Install(_install):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,6 +25,7 @@ class Develop(_develop):
         super().__init__(*args, **kwargs)
 
     def run(self):
+        _develop.
         import nltk
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
