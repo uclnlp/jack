@@ -26,7 +26,7 @@ class Install(_install):
 
 
 class Develop(_develop):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
 
     def run(self):
