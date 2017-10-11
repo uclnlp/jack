@@ -12,3 +12,4 @@ sacred
 sqlalchemy
 pyyaml
 spacy
+pytest
