@@ -442,7 +442,7 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
     for i, (key, x) in enumerate(xs_iter):
         if keys is None or key in keys:
             shape = get_list_shape(x)
-            dtype = np.int64 if dtypes is None else dtypes[i]
+            dtype = dtypes[i] if dtypes is not None else np.int64
             x_np = np.full(shape, pad, dtype)
             dims = len(shape)
             if dims == 0:
