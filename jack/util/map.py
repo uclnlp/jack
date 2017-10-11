@@ -437,22 +437,34 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
             dtype = dtypes[i] if dtypes is not None else np.int64
             x_np = np.full(shape, pad, dtype)
             nb_dims = len(shape)
+
             if nb_dims == 0:
-                x_np=x
-            elif nb_dims == 1:
-                x_np[0:shape[0]] = x
-            elif nb_dims == 2:
-                for j, y in enumerate(x):
-                    # this comprehension turns DynamicSubsampledList into a list
-                    x_np[j, 0:len(y)] = [ys for ys in y]
-            elif nb_dims == 3:
-                for j, ys in enumerate(x):
-                    for k, y in enumerate(ys):
-                        x_np[j, k, 0:len(y)] = y
+                x_np = x
             else:
-                raise NotImplementedError
-                # todo: extend to general case
-                pass
+                def f(tensor, values):
+                    t_shp = tensor.shape
+                    if len(t_shp) > 1:
+                        for _i, _values in enumerate(values):
+                            f(tensor[_i], _values)
+                    else:
+                        tensor[0:len(values)] = [v for v in values]
+
+                f(x_np, x)
+
+            # elif nb_dims == 1:
+            #     x_np[0:shape[0]] = x
+            # elif nb_dims == 2:
+            #     for j, y in enumerate(x):
+            #         # this comprehension turns DynamicSubsampledList into a list
+            #         x_np[j, 0:len(y)] = [ys for ys in y]
+            # elif nb_dims == 3:
+            #     for j, ys in enumerate(x):
+            #         for k, y in enumerate(ys):
+            #             x_np[j, k, 0:len(y)] = y
+            # else:
+            #     raise NotImplementedError
+            #     # todo: extend to general case
+            #     pass
             xs_np[key] = x_np
         else:
             xs_np[key] = x
