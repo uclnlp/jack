@@ -26,6 +26,7 @@ def test_tokenize():
     desired_tokenised_question = ["where","is","the","cat","?"]
     assert map.tokenize(question_text) == desired_tokenised_question
 
+
 def test_lower():
     lower_text = [word.lower() for word in tokenized_text]
     assert map.lower(tokenized_text) == lower_text
