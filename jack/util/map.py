@@ -347,8 +347,6 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
     return result
 
 
-
-
 class DynamicSubsampledList:
     """
     A container that produces different list subsamples on every call to `__iter__`.
@@ -413,7 +411,6 @@ def get_seq_depth(xs):
     return [n - 1 for n in get_list_shape(xs)]
 
 
-
 def get_entry_dims(corpus):
     """
     get number of dimensions for each entry; needed for placeholder generation
@@ -434,7 +431,6 @@ def get_entry_dims(corpus):
         except:
             dims[key] = None
     return dims
-
 
 
 def numpify(xs, pad=0, keys=None, dtypes=None):
