@@ -25,23 +25,17 @@ rs = DefaultRandomState(1337)
 def tokenize(xs, pattern=None):
     """ Splits sentences into tokens. If specific regex pattern is provided,
     then it will be used for tokenisation instead. """
-    if not pattern:
-        return nltk.word_tokenize(xs)
-    else:
-        return [x for x in re.split(pattern, xs)
-                if not re.match("\s", x) and x != ""]
+    return nltk.word_tokenize(xs) if not pattern\
+        else [x for x in re.split(pattern, xs) if not re.match("\s", x) and x != ""]
 
 
 def notokenize(xs):
-    """Embeds deepest itemns into a list"""
+    """Embeds deepest items into a list"""
     return [xs]
 
 
 def lower(xs):
     """returns lowercase for sequence of strings"""
-    # """performs lowercasing on string or sequence of strings"""
-    # if isinstance(xs, str):
-    #    return xs.lower()
     return [x.lower() for x in xs]
 
 
