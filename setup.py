@@ -12,7 +12,7 @@ class Install(_install):
 
     def run(self):
         _install.do_egg_install(self)
-        
+
         import nltk
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
@@ -49,7 +49,7 @@ class Develop(_develop):
 with open('requirements.txt', 'r') as f:
     requirements = f.readlines()
 
-tests_requirements = []  # 'pytest', 'pytest-pep8', 'pytest-xdist', 'pytest-cov']
+tests_requirements = ['pytest', 'pytest-pep8', 'pytest-xdist', 'pytest-cov']
 
 setup(name='jack',
       version='0.1.0',
