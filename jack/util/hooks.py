@@ -430,12 +430,6 @@ class ClassificationEvalHook(EvalHook):
         labels = tensors[Ports.Target.target_index]
         predictions = tensors[Ports.Prediction.candidate_index]
 
-        def len_np_or_list(v):
-            if isinstance(v, list):
-                return len(v)
-            else:
-                return v.shape[0]
-
         acc_exact = np.sum(np.equal(labels, predictions))
         acc_f1 = f1_score(labels, predictions, average='macro') * labels.shape[0]
 
