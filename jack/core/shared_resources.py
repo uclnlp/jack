@@ -56,7 +56,7 @@ class SharedResources:
             with open(path, 'rb') as f:
                 self.__dict__.update(pickle.load(f))
         for f in os.listdir(os.path.dirname(path)):
-            if f.startswith(path + '_') and f.endswith('.pkl'):
+            if f.startswith(os.path.basename(path) + '_') and f.endswith('.pkl'):
                 key = f.split('_')[-1][:-4]
                 v = Vocab()
                 v.load(path + '_' + key)
