@@ -9,7 +9,6 @@ def mask_for_lengths(lengths, max_length=None, mask_right=True, value=-1000.0):
 
     Args:
         lengths: int32 1-dim tensor of batch_size lengths
-        batch_size: int32 0-dim tensor or python int
         max_length: int32 0-dim tensor or python int
         mask_right: if True, everything before "lengths" becomes zero and the
             rest "value", else vice versa

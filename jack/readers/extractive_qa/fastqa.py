@@ -226,8 +226,8 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
         # Some helpers
         batch_size = tf.shape(question_length)[0]
         max_question_length = tf.reduce_max(question_length)
-        support_mask = tfutil.mask_for_lengths(support_length, batch_size)
-        question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
+        support_mask = tfutil.mask_for_lengths(support_length)
+        question_binary_mask = tfutil.mask_for_lengths(question_length, mask_right=False, value=1.0)
 
         input_size = shared_vocab_config.config["repr_dim_input"]
         size = shared_vocab_config.config["repr_dim"]
@@ -358,7 +358,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                      scope="start_scores")
     start_scores = tf.squeeze(start_scores, [2])
 
-    support_mask = tfutil.mask_for_lengths(support_length, batch_size)
+    support_mask = tfutil.mask_for_lengths(support_length)
     start_scores = start_scores + support_mask
 
     # probs are needed during beam search
@@ -410,7 +410,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     def mask_with_start(scores):
         return scores + tfutil.mask_for_lengths(tf.cast(start_pointer, tf.int32),
-                                                batch_size * beam_size, tf.reduce_max(support_length),
+                                                tf.reduce_max(support_length),
                                                 mask_right=False)
 
     end_scores = tf.cond(is_eval, lambda: mask_with_start(end_scores), lambda: end_scores)
