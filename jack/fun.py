@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from jack.core import *
+import tensorflow as tf
+
+from jack.core import Sequence, SharedResources, TensorPort, TFModelModule
 
 
 def simple_model_module(input_ports: Sequence[TensorPort],
