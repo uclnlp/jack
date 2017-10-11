@@ -5,16 +5,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Backends:
-    TENSORFLOW = 'tensorflow'
-    TEST = 'test'
-
-
 class Config:
     dropout = 0.0
     batch_size = 128
     learning_rate = 0.001
-    backend = Backends.TENSORFLOW
     L2 = 0.000
     cuda = False
     embedding_dim = 128
