@@ -3,7 +3,7 @@
 from setuptools import setup
 from setuptools import find_packages
 from setuptools.command.install import install as _install
-
+from setuptools.command.develop import develop as _develop
 
 class Install(_install):
     def __init__(self, *args, **kwargs):
@@ -15,9 +15,22 @@ class Install(_install):
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
         import subprocess
-        args = ['python3', '-m', 'spacy', 'download', 'en']
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        _, _ = p.communicate()
+        args = ['python3 -m spacy download en']
+        subprocess.call(args, shell=True)
+
+
+class Develop(_develop):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def run(self):
+        _develop.do_egg_install(self)
+        import nltk
+        nltk.download('punkt')
+        nltk.download('averaged_perceptron_tagger')
+        import subprocess
+        args = ['python3 -m spacy download en']
+        subprocess.call(args, shell=True)
 
 
 with open('requirements.txt', 'r') as f:
@@ -33,7 +46,7 @@ setup(name='jack',
       url='https://github.com/uclmr/jack',
       test_suite='tests',
       license='MIT',
-      cmdclass={'install': Install, 'develop': Install},
+      cmdclass={'install': Install, 'develop': Develop},
       install_requires=requirements + tests_requirements,
       extras_require={
           'tests': tests_requirements,
