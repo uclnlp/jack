@@ -14,12 +14,12 @@ from typing import Iterable, List
 
 import tensorflow as tf
 
+from jack.core.data_structures import *
 from jack.core.input_module import InputModule
 from jack.core.model_module import ModelModule, TFModelModule
 from jack.core.output_module import OutputModule
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import Ports
-from jack.data_structures import *
 
 logger = logging.getLogger(__name__)
 

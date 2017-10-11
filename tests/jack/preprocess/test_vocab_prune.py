@@ -2,20 +2,20 @@
 
 from pprint import pprint
 
-from jack.util.pipelines import pipeline
+from jack.core import QASetting
+from jack.util import preprocessing
 
 
 def test_vocab():
-    train_data = {
-        'candidates': [['entailment', 'neutral', 'contradiction']],
-        'answers': [['neutral']],
-        'question': ['A person is training his horse for a competition.'],
-        'support': ['A person on a horse jumps over a broken down airplane.']}
+    train_data = [
+        QASetting(question='A person is training his horse for a competition.',
+                  support=['A person on a horse jumps over a broken down airplane.'],
+                  atomic_candidates=['entailment', 'neutral', 'contradiction'])
+    ]
 
     print('build vocab based on train data')
-    _, train_vocab, train_answer_vocab, train_candidate_vocab = \
-        pipeline(train_data, normalize=True)
-
+    train_vocab = preprocessing.fill_vocab(train_data, )
+    train_vocab.freeze()
     pprint(train_vocab.sym2freqs)
     pprint(train_vocab.sym2id)
 
@@ -26,6 +26,5 @@ def test_vocab():
     pprint(train_vocab.sym2id)
 
     print('encode train data')
-    train_data, _, _, _ = pipeline(train_data, train_vocab, train_answer_vocab, train_candidate_vocab,
-                                   normalize=True, freeze=True)
+    train_data, _, _, _ = preprocessing.nlp_preprocess(train_data[0].question, train_vocab)
     print(train_data)

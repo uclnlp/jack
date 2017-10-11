@@ -1,10 +1,9 @@
 import random
 import re
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
-import numpy as np
-
-from jack.data_structures import QASetting, Answer
+from jack.core.data_structures import QASetting, Answer
+from jack.util import preprocessing
 from jack.util.vocab import Vocab
 
 __pattern = re.compile('\w+|[^\w\s]')
@@ -30,9 +29,11 @@ def prepare_data(qa_setting: QASetting,
                  lowercase: bool = False,
                  with_answers: bool = False,
                  wiq_contentword: bool = False,
-                 with_spacy: bool = False,
-                 max_support_length: int = -1) \
-            -> Tuple[List[str], List[int], int,
+                 spacy_nlp: bool = False,
+                 max_support_length: int = -1,
+                 lemmatize=False,
+                 with_lemmas=False) \
+        -> Tuple[List[str], List[int], int,
                      List[str], List[int], int,
                      List[float], List[int], List[Tuple[int, int]]]:
     """Preprocesses a question and (optionally) answers:
@@ -40,51 +41,35 @@ def prepare_data(qa_setting: QASetting,
     computing the word-in-question feature, computing token offsets,
     truncating supports, and computing answer spans.
     """
-
-    if with_spacy:
-        import spacy
-        nlp = spacy.load("en", parser=False)
-        thistokenize = lambda t: nlp(t)
-    else:
-        thistokenize = tokenize
-
     support = " ".join(qa_setting.support)
     question = qa_setting.question
 
-    if lowercase:
-        support = support.lower()
-        question = question.lower()
+    question_tokens, question_ids, question_length, question_lemmas, _ = preprocessing.nlp_preprocess(
+        question, vocab, lowercase=lowercase, spacy_nlp=spacy_nlp,
+        lemmatize=lemmatize, with_lemmas=with_lemmas, with_tokens_offsets=False)
 
-    support_tokens, question_tokens = thistokenize(support), thistokenize(question)
+    support_tokens, support_ids, support_length, support_lemmas, token_offsets = preprocessing.nlp_preprocess(
+        support, vocab, lowercase=lowercase, spacy_nlp=spacy_nlp,
+        lemmatize=lemmatize, with_lemmas=with_lemmas, with_tokens_offsets=True)
 
     rng = random.Random(12345)
 
     word_in_question = []
-    for token in support_tokens:
-        if with_spacy:
-            word_in_question.append(float(any(token.lemma == t2.lemma for t2 in question_tokens) and
-                             (not wiq_contentword or (token.orth_.isalnum() and not token.is_stop))))
-        else:
-            word_in_question.append(float(token in question_tokens and (not wiq_contentword or token.isalnum())))
 
-    if with_spacy:
-        token_offsets = [t.idx for t in support_tokens]
-        support_tokens = [t.orth_ for t in support_tokens]
-        question_tokens = [t.orth_ for t in question_tokens]
+    if with_lemmas:
+        for lemma in support_lemmas:
+            word_in_question.append(float(lemma in question_lemmas and
+                                          (not wiq_contentword or (lemma.isalnum() and not lemma.is_stop))))
     else:
-        # char to token offsets
-        token_offsets = token_to_char_offsets(support, support_tokens)
-
-    question_length = len(question_tokens)
+        for token in support_tokens:
+            word_in_question.append(float(token in question_tokens and (not wiq_contentword or token.isalnum())))
 
     min_answer = len(support_tokens)
     max_answer = 0
 
     answer_spans = []
     if with_answers:
-
         assert isinstance(answers, list)
-
         for a in answers:
             start = 0
             while start < len(token_offsets) and token_offsets[start] < a.span[0]:
@@ -103,8 +88,12 @@ def prepare_data(qa_setting: QASetting,
 
     # cut support whenever there is a maximum allowed length and recompute answer spans
     if max_support_length is not None and len(support_tokens) > max_support_length > 0:
+        support_length = max_support_length
         if max_answer < max_support_length:
             support_tokens = support_tokens[:max_support_length]
+            support_ids = support_ids[:max_support_length]
+            if with_lemmas:
+                support_lemmas = support_lemmas[:max_support_length]
             word_in_question = word_in_question[:max_support_length]
         else:
             offset = rng.randint(1, 11)
@@ -115,15 +104,19 @@ def prepare_data(qa_setting: QASetting,
                 new_end = max(answer_spans, key=lambda span: span[1])[1] + offset
                 new_start = max(0, min(min_answer - offset, new_end - max_support_length))
             support_tokens = support_tokens[new_start:new_end]
+            support_ids = support_ids[new_start:new_end]
+            if with_lemmas:
+                support_lemmas = support_lemmas[new_start:new_end]
             answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
             word_in_question = word_in_question[new_start:new_end]
 
-    support_length = len(support_tokens)
-
-    support_ids, question_ids = vocab(support_tokens), vocab(question_tokens)
-
-    return question_tokens, question_ids, question_length, \
-           support_tokens, support_ids, support_length, \
+    if with_lemmas:
+        return question_tokens, question_ids, question_lemmas, question_length, \
+               support_tokens, support_ids, support_lemmas, support_length, \
+               word_in_question, token_offsets, answer_spans
+    else:
+        return question_tokens, question_ids, question_length, \
+               support_tokens, support_ids, support_length, \
            word_in_question, token_offsets, answer_spans
 
 
@@ -157,38 +150,3 @@ def unique_words_with_chars(q_tokenized, s_tokenized, char_vocab, indices=None, 
         support2unique.append(s2u)
 
     return unique_words, unique_word_lengths, question2unique, support2unique
-
-
-def char_vocab_from_vocab(vocab):
-    char_vocab = dict()
-    char_vocab["PAD"] = 0
-    for i in range(max(vocab.id2sym.keys()) + 1):
-        w = vocab.id2sym.get(i)
-        if w is not None:
-            for c in w:
-                if c not in char_vocab:
-                    char_vocab[c] = len(char_vocab)
-    return char_vocab
-
-
-def stack_and_pad(values: List[Union[np.ndarray, int, float]], pad = 0) -> np.ndarray:
-    """Pads a list of numpy arrays so that they have equal dimensions, then stacks them."""
-
-    if isinstance(values[0], int) or isinstance(values[0], float):
-        return np.array(values)
-
-    dims = len(values[0].shape)
-    max_shape = [max(sizes) for sizes in zip(*[v.shape for v in values])]
-
-    padded_values = []
-
-    for value in values:
-
-        pad_width = [(0, max_shape[i] - value.shape[i])
-                     for i in range(dims)]
-        padded_value = np.lib.pad(value, pad_width, mode='constant',
-                                  constant_values=pad)
-        padded_values.append(padded_value)
-
-    return np.stack(padded_values)
-

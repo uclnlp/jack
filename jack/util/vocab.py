@@ -78,8 +78,8 @@ class Vocab:
         """
         # if any pretrained have been encountered
         if not self.frozen and self.next_neg < -1:
-            sym2id = {sym: self._normalize(id) for sym, id in self.sym2id.items()}
-            id2sym = {self._normalize(id): sym for id, sym in self.id2sym.items()}
+            sym2id = {sym: self.normalize(id) for sym, id in self.sym2id.items()}
+            id2sym = {self.normalize(id): sym for id, sym in self.id2sym.items()}
             self.sym2id = sym2id
             self.id2sym = id2sym
         self.frozen = True
@@ -170,7 +170,7 @@ class Vocab:
         """checks if `sym` already in the Vocab object"""
         return sym in self.sym2id
 
-    def _normalize(self, id):
+    def normalize(self, id):
         """map original (pos/neg) ids to normalized (non-neg) ids: first new symbols, then those in emb"""
         # e.g. -1 should be mapped to self.next_pos + 0
         # e.g. -3 should be mapped to self.next_pos + 2

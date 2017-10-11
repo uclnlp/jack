@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABCMeta
-from typing import Any
 
 from jack.core import *
-from jack.data_structures import *
-from jack.preprocessing import preprocess_with_pipeline
-from jack.util.batch import get_batches
-from jack.util.map import numpify
-from jack.util.pipelines import pipeline, transpose_dict_of_lists
+from jack.core.data_structures import *
+from jack.readers.multiple_choice import util
+from jack.util import preprocessing
 
 
 class SingleSupportFixedClassForward(object):
@@ -34,7 +31,7 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.multiple_support,
+        return [Ports.Input.support,
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length]
 
@@ -57,7 +54,6 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
                       question: tf.Tensor,
                       support_length: tf.Tensor,
                       question_length: tf.Tensor) -> Sequence[tf.Tensor]:
-        question_ids, support_ids = question, support
         if self.question_embedding_matrix is None:
             vocab_size = len(shared_resources.vocab)
             input_size = shared_resources.config['repr_dim_input']
@@ -71,8 +67,8 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
                 trainable=True, dtype="float32")
 
         logits = self.forward_pass(shared_resources,
-                                   question_ids, question_length,
-                                   support_ids, support_length,
+                                   question, question_length,
+                                   support, support_length,
                                    shared_resources.config['answer_size'])
 
         predictions = tf.argmax(logits, 1, name='prediction')
@@ -86,71 +82,7 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
         return [loss]
 
 
-class SimpleMCInputModule(OnlineInputModule[Mapping[str, Any]]):
-    def __init__(self, shared_resources):
-        self.vocab = shared_resources.vocab
-        self.config = shared_resources.config
-        self.shared_resources = shared_resources
-
-    def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
-
-        # Run preprocessing once for all data in order to populate the vocabulary.
-        questions, answers = zip(*data)
-        self.preprocess(questions, answers)
-
-    @property
-    def training_ports(self) -> List[TensorPort]:
-        return [Ports.Target.candidate_1hot]
-
-    def preprocess(self, questions: List[QASetting],
-                   answers: Optional[List[List[Answer]]] = None,
-                   is_eval: bool = False) \
-            -> List[Mapping[str, Any]]:
-
-        output_keys = ["support", "question", "candidates"]
-        corpus = {
-            "support": [q.support for q in questions],
-            "question": [q.question for q in questions],
-            "candidates": [q.atomic_candidates for q in questions]
-        }
-
-        if answers:
-            assert len(answers) == len(questions)
-            assert all(len(a) == 1 for a in answers)
-
-            corpus["answers"] = [[a[0].text] for a in answers]
-            output_keys += ["targets"]
-
-        corpus, _, _, _ = pipeline(corpus, self.vocab, sepvocab=False,
-                                   test_time=(answers is None))
-
-        return transpose_dict_of_lists(corpus, output_keys)
-
-    def create_batch(self, annotations: List[Mapping[str, Any]],
-                     is_eval: bool, with_answers: bool) \
-            -> Mapping[TensorPort, np.ndarray]:
-
-        x_dict = {
-            Ports.Input.multiple_support: [a["support"] for a in annotations],
-            Ports.Input.question: [a["question"] for a in annotations],
-            Ports.Input.atomic_candidates: [a["candidates"] for a in annotations]
-        }
-
-        if not is_eval:
-
-            x_dict.update({
-                Ports.Target.candidate_1hot: [a["targets"] for a in annotations]
-            })
-
-        return numpify(x_dict)
-
-    @property
-    def output_ports(self) -> List[TensorPort]:
-        return [Ports.Input.multiple_support,
-                Ports.Input.question, Ports.Input.atomic_candidates]
-
-
-class MultiSupportFixedClassInputs(InputModule):
+class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
@@ -168,112 +100,53 @@ class MultiSupportFixedClassInputs(InputModule):
         4. Max timestep length of mini-batches for question tensor
         5. Labels
         """
-        return [Ports.Input.multiple_support,
+        return [Ports.Input.support,
                 Ports.Input.question, Ports.Input.support_length,
                 Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
 
-    def __call__(self, qa_settings: List[QASetting]) \
-            -> Mapping[TensorPort, np.ndarray]:
-        corpus, _, _, _ = \
-            preprocess_with_pipeline(qa_settings,
-                                     self.shared_resources.vocab,
-                                     self.shared_resources.answer_vocab,
-                                     sepvocab=True,
-                                     test_time=True)
+    def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) -> List[Mapping[str, any]]:
+        preprocessed = list()
+        for i, qa in enumerate(questions):
+            _, token_ids, length, _, _ = preprocessing.nlp_preprocess(
+                qa.question, self.shared_resources.vocab, lowercase=True)
+            _, s_token_ids, s_length, _, _ = preprocessing.nlp_preprocess(
+                qa.support[0], self.shared_resources.vocab, lowercase=True)
 
+            preprocessed.append({
+                'supports': s_token_ids,
+                'question': token_ids,
+                'support_lengths': s_length,
+                'question_lengths': length,
+                'ids': qa.id,
+            })
+            if answers is not None:
+                preprocessed[-1]["answers"] = self.shared_resources.answer_vocab(answers[i][0].text)
+
+        return preprocessed
+
+    def create_batch(self, annotations: List[Mapping[str, any]],
+                     is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
         xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Input.question_length: corpus['question_lengths'],
-            Ports.Input.support_length: corpus['support_lengths'],
-            Ports.Input.sample_id: corpus['ids']
+            Ports.Input.support: [a["supports"] for a in annotations],
+            Ports.Input.question: [a["question"] for a in annotations],
+            Ports.Input.question_length: [a["question_lengths"] for a in annotations],
+            Ports.Input.support_length: [a['support_lengths'] for a in annotations],
+            Ports.Input.sample_id: [a['ids'] for a in annotations]
         }
-
-        return numpify(xy_dict)
-
+        if "answers" in annotations[0]:
+            xy_dict[Ports.Target.target_index] = [a["answers"] for a in annotations]
+        return xy_dict
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
-        sepvocab=True
-        corpus, train_vocab, train_answer_vocab, train_candidate_vocab = \
-                preprocess_with_pipeline(data, self.shared_resources.vocab,
-                        None, sepvocab=sepvocab)
-        train_vocab.freeze()
-        train_answer_vocab.freeze()
-        train_candidate_vocab.freeze()
-        self.shared_resources.config['answer_size'] = len(train_answer_vocab)
-        self.shared_resources.vocab = train_vocab
-        if sepvocab:
-            self.shared_resources.answer_vocab = train_answer_vocab
-        else:
-            self.shared_resources.answer_vocab = train_vocab
-
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
-            -> List[Mapping[TensorPort, np.ndarray]]:
-        corpus, _, _, _ = \
-                preprocess_with_pipeline(dataset,
-                        self.shared_resources.vocab,
-                        self.shared_resources.answer_vocab,
-                        sepvocab=True)
-
-        xy_dict = {
-            Ports.Input.multiple_support: corpus["support"],
-            Ports.Input.question: corpus["question"],
-            Ports.Target.target_index:  [a[0] for a in corpus["answers"]],
-            Ports.Input.question_length: corpus['question_lengths'],
-            Ports.Input.support_length: corpus['support_lengths'],
-            Ports.Input.sample_id: corpus['ids']
-        }
-
-        return get_batches(xy_dict, batch_size)
-
-
-class SimpleMCModelModule(TFModelModule):
-
-    @property
-    def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.multiple_support, Ports.Input.question, Ports.Input.atomic_candidates]
-
-    @property
-    def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits]
-
-    @property
-    def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, Ports.Target.candidate_1hot]
-
-    @property
-    def training_output_ports(self) -> List[TensorPort]:
-        return [Ports.loss]
-
-    def create_training_output(self,
-                               shared_resources: SharedResources,
-                               logits: tf.Tensor,
-                               candidate_labels: tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
-                labels=candidate_labels)
-        return loss,
-
-    def create_output(self,
-                      shared_resources: SharedResources,
-                      multiple_support: tf.Tensor,
-                      question: tf.Tensor,
-                      atomic_candidates: tf.Tensor) -> Sequence[tf.Tensor]:
-        emb_dim = shared_resources.config["repr_dim"]
-        with tf.variable_scope("simplce_mcqa"):
-            # varscope.reuse_variables()
-            embeddings = tf.get_variable(
-                "embeddings", [len(self.shared_resources.vocab), emb_dim],
-                trainable=True, dtype="float32")
-
-            embedded_supports = tf.reduce_sum(tf.gather(embeddings, multiple_support), (1, 2))  # [batch_size, emb_dim]
-            embedded_question = tf.reduce_sum(tf.gather(embeddings, question), (1,))  # [batch_size, emb_dim]
-            embedded_supports_and_question = embedded_supports + embedded_question
-            embedded_candidates = tf.gather(embeddings, atomic_candidates)  # [batch_size, num_candidates, emb_dim]
-
-            scores = tf.matmul(embedded_candidates, tf.expand_dims(embedded_supports_and_question, -1))
-
-            squeezed = tf.squeeze(scores, 2)
-            return squeezed,
+        if not self.shared_resources.vocab.frozen:
+            self.shared_resources.vocab = preprocessing.fill_vocab(
+                (q for q, _ in data), self.shared_resources.vocab, lowercase=True)
+            self.shared_resources.vocab.freeze()
+        if not hasattr(self.shared_resources, 'answer_vocab') or not self.shared_resources.answer_vocab.frozen:
+            self.shared_resources.answer_vocab = util.create_answer_vocab(answers=(a for _, ass in data for a in ass))
+            self.shared_resources.answer_vocab.freeze()
+        self.shared_resources.config['answer_size'] = len(self.shared_resources.answer_vocab)
 
 
 class SimpleMCOutputModule(OutputModule):
@@ -301,7 +174,6 @@ class SimpleMCOutputModule(OutputModule):
 
 
 class MisclassificationOutputModule(OutputModule):
-
     def __init__(self, interval, limit=100):
         self.lower, self.upper = interval
         self.limit = limit
@@ -351,7 +223,7 @@ class MisclassificationOutputModule(OutputModule):
                 logger.info('Answer: {0}'.format(answer.text))
                 logger.info('Predicted class: {0}'.format(idx2class[predicted_idx]))
 
-                predictions_str = str([(idx2class[b], a) for a,b in zip(logits[i], range(num_classes))])
+                predictions_str = str([(idx2class[b], a) for a, b in zip(logits[i], range(num_classes))])
                 logger.info('Predictions: {0}'.format(predictions_str))
 
     def setup(self):

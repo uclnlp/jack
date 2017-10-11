@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from jack.core import *
-from jack.data_structures import *
+from jack.core.data_structures import *
 from jack.readers.knowledge_base_population.shared import KBPPorts
 from jack.util.map import numpify
 

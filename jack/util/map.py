@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import pprint
-import re
 
-import nltk
 import numpy as np
 
 from jack.util.random import DefaultRandomState
 from jack.util.vocab import Vocab
 
 rs = DefaultRandomState(1337)
+
 
 # sym (e.g. token, token id or class label)
 # seq (e.g. sequence of tokens)
@@ -20,21 +19,6 @@ rs = DefaultRandomState(1337)
 #        support (sequence of sequence of sequences)
 #        labels (sequence of symbols)
 # corpus = [hypotheses, premises, support, labels]
-
-
-def tokenize(xs, pattern=None):
-    """ Splits sentences into tokens. If specific regex pattern is provided,
-    then it will be used for tokenisation instead. """
-    if not pattern:
-        return nltk.word_tokenize(xs)
-    else:
-        return [x for x in re.split(pattern, xs)
-                if not re.match("\s", x) and x != ""]
-
-
-def notokenize(xs):
-    """Embeds deepest itemns into a list"""
-    return [xs]
 
 
 def lower(xs):
@@ -174,7 +158,7 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
                     if expand:
                         xs_mapped.append(x)
                     if isinstance(x, list) or isinstance(x, dict):
-                        x_mapped = deep_map_recursion(x) #deep_map(x, fun, fun_name=fun_name)
+                        x_mapped = deep_map_recursion(x)  # deep_map(x, fun, fun_name=fun_name)
                     else:
                         x_mapped = fun(x)
                     xs_mapped.append(x_mapped)
@@ -184,7 +168,7 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
             cache[id(inner_xs)] = xs_mapped
         return xs_mapped
 
-    return deep_map_recursion(xs,keys)
+    return deep_map_recursion(xs, keys)
 
 
 def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
@@ -339,14 +323,12 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i],'__len__') else answer_dataset[i]
+        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
         new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, avoid=[], rand=rs))
     result = {}
     result.update(xs)
     result[candidate_key] = new_candidates
     return result
-
-
 
 
 class DynamicSubsampledList:
@@ -384,16 +366,17 @@ class DynamicSubsampledList:
         return result.__iter__()
 
     def __len__(self):
-        return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
+        return len(
+            self.always_in) + self.how_many  # number of items is the number of answers plus number of negative samples
 
     def __getitem__(self, key):
-        #todo: verify
+        # todo: verify
         return self.always_in[0]
 
 
 def get_list_shape(xs):
-    if isinstance(xs,int):
-        shape=[]
+    if isinstance(xs, int):
+        shape = []
     else:
         shape = [len(xs)]
         for i, x in enumerate(xs):
@@ -413,28 +396,26 @@ def get_seq_depth(xs):
     return [n - 1 for n in get_list_shape(xs)]
 
 
-
 def get_entry_dims(corpus):
     """
     get number of dimensions for each entry; needed for placeholder generation
     """
-    #todo: implement recursive form; now only OK for 'regular' (=most common type of) data structures
+    # todo: implement recursive form; now only OK for 'regular' (=most common type of) data structures
     if isinstance(corpus, dict):
         keys = list(corpus.keys())
         dims = {key: 0 for key in keys}
     else:
         keys = range(len(corpus))
-        dims = [0 for i in range(len(corpus))]  #scalars have dim 0 (but tensor version will have shape length 1)
+        dims = [0 for i in range(len(corpus))]  # scalars have dim 0 (but tensor version will have shape length 1)
     for key in keys:
         entry = corpus[key]
         try:
             while hasattr(entry, '__len__'):
                 dims[key] += 1
-                entry = entry[0]  #will fail if entry is dict
+                entry = entry[0]  # will fail if entry is dict
         except:
             dims[key] = None
     return dims
-
 
 
 def numpify(xs, pad=0, keys=None, dtypes=None):
@@ -453,12 +434,12 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
             x_np = np.full(shape, pad, dtype)
             dims = len(shape)
             if dims == 0:
-                x_np=x
+                x_np = x
             elif dims == 1:
                 x_np[0:shape[0]] = x
             elif dims == 2:
                 for j, y in enumerate(x):
-                    x_np[j, 0:len(y)] = [ys for ys in y]#this comprehension turns DynamicSubsampledList into a list
+                    x_np[j, 0:len(y)] = [ys for ys in y]  # this comprehension turns DynamicSubsampledList into a list
             elif dims == 3:
                 for j, ys in enumerate(x):
                     for k, y in enumerate(ys):

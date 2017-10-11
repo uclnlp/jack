@@ -5,17 +5,17 @@ This file contains FastQA specific modules and ports
 from typing import NamedTuple
 
 from jack.core import *
-from jack.fun import simple_model_module, no_shared_resources
+from jack.core.fun import simple_model_module, no_shared_resources
 from jack.readers.extractive_qa.shared import XQAPorts
-from jack.readers.extractive_qa.util import unique_words_with_chars, prepare_data, \
-    char_vocab_from_vocab, stack_and_pad
-from jack.tf_fun.dropout import fixed_dropout
-from jack.tf_fun.embedding import conv_char_embedding_alt
-from jack.tf_fun.highway import highway_network
-from jack.tf_fun.rnn import birnn_with_projection
-from jack.tf_fun.xqa import xqa_min_crossentropy_loss
-from jack.util import tfutil
+from jack.readers.extractive_qa.util import unique_words_with_chars, prepare_data
+from jack.tf_util import misc
+from jack.tf_util.dropout import fixed_dropout
+from jack.tf_util.embedding import conv_char_embedding_alt
+from jack.tf_util.highway import highway_network
+from jack.tf_util.rnn import birnn_with_projection
+from jack.tf_util.xqa import xqa_min_crossentropy_loss
 from jack.util.map import numpify
+from jack.util.preprocessing import char_vocab_from_vocab, stack_and_pad
 
 FastQAAnnotation = NamedTuple('FastQAAnnotation', [
     ('question_tokens', List[str]),
@@ -77,8 +77,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
 
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
-                   is_eval: bool = False) \
-            -> List[FastQAAnnotation]:
+                   is_eval: bool = False) -> List[FastQAAnnotation]:
 
         if answers is None:
             answers = [None] * len(questions)
@@ -226,8 +225,8 @@ def fastqa_model(shared_vocab_config, emb_question, question_length,
         # Some helpers
         batch_size = tf.shape(question_length)[0]
         max_question_length = tf.reduce_max(question_length)
-        support_mask = tfutil.mask_for_lengths(support_length, batch_size)
-        question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
+        support_mask = misc.mask_for_lengths(support_length, batch_size)
+        question_binary_mask = misc.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
 
         input_size = shared_vocab_config.config["repr_dim_input"]
         size = shared_vocab_config.config["repr_dim"]
@@ -330,7 +329,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                          weights_initializer=None,
                                                          biases_initializer=None,
                                                          scope="question_attention")
-    q_mask = tfutil.mask_for_lengths(question_length, batch_size)
+    q_mask = misc.mask_for_lengths(question_length, batch_size)
     attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
     question_attention_weights = tf.nn.softmax(attention_scores, 1, name="question_attention_weights")
     question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
@@ -358,7 +357,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                      scope="start_scores")
     start_scores = tf.squeeze(start_scores, [2])
 
-    support_mask = tfutil.mask_for_lengths(support_length, batch_size)
+    support_mask = misc.mask_for_lengths(support_length, batch_size)
     start_scores = start_scores + support_mask
 
     # probs are needed during beam search
@@ -409,9 +408,9 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     end_scores = end_scores + support_mask
 
     def mask_with_start(scores):
-        return scores + tfutil.mask_for_lengths(tf.cast(start_pointer, tf.int32),
-                                                batch_size * beam_size, tf.reduce_max(support_length),
-                                                mask_right=False)
+        return scores + misc.mask_for_lengths(tf.cast(start_pointer, tf.int32),
+                                              batch_size * beam_size, tf.reduce_max(support_length),
+                                              mask_right=False)
 
     end_scores = tf.cond(is_eval, lambda: mask_with_start(end_scores), lambda: end_scores)
 

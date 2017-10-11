@@ -7,8 +7,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
-from jack.tf_fun.attention import attention_softmax3d
-from jack.tf_fun.masking import mask_3d
+from jack.tf_util.attention import attention_softmax3d
+from jack.tf_util.masking import mask_3d
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +19,6 @@ class ESIMModel(AbstractSingleSupportFixedClassModel):
                      support, support_length, num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-        support = tf.squeeze(support, 1)
-        support_length = tf.squeeze(support_length, 1)
-
         question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
         support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
 

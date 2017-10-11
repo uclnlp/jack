@@ -39,10 +39,12 @@ class SharedResources:
         Args:
             path: path to save shared resources
         """
+        vocabs = [(k, v) for k, v in self.__dict__.items() if isinstance(v, Vocab)]
         with open(path, 'wb') as f:
-            remaining = {k: self.__dict__[k] for k in self.__dict__ if k != "vocab"}
+            remaining = {k: v for k, v in self.__dict__.items() if isinstance(v, Vocab)}
             pickle.dump(remaining, f, pickle.HIGHEST_PROTOCOL)
-        self.vocab.store(path + "_vocab")
+        for k, v in vocabs:
+            v.store(path + '_' + k)
 
     def load(self, path):
         """
@@ -53,6 +55,9 @@ class SharedResources:
         if os.path.exists(path):
             with open(path, 'rb') as f:
                 self.__dict__.update(pickle.load(f))
-
-        self.vocab = Vocab()
-        self.vocab.load(path + "_vocab")
+        for f in os.listdir(path):
+            if f.startswith(path + '_') and f.endswith('.pkl'):
+                key = f.split('_')[-1][:-4]
+                v = Vocab()
+                v.load(path + '_' + key)
+                self.__dict__[key] = v
