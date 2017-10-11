@@ -330,7 +330,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
                                                          weights_initializer=None,
                                                          biases_initializer=None,
                                                          scope="question_attention")
-    q_mask = tfutil.mask_for_lengths(question_length, batch_size)
+    q_mask = tfutil.mask_for_lengths(question_length)
     attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
     question_attention_weights = tf.nn.softmax(attention_scores, 1, name="question_attention_weights")
     question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])

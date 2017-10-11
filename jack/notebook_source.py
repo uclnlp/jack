@@ -289,7 +289,7 @@ class MyModelModule(TFModelModule):
         # Computing single time attention over question
         attention_scores = tf.contrib.layers.fully_connected(encoded_question, 1,
                                                              scope="question_attention")
-        q_mask = tfutil.mask_for_lengths(question_length, batch_size)
+        q_mask = tfutil.mask_for_lengths(question_length)
         attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
         question_attention_weights = tf.nn.softmax(attention_scores, 1, name="question_attention_weights")
         question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
@@ -306,7 +306,7 @@ class MyModelModule(TFModelModule):
                                                          scope="start_scores")
         start_scores = tf.squeeze(start_scores, [2])
 
-        support_mask = tfutil.mask_for_lengths(support_length, batch_size)
+        support_mask = tfutil.mask_for_lengths(support_length)
         start_scores = start_scores + support_mask
 
         predicted_start_pointer = tf.arg_max(start_scores, 1)
