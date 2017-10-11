@@ -105,5 +105,3 @@ class Logger:
             if message.strip() != '':
                 print(message)
                 self.f.write(message + '\n')
-
-

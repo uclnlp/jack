@@ -8,52 +8,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def write_to_hdf(path, data):
-    """
-    Writes a numpy array to a hdf5 file under the given path.
-    
-    Args:
-        path:
-        data:
-    """
-    h5file = h5py.File(path, "w")
-    h5file.create_dataset("default", data=data)
-    h5file.close()
-
-
-def load_hdf_file(path, keyword='default'):
-    """
-    Reads and returns a numpy array for a hdf5 file.
-
-    Args:
-        path: 
-        keyword: 
- 
-    Returns:
-    """
-    h5file = h5py.File(path, 'r')
-    dset = h5file.get(keyword)
-    data = dset[:]
-    h5file.close()
-    return data
-
-
-def load_hdf5_paths(paths, limit=None):
-    """
-    
-    Args:
-        paths: 
-        limit: 
-
-    Returns:
-
-    """
-    data = []
-    for path in paths:
-        data.append(load_hdf_file(path)[:limit] if limit else load_hdf_file(path))
-    return data
-
-
 def get_home_path():
     """
     Return the home directory path.
