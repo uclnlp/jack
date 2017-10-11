@@ -168,7 +168,7 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
                     if expand:
                         xs_mapped.append(x)
                     if isinstance(x, list) or isinstance(x, dict):
-                        x_mapped = deep_map_recursion(x) #deep_map(x, fun, fun_name=fun_name)
+                        x_mapped = deep_map_recursion(x)
                     else:
                         x_mapped = fun(x)
                     xs_mapped.append(x_mapped)
@@ -291,7 +291,7 @@ def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
         return xss_mapped
 
 
-def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
+def dynamic_subsample(xs, candidate_key, answer_key, how_many=1):
     """Replaces candidates by a mix of answers and random candidates.
 
     Creates negative samples by combining the true answers and some random
@@ -306,9 +306,6 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
         candidate_key: the key of the candidate list
         answer_key: the key of the answer list
         how_many: how many samples from the candidate list should we take
-        avoid: list of candidates to be avoided
-        (note: only those are avoided, any instances according to `answer_key` which are not
-        in `avoid`, may still be sampled!)
 
     Returns:
         a new dictionary identical to `xs` for all but the `candidate_key`. For that key the value
@@ -376,7 +373,8 @@ class DynamicSubsampledList:
         return result.__iter__()
 
     def __len__(self):
-        return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
+        # number of items is the number of answers plus number of negative samples
+        return len(self.always_in)+self.how_many
 
     def __getitem__(self, key):
         #todo: verify
