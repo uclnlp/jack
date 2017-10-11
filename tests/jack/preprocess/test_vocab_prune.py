@@ -14,7 +14,7 @@ def test_vocab():
     ]
 
     print('build vocab based on train data')
-    train_vocab = preprocessing.fill_vocab(train_data, )
+    train_vocab = preprocessing.fill_vocab(train_data)
     train_vocab.freeze()
     pprint(train_vocab.sym2freqs)
     pprint(train_vocab.sym2id)
@@ -26,5 +26,5 @@ def test_vocab():
     pprint(train_vocab.sym2id)
 
     print('encode train data')
-    train_data, _, _, _ = preprocessing.nlp_preprocess(train_data[0].question, train_vocab)
+    train_data = preprocessing.nlp_preprocess(train_data[0].question, train_vocab)[0]
     print(train_data)

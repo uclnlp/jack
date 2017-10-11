@@ -3,6 +3,7 @@
 import numpy as np
 
 from jack.util import map
+from jack.util import preprocessing
 
 text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et ' \
        'dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ' \
@@ -21,10 +22,10 @@ tokenized_text = ['Lorem', 'ipsum', 'dolor', 'sit', 'amet', ',', 'consectetur', 
 
 
 def test_tokenize():
-    assert map.tokenize(text) == tokenized_text
+    assert preprocessing.tokenize(text) == tokenized_text
     question_text = "where is the cat?"
     desired_tokenised_question = ["where","is","the","cat","?"]
-    assert map.tokenize(question_text) == desired_tokenised_question
+    assert preprocessing.tokenize(question_text) == desired_tokenised_question
 
 def test_lower():
     lower_text = [word.lower() for word in tokenized_text]

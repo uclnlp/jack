@@ -100,8 +100,9 @@ def nlp_preprocess(text: str,
 
     ids = vocab(tokens)
     # make sure ids are non-negative
-    for i in range(len(ids)):
-        ids[i] = vocab.normalize(ids[i])
+    if not vocab.frozen:
+        for i in range(len(ids)):
+            ids[i] = vocab.normalize(ids[i])
 
     return tokens, ids, length, lemmas, token_offsets
 
