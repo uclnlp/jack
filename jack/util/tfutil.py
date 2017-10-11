@@ -3,20 +3,6 @@
 import tensorflow as tf
 
 
-def get_by_index(tensor, index):
-    """
-    Args:
-        tensor: [dim1 x dim2 x dim3] tensor
-        index: [dim1] tensor of indices for dim2
-
-    Returns:
-        [dim1 x dim3] tensor
-    """
-    dim1, dim2, dim3 = tf.unstack(tf.shape(tensor))
-    flat_index = tf.range(0, dim1) * dim2 + (index - 1)
-    return tf.gather(tf.reshape(tensor, [-1, dim3]), flat_index)
-
-
 def mask_for_lengths(lengths, batch_size=None, max_length=None, mask_right=True, value=-1000.0):
     """
     Creates a [batch_size x max_length] mask.
