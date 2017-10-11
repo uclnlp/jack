@@ -436,16 +436,16 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
             shape = get_list_shape(x)
             dtype = dtypes[i] if dtypes is not None else np.int64
             x_np = np.full(shape, pad, dtype)
-            dims = len(shape)
-            if dims == 0:
+            nb_dims = len(shape)
+            if nb_dims == 0:
                 x_np=x
-            elif dims == 1:
+            elif nb_dims == 1:
                 x_np[0:shape[0]] = x
-            elif dims == 2:
+            elif nb_dims == 2:
                 for j, y in enumerate(x):
                     # this comprehension turns DynamicSubsampledList into a list
                     x_np[j, 0:len(y)] = [ys for ys in y]
-            elif dims == 3:
+            elif nb_dims == 3:
                 for j, ys in enumerate(x):
                     for k, y in enumerate(ys):
                         x_np[j, k, 0:len(y)] = y
