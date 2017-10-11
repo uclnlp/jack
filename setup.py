@@ -24,7 +24,6 @@ class Develop(_develop):
         super().__init__(*args, **kwargs)
 
     def run(self):
-        _develop.do_egg_install(self)
         import nltk
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
