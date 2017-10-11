@@ -14,24 +14,34 @@ class Install(_install):
         import nltk
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
-        import subprocess
-        args = ['python3 -m spacy download en']
-        subprocess.call(args, shell=True)
-        _install.run(self)
+
+        import spacy
+        try:
+            spacy.load('en')
+        except RuntimeError:
+            import subprocess
+            args = ['python3 -m spacy download en']
+            subprocess.call(args, shell=True)
+            _install.run(self)
 
 
 class Develop(_develop):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
     def run(self):
         import nltk
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
-        import subprocess
-        args = ['python3 -m spacy download en']
-        subprocess.call(args, shell=True)
-        _develop.run(self)
+
+        import spacy
+        try:
+            spacy.load('en')
+        except RuntimeError:
+            import subprocess
+            args = ['python3 -m spacy download en']
+            subprocess.call(args, shell=True)
+            _install.run(self)
 
 
 with open('requirements.txt', 'r') as f:
