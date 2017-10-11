@@ -325,8 +325,9 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         # question encoding
         answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]), axis=0)
         answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]), axis=0)
-        answer_type_mask = misc.mask_for_lengths(answer_type_start, batch_size, max_question_length, value=1.0) * \
-                           misc.mask_for_lengths(answer_type_end + 1, batch_size, max_question_length,
+
+        answer_type_mask = misc.mask_for_lengths(answer_type_start, max_question_length, value=1.0) * \
+                           misc.mask_for_lengths(answer_type_end + 1, max_question_length,
                                                    mask_right=False, value=1.0)
         answer_type = tf.reduce_sum(emb_question * tf.expand_dims(answer_type_mask, 2), 1) / \
                       tf.maximum(1.0, tf.reduce_sum(answer_type_mask, 1, keep_dims=True))
@@ -339,8 +340,8 @@ def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
         question_rep.set_shape([None, input_size * 3])
 
         # wiq features
-        support_mask = misc.mask_for_lengths(support_length, batch_size)
-        question_binary_mask = misc.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
+        support_mask = misc.mask_for_lengths(support_length)
+        question_binary_mask = misc.mask_for_lengths(question_length, mask_right=False, value=1.0)
 
         v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
                                  initializer=tf.constant_initializer(1.0))

@@ -27,6 +27,7 @@ def test_tokenize():
     desired_tokenised_question = ["where","is","the","cat","?"]
     assert preprocessing.tokenize(question_text) == desired_tokenised_question
 
+
 def test_lower():
     lower_text = [word.lower() for word in tokenized_text]
     assert map.lower(tokenized_text) == lower_text
@@ -53,7 +54,7 @@ def test_dynamic_subsample():
     # assert list(data_ss['candidates'][0]) == [1, 2, 18, 26]
     # assert list(data_ss['candidates'][1]) == [3, 4, 67, 34]
 
-    data_ss = map.dynamic_subsample(xs=data, candidate_key='candidates', answer_key='answers', how_many=3, avoid=range(91))
+    data_ss = map.dynamic_subsample(xs=data, candidate_key='candidates', answer_key='answers', how_many=3)
 
     assert data_ss['answers'] == [[1, 2], [3, 4]]
 
