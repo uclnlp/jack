@@ -79,8 +79,9 @@ def nlp_preprocess(text: str,
         thistokenize = lambda t: nlp(t)
     else:
         thistokenize = tokenize
-
-    tokens = thistokenize(text.lower() if lowercase else text)
+    if lowercase:
+        text = text.lower()
+    tokens = thistokenize(text)
 
     token_offsets = None
     lemmas = None
