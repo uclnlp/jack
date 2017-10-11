@@ -193,39 +193,3 @@ def shuffle_and_batch(items: List[T], batch_size: int,
         todo = todo[batch_size:]
         items_batch = [items[i] for i in indices]
         yield items_batch
-
-
-def get_feed_dicts(data, placeholders, batch_size=32, pad=0, bucket_order=None, bucket_structure=None,
-                   exact_epoch=False):
-    """Creates feed dicts for all batches with a given batch size.
-
-    Args:
-        `data` (dict): The input data for the feed dicts.
-        `placeholders` (dict): The TensorFlow placeholders for the data
-            (placeholders.keys() must form a subset of data.keys()).
-        `batch_size` (int): The batch size for the data.
-        `pad` (int): Padding symbol index to pad lists of different sizes.
-        `bucket_order`: argument `order` in get_buckets (list with keys); `None` if no bucketing
-        `bucket_structure`: argument `structure` in get_buckets; `None` if no bucketing
-        `exact_epoch`: if set to `True`, final batch per bucket may be smaller, but each instance will be seen exactly
-            once during training. Default: `False`, to be certain during training
-            that each instance per batch gets same weight in the total loss.
-
-    Returns:
-        GeneratorWithRestart: Generator that yields a feed_dict for each
-        iteration. A feed dict consists of '{ placeholder : data-batch }` key-value pairs.
-    """
-    assert isinstance(data, dict) and isinstance(placeholders, dict)
-    assert set(placeholders.keys()).issubset(set(data.keys())), \
-        'data keys %s \nnot compatible with placeholder keys %s' % (set(placeholders.keys()), set(data.keys()))
-
-    def generator():
-        batches = get_batches(data, batch_size, pad, bucket_order, bucket_structure, exact_epoch)
-        # fixme: this is potentially inefficient as it might be called every time we retrieve a batch
-        # todo: measure and fix if significant impact
-        mapped = map(lambda xs: {placeholders[k]: xs[k] for k in placeholders}, batches)
-        # for each key in placeholders dict, pair the placeholder with the corresponding batch dict value
-        for x in mapped:
-            yield x
-
-    return GeneratorWithRestart(generator)

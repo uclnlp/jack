@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from jack.util.logger import Logger
-log = Logger('global_config.py.txt')
+import logging
 
-
-class Backends:
-    TENSORFLOW = 'tensorflow'
-    TEST = 'test'
+logger = logging.getLogger(__name__)
 
 
 class Config:
     dropout = 0.0
     batch_size = 128
     learning_rate = 0.001
-    backend = Backends.TENSORFLOW
     L2 = 0.000
     cuda = False
     embedding_dim = 128
@@ -33,7 +28,7 @@ class Config:
 
         for i in range(len(names)):
             if names[i] in alias2params:
-                log.debug('Replaced parameters alias {0} with name {1}', names[i], alias2params[names[i]])
+                logger.debug('Replaced parameters alias {0} with name {1}', names[i], alias2params[names[i]])
                 names[i] = alias2params[names[i]]
 
         for i in range(len(names)):
@@ -49,7 +44,7 @@ class Config:
             if name[:2] == '--':
                 continue
             params2field[name](value)
-            log.debug('Set parameter {0} to {1}', name, value)
+            logger.debug('Set parameter {0} to {1}', name, value)
 
 
 params2type = {

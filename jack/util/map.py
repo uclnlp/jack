@@ -25,23 +25,17 @@ rs = DefaultRandomState(1337)
 def tokenize(xs, pattern=None):
     """ Splits sentences into tokens. If specific regex pattern is provided,
     then it will be used for tokenisation instead. """
-    if not pattern:
-        return nltk.word_tokenize(xs)
-    else:
-        return [x for x in re.split(pattern, xs)
-                if not re.match("\s", x) and x != ""]
+    return nltk.word_tokenize(xs) if not pattern\
+        else [x for x in re.split(pattern, xs) if not re.match("\s", x) and x != ""]
 
 
 def notokenize(xs):
-    """Embeds deepest itemns into a list"""
+    """Embeds deepest items into a list"""
     return [xs]
 
 
 def lower(xs):
     """returns lowercase for sequence of strings"""
-    # """performs lowercasing on string or sequence of strings"""
-    # if isinstance(xs, str):
-    #    return xs.lower()
     return [x.lower() for x in xs]
 
 
@@ -174,7 +168,7 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
                     if expand:
                         xs_mapped.append(x)
                     if isinstance(x, list) or isinstance(x, dict):
-                        x_mapped = deep_map_recursion(x) #deep_map(x, fun, fun_name=fun_name)
+                        x_mapped = deep_map_recursion(x)
                     else:
                         x_mapped = fun(x)
                     xs_mapped.append(x_mapped)
@@ -297,7 +291,7 @@ def deep_seq_map(xss, fun, keys=None, fun_name=None, expand=False):
         return xss_mapped
 
 
-def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
+def dynamic_subsample(xs, candidate_key, answer_key, how_many=1):
     """Replaces candidates by a mix of answers and random candidates.
 
     Creates negative samples by combining the true answers and some random
@@ -312,9 +306,6 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
         candidate_key: the key of the candidate list
         answer_key: the key of the answer list
         how_many: how many samples from the candidate list should we take
-        avoid: list of candidates to be avoided
-        (note: only those are avoided, any instances according to `answer_key` which are not
-        in `avoid`, may still be sampled!)
 
     Returns:
         a new dictionary identical to `xs` for all but the `candidate_key`. For that key the value
@@ -345,8 +336,6 @@ def dynamic_subsample(xs, candidate_key, answer_key, how_many=1, avoid=[]):
     result.update(xs)
     result[candidate_key] = new_candidates
     return result
-
-
 
 
 class DynamicSubsampledList:
@@ -384,7 +373,8 @@ class DynamicSubsampledList:
         return result.__iter__()
 
     def __len__(self):
-        return len(self.always_in)+self.how_many#number of items is the number of answers plus number of negative samples
+        # number of items is the number of answers plus number of negative samples
+        return len(self.always_in)+self.how_many
 
     def __getitem__(self, key):
         #todo: verify
@@ -413,7 +403,6 @@ def get_seq_depth(xs):
     return [n - 1 for n in get_list_shape(xs)]
 
 
-
 def get_entry_dims(corpus):
     """
     get number of dimensions for each entry; needed for placeholder generation
@@ -436,7 +425,6 @@ def get_entry_dims(corpus):
     return dims
 
 
-
 def numpify(xs, pad=0, keys=None, dtypes=None):
     """Converts a dict or list of Python data into a dict of numpy arrays."""
     is_dict = isinstance(xs, dict)
@@ -446,27 +434,23 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
     for i, (key, x) in enumerate(xs_iter):
         if keys is None or key in keys:
             shape = get_list_shape(x)
-            if dtypes is None:
-                dtype = np.int64
-            else:
-                dtype = dtypes[i]
+            dtype = dtypes[i] if dtypes is not None else np.int64
             x_np = np.full(shape, pad, dtype)
-            dims = len(shape)
-            if dims == 0:
-                x_np=x
-            elif dims == 1:
-                x_np[0:shape[0]] = x
-            elif dims == 2:
-                for j, y in enumerate(x):
-                    x_np[j, 0:len(y)] = [ys for ys in y]#this comprehension turns DynamicSubsampledList into a list
-            elif dims == 3:
-                for j, ys in enumerate(x):
-                    for k, y in enumerate(ys):
-                        x_np[j, k, 0:len(y)] = y
+            nb_dims = len(shape)
+
+            if nb_dims == 0:
+                x_np = x
             else:
-                raise (NotImplementedError)
-                # todo: extend to general case
-                pass
+                def f(tensor, values):
+                    t_shp = tensor.shape
+                    if len(t_shp) > 1:
+                        for _i, _values in enumerate(values):
+                            f(tensor[_i], _values)
+                    else:
+                        tensor[0:len(values)] = [v for v in values]
+
+                f(x_np, x)
+
             xs_np[key] = x_np
         else:
             xs_np[key] = x
