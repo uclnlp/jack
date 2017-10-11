@@ -41,7 +41,7 @@ class Develop(_develop):
             import subprocess
             args = ['python3 -m spacy download en']
             subprocess.call(args, shell=True)
-            _install.run(self)
+            _develop.run(self)
 
 
 with open('requirements.txt', 'r') as f:
