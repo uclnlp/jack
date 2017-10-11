@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import re
 
 from jack.core import *
-from jack.io.embeddings import Vocabulary, Embeddings
+from jack.io.embeddings import Embeddings
 from jack.readers.extractive_qa.shared import XQAPorts, XQAOutputModule
 from jack.readers.extractive_qa.util import prepare_data, stack_and_pad
 from jack.readers.extractive_qa.util import tokenize
@@ -210,7 +212,6 @@ It takes input module outputs as inputs and produces outputs such as the loss
 and outputs required by hte output module.
 
 """
-
 
 
 class MyModelModule(TFModelModule):
