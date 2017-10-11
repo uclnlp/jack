@@ -11,7 +11,7 @@ class Install(_install):
         super().__init__(*args, **kwargs)
 
     def run(self):
-        _install.do_egg_install(self)
+        # _install.do_egg_install(self)
 
         import nltk
         nltk.download('punkt')
@@ -24,7 +24,8 @@ class Install(_install):
             import subprocess
             args = ['python3 -m spacy download en']
             subprocess.call(args, shell=True)
-            _install.run(self)
+
+        _install.run(self)
 
 
 class Develop(_develop):
@@ -43,7 +44,8 @@ class Develop(_develop):
             import subprocess
             args = ['python3 -m spacy download en']
             subprocess.call(args, shell=True)
-            _develop.run(self)
+
+        _develop.run(self)
 
 
 with open('requirements.txt', 'r') as f:
