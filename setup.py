@@ -14,6 +14,10 @@ class Install(_install):
         import nltk
         nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
+        import subprocess
+        args = ['python3', '-m', 'spacy', 'download', 'en']
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        _, _ = p.communicate()
 
 
 with open('requirements.txt', 'r') as f:
