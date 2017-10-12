@@ -28,11 +28,6 @@ def test_tokenize():
     assert preprocessing.tokenize(question_text) == desired_tokenised_question
 
 
-def test_lower():
-    lower_text = [word.lower() for word in tokenized_text]
-    assert map.lower(tokenized_text) == lower_text
-
-
 def test_get_list_shape():
     data = [[1, 2, 3], [4, 5]]
     assert map.get_list_shape(data) == [2, 3]

@@ -10,11 +10,6 @@ from jack.util.vocab import Vocab
 rs = DefaultRandomState(1337)
 
 
-def lower(xs):
-    """returns lowercase for sequence of strings"""
-    return [x.lower() for x in xs]
-
-
 def get_list_shape(xs):
     if isinstance(xs, int):
         shape = []
