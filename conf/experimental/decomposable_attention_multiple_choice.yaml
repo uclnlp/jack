@@ -43,3 +43,9 @@ embedding_format: 'word2vec'
 
 # format of embeddings to be loaded
 embedding_file: 'jack/data/SG_GoogleNews/GoogleNews-vectors-negative300.bin.gz'
+
+epoch: 3
+
+repr_dim: 10
+
+repr_input_dim: 10

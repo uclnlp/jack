@@ -5,8 +5,8 @@ produced at the input and/or output of each module, thus defining a kind of sign
 flexibility when (re-)using modules in different combinations.
 """
 import logging
-import tensorflow as tf
 
+import tensorflow as tf
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +98,10 @@ class Ports:
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
 
+        support = TensorPort(tf.int32, [None, None], "multiple_support",
+                             "Represents instances with single support documents",
+                             "[batch_size, max_num_tokens]")
+
         multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
                                       ("Represents instances with multiple support documents",
                                        " or single instances with extra dimension set to 1"),
@@ -111,16 +115,24 @@ class Ports:
                                        "[batch_size, num_candidates]")
 
         sample_id = TensorPort(tf.int32, [None], "sample_id",
-                               "Maps this sample to the index in the input text data",
+                               "Maps this sample to the index in the input data",
                                "[batch_size]")
 
-        support_length = TensorPort(tf.int32, [None, None], "support_length",
-                                    "Represents length of supports in each support in batch",
-                                    "[batch_size, num_supports]")
+        sample_str_id = TensorPort(tf.string, [None], "sample_str_id",
+                                   "Maps this sample to the index in the input data",
+                                   "[batch_size]")
+
+        muliple_support_length = TensorPort(tf.int32, [None, None], "muliple_support_length",
+                                            "Represents length of supports in each support in batch",
+                                            "[batch_size, num_supports]")
+
+        support_length = TensorPort(tf.int32, [None], "support_length",
+                                    "Represents length of supports in batch",
+                                    "[batch_size]")
 
         question_length = TensorPort(tf.int32, [None], "question_length",
                                      "Represents length of questions in batch",
-                                     "[Q]")
+                                     "[batch_size]")
 
     class Prediction:
         logits = TensorPort(tf.float32, [None, None], "candidate_scores",
@@ -141,7 +153,7 @@ class Ports:
                                    "This can either be an index into a full list of candidates,",
                                    " which is fixed, or an index into a partial list of ",
                                    "candidates, for example a list of potential entities ",
-                                   "from a list of many candiadtes"),
+                                   "from a list of many candidates"),
                                   "[batch_size]")
 
 

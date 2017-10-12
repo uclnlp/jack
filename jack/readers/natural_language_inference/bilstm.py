@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
-from jack.tf_fun import rnn, simple
+from jack.tf_util import rnn, simple
 
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
@@ -11,9 +11,6 @@ class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassMod
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-        S_ids = tf.squeeze(S_ids, 1)
-        S_lengths = tf.squeeze(S_lengths, 1)
-
         Q_seq = tf.nn.embedding_lookup(self.question_embedding_matrix, Q_ids)
         S_seq = tf.nn.embedding_lookup(self.support_embedding_matrix, S_ids)
 

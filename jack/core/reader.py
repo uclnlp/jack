@@ -14,12 +14,12 @@ from typing import Iterable, List
 
 import tensorflow as tf
 
+from jack.core.data_structures import *
 from jack.core.input_module import InputModule
 from jack.core.model_module import ModelModule, TFModelModule
 from jack.core.output_module import OutputModule
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import Ports
-from jack.data_structures import *
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+    def process_dataset(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.batch_generator are processed in order and do not get shuffled during with
@@ -251,9 +251,7 @@ class TFReader(JTReader):
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
-
                 current_loss, _ = self.session.run([loss, min_op], feed_dict=feed_dict)
-
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
 

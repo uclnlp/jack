@@ -4,8 +4,8 @@ from random import shuffle
 from typing import Any
 
 from jack.core import *
-from jack.util.map import numpify, deep_map, notokenize
-from jack.util.pipelines import transpose_dict_of_lists
+from jack.util.map import numpify, deep_map
+from jack.util.preprocessing import transpose_dict_of_lists
 
 
 class ShuffleList:
@@ -40,7 +40,6 @@ def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         question = question_dataset[i][0]
-        candidates = candidate_dataset[i]
         answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
         posneg = [] + answers
         avoided = False
@@ -89,7 +88,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
             if y is not None:
                 assert len(y) == 1
                 corpus["answers"].append([y[0].text])
-        corpus = deep_map(corpus, notokenize, ['question'])
+        corpus = deep_map(corpus, lambda x: [x], ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
         corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
 

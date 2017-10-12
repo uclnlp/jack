@@ -11,5 +11,5 @@ typing
 sacred
 sqlalchemy
 pyyaml
-pytest
 spacy
+pytest

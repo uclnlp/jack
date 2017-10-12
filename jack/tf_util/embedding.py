@@ -6,7 +6,7 @@ from collections import defaultdict
 import numpy as np
 import tensorflow as tf
 
-from jack.util import tfutil
+from jack.tf_util import misc
 
 
 def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
@@ -67,7 +67,7 @@ def conv_char_embeddings(vocab, size, word_ids, conv_width=5,
                 filter = tf.get_variable("filter", [conv_width*size, size])
                 filter_reshaped = tf.reshape(filter, [conv_width, size, size])
                 conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "SAME")
-                conv_mask = tf.expand_dims(tfutil.mask_for_lengths(wl - pad_right, max_length=max_word_length), 2)
+                conv_mask = tf.expand_dims(misc.mask_for_lengths(wl - pad_right, max_length=max_word_length), 2)
                 conv_out = conv_out + conv_mask
 
             unique_embedded_words = tf.reduce_max(conv_out, [1])
@@ -102,7 +102,7 @@ def conv_char_embedding_alt(char_vocab, size, unique_word_chars, unique_word_len
             filter_reshaped = tf.reshape(filter, [conv_width, size, size])
             # [B, T, S + pad_right]
             conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "VALID")
-            conv_mask = tf.expand_dims(tfutil.mask_for_lengths(unique_word_lengths, max_length=max_word_length), 2)
+            conv_mask = tf.expand_dims(misc.mask_for_lengths(unique_word_lengths, max_length=max_word_length), 2)
             conv_out = conv_out + conv_mask
 
         unique_embedded_words = tf.reduce_max(conv_out, [1])

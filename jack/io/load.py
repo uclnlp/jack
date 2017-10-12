@@ -2,7 +2,7 @@
 
 import json
 
-from jack.data_structures import *
+from jack.core.data_structures import *
 from jack.io.SNLI2jtr import convert_snli
 from jack.io.SQuAD2jtr import convert_squad
 

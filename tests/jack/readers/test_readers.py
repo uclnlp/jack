@@ -5,8 +5,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack import readers
+from jack.core.data_structures import QASetting, Answer
 from jack.core.shared_resources import SharedResources
-from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Embeddings
 from jack.readers.extractive_qa.util import tokenize
 from jack.util.vocab import Vocab
@@ -39,7 +39,7 @@ def smoke_test(reader_name):
             support=["While b seems plausible, answer a is correct."],
             id="1",
             atomic_candidates=["a", "b", "c"]),
-         [Answer("a", (0, 6, 6))])
+         [Answer("a", (6, 6))])
     ]
     questions = [q for q, _ in data_set]
 
