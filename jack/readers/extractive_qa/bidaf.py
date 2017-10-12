@@ -120,11 +120,15 @@ class BiDAF(AbstractExtractiveQA):
             max_support_length = tf.reduce_max(support_length)
             support_mask = tfutil.mask_for_lengths(support_length, batch_size)
             question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
+            beam_size = 1
+            beam_size = tf.cond(is_eval, lambda: tf.constant(beam_size, tf.int32), lambda: tf.constant(1, tf.int32))
 
             input_size = shared_vocab_config.config["repr_dim_input"]
             size = shared_vocab_config.config["repr_dim"]
             with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
             W = tf.get_variable("biattention_weight", [size*6])
+            W_start_index = tf.get_variable("start_index_weight", [size*10])
+            W_end_index = tf.get_variable("end_index_weight", [size*10])
 
 
             # 1. char embeddings + word embeddings
@@ -185,12 +189,12 @@ class BiDAF(AbstractExtractiveQA):
             # we do that with
             # (a) expand dim
             # [batch, 2*embedding, L2] -> [batch, 2*embedding, 1, L2]
-            support = tf.expand(encoded_support, 2)
+            support = tf.expand_dims(encoded_support, 2)
             # [batch, 2*embedding, L1] -> [batch, 2*embedding, L1, 1]
-            question = tf.expand(encoded_question, 3)
+            question = tf.expand_dims(encoded_question, 3)
             # (b) tile with the other dimension
-            support = tf.tile(support, [1, 1, max_question_length, 1]
-            question = tf.tile(support, [1, 1, 1, max_support_length]
+            support = tf.tile(support, [1, 1, max_question_length, 1])
+            question = tf.tile(support, [1, 1, 1, max_support_length])
 
             # 5. cat
             # question = U = [batch, 2*embedding, length1, length2]
@@ -206,21 +210,32 @@ class BiDAF(AbstractExtractiveQA):
             S = tf.einsum('ijkl,j->ikl', features, W)
 
             # S = [batch, length1, length2]
-            # softmax -> [ batch, length1] = att_question
-            # softmax -> [ batch, length2] = att_support
-            att_question = tf.nn.softmax(S, 2)
-            att_support = tf.nn.softmax(S, 1)
-            # weighted =  [batch, length1, length2] * [batch, 2*embedding, length2] -> [batch, 2*embedding, length2]
-            question_weighted = tf.einsum('ij,ikj->ikj', att_question, question_padded)
-            support_weighted = tf.einsum('ij,ikj->ikj', att_support, support)
+            # question to support attention
+            # softmax -> [ batch, length1, length2] = att_question
+            att_question = tf.nn.softmax(S, 2) # softmax over support
+            # weighted =  [batch, length1, length2] * [batch, 2*embedding, length1, length2] -> [batch, 2*embedding, length2]
+            question_weighted = tf.einsum('ijk,iljk->ilk', att_question, question)
+
+            # support to question attention
+            # 1. filter important context words with max
+            # 2. softmax over question to get the question words which are most relevant for the most relevant context words 
+            # max(S) = [batch, length1, length2] -> [ batch, length1] = most important context
+            max_support = tf.reduce_max(S, 2)
+            # softmax over question -> [batch, length1]
+            support_attention = tf.nn.softmax(max_support, 1)
+            # support attention * support = weighted support
+            # [batch, length1] * [batch, 2*embedding, length1, length2] = [batch, 2*embedding]
+            support_weighted = tf.einsum('ij,ikjl->ik', support_attention, support)
+            # tile to have the same dimension
+            # [batch, 2*embedding] -> [batch, 2*embedding, length2]
+            support_weighted = tf.expand_dims(support_weighted, 2)
+            support_weighted = tf.tile(support_weighted, [1,1, max_support_length])
+
             # 6b. generate feature matrix 
             # G(support, weighted question, weighted support)  = G(h, *u, *h) = [h, *u, mul(h, *u), mul(h, h*)] = [batch, embedding *8, length2]
-            G = tf.concat([support, question_weighted, support*question_weighted, question_padded*question_weighted], 1)
+            G = tf.concat([encoded_support, question_weighted, encoded_support*question_weighted, encoded_support*support_weighted], 1)
 
-            # 8. BiLSTM
-            M = birnn_with_projection(size, rnn, G, support_length,
-                                                     projection_scope="question_proj")
-
+            # 8. BiLSTM(G) = M
             # start_index = M
             cell3 = tf.contrib.rnn.LSTMBlockFusedCell(size)
             start_index = fused_birnn(cell3, G, support_length, dtype=tf.float32, time_major=False, scope='start_index')[0]
@@ -232,62 +247,73 @@ class BiDAF(AbstractExtractiveQA):
             end_index = tf.concat(end_index, 2)
             end_index = tf.concat([end_index, G], 2)
             # 9. double cross-entropy loss
-            # prepare logits
-            # prepare top-k probabilities for beam search
-            # prepare argmax for output module
-            start_scores = tf.contrib.layers.fully_connected(start_index, max_support_length,
-                                                              activation_fn=None,
-                                                              weights_initializer=None,
-                                                              scope="q_start_inter")
+            # 9a. prepare logits
+            # 9b. prepare top-k probabilities for beam search
+            # 9c. prepare argmax for output module
+
+            # start_index = [batch, 10*emb, length2] 
+            # W_start_index = [10*emb]
+            # start_index *w_start_index = start_scores
+            # [batch, 10*emb, length2] * [10*emb] = [batch, length2] 
+            # 9a. prepare logits
+            start_scores = tf.einsum('ijk,j->ik', start_index, W_start_index)
             support_mask = tfutil.mask_for_lengths(support_length, batch_size)
             # add -1000 to out-of-bounds slots
-            start_scores = logits_start + support_mask
-
+            start_scores = start_scores + support_mask
 
             # probs are needed during beam search
+            # 9b. prepare top-k probabilities for beam search
             start_probs = tf.nn.softmax(start_scores)
             predicted_start_probs, predicted_start_pointer = tf.nn.top_k(start_probs, beam_size)
 
             # use correct start during training, because p(end|start) should be optimized
             predicted_start_pointer = tf.gather(predicted_start_pointer, answer2question)
-            predicted_start_probs = tf.gather(predicted_start_probs, answer2question)
+            #predicted_start_probs = tf.gather(predicted_start_probs, answer2question)
 
-            start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: tf.expand_dims(correct_start, 1))
+            #start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: tf.expand_dims(correct_start, 1))
 
-            # flatten again
-            start_pointer = tf.reshape(start_pointer, [-1])
-            answer2questionwithbeam = tf.reshape(tf.tile(tf.expand_dims(answer2question, 1), tf.stack([1, beam_size])), [-1])
+            ## flatten again
+            #start_pointer = tf.reshape(start_pointer, [-1])
+            #answer2questionwithbeam = tf.reshape(tf.tile(tf.expand_dims(answer2question, 1), tf.stack([1, beam_size])), [-1])
 
-            offsets = tf.cast(tf.range(0, batch_size) * tf.reduce_max(support_length), dtype=tf.int32)
-            offsets = tf.gather(offsets, answer2questionwithbeam)
-            u_s = tf.gather(support_states_flat, start_pointer + offsets)
+            #input_size = encoded_support.get_shape()[-1].value
+            #support_states_flat = tf.reshape(encoded_support, [-1, input_size])
 
-            start_scores = tf.gather(start_scores, answer2questionwithbeam)
+            #offsets = tf.cast(tf.range(0, batch_size) * max_support_length, dtype=tf.int32)
+            #offsets = tf.gather(offsets, answer2questionwithbeam)
+            #u_s = tf.gather(support_states_flat, start_pointer + offsets)
 
-            def mask_with_start(scores):
-                return scores + tfutil.mask_for_lengths(tf.cast(start_pointer, tf.int32),
-                                                        batch_size * beam_size, tf.reduce_max(support_length),
-                                                        mask_right=False)
+            #start_scores = tf.gather(start_scores, answer2questionwithbeam)
 
-            end_scores = tf.contrib.layers.fully_connected(end_index, max_support_length,
-                                                              activation_fn=None,
-                                                              weights_initializer=None,
-                                                              scope="q_start_inter")
+            #def mask_with_start(scores):
+            #    return scores + tfutil.mask_for_lengths(tf.cast(start_pointer, tf.int32),
+            #                                            batch_size * beam_size, tf.reduce_max(support_length),
+            #                                            mask_right=False)
+
+            # end_index = [batch, 10*emb, length2] 
+            # W_end_index = [10*emb]
+            # end_index *w_end_index = start_scores
+            # [batch, 10*emb, length2] * [10*emb] = [batch, length2] 
+            # 9a. prepare logits
+            end_scores = tf.einsum('ijk,j->ik', end_index, W_end_index)
             # add -1000 to out-of-bounds slots
             end_scores = end_scores + support_mask
-            end_scores = tf.cond(is_eval, lambda: mask_with_start(end_scores), lambda: end_scores)
+            #end_scores = tf.cond(is_eval, lambda: mask_with_start(end_scores), lambda: end_scores)
 
             # probs are needed during beam search
             end_probs = tf.nn.softmax(end_scores)
+
+
             predicted_end_probs, predicted_end_pointer = tf.nn.top_k(end_probs, 1)
-            predicted_end_probs = tf.reshape(predicted_end_probs, tf.stack([-1, beam_size]))
-            predicted_end_pointer = tf.reshape(predicted_end_pointer, tf.stack([-1, beam_size]))
+            #predicted_end_probs = tf.reshape(predicted_end_probs, tf.stack([-1, beam_size]))
+            #predicted_end_pointer = tf.reshape(predicted_end_pointer, tf.stack([-1, beam_size]))
 
-            predicted_idx = tf.cast(tf.argmax(predicted_start_probs * predicted_end_probs, 1), tf.int32)
-            predicted_idx = tf.stack([tf.range(0, tf.shape(answer2question)[0], dtype=tf.int32), predicted_idx], 1)
+            # 9c. prepare argmax for output module
+            #predicted_idx = tf.cast(tf.argmax(predicted_start_probs * predicted_end_probs, 1), tf.int32)
 
-            predicted_start_pointer = tf.gather_nd(predicted_start_pointer, predicted_idx)
-            predicted_end_pointer = tf.gather_nd(predicted_end_pointer, predicted_idx)
+            #predicted_start_pointer = tf.gather(predicted_start_pointer, predicted_idx)
+            #predicted_end_pointer = tf.gather(predicted_end_pointer, predicted_idx)
+
 
             return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer
 
