@@ -355,9 +355,12 @@ def dynamic_lstm_decoder_loss(decoder_logits_train,
             tf.cast(target_lengths, tf.float32),
             ones)
         # Thanks https://stackoverflow.com/questions/35361467/tensorflow-numpy-repeat-alternative
+        # tf.tile() repeats whole array x times, e.g.,
+        # tf.tile([1, 2, 3], [2]) --> [1, 2, 3, 1, 2, 3] but we need [1, 1, 2, 2, 3, 3]
+        # so we tile [n], then reshape into n columns and transpose, then flatten
         label_weights = tf.div(label_weights, label_divisors)  # shape = batch size x 1
-        label_weights = tf.tile(label_weights, [max_interpr_seq_len_batch])
-        label_weights = tf.transpose(tf.reshape(label_weights, [-1, 2]))
+        label_weights = tf.tile(label_weights, [max_interpr_seq_len_batch]) # shape = (batch_size * max_...) x 1
+        label_weights = tf.transpose(tf.reshape(label_weights, [-1, max_interpr_seq_len_batch]))
         label_weights_flat = tf.reshape(label_weights, [-1])
         # Finally, calculate cross entropy loss using the weights
         crossent = tf.losses.sparse_softmax_cross_entropy(
