@@ -154,61 +154,18 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
     return deep_map_recursion(xs, keys)
 
 
-class DynamicSubsampledList:
-    """
-    A container that produces different list subsamples on every call to `__iter__`.
-
-    >>> dlist = DynamicSubsampledList([1,2], range(0,100),2, rand=rs)
-    >>> print(" ".join([str(e) for e in dlist]))
-    1 2 23 61
-    >>> print(" ".join([str(e) for e in dlist]))
-    1 2 92 39
-    """
-
-    def __init__(self, always_in, to_sample_from, how_many, avoid=[], rand=rs):
-        self.always_in = always_in
-        self.to_sample_from = to_sample_from
-        self.how_many = how_many
-        self.avoid = set(avoid)
-        self.random = rand
-
-    def __iter__(self):
-        result = []
-        result += self.always_in
-        if len(self.avoid) == 0:
-            result.extend(list(self.random.choice(self.to_sample_from, size=self.how_many, replace=True)))
-        else:
-            for _ in range(self.how_many):
-                avoided = False
-                trial, max_trial = 0, 50
-                while (not avoided and trial < max_trial):
-                    samp = self.random.choice(self.to_sample_from)
-                    trial += 1
-                    avoided = False if samp in self.avoid else True
-                result.append(samp)
-        return result.__iter__()
-
-    def __len__(self):
-        # number of items is the number of answers plus number of negative samples
-        return len(self.always_in)+self.how_many
-
-    def __getitem__(self, key):
-        # todo: verify
-        return self.always_in[0]
-
-
 def get_list_shape(xs):
     if isinstance(xs, int):
         shape = []
     else:
         shape = [len(xs)]
         for i, x in enumerate(xs):
-            if isinstance(x, list) or isinstance(x, DynamicSubsampledList):
+            if isinstance(x, list):
                 if len(shape) == 1:
                     shape.append(0)
                 shape[1] = max(len(x), shape[1])
                 for j, y in enumerate(x):
-                    if isinstance(y, list) or isinstance(y, DynamicSubsampledList):
+                    if isinstance(y, list):
                         if len(shape) == 2:
                             shape.append(0)
                         shape[2] = max(len(y), shape[2])
