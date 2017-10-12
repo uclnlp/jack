@@ -5,9 +5,12 @@ from jack.core.shared_resources import SharedResources
 from jack.core import TFModelModule, Mapping, TensorPort, List, Sequence, Ports
 from jack.util import tfutil
 from jack.tf_fun.rnn import fused_birnn
+from jack.tf_fun.highway import highway_network
 
 import numpy as np
 import tensorflow as tf
+import logging
+logger = logging.getLogger(__name__)
 
 
 input_ports=[XQAPorts.emb_question, XQAPorts.question_length,
@@ -31,9 +34,9 @@ class AbstractExtractiveQA(TFModelModule):
         super(AbstractExtractiveQA, self).__init__(shared_resources)
         self.shared_resources = shared_resources
 
-    def __call__(self, batch: Mapping[TensorPort, np.ndarray],
-                 goal_ports: List[TensorPort] = None) -> Mapping[TensorPort, np.ndarray]:
-        raise NotImplementedError("Not implemented yet...")
+    #def __call__(self, batch: Mapping[TensorPort, np.ndarray],
+    #             goal_ports: List[TensorPort] = None) -> Mapping[TensorPort, np.ndarray]:
+    #    raise NotImplementedError("Not implemented yet...")
 
     @property
     def output_ports(self) -> Sequence[TensorPort]:
@@ -137,46 +140,37 @@ class BiDAF(AbstractExtractiveQA):
             emb_support.set_shape([None, None, input_size])
 
             # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
-            if with_char_embeddings:
-                # compute combined embeddings
-                [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"],
-                                                                                size,
-                                                                                unique_word_chars, unique_word_char_length,
-                                                                                [question_words2unique,
-                                                                                 support_words2unique])
-
-                # 3. cat
-                emb_question = tf.concat([emb_question, char_emb_question], 2)
-                emb_support = tf.concat([emb_support, char_emb_support], 2)
-                input_size += size
-
-                # set shapes for inputs
-                emb_question.set_shape([None, None, input_size])
-                emb_support.set_shape([None, None, input_size])
-
-
+            # compute combined embeddings
+            [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"],
+                                                                            size,
+                                                                            unique_word_chars, unique_word_char_length,
+                                                                            [question_words2unique,
+                                                                             support_words2unique])
+            # 3. cat
+            emb_question = tf.concat([emb_question, char_emb_question], 2)
+            emb_support = tf.concat([emb_support, char_emb_support], 2)
+            input_size += size
 
             # highway layer to allow for interaction between concatenated embeddings
-            if with_char_embeddings:
-                # 3. highway
-                # following bidaf notation here  (qq=question, xx=support)
-                qq = highway_network(emb_question, 2)
-                xx = highway_network(emb_support, 2)
+            # 3. highway
+            # following bidaf notation here  (qq=question, xx=support)
+            highway_question = highway_network(emb_question, 2, scope='question_highway')
+            highway_support = highway_network(emb_support, 2, scope='support_highway')
 
-                emb_question = tf.slice(all_embedded_hw, [0, 0, 0], tf.stack([-1, max_question_length, -1]))
-                emb_support = tf.slice(all_embedded_hw, tf.stack([0, max_question_length, 0]), [-1, -1, -1])
+            #emb_question = tf.slice(highway_question, [0, 0, 0], tf.stack([-1, max_question_length, -1]))
+            #emb_support = tf.slice(all_embedded_hw, tf.stack([0, max_question_length, 0]), [-1, -1, -1])
 
-                emb_question.set_shape([None, None, size])
-                emb_support.set_shape([None, None, size])
+            #emb_question.set_shape([None, None, size])
+            #emb_support.set_shape([None, None, size])
 
 
             # 4. BiLSTM
             cell1 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            encoded_question = fused_birnn(cell1, emb_question, question_length, dtype=tf.float32, time_major=False, scope='question_encoding')[0]
+            encoded_question = fused_birnn(cell1, highway_question, question_length, dtype=tf.float32, time_major=False, scope='question_encoding')[0]
             encoded_question = tf.concat(encoded_question, 2)
 
             cell2 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            encoded_support = fused_birnn(cell2, emb_support, support_length, dtype=tf.float32, time_major=False, scope='support_encoding')[0]
+            encoded_support = fused_birnn(cell2, highway_support, support_length, dtype=tf.float32, time_major=False, scope='support_encoding')[0]
             encoded_support = tf.concat(encoded_support, 2)
 
             # 6. biattention alpha(U, H) = S
@@ -188,33 +182,33 @@ class BiDAF(AbstractExtractiveQA):
             # we want to get from [length 1] and [length 2] to [length1, length2] and [length1, length2]
             # we do that with
             # (a) expand dim
-            # [batch, 2*embedding, L2] -> [batch, 2*embedding, 1, L2]
-            support = tf.expand_dims(encoded_support, 2)
-            # [batch, 2*embedding, L1] -> [batch, 2*embedding, L1, 1]
-            question = tf.expand_dims(encoded_question, 3)
+            # [batch, L2, 2*embedding ] -> [batch, 1, L2 2*embedding]
+            support = tf.expand_dims(encoded_support, 1)
+            # [batch, L1, 2*embedding] -> [batch, L1, 1, 2*embedding]
+            question = tf.expand_dims(encoded_question, 2)
             # (b) tile with the other dimension
-            support = tf.tile(support, [1, 1, max_question_length, 1])
-            question = tf.tile(support, [1, 1, 1, max_support_length])
+            support = tf.tile(support, [1, max_question_length, 1, 1])
+            question = tf.tile(question, [1, 1, max_support_length, 1])
 
             # 5. cat
-            # question = U = [batch, 2*embedding, length1, length2]
-            # support = H = [batch, 2*embedding, length1, length2]
+            # question = U = [batch, length1, length2, 2*embeddings]
+            # support = H = [batch, length1, length2, 2*embeddings]
             # S = W^T*[H; U; H*U]
-            features = tf.concat([support, question, question*support], 1)
+            features = tf.concat([support, question, question*support], 3)
 
             # 6. biattention
             # 6a. create matrix of question support attentions
-            # features = [batch, 6*embeddings, length1, length2]
+            # features = [batch, length1, length2, 6*embeddings]
             # w = [6*embeddings]
             # S = attention matrix = [batch, length1, length2] 
-            S = tf.einsum('ijkl,j->ikl', features, W)
+            S = tf.einsum('ijkl,l->ijk', features, W)
 
             # S = [batch, length1, length2]
             # question to support attention
             # softmax -> [ batch, length1, length2] = att_question
             att_question = tf.nn.softmax(S, 2) # softmax over support
-            # weighted =  [batch, length1, length2] * [batch, 2*embedding, length1, length2] -> [batch, 2*embedding, length2]
-            question_weighted = tf.einsum('ijk,iljk->ilk', att_question, question)
+            # weighted =  [batch, length1, length2] * [batch, length1, length2, 2*embedding] -> [batch, length2, 2*embedding]
+            question_weighted = tf.einsum('ijk,ijkl->ikl', att_question, question)
 
             # support to question attention
             # 1. filter important context words with max
@@ -224,16 +218,16 @@ class BiDAF(AbstractExtractiveQA):
             # softmax over question -> [batch, length1]
             support_attention = tf.nn.softmax(max_support, 1)
             # support attention * support = weighted support
-            # [batch, length1] * [batch, 2*embedding, length1, length2] = [batch, 2*embedding]
-            support_weighted = tf.einsum('ij,ikjl->ik', support_attention, support)
+            # [batch, length1] * [batch, length1, length2, 2*embedding] = [batch, 2*embedding]
+            support_weighted = tf.einsum('ij,ijkl->il', support_attention, support)
             # tile to have the same dimension
-            # [batch, 2*embedding] -> [batch, 2*embedding, length2]
-            support_weighted = tf.expand_dims(support_weighted, 2)
-            support_weighted = tf.tile(support_weighted, [1,1, max_support_length])
+            # [batch, 2*embedding] -> [batch, length2, 2*embedding]
+            support_weighted = tf.expand_dims(support_weighted, 1)
+            support_weighted = tf.tile(support_weighted, [1, max_support_length, 1])
 
             # 6b. generate feature matrix 
-            # G(support, weighted question, weighted support)  = G(h, *u, *h) = [h, *u, mul(h, *u), mul(h, h*)] = [batch, embedding *8, length2]
-            G = tf.concat([encoded_support, question_weighted, encoded_support*question_weighted, encoded_support*support_weighted], 1)
+            # G(support, weighted question, weighted support)  = G(h, *u, *h) = [h, *u, mul(h, *u), mul(h, h*)] = [batch, length2, embedding*8]
+            G = tf.concat([encoded_support, question_weighted, encoded_support*question_weighted, encoded_support*support_weighted], 2)
 
             # 8. BiLSTM(G) = M
             # start_index = M
@@ -251,12 +245,12 @@ class BiDAF(AbstractExtractiveQA):
             # 9b. prepare top-k probabilities for beam search
             # 9c. prepare argmax for output module
 
-            # start_index = [batch, 10*emb, length2] 
-            # W_start_index = [10*emb]
+            # start_index = [batch, length2, 10*embedding] 
+            # W_start_index = [10*embedding]
             # start_index *w_start_index = start_scores
-            # [batch, 10*emb, length2] * [10*emb] = [batch, length2] 
+            # [batch, length2, 10*embedding] * [10*embedding] = [batch, length2] 
             # 9a. prepare logits
-            start_scores = tf.einsum('ijk,j->ik', start_index, W_start_index)
+            start_scores = tf.einsum('ijk,k->ij', start_index, W_start_index)
             support_mask = tfutil.mask_for_lengths(support_length, batch_size)
             # add -1000 to out-of-bounds slots
             start_scores = start_scores + support_mask
@@ -267,7 +261,8 @@ class BiDAF(AbstractExtractiveQA):
             predicted_start_probs, predicted_start_pointer = tf.nn.top_k(start_probs, beam_size)
 
             # use correct start during training, because p(end|start) should be optimized
-            predicted_start_pointer = tf.gather(predicted_start_pointer, answer2question)
+            #print(predicted_start_pointer, answer2question)
+            #predicted_start_pointer = tf.gather(predicted_start_pointer, answer2question)
             #predicted_start_probs = tf.gather(predicted_start_probs, answer2question)
 
             #start_pointer = tf.cond(is_eval, lambda: predicted_start_pointer, lambda: tf.expand_dims(correct_start, 1))
@@ -290,12 +285,12 @@ class BiDAF(AbstractExtractiveQA):
             #                                            batch_size * beam_size, tf.reduce_max(support_length),
             #                                            mask_right=False)
 
-            # end_index = [batch, 10*emb, length2] 
+            # end_index = [batch, length2, 10*emb] 
             # W_end_index = [10*emb]
             # end_index *w_end_index = start_scores
-            # [batch, 10*emb, length2] * [10*emb] = [batch, length2] 
+            # [batch, length2, 10*emb] * [10*emb] = [batch, length2] 
             # 9a. prepare logits
-            end_scores = tf.einsum('ijk,j->ik', end_index, W_end_index)
+            end_scores = tf.einsum('ijk,k->ij', end_index, W_end_index)
             # add -1000 to out-of-bounds slots
             end_scores = end_scores + support_mask
             #end_scores = tf.cond(is_eval, lambda: mask_with_start(end_scores), lambda: end_scores)
@@ -314,6 +309,7 @@ class BiDAF(AbstractExtractiveQA):
             #predicted_start_pointer = tf.gather(predicted_start_pointer, predicted_idx)
             #predicted_end_pointer = tf.gather(predicted_end_pointer, predicted_idx)
 
+            span = tf.concat([tf.expand_dims(predicted_start_pointer, 1), tf.expand_dims(predicted_end_pointer, 1)], 1)
 
-            return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer
+            return start_scores, end_scores, span
 

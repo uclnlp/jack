@@ -27,12 +27,12 @@ overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15, 'squad': 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5, 'squad': 10}
 
 modelspecifics = {
-    'fastqa_reader': (' repr_dim=32 repr_dim_input=50 pretrain=true' +
+        'fastqa_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50 pretrain=true' +
                       ' embedding_file=tests/test_data/glove.500.50d.txt' +
                       ' embedding_format=glove'),
-    'bidaf_reader': (' repr_dim=32 repr_dim_input=50 pretrain=true' +
+        'bidaf_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50 pretrain=true' +
                       ' embedding_file=tests/test_data/glove.500.50d.txt' +
-                      ' embedding_format=glove')
+                      ' embedding_format=glove epochs={0}'.format(2 if is_small_data else 5))
 }
 
 ids = []
@@ -107,7 +107,8 @@ def test_model(model_name, epochs, use_small_data, dataset):
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' learning_rate_decay=1.0'
     if model_name in modelspecifics:
-        cmd += modelspecifics[model_name]
+        # this is a function which takes use_small_data as argument
+        cmd += modelspecifics[model_name](use_small_data)
     print('command: '+cmd)
     # Execute command and wait for results
     t0 = time.time()
