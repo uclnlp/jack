@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+
 import random
+
 from itertools import islice
 from typing import TypeVar, List, Iterator, Optional
 
