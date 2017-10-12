@@ -1,11 +1,11 @@
 from jack.readers.extractive_qa.shared import XQAPorts
-from jack.tf_fun.xqa import xqa_min_crossentropy_loss
-from jack.tf_fun.embedding import conv_char_embedding_alt
+from jack.tf_util.xqa import xqa_min_crossentropy_loss
+from jack.tf_util.embedding import conv_char_embedding_alt
 from jack.core.shared_resources import SharedResources
 from jack.core import TFModelModule, Mapping, TensorPort, List, Sequence, Ports
-from jack.util import tfutil
-from jack.tf_fun.rnn import fused_birnn
-from jack.tf_fun.highway import highway_network
+from jack.tf_util.rnn import fused_birnn
+from jack.tf_util.highway import highway_network
+from jack.tf_util.misc import mask_for_lengths
 
 import numpy as np
 import tensorflow as tf
@@ -121,8 +121,8 @@ class BiDAF(AbstractExtractiveQA):
             batch_size = tf.shape(question_length)[0]
             max_question_length = tf.reduce_max(question_length)
             max_support_length = tf.reduce_max(support_length)
-            support_mask = tfutil.mask_for_lengths(support_length, batch_size)
-            question_binary_mask = tfutil.mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
+            support_mask = mask_for_lengths(support_length, batch_size)
+            question_binary_mask = mask_for_lengths(question_length, batch_size, mask_right=False, value=1.0)
             beam_size = 1
             beam_size = tf.cond(is_eval, lambda: tf.constant(beam_size, tf.int32), lambda: tf.constant(1, tf.int32))
 
@@ -141,7 +141,7 @@ class BiDAF(AbstractExtractiveQA):
 
             # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
             # compute combined embeddings
-            [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"],
+            [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.char_vocab,
                                                                             size,
                                                                             unique_word_chars, unique_word_char_length,
                                                                             [question_words2unique,
@@ -251,7 +251,7 @@ class BiDAF(AbstractExtractiveQA):
             # [batch, length2, 10*embedding] * [10*embedding] = [batch, length2] 
             # 9a. prepare logits
             start_scores = tf.einsum('ijk,k->ij', start_index, W_start_index)
-            support_mask = tfutil.mask_for_lengths(support_length, batch_size)
+            support_mask = mask_for_lengths(support_length)
             # add -1000 to out-of-bounds slots
             start_scores = start_scores + support_mask
 
@@ -281,7 +281,7 @@ class BiDAF(AbstractExtractiveQA):
             #start_scores = tf.gather(start_scores, answer2questionwithbeam)
 
             #def mask_with_start(scores):
-            #    return scores + tfutil.mask_for_lengths(tf.cast(start_pointer, tf.int32),
+            #    return scores + mask_for_lengths(tf.cast(start_pointer, tf.int32),
             #                                            batch_size * beam_size, tf.reduce_max(support_length),
             #                                            mask_right=False)
 
