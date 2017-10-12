@@ -140,7 +140,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
 
         has_answers = answers is not None
 
-        q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
+        q_tokenized, q_ids, _, q_length, s_tokenized, s_ids, _, s_length, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(question, answers, self.vocab, self.config.get("lowercase", False),
                          with_answers=has_answers, wiq_contentword=True, spacy_nlp=True,

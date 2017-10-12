@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-from typing import Mapping, List, Any, Union
+from typing import Mapping, List, Any, Union, Tuple, Optional
 
 import numpy as np
 
@@ -60,7 +60,8 @@ def nlp_preprocess(text: str,
                    lemmatize: bool = False,
                    with_lemmas: bool = False,
                    with_tokens_offsets: bool = False,
-                   spacy_nlp: bool = False):
+                   spacy_nlp: bool = False) \
+        -> Tuple[List[str], List[int], int, Optional[List[str]], Optional[List[int]]]:
     """Preprocesses a question and support:
     The steps include tokenization, lower-casing. It also includes the computation of token-to-character offsets for
     the support. Lemmatization is supported in 2 ways. If lemmatize is True then the returned tokens are lemmatized

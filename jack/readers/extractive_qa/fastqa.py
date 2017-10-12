@@ -88,7 +88,7 @@ class FastQAInputModule(OnlineInputModule[FastQAAnnotation]):
     def preprocess_instance(self, question: QASetting, answers: Optional[List[Answer]] = None) -> FastQAAnnotation:
         has_answers = answers is not None
 
-        q_tokenized, q_ids, q_length, s_tokenized, s_ids, s_length, \
+        q_tokenized, q_ids, _, q_length, s_tokenized, s_ids, _, s_length, \
         word_in_question, token_offsets, answer_spans = prepare_data(
             question, answers, self.vocab, self.config.get("lowercase", False),
             with_answers=has_answers, max_support_length=self.config.get("max_support_length", None))

@@ -33,8 +33,8 @@ def prepare_data(qa_setting: QASetting,
                  max_support_length: int = -1,
                  lemmatize=False,
                  with_lemmas=False) \
-        -> Tuple[List[str], List[int], int,
-                     List[str], List[int], int,
+        -> Tuple[List[str], List[int], Optional[List[int]], int,
+                     List[str], List[int], Optional[List[int]], int,
                      List[float], List[int], List[Tuple[int, int]]]:
     """Preprocesses a question and (optionally) answers:
     The steps include tokenization, lower-casing, translation to IDs,
@@ -57,6 +57,7 @@ def prepare_data(qa_setting: QASetting,
     word_in_question = []
 
     if with_lemmas:
+        assert support_lemmas is not None
         for lemma in support_lemmas:
             word_in_question.append(float(lemma in question_lemmas and
                                           (not wiq_contentword or (lemma.isalnum() and not lemma.is_stop))))
@@ -110,13 +111,8 @@ def prepare_data(qa_setting: QASetting,
             answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
             word_in_question = word_in_question[new_start:new_end]
 
-    if with_lemmas:
-        return question_tokens, question_ids, question_lemmas, question_length, \
-               support_tokens, support_ids, support_lemmas, support_length, \
-               word_in_question, token_offsets, answer_spans
-    else:
-        return question_tokens, question_ids, question_length, \
-               support_tokens, support_ids, support_length, \
+    return question_tokens, question_ids, question_lemmas, question_length, \
+           support_tokens, support_ids, support_lemmas, support_length, \
            word_in_question, token_offsets, answer_spans
 
 
