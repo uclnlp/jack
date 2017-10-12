@@ -24,14 +24,19 @@ build:
     - script:
         name: Run unit tests
         code: |
-          pytest tests -v -m "not (overfit or smalldata)"
+          pytest tests -v -m "not (overfit or smalldata)" --cov=jack
 
     - script:
         name: Run overfit integration tests
         code: |
-          pytest tests -v -m "overfit"
+          pytest tests -v -m "overfit" --cov=jack
 
     - script:
         name: Run small data integration tests
         code: |
-          pytest tests -v -m "smalldata"
+          pytest tests -v -m "smalldata" --cov=jack
+
+    - script:
+        name: Code coverage upload
+        code: |
+            codecov
