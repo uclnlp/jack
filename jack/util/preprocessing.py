@@ -8,7 +8,7 @@ import numpy as np
 from jack.util.vocab import Vocab
 
 
-def fill_vocab(qa_settings, vocab=None, lowercase=False, lemmatize=False, spacy_nlp=True):
+def fill_vocab(qa_settings, vocab=None, lowercase=False, lemmatize=False, spacy_nlp=False):
     vocab = vocab or Vocab(unk=None)
     assert not vocab.frozen, 'Filling frozen vocabs does not make a lot fo sense...'
     for qa_setting in qa_settings:
@@ -60,7 +60,7 @@ def nlp_preprocess(text: str,
                    lemmatize: bool = False,
                    with_lemmas: bool = False,
                    with_tokens_offsets: bool = False,
-                   spacy_nlp: bool = True):
+                   spacy_nlp: bool = False):
     """Preprocesses a question and support:
     The steps include tokenization, lower-casing. It also includes the computation of token-to-character offsets for
     the support. Lemmatization is supported in 2 ways. If lemmatize is True then the returned tokens are lemmatized
@@ -75,7 +75,7 @@ def nlp_preprocess(text: str,
 
     if spacy_nlp:
         import spacy
-        nlp = spacy.load("en", parser=False)
+        nlp = spacy.load("en", parser=False, entity=False, matcher=False)
         thistokenize = lambda t: nlp(t)
     else:
         thistokenize = tokenize

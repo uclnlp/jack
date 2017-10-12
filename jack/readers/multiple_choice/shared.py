@@ -6,6 +6,7 @@ from jack.core import *
 from jack.core.data_structures import *
 from jack.readers.multiple_choice import util
 from jack.util import preprocessing
+from jack.util.map import numpify
 
 
 class SingleSupportFixedClassForward(object):
@@ -118,7 +119,7 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
                 'question': token_ids,
                 'support_lengths': s_length,
                 'question_lengths': length,
-                'ids': qa.id,
+                'ids': i,
             })
             if answers is not None:
                 preprocessed[-1]["answers"] = self.shared_resources.answer_vocab(answers[i][0].text)
@@ -136,7 +137,7 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
         }
         if "answers" in annotations[0]:
             xy_dict[Ports.Target.target_index] = [a["answers"] for a in annotations]
-        return xy_dict
+        return numpify(xy_dict)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         if not self.shared_resources.vocab.frozen:

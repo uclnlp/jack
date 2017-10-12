@@ -218,31 +218,34 @@ class Vocab:
         return pruned_vocab
 
     def store(self, path: str):
-        if not os.path.exists(os.path.dirname(path)):
-            os.mkdir(os.path.dirname(path))
-        conf_file = path + "_conf.yaml"
-        emb_file = path + "_emb.pkl"
-        remainder_file = path + ".pkl"
-        with open(conf_file, "w") as f:
-            yaml.dump({"embedding_file": self.emb.filename, "emb_format": self.emb.emb_format}, f)
-
-        if self.emb.filename is None:
-            with open(emb_file, "wb") as f:
-                pickle.dump(self.emb, f)
+        if not os.path.exists(path):
+            os.mkdir(path)
+        conf_file = os.path.join(path, "conf.yaml")
+        emb_file = os.path.join(path, "emb.pkl")
+        remainder_file = os.path.join(path, "remainder.pkl")
+        if self.emb is not None:
+            with open(conf_file, "w") as f:
+                yaml.dump({"embedding_file": self.emb.filename, "emb_format": self.emb.emb_format}, f)
+            if self.emb.filename is None:
+                with open(emb_file, "wb") as f:
+                    pickle.dump(self.emb, f)
         remaining = {k: self.__dict__[k] for k in self.__dict__ if k != "emb"}
         with open(remainder_file, "wb") as f:
             pickle.dump(remaining, f)
 
     def load(self, path: str):
-        conf_file = path + "_conf.yaml"
-        emb_file = path + "_emb.pkl"
-        remainder_file = path + ".pkl"
-        with open(conf_file, "r") as f:
-            config = yaml.load(f)
-
-        if config["embedding_file"] is not None:
-            emb = load_embeddings(config["embedding_file"], typ=config.get("emb_format", None))
-        else:
+        conf_file = os.path.join(path, "conf.yaml")
+        emb_file = os.path.join(path, "emb.pkl")
+        remainder_file = os.path.join(path, "remainder.pkl")
+        if os.path.exists(conf_file):
+            with open(conf_file, "r") as f:
+                config = yaml.load(f)
+            if config["embedding_file"] is not None:
+                emb = load_embeddings(config["embedding_file"], typ=config.get("emb_format", None))
+            elif os.path.exists(emb_file):
+                with open(emb_file, "rb") as f:
+                    emb = pickle.load(f)
+        elif os.path.exists(emb_file):
             with open(emb_file, "rb") as f:
                 emb = pickle.load(f)
 
