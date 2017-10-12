@@ -33,16 +33,6 @@ def test_lower():
     assert map.lower(tokenized_text) == lower_text
 
 
-def test_deep_map():
-    a_lst = [[1, 2, 3], [4, 5, 6]]
-    a_lst_map = map.deep_map(a_lst, lambda x: '_{}'.format(x))
-    assert a_lst_map == [['_1', '_2', '_3'], ['_4', '_5', '_6']]
-
-    a_dict = [{1: 0, 2: 1, 3: 0}, {4: 1, 5: 0, 6: 1}]
-    a_dict_map = map.deep_map(a_dict, lambda x: '_{}'.format(x))
-    assert a_dict_map == [{1: '_0', 2: '_1', 3: '_0'}, {4: '_1', 5: '_0', 6: '_1'}]
-
-
 def test_get_list_shape():
     data = [[1, 2, 3], [4, 5]]
     assert map.get_list_shape(data) == [2, 3]
