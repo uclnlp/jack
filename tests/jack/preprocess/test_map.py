@@ -41,14 +41,6 @@ def test_get_list_shape():
     assert map.get_list_shape(data) == [2, 2, 3]
 
 
-def test_get_seq_depth():
-    data = [[1, 2, 3], [4, 5]]
-    assert map.get_seq_depth(data) == [n - 1 for n in [2, 3]]
-
-    data = [[[1, 2, 3]], [[4, 5], [6, 7]]]
-    assert map.get_seq_depth(data) == [n - 1 for n in [2, 2, 3]]
-
-
 def test_get_entry_dims():
     data = [[1, 2, 3], [4, 5], [6, 7, 8]]
     assert map.get_entry_dims(data) == [1, 1, 1]

@@ -44,10 +44,6 @@ def get_list_shape(xs):
     return shape
 
 
-def get_seq_depth(xs):
-    return [n - 1 for n in get_list_shape(xs)]
-
-
 def get_entry_dims(corpus):
     """
     get number of dimensions for each entry; needed for placeholder generation
@@ -58,7 +54,7 @@ def get_entry_dims(corpus):
         dims = {key: 0 for key in keys}
     else:
         keys = range(len(corpus))
-        dims = [0 for i in range(len(corpus))]  # scalars have dim 0 (but tensor version will have shape length 1)
+        dims = [0 for _ in range(len(corpus))]  # scalars have dim 0 (but tensor version will have shape length 1)
     for key in keys:
         entry = corpus[key]
         try:
