@@ -50,7 +50,7 @@ class Develop(_develop):
 with open('requirements.txt', 'r') as f:
     requirements = f.readlines()
 
-tests_requirements = ['pytest', 'pytest-pep8', 'pytest-xdist', 'pytest-cov']
+tests_requirements = ['pytest', 'pytest-pep8', 'pytest-xdist', 'codecov', 'pytest-cov']
 
 setup(name='jack',
       version='0.1.0',
