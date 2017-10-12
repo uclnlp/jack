@@ -10,17 +10,6 @@ from jack.util.vocab import Vocab
 rs = DefaultRandomState(1337)
 
 
-# sym (e.g. token, token id or class label)
-# seq (e.g. sequence of tokens)
-# seqs (sequence of sequences)
-# corpus (sequence of sequence of sequences)
-#   e.g. hypotheses (sequence of sequences)
-#        premises (sequence of sequences)
-#        support (sequence of sequence of sequences)
-#        labels (sequence of symbols)
-# corpus = [hypotheses, premises, support, labels]
-
-
 def lower(xs):
     """returns lowercase for sequence of strings"""
     return [x.lower() for x in xs]
