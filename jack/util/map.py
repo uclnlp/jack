@@ -60,9 +60,3 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
         else:
             xs_np[key] = x
     return xs_np
-
-
-if __name__ == '__main__':
-    import doctest
-
-    print(doctest.testmod())
