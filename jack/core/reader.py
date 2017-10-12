@@ -87,7 +87,7 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_outputs(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+    def process_dataset(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.batch_generator are processed in order and do not get shuffled during with

@@ -53,7 +53,7 @@ else:
 dataset = jtr_to_qasetting(dataset_jtr)
 
 logger.info("Start!")
-answers = reader.process_outputs(dataset, FLAGS.batch_size, debug=True)
+answers = reader.process_dataset(dataset, FLAGS.batch_size, debug=True)
 results = {dataset[i][0].id: a.text for i, a in enumerate(answers)}
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)
