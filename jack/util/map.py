@@ -44,28 +44,6 @@ def get_list_shape(xs):
     return shape
 
 
-def get_entry_dims(corpus):
-    """
-    get number of dimensions for each entry; needed for placeholder generation
-    """
-    # todo: implement recursive form; now only OK for 'regular' (=most common type of) data structures
-    if isinstance(corpus, dict):
-        keys = list(corpus.keys())
-        dims = {key: 0 for key in keys}
-    else:
-        keys = range(len(corpus))
-        dims = [0 for _ in range(len(corpus))]  # scalars have dim 0 (but tensor version will have shape length 1)
-    for key in keys:
-        entry = corpus[key]
-        try:
-            while hasattr(entry, '__len__'):
-                dims[key] += 1
-                entry = entry[0]  # will fail if entry is dict
-        except:
-            dims[key] = None
-    return dims
-
-
 def numpify(xs, pad=0, keys=None, dtypes=None):
     """Converts a dict or list of Python data into a dict of numpy arrays."""
     is_dict = isinstance(xs, dict)

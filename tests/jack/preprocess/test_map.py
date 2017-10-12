@@ -41,14 +41,6 @@ def test_get_list_shape():
     assert map.get_list_shape(data) == [2, 2, 3]
 
 
-def test_get_entry_dims():
-    data = [[1, 2, 3], [4, 5], [6, 7, 8]]
-    assert map.get_entry_dims(data) == [1, 1, 1]
-
-    data = {2: 0, 3: [1, 2], 4: 2}
-    assert map.get_entry_dims(data) == {2: 0, 3: 1, 4: 0}
-
-
 def test_numpify():
     def _fillna(xs):
         data = np.array(xs)
