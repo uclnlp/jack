@@ -154,53 +154,6 @@ def deep_map(xs, fun, keys=None, fun_name='trf', expand=False, cache_fun=False):
     return deep_map_recursion(xs, keys)
 
 
-def dynamic_subsample(xs, candidate_key, answer_key, how_many=1):
-    """Replaces candidates by a mix of answers and random candidates.
-
-    Creates negative samples by combining the true answers and some random
-    deletion of entries in the candidates. Then replaces the candidates
-    dictionary and returns it.
-
-    Replace a list of lists with a list of dynamically subsampled lists. The dynamic list will
-    always contain the elements from the `answer_key` list, and a subsample of size `how_many` from
-    the corresponding `candidate_key` list
-    Args:
-        xs: a dictionary of keys to lists
-        candidate_key: the key of the candidate list
-        answer_key: the key of the answer list
-        how_many: how many samples from the candidate list should we take
-
-    Returns:
-        a new dictionary identical to `xs` for all but the `candidate_key`. For that key the value
-        is a list of `DynamicSubsampledList` objects.
-
-    Example:
-        >>> data = {'answers':[[1,2],[3,4]], 'candidates': [range(0,100), range(0,100)]}
-        >>> processed = dynamic_subsample(data, 'candidates', 'answers', 2)
-        >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['candidates']])
-        '1 2 89 39 | 3 4 90 82'
-        >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['candidates']])
-        '1 2 84 72 | 3 4 9 6'
-        >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['answers']])
-        '1 2 | 3 4'
-        >>> processed = dynamic_subsample(data, 'candidates', 'answers', 5, avoid=range(91))
-        >>> " | ".join([" ".join([str(elem) for elem in elems]) for elems in processed['candidates']])
-        '1 2 93 91 91 95 97 | 3 4 93 99 92 98 93'
-    """
-    candidate_dataset = xs[candidate_key]
-    answer_dataset = xs[answer_key]
-    new_candidates = []
-    assert (len(candidate_dataset) == len(answer_dataset))
-    for i in range(0, len(candidate_dataset)):
-        candidates = candidate_dataset[i]
-        answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
-        new_candidates.append(DynamicSubsampledList(answers, candidates, how_many, avoid=[], rand=rs))
-    result = {}
-    result.update(xs)
-    result[candidate_key] = new_candidates
-    return result
-
-
 class DynamicSubsampledList:
     """
     A container that produces different list subsamples on every call to `__iter__`.
