@@ -91,6 +91,20 @@ XQAAnnotation = NamedTuple('XQAAnnotation', [
 
 
 class XQAInputModule(OnlineInputModule[XQAAnnotation]):
+    _output_ports = [XQAPorts.emb_question, XQAPorts.question_length,
+                     XQAPorts.emb_support, XQAPorts.support_length,
+                     # char
+                     XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                     XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                     # features
+                     XQAPorts.word_in_question,
+                     # optional, only during training
+                     XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                     XQAPorts.keep_prob, XQAPorts.is_eval,
+                     # for output module
+                     XQAPorts.token_char_offsets]
+    _training_ports = [XQAPorts.answer_span, XQAPorts.answer2question]
+
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
             "shared_resources for FastQAInputModule must be an instance of SharedResources"
@@ -116,22 +130,11 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [XQAPorts.emb_question, XQAPorts.question_length,
-                XQAPorts.emb_support, XQAPorts.support_length,
-                # char
-                XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
-                XQAPorts.question_words2unique, XQAPorts.support_words2unique,
-                # features
-                XQAPorts.word_in_question,
-                # optional, only during training
-                XQAPorts.correct_start_training, XQAPorts.answer2question_training,
-                XQAPorts.keep_prob, XQAPorts.is_eval,
-                # for output module
-                XQAPorts.token_char_offsets]
+        return self._output_ports
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [XQAPorts.answer_span, XQAPorts.answer2question]
+        return self._training_ports
 
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
