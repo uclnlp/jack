@@ -49,7 +49,7 @@ class CBOWXqaPorts:
 class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
-        self.__nlp = spacy.load('en', parser=False)
+        self.__nlp = spacy.load('en', parser=False, entity=False, matcher=False)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
