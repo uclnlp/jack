@@ -201,6 +201,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             XQAPorts.support_length: support_lengths,
             XQAPorts.emb_question: stack_and_pad(emb_questions),
             XQAPorts.question_length: question_lengths,
+            XQAPorts.word_in_question: wiq,
             XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_char_offsets: offsets
@@ -211,6 +212,8 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             span2question = [i for i in range(batch_size) for _ in spans[i]]
             output.update({
                 XQAPorts.answer_span: [span for span_list in spans for span in span_list],
+                XQAPorts.correct_start_training: [] if is_eval else [span[0] for span_list in spans for span in
+                                                                     span_list],
                 XQAPorts.answer2question: span2question,
                 XQAPorts.answer2question_training: [] if is_eval else span2question,
             })
