@@ -464,7 +464,9 @@ class KBPEvalHook(EvalHook):
         logger.info("Started test evaluation %s" % self._info)
 
         if self._batches is None:
+            self.reader.input_module.all_candidates=True
             self._batches = self.reader.input_module.batch_generator(self._dataset, self._batch_size, is_eval=True)
+            self.reader.input_module.all_candidates=False
 
         def len_np_or_list(v):
             if isinstance(v, list):
