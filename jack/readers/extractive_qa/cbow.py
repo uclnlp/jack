@@ -139,7 +139,7 @@ class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
         q_tokenized, q_ids, _, q_length, s_tokenized, s_ids, _, s_length, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(question, answers, self.vocab, self.config.get("lowercase", False),
-                         with_answers=has_answers, wiq_contentword=True, spacy_nlp=True,
+                         with_answers=has_answers, wiq_contentword=True, spacy_nlp=False,
                          max_support_length=self.config.get("max_support_length", None))
 
         not_allowed = all(end - start > _max_span_size
