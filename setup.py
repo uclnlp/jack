@@ -12,10 +12,6 @@ class Install(_install):
 
     def run(self):
         _install.do_egg_install(self)
-        import nltk
-        nltk.download('punkt')
-        nltk.download('averaged_perceptron_tagger')
-
         import spacy
         try:
             spacy.load('en')
