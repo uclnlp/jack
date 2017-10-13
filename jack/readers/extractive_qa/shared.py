@@ -57,11 +57,6 @@ class XQAPorts:
                                                    "model during training for use to predicting end.",
                                                    "[A]")
 
-    answer2question_training = TensorPortWithDefault([0], tf.int32, [None], "answer2question_training",
-                                                     "Represents mapping to question idx per answer, which is used "
-                                                     "together with correct_start_training during training.",
-                                                     "[A]")
-
     # output ports
     start_scores = FlatPorts.Prediction.start_scores
     end_scores = FlatPorts.Prediction.end_scores
@@ -71,7 +66,7 @@ class XQAPorts:
                                     "[S, support_length]")
 
     # ports used during training
-    answer2question = FlatPorts.Input.answer2question
+    answer2question_training = FlatPorts.Input.answer2question
     answer_span = FlatPorts.Target.answer_span
 
 
@@ -103,7 +98,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.keep_prob, XQAPorts.is_eval,
                      # for output module
                      XQAPorts.token_char_offsets]
-    _training_ports = [XQAPorts.answer_span, XQAPorts.answer2question]
+    _training_ports = [XQAPorts.answer_span, XQAPorts.answer2question_training]
 
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
@@ -217,7 +212,6 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                 XQAPorts.answer_span: [span for span_list in spans for span in span_list],
                 XQAPorts.correct_start_training: [] if is_eval else [span[0] for span_list in spans for span in
                                                                      span_list],
-                XQAPorts.answer2question: span2question,
                 XQAPorts.answer2question_training: [] if is_eval else span2question,
             })
 
@@ -239,7 +233,7 @@ class AbstractXQAModelModule(TFModelModule):
     _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
                      XQAPorts.span_prediction]
     _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                             XQAPorts.answer_span, XQAPorts.answer2question]
+                             XQAPorts.answer_span, XQAPorts.answer2question_training]
     _training_output_ports = [Ports.loss]
 
     @property

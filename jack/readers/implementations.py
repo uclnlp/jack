@@ -132,13 +132,13 @@ def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @__extractive_qa_reader
 def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model). """
-    from jack.readers.extractive_qa.cbow import CBOWXqaInputModule
-    from jack.readers.extractive_qa.cbow import cbow_xqa_model_module
+    from jack.readers.extractive_qa.cbow import CbowXQAInputModule
+    from jack.readers.extractive_qa.cbow import CbowXQAModule
     from jack.readers.extractive_qa.shared import XQANoScoreOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
-    input_module = CBOWXqaInputModule(shared_resources)
-    model_module = cbow_xqa_model_module(shared_resources)
+    input_module = CbowXQAInputModule(shared_resources)
+    model_module = CbowXQAModule(shared_resources)
     output_module = XQANoScoreOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
