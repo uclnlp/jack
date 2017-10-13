@@ -155,7 +155,7 @@ class FastQAModule(AbstractXQAModelModule):
                                     correct_start, answer2question, is_eval,
                                     beam_size=shared_vocab_config.config.get("beam_size", 1))
 
-            span = tf.concat([tf.expand_dims(predicted_start_pointer, 1), tf.expand_dims(predicted_end_pointer, 1)], 1)
+            span = tf.stack([predicted_start_pointer, predicted_end_pointer], 1)
 
             return start_scores, end_scores, span
 

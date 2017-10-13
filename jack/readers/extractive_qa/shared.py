@@ -190,6 +190,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         unique_words, unique_word_lengths, question2unique, support2unique = \
             unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
 
+
         output = {
             XQAPorts.unique_word_chars: unique_words,
             XQAPorts.unique_word_char_length: unique_word_lengths,
@@ -202,7 +203,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             XQAPorts.word_in_question: wiq,
             XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
             XQAPorts.is_eval: is_eval,
-            XQAPorts.token_char_offsets: offsets
+            XQAPorts.token_char_offsets: offsets,
         }
 
         if with_answers:
@@ -212,7 +213,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                 XQAPorts.answer_span: [span for span_list in spans for span in span_list],
                 XQAPorts.correct_start_training: [] if is_eval else [span[0] for span_list in spans for span in
                                                                      span_list],
-                XQAPorts.answer2question_training: [] if is_eval else span2question,
+                XQAPorts.answer2question_training: span2question,
             })
 
         # we can only numpify in here, because bucketing is not possible prior
