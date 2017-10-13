@@ -7,7 +7,6 @@ from typing import NamedTuple
 import spacy
 
 from jack.core import *
-from jack.core.fun import simple_model_module, no_shared_resources
 from jack.readers.extractive_qa.fastqa import XQAPorts
 from jack.readers.extractive_qa.util import prepare_data, unique_words_with_chars
 from jack.tf_util import misc
@@ -47,10 +46,10 @@ class CBOWXqaPorts:
                              "[Q, SP]")
 
 
-class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
+class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
     def __init__(self, shared_vocab_config):
         self.shared_vocab_config = shared_vocab_config
-        self.__nlp = spacy.load('en', parser=False)
+        self.__nlp = spacy.load('en', parser=False, entity=False, matcher=False)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
@@ -118,7 +117,7 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
 
     @property
     def training_ports(self) -> List[TensorPort]:
-        return [XQAPorts.answer_span, XQAPorts.answer2question]
+        return [XQAPorts.answer_span, XQAPorts.answer2question_training]
 
     def preprocess(self, questions: List[QASetting],
                    answers: Optional[List[List[Answer]]] = None,
@@ -132,18 +131,15 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
                        for q, a in zip(questions, answers)]
         return [a for a in annotations if a is not None]
 
-
     def preprocess_instance(self, question: QASetting,
                             answers: Optional[List[Answer]],
-                            is_eval: bool) \
-            -> Optional[CBowAnnotation]:
-
+                            is_eval: bool) -> Optional[CBowAnnotation]:
         has_answers = answers is not None
 
         q_tokenized, q_ids, _, q_length, s_tokenized, s_ids, _, s_length, \
         word_in_question, token_offsets, answer_spans = \
             prepare_data(question, answers, self.vocab, self.config.get("lowercase", False),
-                         with_answers=has_answers, wiq_contentword=True, spacy_nlp=True,
+                         with_answers=has_answers, wiq_contentword=True, spacy_nlp=False,
                          max_support_length=self.config.get("max_support_length", None))
 
         not_allowed = all(end - start > _max_span_size
@@ -177,11 +173,8 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
             answer_spans=answer_spans if has_answers else None,
         )
 
-
     def create_batch(self, annotations: List[CBowAnnotation],
-                     is_eval: bool, with_answers: bool) \
-            -> Mapping[TensorPort, np.ndarray]:
-
+                     is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
         batch_size = len(annotations)
 
         emb_supports = [a.support_embeddings for a in annotations]
@@ -213,7 +206,6 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
             output.update({
                 XQAPorts.answer_span: [s for s_list in spans for s in s_list],
                 XQAPorts.correct_start_training: [] if is_eval else [s[0] for s_list in spans for s in s_list],
-                XQAPorts.answer2question: span2question,
                 XQAPorts.answer2question_training: [] if is_eval else span2question,
                 XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
                 XQAPorts.is_eval: is_eval,
@@ -226,220 +218,227 @@ class CBOWXqaInputModule(OnlineInputModule[CBowAnnotation]):
         return batch
 
 
-cbow_xqa_like_model_module_factory = simple_model_module(
-    input_ports=[XQAPorts.emb_question, XQAPorts.question_length,
-                 XQAPorts.emb_support, XQAPorts.support_length,
-                 # char embedding inputs
-                 XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
-                 XQAPorts.question_words2unique, XQAPorts.support_words2unique,
-                 # feature input
-                 XQAPorts.word_in_question,
-                 # optional input, provided only during training
-                 XQAPorts.correct_start_training, XQAPorts.answer2question_training,
-                 XQAPorts.keep_prob, XQAPorts.is_eval,
-                 CBOWXqaPorts.answer_type_span],
-    output_ports=[CBOWXqaPorts.span_scores, CBOWXqaPorts.span_candidates,
-                  XQAPorts.span_prediction],
-    training_input_ports=[CBOWXqaPorts.span_scores, CBOWXqaPorts.span_candidates,
-                          XQAPorts.answer_span, XQAPorts.answer2question],
-    training_output_ports=[Ports.loss])
+class CbowXQAModule(TFModelModule):
+    _input_ports = [XQAPorts.emb_question, XQAPorts.question_length,
+                    XQAPorts.emb_support, XQAPorts.support_length,
+                    # char embedding inputs
+                    XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                    XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                    # feature input
+                    XQAPorts.word_in_question,
+                    # optional input, provided only during training
+                    XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                    XQAPorts.keep_prob, XQAPorts.is_eval, CBOWXqaPorts.answer_type_span]
+    _output_ports = [CBOWXqaPorts.span_scores, CBOWXqaPorts.span_candidates, XQAPorts.span_prediction]
+    _training_input_ports = [CBOWXqaPorts.span_scores, CBOWXqaPorts.span_candidates,
+                             XQAPorts.answer_span, XQAPorts.answer2question_training]
+    _training_output_ports = [Ports.loss]
 
+    @property
+    def input_ports(self):
+        return self._input_ports
 
-def cbow_xqa_like_with_min_crossentropy_loss_factory(shared_resources, f):
-    return cbow_xqa_like_model_module_factory(shared_resources, f, no_shared_resources(xqa_min_crossentropy_span_loss))
+    @property
+    def output_ports(self):
+        return self._output_ports
 
+    @property
+    def training_input_ports(self):
+        return self._training_input_ports
 
-# Very specialized and therefore not sharable  TF code for fast qa model.
-def cbow_xqa_model_module(shared_vocab_config):
-    return cbow_xqa_like_with_min_crossentropy_loss_factory(shared_vocab_config, cbow_xqa_model)
+    @property
+    def training_output_ports(self):
+        return self._training_output_ports
 
+    def create_training_output(self, shared_resources, span_scores, span_candidates, answer_span, answer_to_question):
+        return xqa_min_crossentropy_span_loss(span_scores, span_candidates, answer_span, answer_to_question)
 
-def cbow_xqa_model(shared_vocab_config, emb_question, question_length,
-                   emb_support, support_length,
-                   unique_word_chars, unique_word_char_length,
-                   question_words2unique, support_words2unique,
-                   word_in_question,
-                   correct_start, answer2question, keep_prob, is_eval,
-                   answer_type_span):
-    """
-    cbow_baseline_model model
-    Args:
-        shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
-        emb_question: [Q, L_q, N]
-        question_length: [Q]
-        emb_support: [Q, L_s, N]
-        support_length: [Q]
-        unique_word_chars
-        unique_word_char_length
-        question_words2unique
-        support_words2unique
-        word_in_question: [Q, L_s]
-        correct_start: [A], only during training, window_size.e., is_eval=False
-        answer2question: [A], only during training, window_size.e., is_eval=False
-        keep_prob: []
-        is_eval: []
-        answer_type_span: [Q, 2], span within question marking the expected answer type
+    def create_output(self, shared_vocab_config, emb_question, question_length,
+                      emb_support, support_length,
+                      unique_word_chars, unique_word_char_length,
+                      question_words2unique, support_words2unique,
+                      word_in_question,
+                      correct_start, answer2question, keep_prob, is_eval,
+                      answer_type_span):
+        """cbow_baseline_model model.
 
-    Returns:
-        start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
-    """
-    with tf.variable_scope("cbow_xqa", initializer=tf.contrib.layers.xavier_initializer()):
-        # Some helpers
-        batch_size = tf.shape(question_length)[0]
-        max_support_length = tf.reduce_max(support_length)
-        max_question_length = tf.reduce_max(question_length)
+        Args:
+            shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
+            emb_question: [Q, L_q, N]
+            question_length: [Q]
+            emb_support: [Q, L_s, N]
+            support_length: [Q]
+            unique_word_chars
+            unique_word_char_length
+            question_words2unique
+            support_words2unique
+            word_in_question: [Q, L_s]
+            correct_start: [A], only during training, window_size.e., is_eval=False
+            answer2question: [A], only during training, window_size.e., is_eval=False
+            keep_prob: []
+            is_eval: []
+            answer_type_span: [Q, 2], span within question marking the expected answer type
 
-        input_size = shared_vocab_config.config["repr_dim_input"]
-        size = shared_vocab_config.config["repr_dim"]
-        with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
+        Returns:
+            start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
+        """
+        with tf.variable_scope("cbow_xqa", initializer=tf.contrib.layers.xavier_initializer()):
+            # Some helpers
+            batch_size = tf.shape(question_length)[0]
+            max_support_length = tf.reduce_max(support_length)
+            max_question_length = tf.reduce_max(question_length)
 
-        # set shapes for inputs
-        emb_question.set_shape([None, None, input_size])
-        emb_support.set_shape([None, None, input_size])
-
-        if with_char_embeddings:
-            # compute combined embeddings
-            [char_emb_question, char_emb_support] = conv_char_embedding_alt(shared_vocab_config.config["char_vocab"],
-                                                                            size,
-                                                                            unique_word_chars, unique_word_char_length,
-                                                                            [question_words2unique,
-                                                                             support_words2unique])
-
-            emb_question = tf.concat([emb_question, char_emb_question], 2)
-            emb_support = tf.concat([emb_support, char_emb_support], 2)
-            input_size += size
+            input_size = shared_vocab_config.config["repr_dim_input"]
+            size = shared_vocab_config.config["repr_dim"]
+            with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
 
             # set shapes for inputs
             emb_question.set_shape([None, None, input_size])
             emb_support.set_shape([None, None, input_size])
 
-        # variational dropout
-        dropout_shape = tf.unstack(tf.shape(emb_question))
-        dropout_shape[1] = 1
+            if with_char_embeddings:
+                # compute combined embeddings
+                [char_emb_question, char_emb_support] = conv_char_embedding_alt(
+                    shared_vocab_config.char_vocab, size, unique_word_chars, unique_word_char_length,
+                    [question_words2unique, support_words2unique])
 
-        [emb_question, emb_support] = tf.cond(is_eval,
-                                              lambda: [emb_question, emb_support],
-                                              lambda: fixed_dropout([emb_question, emb_support],
-                                                                    keep_prob, dropout_shape))
+                emb_question = tf.concat([emb_question, char_emb_question], 2)
+                emb_support = tf.concat([emb_support, char_emb_support], 2)
+                input_size += size
 
-        # question encoding
-        answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]), axis=0)
-        answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]), axis=0)
+                # set shapes for inputs
+                emb_question.set_shape([None, None, input_size])
+                emb_support.set_shape([None, None, input_size])
 
-        answer_type_mask = misc.mask_for_lengths(answer_type_start, max_question_length, value=1.0) * \
-                           misc.mask_for_lengths(answer_type_end + 1, max_question_length,
-                                                   mask_right=False, value=1.0)
-        answer_type = tf.reduce_sum(emb_question * tf.expand_dims(answer_type_mask, 2), 1) / \
-                      tf.maximum(1.0, tf.reduce_sum(answer_type_mask, 1, keep_dims=True))
+            # variational dropout
+            dropout_shape = tf.unstack(tf.shape(emb_question))
+            dropout_shape[1] = 1
 
-        batch_size_range = tf.range(0, batch_size)
-        answer_type_start_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_start], 1))
-        answer_type_end_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_end], 1))
+            [emb_question, emb_support] = tf.cond(is_eval,
+                                                  lambda: [emb_question, emb_support],
+                                                  lambda: fixed_dropout([emb_question, emb_support],
+                                                                        keep_prob, dropout_shape))
 
-        question_rep = tf.concat([answer_type, answer_type_start_state, answer_type_end_state], 1)
-        question_rep.set_shape([None, input_size * 3])
+            # question encoding
+            answer_type_start = tf.squeeze(tf.slice(answer_type_span, [0, 0], [-1, 1]), axis=0)
+            answer_type_end = tf.squeeze(tf.slice(answer_type_span, [0, 1], [-1, -1]), axis=0)
 
-        # wiq features
-        support_mask = misc.mask_for_lengths(support_length)
-        question_binary_mask = misc.mask_for_lengths(question_length, mask_right=False, value=1.0)
+            answer_type_mask = misc.mask_for_lengths(answer_type_start, max_question_length, value=1.0) * \
+                               misc.mask_for_lengths(answer_type_end + 1, max_question_length,
+                                                     mask_right=False, value=1.0)
+            answer_type = tf.reduce_sum(emb_question * tf.expand_dims(answer_type_mask, 2), 1) / \
+                          tf.maximum(1.0, tf.reduce_sum(answer_type_mask, 1, keep_dims=True))
 
-        v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
-                                 initializer=tf.constant_initializer(1.0))
+            batch_size_range = tf.range(0, batch_size)
+            answer_type_start_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_start], 1))
+            answer_type_end_state = tf.gather_nd(emb_question, tf.stack([batch_size_range, answer_type_end], 1))
 
-        wiq_w = tf.matmul(emb_question * v_wiqw, emb_support, adjoint_b=True)
-        wiq_w = wiq_w + tf.expand_dims(support_mask, 1)
+            question_rep = tf.concat([answer_type, answer_type_start_state, answer_type_end_state], 1)
+            question_rep.set_shape([None, input_size * 3])
 
-        wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
+            # wiq features
+            support_mask = misc.mask_for_lengths(support_length)
+            question_binary_mask = misc.mask_for_lengths(question_length, mask_right=False, value=1.0)
 
-        wiq_exp = tf.stack([word_in_question, wiq_w], 2)
+            v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
+                                     initializer=tf.constant_initializer(1.0))
 
-        # support span encoding
-        spans = [tf.stack([tf.range(0, max_support_length), tf.range(0, max_support_length)], 1)]
+            wiq_w = tf.matmul(emb_question * v_wiqw, emb_support, adjoint_b=True)
+            wiq_w = wiq_w + tf.expand_dims(support_mask, 1)
 
-        wiq_exp = tf.pad(wiq_exp, [[0, 0], [20, 20], [0, 0]])
-        wiq_pooled5 = tf.layers.average_pooling1d(
-            tf.slice(wiq_exp, [0, 15, 0], tf.stack([-1, max_support_length + 10, -1])), 5, [1], 'valid')
-        wiq_pooled10 = tf.layers.average_pooling1d(
-            tf.slice(wiq_exp, [0, 10, 0], tf.stack([-1, max_support_length + 20, -1])), 10, [1], 'valid')
-        wiq_pooled20 = tf.layers.average_pooling1d(wiq_exp, 20, [1], 'valid')
+            wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
 
-        wiqs_left5 = [tf.slice(wiq_pooled5, [0, 0, 0], tf.stack([-1, max_support_length, -1]))]
-        wiqs_right5 = [tf.slice(wiq_pooled5, [0, 6, 0], [-1, -1, -1])]
-        wiqs_left10 = [tf.slice(wiq_pooled10, [0, 0, 0], tf.stack([-1, max_support_length, -1]))]
-        wiqs_right10 = [tf.slice(wiq_pooled10, [0, 11, 0], [-1, -1, -1])]
-        wiqs_left20 = [tf.slice(wiq_pooled20, [0, 0, 0], tf.stack([-1, max_support_length, -1]))]
-        wiqs_right20 = [tf.slice(wiq_pooled20, [0, 21, 0], [-1, -1, -1])]
+            wiq_exp = tf.stack([word_in_question, wiq_w], 2)
 
-        context_window = 5
-        padded_support = tf.pad(emb_support, [[0, 0], [context_window, context_window], [0, 0]], "CONSTANT")
-        # [B, L + 10 - 4, S]
-        emb_support_windows = tf.layers.average_pooling1d(padded_support, 5, [1], "VALID", "channels_last")
+            # support span encoding
+            spans = [tf.stack([tf.range(0, max_support_length), tf.range(0, max_support_length)], 1)]
 
-        left_context_windows = tf.slice(emb_support_windows, [0, 0, 0],
-                                        tf.stack([-1, max_support_length, -1]))
-        right_context_windows = tf.slice(emb_support_windows, [0, context_window + 1, 0],
-                                         [-1, -1, -1])
-        span_rep = [tf.concat([emb_support, emb_support, emb_support, left_context_windows, right_context_windows], 2)]
+            wiq_exp = tf.pad(wiq_exp, [[0, 0], [20, 20], [0, 0]])
+            wiq_pooled5 = tf.layers.average_pooling1d(
+                tf.slice(wiq_exp, [0, 15, 0], tf.stack([-1, max_support_length + 10, -1])), 5, [1], 'valid')
+            wiq_pooled10 = tf.layers.average_pooling1d(
+                tf.slice(wiq_exp, [0, 10, 0], tf.stack([-1, max_support_length + 20, -1])), 10, [1], 'valid')
+            wiq_pooled20 = tf.layers.average_pooling1d(wiq_exp, 20, [1], 'valid')
 
-        for window_size in range(2, _max_span_size + 1):
-            start = tf.slice(emb_support, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1]))
-            end = tf.slice(emb_support, [0, window_size - 1, 0], [-1, -1, -1])
-            averagespan = tf.layers.average_pooling1d(emb_support, window_size, [1], "VALID", "channels_last")
+            wiqs_left5 = [tf.slice(wiq_pooled5, [0, 0, 0], tf.stack([-1, max_support_length, -1]))]
+            wiqs_right5 = [tf.slice(wiq_pooled5, [0, 6, 0], [-1, -1, -1])]
+            wiqs_left10 = [tf.slice(wiq_pooled10, [0, 0, 0], tf.stack([-1, max_support_length, -1]))]
+            wiqs_right10 = [tf.slice(wiq_pooled10, [0, 11, 0], [-1, -1, -1])]
+            wiqs_left20 = [tf.slice(wiq_pooled20, [0, 0, 0], tf.stack([-1, max_support_length, -1]))]
+            wiqs_right20 = [tf.slice(wiq_pooled20, [0, 21, 0], [-1, -1, -1])]
+
+            context_window = 5
+            padded_support = tf.pad(emb_support, [[0, 0], [context_window, context_window], [0, 0]], "CONSTANT")
+            # [B, L + 10 - 4, S]
+            emb_support_windows = tf.layers.average_pooling1d(padded_support, 5, [1], "VALID", "channels_last")
 
             left_context_windows = tf.slice(emb_support_windows, [0, 0, 0],
-                                            tf.stack([-1, max_support_length - (window_size - 1), -1]))
-            right_context_windows = tf.slice(emb_support_windows, [0, window_size - 1 + context_window + 1, 0],
+                                            tf.stack([-1, max_support_length, -1]))
+            right_context_windows = tf.slice(emb_support_windows, [0, context_window + 1, 0],
                                              [-1, -1, -1])
+            span_rep = [
+                tf.concat([emb_support, emb_support, emb_support, left_context_windows, right_context_windows], 2)]
 
-            span_rep.append(tf.concat([averagespan, start, end, left_context_windows, right_context_windows], 2))
+            for window_size in range(2, _max_span_size + 1):
+                start = tf.slice(emb_support, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1]))
+                end = tf.slice(emb_support, [0, window_size - 1, 0], [-1, -1, -1])
+                averagespan = tf.layers.average_pooling1d(emb_support, window_size, [1], "VALID", "channels_last")
 
-            wiqs_left5.append(
-                tf.slice(wiq_pooled5, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
-            wiqs_left10.append(
-                tf.slice(wiq_pooled10, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
-            wiqs_left20.append(
-                tf.slice(wiq_pooled20, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
+                left_context_windows = tf.slice(emb_support_windows, [0, 0, 0],
+                                                tf.stack([-1, max_support_length - (window_size - 1), -1]))
+                right_context_windows = tf.slice(emb_support_windows, [0, window_size - 1 + context_window + 1, 0],
+                                                 [-1, -1, -1])
 
-            wiqs_right5.append(tf.slice(wiq_pooled5, [0, window_size + 5, 0], [-1, -1, -1]))
-            wiqs_right10.append(tf.slice(wiq_pooled10, [0, window_size + 10, 0], [-1, -1, -1]))
-            wiqs_right20.append(tf.slice(wiq_pooled20, [0, window_size + 20, 0], [-1, -1, -1]))
+                span_rep.append(tf.concat([averagespan, start, end, left_context_windows, right_context_windows], 2))
 
-            spans.append(tf.stack([tf.range(0, max_support_length - (window_size - 1)),
-                                   tf.range(window_size - 1, max_support_length)], 1))
+                wiqs_left5.append(
+                    tf.slice(wiq_pooled5, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
+                wiqs_left10.append(
+                    tf.slice(wiq_pooled10, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
+                wiqs_left20.append(
+                    tf.slice(wiq_pooled20, [0, 0, 0], tf.stack([-1, max_support_length - (window_size - 1), -1])))
 
-        span_rep = tf.concat(span_rep, 1)
-        span_rep.set_shape([None, None, input_size * 5])
-        wiqs_left5 = tf.concat(wiqs_left5, 1)
-        wiqs_left10 = tf.concat(wiqs_left10, 1)
-        wiqs_left20 = tf.concat(wiqs_left20, 1)
+                wiqs_right5.append(tf.slice(wiq_pooled5, [0, window_size + 5, 0], [-1, -1, -1]))
+                wiqs_right10.append(tf.slice(wiq_pooled10, [0, window_size + 10, 0], [-1, -1, -1]))
+                wiqs_right20.append(tf.slice(wiq_pooled20, [0, window_size + 20, 0], [-1, -1, -1]))
 
-        wiqs_right5 = tf.concat(wiqs_right5, 1)
-        wiqs_right10 = tf.concat(wiqs_right10, 1)
-        wiqs_right20 = tf.concat(wiqs_right20, 1)
+                spans.append(tf.stack([tf.range(0, max_support_length - (window_size - 1)),
+                                       tf.range(window_size - 1, max_support_length)], 1))
 
-        spans = tf.concat(spans, 0)
+            span_rep = tf.concat(span_rep, 1)
+            span_rep.set_shape([None, None, input_size * 5])
+            wiqs_left5 = tf.concat(wiqs_left5, 1)
+            wiqs_left10 = tf.concat(wiqs_left10, 1)
+            wiqs_left20 = tf.concat(wiqs_left20, 1)
 
-        # scoring
-        with tf.variable_scope("question_rep"):
-            question_rep = tf.layers.dense(question_rep, size, activation=tf.tanh)
-        with tf.variable_scope("question_inter"):
-            question_inter = tf.layers.dense(question_rep, size, activation=None)
+            wiqs_right5 = tf.concat(wiqs_right5, 1)
+            wiqs_right10 = tf.concat(wiqs_right10, 1)
+            wiqs_right20 = tf.concat(wiqs_right20, 1)
 
-        with tf.variable_scope("span_rep"):
-            span_rep = tf.layers.dense(span_rep, size, activation=tf.tanh)
+            spans = tf.concat(spans, 0)
 
-        span_question_rep = tf.concat([span_rep, tf.expand_dims(question_rep, 1) * span_rep,
-                                       wiqs_left5, wiqs_left10, wiqs_left20,
-                                       wiqs_right5, wiqs_right10, wiqs_right20], 2)
-        span_question_rep.set_shape([None, None, 2 * size + 6 * 2])
+            # scoring
+            with tf.variable_scope("question_rep"):
+                question_rep = tf.layers.dense(question_rep, size, activation=tf.tanh)
+            with tf.variable_scope("question_inter"):
+                question_inter = tf.layers.dense(question_rep, size, activation=None)
 
-        with tf.variable_scope("hidden"):
-            h = tf.tanh(tf.layers.dense(span_question_rep, size, activation=None) + tf.expand_dims(question_inter, 1))
+            with tf.variable_scope("span_rep"):
+                span_rep = tf.layers.dense(span_rep, size, activation=tf.tanh)
 
-        with tf.variable_scope("scoring"):
-            span_scores = tf.squeeze(tf.layers.dense(h, 1, activation=None), 2)
+            span_question_rep = tf.concat([span_rep, tf.expand_dims(question_rep, 1) * span_rep,
+                                           wiqs_left5, wiqs_left10, wiqs_left20,
+                                           wiqs_right5, wiqs_right10, wiqs_right20], 2)
+            span_question_rep.set_shape([None, None, 2 * size + 6 * 2])
 
-        best_span = tf.argmax(span_scores, 1)
-        predicted_span = tf.gather(spans, best_span)
+            with tf.variable_scope("hidden"):
+                h = tf.tanh(
+                    tf.layers.dense(span_question_rep, size, activation=None) + tf.expand_dims(question_inter, 1))
 
-        return span_scores, tf.tile(tf.expand_dims(spans, 0), tf.stack([batch_size, 1, 1])), predicted_span
+            with tf.variable_scope("scoring"):
+                span_scores = tf.squeeze(tf.layers.dense(h, 1, activation=None), 2)
+
+            best_span = tf.argmax(span_scores, 1)
+            predicted_span = tf.gather(spans, best_span)
+
+            return span_scores, tf.tile(tf.expand_dims(spans, 0), tf.stack([batch_size, 1, 1])), predicted_span
