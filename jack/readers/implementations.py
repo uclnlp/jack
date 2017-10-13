@@ -106,12 +106,25 @@ def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @__extractive_qa_reader
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a FastQA reader instance (extractive qa model). """
-    from jack.readers.extractive_qa.fastqa import FastQAInputModule, fatqa_model_module
-    from jack.readers.extractive_qa.shared import XQAOutputModule
+    from jack.readers.extractive_qa.fastqa import FastQAModule
+    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
-    input_module = FastQAInputModule(shared_resources)
-    model_module = fatqa_model_module(shared_resources)
+    input_module = XQAInputModule(shared_resources)
+    model_module = FastQAModule(shared_resources)
+    output_module = XQAOutputModule(shared_resources)
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@__extractive_qa_reader
+def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """ Creates a FastQA reader instance (extractive qa model). """
+    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
+    from jack.readers.extractive_qa.bidaf import BiDAF
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = XQAInputModule(shared_resources)
+    model_module = BiDAF(shared_resources)
     output_module = XQAOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
@@ -119,13 +132,13 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @__extractive_qa_reader
 def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model). """
-    from jack.readers.extractive_qa.cbow import CBOWXqaInputModule
-    from jack.readers.extractive_qa.cbow import cbow_xqa_model_module
+    from jack.readers.extractive_qa.cbow import CbowXQAInputModule
+    from jack.readers.extractive_qa.cbow import CbowXQAModule
     from jack.readers.extractive_qa.shared import XQANoScoreOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
-    input_module = CBOWXqaInputModule(shared_resources)
-    model_module = cbow_xqa_model_module(shared_resources)
+    input_module = CbowXQAInputModule(shared_resources)
+    model_module = CbowXQAModule(shared_resources)
     output_module = XQANoScoreOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 

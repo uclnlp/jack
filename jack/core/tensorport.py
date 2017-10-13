@@ -172,9 +172,9 @@ class FlatPorts:
         candidate_to_question = TensorPort(tf.int32, [None], "candidate2question",
                                            "Represents mapping to question idx per candidate",
                                            "[C]")
-        answer2question = TensorPort(tf.int32, [None], "answer2question",
-                                     "Represents mapping to question idx per answer",
-                                     "[A]")
+        answer2question = TensorPortWithDefault([0], tf.int32, [None], "answer2question",
+                                                "Represents mapping to question idx per answer",
+                                                "[A]")
 
         support = TensorPort(tf.int32, [None, None], "support_flat",
                              "Represents instances with a single support document. "
