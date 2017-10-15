@@ -109,6 +109,7 @@ We are thankful for support from:
 <a href="https://www.dfki.de/web"><img src="https://www.dfki.de/web/presse/bildmaterial/dfki-logo-e-schrift.jpg" width="100px"></a>
 <a href="http://www.pgafamilyfoundation.org"><img src="https://portlandmercado.files.wordpress.com/2013/02/pgaff_pms.jpg" width="100px"></a>
 <a href="http://summa-project.eu/"><img src="http://summa-project.eu/wp-content/uploads/2017/04/summalogofinal.png" width="100px"></a>
+<a href="http://ec.europa.eu/research/mariecurieactions/funded-projects/career-integration-grants_en"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/European_Commission.svg/2000px-European_Commission.svg.png" width="100px"></a>
 
 # Developer guidelines
 
