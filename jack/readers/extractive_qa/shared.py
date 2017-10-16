@@ -304,7 +304,7 @@ class XQAOutputModule(OutputModule):
                     char_end = len(q.support[0])
             else:
                 char_end = len(q.support[0])
-            print(char_start, char_end)
+
             answer = q.support[0][char_start: char_end]
 
             start_probs = _np_softmax(start_scores[i])
