@@ -14,7 +14,8 @@ import tensorflow as tf
 from sklearn.metrics import f1_score
 
 from jack.core.data_structures import QASetting, Answer
-from jack.core.reader import JTReader, TFReader
+from jack.core.reader import JTReader
+from jack.core.tensorflow import TFReader
 from jack.core.tensorport import TensorPort, Ports
 
 logger = logging.getLogger(__name__)

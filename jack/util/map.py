@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import pprint
-
 import numpy as np
 
 from jack.util.random import DefaultRandomState
-from jack.util.vocab import Vocab
 
 rs = DefaultRandomState(1337)
 
@@ -35,7 +32,7 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
     xs_iter = xs.items() if is_dict else enumerate(xs)
 
     for i, (key, x) in enumerate(xs_iter):
-        if keys is None or key in keys:
+        if (keys is None or key in keys) and not isinstance(x, np.ndarray):
             shape = get_list_shape(x)
             dtype = dtypes[i] if dtypes is not None else np.int64
             x_np = np.full(shape, pad, dtype)
@@ -44,7 +41,6 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
 
             if nb_dims == 0:
                 x_np = x
-
             else:
                 def f(tensor, values):
                     t_shp = tensor.shape

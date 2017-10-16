@@ -7,6 +7,7 @@ from typing import NamedTuple
 import progressbar
 
 from jack.core import *
+from jack.core.tensorflow import TFModelModule
 from jack.readers.extractive_qa.util import prepare_data
 from jack.tfutil import sequence_encoder
 from jack.tfutil.xqa import xqa_crossentropy_loss

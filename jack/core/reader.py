@@ -9,18 +9,13 @@ using a TensorFlow model into other tensors, and one that converts these tensors
 import logging
 import os
 import shutil
-import sys
-from functools import reduce
 from typing import Iterable, List
-
-import tensorflow as tf
 
 from jack.core.data_structures import *
 from jack.core.input_module import InputModule
-from jack.core.model_module import ModelModule, TFModelModule
+from jack.core.model_module import ModelModule
 from jack.core.output_module import OutputModule
 from jack.core.shared_resources import SharedResources
-from jack.core.tensorport import Ports
 
 logger = logging.getLogger(__name__)
 
@@ -196,96 +191,3 @@ class JTReader:
         self.input_module.store(os.path.join(path, "input_module"))
         self.model_module.store(os.path.join(path, "model_module"))
         self.output_module.store(os.path.join(path, "output_module"))
-
-
-class TFReader(JTReader):
-    """Tensorflow implementation of JTReader.
-
-    A tensorflow reader reads inputs consisting of questions, supports and possibly candidates, and produces answers.
-    It consists of three layers: input to tensor (input_module), tensor to tensor (model_module), and tensor to answer
-    (output_model). These layers are called in-turn on a given input (list).
-    """
-
-    @property
-    def model_module(self) -> TFModelModule:
-        return super().model_module
-
-    @property
-    def session(self) -> tf.Session:
-        """Returns: input module"""
-        return self.model_module.tf_session
-
-    def train(self, optimizer,
-              training_set: Iterable[Tuple[QASetting, List[Answer]]],
-              batch_size: int, max_epochs=10, hooks=tuple(),
-              l2=0.0, clip=None, clip_op=tf.clip_by_value, summary_writer=None, **kwargs):
-        """
-        This method trains the reader (and changes its state).
-
-        Args:
-            optimizer: TF optimizer
-            training_set: the training instances.
-            batch_size: size of training batches
-            max_epochs: maximum number of epochs
-            hooks: TrainingHook implementations that are called after epochs and batches
-            l2: whether to use l2 regularization
-            clip: whether to apply gradient clipping and at which value
-            clip_op: operation to perform for clipping
-        """
-        batches, loss, min_op, summaries = self._setup_training(
-            batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs)
-
-        self._train_loop(min_op, loss, batches, hooks, max_epochs, summaries, summary_writer, **kwargs)
-
-    def _setup_training(self, batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs):
-        global_step = tf.train.create_global_step()
-        if not self._is_setup:
-            # First setup shared resources, e.g., vocabulary. This depends on the input module.
-            logger.info("Setting up model...")
-            self.setup_from_data(training_set, is_training=True)
-        logger.info("Preparing training data...")
-        batches = self.input_module.batch_generator(training_set, batch_size, is_eval=False)
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        loss = self.model_module.tensors[Ports.loss]
-        summaries = None
-        if summary_writer is not None:
-            summaries = tf.summary.merge_all()
-        if l2:
-            loss += tf.add_n([tf.nn.l2_loss(v) for v in self.model_module.train_variables]) * l2
-        if clip:
-            gradients = optimizer.compute_gradients(loss)
-            if clip_op == tf.clip_by_value:
-                gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                             for grad, var in gradients if grad]
-            elif clip_op == tf.clip_by_norm:
-                gradients = [(tf.clip_by_norm(grad, clip), var)
-                             for grad, var in gradients if grad]
-            min_op = optimizer.apply_gradients(gradients, global_step)
-        else:
-            min_op = optimizer.minimize(loss, global_step)
-
-        variable_size = lambda v: reduce(lambda x, y: x * y, v.get_shape().as_list())
-        num_params = sum(variable_size(v) for v in self.model_module.train_variables)
-        logger.info("Number of parameters: %d" % num_params)
-
-        # initialize non model variables like learning rate, optimizer vars ...
-        self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
-        return batches, loss, min_op, summaries
-
-    def _train_loop(self, optimization_op, loss_op, batches, hooks, max_epochs, summaries, summary_writer, **kwargs):
-        logger.info("Start training...")
-        for i in range(1, max_epochs + 1):
-            for j, batch in enumerate(batches):
-                feed_dict = self.model_module.convert_to_feed_dict(batch)
-                if summaries is not None:
-                    step, sums, current_loss, _ = self.session.run(
-                        [tf.train.get_global_step(), summaries, loss_op, optimization_op], feed_dict=feed_dict)
-                    summary_writer.add_summary(sums, step)
-                else:
-                    current_loss, _ = self.session.run([loss_op, optimization_op], feed_dict=feed_dict)
-                for hook in hooks:
-                    hook.at_iteration_end(i, current_loss, set_name='train')
-
-            # calling post-epoch hooks
-            for hook in hooks:
-                hook.at_epoch_end(i)

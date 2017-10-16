@@ -6,6 +6,7 @@ import progressbar
 
 from jack.core import *
 from jack.core.data_structures import *
+from jack.core.tensorflow import TFModelModule
 from jack.readers.multiple_choice import util
 from jack.util import preprocessing
 from jack.util.map import numpify
