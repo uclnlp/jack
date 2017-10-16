@@ -1,5 +1,4 @@
 import torch
-import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as functional
 
@@ -11,8 +10,6 @@ from jack.torch_util import misc, xqa
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):
-    TorchTensor = torch._TensorBase
-    TorchVariable = torch.autograd.Variable
 
     @property
     def input_ports(self):
@@ -53,10 +50,11 @@ class FastQAPyTorchModule(nn.Module):
         self._shared_resources = shared_resources
         input_size = shared_resources.config["repr_dim_input"]
         size = shared_resources.config["repr_dim"]
+        self._size = size
         self._answer_layer = FastQAAnswerModule(shared_resources)
 
         # modules
-        self._bilstm = nn.LSTM(input_size + 2, size, 1, bidirectional=True)
+        self._bilstm = nn.LSTM(input_size + 2, size, 1, bidirectional=True, batch_first=True)
 
         # parameters
         self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size))
@@ -102,17 +100,19 @@ class FastQAPyTorchModule(nn.Module):
         with_char_embeddings = self._shared_resources.config.get("with_char_embeddings", False)
 
         # compute encoder features
-        question_features = torch.ones(batch_size, max_question_length, 2)
+        question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2))
+        if torch.cuda.device_count() > 0:
+            question_features = question_features.cuda()
+        question_features = question_features.type_as(emb_question)
 
         v_wiqw = self._v_wiq_w
-
         # [B, L_q, L_s]
         wiq_w = torch.matmul(emb_question * v_wiqw, emb_support.transpose(1, 2))
         # [B, L_q, L_s]
         wiq_w = wiq_w + support_mask.view(batch_size, 1, -1)
 
         # [B, L_s]
-        wiq_w = torch.mul(functional.softmax(wiq_w), question_binary_mask.view(batch_size, -1, 1)).sum(dim=1)
+        wiq_w = torch.mul(functional.softmax(wiq_w), question_binary_mask.unsqueeze(2)).sum(dim=1)
 
         # [B, L , 2]
         support_features = torch.stack([word_in_question, wiq_w], dim=2)
@@ -126,15 +126,15 @@ class FastQAPyTorchModule(nn.Module):
         emb_support_ext = torch.cat([emb_support, support_features], 2)
 
         # encode question and support
-        # [L, B, 2 * size]
-        encoded_question = self._bilstm(emb_question_ext.transpose(0, 1),
-                                        (self._lstm_start_hidden, self._lstm_start_state))[0]
-        encoded_support = self._bilstm(emb_support_ext.transpose(0, 1),
-                                       (self._lstm_start_hidden, self._lstm_start_state))[0]
+        # [B, L, 2 * size]
+        start_hidden = self._lstm_start_hidden.unsqueeze(1).expand(2, batch_size, self._size).contiguous()
+        start_state = self._lstm_start_state.unsqueeze(1).expand(2, batch_size, self._size).contiguous()
+        encoded_question = self._bilstm(emb_question_ext, (start_hidden, start_state))[0]
+        encoded_support = self._bilstm(emb_support_ext, (start_hidden, start_state))[0]
 
         # [B, L, size]
-        encoded_support = functional.linear(encoded_support, self._support_projection).transpose(0, 1)
-        encoded_question = functional.linear(encoded_question, self._question_projection).transpose(0, 1)
+        encoded_support = functional.linear(encoded_support, self._support_projection)
+        encoded_question = functional.linear(encoded_question, self._question_projection)
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
             self._answer_layer(encoded_question, question_length, encoded_support, support_length,
@@ -164,7 +164,8 @@ class FastQAAnswerModule(nn.Module):
     def forward(self, encoded_question, question_length, encoded_support, support_length,
                 correct_start, answer2question, is_eval):
         # casting
-        answer2question = answer2question.type(torch.LongTensor)
+        long_tensor = torch.cuda.LongTensor if torch.cuda.device_count() > 0 else torch.LongTensor
+        answer2question = answer2question.type(long_tensor)
         batch_size = question_length.data.shape[0]
 
         # computing single time attention over question
@@ -195,7 +196,7 @@ class FastQAAnswerModule(nn.Module):
             # use correct start during training, because p(end|start) should be optimized
             start_pointer = predicted_start_pointer
         else:
-            start_pointer = correct_start.type(torch.LongTensor)
+            start_pointer = correct_start.type(long_tensor)
             predicted_start_pointer = align(predicted_start_pointer)
             start_scores = align(start_scores)
             start_input = align(start_input)

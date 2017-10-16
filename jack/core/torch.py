@@ -40,7 +40,7 @@ class PyTorchModelModule(ModelModule):
             A mapping from goal ports to tensors.
         """
         goal_ports = goal_ports or self.output_ports
-        inputs = [p.create_torch_variable(batch.get(p)) for p in self.input_ports]
+        inputs = [p.create_torch_variable(batch.get(p), gpu=torch.cuda.device_count() > 0) for p in self.input_ports]
         outputs = self.prediction_module.forward(*inputs)
         ret = {p: p.torch_to_numpy(t) for p, t in zip(self.output_ports, outputs) if p in goal_ports}
         for p in goal_ports:
@@ -79,6 +79,9 @@ class PyTorchModelModule(ModelModule):
         """
         self._prediction_module = self.create_prediction_module(self.shared_resources)
         self._loss_module = self.create_loss_module(self.shared_resources)
+        if torch.cuda.device_count() > 0:
+            self._prediction_module.cuda()
+            self._loss_module.cuda()
 
     def store(self, path):
         with open(path, 'wb') as f:
@@ -130,7 +133,7 @@ class PyTorchReader(reader.JTReader):
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 for p, v in batch.items():
-                    batch[p] = p.create_torch_variable(batch[p])
+                    batch[p] = p.create_torch_variable(batch[p], gpu=torch.cuda.device_count() > 0)
                 # zero the parameter gradients
                 optimizer.zero_grad()
 

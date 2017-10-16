@@ -65,9 +65,8 @@ class TensorPort:
                 value = torch.autograd.Variable(torch.from_numpy(value))
         else:
             value = torch.autograd.Variable(value)
-        if gpu:
+        if gpu and isinstance(value, torch.autograd.Variable):
             value = value.cuda()
-
         return value
 
     def torch_to_numpy(self, value):
@@ -78,7 +77,7 @@ class TensorPort:
         if isinstance(value, torch.autograd.Variable):
             value = value.data
         if torch.is_tensor(value):
-            return value.numpy()
+            return value.cpu().numpy()
         elif isinstance(value, np.ndarray):
             return value
         else:

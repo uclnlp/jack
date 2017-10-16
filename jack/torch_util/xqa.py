@@ -8,7 +8,8 @@ from torch.nn import functional
 class XQAMinCrossentropyLossModule(nn.Module):
     def forward(self, start_scores, end_scores, answer_span, answer_to_question):
         """very common XQA loss function."""
-        answer_span = answer_span.type(torch.LongTensor)
+        long_tensor = torch.cuda.LongTensor if torch.cuda.device_count() > 0 else torch.LongTensor
+        answer_span = answer_span.type(long_tensor)
         start, end = answer_span[:, 0], answer_span[:, 1]
 
         batch_size1 = start.data.shape[0]
