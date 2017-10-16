@@ -18,7 +18,7 @@ from jack.io.embeddings.embeddings import load_embeddings, Embeddings
 from jack.io.load import loaders
 from jack.util.vocab import Vocab
 
-from jack import train as jtrain
+from jack.train_reader import train as jtrain
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 

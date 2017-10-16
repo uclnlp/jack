@@ -24,8 +24,8 @@ class Install(_install):
 
 
 class Develop(_develop):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def run(self):
         import nltk
