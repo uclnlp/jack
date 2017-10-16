@@ -137,6 +137,11 @@ class TensorPortWithDefault(TensorPort):
                                                                                                      self.dtype))
         return ph
 
+    def create_torch_variable(self, value, gpu=False):
+        if value is None:
+            value = self.default_value
+        return super(TensorPortWithDefault, self).create_torch_variable(value, gpu)
+
 
 class Ports:
     """Defines sopme common ports for reusability and as examples. Readers can of course define their own.

@@ -217,14 +217,15 @@ class FastQAAnswerModule(nn.Module):
 
         end_scores = end_scores + support_mask
 
-        _, predicted_end_pointer = end_scores.max(1)
-
         max_support = support_length.max().data[0]
 
         def mask_with_start(scores):
             return scores + misc.mask_for_lengths(start_pointer, max_support, mask_right=False)
 
-        end_scores = mask_with_start(end_scores) if is_eval else end_scores
+        if is_eval:
+            end_scores = mask_with_start(end_scores)
+
+        _, predicted_end_pointer = end_scores.max(1)
 
         if is_eval and answer2question.data.shape[0] > batch_size:
             # this is evaluation on a dataset, not application => we need to align output with correct answers

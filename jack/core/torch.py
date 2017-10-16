@@ -23,14 +23,11 @@ class PyTorchModelModule(ModelModule):
     the ports.
     """
 
-    TorchTensor = torch._TensorBase
-    TorchVariable = torch.autograd.Variable
-
     def __init__(self, shared_resources: SharedResources):
         self.shared_resources = shared_resources
         # will be set in setup later
-        self.prediction_module = None
-        self.loss_module = None
+        self._prediction_module = None
+        self._loss_module = None
 
     def __call__(self, batch: Mapping[TensorPort, np.ndarray],
                  goal_ports: List[TensorPort] = None) -> Mapping[TensorPort, np.ndarray]:
@@ -43,7 +40,7 @@ class PyTorchModelModule(ModelModule):
             A mapping from goal ports to tensors.
         """
         goal_ports = goal_ports or self.output_ports
-        inputs = [p.create_torch_variable(batch[p]) for p in self.input_ports]
+        inputs = [p.create_torch_variable(batch.get(p)) for p in self.input_ports]
         outputs = self.prediction_module.forward(*inputs)
         ret = {p: p.torch_to_numpy(t) for p, t in zip(self.output_ports, outputs) if p in goal_ports}
         for p in goal_ports:
@@ -66,20 +63,33 @@ class PyTorchModelModule(ModelModule):
         `training_output_ports`."""
         raise NotImplementedError
 
+    @property
+    def prediction_module(self) -> nn.Module:
+        return self._prediction_module
+
+    @property
+    def loss_module(self) -> nn.Module:
+        return self._loss_module
+
     def setup(self, is_training=True):
         """Sets up the module.
 
         This usually involves creating the actual tensorflow graph. It is expected to be called after the input module
         is set up and shared resources, such as the vocab, config, etc., are prepared already at this point.
         """
-        self.prediction_module = self.create_prediction_module(self.shared_resources)
-        self.loss_module = self.create_loss_module(self.shared_resources)
+        self._prediction_module = self.create_prediction_module(self.shared_resources)
+        self._loss_module = self.create_loss_module(self.shared_resources)
 
     def store(self, path):
-        pass
+        with open(path, 'wb') as f:
+            torch.save({'prediction_module': self.prediction_module.state_dict(),
+                        'loss_module': self.loss_module.state_dict()}, f)
 
     def load(self, path):
-        pass
+        with open(path, 'rb') as f:
+            d = torch.load(f)
+        self.prediction_module.load_state_dict(d['prediction_module'])
+        self.loss_module.load_state_dict(d['loss_module'])
 
 
 class PyTorchReader(reader.JTReader):
@@ -121,6 +131,9 @@ class PyTorchReader(reader.JTReader):
             for j, batch in enumerate(batches):
                 for p, v in batch.items():
                     batch[p] = p.create_torch_variable(batch[p])
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
                 pred_outputs = p_module.forward(
                     *(batch[p] for p in self.model_module.input_ports))
                 batch.update(zip(self.model_module.output_ports, pred_outputs))
