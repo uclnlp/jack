@@ -6,7 +6,8 @@ from jack.core import SharedResources
 from jack.core.tensorport import Ports
 from jack.core.torch import PyTorchModelModule
 from jack.readers.extractive_qa.shared import XQAPorts
-from jack.torch_util import misc, xqa
+from jack.torch_util import embedding, misc, xqa
+from jack.torch_util.highway import Highway
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):
@@ -51,13 +52,23 @@ class FastQAPyTorchModule(nn.Module):
         input_size = shared_resources.config["repr_dim_input"]
         size = shared_resources.config["repr_dim"]
         self._size = size
+        self._with_char_embeddings = self._shared_resources.config.get("with_char_embeddings", False)
+
+        # modules & parameters
+        self._conv_char_embedding = embedding.ConvCharEmbeddingModule(
+            len(shared_resources.char_vocab), size)
+
+        if self._with_char_embeddings:
+            self._embedding_projection = nn.Linear(size + input_size, size)
+            self._embedding_highway = Highway(size, 1)
+            self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size + size))
+            input_size = size
+        else:
+            self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size))
+
+        self._bilstm = nn.LSTM(input_size + 2, size, 1, bidirectional=True, batch_first=True)
         self._answer_layer = FastQAAnswerModule(shared_resources)
 
-        # modules
-        self._bilstm = nn.LSTM(input_size + 2, size, 1, bidirectional=True, batch_first=True)
-
-        # parameters
-        self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size))
         self._lstm_start_hidden = nn.Parameter(torch.zeros(2, size))
         self._lstm_start_state = nn.Parameter(torch.zeros(2, size))
 
@@ -97,7 +108,13 @@ class FastQAPyTorchModule(nn.Module):
         support_mask = misc.mask_for_lengths(support_length)
         question_binary_mask = misc.mask_for_lengths(question_length, mask_right=False, value=1.0)
 
-        with_char_embeddings = self._shared_resources.config.get("with_char_embeddings", False)
+        if self._with_char_embeddings:
+            # compute combined embeddings
+            [char_emb_question, char_emb_support] = self._conv_char_embedding(
+                unique_word_chars, unique_word_char_length, [question_words2unique, support_words2unique])
+
+            emb_question = torch.cat([emb_question, char_emb_question], 2)
+            emb_support = torch.cat([emb_support, char_emb_support], 2)
 
         # compute encoder features
         question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2))
@@ -116,6 +133,13 @@ class FastQAPyTorchModule(nn.Module):
 
         # [B, L , 2]
         support_features = torch.stack([word_in_question, wiq_w], dim=2)
+
+        if self._with_char_embeddings:
+            # highway layer to allow for interaction between concatenated embeddings
+            emb_question = self._embedding_projection(emb_question)
+            emb_support = self._embedding_projection(emb_support)
+            emb_question = self._embedding_highway(emb_question)
+            emb_support = self._embedding_highway(emb_support)
 
         # dropout
         emb_question = functional.dropout(emb_question, 1.0 - keep_prob)
