@@ -22,7 +22,6 @@ FLAGS = tf.app.flags.FLAGS
 
 logger.info("Creating and loading reader from {}...".format(FLAGS.model_dir))
 
-config = {'batch_size': FLAGS.batch_size, 'max_support_length': None}
 reader = reader_from_file(FLAGS.model_dir)
 dataset = loaders[FLAGS.loader](FLAGS.dataset)
 
@@ -37,9 +36,8 @@ def side_effect(metrics, _):
     logger.info("#####################################")
     return 0.0
 
-
 test_eval_hook = eval_hooks[reader.shared_resources.config["model"]](
-    reader, dataset, epoch_interval=1, side_effect=side_effect)
+    reader, dataset, FLAGS.batch_size, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 
 logger.info("Done!")
