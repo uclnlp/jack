@@ -134,9 +134,9 @@ class PyTorchReader(reader.JTReader):
             for j, batch in enumerate(batches):
                 for p, v in batch.items():
                     batch[p] = p.create_torch_variable(batch[p], gpu=torch.cuda.device_count() > 0)
+
                 # zero the parameter gradients
                 optimizer.zero_grad()
-
                 pred_outputs = p_module.forward(
                     *(batch[p] for p in self.model_module.input_ports))
                 batch.update(zip(self.model_module.output_ports, pred_outputs))

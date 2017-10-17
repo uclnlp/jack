@@ -55,10 +55,9 @@ class FastQAPyTorchModule(nn.Module):
         self._with_char_embeddings = self._shared_resources.config.get("with_char_embeddings", False)
 
         # modules & parameters
-        self._conv_char_embedding = embedding.ConvCharEmbeddingModule(
-            len(shared_resources.char_vocab), size)
-
         if self._with_char_embeddings:
+            self._conv_char_embedding = embedding.ConvCharEmbeddingModule(
+                len(shared_resources.char_vocab), size)
             self._embedding_projection = nn.Linear(size + input_size, size)
             self._embedding_highway = Highway(size, 1)
             self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size + size))
@@ -126,7 +125,7 @@ class FastQAPyTorchModule(nn.Module):
         # [B, L_q, L_s]
         wiq_w = torch.matmul(emb_question * v_wiqw, emb_support.transpose(1, 2))
         # [B, L_q, L_s]
-        wiq_w = wiq_w + support_mask.view(batch_size, 1, -1)
+        wiq_w = wiq_w + support_mask.unsqueeze(1)
 
         # [B, L_s]
         wiq_w = torch.mul(functional.softmax(wiq_w), question_binary_mask.unsqueeze(2)).sum(dim=1)
@@ -190,7 +189,6 @@ class FastQAAnswerModule(nn.Module):
         # casting
         long_tensor = torch.cuda.LongTensor if torch.cuda.device_count() > 0 else torch.LongTensor
         answer2question = answer2question.type(long_tensor)
-        batch_size = question_length.data.shape[0]
 
         # computing single time attention over question
         attention_scores = self._linear_question_attention(encoded_question)
@@ -251,12 +249,5 @@ class FastQAAnswerModule(nn.Module):
             end_scores = mask_with_start(end_scores)
 
         _, predicted_end_pointer = end_scores.max(1)
-
-        if is_eval and answer2question.data.shape[0] > batch_size:
-            # this is evaluation on a dataset, not application => we need to align output with correct answers
-            start_scores = align(start_scores)
-            end_scores = align(end_scores)
-            predicted_start_pointer = align(predicted_start_pointer)
-            predicted_end_pointer = align(predicted_end_pointer)
 
         return start_scores, end_scores, predicted_start_pointer, predicted_end_pointer
