@@ -25,11 +25,11 @@ class XQAMinCrossentropyLossModule(nn.Module):
             while j >= len(partitioned_loss):
                 partitioned_loss.append([])
             loss = -torch.index_select(functional.log_softmax(start_scores[i]), 0, start[i])
-            loss += -torch.index_select(functional.log_softmax(end_scores[i]), 0, end[i])
+            loss -= torch.index_select(functional.log_softmax(end_scores[i]), 0, end[i])
             partitioned_loss[j].append(loss)
 
-        for i in range(len(partitioned_loss)):
-            partitioned_loss[i] = torch.min(torch.stack(partitioned_loss[i]))
+        for j in range(len(partitioned_loss)):
+            partitioned_loss[j] = torch.stack(partitioned_loss[j]).min()
 
         loss = torch.stack(partitioned_loss).mean()
         return loss

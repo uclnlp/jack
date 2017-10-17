@@ -11,32 +11,38 @@ from jack.torch_util.highway import Highway
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):
+    _input_ports = [XQAPorts.emb_question, XQAPorts.question_length,
+                    XQAPorts.emb_support, XQAPorts.support_length,
+                    # char embedding inputs
+                    XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
+                    XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                    # feature input
+                    XQAPorts.word_in_question,
+                    # optional input, provided only during training
+                    XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                    XQAPorts.keep_prob, XQAPorts.is_eval]
 
-    @property
-    def input_ports(self):
-        return [XQAPorts.emb_question, XQAPorts.question_length,
-                XQAPorts.emb_support, XQAPorts.support_length,
-                # char embedding inputs
-                XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
-                XQAPorts.question_words2unique, XQAPorts.support_words2unique,
-                # feature input
-                XQAPorts.word_in_question,
-                # optional input, provided only during training
-                XQAPorts.correct_start_training, XQAPorts.answer2question_training,
-                XQAPorts.keep_prob, XQAPorts.is_eval]
+    _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
+                     XQAPorts.span_prediction]
+    _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
+                             XQAPorts.answer_span, XQAPorts.answer2question_training]
+    _training_output_ports = [Ports.loss]
 
     @property
     def output_ports(self):
-        return [XQAPorts.start_scores, XQAPorts.end_scores, XQAPorts.span_prediction]
+        return self._output_ports
+
+    @property
+    def input_ports(self):
+        return self._input_ports
 
     @property
     def training_input_ports(self):
-        return [XQAPorts.start_scores, XQAPorts.end_scores,
-                XQAPorts.answer_span, XQAPorts.answer2question_training]
+        return self._training_input_ports
 
     @property
     def training_output_ports(self):
-        return [Ports.loss]
+        return self._training_output_ports
 
     def create_loss_module(self, shared_resources: SharedResources):
         return xqa.XQAMinCrossentropyLossModule()
@@ -80,7 +86,7 @@ class FastQAPyTorchModule(nn.Module):
                 unique_word_chars, unique_word_char_length,
                 question_words2unique, support_words2unique,
                 word_in_question, correct_start, answer2question,
-                keep_prob: float, is_eval: bool):
+                keep_prob, is_eval: bool):
         """fast_qa model
 
         Args:
@@ -116,9 +122,11 @@ class FastQAPyTorchModule(nn.Module):
             emb_support = torch.cat([emb_support, char_emb_support], 2)
 
         # compute encoder features
-        question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2))
-        if torch.cuda.device_count() > 0:
-            question_features = question_features.cuda()
+        if emb_question.is_cuda:
+            question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2,
+                                                                   out=torch.cuda.FloatTensor()))
+        else:
+            question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2))
         question_features = question_features.type_as(emb_question)
 
         v_wiqw = self._v_wiq_w
@@ -141,8 +149,9 @@ class FastQAPyTorchModule(nn.Module):
             emb_support = self._embedding_highway(emb_support)
 
         # dropout
-        emb_question = functional.dropout(emb_question, 1.0 - keep_prob)
-        emb_support = functional.dropout(emb_support, 1.0 - keep_prob)
+        dropout = self._shared_resources.config["dropout"]
+        emb_question = functional.dropout(emb_question, dropout, training=not is_eval)
+        emb_support = functional.dropout(emb_support, dropout, training=not is_eval)
 
         # extend embeddings with features
         emb_question_ext = torch.cat([emb_question, question_features], 2)
@@ -187,7 +196,7 @@ class FastQAAnswerModule(nn.Module):
     def forward(self, encoded_question, question_length, encoded_support, support_length,
                 correct_start, answer2question, is_eval):
         # casting
-        long_tensor = torch.cuda.LongTensor if torch.cuda.device_count() > 0 else torch.LongTensor
+        long_tensor = torch.cuda.LongTensor if encoded_question.is_cuda else torch.LongTensor
         answer2question = answer2question.type(long_tensor)
 
         # computing single time attention over question
