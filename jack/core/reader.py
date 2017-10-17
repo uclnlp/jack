@@ -151,6 +151,16 @@ class JTReader:
             is_training: indicates whether it's the training phase or not
         """
         self.shared_resources.load(os.path.join(path, "shared_resources"))
+        self.load_and_setup_modules(path, is_training)
+
+    def load_and_setup_modules(self, path, is_training=False):
+        """
+        Sets up already stored reader from model directory.
+
+        Args:
+            path: training dataset
+            is_training: indicates whether it's the training phase or not
+        """
         self.input_module.setup()
         self.input_module.load(os.path.join(path, "input_module"))
         self.model_module.setup(is_training)

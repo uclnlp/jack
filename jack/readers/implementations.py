@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 from jack.core.reader import TFReader
@@ -37,6 +38,14 @@ def __kbp_reader(f):
     kbp_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, KBPEvalHook)
     return f
+
+
+def reader_from_file(reader_dir: str):
+    shared_resources = create_shared_resources()
+    shared_resources.load(os.path.join(reader_dir, "shared_resources"))
+    reader = readers[shared_resources.config["model"]](shared_resources)
+    reader.load_and_setup_modules(reader_dir)
+    return reader
 
 
 def create_shared_resources(resources_or_config: Union[dict, SharedResources] = None) -> SharedResources:
