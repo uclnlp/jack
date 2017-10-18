@@ -60,7 +60,6 @@ class Duration(object):
 checkpoint = Duration()
 
 logging.basicConfig(level=logging.INFO)
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # print only TF errors
 
 
 @ex.automain
