@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
 from setuptools import find_packages
-from setuptools.command.install import install as _install
+from setuptools import setup
 from setuptools.command.develop import develop as _develop
+from setuptools.command.install import install as _install
 
 
 class Install(_install):
@@ -28,10 +28,6 @@ class Develop(_develop):
         super().__init__()
 
     def run(self):
-        import nltk
-        nltk.download('punkt')
-        nltk.download('averaged_perceptron_tagger')
-
         import spacy
         try:
             spacy.load('en')

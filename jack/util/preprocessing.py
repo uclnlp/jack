@@ -12,9 +12,9 @@ def fill_vocab(qa_settings, vocab=None, lowercase=False, lemmatize=False, spacy_
     vocab = vocab or Vocab(unk=None)
     assert not vocab.frozen, 'Filling frozen vocabs does not make a lot fo sense...'
     for qa_setting in qa_settings:
-        nlp_preprocess(qa_setting.question, vocab, lowercase, lemmatize, spacy_nlp=spacy_nlp)
+        nlp_preprocess(qa_setting.question, vocab, lowercase, lemmatize, use_spacy=spacy_nlp)
         for s in qa_setting.support:
-            nlp_preprocess(s, vocab, lowercase, lemmatize, spacy_nlp=spacy_nlp)
+            nlp_preprocess(s, vocab, lowercase, lemmatize, use_spacy=spacy_nlp)
     return vocab
 
 
@@ -41,17 +41,28 @@ def nlp_preprocess_all(qa_settings,
                        lemmatize: bool = False,
                        with_lemmas: bool = False,
                        with_tokens_offsets: bool = False,
-                       spacy_nlp: bool = False):
+                       use_spacy: bool = False):
     assert not vocab.frozen, 'Filling frozen vocabs does not make a lot fo sense...'
     processed_questions = []
     processed_support = []
     for qa_setting in qa_settings:
         processed_questions.append(
-            nlp_preprocess(qa_setting.question, vocab, lowercase, lemmatize, spacy_nlp=spacy_nlp))
+            nlp_preprocess(qa_setting.question, vocab, lowercase, lemmatize, use_spacy=use_spacy))
         processed_support.append([])
         for s in qa_settings.support:
-            processed_support[-1].append(nlp_preprocess(s, vocab, lowercase, lemmatize, spacy_nlp=spacy_nlp))
+            processed_support[-1].append(nlp_preprocess(s, vocab, lowercase, lemmatize, use_spacy=use_spacy))
     return processed_questions, processed_support
+
+
+__spacy_nlp = None
+
+
+def spacy_nlp():
+    import spacy
+    global __spacy_nlp
+    if __spacy_nlp is None:
+        __spacy_nlp = spacy.load("en", parser=False, entity=False, matcher=False)
+    return __spacy_nlp
 
 
 def nlp_preprocess(text: str,
@@ -60,7 +71,7 @@ def nlp_preprocess(text: str,
                    lemmatize: bool = False,
                    with_lemmas: bool = False,
                    with_tokens_offsets: bool = False,
-                   spacy_nlp: bool = False) \
+                   use_spacy: bool = False) \
         -> Tuple[List[str], List[int], int, Optional[List[str]], Optional[List[int]]]:
     """Preprocesses a question and support:
     The steps include tokenization, lower-casing. It also includes the computation of token-to-character offsets for
@@ -71,12 +82,12 @@ def nlp_preprocess(text: str,
     Returns:
         tokens, ids, length, lemmas or None, token_offsets or None
     """
-    assert not with_lemmas or spacy_nlp, "enable spacy when using lemmas"
-    assert not lemmatize or spacy_nlp, "enable spacy when using lemmas"
+    assert not with_lemmas or use_spacy, "enable spacy when using lemmas"
+    assert not lemmatize or use_spacy, "enable spacy when using lemmas"
 
-    if spacy_nlp:
+    if use_spacy:
         import spacy
-        nlp = spacy.load("en", parser=False, entity=False, matcher=False)
+        nlp = use_spacy()
         thistokenize = lambda t: nlp(t)
     else:
         thistokenize = tokenize
@@ -86,7 +97,7 @@ def nlp_preprocess(text: str,
 
     token_offsets = None
     lemmas = None
-    if spacy_nlp:
+    if use_spacy:
         if with_lemmas:
             lemmas = [t.lemma_ for t in tokens]
         if with_tokens_offsets:

@@ -45,11 +45,11 @@ def prepare_data(qa_setting: QASetting,
     question = qa_setting.question
 
     question_tokens, question_ids, question_length, question_lemmas, _ = preprocessing.nlp_preprocess(
-        question, vocab, lowercase=lowercase, spacy_nlp=spacy_nlp,
+        question, vocab, lowercase=lowercase, use_spacy=spacy_nlp,
         lemmatize=lemmatize, with_lemmas=with_lemmas, with_tokens_offsets=False)
 
     support_tokens, support_ids, support_length, support_lemmas, token_offsets = preprocessing.nlp_preprocess(
-        support, vocab, lowercase=lowercase, spacy_nlp=spacy_nlp,
+        support, vocab, lowercase=lowercase, use_spacy=spacy_nlp,
         lemmatize=lemmatize, with_lemmas=with_lemmas, with_tokens_offsets=True)
 
     rng = random.Random(12345)
