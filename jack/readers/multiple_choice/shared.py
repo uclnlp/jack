@@ -99,11 +99,10 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
         2. Word embedding index tensor of support of mini-batchs
         3. Max timestep length of mini-batches for support tensor
         4. Max timestep length of mini-batches for question tensor
-        5. Labels
         """
         return [Ports.Input.support,
                 Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Target.target_index, Ports.Input.sample_id]
+                Ports.Input.question_length, Ports.Input.sample_id]
 
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[Mapping[str, any]]:
