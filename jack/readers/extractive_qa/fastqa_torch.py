@@ -72,6 +72,8 @@ class FastQAPyTorchModule(nn.Module):
             self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size))
 
         self._bilstm = nn.LSTM(input_size + 2, size, 1, bidirectional=True, batch_first=True)
+        self._bilstm.bias_ih_l0.data[size:2 * size].fill_(1.0)
+        self._bilstm.bias_ih_l0_reverse.data[size:2 * size].fill_(1.0)
         self._answer_layer = FastQAAnswerModule(shared_resources)
 
         self._lstm_start_hidden = nn.Parameter(torch.zeros(2, size))
