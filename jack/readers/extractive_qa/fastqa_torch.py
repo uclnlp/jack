@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as functional
+import torch.nn.functional as F
 
 from jack.core import SharedResources
 from jack.core.tensorport import Ports
@@ -134,9 +134,9 @@ class FastQAPyTorchModule(nn.Module):
         wiq_w = torch.matmul(emb_question * v_wiqw, emb_support.transpose(1, 2))
         # [B, L_q, L_s]
         wiq_w = wiq_w + support_mask.unsqueeze(1)
-
+        wiq_w = F.softmax(wiq_w.view(batch_size * max_question_length, -1)).view(batch_size, max_question_length, -1)
         # [B, L_s]
-        wiq_w = torch.mul(functional.softmax(wiq_w), question_binary_mask.unsqueeze(2)).sum(dim=1)
+        wiq_w = torch.matmul(question_binary_mask.unsqueeze(1), wiq_w).squeeze(1)
 
         # [B, L , 2]
         support_features = torch.stack([word_in_question, wiq_w], dim=2)
@@ -150,8 +150,8 @@ class FastQAPyTorchModule(nn.Module):
 
         # dropout
         dropout = self._shared_resources.config["dropout"]
-        emb_question = functional.dropout(emb_question, dropout, training=not is_eval)
-        emb_support = functional.dropout(emb_support, dropout, training=not is_eval)
+        emb_question = F.dropout(emb_question, dropout, training=not is_eval)
+        emb_support = F.dropout(emb_support, dropout, training=not is_eval)
 
         # extend embeddings with features
         emb_question_ext = torch.cat([emb_question, question_features], 2)
@@ -165,8 +165,8 @@ class FastQAPyTorchModule(nn.Module):
         encoded_support = self._bilstm(emb_support_ext, (start_hidden, start_state))[0]
 
         # [B, L, size]
-        encoded_support = functional.linear(encoded_support, self._support_projection)
-        encoded_question = functional.linear(encoded_question, self._question_projection)
+        encoded_support = F.tanh(F.linear(encoded_support, self._support_projection))
+        encoded_question = F.tanh(F.linear(encoded_question, self._question_projection))
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
             self._answer_layer(encoded_question, question_length, encoded_support, support_length,
@@ -185,11 +185,11 @@ class FastQAAnswerModule(nn.Module):
         # modules
         self._linear_question_attention = nn.Linear(self._size, 1, bias=False)
 
-        self._linear_q_start_inter = nn.Linear(self._size, self._size)
+        self._linear_q_start_q = nn.Linear(self._size, self._size)
         self._linear_q_start = nn.Linear(2 * self._size, self._size, bias=False)
         self._linear_start_scores = nn.Linear(self._size, 1, bias=False)
 
-        self._linear_q_end_inter = nn.Linear(self._size, self._size)
+        self._linear_q_end_q = nn.Linear(self._size, self._size)
         self._linear_q_end = nn.Linear(3 * self._size, self._size, bias=False)
         self._linear_end_scores = nn.Linear(self._size, 1, bias=False)
 
@@ -203,30 +203,28 @@ class FastQAAnswerModule(nn.Module):
         attention_scores = self._linear_question_attention(encoded_question)
         q_mask = misc.mask_for_lengths(question_length)
         attention_scores = attention_scores.squeeze(2) + q_mask
-        question_attention_weights = functional.softmax(attention_scores)
-        question_state = torch.matmul(encoded_question.transpose(1, 2),
-                                      question_attention_weights.unsqueeze(2)).squeeze(2)
+        question_attention_weights = F.softmax(attention_scores)
+        question_state = torch.matmul(question_attention_weights.unsqueeze(1),
+                                      encoded_question).squeeze(1)
 
         # Prediction
         # start
         start_input = torch.cat([question_state.unsqueeze(1) * encoded_support, encoded_support], 2)
 
-        q_start_inter = self._linear_q_start_inter(question_state)
-        q_start_state = self._linear_q_start(start_input) + q_start_inter.unsqueeze(1)
-        start_scores = self._linear_start_scores(functional.relu(q_start_state)).squeeze(2)
+        q_start_state = self._linear_q_start(start_input) + self._linear_q_start_q(question_state).unsqueeze(1)
+        start_scores = self._linear_start_scores(F.relu(q_start_state)).squeeze(2)
 
         support_mask = misc.mask_for_lengths(support_length)
         start_scores = start_scores + support_mask
         _, predicted_start_pointer = start_scores.max(1)
 
         def align(t):
-            v = torch.index_select(t, 0, answer2question)
-            return v
+            return torch.index_select(t, 0, answer2question)
 
         if is_eval:
-            # use correct start during training, because p(end|start) should be optimized
             start_pointer = predicted_start_pointer
         else:
+            # use correct start during training, because p(end|start) should be optimized
             start_pointer = correct_start.type(long_tensor)
             predicted_start_pointer = align(predicted_start_pointer)
             start_scores = align(start_scores)
@@ -243,19 +241,15 @@ class FastQAAnswerModule(nn.Module):
 
         end_input = torch.cat([encoded_support * u_s.unsqueeze(1), start_input], 2)
 
-        q_end_inter = self._linear_q_end_inter(question_state)
-        q_end_state = self._linear_q_end(end_input) + q_end_inter.unsqueeze(1)
-        end_scores = self._linear_end_scores(functional.relu(q_end_state)).squeeze(2)
+        q_end_state = self._linear_q_end(end_input) + self._linear_q_end_q(question_state).unsqueeze(1)
+        end_scores = self._linear_end_scores(F.relu(q_end_state)).squeeze(2)
 
         end_scores = end_scores + support_mask
 
         max_support = support_length.max().data[0]
 
-        def mask_with_start(scores):
-            return scores + misc.mask_for_lengths(start_pointer, max_support, mask_right=False)
-
         if is_eval:
-            end_scores = mask_with_start(end_scores)
+            end_scores += misc.mask_for_lengths(start_pointer, max_support, mask_right=False)
 
         _, predicted_end_pointer = end_scores.max(1)
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import torch
+import torch.nn.functional as F
 from torch import nn
-from torch.nn import functional
 
 
 class XQAMinCrossentropyLossModule(nn.Module):
@@ -24,12 +24,12 @@ class XQAMinCrossentropyLossModule(nn.Module):
             j = j.data[0]
             while j >= len(partitioned_loss):
                 partitioned_loss.append([])
-            loss = -torch.index_select(functional.log_softmax(start_scores[i]), 0, start[i])
-            loss -= torch.index_select(functional.log_softmax(end_scores[i]), 0, end[i])
+            loss = -torch.index_select(F.log_softmax(start_scores[i]), 0, start[i])
+            loss -= torch.index_select(F.log_softmax(end_scores[i]), 0, end[i])
             partitioned_loss[j].append(loss)
 
-        for j in range(len(partitioned_loss)):
-            partitioned_loss[j] = torch.stack(partitioned_loss[j]).min()
+        for j, l in enumerate(partitioned_loss):
+            partitioned_loss[j] = torch.stack(l).min()
 
         loss = torch.stack(partitioned_loss).mean()
         return loss

@@ -15,6 +15,7 @@ class ConvCharEmbeddingModule(nn.Module):
         self._size = size
         self._conv_width = conv_width
         self._embeddings = torch.nn.Embedding(num_chars, size)
+        self._embeddings.weight.data.mul_(0.1)
         self._conv = torch.nn.Conv1d(size, size, conv_width, padding=math.floor(conv_width / 2))
 
     def forward(self, unique_word_chars, unique_word_lengths, sequences_as_uniqs):
