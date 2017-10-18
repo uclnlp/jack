@@ -54,8 +54,7 @@ training epoch.  These can be loaded using the commands below or see e.g.
 from jack import readers
 from jack.core import QASetting
 
-fastqa_reader = readers.fastqa_reader()
-fastqa_reader.load_and_setup("./fastqa_reader")
+fastqa_reader = readers.reader_from_file("./fastqa_reader")
 
 support = """"It is a replica of the grotto at Lourdes, 
 France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. 
