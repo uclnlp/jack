@@ -8,6 +8,7 @@ from jack.core.torch import PyTorchModelModule
 from jack.readers.extractive_qa.shared import XQAPorts
 from jack.torch_util import embedding, misc, xqa
 from jack.torch_util.highway import Highway
+from jack.torch_util.rnn import BiLSTM
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):
@@ -71,13 +72,8 @@ class FastQAPyTorchModule(nn.Module):
         else:
             self._v_wiq_w = nn.Parameter(torch.ones(1, 1, input_size))
 
-        self._bilstm = nn.LSTM(input_size + 2, size, 1, bidirectional=True, batch_first=True)
-        self._bilstm.bias_ih_l0.data[size:2 * size].fill_(1.0)
-        self._bilstm.bias_ih_l0_reverse.data[size:2 * size].fill_(1.0)
+        self._bilstm = BiLSTM(input_size + 2, size)
         self._answer_layer = FastQAAnswerModule(shared_resources)
-
-        self._lstm_start_hidden = nn.Parameter(torch.zeros(2, size))
-        self._lstm_start_state = nn.Parameter(torch.zeros(2, size))
 
         # [size, 2 * size]
         self._question_projection = nn.Parameter(torch.cat([torch.eye(size), torch.eye(size)], dim=1))
@@ -161,10 +157,8 @@ class FastQAPyTorchModule(nn.Module):
 
         # encode question and support
         # [B, L, 2 * size]
-        start_hidden = self._lstm_start_hidden.unsqueeze(1).expand(2, batch_size, self._size).contiguous()
-        start_state = self._lstm_start_state.unsqueeze(1).expand(2, batch_size, self._size).contiguous()
-        encoded_question = self._bilstm(emb_question_ext, (start_hidden, start_state))[0]
-        encoded_support = self._bilstm(emb_support_ext, (start_hidden, start_state))[0]
+        encoded_question = self._bilstm(emb_question_ext)[0]
+        encoded_support = self._bilstm(emb_support_ext)[0]
 
         # [B, L, size]
         encoded_support = F.tanh(F.linear(encoded_support, self._support_projection))
