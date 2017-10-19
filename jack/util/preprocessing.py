@@ -87,7 +87,7 @@ def nlp_preprocess(text: str,
 
     if use_spacy:
         import spacy
-        nlp = use_spacy()
+        nlp = spacy_nlp()
         thistokenize = lambda t: nlp(t)
     else:
         thistokenize = tokenize
