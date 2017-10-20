@@ -1,10 +1,14 @@
 # Configs and Command Line Arguments for Jack
+
 Jack uses [sacred](http://sacred.readthedocs.io/en/latest/) for management of config files and parsing of command files.
-Configuration files are stored in `../conf`.
-See `./conf/jack.yaml` for a default configuration file.
-Configs use [YAML](http://www.yaml.org/start.html) as markup language to define hyperparameters and other options for training and running Jack models.
+
+
+Configuration files are stored in `../conf`: see `./conf/jack.yaml` for a default configuration file.
+
+Configuration files use [YAML](http://www.yaml.org/start.html) as markup language to define hyperparameters and other options for training and running Jack models.
+
 Configuration files can inherit default configurations by setting a `parent_config`.
-For instance, `./conf/jack_more_specific.yaml` inherits and overrides parameters of `./conf/jack_specific.yaml` which in turn overrides parameters in the default configuration `./conf/jack.yaml`.
+For instance, `./conf/fastqa.yaml` inherits and overrides parameters of `./conf/jack.yaml`, containing the default configuration for all models.
 
 ## Selecting a Config
 Paths to configs are passed in the command line. For example, the following runs Jack with the `jack_more_specific.yaml` config.
