@@ -2,7 +2,6 @@
 
 Jack uses [sacred](http://sacred.readthedocs.io/en/latest/) for management of config files and parsing of command files.
 
-
 Configuration files are stored in `../conf`: see `./conf/jack.yaml` for a default configuration file.
 
 Configuration files use [YAML](http://www.yaml.org/start.html) as markup language to define hyperparameters and other options for training and running Jack models.
