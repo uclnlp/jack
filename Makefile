@@ -24,7 +24,54 @@ overfit:
 smalldata:
 	$(PYTEST) tests -v -m "smalldata"
 
-SNLI:
-	$(PYTEST) tests -v -m SNLI
+
+# ===========
+# SNLI
+# ===========
+
+snli:
+	./data/SNLI/download.sh
+	$(PYTHON) jack/io/SNLI2jtr.py
+snli-esim:
+	 $(PYTHON) bin/jack-train.py with \
+		 train=data/SNLI/snli_1.0/snli_1.0_train_jtr_v1.json \
+		dev=data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json \
+		test=data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json \
+		model=esim_snli_reader
+
+
+# ===========
+# SQuAD
+# ===========
+#
+squad:
+	./data/SQuAD/download.sh
+
+glove:
+	./data/GloVe/download.sh
+
+squad-fastqa:
+	 $(PYTHON) bin/jack-train.py with \
+		 train=data/SQuAD/
+		dev=data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json \
+		test=data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json \
+		model=fastqa_reader
+
+
 doctests:
 	$(PYTEST) --doctest-modules jtr/preprocess/vocab.py
+
+help:
+	@echo "=================================="
+	@echo "Download and preprocess datasets:"
+	@echo "=================================="
+	@echo ""
+	@echo "SNLI"
+	@echo ""
+	@echo "=================================="
+	@echo "Run models:"
+	@echo "=================================="
+	@echo ""
+	@echo "SNLI-esim"
+
+
