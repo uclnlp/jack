@@ -6,20 +6,23 @@ from setuptools.command.develop import develop as _develop
 from setuptools.command.install import install as _install
 
 
+def spacy_download_en():
+    import spacy
+    try:
+        spacy.load('en')
+    except RuntimeError:
+        import subprocess
+        args = ['python3 -m spacy download en']
+        subprocess.call(args, shell=True)
+
+
 class Install(_install):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def run(self):
         _install.do_egg_install(self)
-        import spacy
-        try:
-            spacy.load('en')
-        except RuntimeError:
-            import subprocess
-            args = ['python3 -m spacy download en']
-            subprocess.call(args, shell=True)
-
+        spacy_download_en()
         _install.run(self)
 
 
@@ -28,14 +31,7 @@ class Develop(_develop):
         super().__init__()
 
     def run(self):
-        import spacy
-        try:
-            spacy.load('en')
-        except RuntimeError:
-            import subprocess
-            args = ['python3 -m spacy download en']
-            subprocess.call(args, shell=True)
-
+        spacy_download_en()
         _develop.run(self)
 
 
