@@ -25,6 +25,6 @@ embedding_format: 'glove'
 # format of embeddings to be loaded
 embedding_file: 'data/GloVe/glove.840B.300d.txt'
 
-epoch: 20
+epochs: 20
 
 repr_dim: 300

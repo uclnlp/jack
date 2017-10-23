@@ -87,8 +87,8 @@ $ ./data/SNLI/download.sh
 Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
-$ python3 bin/jack-train.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' 
-> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' repr_dim=300 epoch=20 seed=1337 dropout=0.5 batch_size=128
+$ python3 bin/jack-train.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
+> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128 \
 > embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
 ```
 
