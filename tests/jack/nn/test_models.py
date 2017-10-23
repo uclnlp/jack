@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import os
 import subprocess
 import time
 from os.path import join, exists
-import os
-import pytest
+
 import numpy as np
+import pytest
 
 OVERFIT_PATH = './tests/test_results/overfit_test/'
 SMALLDATA_PATH = './tests/test_results/smalldata_test/'
@@ -27,10 +28,10 @@ overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15, 'squad': 15}
 small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5, 'squad': 10}
 
 modelspecifics = {
-        'fastqa_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50 pretrain=true' +
+    'fastqa_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50' +
                       ' embedding_file=tests/test_data/glove.500.50d.txt' +
                       ' embedding_format=glove'),
-        'bidaf_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50 pretrain=true' +
+    'bidaf_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50' +
                       ' embedding_file=tests/test_data/glove.500.50d.txt' +
                       ' embedding_format=glove epochs={0}'.format(2 if is_small_data else 5))
 }
