@@ -51,7 +51,7 @@ $ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
 You want to train another model with the same configuration (e.g., bidaf)? No problem, just change the `model` flag:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/fastqa.yaml model=bidaf_reader'
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=bidaf_reader
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
@@ -92,7 +92,7 @@ $ ./data/SNLI/download.sh
 Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
-$ python3 bin/jack-train.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
+$ python3 bin/jack-train.py with model='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
 > dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl'
 > model_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128 \
 > embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
@@ -101,7 +101,7 @@ $ python3 bin/jack-train.py with model="dam_snli_reader" loader=snli train='data
 or the short version:
 
 ```bash
-$ python3 bin/jack-train.py with config=conf/snli.yaml model=dam_snli_reader model_dir=./dam_reader
+$ python3 bin/jack-train.py with config='./conf/snli.yaml' model=dam_snli_reader model_dir='./dam_reader'
 ```
 
 Note, you can easily change the model to one of the other implemented NLI readers (e.g., `cbilstm_snli_reader`, `esim_snli_reader`)
