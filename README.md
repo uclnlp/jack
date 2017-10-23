@@ -29,17 +29,23 @@ model.
 
 First, download SQuAD and GloVe embeddings:
 
-```shell
-$ cd data/SQuAD/
-$ ./download.sh
-$ cd ../GloVe/
-$ ./download.sh
-$ cd ../..
+```bash
+$ data/SQuAD/download.sh
+$ data/GloVe/download.sh
 ```
 
-Train a [FastQA][fastqa] model
+Train a [FastQA][fastqa] model:
 
-```shell
+
+```bash
+$ python3 jack/train_reader.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
+> repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' model_dir='./fastqa_reader' epochs=20 \
+> with_char_embeddings=True embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt' vocab_from_embeddings=True
+```
+
+or shorter, using our prepared config:
+
+```bash
 $ python3 jack/train_reader.py with config='./conf/fastqa.yaml'
 ```
 
@@ -74,14 +80,22 @@ answers = fastqa_reader([QASetting(
 
 First, download SNLI
 
-```shell
+```bash
 $ ./data/SNLI/download.sh
 ```
 
-Lastly, train a [Decomposable Attention Model][dam]
+Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
-$ python3 jack/train_reader.py with config=tests/test_conf/dam_test.yaml
+$ python3 jack/train_reader.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' 
+> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' repr_dim=300 epoch=20 seed=1337 dropout=0.5 batch_size=128
+> embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
+```
+
+or the short version:
+
+```bash
+$ python3 jack/train_reader.py with config=conf/dam.yaml
 ```
 
 ```python
@@ -92,8 +106,8 @@ dam_reader = readers.dam_snli_reader()
 dam_reader.load_and_setup("tests/test_results/dam_reader_test")
 
 answers = dam_reader([QASetting(
-    question="The boy plays with the ball.",
-    support=["The boy plays with the ball."]
+    question="The boy plays with the ball.",  # Hypothesis
+    support=["The boy plays with the ball."]  # Premise
 )])
 ```
 

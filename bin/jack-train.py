@@ -5,7 +5,6 @@ import logging
 import os
 import os.path as path
 import sys
-
 from time import time
 
 from sacred import Experiment
@@ -13,12 +12,11 @@ from sacred.arg_parser import parse_args
 from sacred.observers import SqlObserver
 
 from jack import readers
+from jack import train as jtrain
 from jack.core.shared_resources import SharedResources
 from jack.io.embeddings.embeddings import load_embeddings, Embeddings
 from jack.io.load import loaders
 from jack.util.vocab import Vocab
-
-from jack import train as jtrain
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
@@ -82,7 +80,6 @@ def main(batch_size,
          validation_interval,
          model,
          model_dir,
-         pretrain,
          seed,
          tensorboard_folder,
          test,
@@ -102,7 +99,7 @@ def main(batch_size,
         dev_data = train_data
         test_data = train_data
 
-        if pretrain:
+        if embedding_file is not None and embedding_format is not None:
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
@@ -115,7 +112,7 @@ def main(batch_size,
         test_data = loaders[loader](test) if test else None
 
         logger.info('loaded train/dev/test data')
-        if pretrain:
+        if embedding_file is not None and embedding_format is not None:
             embeddings = load_embeddings(embedding_file, embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(embedding_file))
             ex.current_run.config["repr_dim_input"] = embeddings.lookup[0].shape[0]

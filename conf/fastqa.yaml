@@ -39,14 +39,6 @@ embedding_file: 'data/GloVe/glove.840B.300d.txt'
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
 
-# Use pretrained embeddings, by default the initialisation is random
-pretrain: True
-
-# Size of the input representation (embeddings),
-# default 128 (embeddings cut off or extended if not,
-# matched with pretrained embeddings)
-repr_dim_input: 300
-
 repr_dim: 300
 
 epochs: 20

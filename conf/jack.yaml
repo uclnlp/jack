@@ -33,14 +33,11 @@ batch_size: 128
 # Batch size for development data, default 128
 dev_batch_size: 128
 
-# Size of the input representation (embeddings), default 128 (embeddings cut off or extended if not, matched with pretrained embeddings if provided)
+# Size of the input representation (embeddings), is automatically overwritten when pre-trained embeddings are provided
 repr_dim_input: 128
 
 # Size of the hidden representations, default 128
 repr_dim: 128
-
-# Use pretrained embeddings, by default the initialisation is random
-pretrain: False
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: False

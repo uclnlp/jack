@@ -109,9 +109,9 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
         preprocessed = list()
         for i, qa in enumerate(questions):
             _, token_ids, length, _, _ = preprocessing.nlp_preprocess(
-                qa.question, self.shared_resources.vocab, lowercase=True)
+                qa.question, self.shared_resources.vocab, lowercase=self.shared_resources.config['lowercase'])
             _, s_token_ids, s_length, _, _ = preprocessing.nlp_preprocess(
-                qa.support[0], self.shared_resources.vocab, lowercase=True)
+                qa.support[0], self.shared_resources.vocab, lowercase=self.shared_resources.config['lowercase'])
 
             preprocessed.append({
                 'supports': s_token_ids,
@@ -141,7 +141,7 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         if not self.shared_resources.vocab.frozen:
             self.shared_resources.vocab = preprocessing.fill_vocab(
-                (q for q, _ in data), self.shared_resources.vocab, lowercase=True)
+                (q for q, _ in data), self.shared_resources.vocab, lowercase=self.shared_resources.config['lowercase'])
             self.shared_resources.vocab.freeze()
         if not hasattr(self.shared_resources, 'answer_vocab') or not self.shared_resources.answer_vocab.frozen:
             self.shared_resources.answer_vocab = util.create_answer_vocab(answers=(a for _, ass in data for a in ass))
