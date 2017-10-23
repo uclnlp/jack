@@ -64,57 +64,9 @@ def create_shared_resources(resources_or_config: Union[dict, SharedResources] = 
         return SharedResources(config=resources_or_config)
 
 
-@__kbp_reader
-def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population model F. """
-    from jack.readers.knowledge_base_population.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-    input_module = ModelFInputModule(shared_resources)
-    model_module = ModelFModelModule(shared_resources)
-    output_module = ModelFOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__kbp_reader
-def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population DistMult model. """
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
-        KnowledgeGraphEmbeddingOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='DistMult')
-    output_module = KnowledgeGraphEmbeddingOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__kbp_reader
-def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population Complex model. """
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
-        KnowledgeGraphEmbeddingOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='ComplEx')
-    output_module = KnowledgeGraphEmbeddingOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__kbp_reader
-def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population TransE model. """
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
-        KnowledgeGraphEmbeddingOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
-    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='TransE')
-    output_module = KnowledgeGraphEmbeddingOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
 @__extractive_qa_reader
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a FastQA reader instance (extractive qa model). """
+    """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.fastqa import FastQAModule
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
@@ -127,7 +79,7 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__extractive_qa_reader
 def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a FastQA reader instance (extractive qa model). """
+    """Creates a FastQA model as described in https://arxiv.org/abs/1703.04816 (extractive qa model)."""
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
     from jack.readers.extractive_qa.bidaf import BiDAF
     shared_resources = create_shared_resources(resources_or_conf)
@@ -140,7 +92,7 @@ def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__extractive_qa_reader
 def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a FastQA reader instance (extractive qa model). """
+    """Creates a CBow QA model as described in https://arxiv.org/abs/1703.04816. """
     from jack.readers.extractive_qa.cbow import CbowXQAInputModule
     from jack.readers.extractive_qa.cbow import CbowXQAModule
     from jack.readers.extractive_qa.shared import XQANoScoreOutputModule
@@ -173,8 +125,8 @@ def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__nli_reader
 def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
+    """Creates a SNLI reader instance (multiple choice qa model).
+
     This particular reader uses a Decomposable Attention Model, as described in [1].
 
     [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
@@ -192,8 +144,8 @@ def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 @__nli_reader
 def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
+    """Creates a SNLI reader instance (multiple choice qa model).
+
     This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
 
     [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
@@ -206,4 +158,55 @@ def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = ESIMModel(shared_resources)
     output_module = SimpleMCOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@__kbp_reader
+def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a knowledge_base_population model F."""
+    from jack.readers.knowledge_base_population.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+    input_module = ModelFInputModule(shared_resources)
+    model_module = ModelFModelModule(shared_resources)
+    output_module = ModelFOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@__kbp_reader
+def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a knowledge_base_population DistMult model."""
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+        KnowledgeGraphEmbeddingModelModule, \
+        KnowledgeGraphEmbeddingOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
+    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='DistMult')
+    output_module = KnowledgeGraphEmbeddingOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@__kbp_reader
+def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """ Creates a knowledge_base_population Complex model."""
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+        KnowledgeGraphEmbeddingModelModule, \
+        KnowledgeGraphEmbeddingOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
+    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='ComplEx')
+    output_module = KnowledgeGraphEmbeddingOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@__kbp_reader
+def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """ Creates a knowledge_base_population TransE model."""
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+        KnowledgeGraphEmbeddingModelModule, \
+        KnowledgeGraphEmbeddingOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
+    model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='TransE')
+    output_module = KnowledgeGraphEmbeddingOutputModule()
     return TFReader(shared_resources, input_module, model_module, output_module)
