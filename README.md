@@ -36,7 +36,6 @@ $ data/GloVe/download.sh
 
 Train a [FastQA][fastqa] model:
 
-
 ```bash
 $ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
 > repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' model_dir='./fastqa_reader' epochs=20 \
@@ -49,11 +48,17 @@ or shorter, using our prepared config:
 $ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
 ```
 
+You want to train another model with the same configuration (e.g., bidaf)? No problem, just change the `model` flag:
+
+```bash
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml model=bidaf_reader'
+```
+
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
 summaries to a provided path (here `.tb/fastqa`).
 
 A copy of the model is written into the `model_dir` directory after each
-training epoch.  These can be loaded using the commands below or see e.g.
+training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
 ```python
@@ -100,6 +105,13 @@ $ python3 bin/jack-train.py with config=conf/snli.yaml model=dam_snli_reader mod
 ```
 
 Note, you can easily change the model to one of the other implemented NLI readers (e.g., `cbilstm_snli_reader`, `esim_snli_reader`)
+
+Note, you can add a flag `tensorboard_folder=.tb/dam_reader` to write tensorboard
+summaries to a provided path (here `.tb/dam_reader`).
+
+A copy of the model is written into the `model_dir` directory after each
+training epoch when performance improves. These can be loaded using the commands below or see e.g.
+[the showcase notebook][showcase].
 
 ```python
 from jack import readers
