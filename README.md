@@ -64,8 +64,9 @@ training epoch when performance improves. These can be loaded using the commands
 If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
 
 ```bash
-wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
-unzip -d ./fastqa_reader fastqa.zip
+$ data/GloVe/download.sh  # we still need GloVe
+$ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
+$ unzip -d ./fastqa_reader fastqa.zip
 ```
 
 ```python
