@@ -61,6 +61,13 @@ A copy of the model is written into the `model_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
+If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
+
+```bash
+wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
+unzip -d ./fastqa_reader fastqa.zip
+```
+
 ```python
 from jack import readers
 from jack.core import QASetting
