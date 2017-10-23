@@ -3,8 +3,6 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
-seed: 1337
-
 loader: snli
 
 # SNLI training file
@@ -15,9 +13,6 @@ dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 
 # SNLI test file
 test: 'data/SNLI/snli_1.0/snli_1.0_test.jsonl'
-
-# Reading model to use
-model: 'dam_snli_reader'
 
 # [word2vec] or [glove] format of embeddings to be loaded
 embedding_format: 'glove'

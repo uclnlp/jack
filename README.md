@@ -88,22 +88,24 @@ Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
 $ python3 bin/jack-train.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
-> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128 \
+> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl'
+> model_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128 \
 > embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
 ```
 
 or the short version:
 
 ```bash
-$ python3 bin/jack-train.py with config=conf/dam.yaml
+$ python3 bin/jack-train.py with config=conf/snli.yaml model=dam_snli_reader model_dir=./dam_reader
 ```
+
+Note, you can easily change the model to one of the other implemented NLI readers (e.g., `cbilstm_snli_reader`, `esim_snli_reader`)
 
 ```python
 from jack import readers
 from jack.core import QASetting
 
-dam_reader = readers.dam_snli_reader()
-dam_reader.load_and_setup("tests/test_results/dam_reader_test")
+dam_reader = readers.reader_from_file("./dam_reader")
 
 answers = dam_reader([QASetting(
     question="The boy plays with the ball.",  # Hypothesis
