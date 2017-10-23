@@ -38,7 +38,7 @@ Train a [FastQA][fastqa] model:
 
 
 ```bash
-$ python3 jack/train_reader.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
+$ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
 > repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' model_dir='./fastqa_reader' epochs=20 \
 > with_char_embeddings=True embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt' vocab_from_embeddings=True
 ```
@@ -46,7 +46,7 @@ $ python3 jack/train_reader.py with train='data/SQuAD/train-v1.1.json' dev='data
 or shorter, using our prepared config:
 
 ```bash
-$ python3 jack/train_reader.py with config='./conf/fastqa.yaml'
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
@@ -87,7 +87,7 @@ $ ./data/SNLI/download.sh
 Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
-$ python3 jack/train_reader.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' 
+$ python3 bin/jack-train.py with model="dam_snli_reader" loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' 
 > dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' repr_dim=300 epoch=20 seed=1337 dropout=0.5 batch_size=128
 > embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
 ```
@@ -95,7 +95,7 @@ $ python3 jack/train_reader.py with model="dam_snli_reader" loader=snli train='d
 or the short version:
 
 ```bash
-$ python3 jack/train_reader.py with config=conf/dam.yaml
+$ python3 bin/jack-train.py with config=conf/dam.yaml
 ```
 
 ```python

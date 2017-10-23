@@ -91,6 +91,9 @@ tensorboard_folder: null
 # Filename to log the metrics of the EvalHooks
 write_metrics_to: null
 
+# Use also character based embeddings in readers which support it
+with_char_embeddings: True
+
 # If the vocabulary should be pruned to the most frequent words
 prune: False
 
