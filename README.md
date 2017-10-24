@@ -32,6 +32,8 @@ First, download SQuAD and GloVe embeddings:
 ```bash
 $ data/SQuAD/download.sh
 $ data/GloVe/download.sh
+$ # Although we support native glove format it is recommended to use a memory mapped format which allows to load embeddings only as needed.
+$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 ```
 
 Train a [FastQA][fastqa] model:
@@ -39,7 +41,7 @@ Train a [FastQA][fastqa] model:
 ```bash
 $ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
 > repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' model_dir='./fastqa_reader' epochs=20 \
-> with_char_embeddings=True embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt' vocab_from_embeddings=True
+> with_char_embeddings=True embedding_format='memory_map_dir' embedding_file='data/GloVe/glove.840B.300d.memory_map_dir' vocab_from_embeddings=True
 ```
 
 or shorter, using our prepared config:
@@ -64,7 +66,9 @@ training epoch when performance improves. These can be loaded using the commands
 If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
 
 ```bash
-$ data/GloVe/download.sh  # we still need GloVe
+$ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
+$ data/GloVe/download.sh
+$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
 $ unzip -d ./fastqa_reader fastqa.zip
 ```
@@ -102,8 +106,7 @@ Then, for instance, train a [Decomposable Attention Model][dam]
 ```bash
 $ python3 bin/jack-train.py with model='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
 > dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl'
-> model_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128 \
-> embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
+> model_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128
 ```
 
 or the short version:

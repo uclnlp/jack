@@ -30,11 +30,11 @@ dev: 'data/SQuAD/dev-v1.1.json'
 # jack test file
 test: null
 
-# [word2vec] or [glove] format of embeddings to be loaded
-embedding_format: 'glove'
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
+embedding_format: 'memory_map_dir'
 
-# format of embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.txt'
+# embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True

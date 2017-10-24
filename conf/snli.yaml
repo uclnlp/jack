@@ -14,12 +14,6 @@ dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 # SNLI test file
 test: 'data/SNLI/snli_1.0/snli_1.0_test.jsonl'
 
-# [word2vec] or [glove] format of embeddings to be loaded
-embedding_format: 'glove'
-
-# format of embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.txt'
-
 epochs: 20
 
 repr_dim: 300

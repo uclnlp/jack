@@ -48,10 +48,10 @@ train_pretrain: False
 # Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)
 normalize_pretrain: False
 
-# [word2vec] or [glove] format of embeddings to be loaded
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
 embedding_format: null
 
-# format of embeddings to be loaded
+# embeddings to be loaded
 embedding_file: null
 
 vocab_maxsize: 1000000000000

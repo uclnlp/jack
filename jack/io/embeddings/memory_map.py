@@ -1,9 +1,9 @@
-import logging
-import pickle
-import numpy as np
-import sys
-import os
 import json
+import logging
+import os
+import pickle
+
+import numpy as np
 
 from jack.io.embeddings import Embeddings, load_embeddings
 
@@ -20,7 +20,7 @@ def load_memory_map(file_prefix: str) -> Embeddings:
     """
     meta_file = file_prefix + "_meta.pkl"
     mem_map_file = file_prefix + "_memmap"
-    with open(meta_file, "rb") as f:
+    with open(meta_file, "r") as f:
         meta = pickle.load(f)
     shape = meta['shape']
     mem_map = np.memmap(mem_map_file, dtype='float32', mode='r+', shape=shape)
@@ -55,7 +55,7 @@ def load_memory_map_dir(directory: str) -> Embeddings:
     """
     meta_file = os.path.join(directory, "meta.json")
     mem_map_file = os.path.join(directory, "memory_map")
-    with open(meta_file, "rb") as f:
+    with open(meta_file, "r") as f:
         meta = json.load(f)
     shape = tuple(meta['shape'])
     vocab = meta['vocab']
