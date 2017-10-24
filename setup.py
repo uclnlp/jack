@@ -38,8 +38,6 @@ class Develop(_develop):
 with open('requirements.txt', 'r') as f:
     requirements = f.readlines()
 
-tests_requirements = ['pytest', 'pytest-pep8', 'pytest-xdist', 'codecov', 'pytest-cov']
-
 setup(name='jack',
       version='0.1.0',
       description='Jack the Reader is a Python framework for Machine Reading',
@@ -49,11 +47,10 @@ setup(name='jack',
       test_suite='tests',
       license='MIT',
       cmdclass={'install': Install, 'develop': Develop},
-      install_requires=requirements + tests_requirements,
+      install_requires=requirements,
       extras_require={
-          'tests': tests_requirements,
           'gpu': ['tensorflow-gpu>=1.3']
       },
-      setup_requires=['pytest-runner'] + requirements,
+      setup_requires=requirements,
       tests_require=requirements,
       packages=find_packages())
