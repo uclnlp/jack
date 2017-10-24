@@ -19,7 +19,7 @@ model_dir: './dam_snli_reader'
 train: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
 
 # jack dev file
-dev: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
+dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 
 # jack test file
 test: null
