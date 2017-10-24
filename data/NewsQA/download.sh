@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
 
 echo "Cloning NewsQA repo to newsqa..."
 git clone https://github.com/Maluuba/newsqa.git
@@ -28,4 +29,7 @@ rm maluuba/newsqa/data_processing.pye
 python2 maluuba/newsqa/example.py
 python2 maluuba/newsqa/split_dataset.py
 
-echo "Find resulting dataset in newsqa/maluuba/newsqa/[train,dev,test]_story_ids.csv and newsqa/maluuba/newsqa/split_data"
+mv newsqa/maluuba/newsqa/* .
+rm -r newsqa
+
+echo "Find resulting dataset in data/NewsQA/newsqa/maluuba/newsqa/[train,dev,test]_story_ids.csv and newsqa/maluuba/newsqa/split_data"

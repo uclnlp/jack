@@ -29,26 +29,45 @@ model.
 
 First, download SQuAD and GloVe embeddings:
 
-```shell
-$ cd data/SQuAD/
-$ ./download.sh
-$ cd ../GloVe/
-$ ./download.sh
-$ cd ../..
+```bash
+$ data/SQuAD/download.sh
+$ data/GloVe/download.sh
 ```
 
-Train a [FastQA][fastqa] model
+Train a [FastQA][fastqa] model:
 
-```shell
-$ python3 jack/train_reader.py with config='./conf/fastqa.yaml'
+```bash
+$ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
+> repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' model_dir='./fastqa_reader' epochs=20 \
+> with_char_embeddings=True embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt' vocab_from_embeddings=True
+```
+
+or shorter, using our prepared config:
+
+```bash
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
+```
+
+You want to train another model with the same configuration (e.g., bidaf)? No problem, just change the `model` flag:
+
+```bash
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=bidaf_reader
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
 summaries to a provided path (here `.tb/fastqa`).
 
 A copy of the model is written into the `model_dir` directory after each
-training epoch.  These can be loaded using the commands below or see e.g.
+training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
+
+If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
+
+```bash
+$ data/GloVe/download.sh  # we still need GloVe
+$ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
+$ unzip -d ./fastqa_reader fastqa.zip
+```
 
 ```python
 from jack import readers
@@ -74,26 +93,43 @@ answers = fastqa_reader([QASetting(
 
 First, download SNLI
 
-```shell
+```bash
 $ ./data/SNLI/download.sh
 ```
 
-Lastly, train a [Decomposable Attention Model][dam]
+Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
-$ python3 jack/train_reader.py with config=tests/test_conf/dam_test.yaml
+$ python3 bin/jack-train.py with model='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
+> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl'
+> model_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=128 \
+> embedding_format='glove' embedding_file='data/GloVe/glove.840B.300d.txt'
 ```
+
+or the short version:
+
+```bash
+$ python3 bin/jack-train.py with config='./conf/snli.yaml' model=dam_snli_reader model_dir='./dam_reader'
+```
+
+Note, you can easily change the model to one of the other implemented NLI readers (e.g., `cbilstm_snli_reader`, `esim_snli_reader`)
+
+Note, you can add a flag `tensorboard_folder=.tb/dam_reader` to write tensorboard
+summaries to a provided path (here `.tb/dam_reader`).
+
+A copy of the model is written into the `model_dir` directory after each
+training epoch when performance improves. These can be loaded using the commands below or see e.g.
+[the showcase notebook][showcase].
 
 ```python
 from jack import readers
 from jack.core import QASetting
 
-dam_reader = readers.dam_snli_reader()
-dam_reader.load_and_setup("tests/test_results/dam_reader_test")
+dam_reader = readers.reader_from_file("./dam_reader")
 
 answers = dam_reader([QASetting(
-    question="The boy plays with the ball.",
-    support=["The boy plays with the ball."]
+    question="The boy plays with the ball.",  # Hypothesis
+    support=["The boy plays with the ball."]  # Premise
 )])
 ```
 

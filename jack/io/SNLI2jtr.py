@@ -22,9 +22,6 @@ def convert_snli(snli_file_jsonl):
     Notes:
         - instances with gold labels '-' are removed from the corpus
     """
-    assert 'snli_1.0' in snli_file_jsonl and snli_file_jsonl.endswith('.jsonl'),\
-        "input should be the snli_1.0_X.jsonl files (X=test/train/dev)"
-
     with open(snli_file_jsonl, 'r') as f:
         data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
 
@@ -41,7 +38,7 @@ def __convert_snli_instance(instance):
         queb = {}
         queb['id'] = instance['pairID']
         queb['support'] = [
-            {'id': instance['captionID'], 'text': instance['sentence1']}]
+            {'id': instance.get('captionID'), 'text': instance['sentence1']}]
         queb['questions'] = [
             {'question': instance['sentence2'],
              'answers': [

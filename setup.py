@@ -52,6 +52,7 @@ setup(name='jack',
       install_requires=requirements + tests_requirements,
       extras_require={
           'tests': tests_requirements,
+          'gpu': ['tensorflow-gpu>=1.3']
       },
       setup_requires=['pytest-runner'] + requirements,
       tests_require=requirements,

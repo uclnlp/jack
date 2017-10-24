@@ -4,11 +4,10 @@ This file contains reusable modules for extractive QA models and ports
 from typing import NamedTuple
 
 from jack.core import *
-from jack.readers.extractive_qa.util import unique_words_with_chars, prepare_data
+from jack.readers.extractive_qa.util import prepare_data
 from jack.tf_util.xqa import xqa_min_crossentropy_loss
 from jack.util import preprocessing
 from jack.util.map import numpify
-from jack.util.preprocessing import stack_and_pad
 
 
 class ParameterTensorPorts:
@@ -188,7 +187,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         s_tokenized = [a.support_tokens for a in annotations]
 
         unique_words, unique_word_lengths, question2unique, support2unique = \
-            unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
+            preprocessing.unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
 
 
         output = {
@@ -196,9 +195,9 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             XQAPorts.unique_word_char_length: unique_word_lengths,
             XQAPorts.question_words2unique: question2unique,
             XQAPorts.support_words2unique: support2unique,
-            XQAPorts.emb_support: stack_and_pad(emb_supports),
+            XQAPorts.emb_support: preprocessing.stack_and_pad(emb_supports),
             XQAPorts.support_length: support_lengths,
-            XQAPorts.emb_question: stack_and_pad(emb_questions),
+            XQAPorts.emb_question: preprocessing.stack_and_pad(emb_questions),
             XQAPorts.question_length: question_lengths,
             XQAPorts.word_in_question: wiq,
             XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
