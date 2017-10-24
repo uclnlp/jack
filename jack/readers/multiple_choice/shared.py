@@ -214,9 +214,12 @@ class MisclassificationOutputModule(OutputModule):
             if answer.text not in class2idx:
                 class2idx[answer.text] = right_idx
                 idx2class[right_idx] = answer.text
-            if len(class2idx) < num_classes: continue
-            if self.i >= self.limit: continue
-            if right_idx == predicted_idx: continue
+            if len(class2idx) < num_classes:
+                continue
+            if self.i >= self.limit:
+                continue
+            if right_idx == predicted_idx:
+                continue
             score = logits[i][right_idx]
             if self.lower < score < self.upper:
                 self.i += 1
