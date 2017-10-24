@@ -8,13 +8,13 @@ import spacy
 
 from jack.core import *
 from jack.readers.extractive_qa.fastqa import XQAPorts
-from jack.readers.extractive_qa.util import prepare_data, unique_words_with_chars
+from jack.readers.extractive_qa.util import prepare_data
 from jack.tf_util import misc
 from jack.tf_util.dropout import fixed_dropout
 from jack.tf_util.embedding import conv_char_embedding_alt
 from jack.tf_util.xqa import xqa_min_crossentropy_span_loss
 from jack.util.map import numpify
-from jack.util.preprocessing import char_vocab_from_vocab, stack_and_pad
+from jack.util.preprocessing import char_vocab_from_vocab, stack_and_pad, unique_words_with_chars
 
 _max_span_size = 10
 

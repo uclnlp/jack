@@ -157,3 +157,33 @@ def stack_and_pad(values: List[Union[np.ndarray, int, float]], pad=0) -> np.ndar
         padded_values.append(padded_value)
 
     return np.stack(padded_values)
+
+
+def unique_words_with_chars(q_tokenized, s_tokenized, char_vocab, indices=None, char_limit=20):
+    indices = indices or range(len(q_tokenized))
+
+    unique_words_set = dict()
+    unique_words = list()
+    unique_word_lengths = list()
+    question2unique = list()
+    support2unique = list()
+
+    for j in indices:
+        q2u = list()
+        for w in q_tokenized[j]:
+            if w not in unique_words_set:
+                unique_word_lengths.append(min(char_limit, len(w)))
+                unique_words.append([char_vocab.get(c, 0) for c in w[:char_limit]])
+                unique_words_set[w] = len(unique_words_set)
+            q2u.append(unique_words_set[w])
+        question2unique.append(q2u)
+        s2u = list()
+        for w in s_tokenized[j]:
+            if w not in unique_words_set:
+                unique_word_lengths.append(min(char_limit, len(w)))
+                unique_words.append([char_vocab.get(c, 0) for c in w[:char_limit]])
+                unique_words_set[w] = len(unique_words_set)
+            s2u.append(unique_words_set[w])
+        support2unique.append(s2u)
+
+    return unique_words, unique_word_lengths, question2unique, support2unique
