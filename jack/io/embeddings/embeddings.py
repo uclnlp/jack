@@ -48,7 +48,7 @@ def load_embeddings(file, typ='glove', **options):
     Returns:
         Embeddings object, wrapper class around Vocabulary embedding matrix.
     """
-    assert typ in {"word2vec", "glove", "fasttext", "mem_map", "memory_map_dir"}, "so far only 'word2vec' and 'glove' foreseen"
+    assert typ in {"word2vec", "glove", "fasttext", "memory_map_dir"}, "so far only 'word2vec' and 'glove' foreseen"
 
     if typ.lower() == "word2vec":
         return Embeddings(*load_word2vec(file, **options))
@@ -68,10 +68,6 @@ def load_embeddings(file, typ='glove', **options):
     elif typ.lower() == "fasttext":
         with open(file, 'rb') as f:
             return Embeddings(*load_fasttext(f), filename=file, emb_format=typ)
-
-    elif typ.lower() == "mem_map":
-        from jack.io.embeddings.memory_map import load_memory_map
-        return load_memory_map(file)
 
     elif typ.lower() == "memory_map_dir":
         from jack.io.embeddings.memory_map import load_memory_map_dir
