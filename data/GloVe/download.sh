@@ -9,5 +9,5 @@ else
     unzip data/GloVe/glove.840B.300d.zip
     echo "Downloading glove.840B.300d.memory_map_dir!"
     wget -P data/GloVe/ http://data.neuralnoise.com/jack/embeddings/glove.840B.300d.memory_map_dir.tar.gz
-    tat xvfz data/GloVe/glove.840B.300d.memory_map_dir.tar.gz -C data/GloVe/
+    tar xvfz data/GloVe/glove.840B.300d.memory_map_dir.tar.gz -C data/GloVe/
 fi
