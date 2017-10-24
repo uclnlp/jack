@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
-from jack.tf_util import rnn, simple
+from jack.tfutil import rnn, simple
 
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):

@@ -6,7 +6,7 @@ from collections import defaultdict
 import numpy as np
 import tensorflow as tf
 
-from jack.tf_util import misc
+from jack.tfutil import misc
 
 
 def conv_char_embeddings(vocab, size, word_ids, conv_width=5,

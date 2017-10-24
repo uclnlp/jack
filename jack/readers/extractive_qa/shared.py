@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 from jack.core import *
 from jack.readers.extractive_qa.util import prepare_data
-from jack.tf_util.xqa import xqa_min_crossentropy_loss
+from jack.tfutil.xqa import xqa_min_crossentropy_loss
 from jack.util import preprocessing
 from jack.util.map import numpify
 

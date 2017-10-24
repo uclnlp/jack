@@ -3,10 +3,10 @@ import logging
 import tensorflow as tf
 
 from jack.readers.extractive_qa.shared import AbstractXQAModelModule
-from jack.tf_util.embedding import conv_char_embedding_alt
-from jack.tf_util.highway import highway_network
-from jack.tf_util.misc import mask_for_lengths
-from jack.tf_util.rnn import fused_birnn
+from jack.tfutil.embedding import conv_char_embedding_alt
+from jack.tfutil.highway import highway_network
+from jack.tfutil.misc import mask_for_lengths
+from jack.tfutil.rnn import fused_birnn
 
 logger = logging.getLogger(__name__)
 

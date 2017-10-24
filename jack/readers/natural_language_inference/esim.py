@@ -7,8 +7,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
-from jack.tf_util.attention import attention_softmax3d
-from jack.tf_util.masking import mask_3d
+from jack.tfutil.attention import attention_softmax3d
+from jack.tfutil.masking import mask_3d
 
 logger = logging.getLogger(__name__)
 

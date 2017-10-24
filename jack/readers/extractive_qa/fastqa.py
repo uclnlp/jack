@@ -6,11 +6,11 @@ from typing import NamedTuple
 
 from jack.core import *
 from jack.readers.extractive_qa.shared import XQAPorts, AbstractXQAModelModule
-from jack.tf_util import misc
-from jack.tf_util.dropout import fixed_dropout
-from jack.tf_util.embedding import conv_char_embedding_alt
-from jack.tf_util.highway import highway_network
-from jack.tf_util.rnn import birnn_with_projection
+from jack.tfutil import misc
+from jack.tfutil.dropout import fixed_dropout
+from jack.tfutil.embedding import conv_char_embedding_alt
+from jack.tfutil.highway import highway_network
+from jack.tfutil.rnn import birnn_with_projection
 
 FastQAAnnotation = NamedTuple('FastQAAnnotation', [
     ('question_tokens', List[str]),
