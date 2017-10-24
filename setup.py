@@ -51,6 +51,6 @@ setup(name='jack',
       extras_require={
           'gpu': ['tensorflow-gpu>=1.3']
       },
-      setup_requires=['pytest-runner'] + requirements,
+      setup_requires=requirements,
       tests_require=requirements,
       packages=find_packages())
