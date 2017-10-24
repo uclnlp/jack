@@ -20,8 +20,8 @@ assuming you are in the top level jack directory, write:
 
 ```bash
 $ export PYTHONPATH=$PYTHONPATH:.
-$ python3 jack/io/embeddings/memory_map.py --help
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir
+$ python3 bin/mmap-cli.py --help
+$ python3 bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir
 ```
 
 This creates a directory `data/GloVe/glove.840B.300d.memory_map_dir` that stores the memory map and some necessary
