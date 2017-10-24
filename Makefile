@@ -31,12 +31,12 @@ smalldata:
 
 snli:
 	./data/SNLI/download.sh
-	$(PYTHON) jack/io/SNLI2jtr.py
 snli-esim:
 	 $(PYTHON) bin/jack-train.py with \
-		 train=data/SNLI/snli_1.0/snli_1.0_train_jtr_v1.json \
-		dev=data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json \
-		test=data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json \
+		loader=snli \
+		train=data/SNLI/snli_1.0/snli_1.0_train.jsonl \
+		dev=data/SNLI/snli_1.0/snli_1.0_dev.jsonl \
+		test=data/SNLI/snli_1.0/snli_1.0_test.jsonl \
 		model=esim_snli_reader
 
 
@@ -51,11 +51,13 @@ glove:
 	./data/GloVe/download.sh
 
 squad-fastqa:
-	 $(PYTHON) bin/jack-train.py with \
-		 train=data/SQuAD/
-		dev=data/SNLI/snli_1.0/snli_1.0_dev_jtr_v1.json \
-		test=data/SNLI/snli_1.0/snli_1.0_test_jtr_v1.json \
-		model=fastqa_reader
+	#$(PYTHON) bin/jack-train.py with config='./conf/fastqa.yaml'
+	$(PYTHON) bin/jack-train.py with \
+		train=data/SQuAD/train-v1.1.json \
+		dev=data/SQuAD/dev-v1.1.json \
+		model=fastqa_reader \
+		loader=squad
+
 
 
 doctests:
