@@ -30,7 +30,6 @@ else:
 def fetch_parents(current_path, parents=[]):
     tmp_ex = Experiment('jack')
     tmp_ex.add_config(current_path)
-    tmp_ex.run("print_config")
     if tmp_ex.current_run is not None and "parent_config" in tmp_ex.current_run.config:
         return fetch_parents(tmp_ex.current_run.config["parent_config"], [current_path] + parents)
     else:
@@ -41,8 +40,6 @@ logger.info("Loading {}".format(configs))
 ex = Experiment('jack')
 for path in configs:
     ex.add_config(path)
-
-logger.info(ex.current_run)
 
 
 class Duration(object):
@@ -125,7 +122,8 @@ def main(batch_size,
 
     # build JTReader
     checkpoint()
-
+    
+    ex.run("print_config")
     parsed_config = ex.current_run.config
 
     # name defaults to name of the model
