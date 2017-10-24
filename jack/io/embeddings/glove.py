@@ -23,7 +23,7 @@ def load_glove(stream, vocab=None):
     dim = len(first_line.split()) - 1
     lookup = np.empty([500000, dim], dtype=np.float)
     lookup[0] = np.fromstring(first_line.split(maxsplit=1)[1], sep=' ')
-    word2idx[first_line.split(maxsplit=1)[0]] = 0
+    word2idx[first_line.split(maxsplit=1)[0].decode('utf-8')] = 0
     n = 1
     for line in stream:
         word, vec = line.rstrip().split(maxsplit=1)
