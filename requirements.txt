@@ -13,3 +13,4 @@ sqlalchemy
 pyyaml
 spacy
 pytest
+pytest-xdist
