@@ -16,10 +16,10 @@ loader: 'snli'
 model_dir: './dam_reader'
 
 # jack training file
-train: 'data/SQuAD/train-v1.1.json'
+train: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
 
 # jack dev file
-dev: 'data/SQuAD/dev-v1.1.json'
+dev: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
 
 # jack test file
 test: null
