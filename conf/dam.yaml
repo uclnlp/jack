@@ -25,10 +25,10 @@ dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 test: null
 
 # [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
-embedding_format: 'memory_map_dir'
+embedding_format: 'glove'
 
 # embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
+embedding_file: 'data/GloVe/glove.840B.300d.txt'
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
