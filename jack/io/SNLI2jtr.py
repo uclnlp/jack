@@ -38,7 +38,7 @@ def __convert_snli_instance(instance):
         queb = {}
         queb['id'] = instance['pairID']
         queb['support'] = [
-            {'id': instance['captionID'], 'text': instance['sentence1']}]
+            {'id': instance.get('captionID'), 'text': instance['sentence1']}]
         queb['questions'] = [
             {'question': instance['sentence2'],
              'answers': [
