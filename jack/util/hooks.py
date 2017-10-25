@@ -430,8 +430,9 @@ class ClassificationEvalHook(EvalHook):
         labels = tensors[Ports.Target.target_index]
         predictions = tensors[Ports.Prediction.candidate_index]
 
-        acc_exact = np.sum(np.equal(labels, predictions))
-        acc_f1 = f1_score(np.array(labels), np.array(predictions), average='macro') * labels.shape[0]
+        labels_np = np.array(labels)
+        acc_exact = np.sum(np.equal(labels_np, predictions))
+        acc_f1 = f1_score(labels_np, predictions, average='macro') * labels_np.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
 
