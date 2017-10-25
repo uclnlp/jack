@@ -114,7 +114,7 @@ def main(batch_size,
             logger.info('loaded pre-trained embeddings ({})'.format(embedding_file))
             ex.current_run.config["repr_dim_input"] = embeddings.lookup[0].shape[0]
         else:
-            embeddings = Embeddings(None, None)
+            embeddings = None
 
     emb = embeddings
 

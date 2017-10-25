@@ -1,7 +1,7 @@
 description: >
   A configuration inheriting from the default jack.yaml
 
-parent_config: './conf/jack.yaml'
+parent_config: './conf/snli.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
 model: 'dam_snli_reader'
@@ -9,43 +9,13 @@ model: 'dam_snli_reader'
 # fixed experiment seed
 seed: 1337
 
-# loader to use in experiment
-loader: 'snli'
+repr_dim: 300
 
-# where to store the reader
-model_dir: './dam_snli_reader'
+epochs: 20
 
-# jack training file
-train: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
+dropout: 0.5
 
-# jack dev file
-dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
-
-# jack test file
-test: data/SNLI/snli_1.0/snli_1.0_test.jsonl'
-
-# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
-embedding_format: 'memory_map_dir'
-
-# embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
-
-# Use fixed vocab of pretrained embeddings
-vocab_from_embeddings: True
-
-repr_dim: 200
-
-epochs: 400
-
-dropout: 0.8
-
-batch_size: 32
-
-optimizer: 'adagrad'
-
-learning_rate: 0.05
-
-vocab_sep: False
+batch_size: 64
 
 lowercase: False
 

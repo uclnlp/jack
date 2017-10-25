@@ -134,6 +134,14 @@ class Ports:
                                      "Represents length of questions in batch",
                                      "[batch_size]")
 
+        embedded_support = TensorPort(tf.float32, [None, None, None], "embedded_support_flat",
+                                      "Represents the embedded support",
+                                      "[S, max_num_tokens, N]")
+
+        embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question_flat",
+                                       "Represents the embedded question",
+                                       "[Q, max_num_question_tokens, N]")
+
     class Prediction:
         logits = TensorPort(tf.float32, [None, None], "candidate_scores",
                             "Represents output scores for each candidate",

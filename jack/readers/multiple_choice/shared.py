@@ -13,28 +13,26 @@ class SingleSupportFixedClassForward(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def forward_pass(self, shared_resources,
-                     Q_embedding_matrix, Q_ids, Q_lengths,
-                     S_embedding_matrix, S_ids, S_lengths,
-                     num_classes):
+    def forward_pass(self, shared_resources, embedded_question, q_lengths, embedded_support, s_lengths, num_classes):
         '''Takes a single support and question and produces logits'''
         raise NotImplementedError
 
 
 class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClassForward):
-    def __init__(self, shared_resources, question_embedding_matrix=None, support_embedding_matrix=None):
+    def __init__(self, shared_resources):
         self.shared_resources = shared_resources
         self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
-        self.question_embedding_matrix = question_embedding_matrix
-        self.support_embedding_matrix = support_embedding_matrix
         super(AbstractSingleSupportFixedClassModel, self).__init__(shared_resources)
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.support,
-                Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length]
+        if self.shared_resources.config["vocab_from_embeddings"]:
+            return [Ports.Input.embedded_support, Ports.Input.embedded_question,
+                    Ports.Input.support_length, Ports.Input.question_length]
+        else:
+            return [Ports.Input.support, Ports.Input.question,
+                    Ports.Input.support_length, Ports.Input.question_length]
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -55,32 +53,36 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
                       question: tf.Tensor,
                       support_length: tf.Tensor,
                       question_length: tf.Tensor) -> Sequence[tf.Tensor]:
-        if self.question_embedding_matrix is None:
-            vocab_size = len(shared_resources.vocab)
-            input_size = shared_resources.config['repr_dim_input']
-            self.question_embedding_matrix = tf.get_variable(
-                "emb_Q", [vocab_size, input_size],
-                initializer=tf.contrib.layers.xavier_initializer(),
-                trainable=True, dtype="float32")
-            self.support_embedding_matrix = tf.get_variable(
-                "emb_S", [vocab_size, input_size],
-                initializer=tf.contrib.layers.xavier_initializer(),
-                trainable=True, dtype="float32")
+        input_size = shared_resources.config['repr_dim_input']
+        if not self.shared_resources.config["vocab_from_embeddings"]:
+            if hasattr(self.shared_resources, 'embeddings'):
+                e = tf.constant(self.shared_resources.embeddings, tf.float32)
+            else:
+                vocab_size = len(shared_resources.vocab)
+                e = tf.get_variable("embeddings", [vocab_size, input_size],
+                                    initializer=tf.random_normal_initializer(0.0, 0.1),
+                                    trainable=True, dtype="float32")
+
+            embedded_question = tf.nn.embedding_lookup(e, question)
+            embedded_support = tf.nn.embedding_lookup(e, support)
+        else:
+            embedded_question = question
+            embedded_support = support
+
+        embedded_question.set_shape([None, None, input_size])
+        embedded_support.set_shape([None, None, input_size])
 
         logits = self.forward_pass(shared_resources,
-                                   question, question_length,
-                                   support, support_length,
+                                   embedded_question, question_length,
+                                   embedded_support, support_length,
                                    shared_resources.config['answer_size'])
 
         predictions = tf.argmax(logits, 1, name='prediction')
 
         return [logits, predictions]
 
-    def create_training_output(self, shared_resources: SharedResources,
-                               logits: tf.Tensor, labels: tf.Tensor) -> Sequence[tf.Tensor]:
-        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels),
-                              name='predictor_loss')
-        return [loss]
+    def create_training_output(self, shared_resources: SharedResources, logits: tf.Tensor, labels: tf.Tensor):
+        return tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels),
 
 
 class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
@@ -93,16 +95,15 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        """Defines the outputs of the InputModule
-
-        1. Word embedding index tensor of questions of mini-batchs
-        2. Word embedding index tensor of support of mini-batchs
-        3. Max timestep length of mini-batches for support tensor
-        4. Max timestep length of mini-batches for question tensor
-        """
-        return [Ports.Input.support,
-                Ports.Input.question, Ports.Input.support_length,
-                Ports.Input.question_length, Ports.Input.sample_id]
+        """Defines the outputs of the InputModule"""
+        if self.shared_resources.config["vocab_from_embeddings"]:
+            return [Ports.Input.embedded_support,
+                    Ports.Input.embedded_question, Ports.Input.support_length,
+                    Ports.Input.question_length, Ports.Input.sample_id]
+        else:
+            return [Ports.Input.support,
+                    Ports.Input.question, Ports.Input.support_length,
+                    Ports.Input.question_length, Ports.Input.sample_id]
 
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[Mapping[str, any]]:
@@ -128,23 +129,63 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
 
     def create_batch(self, annotations: List[Mapping[str, any]],
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
-        xy_dict = {
-            Ports.Input.support: [a["supports"] for a in annotations],
-            Ports.Input.question: [a["question"] for a in annotations],
-            Ports.Input.question_length: [a["question_lengths"] for a in annotations],
-            Ports.Input.support_length: [a['support_lengths'] for a in annotations],
-            Ports.Input.sample_id: [a['ids'] for a in annotations]
-        }
+        q_lengths = [a["question_lengths"] for a in annotations]
+        s_lengths = [a["support_lengths"] for a in annotations]
+        if self.shared_resources.config["vocab_from_embeddings"]:
+            emb_support = np.zeros([len(annotations), max(s_lengths), self.emb_matrix.shape[1]])
+            emb_question = np.zeros([len(annotations), max(q_lengths), self.emb_matrix.shape[1]])
+            for i, a in enumerate(annotations):
+                for j, k in enumerate(a["supports"]):
+                    emb_support[i, j] = self._get_emb(k)
+                for j, k in enumerate(a["question"]):
+                    emb_question[i, j] = self._get_emb(k)
+
+            xy_dict = {
+                Ports.Input.embedded_support: emb_support,
+                Ports.Input.embedded_question: emb_question,
+                Ports.Input.question_length: q_lengths,
+                Ports.Input.support_length: s_lengths,
+                Ports.Input.sample_id: [a['ids'] for a in annotations]
+            }
+        else:
+            xy_dict = {
+                Ports.Input.support: [a["supports"] for a in annotations],
+                Ports.Input.question: [a["question"] for a in annotations],
+                Ports.Input.question_length: [a["question_lengths"] for a in annotations],
+                Ports.Input.support_length: [a['support_lengths'] for a in annotations],
+                Ports.Input.sample_id: [a['ids'] for a in annotations]
+            }
+
         if "answers" in annotations[0]:
             xy_dict[Ports.Target.target_index] = [a["answers"] for a in annotations]
-        return numpify(xy_dict)
+        return numpify(xy_dict, keys=[Ports.Input.support, Ports.Input.question,
+                                      Ports.Input.question_length, Ports.Input.support_length])
+
+    def _get_emb(self, idx):
+        if idx < self.emb_matrix.shape[0]:
+            return self.emb_matrix[idx]
+        else:
+            return self.default_vec
+
+    def setup(self):
+        vocab = self.shared_resources.vocab
+        if vocab.emb is not None:
+            self.emb_matrix = vocab.emb.lookup
+            self.default_vec = np.zeros([vocab.emb_length])
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
-        if not self.shared_resources.vocab.frozen:
-            self.shared_resources.vocab = preprocessing.fill_vocab(
-                (q for q, _ in data), self.shared_resources.vocab,
-                lowercase=self.shared_resources.config.get('lowercase', True))
-            self.shared_resources.vocab.freeze()
+        vocab = self.shared_resources.vocab
+        if not vocab.frozen:
+            preprocessing.fill_vocab(
+                (q for q, _ in data), vocab, lowercase=self.shared_resources.config.get('lowercase', True))
+            vocab.freeze()
+            if vocab.emb is not None:
+                self.shared_resources.embeddings = np.zeros([len(vocab), vocab.emb_length])
+                for w, i in self.shared_resources.vocab.sym2id.items():
+                    e = vocab.emb.get(w)
+                    if e is not None:
+                        self.shared_resources.embeddings[i] = e
+
         if not hasattr(self.shared_resources, 'answer_vocab') or not self.shared_resources.answer_vocab.frozen:
             self.shared_resources.answer_vocab = util.create_answer_vocab(answers=(a for _, ass in data for a in ass))
             self.shared_resources.answer_vocab.freeze()

@@ -15,19 +15,17 @@ logger = logging.getLogger(__name__)
 
 class ESIMModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources,
-                     question, question_length,
-                     support, support_length, num_classes):
+                     embedded_question, question_length,
+                     embedded_support, support_length, num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-        question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
-        support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
 
         model_kwargs = {
-            'sequence1': question_embedding,
+            'sequence1': embedded_question,
             'sequence1_length': question_length,
-            'sequence2': support_embedding,
+            'sequence2': embedded_support,
             'sequence2_length': support_length,
-            'representation_size': shared_resources.config.get('repr_dim', 300),
+            'representation_size': shared_resources.config['repr_dim'],
             'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
             'use_masking': True
         }
