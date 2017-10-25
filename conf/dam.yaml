@@ -22,21 +22,30 @@ train: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
 dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 
 # jack test file
-test: null
+test: data/SNLI/snli_1.0/snli_1.0_test.jsonl'
 
 # [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
-embedding_format: 'glove'
+embedding_format: 'memory_map_dir'
 
 # embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.txt'
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
 
-repr_dim: 300
+repr_dim: 200
 
 epochs: 400
 
-dropout: 0.5
+dropout: 0.8
 
 batch_size: 32
+
+optimizer: 'adagrad'
+
+learning_rate: 0.05
+
+vocab_sep: False
+
+lowercase: False
+
