@@ -26,7 +26,7 @@ def load_memory_map_dir(directory: str) -> Embeddings:
     shape = tuple(meta['shape'])
     vocab = meta['vocab']
     mem_map = np.memmap(mem_map_file, dtype='float32', mode='r+', shape=shape)
-    result = Embeddings(vocab, mem_map, filename=directory, emb_format="mem_map_dir")
+    result = Embeddings(vocab, mem_map, filename=directory, emb_format="memory_map_dir")
     return result
 
 
