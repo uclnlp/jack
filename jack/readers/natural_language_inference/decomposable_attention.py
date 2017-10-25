@@ -57,8 +57,10 @@ class BaseDecomposableAttentionModel:
 
     def __init__(self,
                  sequence1, sequence1_length, sequence2, sequence2_length,
-                 nb_classes=3, reuse=False, use_masking=False, *args, **kwargs):
-
+                 nb_classes=3, reuse=False, use_masking=False,
+                 init_std_dev=0.01,
+                 *args, **kwargs):
+        self.init_std_dev = init_std_dev
         self.nb_classes = nb_classes
 
         self.sequence1 = sequence1
