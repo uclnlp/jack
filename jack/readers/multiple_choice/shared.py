@@ -27,7 +27,7 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        if self.shared_resources.config["vocab_from_embeddings"]:
+        if self.shared_resources.config.get("vocab_from_embeddings", False):
             return [Ports.Input.embedded_support, Ports.Input.embedded_question,
                     Ports.Input.support_length, Ports.Input.question_length]
         else:
@@ -131,7 +131,7 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
         q_lengths = [a["question_lengths"] for a in annotations]
         s_lengths = [a["support_lengths"] for a in annotations]
-        if self.shared_resources.config["vocab_from_embeddings"]:
+        if self.shared_resources.config.get("vocab_from_embeddings", False):
             emb_support = np.zeros([len(annotations), max(s_lengths), self.emb_matrix.shape[1]])
             emb_question = np.zeros([len(annotations), max(q_lengths), self.emb_matrix.shape[1]])
             for i, a in enumerate(annotations):
