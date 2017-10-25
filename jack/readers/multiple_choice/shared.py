@@ -54,7 +54,7 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
                       support_length: tf.Tensor,
                       question_length: tf.Tensor) -> Sequence[tf.Tensor]:
         input_size = shared_resources.config['repr_dim_input']
-        if not self.shared_resources.config["vocab_from_embeddings"]:
+        if not self.shared_resources.config.get("vocab_from_embeddings", False):
             if hasattr(self.shared_resources, 'embeddings'):
                 e = tf.constant(self.shared_resources.embeddings, tf.float32)
             else:
@@ -96,7 +96,7 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
     @property
     def output_ports(self) -> List[TensorPort]:
         """Defines the outputs of the InputModule"""
-        if self.shared_resources.config["vocab_from_embeddings"]:
+        if self.shared_resources.config.get("vocab_from_embeddings", False):
             return [Ports.Input.embedded_support,
                     Ports.Input.embedded_question, Ports.Input.support_length,
                     Ports.Input.question_length, Ports.Input.sample_id]
