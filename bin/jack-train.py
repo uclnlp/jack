@@ -115,10 +115,10 @@ def main(batch_size,
             ex.current_run.config["repr_dim_input"] = embeddings.lookup[0].shape[0]
         else:
             embeddings = None
+            if ex.current_run.config["vocab_from_embeddings"]:
+                raise RuntimeError("If you want to create vocab from embeddings, embeddings have to be provided")
 
-    emb = embeddings
-
-    vocab = Vocab(emb=emb, init_from_embeddings=vocab_from_embeddings)
+    vocab = Vocab(emb=embeddings, init_from_embeddings=vocab_from_embeddings)
 
     # build JTReader
     checkpoint()
