@@ -21,3 +21,9 @@ def test_update(feed_dict, train_op):
         res |= (b != a).any()
 
     return res
+
+
+def test_loss(feed_dict, loss_op):
+    session = tf.Session()
+    loss = session.run(loss_op, feed_dict=feed_dict)
+    return loss != 0
