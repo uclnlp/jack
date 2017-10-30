@@ -12,21 +12,26 @@ from jack.torch_util.rnn import BiLSTM
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):
+    """PyTorch implementation of FastQA."""
+
+    # TODO: does not support multiparagraph yet
+
+
     _input_ports = [XQAPorts.emb_question, XQAPorts.question_length,
                     XQAPorts.emb_support, XQAPorts.support_length,
                     # char embedding inputs
-                    XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
-                    XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                    XQAPorts.word_chars, XQAPorts.word_char_length,
+                    XQAPorts.question_words, XQAPorts.support_words,
                     # feature input
                     XQAPorts.word_in_question,
                     # optional input, provided only during training
-                    XQAPorts.correct_start_training, XQAPorts.answer2question_training,
-                    XQAPorts.keep_prob, XQAPorts.is_eval]
+                    XQAPorts.correct_start, XQAPorts.answer2support_training,
+                    XQAPorts.is_eval]
 
     _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
                      XQAPorts.span_prediction]
     _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                             XQAPorts.answer_span, XQAPorts.answer2question_training]
+                             XQAPorts.answer_span, XQAPorts.answer2support_training]
     _training_output_ports = [Ports.loss]
 
     @property
@@ -83,8 +88,8 @@ class FastQAPyTorchModule(nn.Module):
                 emb_support, support_length,
                 unique_word_chars, unique_word_char_length,
                 question_words2unique, support_words2unique,
-                word_in_question, correct_start, answer2question,
-                keep_prob, is_eval: bool):
+                word_in_question, correct_start, answer2support,
+                is_eval):
         """fast_qa model
 
         Args:
@@ -99,13 +104,14 @@ class FastQAPyTorchModule(nn.Module):
             word_in_question: [Q, L_s]
             correct_start: [A], only during training, i.e., is_eval=False
             answer2question: [A], only during training, i.e., is_eval=False
-            keep_prob: []
             is_eval: []
 
         Returns:
             start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
         """
         # Some helpers
+        float_tensor = torch.cuda.FloatTensor if emb_question.is_cuda else torch.FloatTensor
+        long_tensor = torch.cuda.LongTensor if emb_question.is_cuda else torch.LongTensor
         batch_size = question_length.data.shape[0]
         max_question_length = question_length.max().data[0]
         support_mask = misc.mask_for_lengths(support_length)
@@ -120,11 +126,7 @@ class FastQAPyTorchModule(nn.Module):
             emb_support = torch.cat([emb_support, char_emb_support], 2)
 
         # compute encoder features
-        if emb_question.is_cuda:
-            question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2,
-                                                                   out=torch.cuda.FloatTensor()))
-        else:
-            question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2))
+        question_features = torch.autograd.Variable(torch.ones(batch_size, max_question_length, 2, out=float_tensor()))
         question_features = question_features.type_as(emb_question)
 
         v_wiqw = self._v_wiq_w
@@ -147,7 +149,7 @@ class FastQAPyTorchModule(nn.Module):
             emb_support = self._embedding_highway(emb_support)
 
         # dropout
-        dropout = self._shared_resources.config["dropout"]
+        dropout = self._shared_resources.config.get("dropout", 0.0)
         emb_question = F.dropout(emb_question, dropout, training=not is_eval)
         emb_support = F.dropout(emb_support, dropout, training=not is_eval)
 
@@ -166,9 +168,11 @@ class FastQAPyTorchModule(nn.Module):
 
         start_scores, end_scores, predicted_start_pointer, predicted_end_pointer = \
             self._answer_layer(encoded_question, question_length, encoded_support, support_length,
-                               correct_start, answer2question, is_eval)
+                               correct_start, answer2support, is_eval)
 
-        span = torch.stack([predicted_start_pointer, predicted_end_pointer], 1)
+        # no multi paragraph support yet
+        doc_idx = torch.autograd.Variable(torch.zeros(predicted_start_pointer.data.shape[0], out=long_tensor()))
+        span = torch.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
         return start_scores, end_scores, span
 

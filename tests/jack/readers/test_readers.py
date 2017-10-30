@@ -7,6 +7,7 @@ import tensorflow as tf
 from jack import readers
 from jack.core.data_structures import QASetting, Answer
 from jack.core.shared_resources import SharedResources
+from jack.core.tensorflow import TFReader
 from jack.io.embeddings import Embeddings
 from jack.readers.extractive_qa.util import tokenize
 from jack.util.vocab import Vocab
@@ -49,15 +50,22 @@ def smoke_test(reader_name):
                                                                 "batch_size": 1})
     tf.reset_default_graph()
     reader = readers.readers[reader_name](shared_resources)
-
-    reader.train(tf.train.AdamOptimizer(), data_set, batch_size=1, max_epochs=1)
+    if isinstance(reader, TFReader):
+        reader.train(tf.train.AdamOptimizer(), data_set, batch_size=1, max_epochs=1)
+    else:
+        import torch
+        reader.setup_from_data(data_set, is_training=True)
+        params = list(reader.model_module.prediction_module.parameters())
+        params.extend(reader.model_module.loss_module.parameters())
+        optimizer = torch.optim.Adam(params, lr=0.01)
+        reader.train(optimizer, data_set, batch_size=1, max_epochs=1)
 
     answers = reader(questions)
 
     assert answers, "{} should produce answers".format(reader_name)
 
 
-BLACKLIST = []
+BLACKLIST = ['fastqa_reader_torch']
 READERS = [r for r in readers.readers.keys()
            if r not in BLACKLIST]
 

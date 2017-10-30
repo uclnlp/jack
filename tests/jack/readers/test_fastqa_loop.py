@@ -1,20 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
 import tensorflow as tf
 
-import jack.readers as readers
-
 from jack.core import SharedResources
-from jack.core import TFReader, Ports
-
+from jack.core.tensorflow import TFReader
+from jack.core.tensorport import Ports
 from jack.io.embeddings.embeddings import load_embeddings
 from jack.io.load import load_jack
-from jack.readers.extractive_qa.util import tokenize
-from jack.util.vocab import Vocab
-
-from jack.readers.extractive_qa.fastqa import FastQAModule
 from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
+from jack.readers.extractive_qa.tensorflow.fastqa import FastQAModule
+from jack.util.vocab import Vocab
 
 
 def test_fastqa():

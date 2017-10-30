@@ -24,7 +24,7 @@ build:
     - script:
         name: Run all tests
         code: |
-          pytest tests -v --cov=jack
+          pytest tests -v --cov=jack --max-slave-restart=2
 
     - script:
         name: Code coverage upload

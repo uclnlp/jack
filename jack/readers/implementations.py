@@ -3,7 +3,6 @@ from typing import Union
 
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorflow import TFReader
-from jack.core.torch import PyTorchReader
 from jack.util.hooks import XQAEvalHook, ClassificationEvalHook
 
 readers = {}
@@ -70,7 +69,7 @@ def create_shared_resources(resources_or_config: Union[dict, SharedResources] = 
 @extractive_qa_reader
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model)."""
-    from jack.readers.extractive_qa.fastqa import FastQAModule
+    from jack.readers.extractive_qa.tensorflow.fastqa import FastQAModule
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
@@ -84,7 +83,7 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA model as described in https://arxiv.org/abs/1703.04816 (extractive qa model)."""
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
-    from jack.readers.extractive_qa.bidaf import BiDAF
+    from jack.readers.extractive_qa.tensorflow.bidaf import BiDAF
     shared_resources = create_shared_resources(resources_or_conf)
 
     input_module = XQAInputModule(shared_resources)
@@ -96,14 +95,16 @@ def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @extractive_qa_reader
 def fastqa_reader_torch(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a FastQA reader instance (extractive qa model). """
-    from jack.readers.extractive_qa.fastqa_torch import FastQAPyTorchModelModule
+    from jack.readers.extractive_qa.torch.fastqa import FastQAPyTorchModelModule
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
+    from jack.core.torch import PyTorchReader
     shared_resources = create_shared_resources(resources_or_conf)
 
     input_module = XQAInputModule(shared_resources)
     model_module = FastQAPyTorchModelModule(shared_resources)
     output_module = XQAOutputModule(shared_resources)
     return PyTorchReader(shared_resources, input_module, model_module, output_module)
+
 
 @nli_reader
 def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):

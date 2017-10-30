@@ -4,8 +4,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack.core import TensorPortTensors, TensorPort
-from jack.readers.extractive_qa.answer_layer import compute_spans
-from jack.readers.extractive_qa.shared import AbstractXQAModelModule
+from jack.readers.extractive_qa.tensorflow.answer_layer import compute_spans
+from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
 from jack.tfutil.misc import mask_for_lengths

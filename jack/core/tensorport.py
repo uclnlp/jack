@@ -9,7 +9,11 @@ from typing import Mapping, Sequence
 
 import numpy as np
 import tensorflow as tf
-import torch
+
+try:
+    import torch
+except ImportError as e:
+    pass
 
 logger = logging.getLogger(__name__)
 

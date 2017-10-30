@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def train(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
     if isinstance(reader, TFReader):
         train_tensorflow(reader, train_data, test_data, dev_data, configuration, debug)
-    elif isinstance(reader, PyTorchReader):
+    else:
         train_pytorch(reader, train_data, test_data, dev_data, configuration, debug)
 
 

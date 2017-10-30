@@ -3,8 +3,9 @@ This file contains FastQA specific modules and ports
 """
 
 from jack.core import *
-from jack.readers.extractive_qa.answer_layer import conditional_answer_layer, bilinear_answer_layer
-from jack.readers.extractive_qa.shared import XQAPorts, AbstractXQAModelModule
+from jack.readers.extractive_qa.tensorflow.answer_layer import conditional_answer_layer, bilinear_answer_layer
+from jack.readers.extractive_qa.shared import XQAPorts
+from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
 from jack.tfutil import misc
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
