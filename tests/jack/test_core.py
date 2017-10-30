@@ -25,7 +25,7 @@ def test_shared_resources_store():
         new_shared_resources.load(path)
 
         type_a, type_b = type(new_shared_resources.vocab), type(shared_resources.vocab)
-        assert isinstance(type_a, type_b) and isinstance(type_b, type_a)
+        assert type_a == type_b
 
         for k in new_shared_resources.vocab.__dict__:
             if k != "emb":
