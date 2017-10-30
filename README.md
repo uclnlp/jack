@@ -56,8 +56,9 @@ You want to train another model with the same configuration (e.g., bidaf)? No pr
 $ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=bidaf_reader
 ```
 
-Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
-summaries to a provided path (here `.tb/fastqa`).
+Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
+[summaries][tf_summaries]  to a provided path (here `.tb/fastqa`). Your summaries are automatically
+fetched in the train loop, so all you need to do is write them in your TF model code.
 
 A copy of the model is written into the `model_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
@@ -92,6 +93,7 @@ answers = fastqa_reader([QASetting(
 
 [fastqa]: https://arxiv.org/abs/1703.04816
 [showcase]: notebooks/Showcasing_Jack.ipynb
+[tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 
 ### Recognizing Textual Entailment on SNLI
 
