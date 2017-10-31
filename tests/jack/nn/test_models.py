@@ -3,10 +3,13 @@
 import os
 import subprocess
 import time
-from os.path import join, exists
-
+import logging
 import numpy as np
 import pytest
+
+from os.path import join, exists
+
+logger = logging.getLogger(__name__)
 
 OVERFIT_PATH = './tests/test_results/overfit_test/'
 SMALLDATA_PATH = './tests/test_results/smalldata_test/'
@@ -110,7 +113,7 @@ def test_model(model_name, epochs, use_small_data, dataset):
     if model_name in modelspecifics:
         # this is a function which takes use_small_data as argument
         cmd += modelspecifics[model_name](use_small_data)
-    print('command: '+cmd)
+    logger.info('Command: {0}'.format(cmd))
     # Execute command and wait for results
     t0 = time.time()
     try:
