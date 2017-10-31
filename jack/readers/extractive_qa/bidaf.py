@@ -29,14 +29,15 @@ class BiDAF(AbstractXQAModelModule):
         # 6b. generate feature matrix
         # 7. combine
         # 8. BiLSTM
-        # 9. double cross-entropy loss
+        # 9. double cross-entropy loss (actually applied after this function)
+        # 9a. Dropout
+        # 9b. prepare logits
+        # 9c. prepare argmax for output module
         with tf.variable_scope("bidaf", initializer=tf.contrib.layers.xavier_initializer()):
             # Some helpers
+            dropout_rate = shared_vocab_config.config['dropout']
             max_question_length = tf.reduce_max(question_length)
             max_support_length = tf.reduce_max(support_length)
-
-            beam_size = 1
-            beam_size = tf.cond(is_eval, lambda: tf.constant(beam_size, tf.int32), lambda: tf.constant(1, tf.int32))
 
             input_size = shared_vocab_config.config["repr_dim_input"]
             size = shared_vocab_config.config["repr_dim"]
@@ -78,12 +79,12 @@ class BiDAF(AbstractXQAModelModule):
             # 4. BiLSTM
             cell1 = tf.contrib.rnn.LSTMBlockFusedCell(size)
             encoded_question = fused_birnn(cell1, highway_question, question_length, dtype=tf.float32, time_major=False,
-                                           scope='question_encoding')[0]
+                                           scope='question_encoding', dropout_rate=dropout_rate)[0]
             encoded_question = tf.concat(encoded_question, 2)
 
             cell2 = tf.contrib.rnn.LSTMBlockFusedCell(size)
             encoded_support = fused_birnn(cell2, highway_support, support_length, dtype=tf.float32, time_major=False,
-                                          scope='support_encoding')[0]
+                                          scope='support_encoding', dropout_rate=dropout_rate)[0]
             encoded_support = tf.concat(encoded_support, 2)
 
             # 6. biattention alpha(U, H) = S
@@ -143,25 +144,33 @@ class BiDAF(AbstractXQAModelModule):
             G = tf.concat([encoded_support, question_weighted, encoded_support * question_weighted,
                            encoded_support * support_weighted], 2)
 
-            # 8. BiLSTM(G) = M
+            # 8. BiLSTM(G) 2 layers = M
             # start_index = M
             cell3 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            start_index = \
-                fused_birnn(cell3, G, support_length, dtype=tf.float32, time_major=False, scope='start_index')[0]
-            start_index = tf.concat(start_index, 2)
+            start_index = fused_birnn(cell3, G, support_length,
+                                      dtype=tf.float32, time_major=False, scope='start_index',
+                                      dropout_rate=dropout_rate)[0]
+            #start_index_layer1 = tf.concat(start_index_layer1, 2)
+            #cell4 = tf.contrib.rnn.LSTMBlockFusedCell(size)
+            #start_index = fused_birnn(cell4, start_index_layer1, support_length,
+                                       #dtype=tf.float32, time_major=False, scope='start_index_layer2')[0]
+            #start_index = tf.concat(start_index, 2)
             start_index = tf.concat([start_index, G], 2)
             # BiLSTM(M) = M^2 = end_index
             cell4 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            end_index = \
-                fused_birnn(cell4, start_index, support_length, dtype=tf.float32, time_major=False, scope='end_index')[
-                    0]
+            end_index = fused_birnn(cell4, start_index, support_length,
+                                    dtype=tf.float32, time_major=False, scope='end_index',
+                                    dropout_rate=dropout_rate)[0]
             end_index = tf.concat(end_index, 2)
             end_index = tf.concat([end_index, G], 2)
             # 9. double cross-entropy loss (actually applied after this function)
-            # 9a. prepare logits
-            # 9b. prepare argmax for output module
+            # 9a. Dropout
+            # 9b. prepare logits
+            # 9c. prepare argmax for output module
 
-            # 9a. prepare logits
+            # 9a. Dropout
+
+            # 9b. prepare logits
             # start_index = [batch, length2, 10*embedding]
             # W_start_index = [10*embedding]
             # start_index *w_start_index = start_scores
@@ -178,7 +187,7 @@ class BiDAF(AbstractXQAModelModule):
             start_scores = start_scores + support_mask
             end_scores = end_scores + support_mask
 
-            # 9b. prepare argmax for output module
+            # 9c. prepare argmax for output module
             predicted_start_pointer = tf.argmax(start_scores)
             predicted_end_pointer = tf.argmax(end_scores)
 

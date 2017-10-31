@@ -31,7 +31,7 @@ def fused_rnn_backward(fused_rnn, inputs, sequence_length, initial_state=None, d
 
 
 def fused_birnn(fused_rnn, inputs, sequence_length, initial_state=None, dtype=None, scope=None, time_major=True,
-                backward_device=None):
+                backward_device=None, dropout_rate=0.0):
     with tf.variable_scope(scope or "BiRNN"):
         sequence_length = tf.cast(sequence_length, tf.int32)
         if not time_major:
@@ -50,6 +50,12 @@ def fused_birnn(fused_rnn, inputs, sequence_length, initial_state=None, dtype=No
         if not time_major:
             outputs_fw = tf.transpose(outputs_fw, [1, 0, 2])
             outputs_bw = tf.transpose(outputs_bw, [1, 0, 2])
+
+
+        if dropout_rate != 0.0:
+            outputs_fw = tf.nn.Dropout(outputs_fw, keep_prob=1.0-dropout_rate, seed=1123)
+            outputs_bw = tf.nn.Dropout(outputs_fw, keep_prob=1.0-dropout_rate, seed=1123)
+
     return (outputs_fw, outputs_bw), (state_fw, state_bw)
 
 
