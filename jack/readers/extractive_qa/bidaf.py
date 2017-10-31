@@ -162,13 +162,16 @@ class BiDAF(AbstractXQAModelModule):
                                     dtype=tf.float32, time_major=False, scope='end_index',
                                     dropout_rate=dropout_rate, is_eval=is_eval)[0]
             end_index = tf.concat(end_index, 2)
-            end_index = tf.concat([end_index, G], 2)
             # 9. double cross-entropy loss (actually applied after this function)
             # 9a. Dropout
             # 9b. prepare logits
             # 9c. prepare argmax for output module
 
             # 9a. Dropout
+            G = tf.cond(is_eval,
+                        lambda: tf.layers.dropout(G, rate=dropout_rate, seed=1123, training=False),
+                        lambda: tf.layers.dropout(G, rate=dropout_rate, seed=1123, training=True))
+            end_index = tf.concat([end_index, G], 2)
 
             # 9b. prepare logits
             # start_index = [batch, length2, 10*embedding]
