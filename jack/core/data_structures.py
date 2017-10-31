@@ -78,7 +78,7 @@ def _jtr_to_qasetting(instance, value, global_candidates):
         answers = [Answer(value(c), value(c, 'span')) for c in
                    question_instance['answers']] if "answers" in question_instance else None
         yield QASetting(question, support, atomic_candidates=candidates, id=idd,
-                        doc_id=instance['doc_id']), answers
+                        doc_id=instance.get('doc_id', None)), answers
 
 
 def jtr_to_qasetting(jtr_data, max_count=None):
