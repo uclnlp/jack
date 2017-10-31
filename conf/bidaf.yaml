@@ -1,0 +1,48 @@
+description: >
+  A configuration inheriting from the default jack.yaml
+
+parent_config: './conf/jack.yaml'
+
+# Reader model to use, see jack/readers/implementations.py for options
+model: 'bidaf_reader'
+
+# fixed experiment seed
+seed: 1337
+
+# loader to use in experiment
+loader: 'squad'
+
+# where to store the reader
+model_dir: './fastqa_reader'
+
+# How large the support should be. Can be used for cutting or filtering QA examples
+max_support_length: -1
+
+# Use also character based embeddings in readers which support it
+with_char_embeddings: True
+
+
+train: 'data/SQuAD/train-v1.1.json'
+dev: 'data/SQuAD/dev-v1.1.json'
+test: null
+
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
+embedding_format: 'memory_map_dir'
+
+# embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
+
+# Use fixed vocab of pretrained embeddings
+vocab_from_embeddings: True
+
+repr_dim: 300
+
+epochs: 12
+
+dropout: 0.2
+
+lowercase: True
+
+batch_size: 64
+
+dev_batch_size: 64
