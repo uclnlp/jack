@@ -41,7 +41,8 @@ class QASetting:
                  id: str = None,
                  atomic_candidates: Sequence[str] = None,
                  seq_candidates: Sequence[str] = None,
-                 candidate_spans: Sequence[Tuple[int, int, int]] = None):
+                 candidate_spans: Sequence[Tuple[int, int, int]] = None,
+                 doc_id: str = None):
         """
         Create a new QASetting.
         Args:
@@ -53,7 +54,9 @@ class QASetting:
             candidate_spans: for extractive QA, a sequence of candidate spans in the support documents.
             A span `(doc_index,start,end)` corresponds to a span in support document with index `doc_index`,
             with start position `start` and end position `end`.
+            doc_id: id of the document that the support is are part of, if defined.
         """
+        self.doc_id = doc_id
         self.id = id
         self.candidate_spans = candidate_spans
         self.seq_candidates = seq_candidates
@@ -68,11 +71,14 @@ def _jtr_to_qasetting(instance, value, global_candidates):
         question = value(question_instance['question'])
         idd = value(question_instance['question'], 'id')
         if global_candidates is None:
-            candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
+            candidates = [value(c) for c in
+                          question_instance['candidates']] if "candidates" in question_instance else None
         else:
             candidates = global_candidates
-        answers = [Answer(value(c), value(c, 'span')) for c in question_instance['answers']] if "answers" in question_instance else None
-        yield QASetting(question, support, atomic_candidates=candidates, id=idd), answers
+        answers = [Answer(value(c), value(c, 'span')) for c in
+                   question_instance['answers']] if "answers" in question_instance else None
+        yield QASetting(question, support, atomic_candidates=candidates, id=idd,
+                        doc_id=instance['doc_id']), answers
 
 
 def jtr_to_qasetting(jtr_data, max_count=None):

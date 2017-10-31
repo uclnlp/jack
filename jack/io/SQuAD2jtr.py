@@ -72,10 +72,12 @@ def convert_squad(file_path):
     with open(file_path) as data_file:
         data = json.load(data_file)['data']
         for article in data:
+            title = article["title"]
             for paragraph in article['paragraphs']:
                 qa_set = {
                     'support': [__parse_support(paragraph)],
-                    'questions': [__parse_question(qa_dict) for qa_dict in paragraph['qas']]
+                    'questions': [__parse_question(qa_dict) for qa_dict in paragraph['qas']],
+                    'doc_id': title
                 }
                 question_sets.append(qa_set)
     corpus_dict = {
