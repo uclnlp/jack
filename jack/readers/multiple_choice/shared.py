@@ -193,8 +193,8 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
 
 
 class SimpleMCOutputModule(OutputModule):
-    def __init__(self):
-        self.setup()
+    def __init__(self, shared_resources=None):
+        self._shared_resources = shared_resources
 
     def setup(self):
         pass
@@ -211,7 +211,10 @@ class SimpleMCOutputModule(OutputModule):
         for index_in_batch, question in enumerate(inputs):
             winning_index = winning_indices[index_in_batch]
             score = logits[index_in_batch, winning_index]
-            ans = Answer(question.atomic_candidates[winning_index], score=score)
+            if self._shared_resources is not None and hasattr(self._shared_resources, 'answer_vocab'):
+                ans = self._shared_resources.answer_vocab.id2sym[winning_index]
+            else:
+                ans = Answer(question.atomic_candidates[winning_index], score=score)
             result.append(ans)
         return result
 
