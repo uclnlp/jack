@@ -212,7 +212,7 @@ class SimpleMCOutputModule(OutputModule):
             winning_index = winning_indices[index_in_batch]
             score = logits[index_in_batch, winning_index]
             if self._shared_resources is not None and hasattr(self._shared_resources, 'answer_vocab'):
-                ans = self._shared_resources.answer_vocab.id2sym[winning_index]
+                ans = Answer(self._shared_resources.answer_vocab.id2sym[winning_index], score=score)
             else:
                 ans = Answer(question.atomic_candidates[winning_index], score=score)
             result.append(ans)
