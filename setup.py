@@ -46,11 +46,14 @@ setup(name='jack',
       url='https://github.com/uclmr/jack',
       test_suite='tests',
       license='MIT',
-      cmdclass={'install': Install, 'develop': Develop},
+      cmdclass={
+          'install': Install,
+          'develop': Develop
+      },
       install_requires=requirements,
       extras_require={
-          'tensorflow': ['tensorflow>=1.3.0'],
-          'tensorflow_gpu': ['tensorflow-gpu>=1.3.0'],
+          'tensorflow': ['tensorflow>=1.4.0'],
+          'tensorflow_gpu': ['tensorflow-gpu>=1.4.0'],
       },
       setup_requires=requirements,
       tests_require=requirements,
