@@ -195,7 +195,7 @@ class TFModelModule(ModelModule):
         # Sometimes we want to initialize (partially) with a pre-trained model
         init_model = self.shared_resources.config.get('pretrained_model')
         if is_training and init_model is not None:
-            if not init_model.ends_with('model_module'):
+            if not init_model.endswith('model_module'):
                 # path to a reader was provided
                 init_model = os.path.join(init_model, 'model_module')
             # get all variables in the checkpoint file
