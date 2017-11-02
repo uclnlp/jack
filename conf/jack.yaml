@@ -114,3 +114,7 @@ experiments_db: './out/experiments.db'
 
 # loader for the dataset, ['jack', 'squad', 'snli'] are supported. For everything else convert to jtr format first.
 loader: 'jack'
+
+# ADVANCED: if we want to (partially) initialize from a pretrained reader we can use the following option
+# Note: make sure that the variable names and shapes will match
+pretrained_model: null
