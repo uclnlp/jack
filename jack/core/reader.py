@@ -232,11 +232,11 @@ class TFReader(JTReader):
             clip_op: operation to perform for clipping
         """
         batches, loss, min_op, summaries = self._setup_training(
-            batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op)
+            batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs)
 
-        self._train_loop(min_op, loss, batches, hooks, max_epochs, summaries, summary_writer)
+        self._train_loop(min_op, loss, batches, hooks, max_epochs, summaries, summary_writer, **kwargs)
 
-    def _setup_training(self, batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op):
+    def _setup_training(self, batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs):
         logger.info("Setting up data and model...")
         global_step = tf.train.create_global_step()
         if not self._is_setup:
@@ -266,7 +266,7 @@ class TFReader(JTReader):
         self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
         return batches, loss, min_op, summaries
 
-    def _train_loop(self, optimization_op, loss_op, batches, hooks, max_epochs, summaries, summary_writer):
+    def _train_loop(self, optimization_op, loss_op, batches, hooks, max_epochs, summaries, summary_writer, **kwargs):
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
