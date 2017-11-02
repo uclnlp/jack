@@ -49,8 +49,17 @@ setup(name='jack',
       cmdclass={'install': Install, 'develop': Develop},
       install_requires=requirements,
       extras_require={
-          'gpu': ['tensorflow-gpu>=1.3']
+          'tensorflow': ['tensorflow>=1.3.0'],
+          'tensorflow_gpu': ['tensorflow-gpu>=1.3.0'],
       },
       setup_requires=requirements,
       tests_require=requirements,
-      packages=find_packages())
+      packages=find_packages(),
+      classifiers=[
+          'Development Status :: 4 - Beta',
+          'Intended Audience :: Developers',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: MIT License',
+          'Topic :: Scientific/Engineering :: Artificial Intelligence',
+      ],
+      keywords='tensorflow machine learning natural language processing question answering')
