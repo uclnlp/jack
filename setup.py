@@ -46,6 +46,7 @@ setup(name='jack',
       url='https://github.com/uclmr/jack',
       test_suite='tests',
       license='MIT',
+      packages=find_packages(),
       cmdclass={
           'install': Install,
           'develop': Develop
@@ -57,7 +58,6 @@ setup(name='jack',
       },
       setup_requires=requirements,
       tests_require=requirements,
-      packages=find_packages(),
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
