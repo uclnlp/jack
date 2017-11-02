@@ -3,6 +3,9 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
+# Reader model to use, see jack/readers/implementations.py for options
+model: 'dam_snli_reader'
+
 loader: snli
 
 # SNLI training file
@@ -23,3 +26,14 @@ embedding_format: 'memory_map_dir'
 embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 
 vocab_from_embeddings: True
+
+repr_dim: 300
+
+epochs: 400
+
+dropout: 0.5
+
+batch_size: 32
+
+lowercase: False
+
