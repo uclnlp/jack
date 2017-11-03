@@ -70,7 +70,7 @@ If all of that is too cumbersome for you and you just want to play, why not down
 ```bash
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
 $ unzip -d ./fastqa_reader fastqa.zip
 ```
@@ -103,7 +103,7 @@ First, download SNLI
 ```bash
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ ./data/SNLI/download.sh
 ```
 
