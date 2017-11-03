@@ -162,7 +162,9 @@ We are thankful for support from:
 - Make sure all your code runs from the top level directory, e.g.:
 
 ```shell
-$ python3 ./jack/io/SNLI2jtr_v1.py
+$ pwd
+/home/pasquale/workspace/jack
+$ python3 bin/jack-train.py [..]
 ```
 
 [pep8]: https://www.python.org/dev/peps/pep-0008/
