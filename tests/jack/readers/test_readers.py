@@ -5,8 +5,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack import readers
+from jack.core.data_structures import QASetting, Answer
 from jack.core.shared_resources import SharedResources
-from jack.data_structures import QASetting, Answer
 from jack.io.embeddings import Embeddings
 from jack.readers.extractive_qa.util import tokenize
 from jack.util.vocab import Vocab

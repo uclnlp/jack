@@ -22,16 +22,11 @@ build:
           ls
 
     - script:
-        name: Run unit tests
+        name: Run all tests
         code: |
-          pytest tests -v -m "not (overfit or smalldata)"
+          pytest tests -v --cov=jack
 
     - script:
-        name: Run overfit integration tests
+        name: Code coverage upload
         code: |
-          pytest tests -v -m "overfit"
-
-    - script:
-        name: Run small data integration tests
-        code: |
-          pytest tests -v -m "smalldata"
+            codecov

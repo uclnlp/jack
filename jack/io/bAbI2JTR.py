@@ -11,7 +11,6 @@ JTR download script: data/bAbI/download.sh
 
 import json
 import argparse
-from nltk.tokenize import wordpunct_tokenize
 
 # adapted from https://github.com/YerevaNN/Dynamic-memory-networks-in-Theano/
 def load_babi_task(filename):

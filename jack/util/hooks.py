@@ -12,9 +12,9 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import f1_score
 
+from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader, TFReader
 from jack.core.tensorport import TensorPort, FlatPorts, Ports
-from jack.data_structures import QASetting, Answer
 
 logger = logging.getLogger(__name__)
 
@@ -430,8 +430,9 @@ class ClassificationEvalHook(EvalHook):
         labels = tensors[Ports.Target.target_index]
         predictions = tensors[Ports.Prediction.candidate_index]
 
-        acc_exact = np.sum(np.equal(labels, predictions))
-        acc_f1 = f1_score(labels, predictions, average='macro') * labels.shape[0]
+        labels_np = np.array(labels)
+        acc_exact = np.sum(np.equal(labels_np, predictions))
+        acc_f1 = f1_score(labels_np, predictions, average='macro') * labels_np.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
 
@@ -464,7 +465,9 @@ class KBPEvalHook(EvalHook):
         logger.info("Started test evaluation %s" % self._info)
 
         if self._batches is None:
+            self.reader.input_module.all_candidates=True
             self._batches = self.reader.input_module.batch_generator(self._dataset, self._batch_size, is_eval=True)
+            self.reader.input_module.all_candidates=False
 
         def len_np_or_list(v):
             if isinstance(v, list):

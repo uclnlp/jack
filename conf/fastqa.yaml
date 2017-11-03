@@ -21,31 +21,19 @@ max_support_length: -1
 # Use also character based embeddings in readers which support it
 with_char_embeddings: True
 
-# jack training file
+
 train: 'data/SQuAD/train-v1.1.json'
-
-# jack dev file
 dev: 'data/SQuAD/dev-v1.1.json'
-
-# jack test file
 test: null
 
-# [word2vec] or [glove] format of embeddings to be loaded
-embedding_format: 'glove'
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
+embedding_format: 'memory_map_dir'
 
-# format of embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.txt'
+# embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
-
-# Use pretrained embeddings, by default the initialisation is random
-pretrain: True
-
-# Size of the input representation (embeddings),
-# default 128 (embeddings cut off or extended if not,
-# matched with pretrained embeddings)
-repr_dim_input: 300
 
 repr_dim: 300
 
@@ -54,3 +42,5 @@ epochs: 20
 dropout: 0.5
 
 batch_size: 64
+
+lowercase: True

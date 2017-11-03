@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import tensorflow as tf
 import sys
+
+import tensorflow as tf
 
 
 def hinge_loss(positive_scores, negative_scores, margin=1.0):

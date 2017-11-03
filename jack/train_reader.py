@@ -96,7 +96,7 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
     # Test final model
     if test_data is not None and model_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
-            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
+            reader, test_data, batch_size, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
         reader.load(model_dir)
         test_eval_hook.at_test_time(1)

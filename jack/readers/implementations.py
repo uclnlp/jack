@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 from jack.core.reader import TFReader
@@ -17,26 +18,34 @@ def __reader(f):
     return f
 
 
-def __extractive_qa_reader(f):
+def extractive_qa_reader(f):
     __reader(f)
     extractive_qa_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
     return f
 
 
-def __nli_reader(f):
+def nli_reader(f):
     __reader(f)
     nli_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
     return f
 
 
-def __kbp_reader(f):
+def kbp_reader(f):
     from jack.util.hooks import KBPEvalHook
     __reader(f)
     kbp_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, KBPEvalHook)
     return f
+
+
+def reader_from_file(reader_dir: str):
+    shared_resources = create_shared_resources()
+    shared_resources.load(os.path.join(reader_dir, "shared_resources"))
+    reader = readers[shared_resources.config["model"]](shared_resources)
+    reader.load_and_setup_modules(reader_dir)
+    return reader
 
 
 def create_shared_resources(resources_or_config: Union[dict, SharedResources] = None) -> SharedResources:
@@ -55,20 +64,106 @@ def create_shared_resources(resources_or_config: Union[dict, SharedResources] = 
         return SharedResources(config=resources_or_config)
 
 
-@__nli_reader
-def example_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates an example multiple choice reader. """
-    from jack.readers.multiple_choice.shared import SimpleMCInputModule, SimpleMCModelModule, SimpleMCOutputModule
+@extractive_qa_reader
+def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a FastQA reader instance (extractive qa model)."""
+    from jack.readers.extractive_qa.fastqa import FastQAModule
+    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
-    input_module = SimpleMCInputModule(shared_resources)
-    model_module = SimpleMCModelModule(shared_resources)
+
+    input_module = XQAInputModule(shared_resources)
+    model_module = FastQAModule(shared_resources)
+    output_module = XQAOutputModule(shared_resources)
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@extractive_qa_reader
+def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a FastQA model as described in https://arxiv.org/abs/1703.04816 (extractive qa model)."""
+    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
+    from jack.readers.extractive_qa.bidaf import BiDAF
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = XQAInputModule(shared_resources)
+    model_module = BiDAF(shared_resources)
+    output_module = XQAOutputModule(shared_resources)
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@extractive_qa_reader
+def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a CBow QA model as described in https://arxiv.org/abs/1703.04816. """
+    from jack.readers.extractive_qa.cbow import CbowXQAInputModule
+    from jack.readers.extractive_qa.cbow import CbowXQAModule
+    from jack.readers.extractive_qa.shared import XQANoScoreOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = CbowXQAInputModule(shared_resources)
+    model_module = CbowXQAModule(shared_resources)
+    output_module = XQANoScoreOutputModule(shared_resources)
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@nli_reader
+def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """
+    Creates a SNLI reader instance (multiple choice qa model).
+    This particular reader uses a conditional Bidirectional LSTM, as described in [1].
+
+    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
+    """
+    from jack.readers.multiple_choice.shared import SingleSupportFixedClassInputs
+    from jack.readers.natural_language_inference.bilstm import PairOfBiLSTMOverSupportAndQuestionModel
+    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = SingleSupportFixedClassInputs(shared_resources)
+    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
     output_module = SimpleMCOutputModule()
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@nli_reader
+def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a SNLI reader instance (multiple choice qa model).
+
+    This particular reader uses a Decomposable Attention Model, as described in [1].
+
+    [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
+    """
+    from jack.readers.multiple_choice.shared import SingleSupportFixedClassInputs
+    from jack.readers.natural_language_inference.decomposable_attention import DecomposableAttentionModel
+    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = SingleSupportFixedClassInputs(shared_resources)
+    model_module = DecomposableAttentionModel(shared_resources)
+    output_module = SimpleMCOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@nli_reader
+def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a SNLI reader instance (multiple choice qa model).
+
+    This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
+
+    [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
+    """
+    from jack.readers.multiple_choice.shared import SingleSupportFixedClassInputs
+    from jack.readers.natural_language_inference.esim import ESIMModel
+    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = SingleSupportFixedClassInputs(shared_resources)
+    model_module = ESIMModel(shared_resources)
+    output_module = SimpleMCOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@kbp_reader
 def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population model F. """
+    """Creates a knowledge_base_population model F."""
     from jack.readers.knowledge_base_population.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
     input_module = ModelFInputModule(shared_resources)
@@ -77,10 +172,11 @@ def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population DistMult model. """
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
+    """Creates a knowledge_base_population DistMult model."""
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+        KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
@@ -89,10 +185,11 @@ def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population Complex model. """
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
+    """ Creates a knowledge_base_population Complex model."""
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+        KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
@@ -101,98 +198,15 @@ def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a knowledge_base_population TransE model. """
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, KnowledgeGraphEmbeddingModelModule, \
+    """ Creates a knowledge_base_population TransE model."""
+    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+        KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
     input_module = KnowledgeGraphEmbeddingInputModule(shared_resources)
     model_module = KnowledgeGraphEmbeddingModelModule(shared_resources, model_name='TransE')
     output_module = KnowledgeGraphEmbeddingOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__extractive_qa_reader
-def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """ Creates a FastQA reader instance (extractive qa model). """
-    from jack.readers.extractive_qa.fastqa import FastQAInputModule, fatqa_model_module
-    from jack.readers.extractive_qa.shared import XQAOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = FastQAInputModule(shared_resources)
-    model_module = fatqa_model_module(shared_resources)
-    output_module = XQAOutputModule(shared_resources)
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__extractive_qa_reader
-def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a FastQA reader instance (extractive qa model). """
-    from jack.readers.extractive_qa.cbow import CBOWXqaInputModule
-    from jack.readers.extractive_qa.cbow import cbow_xqa_model_module
-    from jack.readers.extractive_qa.shared import XQANoScoreOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = CBOWXqaInputModule(shared_resources)
-    model_module = cbow_xqa_model_module(shared_resources)
-    output_module = XQANoScoreOutputModule(shared_resources)
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__nli_reader
-def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
-    This particular reader uses a conditional Bidirectional LSTM, as described in [1].
-
-    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
-    """
-    from jack.readers.multiple_choice.shared import MultiSupportFixedClassInputs
-    from jack.readers.natural_language_inference.bilstm import PairOfBiLSTMOverSupportAndQuestionModel
-    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = MultiSupportFixedClassInputs(shared_resources)
-    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-    output_module = SimpleMCOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__nli_reader
-def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
-    This particular reader uses a Decomposable Attention Model, as described in [1].
-
-    [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
-    """
-    from jack.readers.multiple_choice.shared import MultiSupportFixedClassInputs
-    from jack.readers.natural_language_inference.decomposable_attention import DecomposableAttentionModel
-    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = MultiSupportFixedClassInputs(shared_resources)
-    model_module = DecomposableAttentionModel(shared_resources)
-    output_module = SimpleMCOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@__nli_reader
-def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
-    This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
-
-    [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
-    """
-    from jack.readers.multiple_choice.shared import MultiSupportFixedClassInputs
-    from jack.readers.natural_language_inference.esim import ESIMModel
-    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = MultiSupportFixedClassInputs(shared_resources)
-    model_module = ESIMModel(shared_resources)
-    output_module = SimpleMCOutputModule()
     return TFReader(shared_resources, input_module, model_module, output_module)

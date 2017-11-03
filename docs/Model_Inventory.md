@@ -21,9 +21,9 @@ def cbilstm_snli_reader(shared_resources: SharedResources):
 
     [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
     """
-    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel,\
+    from jtr.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, PairOfBiLSTMOverSupportAndQuestionModel,\
         EmptyOutputModule
-    input_module = MultiSupportFixedClassInputs(shared_resources)
+    input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
@@ -37,8 +37,8 @@ def dam_snli_reader(shared_resources: SharedResources):
 
     [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
     """
-    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
-    input_module = MultiSupportFixedClassInputs(shared_resources)
+    from jtr.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, DecomposableAttentionModel, EmptyOutputModule
+    input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)
@@ -52,8 +52,8 @@ def esim_snli_reader(shared_resources: SharedResources):
 
     [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
     """
-    from jtr.tasks.mcqa.simple_mcqa import MultiSupportFixedClassInputs, ESIMModel, EmptyOutputModule
-    input_module = MultiSupportFixedClassInputs(shared_resources)
+    from jtr.tasks.mcqa.simple_mcqa import SingleSupportFixedClassInputs, ESIMModel, EmptyOutputModule
+    input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = ESIMModel(shared_resources)
     output_module = EmptyOutputModule()
     return JTReader(shared_resources, input_module, model_module, output_module)

@@ -155,7 +155,8 @@ class TFModelModule(ModelModule):
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
         if "name" in self.shared_resources.config:
-            with tf.variable_scope(self.shared_resources.config["name"]):
+            with tf.variable_scope(self.shared_resources.config["name"],
+                                   initializer=tf.contrib.layers.xavier_initializer()):
                 self._tensors = {d: d.create_placeholder() for d in self.input_ports}
                 output_tensors = self.create_output(
                     self.shared_resources, *[self._tensors[port] for port in self.input_ports])

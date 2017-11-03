@@ -4,8 +4,8 @@ from random import shuffle
 from typing import Any
 
 from jack.core import *
-from jack.util.map import numpify, deep_map, notokenize
-from jack.util.pipelines import transpose_dict_of_lists
+from jack.util.map import numpify
+from jack.util.preprocessing import transpose_dict_of_lists
 
 
 class ShuffleList:
@@ -40,7 +40,6 @@ def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
     assert (len(candidate_dataset) == len(answer_dataset))
     for i in range(0, len(candidate_dataset)):
         question = question_dataset[i][0]
-        candidates = candidate_dataset[i]
         answers = [answer_dataset[i]] if not hasattr(answer_dataset[i], '__len__') else answer_dataset[i]
         posneg = [] + answers
         avoided = False
@@ -61,6 +60,7 @@ def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
 class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
+        self.all_candidates = False
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         questions, answers = zip(*data)
@@ -89,12 +89,24 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
             if y is not None:
                 assert len(y) == 1
                 corpus["answers"].append([y[0].text])
-        corpus = deep_map(corpus, notokenize, ['question'])
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['question'])
-        corpus = deep_map(corpus, self.shared_resources.vocab, ['candidates'], cache_fun=True)
+
+        corpus['question'] = [[self.shared_resources.vocab(q)] for q in corpus['question']]
+
+        cache = dict()
+        cand_ids = list()
+        for clist in corpus['candidates']:
+            if id(clist) in cache:
+                c_id_list = cache[id(clist)]
+            else:
+                c_id_list = list()
+                for c in clist:
+                    c_id_list.append(self.shared_resources.vocab(c))
+                cache[id(clist)] = c_id_list
+            cand_ids.append(c_id_list)
+        corpus['candidates'] = cand_ids
 
         if has_answers:
-            corpus = deep_map(corpus, self.shared_resources.vocab, ['answers'])
+            corpus['answers'] = [[self.shared_resources.vocab(a) for a in alist] for alist in corpus['answers']]
             qanswers = {}
             for i, q in enumerate(corpus['question']):
                 q0 = q[0]
@@ -102,7 +114,7 @@ class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
                     qanswers[q0] = set()
                 a = corpus["answers"][i][0]
                 qanswers[q0].add(a)
-            if not is_eval:
+            if not self.all_candidates:
                 sl = ShuffleList(corpus["candidates"][0], qanswers)
                 corpus = posnegsample(corpus, 'question', 'answers', 'candidates', sl)
                 # corpus = dynamic_subsample(corpus,'candidates','answers',how_many=1)

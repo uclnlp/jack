@@ -33,14 +33,11 @@ batch_size: 128
 # Batch size for development data, default 128
 dev_batch_size: 128
 
-# Size of the input representation (embeddings), default 128 (embeddings cut off or extended if not, matched with pretrained embeddings if provided)
+# Size of the input representation (embeddings), is automatically overwritten when pre-trained embeddings are provided
 repr_dim_input: 128
 
 # Size of the hidden representations, default 128
 repr_dim: 128
-
-# Use pretrained embeddings, by default the initialisation is random
-pretrain: False
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: False
@@ -51,10 +48,10 @@ train_pretrain: False
 # Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)
 normalize_pretrain: False
 
-# [word2vec] or [glove] format of embeddings to be loaded
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
 embedding_format: null
 
-# format of embeddings to be loaded
+# embeddings to be loaded
 embedding_file: null
 
 vocab_maxsize: 1000000000000
@@ -93,6 +90,9 @@ tensorboard_folder: null
 
 # Filename to log the metrics of the EvalHooks
 write_metrics_to: null
+
+# Use also character based embeddings in readers which support it
+with_char_embeddings: True
 
 # If the vocabulary should be pruned to the most frequent words
 prune: False

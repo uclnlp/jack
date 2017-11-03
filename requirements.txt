@@ -11,5 +11,12 @@ typing
 sacred
 sqlalchemy
 pyyaml
-pytest
 spacy
+
+pytest
+pytest-runner
+pytest-xdist
+pytest-pep8
+pytest-xdist
+pytest-cov
+codecov

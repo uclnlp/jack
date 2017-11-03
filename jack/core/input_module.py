@@ -7,8 +7,8 @@ from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
 
 import numpy as np
 
+from jack.core.data_structures import QASetting, Answer
 from jack.core.tensorport import TensorPort
-from jack.data_structures import QASetting, Answer
 from jack.util.batch import shuffle_and_batch, GeneratorWithRestart
 
 _rng = random.Random(1234)

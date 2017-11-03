@@ -5,8 +5,8 @@ from typing import Sequence
 
 import numpy as np
 
+from jack.core.data_structures import QASetting, Answer
 from jack.core.tensorport import TensorPort
-from jack.data_structures import QASetting, Answer
 
 
 class OutputModule:
