@@ -44,3 +44,5 @@ dropout: 0.5
 batch_size: 64
 
 lowercase: True
+
+learning_rate_decay: 0.5
