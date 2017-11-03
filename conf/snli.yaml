@@ -32,10 +32,6 @@ vocab_from_embeddings: True
 # Use also character based embeddings in readers which support it
 with_char_embeddings: False
 
-repr_dim: 300
-
-epochs: 400
-
 dropout: 0.5
 
 batch_size: 32

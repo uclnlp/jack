@@ -1,4 +1,5 @@
-# Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![codecov](https://codecov.io/gh/uclmr/jack/branch/master/graph/badge.svg?token=jbZrj9oSmi)](https://codecov.io/gh/uclmr/jack) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage)
+# Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![codecov](https://codecov.io/gh/uclmr/jack/branch/master/graph/badge.svg?token=jbZrj9oSmi)](https://codecov.io/gh/uclmr/jack) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage) [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/uclmr/jack/blob/master/LICENSE)
+
 ##### A reading comprehension framework.
 
 * All work and no play makes Jack a great frame*work*!
@@ -33,7 +34,7 @@ First, download SQuAD and GloVe embeddings:
 $ data/SQuAD/download.sh
 $ data/GloVe/download.sh
 $ # Although we support native glove format it is recommended to use a memory mapped format which allows to load embeddings only as needed.
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 ```
 
 Train a [FastQA][fastqa] model:
@@ -69,9 +70,9 @@ If all of that is too cumbersome for you and you just want to play, why not down
 ```bash
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
-$ unzip -d ./fastqa_reader fastqa.zip
+$ unzip fastqa.zip && mv fastqa fastqa_reader
 ```
 
 ```python
@@ -102,7 +103,7 @@ First, download SNLI
 ```bash
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ ./data/SNLI/download.sh
 ```
 
