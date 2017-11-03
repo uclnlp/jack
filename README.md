@@ -34,7 +34,7 @@ First, download SQuAD and GloVe embeddings:
 $ data/SQuAD/download.sh
 $ data/GloVe/download.sh
 $ # Although we support native glove format it is recommended to use a memory mapped format which allows to load embeddings only as needed.
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 ```
 
 Train a [FastQA][fastqa] model:
