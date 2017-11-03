@@ -34,7 +34,7 @@ with_char_embeddings: False
 
 repr_dim: 300
 
-epochs: 400
+epochs: 20
 
 dropout: 0.5
 
