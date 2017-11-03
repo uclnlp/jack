@@ -72,7 +72,7 @@ $ # we still need GloVe in memory mapped format, ignore the next 2 commands if a
 $ data/GloVe/download.sh
 $ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
-$ unzip -d ./fastqa_reader fastqa.zip
+$ unzip fastqa.zip && mv fastqa fastqa_reader
 ```
 
 ```python
