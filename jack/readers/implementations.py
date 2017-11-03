@@ -119,7 +119,7 @@ def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-    output_module = SimpleMCOutputModule()
+    output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -138,7 +138,7 @@ def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
-    output_module = SimpleMCOutputModule()
+    output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -157,7 +157,7 @@ def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = ESIMModel(shared_resources)
-    output_module = SimpleMCOutputModule()
+    output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 

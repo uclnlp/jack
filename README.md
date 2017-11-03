@@ -1,4 +1,5 @@
-# Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![codecov](https://codecov.io/gh/uclmr/jack/branch/master/graph/badge.svg?token=jbZrj9oSmi)](https://codecov.io/gh/uclmr/jack) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage)
+# Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![codecov](https://codecov.io/gh/uclmr/jack/branch/master/graph/badge.svg?token=jbZrj9oSmi)](https://codecov.io/gh/uclmr/jack) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage) [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/uclmr/jack/blob/master/LICENSE)
+
 ##### A reading comprehension framework.
 
 * All work and no play makes Jack a great frame*work*!
@@ -33,7 +34,7 @@ First, download SQuAD and GloVe embeddings:
 $ data/SQuAD/download.sh
 $ data/GloVe/download.sh
 $ # Although we support native glove format it is recommended to use a memory mapped format which allows to load embeddings only as needed.
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 ```
 
 Train a [FastQA][fastqa] model:
@@ -56,8 +57,9 @@ You want to train another model with the same configuration (e.g., bidaf)? No pr
 $ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=bidaf_reader
 ```
 
-Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write tensorboard
-summaries to a provided path (here `.tb/fastqa`).
+Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
+[summaries][tf_summaries]  to a provided path (here `.tb/fastqa`). Your summaries are automatically
+fetched in the train loop, so all you need to do is write them in your TF model code.
 
 A copy of the model is written into the `model_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
@@ -68,9 +70,9 @@ If all of that is too cumbersome for you and you just want to play, why not down
 ```bash
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ wget http://data.neuralnoise.com/jack/extractive_qa/fastqa.zip
-$ unzip -d ./fastqa_reader fastqa.zip
+$ unzip fastqa.zip && mv fastqa fastqa_reader
 ```
 
 ```python
@@ -92,6 +94,7 @@ answers = fastqa_reader([QASetting(
 
 [fastqa]: https://arxiv.org/abs/1703.04816
 [showcase]: notebooks/Showcasing_Jack.ipynb
+[tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 
 ### Recognizing Textual Entailment on SNLI
 
@@ -100,7 +103,7 @@ First, download SNLI
 ```bash
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
-$ python3 jack/io/embeddings/memory_map.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir
+$ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 $ ./data/SNLI/download.sh
 ```
 
@@ -159,7 +162,9 @@ We are thankful for support from:
 - Make sure all your code runs from the top level directory, e.g.:
 
 ```shell
-$ python3 ./jack/io/SNLI2jtr_v1.py
+$ pwd
+/home/pasquale/workspace/jack
+$ python3 bin/jack-train.py [..]
 ```
 
 [pep8]: https://www.python.org/dev/peps/pep-0008/

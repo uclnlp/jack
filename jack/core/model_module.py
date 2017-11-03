@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import logging
+import os
 from abc import abstractmethod
 from typing import Mapping, List, Sequence
 
@@ -8,6 +9,8 @@ import tensorflow as tf
 
 from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import TensorPort
+
+logger = logging.getLogger(__name__)
 
 
 class ModelModule:
@@ -188,6 +191,29 @@ class TFModelModule(ModelModule):
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
         self._variables = [v for v in tf.global_variables() if v not in old_variables]
         self.tf_session.run([v.initializer for v in self.variables])
+
+        # Sometimes we want to initialize (partially) with a pre-trained model
+        init_model = self.shared_resources.config.get('pretrained_model')
+        if is_training and init_model is not None:
+            if not init_model.endswith('model_module'):
+                # path to a reader was provided
+                init_model = os.path.join(init_model, 'model_module')
+            # get all variables in the checkpoint file
+            from tensorflow.python import pywrap_tensorflow
+            reader = pywrap_tensorflow.NewCheckpointReader(init_model)
+            init_vars = []
+            for n in reader.get_variable_to_shape_map().keys():
+                found = False
+                for v in self.variables:
+                    if v.op.name == n:
+                        found = True
+                        init_vars.append(v)
+                        break
+                if not found:
+                    logger.warn("Could not find variable", n, "in computation graph to restore from pretrained model.")
+
+            saver = tf.train.Saver(init_vars)
+            saver.restore(self.tf_session, init_model)
 
     @property
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
