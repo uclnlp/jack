@@ -62,9 +62,11 @@ def prepare_data(qa_setting: QASetting,
                      for char_offset in char_offsets]
 
     support_tokens_flat = [t for s in support_tokens for t in s]
-    support_lemmas_flat = [t for s in support_lemmas for t in s] \
-                          if support_lemmas is not None else None
+    support_lemmas_flat = None
+    if with_lemmas:
+        support_lemmas_flat = [t for s in support_lemmas for t in s]
     support_ids_flat = [i for ids in support_ids for i in ids]
+    support_length = sum(support_length)
 
     rng = random.Random(12345)
 

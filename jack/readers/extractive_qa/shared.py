@@ -218,7 +218,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         # we can only numpify in here, because bucketing is not possible prior
         batch = numpify(output, keys=[XQAPorts.unique_word_chars,
                                       XQAPorts.question_words2unique, XQAPorts.support_words2unique,
-                                      XQAPorts.word_in_question, XQAPorts.token_char_offsets])
+                                      XQAPorts.word_in_question, XQAPorts.token_offsets])
         return batch
 
 
