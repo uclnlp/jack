@@ -142,69 +142,47 @@ class Ports:
                                        "Represents the embedded question",
                                        "[Q, max_num_question_tokens, N]")
 
-    class Prediction:
-        logits = TensorPort(tf.float32, [None, None], "candidate_scores",
-                            "Represents output scores for each candidate",
-                            "[batch_size, num_candidates]")
+        # Number of questions in batch is Q, number of supports is S, number of answers is A, number of candidates is C.
+        # Typical input ports such as support, candidates, answers are defined together with individual mapping ports.
+        # This allows for more flexibility when numbers can vary between questions.
 
-        candidate_index = TensorPort(tf.float32, [None], "candidate_idx",
-                                     "Represents answer as a single index",
-                                     "[batch_size]")
-
-    class Target:
-        candidate_1hot = TensorPort(tf.float32, [None, None], "candidate_targets",
-                                    "Represents target (0/1) values for each candidate",
-                                    "[batch_size, num_candidates]")
-
-        target_index = TensorPort(tf.int32, [None], "target_index",
-                                  ("Represents symbol id of target candidate. ",
-                                   "This can either be an index into a full list of candidates,",
-                                   " which is fixed, or an index into a partial list of ",
-                                   "candidates, for example a list of potential entities ",
-                                   "from a list of many candidates"),
-                                  "[batch_size]")
-
-
-class FlatPorts:
-    """Flat ports that can be used more flexibly in some cases.
-
-    Number of questions in batch is Q, number of supports is S, number of answers is A, number of candidates is C.
-    Typical input ports such as support, candidates, answers are defined together with individual mapping ports. This
-    allows for more flexibility when numbers can vary between questions. Naming convention is to use suffix "_flat".
-    """
-
-    class Input:
-        support_to_question = TensorPort(tf.int32, [None], "support2question",
-                                         "Represents mapping to question idx per support",
-                                         "[S]")
-        candidate_to_question = TensorPort(tf.int32, [None], "candidate2question",
-                                           "Represents mapping to question idx per candidate",
-                                           "[C]")
+        support2question = TensorPort(tf.int32, [None], "support2question",
+                                      "Represents mapping to question idx per support",
+                                      "[S]")
+        candidate2question = TensorPort(tf.int32, [None], "candidate2question",
+                                        "Represents mapping to question idx per candidate",
+                                        "[C]")
         answer2question = TensorPortWithDefault([0], tf.int32, [None], "answer2question",
                                                 "Represents mapping to question idx per answer",
                                                 "[A]")
+        atomic_candidates1D = TensorPort(tf.int32, [None], "candidates1D",
+                                         "Represents candidate choices using single symbols",
+                                         "[C]")
 
-        support = TensorPort(tf.int32, [None, None], "support_flat",
-                             "Represents instances with a single support document. "
-                             "[S, max_num_tokens]")
-
-        atomic_candidates = TensorPort(tf.int32, [None], "candidates_flat",
-                                       "Represents candidate choices using single symbols",
-                                       "[C]")
-
-        seq_candidates = TensorPort(tf.int32, [None, None], "seq_candidates_flat",
+        seq_candidates = TensorPort(tf.int32, [None, None], "seq_candidates",
                                     "Represents candidate choices using single symbols",
                                     "[C, max_num_tokens]")
 
-        support_length = TensorPort(tf.int32, [None], "support_length_flat",
-                                    "Represents length of support in batch",
-                                    "[S]")
+        # MISC intermediate ports that might come in handy
+        # -embeddings
+        embedded_seq_candidates = TensorPort(tf.float32, [None, None, None], "embedded_seq_candidates_flat",
+                                             "Represents the embedded sequential candidates",
+                                             "[C, max_num_tokens, N]")
 
-        question_length = TensorPort(tf.int32, [None], "question_length_flat",
-                                     "Represents length of questions in batch",
-                                     "[Q]")
+        embedded_candidates = TensorPort(tf.float32, [None, None], "embedded_candidates_flat",
+                                         "Represents the embedded candidates",
+                                         "[C, N]")
+
 
     class Prediction:
+        logits = TensorPort(tf.float32, [None, None], "candidate_scores",
+                            "Represents output scores for each candidate",
+                            "[C, num_candidates]")
+
+        candidate_index = TensorPort(tf.float32, [None], "candidate_idx",
+                                     "Represents answer as a single index",
+                                     "[C]")
+
         candidate_scores = TensorPort(tf.float32, [None], "candidate_scores_flat",
                                       "Represents output scores for each candidate",
                                       "[C]")
@@ -237,38 +215,25 @@ class FlatPorts:
                                         "[A, max_num_tokens]")
 
     class Target:
-        candidate_idx = TensorPort(tf.int32, [None], "candidate_targets_flat",
-                                   "Represents groundtruth candidate labels, usually 1 or 0",
-                                   "[C]")
+        candidate_1hot = TensorPort(tf.float32, [None, None], "candidate_targets",
+                                    "Represents target (0/1) values for each candidate",
+                                    "[batch_size, num_candidates]")
 
-        answer_span = TensorPort(tf.int32, [None, 2], "answer_span_target_flat",
+        target_index = TensorPort(tf.int32, [None], "target_index",
+                                  ("Represents symbol id of target candidate. ",
+                                   "This can either be an index into a full list of candidates,",
+                                   " which is fixed, or an index into a partial list of ",
+                                   "candidates, for example a list of potential entities ",
+                                   "from a list of many candidates"),
+                                  "[batch_size]")
+
+        answer_span = TensorPort(tf.int32, [None, 2], "answer_span_target",
                                  "Represents answer as a (start, end) span", "[A, 2]")
 
-        seq_answer = TensorPort(tf.int32, [None, None], "answer_seq_target_flat",
+        seq_answer = TensorPort(tf.int32, [None, None], "answer_seq_target",
                                 "Represents answer as a sequence of symbols",
                                 "[A, max_num_tokens]")
 
-        generative_symbols = TensorPort(tf.int32, [None, None], "symbol_targets",
-                                        "Represents symbol scores for each possible "
-                                        "sequential answer given during training",
-                                        "[A, max_num_tokens]")
-
-    class Misc:
-        # MISC intermediate ports that might come in handy
-        # -embeddings
-        embedded_seq_candidates = TensorPort(tf.float32, [None, None, None], "embedded_seq_candidates_flat",
-                                             "Represents the embedded sequential candidates",
-                                             "[C, max_num_tokens, N]")
-
-        embedded_candidates = TensorPort(tf.float32, [None, None], "embedded_candidates_flat",
-                                         "Represents the embedded candidates",
-                                         "[C, N]")
-
-        embedded_support = TensorPort(tf.float32, [None, None, None], "embedded_support_flat",
-                                      "Represents the embedded support",
-                                      "[S, max_num_tokens, N]")
-
-        embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question_flat",
-                                       "Represents the embedded question",
-                                       "[Q, max_num_question_tokens, N]")
-        # -attention, ...
+        symbols = TensorPort(tf.int32, [None, None], "symbol_targets",
+                             "Represents symbols for each possible target answer sequence",
+                             "[A, max_num_tokens]")
