@@ -46,11 +46,28 @@ setup(name='jack',
       url='https://github.com/uclmr/jack',
       test_suite='tests',
       license='MIT',
-      cmdclass={'install': Install, 'develop': Develop},
+      packages=find_packages(),
+      cmdclass={
+          'install': Install,
+          'develop': Develop
+      },
       install_requires=requirements,
       extras_require={
-          'gpu': ['tensorflow-gpu>=1.3']
+          'tensorflow': ['tensorflow>=1.4.0'],
+          'tensorflow_gpu': ['tensorflow-gpu>=1.4.0'],
       },
       setup_requires=requirements,
       tests_require=requirements,
-      packages=find_packages())
+      classifiers=[
+          'Development Status :: 4 - Beta',
+          'Intended Audience :: Developers',
+          'Intended Audience :: Education',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: MIT License',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.6',
+          'Topic :: Software Development :: Libraries',
+          'Topic :: Software Development :: Libraries :: Python Modules'
+          'Topic :: Scientific/Engineering :: Artificial Intelligence',
+      ],
+      keywords='tensorflow machine learning natural language processing question answering')
