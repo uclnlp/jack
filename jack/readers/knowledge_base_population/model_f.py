@@ -149,11 +149,11 @@ class ModelFModelModule(TFModelModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, FlatPorts.Misc.embedded_question]
+        return [Ports.Prediction.logits, Ports.Input.embedded_question]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, FlatPorts.Misc.embedded_question, Ports.Target.target_index]
+        return [Ports.Prediction.logits, Ports.Input.embedded_question, Ports.Target.target_index]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
