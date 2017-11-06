@@ -92,6 +92,12 @@ class Ports:
     loss = TensorPort(tf.float32, [None], "loss",
                       "Represents loss on each instance in the batch",
                       "[batch_size]")
+    keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
+                                      "scalar representing keep probability when using dropout",
+                                      "[]")
+    is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
+                                    "boolean that determines whether input is eval or training.",
+                                    "[]")
 
     class Input:
         question = TensorPort(tf.int32, [None, None], "question",
