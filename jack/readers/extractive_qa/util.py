@@ -66,7 +66,7 @@ def prepare_data(qa_setting: QASetting,
     if with_lemmas:
         support_lemmas_flat = [t for s in support_lemmas for t in s]
     support_ids_flat = [i for ids in support_ids for i in ids]
-    support_length = sum(support_length)
+    support_length = len(support_tokens_flat)
 
     rng = random.Random(12345)
 
@@ -97,10 +97,16 @@ def prepare_data(qa_setting: QASetting,
             if start == len(document_token_offsets):
                 continue
 
-            # TODO: Add document offset!
             end = start
             while end + 1 < len(document_token_offsets) and document_token_offsets[end + 1] < a.span[1]:
                 end += 1
+
+            # Convert (start, end) document token indices into indices in the
+            # flattened support
+            num_tokens_before = sum([len(s) for s in support_tokens[:a.doc_idx]])
+            start += num_tokens_before
+            end += num_tokens_before
+
             if (start, end) not in answer_spans:
                 answer_spans.append((start, end))
                 min_answer = min(min_answer, start)
@@ -109,12 +115,11 @@ def prepare_data(qa_setting: QASetting,
     # cut support whenever there is a maximum allowed length and recompute answer spans
     if max_support_length is not None and len(support_tokens_flat) > max_support_length > 0:
         support_length = max_support_length
+
+        # Find new start and end in the flattened support
         if max_answer < max_support_length:
-            support_tokens_flat = support_tokens_flat[:max_support_length]
-            support_ids_flat = support_ids_flat[:max_support_length]
-            if with_lemmas:
-                support_lemmas_flat = support_lemmas_flat[:max_support_length]
-            word_in_question = word_in_question[:max_support_length]
+            new_start = 0
+            new_end = max_support_length
         else:
             offset = rng.randint(1, 11)
             new_end = max_answer + offset
@@ -124,12 +129,13 @@ def prepare_data(qa_setting: QASetting,
                 new_end = max(answer_spans, key=lambda span: span[1])[1] + offset
                 new_start = max(0, min(min_answer - offset, new_end - max_support_length))
 
-            support_tokens_flat = support_tokens_flat[new_start:new_end]
-            support_ids_flat = support_ids_flat[new_start:new_end]
-            if with_lemmas:
-                support_lemmas_flat = support_lemmas_flat[new_start:new_end]
-            answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
-            word_in_question = word_in_question[new_start:new_end]
+        # Crop support according to new start and end pointers
+        support_tokens_flat = support_tokens_flat[new_start:new_end]
+        support_ids_flat = support_ids_flat[new_start:new_end]
+        if with_lemmas:
+            support_lemmas_flat = support_lemmas_flat[new_start:new_end]
+        answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
+        word_in_question = word_in_question[new_start:new_end]
 
     return question_tokens, question_ids, question_lemmas, question_length, \
            support_tokens_flat, support_ids_flat, support_lemmas_flat, support_length, \
