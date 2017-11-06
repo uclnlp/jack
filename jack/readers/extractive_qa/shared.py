@@ -10,23 +10,12 @@ from jack.util import preprocessing
 from jack.util.map import numpify
 
 
-class ParameterTensorPorts:
-    # remove?
-    keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
-                                      "scalar representing keep probability when using dropout",
-                                      "[]")
-
-    is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
-                                    "boolean that determines whether input is eval or training.",
-                                    "[]")
-
-
 class XQAPorts:
     # When feeding embeddings directly
-    emb_question = FlatPorts.Misc.embedded_question
-    question_length = FlatPorts.Input.question_length
-    emb_support = FlatPorts.Misc.embedded_support
-    support_length = FlatPorts.Input.support_length
+    emb_question = Ports.Input.embedded_question
+    question_length = Ports.Input.question_length
+    emb_support = Ports.Input.embedded_support
+    support_length = Ports.Input.support_length
 
     # but also ids, for char-based embeddings
     unique_word_chars = TensorPort(tf.int32, [None, None], "question_chars",
@@ -42,8 +31,8 @@ class XQAPorts:
                                       "Represents support using symbol vectors",
                                       "[batch_size, max_num_support_tokens, max]")
 
-    keep_prob = ParameterTensorPorts.keep_prob
-    is_eval = ParameterTensorPorts.is_eval
+    keep_prob = Ports.keep_prob
+    is_eval = Ports.is_eval
 
     # This feature is model specific and thus, not part of the conventional Ports
     word_in_question = TensorPort(tf.float32, [None, None], "word_in_question_feature",
@@ -57,16 +46,16 @@ class XQAPorts:
                                                    "[A]")
 
     # output ports
-    start_scores = FlatPorts.Prediction.start_scores
-    end_scores = FlatPorts.Prediction.end_scores
-    span_prediction = FlatPorts.Prediction.answer_span
+    start_scores = Ports.Prediction.start_scores
+    end_scores = Ports.Prediction.end_scores
+    span_prediction = Ports.Prediction.answer_span
     token_char_offsets = TensorPort(tf.int32, [None, None], "token_char_offsets",
                                     "Character offsets of tokens in support.",
                                     "[S, support_length]")
 
     # ports used during training
-    answer2question_training = FlatPorts.Input.answer2question
-    answer_span = FlatPorts.Target.answer_span
+    answer2question_training = Ports.Input.answer2question
+    answer_span = Ports.Target.answer_span
 
 
 XQAAnnotation = NamedTuple('XQAAnnotation', [
@@ -318,8 +307,8 @@ class XQAOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [FlatPorts.Prediction.answer_span, XQAPorts.token_char_offsets,
-                FlatPorts.Prediction.start_scores, FlatPorts.Prediction.end_scores]
+        return [Ports.Prediction.answer_span, XQAPorts.token_char_offsets,
+                Ports.Prediction.start_scores, Ports.Prediction.end_scores]
 
 
 class XQANoScoreOutputModule(OutputModule):
@@ -349,4 +338,4 @@ class XQANoScoreOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [FlatPorts.Prediction.answer_span, XQAPorts.token_char_offsets]
+        return [Ports.Prediction.answer_span, XQAPorts.token_char_offsets]

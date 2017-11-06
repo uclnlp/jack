@@ -14,7 +14,7 @@ from sklearn.metrics import f1_score
 
 from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader, TFReader
-from jack.core.tensorport import TensorPort, FlatPorts, Ports
+from jack.core.tensorport import TensorPort, Ports
 
 logger = logging.getLogger(__name__)
 
@@ -355,7 +355,7 @@ class XQAEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], batch_size: int,
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [FlatPorts.Prediction.answer_span, FlatPorts.Target.answer_span, FlatPorts.Input.answer2question]
+        ports = [Ports.Prediction.answer_span, Ports.Target.answer_span, Ports.Input.answer2question]
         super().__init__(reader, dataset, batch_size, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -368,9 +368,9 @@ class XQAEvalHook(EvalHook):
         return 'f1', [0.0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_spans = tensors[FlatPorts.Target.answer_span]
-        predicted_spans = tensors[FlatPorts.Prediction.answer_span]
-        correct2prediction = tensors[FlatPorts.Input.answer2question]
+        correct_spans = tensors[Ports.Target.answer_span]
+        predicted_spans = tensors[Ports.Prediction.answer_span]
+        correct2prediction = tensors[Ports.Input.answer2question]
 
         def len_np_or_list(v):
             if isinstance(v, list):
