@@ -354,8 +354,14 @@ class XQAEvalHook(EvalHook):
 
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], batch_size: int,
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, **kwargs):
-        ports = [Ports.Prediction.answer_span, Ports.Target.answer_span, Ports.Input.answer2question]
+                 write_metrics_to=None, info="", side_effect=None,
+                 predicted_answer_span_port=Ports.Prediction.answer_span,
+                 target_answer_span_port=Ports.Prediction.answer_span,
+                 answer2question_port=Ports.Input.answer2question, **kwargs):
+        self._predicted_answer_span_port = predicted_answer_span_port
+        self._target_answer_span_port = target_answer_span_port
+        self._answer2question_port = answer2question_port
+        ports = [predicted_answer_span_port, target_answer_span_port, answer2question_port]
         super().__init__(reader, dataset, batch_size, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -368,9 +374,9 @@ class XQAEvalHook(EvalHook):
         return 'f1', [0.0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_spans = tensors[Ports.Target.answer_span]
-        predicted_spans = tensors[Ports.Prediction.answer_span]
-        correct2prediction = tensors[Ports.Input.answer2question]
+        correct_spans = tensors[self._target_answer_span_port]
+        predicted_spans = tensors[self._predicted_answer_span_port]
+        correct2prediction = tensors[self._answer2question_port]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -409,11 +415,12 @@ class XQAEvalHook(EvalHook):
 class ClassificationEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], batch_size: int,
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
-                 write_metrics_to=None, info="", side_effect=None, **kwargs):
-
-        ports = [Ports.Prediction.logits,
-                 Ports.Prediction.candidate_index,
-                 Ports.Target.target_index]
+                 write_metrics_to=None, info="", side_effect=None,
+                 predicted_index_port=Ports.Prediction.candidate_index,
+                 target_index_port=Ports.Target.target_index, **kwargs):
+        self._predicted_index_port = predicted_index_port
+        self._target_index_port = target_index_port
+        ports = [self._predicted_index_port, self._target_index_port]
 
         super().__init__(reader, dataset, batch_size, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
@@ -427,8 +434,8 @@ class ClassificationEvalHook(EvalHook):
         return 'Accuracy', [0.0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        labels = tensors[Ports.Target.target_index]
-        predictions = tensors[Ports.Prediction.candidate_index]
+        labels = tensors[self._target_index_port]
+        predictions = tensors[self._predicted_index_port]
 
         labels_np = np.array(labels)
         acc_exact = np.sum(np.equal(labels_np, predictions))
