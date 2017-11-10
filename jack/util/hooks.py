@@ -356,7 +356,7 @@ class XQAEvalHook(EvalHook):
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None,
                  predicted_answer_span_port=Ports.Prediction.answer_span,
-                 target_answer_span_port=Ports.Prediction.answer_span,
+                 target_answer_span_port=Ports.Target.answer_span,
                  answer2question_port=Ports.Input.answer2question, **kwargs):
         self._predicted_answer_span_port = predicted_answer_span_port
         self._target_answer_span_port = target_answer_span_port
