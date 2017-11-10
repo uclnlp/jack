@@ -73,6 +73,7 @@ def conv_char_embedding_multi_filter(
         embedded_chars = tf.nn.embedding_lookup(char_embedding_matrix, tf.cast(word_chars, tf.int32))
         conv_mask = tf.expand_dims(tf.sequence_mask(word_lengths, max_word_length, tf.float32), 2)
         embedded_chars *= conv_mask
+        conv_mask_strong_neg = tf.expand_dims(misc.mask_for_lengths(word_lengths, max_length=max_word_length), 2)
 
         embedded_words = []
         for conv_width, size in enumerate(filter_sizes):
@@ -84,8 +85,7 @@ def conv_char_embedding_multi_filter(
                 filter = tf.get_variable("filter", [conv_width * embedding_size, size])
                 filter_reshaped = tf.reshape(filter, [conv_width, embedding_size, size])
                 conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "SAME")
-                conv_mask = tf.expand_dims(misc.mask_for_lengths(word_lengths, max_length=max_word_length), 2)
-                conv_out = conv_out + conv_mask
+                conv_out = conv_out + conv_mask_strong_neg
                 embedded_words.append(tf.reduce_max(conv_out, 1))
 
         embedded_words = tf.concat(embedded_words, 1)

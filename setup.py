@@ -10,7 +10,7 @@ def spacy_download_en():
     import spacy
     try:
         spacy.load('en')
-    except RuntimeError:
+    except FileNotFoundError:
         import subprocess
         args = ['python3 -m spacy download en']
         subprocess.call(args, shell=True)
