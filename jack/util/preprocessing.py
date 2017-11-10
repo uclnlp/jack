@@ -72,7 +72,8 @@ def nlp_preprocess(text: str,
                    with_lemmas: bool = False,
                    with_tokens_offsets: bool = False,
                    use_spacy: bool = False) \
-        -> Tuple[List[str], List[int], int, Optional[List[str]], Optional[List[int]]]:
+        -> Tuple[List[str], List[int], int, Optional[List[str]],
+                 Optional[List[int]]]:
     """Preprocesses a question and support:
     The steps include tokenization, lower-casing. It also includes the computation of token-to-character offsets for
     the support. Lemmatization is supported in 2 ways. If lemmatize is True then the returned tokens are lemmatized

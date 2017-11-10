@@ -12,7 +12,7 @@ class Answer:
     Representation of an answer to a question.
     """
 
-    def __init__(self, text: str, span: Tuple[int, int] = None, doc_idx: int = None, score: float = 1.0):
+    def __init__(self, text: str, span: Tuple[int, int] = None, doc_idx: int = 0, score: float = 1.0):
         """
         Create a new answer.
         Args:
@@ -23,6 +23,8 @@ class Answer:
             support documents. The span starts at `start` and ends at `end` (exclusive).
             score: the score a model associates with this answer.
         """
+        assert span is None or len(span) == 2, "span should be (char_start, char_end) tuple"
+
         self.score = score
         self.span = span
         self.doc_idx = doc_idx
