@@ -22,12 +22,12 @@ class Embeddings:
         self.lookup = lookup
         self.emb_format = emb_format
 
-    def get(self, word):
+    def get(self, word, default=None):
         _id = None
         if self.vocabulary is not None:
             _id = self.vocabulary.get(word, None)
         # Handling OOV words - Note: lookup[None] would return entire lookup table
-        return self.lookup[_id] if _id is not None else None
+        return self.lookup[_id] if _id is not None else default
 
     def __call__(self, word):
         return self.get(word)

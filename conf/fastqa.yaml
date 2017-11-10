@@ -21,13 +21,9 @@ max_support_length: -1
 # Use also character based embeddings in readers which support it
 with_char_embeddings: True
 
-# jack training file
+
 train: 'data/SQuAD/train-v1.1.json'
-
-# jack dev file
 dev: 'data/SQuAD/dev-v1.1.json'
-
-# jack test file
 test: null
 
 # [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
@@ -46,3 +42,7 @@ epochs: 20
 dropout: 0.5
 
 batch_size: 64
+
+lowercase: True
+
+learning_rate_decay: 0.5

@@ -18,21 +18,21 @@ def __reader(f):
     return f
 
 
-def __extractive_qa_reader(f):
+def extractive_qa_reader(f):
     __reader(f)
     extractive_qa_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, XQAEvalHook)
     return f
 
 
-def __nli_reader(f):
+def nli_reader(f):
     __reader(f)
     nli_readers.setdefault(f.__name__, f)
     eval_hooks.setdefault(f.__name__, ClassificationEvalHook)
     return f
 
 
-def __kbp_reader(f):
+def kbp_reader(f):
     from jack.util.hooks import KBPEvalHook
     __reader(f)
     kbp_readers.setdefault(f.__name__, f)
@@ -64,7 +64,7 @@ def create_shared_resources(resources_or_config: Union[dict, SharedResources] = 
         return SharedResources(config=resources_or_config)
 
 
-@__extractive_qa_reader
+@extractive_qa_reader
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.fastqa import FastQAModule
@@ -77,7 +77,7 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__extractive_qa_reader
+@extractive_qa_reader
 def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA model as described in https://arxiv.org/abs/1703.04816 (extractive qa model)."""
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
@@ -90,7 +90,7 @@ def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__extractive_qa_reader
+@extractive_qa_reader
 def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a CBow QA model as described in https://arxiv.org/abs/1703.04816. """
     from jack.readers.extractive_qa.cbow import CbowXQAInputModule
@@ -104,7 +104,7 @@ def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__nli_reader
+@nli_reader
 def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """
     Creates a SNLI reader instance (multiple choice qa model).
@@ -119,11 +119,11 @@ def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-    output_module = SimpleMCOutputModule()
+    output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__nli_reader
+@nli_reader
 def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a SNLI reader instance (multiple choice qa model).
 
@@ -138,11 +138,11 @@ def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
-    output_module = SimpleMCOutputModule()
+    output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__nli_reader
+@nli_reader
 def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a SNLI reader instance (multiple choice qa model).
 
@@ -157,11 +157,11 @@ def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = SingleSupportFixedClassInputs(shared_resources)
     model_module = ESIMModel(shared_resources)
-    output_module = SimpleMCOutputModule()
+    output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a knowledge_base_population model F."""
     from jack.readers.knowledge_base_population.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
@@ -172,7 +172,7 @@ def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a knowledge_base_population DistMult model."""
     from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
@@ -185,7 +185,7 @@ def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a knowledge_base_population Complex model."""
     from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
@@ -198,7 +198,7 @@ def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@__kbp_reader
+@kbp_reader
 def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a knowledge_base_population TransE model."""
     from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \

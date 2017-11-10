@@ -67,8 +67,8 @@ optimizer: 'adam'
 # Learning rate, default 0.001
 learning_rate: 0.001
 
-# Learning rate decay, default 0.5
-learning_rate_decay: 0.5
+# Learning rate decay, default 1 (disabled)
+learning_rate_decay: 1
 
 # L2 regularization weight, default 0.0
 l2: 0.0
@@ -114,3 +114,7 @@ experiments_db: './out/experiments.db'
 
 # loader for the dataset, ['jack', 'squad', 'snli'] are supported. For everything else convert to jtr format first.
 loader: 'jack'
+
+# ADVANCED: if we want to (partially) initialize from a pretrained reader we can use the following option
+# Note: make sure that the variable names and shapes will match
+pretrained_model: null

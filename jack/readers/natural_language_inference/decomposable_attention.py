@@ -7,35 +7,31 @@ import numpy as np
 import tensorflow as tf
 
 from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
-from jack.tf_util.activations import prelu
-from jack.tf_util.attention import attention_softmax3d
-from jack.tf_util.masking import mask_3d
+from jack.tfutil.attention import attention_softmax3d
+from jack.tfutil.masking import mask_3d
 
 logger = logging.getLogger(__name__)
 
 
 class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
     def forward_pass(self, shared_resources,
-                     question, question_length,
-                     support, support_length,
+                     embedded_question, question_length,
+                     embedded_support, support_length,
                      num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-        question_embedding = tf.nn.embedding_lookup(self.question_embedding_matrix, question)
-        support_embedding = tf.nn.embedding_lookup(self.support_embedding_matrix, support)
 
         model_kwargs = {
-            'sequence1': question_embedding,
+            'sequence1': embedded_question,
             'sequence1_length': question_length,
-            'sequence2': support_embedding,
+            'sequence2': embedded_support,
             'sequence2_length': support_length,
-            'representation_size': 200,
+            'representation_size': shared_resources.config['repr_dim'],
             'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
             'use_masking': True,
-            'prepend_null_token': True
         }
 
-        model = FeedForwardDAMP(**model_kwargs)
+        model = FeedForwardDAM(**model_kwargs)
         logits = model()
         return logits
 
@@ -57,10 +53,9 @@ class BaseDecomposableAttentionModel:
     def _transform_aggregate(self, v1_v2, reuse=False):
         raise NotImplementedError
 
-    def __init__(self,
-                 sequence1, sequence1_length, sequence2, sequence2_length,
-                 nb_classes=3, reuse=False,
-                 use_masking=False, prepend_null_token=False, *args, **kwargs):
+    def __init__(self, sequence1, sequence1_length, sequence2, sequence2_length,
+                 nb_classes=3, reuse=False, use_masking=False, init_std_dev=0.01, *args, **kwargs):
+        self.init_std_dev = init_std_dev
         self.nb_classes = nb_classes
 
         self.sequence1 = sequence1
@@ -70,8 +65,6 @@ class BaseDecomposableAttentionModel:
         self.sequence2_length = sequence2_length
 
         self.reuse = reuse
-
-        batch_size = tf.shape(self.sequence1)[0]
 
         embedding1_size = self.sequence1.get_shape()[-1].value
         embedding2_size = self.sequence2.get_shape()[-1].value
@@ -86,33 +79,6 @@ class BaseDecomposableAttentionModel:
 
         self.transformed_sequence1_length = self.sequence1_length
         self.transformed_sequence2_length = self.sequence2_length
-
-        self.null_token_embedding = None
-
-        if prepend_null_token:
-            with tf.variable_scope('null', reuse=self.reuse) as _:
-                # [1, 1, embedding_size]
-                self.null_token_embedding = tf.get_variable('null_embedding',
-                                                            shape=[1, embedding1_size],
-                                                            initializer=tf.random_normal_initializer(0.0, 1.0))
-
-            # [1, 1, representation_size]
-            transformed_null_token_embedding = self._transform_input(self.null_token_embedding, reuse=True)
-
-            # [batch_size, 1, representation_size]
-            tiled_null_token_embedding = tf.tile(input=tf.expand_dims(transformed_null_token_embedding, axis=0),
-                                                 multiples=[batch_size, 1, 1])
-
-            # [batch_size, time_steps + 1, representation_size]
-            self.transformed_sequence1 = tf.concat(values=[tiled_null_token_embedding, self.transformed_sequence1],
-                                                   axis=1)
-
-            # [batch_size, time_steps + 1, representation_size]
-            self.transformed_sequence2 = tf.concat(values=[tiled_null_token_embedding, self.transformed_sequence2],
-                                                   axis=1)
-
-            self.transformed_sequence1_length += 1
-            self.transformed_sequence2_length += 1
 
         logger.info('Building the Attend graph ..')
 
@@ -245,106 +211,50 @@ class FeedForwardDAM(BaseDecomposableAttentionModel):
         super().__init__(*args, **kwargs)
 
     def _transform_input(self, sequence, reuse=False):
-        with tf.variable_scope('transform_embeddings', reuse=reuse):
-            projection = tf.contrib.layers.fully_connected(inputs=sequence, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           activation_fn=None)
-        return projection
-
-    def _transform_attend(self, sequence, reuse=False):
-        with tf.variable_scope('transform_attend', reuse=reuse):
-            projection = tf.nn.dropout(sequence, keep_prob=self.dropout_keep_prob)
-            projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer(),
-                                                           activation_fn=tf.nn.relu)
-            projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
-            projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer(),
-                                                           activation_fn=tf.nn.relu)
-        return projection
-
-    def _transform_compare(self, sequence, reuse=False):
-        with tf.variable_scope('transform_compare', reuse=reuse):
-            projection = tf.nn.dropout(sequence, keep_prob=self.dropout_keep_prob)
-            projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer(),
-                                                           activation_fn=tf.nn.relu)
-            projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
-            projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer(),
-                                                           activation_fn=tf.nn.relu)
-        return projection
-
-    def _transform_aggregate(self, v1_v2, reuse=False):
-        with tf.variable_scope('transform_aggregate', reuse=reuse):
-            projection = tf.nn.dropout(v1_v2, keep_prob=self.dropout_keep_prob)
-            projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer(),
-                                                           activation_fn=tf.nn.relu)
-            projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
-            projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer(),
-                                                           activation_fn=tf.nn.relu)
-        return projection
-
-
-class FeedForwardDAMP(BaseDecomposableAttentionModel):
-    def __init__(self, representation_size=200, dropout_keep_prob=1.0, *args, **kwargs):
-        self.representation_size = representation_size
-        self.dropout_keep_prob = dropout_keep_prob
-        super().__init__(*args, **kwargs)
-
-    def _transform_input(self, sequence, reuse=False):
         with tf.variable_scope('transform_embeddings', reuse=reuse) as _:
             projection = tf.contrib.layers.fully_connected(inputs=sequence, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           activation_fn=None)
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=None, activation_fn=None)
         return projection
 
     def _transform_attend(self, sequence, reuse=False):
         with tf.variable_scope('transform_attend', reuse=reuse) as _:
             projection = tf.nn.dropout(sequence, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer())
-            projection = prelu(projection, name='1')
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=tf.zeros_initializer(),
+                                                           activation_fn=tf.nn.relu)
             projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer())
-            projection = prelu(projection, name='2')
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=tf.zeros_initializer(),
+                                                           activation_fn=tf.nn.relu)
         return projection
 
     def _transform_compare(self, sequence, reuse=False):
         with tf.variable_scope('transform_compare', reuse=reuse) as _:
             projection = tf.nn.dropout(sequence, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer())
-            projection = prelu(projection, name='1')
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=tf.zeros_initializer(),
+                                                           activation_fn=tf.nn.relu)
             projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer())
-            projection = prelu(projection, name='2')
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=tf.zeros_initializer(),
+                                                           activation_fn=tf.nn.relu)
         return projection
 
     def _transform_aggregate(self, v1_v2, reuse=False):
         with tf.variable_scope('transform_aggregate', reuse=reuse) as _:
             projection = tf.nn.dropout(v1_v2, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer())
-            projection = prelu(projection, name='1')
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=tf.zeros_initializer(),
+                                                           activation_fn=tf.nn.relu)
             projection = tf.nn.dropout(projection, keep_prob=self.dropout_keep_prob)
             projection = tf.contrib.layers.fully_connected(inputs=projection, num_outputs=self.representation_size,
-                                                           weights_initializer=tf.random_normal_initializer(0.0, 0.01),
-                                                           biases_initializer=tf.zeros_initializer())
-            projection = prelu(projection, name='2')
+                                                           weights_initializer=tf.random_normal_initializer(0.0, self.init_std_dev),
+                                                           biases_initializer=tf.zeros_initializer(),
+                                                           activation_fn=tf.nn.relu)
         return projection

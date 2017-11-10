@@ -9,10 +9,10 @@ import spacy
 from jack.core import *
 from jack.readers.extractive_qa.fastqa import XQAPorts
 from jack.readers.extractive_qa.util import prepare_data
-from jack.tf_util import misc
-from jack.tf_util.dropout import fixed_dropout
-from jack.tf_util.embedding import conv_char_embedding_alt
-from jack.tf_util.xqa import xqa_min_crossentropy_span_loss
+from jack.tfutil import misc
+from jack.tfutil.dropout import fixed_dropout
+from jack.tfutil.embedding import conv_char_embedding
+from jack.tfutil.xqa import xqa_min_crossentropy_span_loss
 from jack.util.map import numpify
 from jack.util.preprocessing import char_vocab_from_vocab, stack_and_pad, unique_words_with_chars
 
@@ -28,7 +28,7 @@ CBowAnnotation = NamedTuple('CBowAnnotation', [
     ('support_length', int),
     ('support_embeddings', np.ndarray),
     ('word_in_question', List[float]),
-    ('token_offsets', List[int]),
+    ('token_offsets', List[Tuple[int, int]]),
     ('answertype_span', Tuple[int, int]),
     ('answer_spans', Optional[List[Tuple[int, int]]]),
 ])
@@ -112,7 +112,7 @@ class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
                 XQAPorts.correct_start_training, XQAPorts.answer2question_training,
                 XQAPorts.keep_prob, XQAPorts.is_eval,
                 # for output module
-                XQAPorts.token_char_offsets,
+                XQAPorts.token_offsets,
                 CBOWXqaPorts.answer_type_span]
 
     @property
@@ -183,6 +183,9 @@ class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
         q_tokenized = [a.question_tokens for a in annotations]
         s_tokenized = [a.support_tokens for a in annotations]
 
+        offsets = [[list(offset) for offset in a.token_offsets]
+                   for a in annotations]
+
         unique_words, unique_word_lengths, question2unique, support2unique = \
             unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
 
@@ -196,7 +199,7 @@ class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
             XQAPorts.emb_question: stack_and_pad(emb_questions),
             XQAPorts.question_length: [a.question_length for a in annotations],
             XQAPorts.word_in_question: [a.word_in_question for a in annotations],
-            XQAPorts.token_char_offsets: [a.token_offsets for a in annotations],
+            XQAPorts.token_offsets: offsets,
             CBOWXqaPorts.answer_type_span: [list(a.answertype_span) for a in annotations]
         }
 
@@ -214,7 +217,7 @@ class CbowXQAInputModule(OnlineInputModule[CBowAnnotation]):
         # we can only numpify in here, because bucketing is not possible prior
         batch = numpify(output, keys=[XQAPorts.unique_word_chars,
                                       XQAPorts.question_words2unique, XQAPorts.support_words2unique,
-                                      XQAPorts.word_in_question, XQAPorts.token_char_offsets])
+                                      XQAPorts.word_in_question, XQAPorts.token_offsets])
         return batch
 
 
@@ -298,7 +301,7 @@ class CbowXQAModule(TFModelModule):
 
             if with_char_embeddings:
                 # compute combined embeddings
-                [char_emb_question, char_emb_support] = conv_char_embedding_alt(
+                [char_emb_question, char_emb_support] = conv_char_embedding(
                     shared_vocab_config.char_vocab, size, unique_word_chars, unique_word_char_length,
                     [question_words2unique, support_words2unique])
 

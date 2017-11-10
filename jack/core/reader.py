@@ -228,7 +228,7 @@ class TFReader(JTReader):
     def train(self, optimizer,
               training_set: Iterable[Tuple[QASetting, List[Answer]]],
               batch_size: int, max_epochs=10, hooks=tuple(),
-              l2=0.0, clip=None, clip_op=tf.clip_by_value):
+              l2=0.0, clip=None, clip_op=tf.clip_by_value, summary_writer=None, **kwargs):
         """
         This method trains the reader (and changes its state).
 
@@ -242,17 +242,25 @@ class TFReader(JTReader):
             clip: whether to apply gradient clipping and at which value
             clip_op: operation to perform for clipping
         """
+        batches, loss, min_op, summaries = self._setup_training(
+            batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs)
+
+        self._train_loop(min_op, loss, batches, hooks, max_epochs, summaries, summary_writer, **kwargs)
+
+    def _setup_training(self, batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs):
         logger.info("Setting up data and model...")
+        global_step = tf.train.create_global_step()
         if not self._is_setup:
             # First setup shared resources, e.g., vocabulary. This depends on the input module.
             self.setup_from_data(training_set, is_training=True)
         batches = self.input_module.batch_generator(training_set, batch_size, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
-
+        summaries = None
+        if summary_writer is not None:
+            summaries = tf.summary.merge_all()
         if l2:
             loss += tf.add_n([tf.nn.l2_loss(v) for v in self.model_module.train_variables]) * l2
-
         if clip:
             gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
@@ -261,18 +269,25 @@ class TFReader(JTReader):
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
                              for grad, var in gradients if grad]
-            min_op = optimizer.apply_gradients(gradients)
+            min_op = optimizer.apply_gradients(gradients, global_step)
         else:
-            min_op = optimizer.minimize(loss)
+            min_op = optimizer.minimize(loss, global_step)
 
         # initialize non model variables like learning rate, optimizer vars ...
         self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
+        return batches, loss, min_op, summaries
 
+    def _train_loop(self, optimization_op, loss_op, batches, hooks, max_epochs, summaries, summary_writer, **kwargs):
         logger.info("Start training...")
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
-                current_loss, _ = self.session.run([loss, min_op], feed_dict=feed_dict)
+                if summaries is not None:
+                    step, sums, current_loss, _ = self.session.run(
+                        [tf.train.get_global_step(), summaries, loss_op, optimization_op], feed_dict=feed_dict)
+                    summary_writer.add_summary(sums, step)
+                else:
+                    current_loss, _ = self.session.run([loss_op, optimization_op], feed_dict=feed_dict)
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
 

@@ -237,6 +237,9 @@ class Vocab:
         conf_file = os.path.join(path, "conf.yaml")
         emb_file = os.path.join(path, "emb.pkl")
         remainder_file = os.path.join(path, "remainder.pkl")
+
+        emb = None
+
         if os.path.exists(conf_file):
             with open(conf_file, "r") as f:
                 config = yaml.load(f)

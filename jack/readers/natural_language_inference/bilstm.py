@@ -1,19 +1,13 @@
 import tensorflow as tf
 
 from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
-from jack.tf_util import rnn, simple
+from jack.tfutil import rnn, simple
 
 
 class PairOfBiLSTMOverSupportAndQuestionModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources,
-                     Q_ids, Q_lengths,
-                     S_ids, S_lengths,
-                     num_classes):
+    def forward_pass(self, shared_resources, Q_seq, Q_lengths, S_seq, S_lengths, num_classes):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
-        Q_seq = tf.nn.embedding_lookup(self.question_embedding_matrix, Q_ids)
-        S_seq = tf.nn.embedding_lookup(self.support_embedding_matrix, S_ids)
-
         all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
             Q_seq, Q_lengths, S_seq, S_lengths, shared_resources.config['repr_dim'],
             drop_keep_prob=1.0 - shared_resources.config['dropout'],
