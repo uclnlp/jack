@@ -57,11 +57,11 @@ def nlp_preprocess_all(qa_settings,
 __spacy_nlp = None
 
 
-def spacy_nlp():
+def spacy_nlp(disable=['parser', 'ner', 'textcat']):
     import spacy
     global __spacy_nlp
     if __spacy_nlp is None:
-        __spacy_nlp = spacy.load("en", parser=False, entity=False, matcher=False)
+        __spacy_nlp = spacy.load("en", disable=disable)
     return __spacy_nlp
 
 
