@@ -47,7 +47,7 @@ $ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQ
 or shorter, using our prepared config:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
+$ python3 bin/jack-train.py with config=fastqa_yes_no.yaml
 ```
 
 You want to train another model with the same configuration (e.g., bidaf)? No problem, just change the `model` flag:
