@@ -69,23 +69,26 @@ def conv_char_embedding_multi_filter(
             tf.get_variable("char_embedding_matrix", shape=(len(char_vocab), embedding_size),
                             initializer=emb_initializer, trainable=True)
 
+        pad = tf.zeros(tf.stack([tf.shape(word_lengths)[0], len(filter_sizes) // 2]), tf.int32)
+        word_chars = tf.concat([pad, word_chars, pad], 1)
+
         max_word_length = tf.reduce_max(word_lengths)
         embedded_chars = tf.nn.embedding_lookup(char_embedding_matrix, tf.cast(word_chars, tf.int32))
-        conv_mask = tf.expand_dims(tf.sequence_mask(word_lengths, max_word_length, tf.float32), 2)
-        embedded_chars *= conv_mask
-        conv_mask_strong_neg = tf.expand_dims(misc.mask_for_lengths(word_lengths, max_length=max_word_length), 2)
+        conv_mask = tf.expand_dims(misc.mask_for_lengths(word_lengths, max_length=max_word_length), 2)
 
         embedded_words = []
-        for conv_width, size in enumerate(filter_sizes):
+        for i, size in enumerate(filter_sizes):
             if size == 0:
                 continue
-            conv_width += 1
+            conv_width = i + 1
             with tf.variable_scope("conv_%d" % conv_width):
                 # create filter like this to get fan-in and fan-out right for initializers depending on those
                 filter = tf.get_variable("filter", [conv_width * embedding_size, size])
                 filter_reshaped = tf.reshape(filter, [conv_width, embedding_size, size])
-                conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "SAME")
-                conv_out = conv_out + conv_mask_strong_neg
+                cut = len(filter_sizes) // 2 - conv_width // 2
+                embedded_chars_conv = embedded_chars[:, cut:-cut, :] if cut else embedded_chars
+                conv_out = tf.nn.conv1d(embedded_chars_conv, filter_reshaped, 1, "VALID")
+                conv_out += conv_mask
                 embedded_words.append(tf.reduce_max(conv_out, 1))
 
         embedded_words = tf.concat(embedded_words, 1)
