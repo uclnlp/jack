@@ -189,15 +189,17 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
         # Question in the 1st LSTM, and the Support in the 2nd and
         # thus had Support conditional on Question, and used the
         # Support's LSTM final output as  state for predition
-        all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
+        ### OLD signature: ### all_states_fw_bw, final_states_fw_bw = rnn.pair_of_bidirectional_LSTMs(
+        lstm1_states, lstm2_states = rnn.pair_of_bidirectional_LSTMs(
             # OLD: # Q_seq, Q_lengths, S_seq, S_lengths,
             S_seq, S_lengths, Q_seq, Q_lengths,
             shared_resources.config['repr_dim'], drop_keep_prob=keep_prob,
             conditional_encoding=True)
 
         # ->  [batch, 2*output_dim]
-        final_states = tf.concat([final_states_fw_bw[0][1],
-                                 final_states_fw_bw[1][1]], axis=1)
+        lstm2_final_states = lstm2_states['final-states']
+        final_states = tf.concat([lstm2_final_states[0][1],
+                                  lstm2_final_states[1][1]], axis=1)
 
         # [batch, 2*output_dim] -> [batch, num_classes]
         outputs = simple.fully_connected_projection(
@@ -218,7 +220,9 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
         decoder_embeddings = embeddings  # DONE... decoder_vocab.get_embedding_matrix()
         max_inference_seq_len = tf.reduce_max(Q_lengths)
         # make input state as LSTMTuple
-        state_fw, state_bw = final_states_fw_bw
+        # DONE(chris): ERROR!!!! these states were 2nd LSTM states... 
+        # they should be the 1st!!! (from Q encoding, not S)
+        state_fw, state_bw = lstm1_states['final-states']
         state_h = tf.concat(axis=1, values=[state_fw.h, state_bw.h])
         state_c = tf.concat(axis=1, values=[state_fw.c, state_bw.c])
         decoder_input_state = tf.contrib.rnn.LSTMStateTuple(
@@ -295,11 +299,12 @@ class PairOfBiLSTMOverSupportAndQuestionWithDecoderModel(
             num_decoder_symbols,
             scope='interpretation_loss'
         )
-        # DONE(chris) make hyperparameter 0.1
         decoder_loss_weight = shared_resources.config.get(
             "decoder_loss_weight", 0.1)
         logger.debug("Using decoder_loss_weight = {}".format(decoder_loss_weight))
-        return [loss + decoder_loss_weight * interpretation_loss]
+        ### TODO(chris) restore:
+        ### return [loss + decoder_loss_weight * interpretation_loss]
+        return [interpretation_loss]
 
 
 # not anymore: @__mcqa_reader
@@ -439,11 +444,10 @@ def main():
         'dropout': dropout,
         'init_embeddings': init_embeddings,
         'normalize_embeddings': normalize_embeddings,
-        'decoder_loss_weight': decoder_loss_weight
+        'decoder_loss_weight': decoder_loss_weight,
+        'tensorboard_path': tensorboard_path,
     }
 
-    # logging
-    sw = tf.summary.FileWriter(tensorboard_path)
 
     # load SNLI data
     splits = [train_file, dev_file, test_file]
@@ -497,6 +501,9 @@ def main():
     # reader = readers.readers['snli_reader_with_generator'](vocab, config)
     reader = snli_reader_with_generator(vocab, config)
 
+    # logging
+    sw = tf.summary.FileWriter(tensorboard_path, reader.sess.graph)
+
     # add hooks
     from jtr.jack.train.hooks import LossHook
     hooks = [
@@ -518,7 +525,6 @@ def main():
     # we choose Adam with standard momentum values
     optim = tf.train.AdamOptimizer(config['learning_rate'])
 
-    # TODO loss!!!!
     t0 = time()
     reader.train(
         optim, train_set,

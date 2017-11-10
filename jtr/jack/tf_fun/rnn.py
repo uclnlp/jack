@@ -83,24 +83,25 @@ def pair_of_bidirectional_LSTMs(seq1, seq1_lengths, seq2, seq2_lengths,
     """
     with tf.variable_scope(scope or "paired_LSTM_seq1") as varscope1:
         # seq1_states: (c_fw, h_fw), (c_bw, h_bw)
-        _, seq1_final_states = dynamic_bidirectional_lstm(
-                        seq1, seq1_lengths, output_size, scope=varscope1,
-                        drop_keep_prob=drop_keep_prob)
+        lstm1_all_states, lstm1_final_states = dynamic_bidirectional_lstm(
+            seq1, seq1_lengths, output_size, scope=varscope1,
+            drop_keep_prob=drop_keep_prob)
 
     with tf.variable_scope(scope or "paired_LSTM_seq2") as varscope2:
         varscope1.reuse_variables()
         # each [batch_size x max_seq_length x output_size]
         if conditional_encoding:
-            seq2_init_states = seq1_final_states
+            seq2_init_states = lstm1_final_states
         else:
             seq2_init_states = None
 
-        all_states_fw_bw, final_states_fw_bw = dynamic_bidirectional_lstm(
-                                            seq2, seq2_lengths, output_size,
-                                            seq2_init_states, scope=varscope2,
-                                            drop_keep_prob=drop_keep_prob)
+        lstm2_all_states, lstm2_final_states = dynamic_bidirectional_lstm(
+            seq2, seq2_lengths, output_size,
+            seq2_init_states, scope=varscope2,
+            drop_keep_prob=drop_keep_prob)
 
-    return all_states_fw_bw, final_states_fw_bw
+    return ({'all-states': lstm1_all_states, 'final-states': lstm1_final_states},
+            {'all-states': lstm2_all_states, 'final-states': lstm2_final_states})
 
 
 def dynamic_bidirectional_lstm(inputs, lengths, output_size,

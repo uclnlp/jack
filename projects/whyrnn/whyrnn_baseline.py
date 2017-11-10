@@ -123,6 +123,7 @@ def main():
         'dropout': dropout,
         'init_embeddings': init_embeddings,
         'normalize_embeddings': normalize_embeddings,
+        'tensorboard_path': tensorboard_path,
     }
 
     # logging
