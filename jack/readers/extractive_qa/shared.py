@@ -101,6 +101,10 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         self.vocab = self.shared_vocab_config.vocab
         self.config = self.shared_vocab_config.config
         self.dropout = self.config.get("dropout", 1)
+        if self.vocab.emb is None:
+            logger.error("XQAInputModule needs vocabulary setup from pre-trained embeddings."
+                         "Make sure to set vocab_from_embeddings=False.")
+            sys.exit(1)
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
         self.char_vocab = self.shared_vocab_config.char_vocab
