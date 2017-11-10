@@ -2,6 +2,8 @@
 
 import tensorflow as tf
 
+from jack.tfutil import misc
+
 
 def conv_char_embedding(char_vocab, size, word_chars, word_lengths, word_sequences=None,
                         conv_width=5, emb_initializer=tf.random_normal_initializer(0.0, 0.1), scope=None):
