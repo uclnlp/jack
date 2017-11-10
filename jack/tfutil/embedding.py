@@ -33,7 +33,7 @@ def conv_char_embedding(char_vocab, size, word_chars, word_lengths, word_sequenc
             conv_mask = tf.expand_dims(misc.mask_for_lengths(word_lengths, max_length=max_word_length), 2)
             conv_out = conv_out + conv_mask
 
-        embedded_words = tf.reduce_max(conv_out, [1])
+        embedded_words = tf.reduce_max(conv_out, 1)
 
     if word_sequences is None:
         return embedded_words
@@ -42,8 +42,7 @@ def conv_char_embedding(char_vocab, size, word_chars, word_lengths, word_sequenc
         word_sequences = [word_sequences]
     all_embedded = []
     for word_idxs in word_sequences:
-        embedded_words = tf.nn.embedding_lookup(embedded_words, word_idxs)
-        all_embedded.append(embedded_words)
+        all_embedded.append(tf.nn.embedding_lookup(embedded_words, word_idxs))
 
     return all_embedded
 

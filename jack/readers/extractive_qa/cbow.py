@@ -11,7 +11,7 @@ from jack.readers.extractive_qa.fastqa import XQAPorts
 from jack.readers.extractive_qa.util import prepare_data
 from jack.tfutil import misc
 from jack.tfutil.dropout import fixed_dropout
-from jack.tfutil.embedding import conv_char_embedding_alt
+from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.xqa import xqa_min_crossentropy_span_loss
 from jack.util.map import numpify
 from jack.util.preprocessing import char_vocab_from_vocab, stack_and_pad, unique_words_with_chars
@@ -298,7 +298,7 @@ class CbowXQAModule(TFModelModule):
 
             if with_char_embeddings:
                 # compute combined embeddings
-                [char_emb_question, char_emb_support] = conv_char_embedding_alt(
+                [char_emb_question, char_emb_support] = conv_char_embedding(
                     shared_vocab_config.char_vocab, size, unique_word_chars, unique_word_char_length,
                     [question_words2unique, support_words2unique])
 
