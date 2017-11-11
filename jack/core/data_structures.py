@@ -30,6 +30,22 @@ class Answer:
         self.doc_idx = doc_idx
         self.text = text
 
+    def _repr_html_(self):
+        style = """
+            <style>
+                .qasetting td {
+                    text-align: left;
+                }
+            </style>        
+        """
+        return f"""
+            {style}
+            <table class='qasetting'>
+            <tr><td>Text</td><td>{self.text}</td></tr>
+            <tr><td>Score</td><td>{self.score}</td></tr>
+            </table>
+        """
+
 
 class QASetting:
     """
@@ -65,6 +81,23 @@ class QASetting:
         self.atomic_candidates = atomic_candidates
         self.support = support
         self.question = question
+
+    def _repr_html_(self):
+        support_text = "\n".join(self.support)
+        style = """
+            <style>
+                .qasetting td {
+                    text-align: left;
+                }
+            </style>        
+        """
+        return f"""
+            {style}
+            <table class='qasetting'>
+            <tr><td>Question</td><td>{self.question}</td></tr>
+            <tr><td>Support</td><td>{support_text}</td></tr>
+            </table>
+        """
 
 
 def _jtr_to_qasetting(instance, value, global_candidates):
