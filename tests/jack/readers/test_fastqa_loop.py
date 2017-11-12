@@ -50,12 +50,11 @@ def test_fastqa():
     optimizer = tf.train.AdagradOptimizer(learning_rate=0.01)
     min_op = optimizer.minimize(loss)
 
-    sess = model_module.tf_session
-    sess.run(tf.global_variables_initializer())
+    session = model_module.tf_session
+    session.run(tf.global_variables_initializer())
 
     for epoch in range(0, 10):
         for batch in reader.input_module.batch_generator(data, 1, False):
             feed_dict = reader.model_module.convert_to_feed_dict(batch)
-            loss_value, _ = sess.run((loss, min_op), feed_dict=feed_dict)
-        if epoch % 5 == 1:
+            loss_value, _ = session.run((loss, min_op), feed_dict=feed_dict)
             print(loss_value)

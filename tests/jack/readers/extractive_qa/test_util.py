@@ -7,6 +7,7 @@ qa_setting = QASetting(question="What is the answer?",
                        support=["It is not A.", "It is B."])
 answers = [Answer(text="B", span=(6, 7), doc_idx=1)]
 
+
 def test_prepare_data():
 
     result = prepare_data(qa_setting, answers, Vocab(),
