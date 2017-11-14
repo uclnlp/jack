@@ -43,6 +43,7 @@ class Answer:
             <table class='qasetting'>
             <tr><td>Text</td><td>{self.text}</td></tr>
             <tr><td>Score</td><td>{self.score}</td></tr>
+            <tr><td>Span</td><td>{self.span}</td></tr>
             </table>
         """
 
