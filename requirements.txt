@@ -11,7 +11,7 @@ typing
 sacred
 sqlalchemy
 pyyaml
-spacy
+spacy==1.9
 
 pytest
 pytest-runner
