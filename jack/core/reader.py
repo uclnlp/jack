@@ -103,15 +103,14 @@ class JTReader:
             predicted outputs/answers to a given (labeled) dataset
         """
         logger.debug("Setting up batches...")
-        batches = self.input_module.batch_generator(dataset, batch_size, is_eval=True)
+        batch = self.input_module([qa for qa,a in dataset])
         answers = list()
         logger.debug("Start answering...")
-        for j, batch in enumerate(batches):
-            output_module_input = self.model_module(batch, self.output_module.input_ports)
-            answers.extend(self.output_module(
-                output_module_input, *[output_module_input[p] for p in self.output_module.input_ports]))
-            if debug:
-                logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
+        output_module_input = self.model_module(batch, self.output_module.input_ports)
+        answers.extend(self.output_module(
+            [qa for qa,a in dataset], *[output_module_input[p] for p in self.output_module.input_ports]))
+        if debug:
+            logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
 
     def train(self, optimizer, training_set: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int,
