@@ -5,7 +5,7 @@ import tensorflow as tf
 from jack.tfutil import misc
 
 
-def conv_char_embedding(char_vocab, size, word_chars, word_lengths, word_sequences=None,
+def conv_char_embedding(num_chars, size, word_chars, word_lengths, word_sequences=None,
                         conv_width=5, emb_initializer=tf.random_normal_initializer(0.0, 0.1), scope=None):
     """Build simple convolutional character based embeddings for words with a fixed filter and size.
 
@@ -18,7 +18,7 @@ def conv_char_embedding(char_vocab, size, word_chars, word_lengths, word_sequenc
 
     with tf.variable_scope(scope or "char_embeddings"):
         char_embedding_matrix = \
-            tf.get_variable("char_embedding_matrix", shape=(len(char_vocab), size),
+            tf.get_variable("char_embedding_matrix", shape=(num_chars, size),
                             initializer=emb_initializer, trainable=True)
 
         max_word_length = tf.reduce_max(word_lengths)
@@ -48,7 +48,7 @@ def conv_char_embedding(char_vocab, size, word_chars, word_lengths, word_sequenc
 
 
 def conv_char_embedding_multi_filter(
-        char_vocab, filter_sizes, embedding_size, word_chars, word_lengths, word_sequences=None,
+        num_chars, filter_sizes, embedding_size, word_chars, word_lengths, word_sequences=None,
         emb_initializer=tf.random_normal_initializer(0.0, 0.1), projection_size=None, scope=None):
     """Build convolutional character based embeddings for words with multiple filters.
 
@@ -65,7 +65,7 @@ def conv_char_embedding_multi_filter(
     """
     with tf.variable_scope(scope or "char_embeddings"):
         char_embedding_matrix = \
-            tf.get_variable("char_embedding_matrix", shape=(len(char_vocab), embedding_size),
+            tf.get_variable("char_embedding_matrix", shape=(num_chars, embedding_size),
                             initializer=emb_initializer, trainable=True)
 
         pad = tf.zeros(tf.stack([tf.shape(word_lengths)[0], len(filter_sizes) // 2]), tf.int32)

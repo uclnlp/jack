@@ -357,11 +357,13 @@ class XQAEvalHook(EvalHook):
                  write_metrics_to=None, info="", side_effect=None,
                  predicted_answer_span_port=Ports.Prediction.answer_span,
                  target_answer_span_port=Ports.Target.answer_span,
-                 answer2question_port=Ports.Input.answer2question, **kwargs):
+                 answer2support_port=Ports.Input.answer2support,
+                 support2question_port=Ports.Input.support2question, **kwargs):
         self._predicted_answer_span_port = predicted_answer_span_port
         self._target_answer_span_port = target_answer_span_port
-        self._answer2question_port = answer2question_port
-        ports = [predicted_answer_span_port, target_answer_span_port, answer2question_port]
+        self._answer2support_port = answer2support_port
+        self._support2question_port = support2question_port
+        ports = [predicted_answer_span_port, target_answer_span_port, answer2support_port, support2question_port]
         super().__init__(reader, dataset, batch_size, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -376,7 +378,8 @@ class XQAEvalHook(EvalHook):
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         correct_spans = tensors[self._target_answer_span_port]
         predicted_spans = tensors[self._predicted_answer_span_port]
-        correct2prediction = tensors[self._answer2question_port]
+        correct_answer2support = tensors[self._answer2support_port]
+        support2question = tensors[self._support2question_port]
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -389,21 +392,22 @@ class XQAEvalHook(EvalHook):
         k = 0
         for i in range(len_np_or_list(predicted_spans)):
             f1, exact = 0.0, 0.0
-            p_start, p_end = predicted_spans[i][0], predicted_spans[i][1]
-            while k < len_np_or_list(correct_spans) and correct2prediction[k] == i:
-                c_start, c_end = correct_spans[k][0], correct_spans[k][1]
-                if p_start == c_start and p_end == c_end:
-                    f1 = 1.0
-                    exact = 1.0
-                elif f1 < 1.0:
-                    total = float(c_end - c_start + 1)
-                    missed_from_start = float(p_start - c_start)
-                    missed_from_end = float(c_end - p_end)
-                    tp = total - min(total, max(0, missed_from_start) + max(0, missed_from_end))
-                    fp = max(0, -missed_from_start) + max(0, -missed_from_end)
-                    recall = tp / total
-                    precision = tp / (tp + fp + 1e-10)
-                    f1 = max(f1, 2.0 * precision * recall / (precision + recall + 1e-10))
+            doc_idx, p_start, p_end = predicted_spans[i][0], predicted_spans[i][1], predicted_spans[i][2]
+            while k < len_np_or_list(correct_spans) and support2question[correct_answer2support[k]] == i:
+                c_doc_idx, c_start, c_end = correct_answer2support[k], correct_spans[k][0], correct_spans[k][1]
+                if c_doc_idx != doc_idx:
+                    if p_start == c_start and p_end == c_end:
+                        f1 = 1.0
+                        exact = 1.0
+                    elif f1 < 1.0:
+                        total = float(c_end - c_start + 1)
+                        missed_from_start = float(p_start - c_start)
+                        missed_from_end = float(c_end - p_end)
+                        tp = total - min(total, max(0, missed_from_start) + max(0, missed_from_end))
+                        fp = max(0, -missed_from_start) + max(0, -missed_from_end)
+                        recall = tp / total
+                        precision = tp / (tp + fp + 1e-10)
+                        f1 = max(f1, 2.0 * precision * recall / (precision + recall + 1e-10))
                 k += 1
 
             acc_f1 += f1
