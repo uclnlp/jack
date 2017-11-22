@@ -110,7 +110,8 @@ def __parse_answer(answer_dict):
     answer_end = answer_start + len(answer_text)
     return {
         'text': answer_text,
-        'span': (answer_start, answer_end)
+        'span': (answer_start, answer_end),
+        'doc_idx': 0,  # in SQuAD there is always only a single document
     }
 
 

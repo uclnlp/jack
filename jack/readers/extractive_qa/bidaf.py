@@ -12,12 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class BiDAF(AbstractXQAModelModule):
-    def create_output(self, shared_vocab_config,
-                      emb_question, question_length,
-                      emb_support, support_length,
+    def create_output(self, shared_resources, emb_question, question_length,
+                      emb_support, support_length, support2question,
                       unique_word_chars, unique_word_char_length,
                       question_words2unique, support_words2unique,
-                      answer2question, keep_prob, is_eval):
+                      answer2support, keep_prob, is_eval):
         # 1. char embeddings + word embeddings
         # 2a. conv char embeddings
         # 2b. pool char embeddings
@@ -38,9 +37,9 @@ class BiDAF(AbstractXQAModelModule):
             beam_size = 1
             beam_size = tf.cond(is_eval, lambda: tf.constant(beam_size, tf.int32), lambda: tf.constant(1, tf.int32))
 
-            input_size = shared_vocab_config.config["repr_dim_input"]
-            size = shared_vocab_config.config["repr_dim"]
-            with_char_embeddings = shared_vocab_config.config.get("with_char_embeddings", False)
+            input_size = shared_resources.config["repr_dim_input"]
+            size = shared_resources.config["repr_dim"]
+            with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
             W = tf.get_variable("biattention_weight", [size * 6])
             W_start_index = tf.get_variable("start_index_weight", [size * 10])
             W_end_index = tf.get_variable("end_index_weight", [size * 10])
@@ -51,16 +50,17 @@ class BiDAF(AbstractXQAModelModule):
             emb_support.set_shape([None, None, input_size])
 
             # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
-            # compute combined embeddings
-            [char_emb_question, char_emb_support] = conv_char_embedding(shared_vocab_config.char_vocab,
-                                                                        size,
-                                                                        unique_word_chars, unique_word_char_length,
-                                                                        [question_words2unique,
+            if with_char_embeddings:
+                # compute combined embeddings
+                [char_emb_question, char_emb_support] = conv_char_embedding(len(shared_resources.char_vocab),
+                                                                            size,
+                                                                            unique_word_chars, unique_word_char_length,
+                                                                            [question_words2unique,
                                                                              support_words2unique])
-            # 3. cat
-            emb_question = tf.concat([emb_question, char_emb_question], 2)
-            emb_support = tf.concat([emb_support, char_emb_support], 2)
-            input_size += size
+                # 3. cat
+                emb_question = tf.concat([emb_question, char_emb_question], 2)
+                emb_support = tf.concat([emb_support, char_emb_support], 2)
+                input_size += size
 
             # highway layer to allow for interaction between concatenated embeddings
             # 3. highway
@@ -179,9 +179,11 @@ class BiDAF(AbstractXQAModelModule):
             end_scores = end_scores + support_mask
 
             # 9b. prepare argmax for output module
-            predicted_start_pointer = tf.argmax(start_scores)
-            predicted_end_pointer = tf.argmax(end_scores)
+            predicted_start_pointer = tf.argmax(start_scores, 1, output_type=tf.int32)
+            predicted_end_pointer = tf.argmax(end_scores, 1, output_type=tf.int32)
 
-            span = tf.concat([tf.expand_dims(predicted_start_pointer, 1), tf.expand_dims(predicted_end_pointer, 1)], 1)
+            # can only deal with single doc setups
+            doc_idx = tf.zeros_like(predicted_start_pointer, tf.int32)
+            span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
             return start_scores, end_scores, span

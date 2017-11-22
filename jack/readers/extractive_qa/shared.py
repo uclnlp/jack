@@ -16,20 +16,21 @@ class XQAPorts:
     question_length = Ports.Input.question_length
     emb_support = Ports.Input.embedded_support
     support_length = Ports.Input.support_length
+    support2question = Ports.Input.support2question
 
     # but also ids, for char-based embeddings
-    unique_word_chars = TensorPort(tf.int32, [None, None], "question_chars",
-                                   "Represents questions using symbol vectors",
-                                   "[U, max_num_chars]")
-    unique_word_char_length = TensorPort(tf.int32, [None], "question_char_length",
-                                         "Represents questions using symbol vectors",
-                                         "[U]")
-    question_words2unique = TensorPort(tf.int32, [None, None], "question_words2unique",
-                                       "Represents support using symbol vectors",
-                                       "[batch_size, max_num_question_tokens]")
-    support_words2unique = TensorPort(tf.int32, [None, None], "support_words2unique",
-                                      "Represents support using symbol vectors",
-                                      "[batch_size, max_num_support_tokens, max]")
+    word_chars = TensorPort(tf.int32, [None, None], "question_chars",
+                            "Represents questions using symbol vectors",
+                            "[U, max_num_chars]")
+    word_length = TensorPort(tf.int32, [None], "question_char_length",
+                             "Represents questions using symbol vectors",
+                             "[U]")
+    question_words = TensorPort(tf.int32, [None, None], "question_words2unique",
+                                "Represents support using symbol vectors indexing defined word chars.",
+                                "[batch_size, max_num_question_tokens]")
+    support_words = TensorPort(tf.int32, [None, None], "support_words2unique",
+                               "Represents support using symbol vectors indexing defined word chars",
+                               "[batch_size, max_num_support_tokens, max]")
 
     keep_prob = Ports.keep_prob
     is_eval = Ports.is_eval
@@ -54,7 +55,7 @@ class XQAPorts:
                                "[S, support_length, 2]")
 
     # ports used during training
-    answer2question_training = Ports.Input.answer2question
+    answer2support_training = Ports.Input.answer2support
     answer_span = Ports.Target.answer_span
 
 
@@ -62,31 +63,32 @@ XQAAnnotation = NamedTuple('XQAAnnotation', [
     ('question_tokens', List[str]),
     ('question_ids', List[int]),
     ('question_length', int),
-    ('question_embeddings', np.ndarray),
-    ('support_tokens', List[str]),
-    ('support_ids', List[int]),
-    ('support_length', int),
-    ('support_embeddings', np.ndarray),
-    ('word_in_question', List[float]),
-    ('token_offsets', List[Tuple[int, int]]),
-    ('answer_spans', Optional[List[Tuple[int, int]]]),
+    ('question_embeddings', List[np.ndarray]),
+    ('support_tokens', List[List[str]]),
+    ('support_ids', List[List[int]]),
+    ('support_length', List[int]),
+    ('support_embeddings', List[List[np.ndarray]]),
+    ('word_in_question', List[List[float]]),
+    ('token_offsets', List[List[int]]),
+    ('answer_spans', Optional[List[List[Tuple[int, int]]]]),
 ])
 
 
 class XQAInputModule(OnlineInputModule[XQAAnnotation]):
     _output_ports = [XQAPorts.emb_question, XQAPorts.question_length,
                      XQAPorts.emb_support, XQAPorts.support_length,
+                     XQAPorts.support2question,
                      # char
-                     XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
-                     XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                     XQAPorts.word_chars, XQAPorts.word_length,
+                     XQAPorts.question_words, XQAPorts.support_words,
                      # features
                      XQAPorts.word_in_question,
                      # optional, only during training
-                     XQAPorts.correct_start_training, XQAPorts.answer2question_training,
+                     XQAPorts.correct_start_training, XQAPorts.answer2support_training,
                      XQAPorts.keep_prob, XQAPorts.is_eval,
                      # for output module
                      XQAPorts.token_offsets]
-    _training_ports = [XQAPorts.answer_span, XQAPorts.answer2question_training]
+    _training_ports = [XQAPorts.answer_span, XQAPorts.answer2support_training]
 
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
@@ -130,8 +132,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         if answers is None:
             answers = [None] * len(questions)
 
-        return [self.preprocess_instance(q, a)
-                for q, a in zip(questions, answers)]
+        return [self.preprocess_instance(q, a) for q, a in zip(questions, answers)]
 
     def preprocess_instance(self, question: QASetting, answers: Optional[List[Answer]] = None) -> XQAAnnotation:
         has_answers = answers is not None
@@ -141,13 +142,15 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             question, answers, self.vocab, self.config.get("lowercase", False),
             with_answers=has_answers, max_support_length=self.config.get("max_support_length", None))
 
-        emb_support = np.zeros([s_length, self.emb_matrix.shape[1]])
-        emb_question = np.zeros([q_length, self.emb_matrix.shape[1]])
+        emb_support = []
+        emb_question = []
 
         for k in range(len(s_ids)):
-            emb_support[k] = self._get_emb(s_ids[k])
+            emb_support.append([])
+            for j in range(len(s_ids[k])):
+                emb_support[-1].append(self._get_emb(s_ids[k][j]))
         for k in range(len(q_ids)):
-            emb_question[k] = self._get_emb(q_ids[k])
+            emb_question.append(self._get_emb(q_ids[k]))
 
         return XQAAnnotation(
             question_tokens=q_tokenized,
@@ -166,51 +169,53 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
     def create_batch(self, annotations: List[XQAAnnotation], is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
 
-        batch_size = len(annotations)
-
-        emb_supports = [a.support_embeddings for a in annotations]
-        emb_questions = [a.question_embeddings for a in annotations]
-
-        support_lengths = [a.support_length for a in annotations]
-        question_lengths = [a.question_length for a in annotations]
-        wiq = [a.word_in_question for a in annotations]
-        offsets = [[list(offset) for offset in a.token_offsets]
-                   for a in annotations]
-
         q_tokenized = [a.question_tokens for a in annotations]
-        s_tokenized = [a.support_tokens for a in annotations]
+        emb_questions = [np.stack(a.question_embeddings) for a in annotations]
+        question_lengths = [a.question_length for a in annotations]
+
+        s_tokenized = [ts for a in annotations for ts in a.support_tokens]
+        support_lengths = [l for a in annotations for l in a.support_length]
+        emb_supports = [np.stack(s_embs) for a in annotations for s_embs in a.support_embeddings]
+        wiq = [wiq for a in annotations for wiq in a.word_in_question]
+        offsets = [offsets for a in annotations for offsets in a.token_offsets]
+        support2question = [i for i, a in enumerate(annotations) for _ in a.support_tokens]
 
         unique_words, unique_word_lengths, question2unique, support2unique = \
             preprocessing.unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
 
         output = {
-            XQAPorts.unique_word_chars: unique_words,
-            XQAPorts.unique_word_char_length: unique_word_lengths,
-            XQAPorts.question_words2unique: question2unique,
-            XQAPorts.support_words2unique: support2unique,
+            XQAPorts.word_chars: unique_words,
+            XQAPorts.word_length: unique_word_lengths,
+            XQAPorts.question_words: question2unique,
+            XQAPorts.support_words: support2unique,
             XQAPorts.emb_support: preprocessing.stack_and_pad(emb_supports),
             XQAPorts.support_length: support_lengths,
             XQAPorts.emb_question: preprocessing.stack_and_pad(emb_questions),
             XQAPorts.question_length: question_lengths,
             XQAPorts.word_in_question: wiq,
+            XQAPorts.support2question: support2question,
             XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_offsets: offsets,
         }
 
         if with_answers:
-            spans = [a.answer_spans for a in annotations]
-            span2question = [i for i in range(batch_size) for _ in spans[i]]
+            spans = [s for a in annotations for spans_per_support in a.answer_spans for s in spans_per_support]
+            span2support = []
+            support_idx = 0
+            for a in annotations:
+                for spans_per_support in a.answer_spans:
+                    span2support.extend([support_idx] * len(spans_per_support))
+                    support_idx += 1
             output.update({
-                XQAPorts.answer_span: [span for span_list in spans for span in span_list],
-                XQAPorts.correct_start_training: [] if is_eval else [span[0] for span_list in spans for span in
-                                                                     span_list],
-                XQAPorts.answer2question_training: span2question,
+                XQAPorts.answer_span: [span for span in spans],
+                XQAPorts.correct_start_training: [] if is_eval else [span[0] for span in spans],
+                XQAPorts.answer2support_training: span2support,
             })
 
         # we can only numpify in here, because bucketing is not possible prior
-        batch = numpify(output, keys=[XQAPorts.unique_word_chars,
-                                      XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+        batch = numpify(output, keys=[XQAPorts.word_chars,
+                                      XQAPorts.question_words, XQAPorts.support_words,
                                       XQAPorts.word_in_question, XQAPorts.token_offsets])
         return batch
 
@@ -218,15 +223,16 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 class AbstractXQAModelModule(TFModelModule):
     _input_ports = [XQAPorts.emb_question, XQAPorts.question_length,
                     XQAPorts.emb_support, XQAPorts.support_length,
+                    XQAPorts.support2question,
                     # char embedding inputs
-                    XQAPorts.unique_word_chars, XQAPorts.unique_word_char_length,
-                    XQAPorts.question_words2unique, XQAPorts.support_words2unique,
+                    XQAPorts.word_chars, XQAPorts.word_length,
+                    XQAPorts.question_words, XQAPorts.support_words,
                     # optional input, provided only during training
-                    XQAPorts.answer2question_training, XQAPorts.keep_prob, XQAPorts.is_eval]
+                    XQAPorts.answer2support_training, XQAPorts.keep_prob, XQAPorts.is_eval]
     _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
                      XQAPorts.span_prediction]
     _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                             XQAPorts.answer_span, XQAPorts.answer2question_training]
+                             XQAPorts.answer_span, XQAPorts.answer2support_training, XQAPorts.support2question]
     _training_output_ports = [Ports.loss]
 
     @property
@@ -245,14 +251,14 @@ class AbstractXQAModelModule(TFModelModule):
     def training_output_ports(self) -> Sequence[TensorPort]:
         return self._training_output_ports
 
-    def create_output(self, shared_vocab_config, emb_question, question_length,
-                      emb_support, support_length,
+    def create_output(self, shared_resources, emb_question, question_length,
+                      emb_support, support_length, support2question,
                       unique_word_chars, unique_word_char_length,
                       question_words2unique, support_words2unique,
-                      answer2question, keep_prob, is_eval):
+                      answer2support, keep_prob, is_eval):
         """extractive QA model
         Args:
-            shared_vocab_config: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
+            shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
             emb_question: [Q, L_q, N]
             question_length: [Q]
             emb_support: [Q, L_s, N]
@@ -261,7 +267,7 @@ class AbstractXQAModelModule(TFModelModule):
             unique_word_char_length
             question_words2unique
             support_words2unique
-            answer2question: [A], only during training, i.e., is_eval=False
+            answer2support: [A], only during training, i.e., is_eval=False
             keep_prob: []
             is_eval: []
 
@@ -270,8 +276,9 @@ class AbstractXQAModelModule(TFModelModule):
         """
         raise NotImplementedError('Classes that inherit from AbstractExtractiveQA need to override create_output!')
 
-    def create_training_output(self, shared_resources, start_scores, end_scores, answer_span, answer_to_question):
-        return xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer_to_question)
+    def create_training_output(
+            self, shared_resources, start_scores, end_scores, answer_span, answer2support, support2question):
+        return xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer2support, support2question)
 
 
 def _np_softmax(x):
@@ -281,46 +288,39 @@ def _np_softmax(x):
 
 
 def get_answer_and_span(question, support_length, span_prediction, token_offsets):
-    start, end = span_prediction
-    document_start, char_start = token_offsets[start]
-    if end + 1 < support_length:
-        document_end, char_end = token_offsets[end + 1]
-    else:
-        document_end, char_end = len(question.support) - 1, len(question.support[-1])
-
-    if document_start != document_end:
-        # Answer data structure does not support answers across multiple
-        # supports.
-        document_end, char_end = document_start, len(question.support[document_start])
-
-    answer = question.support[document_start][char_start: char_end]
-
+    doc_idx, start, end = span_prediction
+    char_start = token_offsets[start]
+    char_end = token_offsets[end]
+    answer = question.support[doc_idx][char_start: char_end]
     answer = answer.rstrip()
     char_end = char_start + len(answer)
-
-    return answer, document_start, (char_start, char_end)
+    return answer, doc_idx, (char_start, char_end)
 
 
 class XQAOutputModule(OutputModule):
-    def __init__(self, shared_vocab_confg: SharedResources):
-        self.vocab = shared_vocab_confg.vocab
-        self.setup()
+    def __init__(self, shared_resources):
+        self.beam_size = shared_resources.config.get("beam_size", 1)
 
-    def __call__(self, questions, span_prediction, token_offsets, support_length, start_scores, end_scores) -> List[Answer]:
-        answers = []
-        for i, q in enumerate(questions):
-            start, end = span_prediction[i]
-            answer, doc_idx, span = get_answer_and_span(q, support_length[i],
-                                                        span_prediction[i],
-                                                        token_offsets[i])
+    def __call__(self, questions, span_prediction, token_offsets, support_length,
+                 start_scores, end_scores):
+        all_answers = []
+        for k, q in enumerate(questions):
+            answers = []
+            for j in range(self.beam_size):
+                i = k * self.beam_size + j
+                _, start, end = span_prediction[i]
+                answer, doc_idx, span = get_answer_and_span(q, support_length[i],
+                                                            span_prediction[i],
+                                                            token_offsets[i])
 
-            start_probs = _np_softmax(start_scores[i])
-            end_probs = _np_softmax(end_scores[i])
+                start_probs = _np_softmax(start_scores[i])
+                end_probs = _np_softmax(end_scores[i])
 
-            answers.append(Answer(answer, span=span, doc_idx=doc_idx,
-                                  score=start_probs[start] * end_probs[end]))
+                answers.append(Answer(answer, span=span, doc_idx=doc_idx,
+                                      score=start_probs[start] * end_probs[end]))
+            all_answers.append(answers)
 
-        return answers
+        return all_answers
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -328,27 +328,3 @@ class XQAOutputModule(OutputModule):
                 XQAPorts.support_length,
                 Ports.Prediction.start_scores, Ports.Prediction.end_scores]
 
-
-class XQANoScoreOutputModule(OutputModule):
-    def __init__(self, shared_vocab_confg: SharedResources):
-        self.vocab = shared_vocab_confg.vocab
-        self.setup()
-
-    def __call__(self, questions, span_prediction, token_offsets,
-                 support_length) -> List[Answer]:
-        answers = []
-        for i, q in enumerate(questions):
-            start, end = span_prediction[i]
-            answer, doc_idx, span = get_answer_and_span(q, support_length[i],
-                                                        span_prediction[i],
-                                                        token_offsets[i])
-
-
-            answers.append(Answer(answer, span=span, doc_idx=doc_idx, score=1.0))
-
-        return answers
-
-    @property
-    def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.answer_span, XQAPorts.token_offsets,
-                XQAPorts.support_length]

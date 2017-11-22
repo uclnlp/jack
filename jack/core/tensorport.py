@@ -158,9 +158,8 @@ class Ports:
         candidate2question = TensorPort(tf.int32, [None], "candidate2question",
                                         "Represents mapping to question idx per candidate",
                                         "[C]")
-        answer2question = TensorPortWithDefault([0], tf.int32, [None], "answer2question",
-                                                "Represents mapping to question idx per answer",
-                                                "[A]")
+        answer2support = TensorPortWithDefault([0], tf.int32, [None], "answer2support",
+                                               "Represents mapping to support idx per answer", "[A]")
         atomic_candidates1D = TensorPort(tf.int32, [None], "candidates1D",
                                          "Represents candidate choices using single symbols",
                                          "[C]")
@@ -198,16 +197,16 @@ class Ports:
                                    "[C]")
 
         # extractive QA
-        start_scores = TensorPort(tf.float32, [None, None], "start_scores_flat",
+        start_scores = TensorPort(tf.float32, [None, None], "start_scores",
                                   "Represents start scores for each support sequence",
                                   "[S, max_num_tokens]")
 
-        end_scores = TensorPort(tf.float32, [None, None], "end_scores_flat",
+        end_scores = TensorPort(tf.float32, [None, None], "end_scores",
                                 "Represents end scores for each support sequence",
                                 "[S, max_num_tokens]")
 
-        answer_span = TensorPort(tf.int32, [None, 2], "answer_span_prediction_flat",
-                                 "Represents answer as a (start, end) span", "[A, 2]")
+        answer_span = TensorPort(tf.int32, [None, 3], "answer_span_prediction",
+                                 "Represents answer as a (doc_idx, start, end) span", "[A, 3]")
 
         # generative QA
         generative_symbol_scores = TensorPort(tf.int32, [None, None, None], "symbol_scores",
