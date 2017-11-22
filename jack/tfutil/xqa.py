@@ -20,10 +20,9 @@ def xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer2supp
     start_probs = tf.gather_nd(start_probs, tf.stack([answer2support, start], 1))
     end_probs = tf.gather_nd(end_probs, tf.stack([answer2support, end], 1))
 
-    log_prob = tf.unsorted_segment_max(tf.log(start_probs + 1e-6) + tf.log(end_probs + 1e-6), answer2support,
-                                       num_support)
-    log_prob = tf.unsorted_segment_max(log_prob, support2question, num_questions)
-    return tf.reduce_mean(-log_prob),
+    span_probs = tf.unsorted_segment_sum(start_probs * end_probs, answer2support, num_support)
+    span_probs = tf.unsorted_segment_sum(span_probs, support2question, num_questions)
+    return -tf.reduce_mean(tf.log(span_probs + 1e-6)),
 
 
 def xqa_min_crossentropy_span_loss(candidate_scores, span_candidates, answer_span, answer_to_question):
