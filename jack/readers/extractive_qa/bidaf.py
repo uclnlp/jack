@@ -18,21 +18,8 @@ class BiDAF(AbstractXQAModelModule):
                       word_chars, word_char_length,
                       question_words, support_words,
                       answer2support, keep_prob, is_eval):
-        # 1. char embeddings + word embeddings
-        # 2a. conv char embeddings
-        # 2b. pool char embeddings
-        # 3. cat + highway
-        # 4. BiLSTM
-        # 5. cat
-        # 6. biattention
-        # 6a. create matrix of question support attentions
-        # 6b. generate feature matrix
-        # 7. combine
-        # 8. BiLSTM
-        # 9. double cross-entropy loss
         with tf.variable_scope("bidaf", initializer=tf.contrib.layers.xavier_initializer()):
             # Some helpers
-            max_question_length = tf.reduce_max(question_length)
             max_support_length = tf.reduce_max(support_length)
 
             beam_size = 1
@@ -58,19 +45,12 @@ class BiDAF(AbstractXQAModelModule):
                 # 3. cat
                 emb_question = tf.concat([emb_question, char_emb_question], 2)
                 emb_support = tf.concat([emb_support, char_emb_support], 2)
-                input_size += size
 
                 # highway layer to allow for interaction between concatenated embeddings
                 # 3. highway
                 # following bidaf notation here  (qq=question, xx=support)
                 emb_question = highway_network(emb_question, 2, scope='question_highway')
                 emb_support = highway_network(emb_support, 2, scope='support_highway')
-
-            # emb_question = tf.slice(highway_question, [0, 0, 0], tf.stack([-1, max_question_length, -1]))
-            # emb_support = tf.slice(all_embedded_hw, tf.stack([0, max_question_length, 0]), [-1, -1, -1])
-
-            # emb_question.set_shape([None, None, size])
-            # emb_support.set_shape([None, None, size])
 
             # 4. Context encoder
             # encode question and support
@@ -97,10 +77,11 @@ class BiDAF(AbstractXQAModelModule):
             w_3 = tf.get_variable("w3", [size, 1])
             question_mul = question * tf.reshape(w_3, [1, 1, size])
 
+            # S = [batch, support_length, question_length]
             S = (tf.einsum('ijk,ilk->ijl', support, question_mul) +
                  tf.layers.dense(support, 1) + tf.reshape(tf.layers.dense(question, 1), [-1, 1, tf.shape(question)[1]]))
 
-            # S = [batch, length1, length2]
+
             # support to question attention
             att_question = tf.nn.softmax(S, 2)  # softmax over question for each support token
             question_weighted = tf.einsum('ijl,ilk->ijk', att_question, question)
@@ -142,20 +123,8 @@ class BiDAF(AbstractXQAModelModule):
                 end_encoded = self.conv_encoder(size, start_encoded, num_layers=3,
                                                 encoder_type='convnet', name='end_encoder')
             end_encoded = tf.concat([end_encoded, G], 2)
-            # 8. double cross-entropy loss (actually applied after this function)
-            # 8a. prepare logits
-            # 8b. prepare argmax for output module
-
-            # 8a. prepare logits
-            # interaction_encoded = [batch, length2, 10*embedding]
-            # W_start = [10*embedding]
-            # interaction_encoded *w_start_index = start_scores
-            # [batch, length2, 10*embedding] * [10*embedding] = [batch, length2]
+            # 8. logits
             start_scores = tf.squeeze(tf.layers.dense(start_encoded, 1, use_bias=False), 2)
-            # end_encoded = [batch, length2, 10*emb]
-            # W_end = [10*emb]
-            # end_encoded *w_end_index = start_scores
-            # [batch, length2, 10*emb] * [10*emb] = [batch, length2]
             end_scores = tf.squeeze(tf.layers.dense(end_encoded, 1, use_bias=False), 2)
 
             # mask out-of-bounds slots by adding -1000
