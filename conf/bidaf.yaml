@@ -38,7 +38,7 @@ repr_dim: 100
 
 epochs: 20
 
-dropout: 0.5
+dropout: 0.2
 
 batch_size: 64
 
