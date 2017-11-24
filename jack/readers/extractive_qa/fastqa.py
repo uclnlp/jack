@@ -105,8 +105,7 @@ class FastQAModule(AbstractXQAModelModule):
                 encoded_support = tf.layers.dense(encoded_support, size,
                                                   kernel_initializer=projection_initializer, name='projection_s')
             else:
-                encoded_question = self.conv_encoder(size, emb_question_ext, encoder_type=encoder)
-                encoded_support = self.conv_encoder(size, emb_support_ext, encoder_type=encoder, reuse=True)
+                raise ValueError("Only rnn ('lstm', 'sru', 'gru') encoder allowed for FastQA!")
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                 mlp_answer_layer(size, encoded_question, question_length, encoded_support, support_length,

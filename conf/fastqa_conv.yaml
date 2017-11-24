@@ -1,8 +1,0 @@
-description: >
-  FastQA configuration with SRU as RNN. Much faster as normal FastQA. (SRU: https://openreview.net/pdf?id=rJBiunlAW)
-
-parent_config: './conf/fastqa.yaml'
-
-# 'lstm', 'gru', 'sru' (simple recurrent unit), 'gldr' (gated linear dilated residual network)
-encoder: 'gldr'
-repr_dim: 100
