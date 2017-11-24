@@ -1,5 +1,4 @@
 import numpy as np
-
 import tensorflow as tf
 
 from jack.tfutil import rnn
@@ -69,9 +68,8 @@ def gated_linear_dilated_residual_network(out_size, inputs, dilations, width=3, 
     with tf.variable_scope(name, reuse=reuse) as vs:
         # dim reduction
         output = _convolutional_block_glu_block(inputs, out_size, name='conv_dim_reduction')
-        for d in dilations:
-            output = _residual_dilated_convolution_block(inputs, d, width)
-            vs.reuse_variables()
+        for i, d in enumerate(dilations):
+            output = _residual_dilated_convolution_block(inputs, d, width, name='dilated_conv_%d' % i)
     return output
 
 
