@@ -1,0 +1,6 @@
+description: >
+  FastQA configuration with SRU as RNN. Much faster as normal FastQA. (SRU: https://openreview.net/pdf?id=rJBiunlAW)
+
+parent_config: './conf/fastqa.yaml'
+
+encoder: 'gldr'
