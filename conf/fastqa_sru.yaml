@@ -3,4 +3,5 @@ description: >
 
 parent_config: './conf/fastqa.yaml'
 
+# 'lstm', 'gru', 'sru' (simple recurrent unit), 'gldr' (gated linear dilated residual network)
 encoder: 'sru'
