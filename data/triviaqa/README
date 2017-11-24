@@ -1,0 +1,11 @@
+The download script does the following:
+* downloads and unpacks triviaqa
+* clones github.com/allenai/document-qa temporarily (third party)
+* preprocesses triviaqa with third party
+* converts datasets from third-party to Jack format while sub-sampling supporting paragraphs using tf-idf following [1]
+
+You can set parallelism with with the first argument to download script and the download dir of triviaqa
+with the 2nd argument. Try to use an SSD to speed up things. The whole setup can take a few hours.
+
+
+[1] https://arxiv.org/pdf/1710.10723.pdf

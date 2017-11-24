@@ -1,6 +1,7 @@
 """
 This file contains reusable modules for extractive QA models and ports
 """
+from collections import defaultdict
 from typing import NamedTuple
 
 from jack.core import *
@@ -53,6 +54,8 @@ class XQAPorts:
     token_offsets = TensorPort(tf.int32, [None, None, 2], "token_offsets",
                                "Document and character index of tokens in support.",
                                "[S, support_length, 2]")
+    selected_support = TensorPort(tf.int32, [None], "token_offsets",
+                                  "Selected support based on TF IDF with question", "[num_support]")
 
     # ports used during training
     answer2support_training = Ports.Input.answer2support
@@ -63,14 +66,13 @@ XQAAnnotation = NamedTuple('XQAAnnotation', [
     ('question_tokens', List[str]),
     ('question_ids', List[int]),
     ('question_length', int),
-    ('question_embeddings', List[np.ndarray]),
     ('support_tokens', List[List[str]]),
     ('support_ids', List[List[int]]),
     ('support_length', List[int]),
-    ('support_embeddings', List[List[np.ndarray]]),
     ('word_in_question', List[List[float]]),
     ('token_offsets', List[List[int]]),
     ('answer_spans', Optional[List[List[Tuple[int, int]]]]),
+    ('selected_supports', Optional[List[int]]),
 ])
 
 
@@ -87,21 +89,21 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.correct_start_training, XQAPorts.answer2support_training,
                      XQAPorts.keep_prob, XQAPorts.is_eval,
                      # for output module
-                     XQAPorts.token_offsets]
+                     XQAPorts.token_offsets, XQAPorts.selected_support]
     _training_ports = [XQAPorts.answer_span, XQAPorts.answer2support_training]
 
     def __init__(self, shared_vocab_config):
         assert isinstance(shared_vocab_config, SharedResources), \
             "shared_resources for FastQAInputModule must be an instance of SharedResources"
-        self.shared_vocab_config = shared_vocab_config
+        self.shared_resources = shared_vocab_config
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
-        self.shared_vocab_config.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_vocab_config.vocab)
+        self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
     def setup(self):
-        self.vocab = self.shared_vocab_config.vocab
-        self.config = self.shared_vocab_config.config
+        self.vocab = self.shared_resources.vocab
+        self.config = self.shared_resources.config
         self.dropout = self.config.get("dropout", 1)
         if self.vocab.emb is None:
             logger.error("XQAInputModule needs vocabulary setup from pre-trained embeddings."
@@ -109,7 +111,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             sys.exit(1)
         self.emb_matrix = self.vocab.emb.lookup
         self.default_vec = np.zeros([self.vocab.emb_length])
-        self.char_vocab = self.shared_vocab_config.char_vocab
+        self.char_vocab = self.shared_resources.char_vocab
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -142,61 +144,94 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             question, answers, self.vocab, self.config.get("lowercase", False),
             with_answers=has_answers, max_support_length=self.config.get("max_support_length", None))
 
-        emb_support = []
-        emb_question = []
+        max_num_support = self.config.get("max_num_support")  # take all per default
+        if max_num_support is not None and len(question.support) > max_num_support:
+            # subsample by TF-IDF
+            q_freqs = defaultdict(float)
+            freqs = defaultdict(float)
+            for w, i in zip(q_tokenized, q_ids):
+                if w.isalnum():
+                    q_freqs[i] += 1.0
+                    freqs[i] += 1.0
+            d_freqs = []
+            for i, s in enumerate(s_ids):
+                d_freqs.append(defaultdict(float))
+                for j in s:
+                    freqs[j] += 1.0
+                    d_freqs[-1][j] += 1.0
+            scores = []
+            for i, d_freq in enumerate(d_freqs):
+                score = sum(v / freqs[k] * d_freq.get(k, 0.0) / freqs[k] for k, v in q_freqs.items())
+                scores.append((i, score))
 
-        for k in range(len(s_ids)):
-            emb_support.append([])
-            for j in range(len(s_ids[k])):
-                emb_support[-1].append(self._get_emb(s_ids[k][j]))
-        for k in range(len(q_ids)):
-            emb_question.append(self._get_emb(q_ids[k]))
+            selected_supports = [s_idx for s_idx, _ in sorted(scores, key=lambda x: -x[1])[:max_num_support]]
+            s_tokenized = [s_tokenized[s_idx] for s_idx in selected_supports]
+            s_ids = [s_ids[s_idx] for s_idx in selected_supports]
+            s_length = [s_length[s_idx] for s_idx in selected_supports]
+            word_in_question = [word_in_question[s_idx] for s_idx in selected_supports]
+            token_offsets = [token_offsets[s_idx] for s_idx in selected_supports]
+            answer_spans = [answer_spans[s_idx] for s_idx in selected_supports]
+        else:
+            selected_supports = list(range(len(question.support)))
 
         return XQAAnnotation(
             question_tokens=q_tokenized,
             question_ids=q_ids,
             question_length=q_length,
-            question_embeddings=emb_question,
             support_tokens=s_tokenized,
             support_ids=s_ids,
             support_length=s_length,
-            support_embeddings=emb_support,
             word_in_question=word_in_question,
             token_offsets=token_offsets,
             answer_spans=answer_spans if has_answers else None,
+            selected_supports=selected_supports if has_answers else None,
         )
 
     def create_batch(self, annotations: List[XQAAnnotation], is_eval: bool, with_answers: bool) \
             -> Mapping[TensorPort, np.ndarray]:
 
         q_tokenized = [a.question_tokens for a in annotations]
-        emb_questions = [np.stack(a.question_embeddings) for a in annotations]
         question_lengths = [a.question_length for a in annotations]
 
         s_tokenized = [ts for a in annotations for ts in a.support_tokens]
         support_lengths = [l for a in annotations for l in a.support_length]
-        emb_supports = [np.stack(s_embs) for a in annotations for s_embs in a.support_embeddings]
         wiq = [wiq for a in annotations for wiq in a.word_in_question]
         offsets = [offsets for a in annotations for offsets in a.token_offsets]
         support2question = [i for i, a in enumerate(annotations) for _ in a.support_tokens]
 
-        unique_words, unique_word_lengths, question2unique, support2unique = \
-            preprocessing.unique_words_with_chars(q_tokenized, s_tokenized, self.char_vocab)
+        word_chars, word_lengths, word_ids = \
+            preprocessing.unique_words_with_chars(q_tokenized + s_tokenized, self.char_vocab)
+
+        # aligns with support2question, used in output module to get correct index to original set of supports
+        selected_support = [selected for a in annotations for selected in a.selected_supports]
+
+        emb_support = np.zeros([len(support_lengths), max(support_lengths), self.vocab.emb_length])
+        emb_question = np.zeros([len(question_lengths), max(question_lengths), self.vocab.emb_length])
+
+        k = 0
+        for i, a in enumerate(annotations):
+            for j, q_id in enumerate(a.question_ids):
+                emb_question[i, j] = self._get_emb(q_id)
+            for s_ids in a.support_ids:
+                for j, s_id in enumerate(s_ids):
+                    emb_support[k, j] = self._get_emb(s_id)
+                k += 1
 
         output = {
-            XQAPorts.word_chars: unique_words,
-            XQAPorts.word_length: unique_word_lengths,
-            XQAPorts.question_words: question2unique,
-            XQAPorts.support_words: support2unique,
-            XQAPorts.emb_support: preprocessing.stack_and_pad(emb_supports),
+            XQAPorts.word_chars: word_chars,
+            XQAPorts.word_length: word_lengths,
+            XQAPorts.question_words: word_ids[:len(q_tokenized)],
+            XQAPorts.support_words: word_ids[len(q_tokenized):],
+            XQAPorts.emb_support: emb_support,
             XQAPorts.support_length: support_lengths,
-            XQAPorts.emb_question: preprocessing.stack_and_pad(emb_questions),
+            XQAPorts.emb_question: emb_question,
             XQAPorts.question_length: question_lengths,
             XQAPorts.word_in_question: wiq,
             XQAPorts.support2question: support2question,
             XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_offsets: offsets,
+            XQAPorts.selected_support: selected_support,
         }
 
         if with_answers:
@@ -253,26 +288,27 @@ class AbstractXQAModelModule(TFModelModule):
 
     def create_output(self, shared_resources, emb_question, question_length,
                       emb_support, support_length, support2question,
-                      unique_word_chars, unique_word_char_length,
-                      question_words2unique, support_words2unique,
+                      word_chars, word_char_length,
+                      question_words, support_words,
                       answer2support, keep_prob, is_eval):
         """extractive QA model
         Args:
             shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
             emb_question: [Q, L_q, N]
             question_length: [Q]
-            emb_support: [Q, L_s, N]
-            support_length: [Q]
-            unique_word_chars
-            unique_word_char_length
-            question_words2unique
-            support_words2unique
+            emb_support: [S, L_s, N]
+            support_length: [S]
+            support2question: [S]
+            word_chars: characters for each word
+            word_char_length: character length for each word
+            question_words: [Q, L_q] index to character representation of question words
+            support_words: [S, L_q] index to character representation of support words
             answer2support: [A], only during training, i.e., is_eval=False
             keep_prob: []
             is_eval: []
 
         Returns:
-            start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
+            start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 3] (doc idx, start, end)
         """
         raise NotImplementedError('Classes that inherit from AbstractExtractiveQA need to override create_output!')
 
@@ -287,8 +323,8 @@ def _np_softmax(x):
     return e_x / e_x.sum(axis=0)
 
 
-def get_answer_and_span(question, support_length, span_prediction, token_offsets):
-    doc_idx, start, end = span_prediction
+def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_support):
+    doc_idx = selected_support[doc_idx]
     char_start = token_offsets[start]
     char_end = token_offsets[end]
     answer = question.support[doc_idx][char_start: char_end]
@@ -301,17 +337,18 @@ class XQAOutputModule(OutputModule):
     def __init__(self, shared_resources):
         self.beam_size = shared_resources.config.get("beam_size", 1)
 
-    def __call__(self, questions, span_prediction, token_offsets, support_length,
+    def __call__(self, questions, span_prediction,
+                 token_offsets, selected_support, support2question,
                  start_scores, end_scores):
         all_answers = []
         for k, q in enumerate(questions):
             answers = []
             for j in range(self.beam_size):
                 i = k * self.beam_size + j
-                _, start, end = span_prediction[i]
-                answer, doc_idx, span = get_answer_and_span(q, support_length[i],
-                                                            span_prediction[i],
-                                                            token_offsets[i])
+                doc_idx, start, end = span_prediction[i]
+                answer, doc_idx, span = get_answer_and_span(
+                    q, doc_idx, start, end, token_offsets[doc_idx],
+                    [i for q_id, i in zip(support2question, selected_support) if q_id == k])
 
                 start_probs = _np_softmax(start_scores[i])
                 end_probs = _np_softmax(end_scores[i])
@@ -325,6 +362,6 @@ class XQAOutputModule(OutputModule):
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.answer_span, XQAPorts.token_offsets,
-                XQAPorts.support_length,
+                XQAPorts.selected_support, XQAPorts.support2question,
                 Ports.Prediction.start_scores, Ports.Prediction.end_scores]
 

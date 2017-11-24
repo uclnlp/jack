@@ -7,8 +7,6 @@ from jack.tfutil.segment import segment_top_k
 def mlp_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                      correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=16):
     """Answer layer for multiple paragraph QA."""
-    max_support_length = tf.shape(encoded_support)[1]
-
     # computing single time attention over question
     attention_scores = tf.layers.dense(encoded_question, 1, name="question_attention")
     q_mask = misc.mask_for_lengths(question_length)
@@ -18,10 +16,10 @@ def mlp_answer_layer(size, encoded_question, question_length, encoded_support, s
 
     # Prediction
     # start
-    static_input = tf.concat([tf.expand_dims(question_state, 1) * encoded_support,
+    static_input = tf.concat([tf.gather(tf.expand_dims(question_state, 1), support2question) * encoded_support,
                               encoded_support], 2)
 
-    hidden = tf.layers.dense(question_state, 2 * size, name="hidden_1")
+    hidden = tf.gather(tf.layers.dense(question_state, 2 * size, name="hidden_1"), support2question)
     hidden = tf.layers.dense(
         static_input, 2 * size, use_bias=False, name="hidden_2") + tf.expand_dims(hidden, 1)
 
@@ -37,18 +35,25 @@ def mlp_answer_layer(size, encoded_question, question_length, encoded_support, s
     end_scores = tf.squeeze(end_scores, [2])
     end_scores = end_scores + support_mask
 
+    return compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
+                         correct_start, beam_size, max_span_size)
+
+
+def compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
+                  correct_start=None, beam_size=1, max_span_size=10000):
+    max_support_length = tf.shape(start_scores)[1]
     _, _, num_doc_per_question = tf.unique_with_counts(support2question)
     offsets = tf.cumsum(num_doc_per_question, exclusive=True)
     doc_idx_for_support = tf.range(tf.shape(support2question)[0]) - tf.gather(offsets, support2question)
 
     def train():
-        start_pointer = correct_start
         gathered_end_scores = tf.gather(end_scores, answer2support)
         gathered_start_scores = tf.gather(start_scores, answer2support)
 
-        # assuming we know the correct start we only consider ends after that
-        left_mask = misc.mask_for_lengths(tf.cast(start_pointer, tf.int32), max_support_length, mask_right=False)
-        gathered_end_scores = gathered_end_scores + left_mask
+        if correct_start is not None:
+            # assuming we know the correct start we only consider ends after that
+            left_mask = misc.mask_for_lengths(tf.cast(correct_start, tf.int32), max_support_length, mask_right=False)
+            gathered_end_scores = gathered_end_scores + left_mask
 
         predicted_start_pointer = tf.argmax(gathered_start_scores, axis=1, output_type=tf.int32)
         predicted_end_pointer = tf.argmax(gathered_end_scores, axis=1, output_type=tf.int32)
