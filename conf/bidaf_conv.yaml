@@ -1,0 +1,6 @@
+description: >
+  Convolutional BiDAF reader as described in https://openreview.net/pdf?id=HJRV1ZZAW.
+
+parent_config: './conf/bidaf.yaml'
+
+encoder: 'gldr'

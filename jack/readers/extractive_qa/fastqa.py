@@ -8,7 +8,6 @@ from jack.readers.extractive_qa.shared import XQAPorts, AbstractXQAModelModule
 from jack.tfutil import misc
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
-from jack.tfutil.rnn import birnn_with_projection
 
 
 class FastQAModule(AbstractXQAModelModule):
@@ -95,12 +94,19 @@ class FastQAModule(AbstractXQAModelModule):
             emb_support_ext = tf.concat([emb_support, support_features], 2)
 
             # encode question and support
-            rnn = tf.contrib.rnn.LSTMBlockFusedCell
-            encoded_question = birnn_with_projection(size, rnn, emb_question_ext, question_length,
-                                                     projection_scope="question_proj")
-
-            encoded_support = birnn_with_projection(size, rnn, emb_support_ext, support_length,
-                                                    share_rnn=True, projection_scope="support_proj")
+            encoder = shared_resources.config.get('encoder', 'lstm').lower()
+            if encoder in ['lstm', 'sru', 'gru']:
+                size = size + 2 if encoder == 'sru' else size  # to allow for use of residual in SRU
+                encoded_question = self.rnn_encoder(size, emb_question_ext, question_length, encoder)
+                encoded_support = self.rnn_encoder(size, emb_support_ext, support_length, encoder, reuse=True)
+                projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
+                encoded_question = tf.layers.dense(encoded_question, size,
+                                                   kernel_initializer=projection_initializer, name='projection_q')
+                encoded_support = tf.layers.dense(encoded_support, size,
+                                                  kernel_initializer=projection_initializer, name='projection_s')
+            else:
+                encoded_question = self.conv_encoder(size, emb_question_ext, encoder_type=encoder)
+                encoded_support = self.conv_encoder(size, emb_support_ext, encoder_type=encoder, reuse=True)
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                 mlp_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
