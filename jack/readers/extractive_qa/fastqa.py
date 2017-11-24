@@ -6,7 +6,6 @@ from jack.core import *
 from jack.readers.extractive_qa.answer_layer import mlp_answer_layer
 from jack.readers.extractive_qa.shared import XQAPorts, AbstractXQAModelModule
 from jack.tfutil import misc
-from jack.tfutil.dropout import fixed_dropout
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
 from jack.tfutil.rnn import birnn_with_projection
@@ -30,36 +29,15 @@ class FastQAModule(AbstractXQAModelModule):
 
     def create_output(self, shared_resources, emb_question, question_length,
                       emb_support, support_length, support2question,
-                      unique_word_chars, unique_word_char_length,
-                      question_words2unique, support_words2unique,
+                      word_chars, word_char_length,
+                      question_words, support_words,
                       word_in_question,
                       correct_start, answer2support, keep_prob, is_eval):
-        """FastQA model.
-        Args:
-            shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
-            emb_question: [Q, L_q, N]
-            question_length: [Q]
-            emb_support: [Q, L_s, N]
-            support_length: [Q]
-            unique_word_chars
-            unique_word_char_length
-            question_words2unique
-            support_words2unique
-            word_in_question: [Q, L_s]
-            correct_start: [A], only during training, i.e., is_eval=False
-            answer2support: [A], only during training, i.e., is_eval=False
-            keep_prob: []
-            is_eval: []
-
-        Returns:
-            start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 2]
-        """
         with tf.variable_scope("fast_qa", initializer=tf.contrib.layers.xavier_initializer()):
             # Some helpers
             batch_size = tf.shape(question_length)[0]
             max_question_length = tf.reduce_max(question_length)
             support_mask = misc.mask_for_lengths(support_length)
-            question_binary_mask = misc.mask_for_lengths(question_length, mask_right=False, value=1.0)
 
             input_size = shared_resources.config["repr_dim_input"]
             size = shared_resources.config["repr_dim"]
@@ -72,8 +50,8 @@ class FastQAModule(AbstractXQAModelModule):
             if with_char_embeddings:
                 # compute combined embeddings
                 [char_emb_question, char_emb_support] = conv_char_embedding(
-                    len(shared_resources.char_vocab), size, unique_word_chars, unique_word_char_length,
-                    [question_words2unique, support_words2unique])
+                    len(shared_resources.char_vocab), size, word_chars, word_char_length,
+                    [question_words, support_words])
 
                 emb_question = tf.concat([emb_question, char_emb_question], 2)
                 emb_support = tf.concat([emb_support, char_emb_support], 2)
@@ -89,9 +67,10 @@ class FastQAModule(AbstractXQAModelModule):
             v_wiqw = tf.get_variable("v_wiq_w", [1, 1, input_size],
                                      initializer=tf.constant_initializer(1.0))
 
-            wiq_w = tf.matmul(emb_question * v_wiqw, emb_support, adjoint_b=True)
+            wiq_w = tf.matmul(tf.gather(emb_question * v_wiqw, support2question), emb_support, adjoint_b=True)
             wiq_w = wiq_w + tf.expand_dims(support_mask, 1)
 
+            question_binary_mask = tf.gather(tf.sequence_mask(question_length, dtype=tf.float32), support2question)
             wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
 
             # [B, L , 2]
@@ -99,29 +78,17 @@ class FastQAModule(AbstractXQAModelModule):
 
             # highway layer to allow for interaction between concatenated embeddings
             if with_char_embeddings:
-                all_embedded = tf.concat([emb_question, emb_support], 1)
-                all_embedded = tf.contrib.layers.fully_connected(all_embedded, size,
-                                                                 activation_fn=None,
-                                                                 weights_initializer=None,
-                                                                 biases_initializer=None,
-                                                                 scope="embeddings_projection")
+                with tf.variable_scope("char_embeddings") as vs:
+                    emb_question = tf.layers.dense(emb_question, size, name="embeddings_projection")
+                    emb_question = highway_network(emb_question, 1)
+                    vs.reuse_variables()
+                    emb_support = tf.layers.dense(emb_support, size, name="embeddings_projection")
+                    emb_support = highway_network(emb_support, 1)
 
-                all_embedded_hw = highway_network(all_embedded, 1)
-
-                emb_question = tf.slice(all_embedded_hw, [0, 0, 0], tf.stack([-1, max_question_length, -1]))
-                emb_support = tf.slice(all_embedded_hw, tf.stack([0, max_question_length, 0]), [-1, -1, -1])
-
-                emb_question.set_shape([None, None, size])
-                emb_support.set_shape([None, None, size])
-
-            # variational dropout
-            dropout_shape = tf.unstack(tf.shape(emb_question))
-            dropout_shape[1] = 1
-
-            [emb_question, emb_support] = tf.cond(is_eval,
-                                                  lambda: [emb_question, emb_support],
-                                                  lambda: fixed_dropout([emb_question, emb_support],
-                                                                        keep_prob, dropout_shape))
+            emb_question, emb_support = tf.cond(is_eval,
+                                                lambda: (emb_question, emb_support),
+                                                lambda: (tf.nn.dropout(emb_question, keep_prob),
+                                                         tf.nn.dropout(emb_support, keep_prob)))
 
             # extend embeddings with features
             emb_question_ext = tf.concat([emb_question, question_features], 2)

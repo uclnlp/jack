@@ -2,6 +2,7 @@ import logging
 
 import tensorflow as tf
 
+from jack.readers.extractive_qa.answer_layer import compute_spans
 from jack.readers.extractive_qa.shared import AbstractXQAModelModule
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
@@ -14,8 +15,8 @@ logger = logging.getLogger(__name__)
 class BiDAF(AbstractXQAModelModule):
     def create_output(self, shared_resources, emb_question, question_length,
                       emb_support, support_length, support2question,
-                      unique_word_chars, unique_word_char_length,
-                      question_words2unique, support_words2unique,
+                      word_chars, word_char_length,
+                      question_words, support_words,
                       answer2support, keep_prob, is_eval):
         # 1. char embeddings + word embeddings
         # 2a. conv char embeddings
@@ -41,8 +42,8 @@ class BiDAF(AbstractXQAModelModule):
             size = shared_resources.config["repr_dim"]
             with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
             W = tf.get_variable("biattention_weight", [size * 6])
-            W_start_index = tf.get_variable("start_index_weight", [size * 10])
-            W_end_index = tf.get_variable("end_index_weight", [size * 10])
+            W_start = tf.get_variable("start_index_weight", [size * 10])
+            W_end = tf.get_variable("end_index_weight", [size * 10])
 
             # 1. char embeddings + word embeddings
             # set shapes for inputs
@@ -54,9 +55,9 @@ class BiDAF(AbstractXQAModelModule):
                 # compute combined embeddings
                 [char_emb_question, char_emb_support] = conv_char_embedding(len(shared_resources.char_vocab),
                                                                             size,
-                                                                            unique_word_chars, unique_word_char_length,
-                                                                            [question_words2unique,
-                                                                             support_words2unique])
+                                                                            word_chars, word_char_length,
+                                                                            [question_words,
+                                                                             support_words])
                 # 3. cat
                 emb_question = tf.concat([emb_question, char_emb_question], 2)
                 emb_support = tf.concat([emb_support, char_emb_support], 2)
@@ -79,49 +80,27 @@ class BiDAF(AbstractXQAModelModule):
             cell1 = tf.contrib.rnn.LSTMBlockFusedCell(size)
             encoded_question = fused_birnn(cell1, highway_question, question_length, dtype=tf.float32, time_major=False,
                                            scope='question_encoding')[0]
-            encoded_question = tf.concat(encoded_question, 2)
+            question = tf.concat(encoded_question, 2)
 
             cell2 = tf.contrib.rnn.LSTMBlockFusedCell(size)
             encoded_support = fused_birnn(cell2, highway_support, support_length, dtype=tf.float32, time_major=False,
                                           scope='support_encoding')[0]
-            encoded_support = tf.concat(encoded_support, 2)
+            support = tf.concat(encoded_support, 2)
 
-            # 6. biattention alpha(U, H) = S
-            # S = W^T*[H; U; H*U]
-            # question = U = [batch, 2*embedding, length1]
-            # support = H = [batch, 2*embedding, length2]
-            # -> expand with features
+            # align with support
+            question = tf.gather(question, support2question)
 
-            # we want to get from [length 1] and [length 2] to [length1, length2] and [length1, length2]
-            # we do that with
-            # (a) expand dim
-            # [batch, L2, 2*embedding ] -> [batch, 1, L2 2*embedding]
-            support = tf.expand_dims(encoded_support, 1)
-            # [batch, L1, 2*embedding] -> [batch, L1, 1, 2*embedding]
-            question = tf.expand_dims(encoded_question, 2)
-            # (b) tile with the other dimension
-            support = tf.tile(support, [1, max_question_length, 1, 1])
-            question = tf.tile(question, [1, 1, max_support_length, 1])
+            # 5. a_i,j= w1 * s_i + w2 * q_j + w3 * q_j * s_i
+            w_3 = tf.get_variable("w3", [2 * size, 1])
+            question_mul = question * tf.reshape(w_3, [1, 1, 2 * size])
 
-            # 5. cat
-            # question = U = [batch, length1, length2, 2*embeddings]
-            # support = H = [batch, length1, length2, 2*embeddings]
-            # S = W^T*[H; U; H*U]
-            features = tf.concat([support, question, question * support], 3)
-
-            # 6. biattention
-            # 6a. create matrix of question support attentions
-            # features = [batch, length1, length2, 6*embeddings]
-            # w = [6*embeddings]
-            # S = attention matrix = [batch, length1, length2]
-            S = tf.einsum('ijkl,l->ijk', features, W)
+            S = (tf.einsum('ijk,ilk->ijl', support, question_mul) +
+                 tf.layers.dense(support, 1) + tf.reshape(tf.layers.dense(question, 1), [-1, 1, tf.shape(question)[1]]))
 
             # S = [batch, length1, length2]
-            # question to support attention
-            # softmax -> [ batch, length1, length2] = att_question
-            att_question = tf.nn.softmax(S, 2)  # softmax over support
-            # weighted =  [batch, length1, length2] * [batch, length1, length2, 2*embedding] -> [batch, length2, 2*embedding]
-            question_weighted = tf.einsum('ijk,ijkl->ikl', att_question, question)
+            # support to question attention
+            att_question = tf.nn.softmax(S, 2)  # softmax over question for each support token
+            question_weighted = tf.einsum('ijl,ilk->ijk', att_question, question)
 
             # support to question attention
             # 1. filter important context words with max
@@ -132,58 +111,54 @@ class BiDAF(AbstractXQAModelModule):
             support_attention = tf.nn.softmax(max_support, 1)
             # support attention * support = weighted support
             # [batch, length1] * [batch, length1, length2, 2*embedding] = [batch, 2*embedding]
-            support_weighted = tf.einsum('ij,ijkl->il', support_attention, support)
+            support_weighted = tf.einsum('ij,ijk->ik', support_attention, support)
             # tile to have the same dimension
             # [batch, 2*embedding] -> [batch, length2, 2*embedding]
             support_weighted = tf.expand_dims(support_weighted, 1)
             support_weighted = tf.tile(support_weighted, [1, max_support_length, 1])
 
-            # 6b. generate feature matrix
+            # 6 generate feature matrix
             # G(support, weighted question, weighted support)  = G(h, *u, *h) = [h, *u, mul(h, *u), mul(h, h*)] = [batch, length2, embedding*8]
-            G = tf.concat([encoded_support, question_weighted, encoded_support * question_weighted,
-                           encoded_support * support_weighted], 2)
+            G = tf.concat([support, question_weighted, support * question_weighted, support * support_weighted], 2)
 
-            # 8. BiLSTM(G) = M
-            # start_index = M
+            # 7. BiLSTM(G) = M
+            # start_emb = M
             cell3 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            start_index = \
-                fused_birnn(cell3, G, support_length, dtype=tf.float32, time_major=False, scope='start_index')[0]
-            start_index = tf.concat(start_index, 2)
-            start_index = tf.concat([start_index, G], 2)
-            # BiLSTM(M) = M^2 = end_index
+            start_emb = \
+                fused_birnn(cell3, G, support_length, dtype=tf.float32, time_major=False, scope='start_emb')[0]
+            start_emb = tf.concat(start_emb, 2)
+            start_emb = tf.concat([start_emb, G], 2)
+            # BiLSTM(M) = M^2 = end_emb
             cell4 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            end_index = \
-                fused_birnn(cell4, start_index, support_length, dtype=tf.float32, time_major=False, scope='end_index')[
+            end_emb = \
+                fused_birnn(cell4, start_emb, support_length, dtype=tf.float32, time_major=False, scope='end_emb')[
                     0]
-            end_index = tf.concat(end_index, 2)
-            end_index = tf.concat([end_index, G], 2)
-            # 9. double cross-entropy loss (actually applied after this function)
-            # 9a. prepare logits
-            # 9b. prepare argmax for output module
+            end_emb = tf.concat(end_emb, 2)
+            end_emb = tf.concat([end_emb, G], 2)
+            # 8. double cross-entropy loss (actually applied after this function)
+            # 8a. prepare logits
+            # 8b. prepare argmax for output module
 
-            # 9a. prepare logits
-            # start_index = [batch, length2, 10*embedding]
-            # W_start_index = [10*embedding]
-            # start_index *w_start_index = start_scores
+            # 8a. prepare logits
+            # start_emb = [batch, length2, 10*embedding]
+            # W_start = [10*embedding]
+            # start_emb *w_start_index = start_scores
             # [batch, length2, 10*embedding] * [10*embedding] = [batch, length2]
-            start_scores = tf.einsum('ijk,k->ij', start_index, W_start_index)
-            # end_index = [batch, length2, 10*emb]
-            # W_end_index = [10*emb]
-            # end_index *w_end_index = start_scores
+            start_scores = tf.einsum('ijk,k->ij', start_emb, W_start)
+            # end_emb = [batch, length2, 10*emb]
+            # W_end = [10*emb]
+            # end_emb *w_end_index = start_scores
             # [batch, length2, 10*emb] * [10*emb] = [batch, length2]
-            end_scores = tf.einsum('ijk,k->ij', end_index, W_end_index)
+            end_scores = tf.einsum('ijk,k->ij', end_emb, W_end)
 
             # mask out-of-bounds slots by adding -1000
             support_mask = mask_for_lengths(support_length)
             start_scores = start_scores + support_mask
             end_scores = end_scores + support_mask
 
-            # 9b. prepare argmax for output module
-            predicted_start_pointer = tf.argmax(start_scores, 1, output_type=tf.int32)
-            predicted_end_pointer = tf.argmax(end_scores, 1, output_type=tf.int32)
+            start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
+                compute_spans(start_scores, end_scores, answer2support, is_eval, support2question)
 
-            # can only deal with single doc setups
-            doc_idx = tf.zeros_like(predicted_start_pointer, tf.int32)
             span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
             return start_scores, end_scores, span
