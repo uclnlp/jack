@@ -157,7 +157,8 @@ class BiDAF(AbstractXQAModelModule):
             end_scores = end_scores + support_mask
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-                compute_spans(start_scores, end_scores, answer2support, is_eval, support2question)
+                compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
+                              beam_size=shared_resources.config.get("beam_size", 1))
 
             span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
