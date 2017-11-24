@@ -5,7 +5,7 @@ from jack.tfutil.segment import segment_top_k
 
 
 def mlp_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                     correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=16):
+                     correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000):
     """Answer layer for multiple paragraph QA."""
     # computing single time attention over question
     attention_scores = tf.layers.dense(encoded_question, 1, name="question_attention")
