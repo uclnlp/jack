@@ -127,7 +127,7 @@ class BiDAF(AbstractXQAModelModule):
             # 7. BiLSTM(G) = M
             # interaction_encoded = M
             if encoder in ['lstm', 'sru', 'gru']:
-                interaction_encoded = self.rnn_encoder(size, G, support_length, encoder)
+                interaction_encoded = self.rnn_encoder(size, G, support_length, encoder, name='interaction_encoder')
             else:
                 # follows https://openreview.net/pdf?id=HJRV1ZZAW
                 interaction_encoded = self.conv_encoder(size, G, dilations=[1, 2, 4, 8, 16, 1, 1, 1],
@@ -136,7 +136,7 @@ class BiDAF(AbstractXQAModelModule):
 
             # BiLSTM(M) = M^2 = end_encoded
             if encoder in ['lstm', 'sru', 'gru']:
-                end_encoded = self.rnn_encoder(size, start_encoded, support_length, encoder)
+                end_encoded = self.rnn_encoder(size, start_encoded, support_length, encoder, name='end_encoder')
             else:
                 # follows https://openreview.net/pdf?id=HJRV1ZZAW
                 end_encoded = self.conv_encoder(size, start_encoded, num_layers=3,
