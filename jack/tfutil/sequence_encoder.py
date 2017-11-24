@@ -65,11 +65,11 @@ def gated_linear_dilated_residual_network(out_size, inputs, dilations, width=3, 
     Returns:
         [batch_size, length, out_size] tensor
     """
-    with tf.variable_scope(name, reuse=reuse) as vs:
+    with tf.variable_scope(name, reuse=reuse):
         # dim reduction
         output = _convolutional_block_glu_block(inputs, out_size, name='conv_dim_reduction')
         for i, d in enumerate(dilations):
-            output = _residual_dilated_convolution_block(inputs, d, width, name='dilated_conv_%d' % i)
+            output = _residual_dilated_convolution_block(output, d, width, name='dilated_conv_%d' % i)
     return output
 
 
@@ -88,5 +88,5 @@ def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_line
         # dim reduction
         output = inputs
         for i in range(num_layers):
-            output = _convolutional_block_glu_block(inputs, out_size, width=width, name="conv_%d" % i)
+            output = _convolutional_block_glu_block(output, out_size, width=width, name="conv_%d" % i)
     return output
