@@ -60,11 +60,11 @@ class BiDAF(AbstractXQAModelModule):
                 emb_support = tf.concat([emb_support, char_emb_support], 2)
                 input_size += size
 
-            # highway layer to allow for interaction between concatenated embeddings
-            # 3. highway
-            # following bidaf notation here  (qq=question, xx=support)
-            highway_question = highway_network(emb_question, 2, scope='question_highway')
-            highway_support = highway_network(emb_support, 2, scope='support_highway')
+                # highway layer to allow for interaction between concatenated embeddings
+                # 3. highway
+                # following bidaf notation here  (qq=question, xx=support)
+                emb_question = highway_network(emb_question, 2, scope='question_highway')
+                emb_support = highway_network(emb_support, 2, scope='support_highway')
 
             # emb_question = tf.slice(highway_question, [0, 0, 0], tf.stack([-1, max_question_length, -1]))
             # emb_support = tf.slice(all_embedded_hw, tf.stack([0, max_question_length, 0]), [-1, -1, -1])
