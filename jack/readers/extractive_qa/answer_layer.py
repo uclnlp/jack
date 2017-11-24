@@ -27,11 +27,11 @@ def mlp_answer_layer(size, encoded_question, question_length, encoded_support, s
 
     support_mask = misc.mask_for_lengths(support_length)
 
-    start_scores = tf.layers.dense(tf.nn.relu(hidden_start, name='hidden'), 1, use_bias=False, name="start_scores")
+    start_scores = tf.layers.dense(hidden_start, 1, use_bias=False, name="start_scores")
     start_scores = tf.squeeze(start_scores, [2])
     start_scores = start_scores + support_mask
 
-    end_scores = tf.layers.dense(tf.nn.relu(hidden_end), 1, use_bias=False, name="end_scores")
+    end_scores = tf.layers.dense(hidden_end, 1, use_bias=False, name="end_scores")
     end_scores = tf.squeeze(end_scores, [2])
     end_scores = end_scores + support_mask
 
