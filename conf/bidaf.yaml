@@ -48,3 +48,5 @@ learning_rate_decay: 0.5
 
 # 'lstm', 'gru', 'sru' (simple recurrent unit), 'gldr' (gated linear dilated residual network)
 encoder: 'lstm'
+
+max_span_size: 16
