@@ -1,5 +1,5 @@
 description: >
-  A configuration inheriting from the default jack.yaml
+  FastQA configuration to train model on SQuAD as described in https://arxiv.org/abs/1703.04816.
 
 parent_config: './conf/jack.yaml'
 
@@ -20,7 +20,6 @@ max_support_length: -1
 
 # Use also character based embeddings in readers which support it
 with_char_embeddings: True
-
 
 train: 'data/SQuAD/train-v1.1.json'
 dev: 'data/SQuAD/dev-v1.1.json'
@@ -46,3 +45,5 @@ batch_size: 64
 lowercase: True
 
 learning_rate_decay: 0.5
+
+encoder: 'lstm'

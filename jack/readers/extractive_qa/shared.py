@@ -6,6 +6,7 @@ from typing import NamedTuple
 
 from jack.core import *
 from jack.readers.extractive_qa.util import prepare_data
+from jack.tfutil import sequence_encoder
 from jack.tfutil.xqa import xqa_min_crossentropy_loss
 from jack.util import preprocessing
 from jack.util.map import numpify
@@ -285,6 +286,30 @@ class AbstractXQAModelModule(TFModelModule):
     @property
     def training_output_ports(self) -> Sequence[TensorPort]:
         return self._training_output_ports
+
+    @staticmethod
+    def rnn_encoder(size, sequence, seq_length, encoder_type='lstm', reuse=False, with_projection=False,
+                    name='encoder'):
+        if encoder_type == 'lstm':
+            return sequence_encoder.bi_lstm(size, sequence, seq_length, name, reuse, with_projection)
+        elif encoder_type == 'sru':
+            with_residual = sequence.get_shape()[2].value == size
+            return sequence_encoder.bi_sru(size, sequence, seq_length, with_residual, name, reuse, with_projection)
+        elif encoder_type == 'gru':
+            return sequence_encoder.bi_rnn(size, tf.contrib.rnn.BlockGRUCell(size), sequence,
+                                           seq_length, name, reuse, with_projection)
+        else:
+            raise ValueError("Unknown encoder type: %s" % encoder_type)
+
+    @staticmethod
+    def conv_encoder(size, sequence, num_layers=3, width=3,
+                     dilations=[1, 2, 4, 8, 16, 1], encoder_type='gldr', reuse=False, name='encoder'):
+        if encoder_type == 'gldr':
+            return sequence_encoder.gated_linear_dilated_residual_network(size, sequence, dilations, width, name, reuse)
+        elif encoder_type == 'convnet':
+            return sequence_encoder.gated_linear_convnet(size, sequence, num_layers, width, name, reuse)
+        else:
+            raise ValueError("Unknown encoder type: %s" % encoder_type)
 
     def create_output(self, shared_resources, emb_question, question_length,
                       emb_support, support_length, support2question,

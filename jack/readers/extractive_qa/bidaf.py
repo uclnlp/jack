@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import tensorflow as tf
 
 from jack.readers.extractive_qa.answer_layer import compute_spans
@@ -7,7 +8,6 @@ from jack.readers.extractive_qa.shared import AbstractXQAModelModule
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
 from jack.tfutil.misc import mask_for_lengths
-from jack.tfutil.rnn import fused_birnn
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +41,6 @@ class BiDAF(AbstractXQAModelModule):
             input_size = shared_resources.config["repr_dim_input"]
             size = shared_resources.config["repr_dim"]
             with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
-            W = tf.get_variable("biattention_weight", [size * 6])
-            W_start = tf.get_variable("start_index_weight", [size * 10])
-            W_end = tf.get_variable("end_index_weight", [size * 10])
 
             # 1. char embeddings + word embeddings
             # set shapes for inputs
@@ -75,24 +72,30 @@ class BiDAF(AbstractXQAModelModule):
             # emb_question.set_shape([None, None, size])
             # emb_support.set_shape([None, None, size])
 
-
-            # 4. BiLSTM
-            cell1 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            encoded_question = fused_birnn(cell1, highway_question, question_length, dtype=tf.float32, time_major=False,
-                                           scope='question_encoding')[0]
-            question = tf.concat(encoded_question, 2)
-
-            cell2 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            encoded_support = fused_birnn(cell2, highway_support, support_length, dtype=tf.float32, time_major=False,
-                                          scope='support_encoding')[0]
-            support = tf.concat(encoded_support, 2)
+            # 4. Context encoder
+            # encode question and support
+            encoder = shared_resources.config.get('encoder', 'lstm').lower()
+            if encoder in ['lstm', 'sru', 'gru']:
+                encoded_question = self.rnn_encoder(size, emb_question, question_length, encoder)
+                encoded_support = self.rnn_encoder(size, emb_support, support_length, encoder, reuse=True)
+                projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
+                question = tf.layers.dense(encoded_question, size,
+                                           kernel_initializer=projection_initializer, name='projection_q')
+                support = tf.layers.dense(encoded_support, size,
+                                          kernel_initializer=projection_initializer, name='projection_s')
+            else:
+                # follows https://openreview.net/pdf?id=HJRV1ZZAW
+                question = self.conv_encoder(size, emb_question, num_layers=5,
+                                             encoder_type='convnet', name='question_encoder')
+                support = self.conv_encoder(size, emb_support, encoder_type='convnet',
+                                            num_layers=5, name='support_encoder')
 
             # align with support
             question = tf.gather(question, support2question)
 
             # 5. a_i,j= w1 * s_i + w2 * q_j + w3 * q_j * s_i
-            w_3 = tf.get_variable("w3", [2 * size, 1])
-            question_mul = question * tf.reshape(w_3, [1, 1, 2 * size])
+            w_3 = tf.get_variable("w3", [size, 1])
+            question_mul = question * tf.reshape(w_3, [1, 1, size])
 
             S = (tf.einsum('ijk,ilk->ijl', support, question_mul) +
                  tf.layers.dense(support, 1) + tf.reshape(tf.layers.dense(question, 1), [-1, 1, tf.shape(question)[1]]))
@@ -122,34 +125,38 @@ class BiDAF(AbstractXQAModelModule):
             G = tf.concat([support, question_weighted, support * question_weighted, support * support_weighted], 2)
 
             # 7. BiLSTM(G) = M
-            # start_emb = M
-            cell3 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            start_emb = \
-                fused_birnn(cell3, G, support_length, dtype=tf.float32, time_major=False, scope='start_emb')[0]
-            start_emb = tf.concat(start_emb, 2)
-            start_emb = tf.concat([start_emb, G], 2)
-            # BiLSTM(M) = M^2 = end_emb
-            cell4 = tf.contrib.rnn.LSTMBlockFusedCell(size)
-            end_emb = \
-                fused_birnn(cell4, start_emb, support_length, dtype=tf.float32, time_major=False, scope='end_emb')[
-                    0]
-            end_emb = tf.concat(end_emb, 2)
-            end_emb = tf.concat([end_emb, G], 2)
+            # interaction_encoded = M
+            if encoder in ['lstm', 'sru', 'gru']:
+                interaction_encoded = self.rnn_encoder(size, G, support_length, encoder)
+            else:
+                # follows https://openreview.net/pdf?id=HJRV1ZZAW
+                interaction_encoded = self.conv_encoder(size, G, dilations=[1, 2, 4, 8, 16, 1, 1, 1],
+                                                        encoder_type='gldr', name='interaction_encoder')
+            start_encoded = tf.concat([interaction_encoded, G], 2)
+
+            # BiLSTM(M) = M^2 = end_encoded
+            if encoder in ['lstm', 'sru', 'gru']:
+                end_encoded = self.rnn_encoder(size, start_encoded, support_length, encoder)
+            else:
+                # follows https://openreview.net/pdf?id=HJRV1ZZAW
+                end_encoded = self.conv_encoder(size, start_encoded, num_layers=3,
+                                                encoder_type='convnet', name='end_encoder')
+            end_encoded = tf.concat([end_encoded, G], 2)
             # 8. double cross-entropy loss (actually applied after this function)
             # 8a. prepare logits
             # 8b. prepare argmax for output module
 
             # 8a. prepare logits
-            # start_emb = [batch, length2, 10*embedding]
+            # interaction_encoded = [batch, length2, 10*embedding]
             # W_start = [10*embedding]
-            # start_emb *w_start_index = start_scores
+            # interaction_encoded *w_start_index = start_scores
             # [batch, length2, 10*embedding] * [10*embedding] = [batch, length2]
-            start_scores = tf.einsum('ijk,k->ij', start_emb, W_start)
-            # end_emb = [batch, length2, 10*emb]
+            start_scores = tf.squeeze(tf.layers.dense(start_encoded, 1, use_bias=False), 2)
+            # end_encoded = [batch, length2, 10*emb]
             # W_end = [10*emb]
-            # end_emb *w_end_index = start_scores
+            # end_encoded *w_end_index = start_scores
             # [batch, length2, 10*emb] * [10*emb] = [batch, length2]
-            end_scores = tf.einsum('ijk,k->ij', end_emb, W_end)
+            end_scores = tf.squeeze(tf.layers.dense(end_encoded, 1, use_bias=False), 2)
 
             # mask out-of-bounds slots by adding -1000
             support_mask = mask_for_lengths(support_length)
