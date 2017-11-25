@@ -166,7 +166,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     def train():
         predicted_end_pointer = tf.argmax(end_scores, axis=1, output_type=tf.int32)
-        return tf.gather(start_scores, doc_idx_flat), end_scores, doc_idx, beam_start_pointer, predicted_end_pointer
+        return start_scores, end_scores, doc_idx, beam_start_pointer, predicted_end_pointer
 
     def eval():
         # [num_questions * beam_size, support_length]
