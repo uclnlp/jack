@@ -3,7 +3,7 @@ This file contains FastQA specific modules and ports
 """
 
 from jack.core import *
-from jack.readers.extractive_qa.answer_layer import mlp_answer_layer
+from jack.readers.extractive_qa.answer_layer import fastqa_answer_layer
 from jack.readers.extractive_qa.shared import XQAPorts, AbstractXQAModelModule
 from jack.tfutil import misc
 from jack.tfutil.embedding import conv_char_embedding
@@ -108,10 +108,10 @@ class FastQAModule(AbstractXQAModelModule):
                 raise ValueError("Only rnn ('lstm', 'sru', 'gru') encoder allowed for FastQA!")
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-                mlp_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                                 correct_start, support2question, answer2support, is_eval,
-                                 beam_size=shared_resources.config.get("beam_size", 1),
-                                 max_span_size=shared_resources.config.get("max_span_size", 16))
+                fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
+                                    correct_start, support2question, answer2support, is_eval,
+                                    beam_size=shared_resources.config.get("beam_size", 1),
+                                    max_span_size=shared_resources.config.get("max_span_size", 16))
 
             span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
