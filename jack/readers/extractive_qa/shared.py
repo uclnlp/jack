@@ -374,12 +374,8 @@ class XQAOutputModule(OutputModule):
                 answer, doc_idx, span = get_answer_and_span(
                     q, doc_idx, start, end, token_offsets[doc_idx],
                     [i for q_id, i in zip(support2question, selected_support) if q_id == k])
-
-                start_probs = _np_softmax(start_scores[i])
-                end_probs = _np_softmax(end_scores[i])
-
                 answers.append(Answer(answer, span=span, doc_idx=doc_idx,
-                                      score=start_probs[start] * end_probs[end]))
+                                      score=start_scores[doc_idx]))
             all_answers.append(answers)
 
         return all_answers
