@@ -6,11 +6,11 @@ from jack.tfutil import rnn
 
 # RNN Encoders
 def _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse=False, with_projection=False):
-    projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
     with tf.variable_scope(name, reuse=reuse):
         output = rnn.fused_birnn(fused_rnn, sequence, seq_length, dtype=tf.float32, scope='rnn')[0]
         output = tf.concat(output, 2)
         if with_projection:
+            projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
             output = tf.layers.dense(output, size, kernel_initializer=projection_initializer, name='projection')
     return output
 
