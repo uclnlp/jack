@@ -20,7 +20,7 @@ class FastQAModule(AbstractXQAModelModule):
                     XQAPorts.word_in_question,
                     # optional input, provided only during training
                     XQAPorts.correct_start_training, XQAPorts.answer2support_training,
-                    XQAPorts.keep_prob, XQAPorts.is_eval]
+                    XQAPorts.is_eval]
 
     @property
     def input_ports(self):
@@ -31,7 +31,7 @@ class FastQAModule(AbstractXQAModelModule):
                       word_chars, word_char_length,
                       question_words, support_words,
                       word_in_question,
-                      correct_start, answer2support, keep_prob, is_eval):
+                      correct_start, answer2support, is_eval):
         with tf.variable_scope("fast_qa", initializer=tf.contrib.layers.xavier_initializer()):
             # Some helpers
             batch_size = tf.shape(question_length)[0]
@@ -84,6 +84,7 @@ class FastQAModule(AbstractXQAModelModule):
                     emb_support = tf.layers.dense(emb_support, size, name="embeddings_projection")
                     emb_support = highway_network(emb_support, 1)
 
+            keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
             emb_question, emb_support = tf.cond(is_eval,
                                                 lambda: (emb_question, emb_support),
                                                 lambda: (tf.nn.dropout(emb_question, keep_prob),

@@ -39,7 +39,6 @@ class XQAPorts:
                                "Represents support using symbol vectors indexing defined word chars",
                                "[batch_size, max_num_support_tokens, max]")
 
-    keep_prob = Ports.keep_prob
     is_eval = Ports.is_eval
 
     # This feature is model specific and thus, not part of the conventional Ports
@@ -93,7 +92,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.word_in_question,
                      # optional, only during training
                      XQAPorts.correct_start_training, XQAPorts.answer2support_training,
-                     XQAPorts.keep_prob, XQAPorts.is_eval,
+                     XQAPorts.is_eval,
                      # for output module
                      XQAPorts.token_offsets, XQAPorts.selected_support]
     _training_ports = [XQAPorts.answer_span, XQAPorts.answer2support_training]
@@ -110,7 +109,6 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
     def setup(self):
         self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
-        self.dropout = self.config.get("dropout", 1)
         if self.vocab.emb is None:
             logger.error("XQAInputModule needs vocabulary setup from pre-trained embeddings."
                          "Make sure to set vocab_from_embeddings=True.")
@@ -240,7 +238,6 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             XQAPorts.question_length: question_lengths,
             XQAPorts.word_in_question: wiq,
             XQAPorts.support2question: support2question,
-            XQAPorts.keep_prob: 1.0 if is_eval else 1 - self.dropout,
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_offsets: offsets,
             XQAPorts.selected_support: selected_support,
@@ -275,7 +272,7 @@ class AbstractXQAModelModule(TFModelModule):
                     XQAPorts.word_chars, XQAPorts.word_length,
                     XQAPorts.question_words, XQAPorts.support_words,
                     # optional input, provided only during training
-                    XQAPorts.answer2support_training, XQAPorts.keep_prob, XQAPorts.is_eval]
+                    XQAPorts.answer2support_training, XQAPorts.is_eval]
     _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
                      XQAPorts.span_prediction]
     _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
@@ -326,7 +323,7 @@ class AbstractXQAModelModule(TFModelModule):
                       emb_support, support_length, support2question,
                       word_chars, word_char_length,
                       question_words, support_words,
-                      answer2support, keep_prob, is_eval):
+                      answer2support, is_eval):
         """extractive QA model
         Args:
             shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
@@ -340,7 +337,6 @@ class AbstractXQAModelModule(TFModelModule):
             question_words: [Q, L_q] index to character representation of question words
             support_words: [S, L_q] index to character representation of support words
             answer2support: [A], only during training, i.e., is_eval=False
-            keep_prob: []
             is_eval: []
 
         Returns:
