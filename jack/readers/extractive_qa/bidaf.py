@@ -53,10 +53,11 @@ class BiDAF(AbstractXQAModelModule):
                 emb_support = highway_network(emb_support, 2, scope='support_highway')
 
             keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
-            emb_question, emb_support = tf.cond(is_eval,
-                                                lambda: (emb_question, emb_support),
-                                                lambda: (tf.nn.dropout(emb_question, keep_prob),
-                                                         tf.nn.dropout(emb_support, keep_prob)))
+            emb_question, emb_support = tf.cond(
+                is_eval,
+                lambda: (emb_question, emb_support),
+                lambda: (tf.nn.dropout(emb_question, keep_prob), tf.nn.dropout(emb_support, keep_prob))
+            )
 
             # 4. Context encoder
             # encode question and support

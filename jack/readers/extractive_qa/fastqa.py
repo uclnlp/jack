@@ -73,7 +73,7 @@ class FastQAModule(AbstractXQAModelModule):
             wiq_w = tf.reduce_sum(tf.nn.softmax(wiq_w) * tf.expand_dims(question_binary_mask, 2), [1])
 
             # [B, L , 2]
-            support_features = tf.concat([tf.expand_dims(word_in_question, 2), tf.expand_dims(wiq_w, 2)], 2)
+            support_features = tf.stack([word_in_question, wiq_w], 2)
 
             # highway layer to allow for interaction between concatenated embeddings
             if with_char_embeddings:
@@ -85,10 +85,11 @@ class FastQAModule(AbstractXQAModelModule):
                     emb_support = highway_network(emb_support, 1)
 
             keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
-            emb_question, emb_support = tf.cond(is_eval,
-                                                lambda: (emb_question, emb_support),
-                                                lambda: (tf.nn.dropout(emb_question, keep_prob),
-                                                         tf.nn.dropout(emb_support, keep_prob)))
+            emb_question, emb_support = tf.cond(
+                is_eval,
+                lambda: (emb_question, emb_support),
+                lambda: (tf.nn.dropout(emb_question, keep_prob), tf.nn.dropout(emb_support, keep_prob))
+            )
 
             # extend embeddings with features
             emb_question_ext = tf.concat([emb_question, question_features], 2)
