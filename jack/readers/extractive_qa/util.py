@@ -54,8 +54,11 @@ def prepare_data(qa_setting: QASetting,
             lemmatize=lemmatize, with_lemmas=with_lemmas, with_tokens_offsets=True)
         for support in supports]
 
-    all_support_tokens, all_support_ids, all_support_length, all_support_lemmas, all_token_offsets = \
-        zip(*preprocessed_supports)
+    all_support_tokens = [s[0] for s in preprocessed_supports]
+    all_support_ids = [s[1] for s in preprocessed_supports]
+    all_support_length = [s[2] for s in preprocessed_supports]
+    all_support_lemmas = [s[3] for s in preprocessed_supports]
+    all_token_offsets = [s[4] for s in preprocessed_supports]
 
     rng = random.Random(12345)
 
@@ -126,6 +129,8 @@ def prepare_data(qa_setting: QASetting,
                 all_support_lemmas[doc_idx] = all_support_lemmas[doc_idx][new_start:new_end]
             answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
             word_in_question = word_in_question[new_start:new_end]
+            all_support_length[doc_idx] = new_end - new_start
+            all_token_offsets[doc_idx] = token_offsets[new_start:new_end]
         all_answer_spans.append(answer_spans)
 
     return question_tokens, question_ids, question_lemmas, question_length, \
