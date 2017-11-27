@@ -62,20 +62,20 @@ def prepare_data(qa_setting: QASetting,
 
     rng = random.Random(12345)
 
-    word_in_question = []
+    all_word_in_question = []
     if with_lemmas:
         assert all_support_lemmas is not None
         for support_lemmas in all_support_lemmas:
-            word_in_question.append([])
+            all_word_in_question.append([])
             if with_lemmas:
                 for lemma in support_lemmas:
-                    word_in_question[-1].append(float(
+                    all_word_in_question[-1].append(float(
                         lemma in question_lemmas and (not wiq_contentword or (lemma.isalnum() and not lemma.is_stop))))
     else:
         for support_tokens in all_support_tokens:
-            word_in_question.append([])
+            all_word_in_question.append([])
             for token in support_tokens:
-                word_in_question[-1].append(
+                all_word_in_question[-1].append(
                     float(token in question_tokens and (not wiq_contentword or token.isalnum())))
 
     all_answer_spans = []
@@ -128,11 +128,11 @@ def prepare_data(qa_setting: QASetting,
             if with_lemmas:
                 all_support_lemmas[doc_idx] = all_support_lemmas[doc_idx][new_start:new_end]
             answer_spans = [(s - new_start, e - new_start) for s, e in answer_spans]
-            word_in_question = word_in_question[new_start:new_end]
+            all_word_in_question[doc_idx] = all_word_in_question[doc_idx][new_start:new_end]
             all_support_length[doc_idx] = new_end - new_start
             all_token_offsets[doc_idx] = token_offsets[new_start:new_end]
         all_answer_spans.append(answer_spans)
 
     return question_tokens, question_ids, question_lemmas, question_length, \
            all_support_tokens, all_support_ids, all_support_lemmas, all_support_length, \
-           word_in_question, all_token_offsets, all_answer_spans
+           all_word_in_question, all_token_offsets, all_answer_spans
