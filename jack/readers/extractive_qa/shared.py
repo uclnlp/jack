@@ -4,12 +4,17 @@ This file contains reusable modules for extractive QA models and ports
 from collections import defaultdict
 from typing import NamedTuple
 
+import progressbar
+
 from jack.core import *
 from jack.readers.extractive_qa.util import prepare_data
 from jack.tfutil import sequence_encoder
 from jack.tfutil.xqa import xqa_min_crossentropy_loss
 from jack.util import preprocessing
 from jack.util.map import numpify
+
+progressbar.streams.wrap_stderr()
+logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 
 class XQAPorts:
@@ -134,8 +139,14 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
         if answers is None:
             answers = [None] * len(questions)
+        bar = progressbar.ProgressBar(
+            max_value=len(questions),
+            widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
+        preprocessed = []
+        for q, a in bar(zip(questions, answers)):
+            preprocessed.append(self.preprocess_instance(q, a))
 
-        return [self.preprocess_instance(q, a) for q, a in zip(questions, answers)]
+        return preprocessed
 
     def preprocess_instance(self, question: QASetting, answers: Optional[List[Answer]] = None) -> XQAAnnotation:
         has_answers = answers is not None

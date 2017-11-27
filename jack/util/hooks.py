@@ -312,11 +312,11 @@ class EvalHook(TraceHook):
         return {k: sum(vs) / self._total for k, vs in accumulated_metrics.items()}
 
     def __call__(self, epoch):
-        logger.info("Started evaluation %s" % self._info)
-
         if self._batches is None:
+            logger.info("Preparing evaluation data...")
             self._batches = self.reader.input_module.batch_generator(self._dataset, self._batch_size, is_eval=True)
 
+        logger.info("Started evaluation %s" % self._info)
         metrics = defaultdict(lambda: list())
         for i, batch in enumerate(self._batches):
             predictions = self.reader.model_module(batch, self._ports)
@@ -440,7 +440,7 @@ class ClassificationEvalHook(EvalHook):
         return ["Accuracy", "F1_macro"]
 
     @staticmethod
-    def preferred_metric_and_best_score():
+    def preferred_metric_and_initial_score():
         return 'Accuracy', [0.0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
@@ -468,7 +468,7 @@ class KBPEvalHook(EvalHook):
         return ["log_p"]
 
     @staticmethod
-    def preferred_metric_and_best_score():
+    def preferred_metric_and_initial_score():
         return 'log_p', [float('-inf')]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
