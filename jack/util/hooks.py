@@ -294,8 +294,8 @@ class EvalHook(TraceHook):
         """Returns: list of metric keys this evaluation hook produces. """
         raise NotImplementedError
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def preferred_metric_and_initial_score():
         """Returns: Tuple of preferred metric to optimize and its initial value (usually the lowest possible one)"""
         raise NotImplementedError
