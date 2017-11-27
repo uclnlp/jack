@@ -65,7 +65,7 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
     hooks = [LossHook(reader, iter_interval, summary_writer=sw),
              ExamplesPerSecHook(reader, batch_size, iter_interval, sw)]
 
-    preferred_metric, best_metric = readers.eval_hooks[model].preferred_metric_and_best_score()
+    preferred_metric, best_metric = readers.eval_hooks[model].preferred_metric_and_initial_score()
 
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""

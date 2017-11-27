@@ -141,15 +141,15 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     offsets = tf.cumsum(num_doc_per_question, exclusive=True)
     doc_idx_for_support = tf.range(tf.shape(support2question)[0]) - tf.gather(offsets, support2question)
 
-    doc_idx, beam_start_pointer = tf.cond(
+    doc_idx, start_pointer = tf.cond(
         is_eval,
         lambda: segment_top_k(start_scores, support2question, beam_size)[:2],
         lambda: (tf.expand_dims(answer2support, 1), tf.expand_dims(correct_start, 1)))
 
     doc_idx_flat = tf.reshape(doc_idx, [-1])
-    predicted_starts = tf.reshape(beam_start_pointer, [-1])
+    start_pointer_flat = tf.reshape(start_pointer, [-1])
 
-    start_state = tf.gather_nd(encoded_support, tf.stack([doc_idx_flat, predicted_starts], 1))
+    start_state = tf.gather_nd(encoded_support, tf.stack([doc_idx_flat, start_pointer_flat], 1))
     start_state.set_shape([None, size])
     encoded_support_gathered = tf.gather(encoded_support, doc_idx_flat)
     end_input = tf.concat([tf.expand_dims(start_state, 1) * encoded_support_gathered,
@@ -166,18 +166,18 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     def train():
         predicted_end_pointer = tf.argmax(end_scores, axis=1, output_type=tf.int32)
-        return start_scores, end_scores, doc_idx, beam_start_pointer, predicted_end_pointer
+        return start_scores, end_scores, doc_idx, start_pointer, predicted_end_pointer
 
     def eval():
         # [num_questions * beam_size, support_length]
-        left_mask = misc.mask_for_lengths(tf.cast(predicted_starts, tf.int32),
+        left_mask = misc.mask_for_lengths(tf.cast(start_pointer_flat, tf.int32),
                                           max_support_length, mask_right=False)
-        right_mask = misc.mask_for_lengths(tf.cast(predicted_starts + max_span_size, tf.int32),
+        right_mask = misc.mask_for_lengths(tf.cast(start_pointer_flat + max_span_size, tf.int32),
                                            max_support_length)
         masked_end_scores = end_scores + left_mask + right_mask
         predicted_ends = tf.argmax(masked_end_scores, axis=1, output_type=tf.int32)
 
         return (start_scores, masked_end_scores,
-                tf.gather(doc_idx_for_support, doc_idx_flat), predicted_starts, predicted_ends)
+                tf.gather(doc_idx_for_support, doc_idx_flat), start_pointer_flat, predicted_ends)
 
     return tf.cond(is_eval, eval, train)
