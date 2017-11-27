@@ -9,7 +9,7 @@ def compute_question_state(encoded_question, question_length):
     q_mask = misc.mask_for_lengths(question_length)
     attention_scores = attention_scores + tf.expand_dims(q_mask, 2)
     question_attention_weights = tf.nn.softmax(attention_scores, 1, name="question_attention_weights")
-    question_state = tf.reduce_sum(question_attention_weights * encoded_question, [1])
+    question_state = tf.reduce_sum(question_attention_weights * encoded_question, 1)
     return question_state
 
 
@@ -128,14 +128,10 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     support_mask = misc.mask_for_lengths(support_length)
 
-    start_scores = tf.layers.dense(hidden_start, 1, use_bias=False, name="start_scores")
+    start_scores = tf.layers.dense(tf.nn.relu(hidden_start), 1, use_bias=False, name="start_scores")
     start_scores = tf.squeeze(start_scores, [2])
     start_scores = start_scores + support_mask
 
-    support_mask = misc.mask_for_lengths(support_length)
-    start_scores = start_scores + support_mask
-
-    # probs are needed during beam search
     max_support_length = tf.shape(start_scores)[1]
     _, _, num_doc_per_question = tf.unique_with_counts(support2question)
     offsets = tf.cumsum(num_doc_per_question, exclusive=True)
@@ -147,9 +143,9 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
         lambda: (tf.expand_dims(answer2support, 1), tf.expand_dims(correct_start, 1)))
 
     doc_idx_flat = tf.reshape(doc_idx, [-1])
-    start_pointer_flat = tf.reshape(start_pointer, [-1])
+    start_pointer = tf.reshape(start_pointer, [-1])
 
-    start_state = tf.gather_nd(encoded_support, tf.stack([doc_idx_flat, start_pointer_flat], 1))
+    start_state = tf.gather_nd(encoded_support, tf.stack([doc_idx_flat, start_pointer], 1))
     start_state.set_shape([None, size])
     encoded_support_gathered = tf.gather(encoded_support, doc_idx_flat)
     end_input = tf.concat([tf.expand_dims(start_state, 1) * encoded_support_gathered,
@@ -160,7 +156,7 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
     hidden_end = tf.layers.dense(
         end_input, size, use_bias=False, name="hidden_end_2") + tf.expand_dims(hidden_end, 1)
 
-    end_scores = tf.layers.dense(hidden_end, 1, use_bias=False, name="end_scores")
+    end_scores = tf.layers.dense(tf.nn.relu(hidden_end), 1, use_bias=False, name="end_scores")
     end_scores = tf.squeeze(end_scores, [2])
     end_scores = end_scores + tf.gather(support_mask, doc_idx_flat)
 
@@ -170,14 +166,14 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     def eval():
         # [num_questions * beam_size, support_length]
-        left_mask = misc.mask_for_lengths(tf.cast(start_pointer_flat, tf.int32),
+        left_mask = misc.mask_for_lengths(tf.cast(start_pointer, tf.int32),
                                           max_support_length, mask_right=False)
-        right_mask = misc.mask_for_lengths(tf.cast(start_pointer_flat + max_span_size, tf.int32),
+        right_mask = misc.mask_for_lengths(tf.cast(start_pointer + max_span_size, tf.int32),
                                            max_support_length)
         masked_end_scores = end_scores + left_mask + right_mask
         predicted_ends = tf.argmax(masked_end_scores, axis=1, output_type=tf.int32)
 
         return (start_scores, masked_end_scores,
-                tf.gather(doc_idx_for_support, doc_idx_flat), start_pointer_flat, predicted_ends)
+                tf.gather(doc_idx_for_support, doc_idx_flat), start_pointer, predicted_ends)
 
     return tf.cond(is_eval, eval, train)

@@ -100,9 +100,10 @@ class FastQAModule(AbstractXQAModelModule):
                 encoded_question = self.rnn_encoder(size, emb_question_ext, question_length, encoder)
                 encoded_support = self.rnn_encoder(size, emb_support_ext, support_length, encoder, reuse=True)
                 projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
-                encoded_question = tf.layers.dense(encoded_question, size,
-                                                   kernel_initializer=projection_initializer, name='projection_q')
-                encoded_support = tf.layers.dense(encoded_support, size,
+                encoded_question = tf.layers.dense(encoded_question, size, tf.tanh, use_bias=False,
+                                                   kernel_initializer=projection_initializer,
+                                                   name='projection_q')
+                encoded_support = tf.layers.dense(encoded_support, size, tf.tanh, use_bias=False,
                                                   kernel_initializer=projection_initializer, name='projection_s')
             else:
                 raise ValueError("Only rnn ('lstm', 'sru', 'gru') encoder allowed for FastQA!")
