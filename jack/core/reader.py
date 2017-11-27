@@ -10,6 +10,7 @@ import logging
 import os
 import shutil
 import sys
+from functools import reduce
 from typing import Iterable, List
 
 import tensorflow as tf
@@ -262,6 +263,10 @@ class TFReader(JTReader):
             min_op = optimizer.apply_gradients(gradients, global_step)
         else:
             min_op = optimizer.minimize(loss, global_step)
+
+        variable_size = lambda v: reduce(lambda x, y: x * y, v.get_shape().as_list())
+        num_params = sum(variable_size(v) for v in self.model_module.train_variables)
+        logger.info("Number of parameters: %d" % num_params)
 
         # initialize non model variables like learning rate, optimizer vars ...
         self.session.run([v.initializer for v in tf.global_variables() if v not in self.model_module.variables])
