@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
 import sys
@@ -17,12 +18,15 @@ tf.app.flags.DEFINE_string('dataset', None, 'dataset file')
 tf.app.flags.DEFINE_string('loader', 'jack', 'name of loader')
 tf.app.flags.DEFINE_string('model_dir', None, 'directory to saved model')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
+tf.app.flags.DEFINE_string('overwrite', '', 'json string that overwrites configuration.')
 
 FLAGS = tf.app.flags.FLAGS
 
 logger.info("Creating and loading reader from {}...".format(FLAGS.model_dir))
 
-reader = reader_from_file(FLAGS.model_dir)
+kwargs = json.loads(FLAGS.overwrite_kwargs)
+
+reader = reader_from_file(FLAGS.model_dir, **kwargs)
 dataset = loaders[FLAGS.loader](FLAGS.dataset)
 
 logger.info("Start!")
