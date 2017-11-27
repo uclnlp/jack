@@ -40,9 +40,11 @@ def kbp_reader(f):
     return f
 
 
-def reader_from_file(reader_dir: str):
+def reader_from_file(reader_dir: str, **kwargs):
     shared_resources = create_shared_resources()
     shared_resources.load(os.path.join(reader_dir, "shared_resources"))
+    if kwargs:
+        shared_resources.config.update(kwargs)
     reader = readers[shared_resources.config["model"]](shared_resources)
     reader.load_and_setup_modules(reader_dir)
     return reader
