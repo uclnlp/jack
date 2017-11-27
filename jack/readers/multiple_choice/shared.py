@@ -2,11 +2,16 @@
 
 from abc import ABCMeta
 
+import progressbar
+
 from jack.core import *
 from jack.core.data_structures import *
 from jack.readers.multiple_choice import util
 from jack.util import preprocessing
 from jack.util.map import numpify
+
+progressbar.streams.wrap_stderr()
+logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 
 class SingleSupportFixedClassForward(object):
@@ -107,8 +112,11 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
 
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[Mapping[str, any]]:
+        bar = progressbar.ProgressBar(
+            max_value=len(questions),
+            widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
         preprocessed = list()
-        for i, qa in enumerate(questions):
+        for i, qa in bar(enumerate(questions)):
             _, token_ids, length, _, _ = preprocessing.nlp_preprocess(
                 qa.question, self.shared_resources.vocab, lowercase=self.shared_resources.config.get('lowercase', True))
             _, s_token_ids, s_length, _, _ = preprocessing.nlp_preprocess(

@@ -237,11 +237,12 @@ class TFReader(JTReader):
         self._train_loop(min_op, loss, batches, hooks, max_epochs, summaries, summary_writer, **kwargs)
 
     def _setup_training(self, batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs):
-        logger.info("Setting up data and model...")
         global_step = tf.train.create_global_step()
         if not self._is_setup:
             # First setup shared resources, e.g., vocabulary. This depends on the input module.
+            logger.info("Setting up model...")
             self.setup_from_data(training_set, is_training=True)
+        logger.info("Preparing training data...")
         batches = self.input_module.batch_generator(training_set, batch_size, is_eval=False)
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         loss = self.model_module.tensors[Ports.loss]
