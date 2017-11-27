@@ -295,6 +295,12 @@ class EvalHook(TraceHook):
         raise NotImplementedError
 
     @abstractmethod
+    @staticmethod
+    def preferred_metric_and_initial_score():
+        """Returns: Tuple of preferred metric to optimize and its initial value (usually the lowest possible one)"""
+        raise NotImplementedError
+
+    @abstractmethod
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
         """Returns: dict from metric name to float"""
         raise NotImplementedError
@@ -372,7 +378,7 @@ class XQAEvalHook(EvalHook):
         return ["exact", "f1"]
 
     @staticmethod
-    def preferred_metric_and_best_score():
+    def preferred_metric_and_initial_score():
         return 'f1', [0.0]
 
     def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:

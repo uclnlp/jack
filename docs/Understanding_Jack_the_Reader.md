@@ -73,7 +73,7 @@ Define your input, model and output modules (browse [readers](/jack/readers/impl
 
 1. We use hooks for evaluation during training and they need to be defined for each type of reader. Look at predefined hooks at [jtr/jack/train/hooks.py](/jtr/train/hooks.py#386) and see if yours already exists or if you can extend them to support your metric. This depends on whether the input ports of the hook match the output ports of your modules. They are defined in the constructor. For our current tasks these are defined, so nothing todo here.
 2. Again. Make sure you define your input ports in the constructor of your hook that needs to derive from the `EvalHook` class to support plot and evaluation magic. This is the greatest source of errors when implementing a new evaluation hook
-3. Define the `possible_metrics()` and `preferred_metric_and_best_score()` properties. The best score here means the score which is the lowest possible for your evaluation metric (often zero, or 0.0). This definition of best score is used to define when a model is saved after a cross validation step, that is, if the model improved or not
+3. Define the `possible_metrics()` and `preferred_metric_and_initial_score()` properties. The best score here means the score which is the lowest possible for your evaluation metric (often zero, or 0.0). This definition of best score is used to define when a model is saved after a cross validation step, that is, if the model improved or not
 4. Implement your metric by implementing the method `apply_metrics()`, make sure to return a dictionary with scores for each of the metrics defined in `possible_metrics()`
 
 ##### Gluing It Together

@@ -55,6 +55,8 @@ You want to train another model with the same configuration (e.g., bidaf)? No pr
 
 ```bash
 $ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=bidaf_reader
+$ # or use our pre defined bidaf config
+$ python3 bin/jack-train.py with config='./conf/bidaf.yaml'
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
@@ -91,10 +93,15 @@ answers = fastqa_reader([QASetting(
     support=[support]
 )])
 ```
-
 [fastqa]: https://arxiv.org/abs/1703.04816
 [showcase]: notebooks/Showcasing_Jack.ipynb
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
+
+#### Implementing your own Model
+
+After you managed to get already implemented models running you can of course go ahead and implement your own models.
+Take a look at the more detailed documentation for extractive QA [here](/docs/Extractive_QA.md).
+
 
 ### Recognizing Textual Entailment on SNLI
 
