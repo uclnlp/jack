@@ -17,7 +17,6 @@ from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader, TFReader
 from jack.core.tensorport import TensorPort, Ports
 
-progressbar.streams.wrap_stderr()
 logger = logging.getLogger(__name__)
 
 """

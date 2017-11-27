@@ -13,7 +13,6 @@ from jack.tfutil.xqa import xqa_min_crossentropy_loss
 from jack.util import preprocessing
 from jack.util.map import numpify
 
-progressbar.streams.wrap_stderr()
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 
