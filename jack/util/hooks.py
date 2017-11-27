@@ -9,6 +9,7 @@ from time import time
 from typing import List, Tuple, Mapping
 
 import numpy as np
+import progressbar
 import tensorflow as tf
 from sklearn.metrics import f1_score
 
@@ -16,6 +17,7 @@ from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader, TFReader
 from jack.core.tensorport import TensorPort, Ports
 
+progressbar.streams.wrap_stderr()
 logger = logging.getLogger(__name__)
 
 """
@@ -318,7 +320,10 @@ class EvalHook(TraceHook):
 
         logger.info("Started evaluation %s" % self._info)
         metrics = defaultdict(lambda: list())
-        for i, batch in enumerate(self._batches):
+        bar = progressbar.ProgressBar(
+            max_value=len(self._dataset),
+            widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
+        for i, batch in bar(enumerate(self._batches)):
             predictions = self.reader.model_module(batch, self._ports)
             m = self.apply_metrics(predictions)
             for k in self._metrics:
