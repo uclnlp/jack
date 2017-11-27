@@ -85,10 +85,12 @@ class FastQAModule(AbstractXQAModelModule):
                     emb_support = highway_network(emb_support, 1)
 
             keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
+            noise_shape = [batch_size, 1, emb_question.get_shape()[2].value]
             emb_question, emb_support = tf.cond(
                 is_eval,
                 lambda: (emb_question, emb_support),
-                lambda: (tf.nn.dropout(emb_question, keep_prob), tf.nn.dropout(emb_support, keep_prob))
+                lambda: (tf.nn.dropout(emb_question, keep_prob, noise_shape=noise_shape),
+                         tf.nn.dropout(emb_support, keep_prob, noise_shape=noise_shape))
             )
 
             # extend embeddings with features
