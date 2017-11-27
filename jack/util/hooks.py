@@ -320,7 +320,7 @@ class EvalHook(TraceHook):
         logger.info("Started evaluation %s" % self._info)
         metrics = defaultdict(lambda: list())
         bar = progressbar.ProgressBar(
-            max_value=len(self._dataset),
+            max_value=len(self._dataset) // (self._batch_size + 1),
             widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
         for i, batch in bar(enumerate(self._batches)):
             predictions = self.reader.model_module(batch, self._ports)
