@@ -24,7 +24,7 @@ FLAGS = tf.app.flags.FLAGS
 
 logger.info("Creating and loading reader from {}...".format(FLAGS.model_dir))
 
-kwargs = json.loads(FLAGS.overwrite_kwargs)
+kwargs = json.loads(FLAGS.overwrite)
 
 reader = reader_from_file(FLAGS.model_dir, **kwargs)
 dataset = loaders[FLAGS.loader](FLAGS.dataset)
