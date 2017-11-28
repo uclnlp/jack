@@ -30,7 +30,7 @@ def prepare_data(qa_setting: QASetting,
                  with_answers: bool = False,
                  wiq_contentword: bool = False,
                  spacy_nlp: bool = False,
-                 max_support_length: int = -1,
+                 max_support_length: int = None,
                  lemmatize=False,
                  with_lemmas=False) \
         -> Tuple[List[str], List[int], Optional[List[int]], int,
@@ -108,9 +108,9 @@ def prepare_data(qa_setting: QASetting,
                     max_answer = max(max_answer, end)
 
         # cut support whenever there is a maximum allowed length and recompute answer spans
-        if answer_spans and max_support_length is not None and len(support_tokens) > max_support_length > 0:
-            # Find new start and end in the flattened support
+        if max_support_length is not None and len(support_tokens) > max_support_length > 0:
             if max_answer < max_support_length:
+                # Find new start and end in the flattened support
                 new_start = 0
                 new_end = max_support_length
             else:
