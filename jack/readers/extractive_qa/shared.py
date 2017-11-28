@@ -58,7 +58,7 @@ class XQAPorts:
     token_offsets = TensorPort(tf.int32, [None, None, 2], "token_offsets",
                                "Document and character index of tokens in support.",
                                "[S, support_length, 2]")
-    selected_support = TensorPort(tf.int32, [None], "token_offsets",
+    selected_support = TensorPort(tf.int32, [None], "selected_support",
                                   "Selected support based on TF IDF with question", "[num_support]")
 
     # ports used during training
@@ -136,12 +136,16 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
         if answers is None:
             answers = [None] * len(questions)
-        bar = progressbar.ProgressBar(
-            max_value=len(questions),
-            widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
         preprocessed = []
-        for q, a in bar(zip(questions, answers)):
-            preprocessed.append(self.preprocess_instance(q, a))
+        if len(questions) > 1000:
+            bar = progressbar.ProgressBar(
+                max_value=len(questions),
+                widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
+            for q, a in bar(zip(questions, answers)):
+                preprocessed.append(self.preprocess_instance(q, a))
+        else:
+            for q, a in zip(questions, answers):
+                preprocessed.append(self.preprocess_instance(q, a))
 
         return preprocessed
 
@@ -193,7 +197,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             word_in_question=word_in_question,
             token_offsets=token_offsets,
             answer_spans=answer_spans if has_answers else None,
-            selected_supports=selected_supports if has_answers else None,
+            selected_supports=selected_supports,
         )
 
     def create_batch(self, annotations: List[XQAAnnotation], is_eval: bool, with_answers: bool) \
@@ -358,12 +362,14 @@ def _np_softmax(x):
 def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_support):
     doc_idx = selected_support[doc_idx]
     char_start = token_offsets[start]
-    char_end = token_offsets[end]
+    if end < len(token_offsets) - 1:
+        char_end = token_offsets[end + 1]
+    else:
+        char_end = len(question.support[doc_idx])
     answer = question.support[doc_idx][char_start: char_end]
     answer = answer.rstrip()
     char_end = char_start + len(answer)
     return answer, doc_idx, (char_start, char_end)
-
 
 class XQAOutputModule(OutputModule):
     def __init__(self, shared_resources):
@@ -375,14 +381,15 @@ class XQAOutputModule(OutputModule):
         all_answers = []
         for k, q in enumerate(questions):
             answers = []
+            doc_idx_map = [i for i, q_id in enumerate(support2question) if q_id == k]
             for j in range(self.beam_size):
                 i = k * self.beam_size + j
                 doc_idx, start, end = span_prediction[i]
+                score = start_scores[doc_idx_map[doc_idx], start]
                 answer, doc_idx, span = get_answer_and_span(
-                    q, doc_idx, start, end, token_offsets[doc_idx],
+                    q, doc_idx, start, end, token_offsets[doc_idx_map[doc_idx]],
                     [i for q_id, i in zip(support2question, selected_support) if q_id == k])
-                answers.append(Answer(answer, span=span, doc_idx=doc_idx,
-                                      score=start_scores[doc_idx]))
+                answers.append(Answer(answer, span=span, doc_idx=doc_idx, score=score))
             all_answers.append(answers)
 
         return all_answers
@@ -392,4 +399,3 @@ class XQAOutputModule(OutputModule):
         return [Ports.Prediction.answer_span, XQAPorts.token_offsets,
                 XQAPorts.selected_support, XQAPorts.support2question,
                 Ports.Prediction.start_scores, Ports.Prediction.end_scores]
-

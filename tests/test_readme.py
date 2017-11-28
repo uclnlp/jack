@@ -34,7 +34,7 @@ def test_readme_fastqa():
         support=[support]
     )])
 
-    assert answers[0].text is not None
+    assert answers[0][0].text is not None
 
 
 def test_readme_dam():

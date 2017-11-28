@@ -84,7 +84,7 @@ class FastQAModule(AbstractXQAModelModule):
                     emb_support = tf.layers.dense(emb_support, size, name="embeddings_projection")
                     emb_support = highway_network(emb_support, 1)
 
-            keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
+            keep_prob = 1.0 - shared_resources.config.get("dropout", 0.0)
             emb_question, emb_support = tf.cond(
                 is_eval,
                 lambda: (emb_question, emb_support),

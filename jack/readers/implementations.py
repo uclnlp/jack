@@ -92,20 +92,6 @@ def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
-@extractive_qa_reader
-def cbow_xqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a CBow QA model as described in https://arxiv.org/abs/1703.04816. """
-    from jack.readers.extractive_qa.cbow import CbowXQAInputModule
-    from jack.readers.extractive_qa.cbow import CbowXQAModule
-    from jack.readers.extractive_qa.shared import XQANoScoreOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = CbowXQAInputModule(shared_resources)
-    model_module = CbowXQAModule(shared_resources)
-    output_module = XQANoScoreOutputModule(shared_resources)
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
 @nli_reader
 def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """
