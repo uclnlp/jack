@@ -9,7 +9,7 @@ import progressbar
 from jack.core import *
 from jack.readers.extractive_qa.util import prepare_data
 from jack.tfutil import sequence_encoder
-from jack.tfutil.xqa import xqa_min_crossentropy_loss
+from jack.tfutil.xqa import xqa_crossentropy_loss
 from jack.util import preprocessing
 from jack.util.map import numpify
 
@@ -345,7 +345,8 @@ class AbstractXQAModelModule(TFModelModule):
 
     def create_training_output(
             self, shared_resources, start_scores, end_scores, answer_span, answer2support, support2question):
-        return xqa_min_crossentropy_loss(start_scores, end_scores, answer_span, answer2support, support2question)
+        return xqa_crossentropy_loss(start_scores, end_scores, answer_span, answer2support, support2question,
+                                     use_sum=shared_resources.config.get('loss', 'sum') == 'sum')
 
 
 def _np_softmax(x):

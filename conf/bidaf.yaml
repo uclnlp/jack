@@ -50,3 +50,6 @@ learning_rate_decay: 0.5
 encoder: 'lstm'
 
 max_span_size: 16
+
+# 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
+loss: 'max'
