@@ -50,3 +50,6 @@ learning_rate_decay: 0.5
 encoder: 'lstm'
 
 max_span_size: 16
+
+# conditional (end score conditioned on predicted start), conditional_bilinear, bilinear
+answer_layer: conditional_bilinear
