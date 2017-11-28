@@ -88,8 +88,8 @@ class FastQAModule(AbstractXQAModelModule):
             emb_question, emb_support = tf.cond(
                 is_eval,
                 lambda: (emb_question, emb_support),
-                lambda: (tf.nn.dropout(emb_question, keep_prob),
-                         tf.nn.dropout(emb_support, keep_prob))
+                lambda: (tf.nn.dropout(emb_question, keep_prob, noise_shape=[1, 1, emb_question.get_shape()[-1].value]),
+                         tf.nn.dropout(emb_support, keep_prob, noise_shape=[1, 1, emb_question.get_shape()[-1].value]))
             )
 
             # extend embeddings with features

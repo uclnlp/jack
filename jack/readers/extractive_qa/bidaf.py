@@ -56,8 +56,8 @@ class BiDAF(AbstractXQAModelModule):
             emb_question, emb_support = tf.cond(
                 is_eval,
                 lambda: (emb_question, emb_support),
-                lambda: (tf.nn.dropout(emb_question, keep_prob),
-                         tf.nn.dropout(emb_support, keep_prob))
+                lambda: (tf.nn.dropout(emb_question, keep_prob, noise_shape=[1, 1, emb_question.get_shape()[-1].value]),
+                         tf.nn.dropout(emb_support, keep_prob, noise_shape=[1, 1, emb_question.get_shape()[-1].value]))
             )
 
             # 4. Context encoder
@@ -88,7 +88,6 @@ class BiDAF(AbstractXQAModelModule):
             # S = [batch, support_length, question_length]
             S = (tf.einsum('ijk,ilk->ijl', support, question_mul) +
                  tf.layers.dense(support, 1) + tf.reshape(tf.layers.dense(question, 1), [-1, 1, tf.shape(question)[1]]))
-
 
             # support to question attention
             att_question = tf.nn.softmax(S, 2)  # softmax over question for each support token
