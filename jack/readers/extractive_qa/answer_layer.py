@@ -114,22 +114,25 @@ def compute_spans(start_scores, end_scores, answer2support, is_eval, support2que
 
 
 def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                        correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000):
+                        correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000,
+                        bilinear=True):
     question_state = compute_question_state(encoded_question, question_length)
     question_state = tf.gather(question_state, support2question)
 
     # Prediction
     # start
-    static_input = tf.concat([tf.expand_dims(question_state, 1) * encoded_support, encoded_support], 2)
-
-    hidden_start = tf.layers.dense(question_state, size, name="hidden_start_1")
-    hidden_start = tf.layers.dense(
-        static_input, size, use_bias=False, name="hidden_start_2") + tf.expand_dims(hidden_start, 1)
+    if bilinear:
+        hidden_start = tf.layers.dense(question_state, size, name="hidden_start")
+        start_scores = tf.einsum('ik,ijk->ij', hidden_start, encoded_support)
+    else:
+        static_input = tf.concat([tf.expand_dims(question_state, 1) * encoded_support, encoded_support], 2)
+        hidden_start = tf.layers.dense(question_state, size, name="hidden_start_1")
+        hidden_start = tf.layers.dense(
+            static_input, size, use_bias=False, name="hidden_start_2") + tf.expand_dims(hidden_start, 1)
+        start_scores = tf.layers.dense(tf.nn.relu(hidden_start), 1, use_bias=False, name="start_scores")
+        start_scores = tf.squeeze(start_scores, [2])
 
     support_mask = misc.mask_for_lengths(support_length)
-
-    start_scores = tf.layers.dense(tf.nn.relu(hidden_start), 1, use_bias=False, name="start_scores")
-    start_scores = tf.squeeze(start_scores, [2])
     start_scores = start_scores + support_mask
 
     max_support_length = tf.shape(start_scores)[1]
@@ -147,17 +150,23 @@ def fastqa_answer_layer(size, encoded_question, question_length, encoded_support
 
     start_state = tf.gather_nd(encoded_support, tf.stack([doc_idx_flat, start_pointer], 1))
     start_state.set_shape([None, size])
+
     encoded_support_gathered = tf.gather(encoded_support, doc_idx_flat)
-    end_input = tf.concat([tf.expand_dims(start_state, 1) * encoded_support_gathered,
-                           tf.gather(static_input, doc_idx_flat)], 2)
+    if bilinear:
+        hidden_end = tf.layers.dense(tf.concat([question_state, start_state], 1), size, name="hidden_end")
+        end_scores = tf.einsum('ik,ijk->ij', hidden_end, encoded_support_gathered)
+    else:
+        end_input = tf.concat([tf.expand_dims(start_state, 1) * encoded_support_gathered,
+                               tf.gather(static_input, doc_idx_flat)], 2)
 
-    hidden_end = tf.layers.dense(tf.concat([tf.gather(question_state, doc_idx_flat), start_state], 1), size,
-                                 name="hidden_end_1")
-    hidden_end = tf.layers.dense(
-        end_input, size, use_bias=False, name="hidden_end_2") + tf.expand_dims(hidden_end, 1)
+        hidden_end = tf.layers.dense(tf.concat([tf.gather(question_state, doc_idx_flat), start_state], 1), size,
+                                     name="hidden_end_1")
+        hidden_end = tf.layers.dense(
+            end_input, size, use_bias=False, name="hidden_end_2") + tf.expand_dims(hidden_end, 1)
 
-    end_scores = tf.layers.dense(tf.nn.relu(hidden_end), 1, use_bias=False, name="end_scores")
-    end_scores = tf.squeeze(end_scores, [2])
+        end_scores = tf.layers.dense(tf.nn.relu(hidden_end), 1, use_bias=False, name="end_scores")
+        end_scores = tf.squeeze(end_scores, [2])
+
     end_scores = end_scores + tf.gather(support_mask, doc_idx_flat)
 
     def train():
