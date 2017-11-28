@@ -14,7 +14,7 @@ def compute_question_state(encoded_question, question_length):
 
 
 def bilinear_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                          correct_start, support2question, answer2support, is_eval, beam_size=1,
+                          support2question, answer2support, is_eval, beam_size=1,
                           max_span_size=10000):
     """Answer layer for multiple paragraph QA."""
     # computing single time attention over question
@@ -33,11 +33,11 @@ def bilinear_answer_layer(size, encoded_question, question_length, encoded_suppo
     end_scores = end_scores + support_mask
 
     return compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
-                         correct_start, beam_size, max_span_size)
+                         beam_size, max_span_size)
 
 
 def mlp_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                     correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000):
+                     support2question, answer2support, is_eval, beam_size=1, max_span_size=10000):
     """Answer layer for multiple paragraph QA."""
     # computing single time attention over question
     question_state = compute_question_state(encoded_question, question_length)
@@ -63,11 +63,11 @@ def mlp_answer_layer(size, encoded_question, question_length, encoded_support, s
     end_scores = end_scores + support_mask
 
     return compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
-                         correct_start, beam_size, max_span_size)
+                         beam_size, max_span_size)
 
 
 def compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
-                  correct_start=None, beam_size=1, max_span_size=10000):
+                  beam_size=1, max_span_size=10000, correct_start=None):
     max_support_length = tf.shape(start_scores)[1]
     _, _, num_doc_per_question = tf.unique_with_counts(support2question)
     offsets = tf.cumsum(num_doc_per_question, exclusive=True)
@@ -89,28 +89,56 @@ def compute_spans(start_scores, end_scores, answer2support, is_eval, support2que
                 tf.gather(doc_idx_for_support, answer2support), predicted_start_pointer, predicted_end_pointer)
 
     def eval():
-        # [num_questions, beam_size]
-        doc_idx, beam_start_pointer, beam_start_scores = segment_top_k(start_scores, support2question, beam_size)
+        # we collect spans for top k starts and top k ends and select the top k from those top 2k
+        doc_idx1, start_pointer1, end_pointer1, span_score1 = _get_top_k(
+            start_scores, end_scores, beam_size, max_span_size, support2question)
+        doc_idx2, start_pointer2, end_pointer2, span_score2 = _get_top_k(
+            end_scores, start_scores, beam_size, -max_span_size, support2question)
 
-        # [num_questions * beam_size]
-        doc_idx_flat = tf.reshape(doc_idx, [-1])
-        beam_start_pointer_flat = tf.reshape(beam_start_pointer, [-1])
+        doc_idx = tf.concat([doc_idx1, doc_idx2], 1)
+        start_pointer = tf.concat([start_pointer1, start_pointer2], 1)
+        end_pointer = tf.concat([end_pointer1, end_pointer2], 1)
+        span_score = tf.concat([span_score1, span_score2], 1)
 
-        # [num_questions * beam_size, support_length]
-        beam_end_scores_flat = tf.gather(end_scores, doc_idx_flat)
+        _, idx = tf.nn.top_k(span_score, beam_size)
 
-        left_mask = misc.mask_for_lengths(tf.cast(beam_start_pointer_flat, tf.int32),
-                                          max_support_length, mask_right=False)
-        right_mask = misc.mask_for_lengths(tf.cast(beam_start_pointer_flat + max_span_size, tf.int32),
-                                           max_support_length)
-        beam_end_scores_flat = beam_end_scores_flat + left_mask + right_mask
+        r = tf.range(tf.shape(span_score)[0], dtype=tf.int32)
+        r = tf.reshape(tf.tile(tf.expand_dims(r, 1), [1, beam_size]), [-1])
 
-        beam_end_pointer_flat = tf.argmax(beam_end_scores_flat, axis=1, output_type=tf.int32)
+        idx = tf.stack([r, tf.reshape(idx, [-1])])
+        doc_idx = tf.gather_nd(doc_idx, idx)
+        start_pointer = tf.gather_nd(start_pointer, idx)
+        end_pointer = tf.gather_nd(end_pointer, idx)
 
-        return (start_scores, end_scores,
-                tf.gather(doc_idx_for_support, doc_idx_flat), beam_start_pointer_flat, beam_end_pointer_flat)
+        return (start_scores, end_scores, tf.gather(doc_idx_for_support, doc_idx), start_pointer, end_pointer)
 
     return tf.cond(is_eval, eval, train)
+
+
+def _get_top_k(scores1, scores2, k, max_span_size, support2question):
+    max_support_length = tf.shape(scores1)[1]
+    doc_idx, pointer1, topk_scores1 = segment_top_k(scores1, support2question, k)
+
+    # [num_questions * beam_size]
+    doc_idx_flat = tf.reshape(doc_idx, [-1])
+    pointer_flat1 = tf.reshape(pointer1, [-1])
+
+    # [num_questions * beam_size, support_length]
+    scores2 = tf.gather(scores2, doc_idx_flat)
+    if max_span_size < 0:
+        pointer_flat1, max_span_size = pointer_flat1 - max_span_size + 1, -max_span_size
+    left_mask = misc.mask_for_lengths(tf.cast(pointer_flat1, tf.int32),
+                                      max_support_length, mask_right=False)
+    right_mask = misc.mask_for_lengths(tf.cast(pointer_flat1 + max_span_size, tf.int32),
+                                       max_support_length)
+    scores2 = scores2 + left_mask + right_mask
+
+    pointer2 = tf.argmax(scores2, axis=1, output_type=tf.int32)
+
+    topk_score2 = tf.gather_nd(scores2, tf.stack([doc_idx_flat, pointer2], 1))
+
+    return doc_idx, pointer1, tf.reshape(pointer2, [-1, k]), topk_scores1 + tf.reshape(topk_score2, [-1, k])
+
 
 
 def conditional_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
