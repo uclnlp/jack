@@ -113,9 +113,9 @@ def compute_spans(start_scores, end_scores, answer2support, is_eval, support2que
     return tf.cond(is_eval, eval, train)
 
 
-def fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
-                        correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000,
-                        bilinear=True):
+def conditional_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
+                             correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000,
+                             bilinear=False):
     question_state = compute_question_state(encoded_question, question_length)
     question_state = tf.gather(question_state, support2question)
 
