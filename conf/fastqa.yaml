@@ -52,7 +52,7 @@ encoder: 'lstm'
 max_span_size: 16
 
 # 'conditional' (original fastqa, end score conditioned on predicted start), 'conditional_bilinear', 'bilinear'
-answer_layer: bilinear
+answer_layer: conditional_bilinear
 
 # 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
 loss: 'max'
