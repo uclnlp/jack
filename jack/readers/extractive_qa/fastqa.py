@@ -85,12 +85,11 @@ class FastQAModule(AbstractXQAModelModule):
                     emb_support = highway_network(emb_support, 1)
 
             keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
-            noise_shape = [batch_size, 1, emb_question.get_shape()[2].value]
             emb_question, emb_support = tf.cond(
                 is_eval,
                 lambda: (emb_question, emb_support),
-                lambda: (tf.nn.dropout(emb_question, keep_prob, noise_shape=noise_shape),
-                         tf.nn.dropout(emb_support, keep_prob, noise_shape=noise_shape))
+                lambda: (tf.nn.dropout(emb_question, keep_prob),
+                         tf.nn.dropout(emb_support, keep_prob))
             )
 
             # extend embeddings with features
@@ -119,20 +118,20 @@ class FastQAModule(AbstractXQAModelModule):
                     conditional_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                                              correct_start, support2question, answer2support, is_eval,
                                              beam_size=shared_resources.config.get("beam_size", 1),
-                                             max_span_size=shared_resources.config.get("max_span_size", 16))
+                                             max_span_size=shared_resources.config.get("max_span_size", 10000))
             elif answer_layer == 'conditional_bilinear':
                 start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                     conditional_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                                              correct_start, support2question, answer2support, is_eval,
                                              beam_size=shared_resources.config.get("beam_size", 1),
-                                             max_span_size=shared_resources.config.get("max_span_size", 16),
+                                             max_span_size=shared_resources.config.get("max_span_size", 10000),
                                              bilinear=True)
             elif answer_layer == 'bilinear':
                 start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                     bilinear_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                                           support2question, answer2support, is_eval,
                                           beam_size=shared_resources.config.get("beam_size", 1),
-                                          max_span_size=shared_resources.config.get("max_span_size", 16))
+                                          max_span_size=shared_resources.config.get("max_span_size", 10000))
             else:
                 raise ValueError
 
