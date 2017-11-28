@@ -5,6 +5,7 @@ produced at the input and/or output of each module, thus defining a kind of sign
 flexibility when (re-)using modules in different combinations.
 """
 import logging
+from typing import Mapping, Sequence
 
 import tensorflow as tf
 
@@ -55,6 +56,19 @@ class TensorPort:
 
     def __repr__(self):
         return "<TensorPort (%s)>" % self.name
+
+    @staticmethod
+    def to_mapping(ports: Sequence['TensorPort'], tensors: Sequence[tf.Tensor]):
+        """
+        Create a dictionary of ports to tensors based on ordered port and tensor sequences.
+        Args:
+            ports: list of ports
+            tensors: list of tensors (same length as ports)
+
+        Returns: mapping from the i-th port to the i-th tensor in the lists.
+
+        """
+        return dict(zip(ports, tensors))
 
 
 class TensorPortWithDefault(TensorPort):
@@ -113,7 +127,7 @@ class Ports:
                                        " or single instances with extra dimension set to 1"),
                                       "[batch_size, max_num_support, max_num_tokens]")
 
-        atomic_candidates = TensorPort(tf.int32, [None, None], "candidates",
+        atomic_candidates = TensorPort(tf.int32, [None, None], "atomic_candidates",
                                        ("Represents candidate choices using single symbols. ",
                                         "This could be a list of entities from global entities ",
                                         "for example atomic_candidates = [e1, e7, e83] from ",
@@ -140,11 +154,11 @@ class Ports:
                                      "Represents length of questions in batch",
                                      "[batch_size]")
 
-        embedded_support = TensorPort(tf.float32, [None, None, None], "embedded_support",
+        emb_support = TensorPort(tf.float32, [None, None, None], "emb_support",
                                       "Represents the embedded support",
                                       "[S, max_num_tokens, N]")
 
-        embedded_question = TensorPort(tf.float32, [None, None, None], "embedded_question",
+        emb_question = TensorPort(tf.float32, [None, None, None], "emb_question",
                                        "Represents the embedded question",
                                        "[Q, max_num_question_tokens, N]")
 
@@ -178,9 +192,8 @@ class Ports:
                                          "Represents the embedded candidates",
                                          "[C, N]")
 
-
     class Prediction:
-        logits = TensorPort(tf.float32, [None, None], "candidate_scores",
+        logits = TensorPort(tf.float32, [None, None], "logits",
                             "Represents output scores for each candidate",
                             "[C, num_candidates]")
 
@@ -232,7 +245,7 @@ class Ports:
                                    "from a list of many candidates"),
                                   "[batch_size]")
 
-        answer_span = TensorPort(tf.int32, [None, 2], "answer_span_target",
+        answer_span = TensorPort(tf.int32, [None, 2], "answer_span",
                                  "Represents answer as a (start, end) span", "[A, 2]")
 
         seq_answer = TensorPort(tf.int32, [None, None], "answer_seq_target",
@@ -242,3 +255,28 @@ class Ports:
         symbols = TensorPort(tf.int32, [None, None], "symbol_targets",
                              "Represents symbols for each possible target answer sequence",
                              "[A, max_num_tokens]")
+
+
+class TensorPortTensors:
+    """
+    This class wraps around mappings from tensor ports to tensors and makes the tensors available by
+    by `x.foo` instead of `x['foo']` calls.
+    """
+
+    def __init__(self, mapping: Mapping[TensorPort, tf.Tensor]):
+        """
+        Create a wrapping based on the passed in mapping/dictionary.
+        Args:
+            mapping: Mapping from ports to tensors.
+        """
+        self.name_to_tensor = ({key.name: value for key, value in mapping.items()})
+
+    def __getattr__(self, item):
+        """
+        Returns the tensor belonging to the port with the given name.
+        Args:
+            item: the tensor port name.
+
+        Returns: the tensor associated with the tensor port of the given name.
+        """
+        return self.name_to_tensor[item]

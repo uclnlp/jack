@@ -18,38 +18,38 @@ logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 class XQAPorts:
     # When feeding embeddings directly
-    emb_question = Ports.Input.embedded_question
+    emb_question = Ports.Input.emb_question
     question_length = Ports.Input.question_length
-    emb_support = Ports.Input.embedded_support
+    emb_support = Ports.Input.emb_support
     support_length = Ports.Input.support_length
     support2question = Ports.Input.support2question
 
     # but also ids, for char-based embeddings
-    word_chars = TensorPort(tf.int32, [None, None], "question_chars",
+    word_chars = TensorPort(tf.int32, [None, None], "word_chars",
                             "Represents questions using symbol vectors",
                             "[U, max_num_chars]")
-    word_length = TensorPort(tf.int32, [None], "question_char_length",
-                             "Represents questions using symbol vectors",
-                             "[U]")
-    question_words = TensorPort(tf.int32, [None, None], "question_words2unique",
+    word_char_length = TensorPort(tf.int32, [None], "word_char_length",
+                                  "Represents questions using symbol vectors",
+                                  "[U]")
+    question_words = TensorPort(tf.int32, [None, None], "question_words",
                                 "Represents support using symbol vectors indexing defined word chars.",
                                 "[batch_size, max_num_question_tokens]")
-    support_words = TensorPort(tf.int32, [None, None], "support_words2unique",
+    support_words = TensorPort(tf.int32, [None, None], "support_words",
                                "Represents support using symbol vectors indexing defined word chars",
                                "[batch_size, max_num_support_tokens, max]")
 
     is_eval = Ports.is_eval
 
     # This feature is model specific and thus, not part of the conventional Ports
-    word_in_question = TensorPort(tf.float32, [None, None], "word_in_question_feature",
+    word_in_question = TensorPort(tf.float32, [None, None], "word_in_question",
                                   "Represents a 1/0 feature for all context tokens denoting"
                                   " whether it is part of the question or not",
                                   "[Q, support_length]")
 
-    correct_start_training = TensorPortWithDefault(np.array([0], np.int32), tf.int32, [None], "correct_start_training",
-                                                   "Represents the correct start of the span which is given to the"
-                                                   "model during training for use to predicting end.",
-                                                   "[A]")
+    correct_start = TensorPortWithDefault(np.array([0], np.int32), tf.int32, [None], "correct_start",
+                                          "Represents the correct start of the span which is given to the"
+                                          "model during training for use to predicting end.",
+                                          "[A]")
 
     # output ports
     start_scores = Ports.Prediction.start_scores
@@ -85,12 +85,12 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.emb_support, XQAPorts.support_length,
                      XQAPorts.support2question,
                      # char
-                     XQAPorts.word_chars, XQAPorts.word_length,
+                     XQAPorts.word_chars, XQAPorts.word_char_length,
                      XQAPorts.question_words, XQAPorts.support_words,
                      # features
                      XQAPorts.word_in_question,
                      # optional, only during training
-                     XQAPorts.correct_start_training, XQAPorts.answer2support_training,
+                     XQAPorts.correct_start, XQAPorts.answer2support_training,
                      XQAPorts.is_eval,
                      # for output module
                      XQAPorts.token_offsets, XQAPorts.selected_support]
@@ -232,7 +232,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
         output = {
             XQAPorts.word_chars: word_chars,
-            XQAPorts.word_length: word_lengths,
+            XQAPorts.word_char_length: word_lengths,
             XQAPorts.question_words: word_ids[:len(q_tokenized)],
             XQAPorts.support_words: word_ids[len(q_tokenized):],
             XQAPorts.emb_support: emb_support,
@@ -256,7 +256,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                     support_idx += 1
             output.update({
                 XQAPorts.answer_span: [span for span in spans],
-                XQAPorts.correct_start_training: [] if is_eval else [span[0] for span in spans],
+                XQAPorts.correct_start: [] if is_eval else [span[0] for span in spans],
                 XQAPorts.answer2support_training: span2support,
             })
 
@@ -272,7 +272,7 @@ class AbstractXQAModelModule(TFModelModule):
                     XQAPorts.emb_support, XQAPorts.support_length,
                     XQAPorts.support2question,
                     # char embedding inputs
-                    XQAPorts.word_chars, XQAPorts.word_length,
+                    XQAPorts.word_chars, XQAPorts.word_char_length,
                     XQAPorts.question_words, XQAPorts.support_words,
                     # optional input, provided only during training
                     XQAPorts.answer2support_training, XQAPorts.is_eval]
@@ -322,35 +322,14 @@ class AbstractXQAModelModule(TFModelModule):
         else:
             raise ValueError("Unknown encoder type: %s" % encoder_type)
 
-    def create_output(self, shared_resources, emb_question, question_length,
-                      emb_support, support_length, support2question,
-                      word_chars, word_char_length,
-                      question_words, support_words,
-                      answer2support, is_eval):
-        """extractive QA model
-        Args:
-            shared_resources: has at least a field config (dict) with keys "rep_dim", "rep_dim_input"
-            emb_question: [Q, L_q, N]
-            question_length: [Q]
-            emb_support: [S, L_s, N]
-            support_length: [S]
-            support2question: [S]
-            word_chars: characters for each word
-            word_char_length: character length for each word
-            question_words: [Q, L_q] index to character representation of question words
-            support_words: [S, L_q] index to character representation of support words
-            answer2support: [A], only during training, i.e., is_eval=False
-            is_eval: []
-
-        Returns:
-            start_scores [B, L_s, N], end_scores [B, L_s, N], span_prediction [B, 3] (doc idx, start, end)
-        """
-        raise NotImplementedError('Classes that inherit from AbstractExtractiveQA need to override create_output!')
-
-    def create_training_output(
-            self, shared_resources, start_scores, end_scores, answer_span, answer2support, support2question):
-        return xqa_crossentropy_loss(start_scores, end_scores, answer_span, answer2support, support2question,
-                                     use_sum=shared_resources.config.get('loss', 'sum') == 'sum')
+    def create_training_output(self, shared_resources, input_tensors):
+        tensors = TensorPortTensors(input_tensors)
+        return {
+            Ports.loss: xqa_crossentropy_loss(tensors.start_scores, tensors.end_scores,
+                                              tensors.answer_span, tensors.answer2support,
+                                              tensors.support2question,
+                                              use_sum=shared_resources.config.get('loss', 'sum') == 'sum')
+        }
 
 
 def _np_softmax(x):
@@ -370,6 +349,7 @@ def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_s
     answer = answer.rstrip()
     char_end = char_start + len(answer)
     return answer, doc_idx, (char_start, char_end)
+
 
 class XQAOutputModule(OutputModule):
     def __init__(self, shared_resources):

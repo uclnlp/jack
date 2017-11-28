@@ -33,7 +33,7 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
     @property
     def input_ports(self) -> List[TensorPort]:
         if self.shared_resources.config.get("vocab_from_embeddings", False):
-            return [Ports.Input.embedded_support, Ports.Input.embedded_question,
+            return [Ports.Input.emb_support, Ports.Input.emb_question,
                     Ports.Input.support_length, Ports.Input.question_length]
         else:
             return [Ports.Input.support, Ports.Input.question,
@@ -53,15 +53,17 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
     def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
-    def create_output(self, shared_resources: SharedResources,
-                      support: tf.Tensor,
-                      question: tf.Tensor,
-                      support_length: tf.Tensor,
-                      question_length: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_output(self, shared_resources: SharedResources, input_tensors) -> Mapping[TensorPort, tf.Tensor]:
+        vocab_from_embeddings = self.shared_resources.config.get("vocab_from_embeddings", False)
+        support_port = Ports.Input.emb_support if vocab_from_embeddings else Ports.Input.support
+        question_port = Ports.Input.emb_question if vocab_from_embeddings else Ports.Input.question
+        support = input_tensors[support_port]
+        question = input_tensors[question_port]
         input_size = shared_resources.config['repr_dim_input']
-        if not self.shared_resources.config.get("vocab_from_embeddings", False):
-            if hasattr(self.shared_resources, 'embeddings'):
-                e = tf.constant(self.shared_resources.embeddings, tf.float32)
+        tensors = TensorPortTensors(input_tensors)
+        if not shared_resources.config.get("vocab_from_embeddings", False):
+            if hasattr(shared_resources, 'embeddings'):
+                e = tf.constant(shared_resources.embeddings, tf.float32)
             else:
                 vocab_size = len(shared_resources.vocab)
                 e = tf.get_variable("embeddings", [vocab_size, input_size],
@@ -78,16 +80,22 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
         embedded_support.set_shape([None, None, input_size])
 
         logits = self.forward_pass(shared_resources,
-                                   embedded_question, question_length,
-                                   embedded_support, support_length,
+                                   embedded_question, tensors.question_length,
+                                   embedded_support, tensors.support_length,
                                    shared_resources.config['answer_size'])
 
         predictions = tf.argmax(logits, 1, name='prediction')
 
-        return [logits, predictions]
+        return {
+            Ports.Prediction.logits: logits,
+            Ports.Prediction.candidate_index: predictions
+        }
 
-    def create_training_output(self, shared_resources: SharedResources, logits: tf.Tensor, labels: tf.Tensor):
-        return tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels),
+    def create_training_output(self, shared_resources: SharedResources, input_tensors):
+        tensors = TensorPortTensors(input_tensors)
+        return {
+            Ports.loss: tf.losses.sparse_softmax_cross_entropy(logits=tensors.logits, labels=tensors.target_index)
+        }
 
 
 class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
@@ -102,8 +110,8 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
     def output_ports(self) -> List[TensorPort]:
         """Defines the outputs of the InputModule"""
         if self.shared_resources.config.get("vocab_from_embeddings", False):
-            return [Ports.Input.embedded_support,
-                    Ports.Input.embedded_question, Ports.Input.support_length,
+            return [Ports.Input.emb_support,
+                    Ports.Input.emb_question, Ports.Input.support_length,
                     Ports.Input.question_length, Ports.Input.sample_id]
         else:
             return [Ports.Input.support,
@@ -149,8 +157,8 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
                     emb_question[i, j] = self._get_emb(k)
 
             xy_dict = {
-                Ports.Input.embedded_support: emb_support,
-                Ports.Input.embedded_question: emb_question,
+                Ports.Input.emb_support: emb_support,
+                Ports.Input.emb_question: emb_question,
                 Ports.Input.question_length: q_lengths,
                 Ports.Input.support_length: s_lengths,
                 Ports.Input.sample_id: [a['ids'] for a in annotations]
