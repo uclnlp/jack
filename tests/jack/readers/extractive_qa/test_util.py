@@ -22,11 +22,10 @@ def test_prepare_data():
     assert question_lemmas is None
     assert question_length == 5
 
-    assert support_tokens == ['It', 'is', 'not', 'A', '.', 'It', 'is', 'B', '.']
-    assert support_ids == [6, 2, 7, 8, 9, 6, 2, 10, 9]
-    assert support_lemmas is None
-    assert support_length == 9
-    assert word_in_question == [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-    assert token_offsets == [(0, 0), (0, 3), (0, 6), (0, 10), (0, 11),
-                             (1, 0), (1, 3), (1, 6), (1, 7)]
-    assert answer_spans == [(7, 7)]
+    assert support_tokens == [['It', 'is', 'not', 'A', '.', ], ['It', 'is', 'B', '.']]
+    assert support_ids == [[6, 2, 7, 8, 9], [6, 2, 10, 9]]
+    assert support_lemmas == [None, None]
+    assert support_length == [5, 4]
+    assert word_in_question == [[0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]]
+    assert token_offsets == [[0, 3, 6, 10, 11], [0, 3, 6, 7]]
+    assert answer_spans == [[], [(2, 2)]]

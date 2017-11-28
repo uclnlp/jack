@@ -52,7 +52,7 @@ class BiDAF(AbstractXQAModelModule):
                 emb_question = highway_network(emb_question, 2, scope='question_highway')
                 emb_support = highway_network(emb_support, 2, scope='support_highway')
 
-            keep_prob = 1.0 - shared_resources.config.get("dropout", 1)
+            keep_prob = 1.0 - shared_resources.config.get("dropout", 0.0)
             emb_question, emb_support = tf.cond(
                 is_eval,
                 lambda: (emb_question, emb_support),
