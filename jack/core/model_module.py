@@ -106,26 +106,26 @@ class TFModelModule(ModelModule):
         """
         goal_ports = goal_ports or self.output_ports
         feed_dict = self.convert_to_feed_dict(batch)
-        goal_tensors = [self.tensors[p] for p in goal_ports
-                        if p in self.output_ports or p in self.training_output_ports]
+        goal_tensors = {p: self.tensors[p] for p in goal_ports
+                        if p in self.output_ports or p in self.training_output_ports}
         outputs = self.tf_session.run(goal_tensors, feed_dict)
 
-        ret = dict(zip(filter(lambda p: p in self.output_ports or p in self.training_output_ports, goal_ports),
-                       outputs))
         for p in goal_ports:
-            if p not in ret and p in batch:
-                ret[p] = batch[p]
+            if p not in outputs and p in batch:
+                outputs[p] = batch[p]
 
-        return ret
+        return outputs
 
     @abstractmethod
     def create_output(self, shared_resources: SharedResources,
-                      *input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
+                      input_tensors: Mapping[TensorPort, tf.Tensor]) -> \
+            Mapping[TensorPort, tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces
         output from input tensors corresponding to `input_ports`.
 
         Args:
+            shared_resources: contains resources shared by modules, such as hyper-parameters or vocabularies.
             *input_tensors: a list of input tensors.
 
         Returns:
@@ -135,14 +135,16 @@ class TFModelModule(ModelModule):
 
     @abstractmethod
     def create_training_output(self, shared_resources: SharedResources,
-                               *training_input_tensors: tf.Tensor) -> Sequence[tf.Tensor]:
+                               training_input_tensors: Mapping[TensorPort, tf.Tensor]) \
+            -> Mapping[TensorPort, tf.Tensor]:
         """
         This function needs to be implemented in order to define how the module produces tensors only used
         during training given tensors corresponding to the ones defined by `training_input_ports`, which might include
         tensors corresponding to ports defined by `output_ports`. This sub-graph should only be created during training.
 
         Args:
-            *training_input_tensors: a list of input tensors.
+            shared_resources: contains resources shared by modules, such as hyper-parameters or vocabularies.
+            training_input_tensors: a mapping from training input tensorports to tensors.
 
         Returns:
             mapping from defined training output ports to their tensors.
@@ -157,36 +159,24 @@ class TFModelModule(ModelModule):
         """
         old_train_variables = tf.trainable_variables()
         old_variables = tf.global_variables()
-        if "name" in self.shared_resources.config:
-            with tf.variable_scope(self.shared_resources.config["name"],
-                                   initializer=tf.contrib.layers.xavier_initializer()):
-                self._tensors = {d: d.create_placeholder() for d in self.input_ports}
-                output_tensors = self.create_output(
-                    self.shared_resources, *[self._tensors[port] for port in self.input_ports])
-        else:  # backward compability
-            self._tensors = {d: d.create_placeholder() for d in self.input_ports}
-            output_tensors = self.create_output(
-                self.shared_resources, *[self._tensors[port] for port in self.input_ports])
 
-        self._placeholders = dict(self._tensors)
-        self._tensors.update(zip(self.output_ports, output_tensors))
-        if is_training:
-            if "name" in self.shared_resources.config:
-                with tf.variable_scope(self.shared_resources.config["name"]):
-                    self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
-                                              if p not in self._placeholders and p not in self._tensors)
-                    self._tensors.update(self._placeholders)
-                    input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
-                    training_output_tensors = self.create_training_output(
-                        self.shared_resources, *[input_target_tensors[port] for port in self.training_input_ports])
-            else:  # backward compability
+        with tf.variable_scope(self.shared_resources.config.get("name", "jtreader"),
+                               initializer=tf.contrib.layers.xavier_initializer()):
+            self._tensors = {p: p.create_placeholder() for p in self.input_ports}
+            output_tensors = self.create_output(
+                self.shared_resources, {port: self._tensors[port] for port in self.input_ports})
+
+            self._placeholders = dict(self._tensors)
+            self._tensors.update(output_tensors)
+
+            if is_training:
                 self._placeholders.update((p, p.create_placeholder()) for p in self.training_input_ports
                                           if p not in self._placeholders and p not in self._tensors)
                 self._tensors.update(self._placeholders)
                 input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
                 training_output_tensors = self.create_training_output(
-                    self.shared_resources, *[input_target_tensors[port] for port in self.training_input_ports])
-            self._tensors.update(zip(self.training_output_ports, training_output_tensors))
+                    self.shared_resources, {port: input_target_tensors[port] for port in self.training_input_ports})
+                self._tensors.update(training_output_tensors)
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
         self._variables = [v for v in tf.global_variables() if v not in old_variables]
@@ -217,11 +207,19 @@ class TFModelModule(ModelModule):
 
     @property
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:
-        return self._placeholders
+        if hasattr(self, "_placeholders"):
+            return self._placeholders
+        else:
+            logger.warn("Asking for placeholders without having setup this module. Returning None.")
+            return None
 
     @property
     def tensors(self) -> Mapping[TensorPort, tf.Tensor]:
-        return self._tensors if hasattr(self, "_tensors") else None
+        if hasattr(self, "_tensors"):
+            return self._tensors
+        else:
+            logger.warn("Asking for tensors without having setup this module. Returning None.")
+            return None
 
     def store(self, path):
         self._saver.save(self.tf_session, path)

@@ -149,26 +149,30 @@ class ModelFModelModule(TFModelModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, Ports.Input.embedded_question]
+        return [Ports.Prediction.logits, Ports.Input.emb_question]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits, Ports.Input.embedded_question, Ports.Target.target_index]
+        return [Ports.Prediction.logits, Ports.Input.emb_question, Ports.Target.target_index]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
-    def create_training_output(self, shared_resources, logits, embedded_question, target_index) -> Sequence[tf.Tensor]:
+    def create_training_output(self, shared_resources, input_tensors) -> Mapping[TensorPort, tf.Tensor]:
+        tensors = TensorPortTensors(input_tensors)
         with tf.variable_scope("modelf", reuse=True):
             embeddings = tf.get_variable("embeddings", trainable=True, dtype="float32")
-            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, target_index)),
+            embedded_answer = tf.expand_dims(tf.nn.sigmoid(tf.gather(embeddings, tensors.target_index)),
                                              1)  # [batch_size, 1, repr_dim]
-            answer_score = tf.reduce_sum(embedded_question * embedded_answer, 2)  # [batch_size, 1]
-            loss = tf.reduce_sum(tf.nn.softplus(logits - answer_score))
-        return loss,
+            answer_score = tf.reduce_sum(tensors.emb_question * embedded_answer, 2)  # [batch_size, 1]
+            loss = tf.reduce_sum(tf.nn.softplus(tensors.logits - answer_score))
+        return {
+            Ports.loss: loss
+        }
 
-    def create_output(self, shared_resources, question, atomic_candidates) -> Sequence[tf.Tensor]:
+    def create_output(self, shared_resources, input_tensors) -> Mapping[TensorPort, tf.Tensor]:
+        tensors = TensorPortTensors(input_tensors)
         repr_dim = shared_resources.config["repr_dim"]
         with tf.variable_scope("modelf"):
             embeddings = tf.get_variable(
@@ -176,13 +180,16 @@ class ModelFModelModule(TFModelModule):
                 trainable=True, dtype="float32",
                 initializer=tf.random_uniform([len(shared_resources.vocab), repr_dim], -.1, .1))
             # [batch_size, 1, repr_dim]
-            embedded_question = tf.gather(embeddings, question)
+            embedded_question = tf.gather(embeddings, tensors.question)
             # [batch_size, num_candidates, repr_dim]
-            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, atomic_candidates))
+            embedded_candidates = tf.nn.sigmoid(tf.gather(embeddings, tensors.atomic_candidates))
             # [batch_size, num_candidates]
             logits = tf.reduce_sum(tf.multiply(embedded_candidates, embedded_question), 2)
 
-        return logits, embedded_question
+        return {
+            Ports.Prediction.logits: logits,
+            Ports.Input.emb_question: embedded_question
+        }
 
 
 class ModelFOutputModule(OutputModule):

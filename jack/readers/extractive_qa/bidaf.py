@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 
+from jack.core import TensorPortTensors, TensorPort
 from jack.readers.extractive_qa.answer_layer import compute_spans
 from jack.readers.extractive_qa.shared import AbstractXQAModelModule
 from jack.tfutil.embedding import conv_char_embedding
@@ -13,17 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class BiDAF(AbstractXQAModelModule):
-    def create_output(self, shared_resources, emb_question, question_length,
-                      emb_support, support_length, support2question,
-                      word_chars, word_char_length,
-                      question_words, support_words,
-                      answer2support, is_eval):
+    def create_output(self, shared_resources, input_tensors):
+        tensors = TensorPortTensors(input_tensors)
         with tf.variable_scope("bidaf", initializer=tf.contrib.layers.xavier_initializer()):
             # Some helpers
-            max_support_length = tf.reduce_max(support_length)
+            max_support_length = tf.reduce_max(tensors.support_length)
 
             beam_size = 1
-            beam_size = tf.cond(is_eval, lambda: tf.constant(beam_size, tf.int32), lambda: tf.constant(1, tf.int32))
+            beam_size = tf.cond(tensors.is_eval, lambda: tf.constant(beam_size, tf.int32),
+                                lambda: tf.constant(1, tf.int32))
 
             input_size = shared_resources.config["repr_dim_input"]
             size = shared_resources.config["repr_dim"]
@@ -31,17 +30,20 @@ class BiDAF(AbstractXQAModelModule):
 
             # 1. char embeddings + word embeddings
             # set shapes for inputs
-            emb_question.set_shape([None, None, input_size])
-            emb_support.set_shape([None, None, input_size])
+            tensors.emb_question.set_shape([None, None, input_size])
+            tensors.emb_support.set_shape([None, None, input_size])
 
+            emb_question = tensors.emb_question
+            emb_support = tensors.emb_support
             # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
             if with_char_embeddings:
                 # compute combined embeddings
                 [char_emb_question, char_emb_support] = conv_char_embedding(len(shared_resources.char_vocab),
                                                                             size,
-                                                                            word_chars, word_char_length,
-                                                                            [question_words,
-                                                                             support_words])
+                                                                            tensors.word_chars,
+                                                                            tensors.word_char_length,
+                                                                            [tensors.question_words,
+                                                                             tensors.support_words])
                 # 3. cat
                 emb_question = tf.concat([emb_question, char_emb_question], 2)
                 emb_support = tf.concat([emb_support, char_emb_support], 2)
@@ -54,7 +56,7 @@ class BiDAF(AbstractXQAModelModule):
 
             keep_prob = 1.0 - shared_resources.config.get("dropout", 0.0)
             emb_question, emb_support = tf.cond(
-                is_eval,
+                tensors.is_eval,
                 lambda: (emb_question, emb_support),
                 lambda: (tf.nn.dropout(emb_question, keep_prob, noise_shape=[1, 1, emb_question.get_shape()[-1].value]),
                          tf.nn.dropout(emb_support, keep_prob, noise_shape=[1, 1, emb_question.get_shape()[-1].value]))
@@ -64,8 +66,8 @@ class BiDAF(AbstractXQAModelModule):
             # encode question and support
             encoder = shared_resources.config.get('encoder', 'lstm').lower()
             if encoder in ['lstm', 'sru', 'gru']:
-                encoded_question = self.rnn_encoder(size, emb_question, question_length, encoder)
-                encoded_support = self.rnn_encoder(size, emb_support, support_length, encoder, reuse=True)
+                encoded_question = self.rnn_encoder(size, emb_question, tensors.question_length, encoder)
+                encoded_support = self.rnn_encoder(size, emb_support, tensors.support_length, encoder, reuse=True)
                 projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
                 question = tf.layers.dense(encoded_question, size,
                                            kernel_initializer=projection_initializer, name='projection_q')
@@ -79,7 +81,7 @@ class BiDAF(AbstractXQAModelModule):
                                             num_layers=5, name='support_encoder')
 
             # align with support
-            question = tf.gather(question, support2question)
+            question = tf.gather(question, tensors.support2question)
 
             # 5. a_i,j= w1 * s_i + w2 * q_j + w3 * q_j * s_i
             w_3 = tf.get_variable("w3", [size, 1])
@@ -115,7 +117,8 @@ class BiDAF(AbstractXQAModelModule):
             # 7. BiLSTM(G) = M
             # interaction_encoded = M
             if encoder in ['lstm', 'sru', 'gru']:
-                interaction_encoded = self.rnn_encoder(size, G, support_length, encoder, name='interaction_encoder')
+                interaction_encoded = self.rnn_encoder(size, G, tensors.support_length, encoder,
+                                                       name='interaction_encoder')
             else:
                 # follows https://openreview.net/pdf?id=HJRV1ZZAW
                 interaction_encoded = self.conv_encoder(size, G, dilations=[1, 2, 4, 8, 16, 1, 1, 1],
@@ -124,7 +127,7 @@ class BiDAF(AbstractXQAModelModule):
 
             # BiLSTM(M) = M^2 = end_encoded
             if encoder in ['lstm', 'sru', 'gru']:
-                end_encoded = self.rnn_encoder(size, start_encoded, support_length, encoder, name='end_encoder')
+                end_encoded = self.rnn_encoder(size, start_encoded, tensors.support_length, encoder, name='end_encoder')
             else:
                 # follows https://openreview.net/pdf?id=HJRV1ZZAW
                 end_encoded = self.conv_encoder(size, start_encoded, num_layers=3,
@@ -135,15 +138,17 @@ class BiDAF(AbstractXQAModelModule):
             end_scores = tf.squeeze(tf.layers.dense(end_encoded, 1, use_bias=False), 2)
 
             # mask out-of-bounds slots by adding -1000
-            support_mask = mask_for_lengths(support_length)
+            support_mask = mask_for_lengths(tensors.support_length)
             start_scores = start_scores + support_mask
             end_scores = end_scores + support_mask
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-                compute_spans(start_scores, end_scores, answer2support, is_eval, support2question,
+                compute_spans(start_scores, end_scores, tensors.answer2support, tensors.is_eval,
+                              tensors.support2question,
                               beam_size=shared_resources.config.get("beam_size", 1),
                               max_span_size=shared_resources.config.get("max_span_size", 16))
 
             span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
-            return start_scores, end_scores, span
+            return TensorPort.to_mapping(self.output_ports, (start_scores, end_scores, span))
+

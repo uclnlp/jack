@@ -77,32 +77,37 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
         return [Ports.loss, Ports.Prediction.logits]
 
     def create_training_output(self, shared_resources: SharedResources,
-                               question: tf.Tensor, logits: tf.Tensor) -> Sequence[tf.Tensor]:
-        positive_labels = tf.ones_like(logits)
+                               input_tensors) -> Mapping[TensorPort, tf.Tensor]:
+        tensors = TensorPortTensors(input_tensors)
+        positive_labels = tf.ones_like(tensors.triple_logits)
         nb_entities = len(self.entity_to_index)
 
-        random_subject_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
+        random_subject_indices = tf.random_uniform(shape=(tf.shape(tensors.question)[0], 1),
                                                    minval=0, maxval=nb_entities, dtype=tf.int32)
-        random_object_indices = tf.random_uniform(shape=(tf.shape(question)[0], 1),
+        random_object_indices = tf.random_uniform(shape=(tf.shape(tensors.question)[0], 1),
                                                   minval=0, maxval=nb_entities, dtype=tf.int32)
 
         # question_corrupted_subjects[:, 0].assign(random_indices)
-        question_corrupted_subjects = tf.concat(values=[random_subject_indices, question[:, 1:]], axis=1)
-        question_corrupted_objects = tf.concat(values=[question[:, :2], random_object_indices], axis=1)
+        question_corrupted_subjects = tf.concat(values=[random_subject_indices, tensors.question[:, 1:]], axis=1)
+        question_corrupted_objects = tf.concat(values=[tensors.question[:, :2], random_object_indices], axis=1)
 
         negative_subject_logits = self.forward_pass(shared_resources, question_corrupted_subjects)
         negative_object_logits = self.forward_pass(shared_resources, question_corrupted_objects)
 
-        logits = tf.concat(values=[logits, negative_subject_logits, negative_object_logits], axis=0)
+        logits = tf.concat(values=[tensors.triple_logits, negative_subject_logits, negative_object_logits], axis=0)
 
         negative_labels = tf.zeros_like(positive_labels)
         labels = tf.concat(values=[positive_labels, negative_labels, negative_labels], axis=0)
 
         losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
         loss = tf.reduce_mean(losses, axis=0)
-        return loss, logits
+        return {
+            Ports.loss: loss,
+            Ports.Prediction.logits: logits
+        }
 
-    def create_output(self, shared_resources: SharedResources, question: tf.Tensor) -> Sequence[tf.Tensor]:
+    def create_output(self, shared_resources: SharedResources, input_tensors) -> Mapping[TensorPort, tf.Tensor]:
+        tensors = TensorPortTensors(input_tensors)
         with tf.variable_scope('knowledge_graph_embedding'):
             self.embedding_size = shared_resources.config['repr_dim']
 
@@ -121,9 +126,11 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
                                                         initializer=tf.contrib.layers.xavier_initializer(),
                                                         dtype='float32')
 
-            logits = self.forward_pass(shared_resources, question)
+            logits = self.forward_pass(shared_resources, tensors.question)
 
-        return logits,
+        return {
+            KBPPorts.triple_logits: logits
+        }
 
     def forward_pass(self, shared_resources, question):
         subject_idx = question[:, 0]
