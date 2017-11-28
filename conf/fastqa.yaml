@@ -51,5 +51,5 @@ encoder: 'lstm'
 
 max_span_size: 16
 
-# conditional (end score conditioned on predicted start), conditional_bilinear, bilinear
-answer_layer: conditional_bilinear
+# 'conditional' (original fastqa, end score conditioned on predicted start), 'conditional_bilinear', 'bilinear'
+answer_layer: bilinear
