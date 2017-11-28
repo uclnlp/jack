@@ -103,9 +103,9 @@ def compute_spans(start_scores, end_scores, answer2support, is_eval, support2que
         _, idx = tf.nn.top_k(span_score, beam_size)
 
         r = tf.range(tf.shape(span_score)[0], dtype=tf.int32)
-        r = tf.reshape(tf.tile(tf.expand_dims(r, 1), [1, beam_size]), [-1])
+        r = tf.reshape(tf.tile(tf.expand_dims(r, 1), [1, beam_size]), [-1, 1])
 
-        idx = tf.stack([r, tf.reshape(idx, [-1])])
+        idx = tf.concat([r, tf.reshape(idx, [-1, 1])], 1)
         doc_idx = tf.gather_nd(doc_idx, idx)
         start_pointer = tf.gather_nd(start_pointer, idx)
         end_pointer = tf.gather_nd(end_pointer, idx)
