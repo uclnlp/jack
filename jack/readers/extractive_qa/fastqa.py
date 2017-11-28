@@ -116,7 +116,7 @@ class FastQAModule(AbstractXQAModelModule):
                 fastqa_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                                     correct_start, support2question, answer2support, is_eval,
                                     beam_size=shared_resources.config.get("beam_size", 1),
-                                    max_span_size=shared_resources.config.get("max_span_size", 16))
+                                    max_span_size=shared_resources.config.get("max_span_size", 16), bilinear=True)
 
             span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
