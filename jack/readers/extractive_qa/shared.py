@@ -350,6 +350,7 @@ def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_s
     char_end = char_start + len(answer)
     return answer, doc_idx, (char_start, char_end)
 
+
 class XQAOutputModule(OutputModule):
     def __init__(self, shared_resources):
         self.beam_size = shared_resources.config.get("beam_size", 1)

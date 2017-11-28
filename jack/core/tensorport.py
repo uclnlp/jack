@@ -5,9 +5,9 @@ produced at the input and/or output of each module, thus defining a kind of sign
 flexibility when (re-)using modules in different combinations.
 """
 import logging
+from typing import Mapping, Sequence
 
 import tensorflow as tf
-from typing import Mapping, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class TensorPort:
         Returns: mapping from the i-th port to the i-th tensor in the lists.
 
         """
-        return {port: tensor for port, tensor in zip(ports, tensors)}
+        return dict(zip(ports, tensors))
 
 
 class TensorPortWithDefault(TensorPort):

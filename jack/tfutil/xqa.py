@@ -31,4 +31,4 @@ def xqa_crossentropy_loss(start_scores, end_scores, answer_span, answer2support,
         span_probs = tf.unsorted_segment_max(
             start_probs * end_probs, answer2question, num_questions)
 
-    return -tf.reduce_mean(tf.log(span_probs + 1e-6)),
+    return -tf.reduce_mean(tf.log(span_probs + 1e-6))

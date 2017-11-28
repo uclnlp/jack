@@ -88,7 +88,7 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
 
         return {
             Ports.Prediction.logits: logits,
-            Ports.Target.target_index: predictions
+            Ports.Prediction.candidate_index: predictions
         }
 
     def create_training_output(self, shared_resources: SharedResources, input_tensors):
