@@ -140,7 +140,6 @@ def _get_top_k(scores1, scores2, k, max_span_size, support2question):
     return doc_idx, pointer1, tf.reshape(pointer2, [-1, k]), topk_scores1 + tf.reshape(topk_score2, [-1, k])
 
 
-
 def conditional_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
                              correct_start, support2question, answer2support, is_eval, beam_size=1, max_span_size=10000,
                              bilinear=False):
@@ -180,6 +179,7 @@ def conditional_answer_layer(size, encoded_question, question_length, encoded_su
     start_state.set_shape([None, size])
 
     encoded_support_gathered = tf.gather(encoded_support, doc_idx_flat)
+    question_state = tf.gather(question_state, doc_idx_flat)
     if bilinear:
         hidden_end = tf.layers.dense(tf.concat([question_state, start_state], 1), size, name="hidden_end")
         end_scores = tf.einsum('ik,ijk->ij', hidden_end, encoded_support_gathered)
@@ -187,7 +187,7 @@ def conditional_answer_layer(size, encoded_question, question_length, encoded_su
         end_input = tf.concat([tf.expand_dims(start_state, 1) * encoded_support_gathered,
                                tf.gather(static_input, doc_idx_flat)], 2)
 
-        hidden_end = tf.layers.dense(tf.concat([tf.gather(question_state, doc_idx_flat), start_state], 1), size,
+        hidden_end = tf.layers.dense(tf.concat([question_state, start_state], 1), size,
                                      name="hidden_end_1")
         hidden_end = tf.layers.dense(
             end_input, size, use_bias=False, name="hidden_end_2") + tf.expand_dims(hidden_end, 1)
