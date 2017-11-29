@@ -92,7 +92,7 @@ def compute_spans(start_scores, end_scores, answer2support, is_eval, support2que
         # we collect spans for top k starts and top k ends and select the top k from those top 2k
         doc_idx1, start_pointer1, end_pointer1, span_score1 = _get_top_k(
             start_scores, end_scores, beam_size, max_span_size, support2question)
-        doc_idx2, start_pointer2, end_pointer2, span_score2 = _get_top_k(
+        doc_idx2, end_pointer2, start_pointer2, span_score2 = _get_top_k(
             end_scores, start_scores, beam_size, -max_span_size, support2question)
 
         doc_idx = tf.concat([doc_idx1, doc_idx2], 1)
