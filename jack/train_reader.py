@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import math
 import os
 import random
 import shutil
@@ -8,7 +9,7 @@ import shutil
 import tensorflow as tf
 
 from jack import readers
-from jack.util.hooks import LossHook, ExamplesPerSecHook
+from jack.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,7 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
     # Hooks
     iter_interval = 1 if debug else log_interval
     hooks = [LossHook(reader, iter_interval, summary_writer=sw),
+             ETAHook(reader, iter_interval, int(math.ceil(len(train_data) / batch_size)), epochs),
              ExamplesPerSecHook(reader, batch_size, iter_interval, sw)]
 
     preferred_metric, best_metric = readers.eval_hooks[model].preferred_metric_and_initial_score()
