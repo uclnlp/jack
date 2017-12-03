@@ -8,7 +8,6 @@ import shutil
 
 from jack import readers
 from jack.core.tensorflow import TFReader
-from jack.core.torch import PyTorchReader
 from jack.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
 
 logger = logging.getLogger(__name__)
