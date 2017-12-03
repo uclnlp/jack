@@ -4,6 +4,36 @@ import tensorflow as tf
 from jack.tfutil import rnn
 
 
+def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1, conv_width=3,
+            dilations=None, reuse=False, with_projection=False, residual=False, name='encoder'):
+    if num_layers == 1:
+        if layer_type == 'lstm':
+            out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
+        elif layer_type == 'sru':
+            with_residual = sequence.get_shape()[2].value == repr_dim
+            out = bi_sru(repr_dim, sequence, seq_length, with_residual, name, reuse, with_projection)
+        elif layer_type == 'gru':
+            out = bi_rnn(repr_dim, tf.contrib.rnn.BlockGRUCell(repr_dim), sequence,
+                         seq_length, name, reuse, with_projection)
+        elif layer_type == 'gldr':
+            out = gated_linear_dilated_residual_network(
+                repr_dim, sequence, dilations, conv_width, name, reuse)
+        elif layer_type == 'convolution':
+            out = gated_linear_convnet(repr_dim, sequence, num_layers, conv_width, name, reuse)
+        elif layer_type == 'projection':
+            out = tf.layers.dense(sequence, repr_dim, name=name)
+        else:
+            raise ValueError("Unknown encoder type: %s" % type)
+    else:
+        out = encoder(sequence, seq_length, repr_dim, layer_type, num_layers - 1, conv_width,
+                      dilations, reuse, with_projection, name)
+        out = encoder(out, seq_length, repr_dim, layer_type, 1, conv_width,
+                      dilations, reuse, with_projection, name + str(num_layers - 1))
+    if residual:
+        out += sequence
+    return out
+
+
 # RNN Encoders
 def _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse=False, with_projection=False):
     with tf.variable_scope(name, reuse=reuse):

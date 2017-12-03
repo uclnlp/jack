@@ -4,7 +4,7 @@ description: >
   Train and Evaluate a Machine Reader
 
 # Reader model to use, see jack/readers/implementations.py for options
-model: null
+reader: null
 
 # name of this reader, serves as kind of a namespace for created parameters, defaults to name of the model
 name: null

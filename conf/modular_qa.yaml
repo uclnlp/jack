@@ -1,0 +1,56 @@
+description: >
+  FastQA configuration to train model on SQuAD as described in https://arxiv.org/abs/1703.04816.
+
+parent_config: './conf/jack.yaml'
+
+# loader to use in experiment
+loader: 'squad'
+
+# How large the support should be. Can be used for cutting or filtering QA examples
+max_support_length: -1
+
+train: 'data/SQuAD/train-v1.1.json'
+dev: 'data/SQuAD/dev-v1.1.json'
+test: null
+
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
+embedding_format: 'memory_map_dir'
+
+# embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
+
+# Use fixed vocab of pretrained embeddings
+vocab_from_embeddings: True
+
+epochs: 20
+
+dropout: 0.2
+
+batch_size: 64
+
+lowercase: False
+
+learning_rate_decay: 0.8
+
+# 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
+loss: 'max'
+
+with_char_embeddings: True
+model:
+    question_layer: null  # list of encoder modules
+    support_layer: null  # list of encoder modules
+    interaction_layer:
+      layer_type: null  # 'bidaf', 'attention_matching'
+      encoder:  # list of encoder modules that take support aligned with question as input
+    answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
+
+
+# encoder modules can be selected as wanted and are defined by the following keys
+# * repr_dim - dimensionality of output
+# * layer_type - 'lstm', 'gru', 'sru', 'gldr' (gated linear dilated residual network), 'convolution', 'projection'
+# * residual - whether this encoder should be residually employed
+# * num_layers number of times this is consecutively
+# 'convolution' requires another parameter, 'conv_width' (3 by default)
+# 'gldr' requires another parameters, 'conv_width' (3 by default) and 'dilations'
+# (a list of dilations for each layer of the gldr network)
+

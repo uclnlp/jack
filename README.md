@@ -40,7 +40,7 @@ $ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B
 Train a [FastQA][fastqa] model:
 
 ```bash
-$ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' model='fastqa_reader' \
+$ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' reader='fastqa_reader' \
 > repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' model_dir='./fastqa_reader' epochs=20 \
 > with_char_embeddings=True embedding_format='memory_map_dir' embedding_file='data/GloVe/glove.840B.300d.memory_map_dir' vocab_from_embeddings=True
 ```
@@ -54,7 +54,7 @@ $ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
 You want to train another model with the same configuration (e.g., bidaf)? No problem, just change the `model` flag:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=bidaf_reader
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml' reader=bidaf_reader
 $ # or use our pre defined bidaf config
 $ python3 bin/jack-train.py with config='./conf/bidaf.yaml'
 ```
@@ -117,7 +117,7 @@ $ ./data/SNLI/download.sh
 Then, for instance, train a [Decomposable Attention Model][dam]
 
 ```bash
-$ python3 bin/jack-train.py with model='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
+$ python3 bin/jack-train.py with reader='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
 > dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' \
 > model_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=64 \
 > embedding_format='memory_map_dir' embedding_file='data/GloVe/glove.840B.300d.memory_map_dir' vocab_from_embeddings=True
@@ -126,7 +126,7 @@ $ python3 bin/jack-train.py with model='dam_snli_reader' loader=snli train='data
 or the short version:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/snli.yaml' model=dam_snli_reader model_dir='./dam_reader'
+$ python3 bin/jack-train.py with config='./conf/dam.yaml' reader=dam_snli_reader model_dir='./dam_reader'
 ```
 
 Note, you can easily change the model to one of the other implemented NLI readers (e.g., `cbilstm_snli_reader`, `esim_snli_reader`)

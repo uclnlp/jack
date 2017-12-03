@@ -4,8 +4,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack.core import TensorPortTensors, TensorPort
-from jack.readers.extractive_qa.tensorflow.answer_layer import compute_spans
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
+from jack.readers.extractive_qa.tensorflow.answer_layer import compute_spans
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
 from jack.tfutil.misc import mask_for_lengths
@@ -19,10 +19,6 @@ class BiDAF(AbstractXQAModelModule):
         with tf.variable_scope("bidaf", initializer=tf.contrib.layers.xavier_initializer()):
             # Some helpers
             max_support_length = tf.reduce_max(tensors.support_length)
-
-            beam_size = 1
-            beam_size = tf.cond(tensors.is_eval, lambda: tf.constant(beam_size, tf.int32),
-                                lambda: tf.constant(1, tf.int32))
 
             input_size = shared_resources.config["repr_dim_input"]
             size = shared_resources.config["repr_dim"]
@@ -66,8 +62,8 @@ class BiDAF(AbstractXQAModelModule):
             # encode question and support
             encoder = shared_resources.config.get('encoder', 'lstm').lower()
             if encoder in ['lstm', 'sru', 'gru']:
-                encoded_question = self.rnn_encoder(size, emb_question, tensors.question_length, encoder)
-                encoded_support = self.rnn_encoder(size, emb_support, tensors.support_length, encoder, reuse=True)
+                encoded_question = self.encoder(size, emb_question, tensors.question_length, encoder)
+                encoded_support = self.encoder(size, emb_support, tensors.support_length, encoder, reuse=True)
                 projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
                 question = tf.layers.dense(encoded_question, size,
                                            kernel_initializer=projection_initializer, name='projection_q')
@@ -76,8 +72,8 @@ class BiDAF(AbstractXQAModelModule):
             else:
                 # follows https://openreview.net/pdf?id=HJRV1ZZAW
                 question = self.conv_encoder(size, emb_question, num_layers=5,
-                                             encoder_type='convnet', name='question_encoder')
-                support = self.conv_encoder(size, emb_support, encoder_type='convnet',
+                                             type='convnet', name='question_encoder')
+                support = self.conv_encoder(size, emb_support, type='convnet',
                                             num_layers=5, name='support_encoder')
 
             # align with support
@@ -117,38 +113,40 @@ class BiDAF(AbstractXQAModelModule):
             # 7. BiLSTM(G) = M
             # interaction_encoded = M
             if encoder in ['lstm', 'sru', 'gru']:
-                interaction_encoded = self.rnn_encoder(size, G, tensors.support_length, encoder,
-                                                       name='interaction_encoder')
+                interaction_encoded = self.encoder(size, G, tensors.support_length, encoder,
+                                                   name='interaction_encoder')
             else:
                 # follows https://openreview.net/pdf?id=HJRV1ZZAW
                 interaction_encoded = self.conv_encoder(size, G, dilations=[1, 2, 4, 8, 16, 1, 1, 1],
-                                                        encoder_type='gldr', name='interaction_encoder')
+                                                        type='gldr', name='interaction_encoder')
             start_encoded = tf.concat([interaction_encoded, G], 2)
 
-            # BiLSTM(M) = M^2 = end_encoded
-            if encoder in ['lstm', 'sru', 'gru']:
-                end_encoded = self.rnn_encoder(size, start_encoded, tensors.support_length, encoder, name='end_encoder')
-            else:
-                # follows https://openreview.net/pdf?id=HJRV1ZZAW
-                end_encoded = self.conv_encoder(size, start_encoded, num_layers=3,
-                                                encoder_type='convnet', name='end_encoder')
-            end_encoded = tf.concat([end_encoded, G], 2)
-            # 8. logits
-            start_scores = tf.squeeze(tf.layers.dense(start_encoded, 1, use_bias=False), 2)
-            end_scores = tf.squeeze(tf.layers.dense(end_encoded, 1, use_bias=False), 2)
-
-            # mask out-of-bounds slots by adding -1000
-            support_mask = mask_for_lengths(tensors.support_length)
-            start_scores = start_scores + support_mask
-            end_scores = end_scores + support_mask
-
-            start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-                compute_spans(start_scores, end_scores, tensors.answer2support, tensors.is_eval,
-                              tensors.support2question,
-                              beam_size=shared_resources.config.get("beam_size", 1),
-                              max_span_size=shared_resources.config.get("max_span_size", 16))
+            doc_idx, end_scores, predicted_end_pointer, predicted_start_pointer, start_scores = self.bidaf_answer_layer(
+                G, encoder, shared_resources, size, start_encoded, tensors)
 
             span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
             return TensorPort.to_mapping(self.output_ports, (start_scores, end_scores, span))
 
+    def bidaf_answer_layer(self, G, encoder, shared_resources, size, start_encoded, tensors):
+        # BiLSTM(M) = M^2 = end_encoded
+        if encoder in ['lstm', 'sru', 'gru']:
+            end_encoded = self.encoder(size, start_encoded, tensors.support_length, encoder, name='end_encoder')
+        else:
+            # follows https://openreview.net/pdf?id=HJRV1ZZAW
+            end_encoded = self.conv_encoder(size, start_encoded, num_layers=3,
+                                            type='convnet', name='end_encoder')
+        end_encoded = tf.concat([end_encoded, G], 2)
+        # 8. logits
+        start_scores = tf.squeeze(tf.layers.dense(start_encoded, 1, use_bias=False), 2)
+        end_scores = tf.squeeze(tf.layers.dense(end_encoded, 1, use_bias=False), 2)
+        # mask out-of-bounds slots by adding -1000
+        support_mask = mask_for_lengths(tensors.support_length)
+        start_scores = start_scores + support_mask
+        end_scores = end_scores + support_mask
+        start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
+            compute_spans(start_scores, end_scores, tensors.answer2support, tensors.is_eval,
+                          tensors.support2question,
+                          beam_size=shared_resources.config.get("beam_size", 1),
+                          max_span_size=shared_resources.config.get("max_span_size", 16))
+        return doc_idx, end_scores, predicted_end_pointer, predicted_start_pointer, start_scores

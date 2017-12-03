@@ -4,52 +4,44 @@ description: >
 parent_config: './conf/jack.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
-model: 'bidaf_reader'
+reader: 'bidaf_reader'
 
 # fixed experiment seed
 seed: 1337
 
-# loader to use in experiment
-loader: 'squad'
-
 # where to store the reader
 model_dir: './bidaf_reader'
 
-# How large the support should be. Can be used for cutting or filtering QA examples
-max_support_length: -1
-
-# Use also character based embeddings in readers which support it
 with_char_embeddings: True
 
-train: 'data/SQuAD/train-v1.1.json'
-dev: 'data/SQuAD/dev-v1.1.json'
-test: null
+repr_dim: &dim 100
 
-# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
-embedding_format: 'memory_map_dir'
 
-# embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
+model:
+    question_layer:
+      - repr_dim: *dim
+        layer_type: 'lstm'
+        num_layers: '1'
+    support_layer:
+      - repr_dim: *dim
+        layer_type: 'lstm'
+        num_layers: '1'
+    interaction_layer:
+      layer_type: 'bidaf'
+      encoder:
+          - repr_dim: *dim
+            layer_type: 'lstm'
+            num_layers: 1
+    answer_layer:
+      layer_type: 'bidaf'
+      max_span_size: 16
+      repr_dim: *dim
+      encoder:  #only needed for bidaf answer layer
+        repr_dim: *dim
+        layer_type: 'lstm'
+        num_layers: 1
 
-# Use fixed vocab of pretrained embeddings
-vocab_from_embeddings: True
 
-repr_dim: 100
 
-epochs: 20
 
-dropout: 0.2
 
-batch_size: 64
-
-lowercase: True
-
-learning_rate_decay: 0.5
-
-# 'lstm', 'gru', 'sru' (simple recurrent unit), 'gldr' (gated linear dilated residual network)
-encoder: 'lstm'
-
-max_span_size: 16
-
-# 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
-loss: 'max'

@@ -1,0 +1,81 @@
+import tensorflow as tf
+
+from jack.core import TensorPortTensors, TensorPort
+from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
+from jack.readers.extractive_qa.tensorflow.answer_layer import answer_layer
+from jack.tfutil.embedding import conv_char_embedding
+from jack.tfutil.highway import highway_network
+from jack.tfutil.interaction_layer import interaction_layer
+from jack.tfutil.sequence_encoder import encoder
+
+
+class ModularQAModel(AbstractXQAModelModule):
+    def create_output(self, shared_resources, input_tensors):
+        tensors = TensorPortTensors(input_tensors)
+
+        encoded_question, encoded_support = self.embedding_layer(shared_resources, tensors)
+
+        model = shared_resources.config['model']
+
+        with tf.variable_scope('encoder'):
+            for i, layer in enumerate(model['question_layer']):
+                encoded_question = encoder(encoded_question, tensors.question_length,
+                                           name='question_%d' % i, **layer)
+            for i, layer in enumerate(model['support_layer']):
+                encoded_support = encoder(encoded_support, tensors.support_length,
+                                          name='support_%d' % i, **layer)
+
+        with tf.variable_scope('interaction'):
+            interaction_layer_module = model.get('interaction_layer')
+            if interaction_layer:
+                encoded_support = interaction_layer(
+                    encoded_support, tensors.support_length, encoded_question, tensors.question_length,
+                    tensors.support2question, layer_type=interaction_layer_module['layer_type'])
+                for i, layer in enumerate(interaction_layer_module.get('encoder', [])):
+                    encoded_support = encoder(encoded_support, tensors.support_length,
+                                              name='encoder_%d' % i, **layer)
+
+        with tf.variable_scope('answer_layer'):
+            answer_layer_config = model['answer_layer']
+            start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
+                answer_layer(size, encoded_question, tensors.question_length, encoded_support,
+                             tensors.support_length,
+                             tensors.support2question, tensors.answer2support, tensors.is_eval,
+                             tensors.correct_start, **answer_layer_config)
+
+        span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
+
+        return TensorPort.to_mapping(self.output_ports, (start_scores, end_scores, span))
+
+    def embedding_layer(self, shared_resources, tensors):
+        # embedding layer
+        input_size = shared_resources.config["repr_dim_input"]
+        size = shared_resources.config["repr_dim"]
+        with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
+        # 1. char embeddings + word embeddings
+        # set shapes for inputs
+        tensors.emb_question.set_shape([None, None, input_size])
+        tensors.emb_support.set_shape([None, None, input_size])
+        emb_question = tensors.emb_question
+        emb_support = tensors.emb_support
+        # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
+        if with_char_embeddings:
+            # compute combined embeddings
+            [char_emb_question, char_emb_support] = conv_char_embedding(
+                len(shared_resources.char_vocab), size, tensors.word_chars, tensors.word_char_length,
+                [tensors.question_words, tensors.support_words])
+            # 3. cat
+            emb_question = tf.concat([emb_question, char_emb_question], 2)
+            emb_support = tf.concat([emb_support, char_emb_support], 2)
+
+            # highway layer to allow for interaction between concatenated embeddings
+            # 3. highway
+            # following bidaf notation here  (qq=question, xx=support)
+            emb_question = highway_network(emb_question, 2, scope='question_highway')
+            emb_support = highway_network(emb_support, 2, scope='support_highway')
+        else:
+            # apply projection
+            emb_support = tf.layers.dense(emb_support, size, tf.tanh)
+            emb_question = tf.layers.dense(emb_question, size, tf.tanh)
+
+        return emb_question, emb_support
