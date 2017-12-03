@@ -97,6 +97,9 @@ with_char_embeddings: True
 # If the vocabulary should be pruned to the most frequent words
 prune: False
 
+# maximum number of supports to consider (as scored by tf idf against question in extractive QA for instance)
+max_num_support: null
+
 # Directory to write reader to
 model_dir: null
 
