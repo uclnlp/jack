@@ -7,7 +7,13 @@ flexibility when (re-)using modules in different combinations.
 import logging
 from typing import Mapping, Sequence
 
+import numpy as np
 import tensorflow as tf
+
+try:
+    import torch
+except ImportError as e:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +47,45 @@ class TensorPort:
         Returns: a placeholder of same type, shape and name.
         """
         return tf.placeholder(self.dtype, self.shape, self.name)
+
+    def create_torch_variable(self, value, gpu=False):
+        """Convenience method that produces a tensor given the value of the defined type.
+
+        Returns: a torch tensor of same type.
+        """
+        if isinstance(value, torch.autograd.Variable):
+            if gpu:
+                value = value.cuda()
+            return value
+        if not torch.is_tensor(value):
+            if not isinstance(value, np.ndarray):
+                value = np.array(value, dtype=self.dtype.as_numpy_dtype)
+            else:
+                value = value.astype(self.dtype.as_numpy_dtype)
+            if value.size == 0:
+                return value
+            allowed = [tf.int16, tf.int32, tf.int64, tf.float16, tf.float32, tf.float64, tf.int8]
+            if self.dtype in allowed:
+                value = torch.autograd.Variable(torch.from_numpy(value))
+        else:
+            value = torch.autograd.Variable(value)
+        if gpu and isinstance(value, torch.autograd.Variable):
+            value = value.cuda()
+        return value
+
+    def torch_to_numpy(self, value):
+        """Convenience method that produces a tensor given the value of the defined type.
+
+        Returns: a torch tensor of same type.
+        """
+        if isinstance(value, torch.autograd.Variable):
+            value = value.data
+        if torch.is_tensor(value):
+            return value.cpu().numpy()
+        elif isinstance(value, np.ndarray):
+            return value
+        else:
+            return np.ndarray(value)
 
     def get_description(self):
         """Returns a multi-line description string of the TensorPort."""
@@ -94,6 +139,11 @@ class TensorPortWithDefault(TensorPort):
                                                                                                      ph.dtype,
                                                                                                      self.dtype))
         return ph
+
+    def create_torch_variable(self, value, gpu=False):
+        if value is None:
+            value = self.default_value
+        return super(TensorPortWithDefault, self).create_torch_variable(value, gpu)
 
 
 class Ports:

@@ -126,7 +126,7 @@ def _get_top_k(scores1, scores2, k, max_span_size, support2question):
     # [num_questions * beam_size, support_length]
     scores2 = tf.gather(scores2, doc_idx_flat)
     if max_span_size < 0:
-        pointer_flat1, max_span_size = pointer_flat1 - max_span_size + 1, -max_span_size
+        pointer_flat1, max_span_size = pointer_flat1 + max_span_size + 1, -max_span_size
     left_mask = misc.mask_for_lengths(tf.cast(pointer_flat1, tf.int32),
                                       max_support_length, mask_right=False)
     right_mask = misc.mask_for_lengths(tf.cast(pointer_flat1 + max_span_size, tf.int32),

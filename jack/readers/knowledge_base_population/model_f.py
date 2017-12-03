@@ -4,6 +4,7 @@ from random import shuffle
 from typing import Any
 
 from jack.core import *
+from jack.core.tensorflow import TFModelModule
 from jack.util.map import numpify
 from jack.util.preprocessing import transpose_dict_of_lists
 
