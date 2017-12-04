@@ -13,7 +13,7 @@ reader_dir: './jack_qa_reader'
 
 with_char_embeddings: True
 
-repr_dim: &dim 100
+repr_dim: &dim 150
 
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
@@ -34,26 +34,26 @@ model:
     layer_type: 'attention_matching'
     attn_type: 'diagonal_bilinear'
     scaled: True
-    encoder:
-    - repr_dim: *dim
-      layer_type: 'glu_conv'
-      conv_width: 5
-      num_layers: 1
-      name: 'glu_conv_interaction_1'
-    - repr_dim: *dim
-      layer_type: 'self_attn'
-      attn_type: 'diagonal_bilinear'
-      scaled: True
-    - repr_dim: *dim
-      layer_type: 'lstm'
-      with_projection: True
-      num_layers: 1
-    - repr_dim: *dim
-      layer_type: 'glu_conv'
-      conv_width: 5
-      num_layers: 2
-      name: 'glu_conv_interaction_2'
-      residual: True
+  encoder_layer:
+  - repr_dim: *dim
+    layer_type: 'glu_conv'
+    conv_width: 5
+    num_layers: 1
+    name: 'glu_conv_interaction_1'
+  - repr_dim: *dim
+    layer_type: 'self_attn'
+    attn_type: 'diagonal_bilinear'
+    scaled: True
+  - repr_dim: *dim
+    layer_type: 'lstm'
+    with_projection: True
+    num_layers: 1
+  - repr_dim: *dim
+    layer_type: 'glu_conv'
+    conv_width: 5
+    num_layers: 2
+    name: 'glu_conv_interaction_2'
+    residual: True
   answer_layer:
     layer_type: 'bilinear'
     max_span_size: 16

@@ -43,7 +43,7 @@ model:
   support_layer: null  # list of encoder modules
   interaction_layer:
     layer_type: null  # 'bidaf', 'attention_matching'
-    encoder:  # list of encoder modules that take support aligned with question as input
+  encoder_layer: null  # list of encoder modules that take support aligned with question as input
   answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
 
 

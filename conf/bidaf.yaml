@@ -21,24 +21,24 @@ model:
   - repr_dim: *dim
     layer_type: 'lstm'
     num_layers: 1
-    with_projection: True # not in the original bidaf implementation, cut helps
+    with_projection: True # not in the original bidaf implementation, but helps
   support_layer:
   - repr_dim: *dim
     layer_type: 'lstm'
     num_layers: 1
-    with_projection: True # not in the original bidaf implementation, cut helps
+    with_projection: True # not in the original bidaf implementation, but helps
   interaction_layer:
     layer_type: 'bidaf'
-    encoder:
-    - repr_dim: *dim
-      layer_type: 'lstm'
-      with_projection: True # not in the original bidaf implementation, cut helps
-      num_layers: 2
+  encoder_layer:
+  - repr_dim: *dim
+    layer_type: 'lstm'
+    with_projection: True # not in the original bidaf implementation, but helps
+    num_layers: 2
   answer_layer:
     layer_type: 'bidaf'
     max_span_size: 16
     repr_dim: *dim
-    encoder:  #only needed for bidaf answer layer
+    encoder:  # only needed for bidaf answer layer
       repr_dim: *dim
       layer_type: 'lstm'
       num_layers: 1

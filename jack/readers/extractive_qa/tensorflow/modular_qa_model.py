@@ -25,7 +25,7 @@ class ModularQAModel(AbstractXQAModelModule):
 
         model = shared_resources.config['model']
 
-        with tf.variable_scope('encoder'):
+        with tf.variable_scope('contextual_encoder'):
             for i, layer in enumerate(model['question_layer']):
                 if 'name' not in layer:
                     layer['name'] = 'question_%d' % i
@@ -35,7 +35,7 @@ class ModularQAModel(AbstractXQAModelModule):
                     layer['name'] = 'support_%d' % i
                 encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
-        with tf.variable_scope('interaction_layer'):
+        with tf.variable_scope('interaction'):
             interaction_layer_module = model.get('interaction_layer')
             if interaction_layer:
                 encoded_support = interaction_layer(
@@ -45,10 +45,12 @@ class ModularQAModel(AbstractXQAModelModule):
                     scaled=interaction_layer_module.get('scaled', True),
                     name=interaction_layer_module.get('name', 'interaction_attention'),
                 )
-                for i, layer in enumerate(interaction_layer_module.get('encoder', [])):
-                    if 'name' not in layer:
-                        layer['name'] = 'encoder_%d' % i
-                    encoded_support = encoder(encoded_support, tensors.support_length, **layer)
+
+        with tf.variable_scope('encoder'):
+            for i, layer in enumerate(model.get('encoder_layer', [])):
+                if 'name' not in layer:
+                    layer['name'] = 'encoder_%d' % i
+                encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
         encoded_question, encoded_support = tf.cond(
             tensors.is_eval,
