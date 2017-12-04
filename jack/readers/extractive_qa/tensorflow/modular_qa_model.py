@@ -14,6 +14,14 @@ class ModularQAModel(AbstractXQAModelModule):
         tensors = TensorPortTensors(input_tensors)
 
         encoded_question, encoded_support = self.embedding_layer(shared_resources, tensors)
+        keep_prob = 1.0 - shared_resources.config.get("dropout", 0.0)
+        encoded_question, encoded_question = tf.cond(
+            tensors.is_eval,
+            lambda: (encoded_question, encoded_support),
+            lambda: (
+            tf.nn.dropout(encoded_question, keep_prob, noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
+            tf.nn.dropout(encoded_support, keep_prob, noise_shape=[1, 1, encoded_support.get_shape()[-1].value]))
+        )
 
         model = shared_resources.config['model']
 
@@ -41,6 +49,14 @@ class ModularQAModel(AbstractXQAModelModule):
                     if 'name' not in layer:
                         layer['name'] = 'encoder_%d' % i
                     encoded_support = encoder(encoded_support, tensors.support_length, **layer)
+
+        encoded_question, encoded_question = tf.cond(
+            tensors.is_eval,
+            lambda: (encoded_question, encoded_support),
+            lambda: (
+            tf.nn.dropout(encoded_question, keep_prob, noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
+            tf.nn.dropout(encoded_support, keep_prob, noise_shape=[1, 1, encoded_support.get_shape()[-1].value]))
+        )
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
