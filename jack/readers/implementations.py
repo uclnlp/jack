@@ -67,6 +67,19 @@ def create_shared_resources(resources_or_config: Union[dict, SharedResources] = 
 
 
 @extractive_qa_reader
+def multiscale_qa_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a FastQA reader instance (extractive qa model)."""
+    from jack.readers.extractive_qa.tensorflow.multiscale_model import MultiscaleQA, XQAMultiScaleOutputModule
+    from jack.readers.extractive_qa.shared import XQAInputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+
+    input_module = XQAInputModule(shared_resources)
+    model_module = MultiscaleQA(shared_resources)
+    output_module = XQAMultiScaleOutputModule(shared_resources)
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@extractive_qa_reader
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.tensorflow.fastqa import FastQAModule
