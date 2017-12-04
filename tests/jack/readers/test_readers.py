@@ -65,7 +65,7 @@ def smoke_test(reader_name):
     assert answers, "{} should produce answers".format(reader_name)
 
 
-BLACKLIST = ['fastqa_reader_torch']
+BLACKLIST = ['fastqa_reader_torch', 'modular_qa_reader']
 READERS = [r for r in readers.readers.keys()
            if r not in BLACKLIST]
 
