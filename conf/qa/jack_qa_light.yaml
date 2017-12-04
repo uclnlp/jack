@@ -23,14 +23,12 @@ model:
   encoder_layer:
   - input: 'question'
     layer_type: 'conv_glu'
-    activation: 'relu'
     conv_width: 5
     num_layers: 2
     residual: True
 
   - input: 'support'
     layer_type: 'conv_glu'
-    activation: 'relu'
     conv_width: 5
     num_layers: 2
     residual: True
