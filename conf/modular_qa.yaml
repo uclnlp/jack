@@ -64,6 +64,7 @@ model:
 # 'dot', 'bilinear', 'diagonal_bilinear' have additional scale attribute which scales attn scores by sqrt of repr_dim
 # of input states, it is recommended to use it for 'dot' and 'diagonal_bilinear'
 # 'mlp' has additional 'repr_dim' and 'activation' property for the dimensionality and activation of the hidden layer
+# you can set the number of parallel attention heads using num_attn_heads
 #
 # You can reuse encoders (i.e., their parameters) by giving them the same name and set 'reuse: True'
 

@@ -36,9 +36,9 @@ model:
     conv_width: 5
     num_layers: 1
     name: 'glu_conv_interaction_1'
-  - layer_type: 'self_attn'
-    attn_type: 'diagonal_bilinear'
-    scaled: True
+  - layer_type: 'self_attn'  # concatenates attention weighted state with state at particular position
+    attn_type: 'bilinear'
+    num_attn_heads: 3
   - layer_type: 'lstm'
     with_projection: True
     num_layers: 1

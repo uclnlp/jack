@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1, conv_width=3,
-            dilations=None, reuse=False, residual=False, attn_type=None, scaled=False, activation=None,
+            dilations=None, reuse=False, residual=False, attn_type=None, num_attn_heads=1, scaled=False,
+            activation=None,
             with_projection=False, name='encoder'):
     if num_layers == 1:
         if layer_type == 'lstm':
@@ -32,16 +33,18 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
             if activation:
                 out = activation_from_string(activation)(out)
         elif layer_type == 'self_attn':
-            out = self_attention(sequence, seq_length, attn_type, scaled, repr_dim, activation_from_string(activation),
-                                 name, reuse)[2]
-            out = tf.concat([sequence, out], 2)
+            outs = [sequence]
+            for i in range(num_attn_heads):
+                outs.append(self_attention(sequence, seq_length, attn_type, scaled, repr_dim,
+                                           activation_from_string(activation), name + str(i), reuse)[2])
+            out = tf.concat(outs, 2)
         else:
             raise ValueError("Unknown encoder type: %s" % layer_type)
     else:
         out = encoder(sequence, seq_length, repr_dim, layer_type, num_layers - 1, conv_width,
-                      dilations, reuse, False, attn_type, scaled, activation, with_projection, name)
+                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_projection, name)
         out = encoder(out, seq_length, repr_dim, layer_type, 1, conv_width,
-                      dilations, reuse, False, attn_type, scaled, activation, with_projection,
+                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_projection,
                       name + str(num_layers - 1), )
     if residual:
         if out.get_shape()[-1].value != sequence.get_shape()[-1].value:
