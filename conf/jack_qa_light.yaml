@@ -30,6 +30,7 @@ model:
     residual: True
   interaction_layer:  # saving computation by running mostly conv nets here
     layer_type: 'attention_matching'
+    gated: True  # we gate the attention with a scalar gate because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     attn_type: 'diagonal_bilinear'
     scaled: True
   encoder_layer:
@@ -39,6 +40,7 @@ model:
     name: 'glu_conv_interaction_1'
   - layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
     attn_type: 'bilinear'
+    gated: True  # we gate the attention with a scalar gate because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 1
   - layer_type: 'lstm'  # the only application of a RNN
     with_projection: True

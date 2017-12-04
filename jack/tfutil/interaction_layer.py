@@ -5,14 +5,14 @@ from jack.tfutil.misc import mask_for_lengths
 
 
 def interaction_layer(support, support_length, question, question_length, support2question,
-                      layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True,
+                      layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True, gated=True,
                       name='interaction_layer', reuse=False):
     with tf.variable_scope(name, reuse):
         question = tf.gather(question, support2question)
         question_length = tf.gather(question_length, support2question)
         if layer_type == 'attention_matching':
             return attention_matching_layer(support, support_length, question, question_length, support2question,
-                                            attn_type, scaled)
+                                            attn_type, scaled, gated)
         elif layer_type == 'bidaf':
             return bidaf_layer(support, support_length, question, question_length, support2question)
         else:
@@ -36,7 +36,7 @@ def bidaf_layer(support, support_length, question, question_length, support2ques
 
 
 def attention_matching_layer(support, support_length, question, question_length, support2question,
-                             attn_type='diagonal_bilinear', scaled=True):
+                             attn_type='diagonal_bilinear', scaled=True, gated=False):
     """Encodes support conditioned on question, e.g., using word-by-word attention."""
     if attn_type == 'bilinear':
         _, _, attn_states = attention.bilinear_attention(support, question, question_length, scaled)
@@ -49,5 +49,9 @@ def attention_matching_layer(support, support_length, question, question_length,
                                                     question_length)
     else:
         raise ValueError("Unknown attention type: %s" % attn_type)
+
+    if gated:
+        g = tf.sigmoid(tf.einsum('abc,abc->ab', tf.layers.dense(attn_states, support.get_shape()[-1].value), support))
+        attn_states *= tf.expand_dims(g, 2)
 
     return tf.concat([support, attn_states], 2)

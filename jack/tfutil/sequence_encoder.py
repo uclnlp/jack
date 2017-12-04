@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 
 def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1, conv_width=3,
             dilations=None, reuse=False, residual=False, attn_type=None, num_attn_heads=1, scaled=False,
-            activation=None,
-            with_projection=False, name='encoder'):
+            activation=None, gated=False, with_projection=False, name='encoder', **kwargs):
     if num_layers == 1:
         if layer_type == 'lstm':
             out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
@@ -35,17 +34,19 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
         elif layer_type == 'self_attn':
             outs = [sequence]
             for i in range(num_attn_heads):
-                outs.append(self_attention(sequence, seq_length, attn_type, scaled, repr_dim,
-                                           activation_from_string(activation), name + str(i), reuse)[2])
+                attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim, gated,
+                                      activation_from_string(activation), name + str(i), reuse)
+                outs.append(attn)
             out = tf.concat(outs, 2)
         else:
             raise ValueError("Unknown encoder type: %s" % layer_type)
     else:
         out = encoder(sequence, seq_length, repr_dim, layer_type, num_layers - 1, conv_width,
-                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_projection, name)
+                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, gated,
+                      with_projection, name)
         out = encoder(out, seq_length, repr_dim, layer_type, 1, conv_width,
-                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_projection,
-                      name + str(num_layers - 1), )
+                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, gated,
+                      with_projection, name + str(num_layers - 1))
     if residual:
         if out.get_shape()[-1].value != sequence.get_shape()[-1].value:
             logging.error('Residual connection only possible if input to sequence encoder %s of type %s has same '
@@ -145,16 +146,21 @@ def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_line
 
 
 # Self attention layers
-def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=None, activation=None,
+def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=None, activation=None, gated=False,
                    name='self_attention', reuse=False):
     with tf.variable_scope(name, reuse):
         if attn_type == 'bilinear':
-            return attention.bilinear_attention(inputs, inputs, lengths, scaled)
+            attn_states = attention.bilinear_attention(inputs, inputs, lengths, scaled)[2]
         elif attn_type == 'dot':
-            return attention.dot_attention(inputs, inputs, lengths, scaled)
+            attn_states = attention.dot_attention(inputs, inputs, lengths, scaled)[2]
         elif attn_type == 'diagonal_bilinear':
-            return attention.diagonal_bilinear_attention(inputs, inputs, lengths, scaled)
+            attn_states = attention.diagonal_bilinear_attention(inputs, inputs, lengths, scaled)[2]
         elif attn_type == 'mlp':
-            return attention.mlp_attention(repr_dim, activation, inputs, inputs, lengths)
+            attn_states = attention.mlp_attention(repr_dim, activation, inputs, inputs, lengths)[2]
         else:
             raise ValueError("Unknown attention type: %s" % attn_type)
+
+        if gated:
+            g = tf.sigmoid(tf.einsum('abc,abc->ab', tf.layers.dense(attn_states, inputs.get_shape()[-1].value), inputs))
+            attn_states *= tf.expand_dims(g, 2)
+    return attn_states
