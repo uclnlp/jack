@@ -8,6 +8,8 @@ def interaction_layer(support, support_length, question, question_length, suppor
                       layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True,
                       name='interaction_layer', reuse=False):
     with tf.variable_scope(name, reuse):
+        question = tf.gather(question, support2question)
+        question_length = tf.gather(question_length, support2question)
         if layer_type == 'attention_matching':
             return attention_matching_layer(support, support_length, question, question_length, support2question,
                                             attn_type, scaled)
@@ -19,29 +21,12 @@ def interaction_layer(support, support_length, question, question_length, suppor
 
 def bidaf_layer(support, support_length, question, question_length, support2question):
     """Encodes support conditioned on question, e.g., using word-by-word attention."""
-    question = tf.gather(question, support2question)
-    size = support.get_shape()[-1].value
+    attn_scores, attn_probs, question_weighted = attention.diagonal_bilinear_attention(
+        support, question, question_length, False)
 
-    # a_i,j= w1 * s_i + w2 * q_j + w3 * q_j * s_i
-    w_3 = tf.get_variable("w3", [size, 1])
-    question_mul = question * tf.reshape(w_3, [1, 1, size])
+    attn_scores += tf.expand_dims(mask_for_lengths(support_length, tf.shape(attn_scores)[1]), 2)
 
-    # a = [batch, support_length, question_length]
-    a = (tf.einsum('ijk,ilk->ijl', support, question_mul) +
-         tf.layers.dense(support, 1) + tf.reshape(tf.layers.dense(question, 1), [-1, 1, tf.shape(question)[1]]))
-
-    a += tf.expand_dims(mask_for_lengths(support_length), 2)
-    a += tf.expand_dims(mask_for_lengths(question_length), 1)
-
-    # support to question attention
-    att_question = tf.nn.softmax(a, 2)  # softmax over question for each support token
-    question_weighted = tf.einsum('ijl,ilk->ijk', att_question, question)
-
-    # support to question attention
-    # 1. filter important context words with max
-    # 2. softmax over question to get the question words which are most relevant for the most relevant context words
-    # max(a) = [batch, length1, length2] -> [ batch, length1] = most important context
-    max_support = tf.reduce_max(a, 2)
+    max_support = tf.reduce_max(attn_scores, 2)
     support_attention = tf.nn.softmax(max_support, 1)
     support_weighted = tf.einsum('ij,ijk->ik', support_attention, support)
     support_weighted = tf.expand_dims(support_weighted, 1)
