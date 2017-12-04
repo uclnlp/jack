@@ -15,7 +15,7 @@ class ModularQAModel(AbstractXQAModelModule):
 
         encoded_question, encoded_support = self.embedding_layer(shared_resources, tensors)
         keep_prob = 1.0 - shared_resources.config.get("dropout", 0.0)
-        encoded_question, encoded_question = tf.cond(
+        encoded_question, encoded_support = tf.cond(
             tensors.is_eval,
             lambda: (encoded_question, encoded_support),
             lambda: (
@@ -50,7 +50,7 @@ class ModularQAModel(AbstractXQAModelModule):
                         layer['name'] = 'encoder_%d' % i
                     encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
-        encoded_question, encoded_question = tf.cond(
+        encoded_question, encoded_support = tf.cond(
             tensors.is_eval,
             lambda: (encoded_question, encoded_support),
             lambda: (
