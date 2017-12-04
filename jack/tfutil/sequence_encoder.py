@@ -161,6 +161,7 @@ def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=
             raise ValueError("Unknown attention type: %s" % attn_type)
 
         if gated:
-            g = tf.sigmoid(tf.einsum('abc,abc->ab', tf.layers.dense(attn_states, inputs.get_shape()[-1].value), inputs))
+            g = tf.sigmoid(tf.einsum('abc,abc->ab',
+                                     tf.layers.dense(inputs, attn_states.get_shape()[-1].value), attn_states))
             attn_states *= tf.expand_dims(g, 2)
     return attn_states

@@ -51,7 +51,8 @@ def attention_matching_layer(support, support_length, question, question_length,
         raise ValueError("Unknown attention type: %s" % attn_type)
 
     if gated:
-        g = tf.sigmoid(tf.einsum('abc,abc->ab', tf.layers.dense(attn_states, support.get_shape()[-1].value), support))
+        g = tf.sigmoid(tf.einsum('abc,abc->ab',
+                                 tf.layers.dense(support, attn_states.get_shape()[-1].value), attn_states))
         attn_states *= tf.expand_dims(g, 2)
 
     return tf.concat([support, attn_states], 2)
