@@ -67,6 +67,9 @@ optimizer: 'adam'
 # Learning rate, default 0.001
 learning_rate: 0.001
 
+# Minimum learning rate, default 0.001
+min_learning_rate: 0.0001
+
 # Learning rate decay, default 1 (disabled)
 learning_rate_decay: 1
 

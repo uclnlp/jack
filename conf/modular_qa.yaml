@@ -32,7 +32,9 @@ batch_size: 64
 
 lowercase: False
 
-learning_rate_decay: 0.8
+learning_rate: 0.001
+min_learning_rate: 0.0001
+learning_rate_decay: 0.5
 
 # 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
 loss: 'sum'

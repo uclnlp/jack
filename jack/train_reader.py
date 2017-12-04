@@ -35,6 +35,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
     l2 = configuration.get('l2')
     optimizer = configuration.get('optimizer')
     learning_rate = configuration.get('learning_rate')
+    min_learning_rate = configuration.get('min_learning_rate')
     learning_rate_decay = configuration.get('learning_rate_decay')
     log_interval = configuration.get('log_interval')
     validation_interval = configuration.get('validation_interval')
@@ -47,7 +48,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
         clip_value = - abs(clip_value), abs(clip_value)
 
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32, trainable=False)
-    lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
+    lr_decay_op = learning_rate.assign(tf.maximum(learning_rate_decay * learning_rate, min_learning_rate))
 
     name_to_optimizer = {
         'gd': tf.train.GradientDescentOptimizer,
