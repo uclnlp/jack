@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 
 import tensorflow as tf
 
@@ -14,7 +15,7 @@ def apply_attention(attn_scores, states, length, is_self=False):
     attn_scores += tf.expand_dims(misc.mask_for_lengths(length, tf.shape(attn_scores)[2]), 1)
     if is_self:
         # exclude attending to state itself
-        attn_scores += tf.expand_dims(tf.diag(tf.fill([tf.shape(states)[1]], -1e6)), 0)
+        attn_scores += tf.expand_dims(tf.diag(tf.fill([tf.shape(attn_scores)[1]], -1e6)), 0)
     attn_probs = tf.nn.softmax(attn_scores)
     attn_states = tf.einsum('abd,adc->abc', attn_probs, states)
     return attn_scores, attn_probs, attn_states
@@ -28,10 +29,10 @@ def dot_attention(seq1, seq2, len2, scaled=True):
 
 
 def bilinear_attention(seq1, seq2, len2, scaled=True):
-    attn_scores = tf.einsum('abc,adc->abd', tf.layers.dense(seq1, seq2.get_shape()[-1].value), seq2)
+    attn_scores = tf.einsum('abc,adc->abd', tf.layers.dense(seq1, seq2.get_shape()[-1].value, use_bias=False), seq2)
     if scaled:
-        attn_scores /= tf.sqrt(float(seq1.get_shape()[-1].value))
-    return apply_attention(seq1, seq2, len2, is_self=seq1 is seq2)
+        attn_scores /= math.sqrt(float(seq1.get_shape()[-1].value))
+    return apply_attention(attn_scores, seq2, len2, is_self=seq1 is seq2)
 
 
 def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True):
