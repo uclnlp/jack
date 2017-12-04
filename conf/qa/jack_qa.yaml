@@ -40,8 +40,9 @@ model:
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
 
-  - input: 'support'
-    layer_type: 'word_in_question'
+  - input: ['support', 'word_in_question', 'word_in_question']  # 2x wiq because lstm impl likes even inputs
+    output: 'support'
+    layer_type: 'concat'
   - input: 'support'
     layer_type: 'lstm'  # the only application of a RNN
     with_projection: True

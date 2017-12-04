@@ -28,17 +28,12 @@ class ModularQAModel(AbstractXQAModelModule):
 
         inputs = {'question': encoded_question, 'support': encoded_support}
         inputs_length = {'question': tensors.question_length, 'support': tensors.support_length}
-        inputs_mapping = {'question': None, 'support': tensors.support2question}
+        inputs_mapping = {'question': None, 'support': tensors.support2question,
+                          'word_in_question': tf.expand_dims(tensors.word_in_question, 2)}
 
         for i, layer in enumerate(model['encoder_layer']):
             key = layer['input']
             out_key = layer.get('output', key)
-            if layer['layer_type'] == 'word_in_question':
-                key = layer['input']
-                # add 2x wiq to keep dimensionality even, otherwise FusedLSTM complains...
-                inputs[out_key] = tf.concat([inputs[key],
-                                             tf.stack([tensors.word_in_question, tensors.word_in_question], 2)], 2)
-                continue
 
             if layer['layer_type'] == 'concat':
                 inputs[out_key] = tf.concat([inputs[k] for k in key], 2)
