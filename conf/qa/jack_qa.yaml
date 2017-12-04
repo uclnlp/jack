@@ -34,19 +34,25 @@ model:
   - input: 'support'
     dependent: 'question'
     layer_type: 'coattention'
-    attn_type: 'diagonal_bilinear'
+    attn_type: 'bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
 
   - input: 'support'
+    layer_type: 'projection'
+    activation: 'relu'
+  - input: 'support'
     layer_type: 'conv'
     activation: 'relu'
     conv_width: 5
+    residual: True
+
   - input: 'support'
     layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
     attn_type: 'bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 3
+
   - input: 'support'
     layer_type: 'word_in_question'
   - input: 'support'

@@ -33,6 +33,8 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
                 repr_dim, sequence, dilations, conv_width, name, reuse)
         elif layer_type == 'conv':
             out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
+        elif layer_type == 'conv_glu':
+            out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
         elif layer_type == 'projection':
             out = tf.layers.dense(sequence, repr_dim, name=name)
             if activation:
