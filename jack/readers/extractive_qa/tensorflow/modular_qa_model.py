@@ -54,18 +54,20 @@ class ModularQAModel(AbstractXQAModelModule):
                     inputs_mapping[key], **layer)
             else:
                 inputs[out_key] = encoder(inputs[key], inputs_length[key], **layer)
+            inputs_length[out_key] = inputs_length[key]
+            inputs_mapping[out_key] = inputs_mapping[key]
+            dropout = layer.get('dropout', shared_resources.config.get("dropout", 0.0))
+            if dropout > 0.0:
+                inputs[out_key] = tf.cond(
+                    tensors.is_eval,
+                    lambda: inputs[out_key],
+                    lambda: tf.nn.dropout(
+                        inputs[out_key], keep_prob, noise_shape=[1, 1, inputs[out_key].get_shape()[-1].value]))
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
             encoded_question = inputs[answer_layer_config.get('question', 'question')]
             encoded_support = inputs[answer_layer_config.get('support', 'support')]
-            encoded_question, encoded_support = tf.cond(
-                tensors.is_eval,
-                lambda: (encoded_question, encoded_support),
-                lambda: (tf.nn.dropout(encoded_question, keep_prob,
-                                       noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
-                         tf.nn.dropout(encoded_support, keep_prob,
-                                       noise_shape=[1, 1, encoded_support.get_shape()[-1].value])))
 
             if 'repr_dim' not in answer_layer_config:
                 answer_layer_config['repr_dim'] = repr_dim
