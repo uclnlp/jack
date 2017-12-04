@@ -5,14 +5,14 @@ from jack.tfutil.misc import mask_for_lengths
 
 
 def interaction_layer(support, support_length, question, question_length, support2question,
-                      layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True, gated=True,
+                      layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True, with_sentinel=False,
                       name='interaction_layer', reuse=False):
     with tf.variable_scope(name, reuse):
         question = tf.gather(question, support2question)
         question_length = tf.gather(question_length, support2question)
         if layer_type == 'attention_matching':
             return attention_matching_layer(support, support_length, question, question_length, support2question,
-                                            attn_type, scaled, gated)
+                                            attn_type, scaled, with_sentinel)
         elif layer_type == 'bidaf':
             return bidaf_layer(support, support_length, question, question_length, support2question)
         else:
@@ -36,23 +36,19 @@ def bidaf_layer(support, support_length, question, question_length, support2ques
 
 
 def attention_matching_layer(support, support_length, question, question_length, support2question,
-                             attn_type='diagonal_bilinear', scaled=True, gated=False):
+                             attn_type='diagonal_bilinear', scaled=True, with_sentinel=False):
     """Encodes support conditioned on question, e.g., using word-by-word attention."""
     if attn_type == 'bilinear':
-        _, _, attn_states = attention.bilinear_attention(support, question, question_length, scaled)
+        _, _, attn_states = attention.bilinear_attention(support, question, question_length, scaled, with_sentinel)
     elif attn_type == 'dot':
-        _, _, attn_states = attention.dot_attention(support, question, question_length, scaled)
+        _, _, attn_states = attention.dot_attention(support, question, question_length, scaled, with_sentinel)
     elif attn_type == 'diagonal_bilinear':
-        _, _, attn_states = attention.diagonal_bilinear_attention(support, question, question_length, scaled)
+        _, _, attn_states = attention.diagonal_bilinear_attention(support, question, question_length, scaled,
+                                                                  with_sentinel)
     elif attn_type == 'mlp':
         _, _, attn_states = attention.mlp_attention(support.get_shape()[-1].value, tf.nn.relu, support, question,
-                                                    question_length)
+                                                    question_length, with_sentinel)
     else:
         raise ValueError("Unknown attention type: %s" % attn_type)
-
-    if gated:
-        g = tf.sigmoid(tf.einsum('abc,abc->ab',
-                                 tf.layers.dense(support, attn_states.get_shape()[-1].value), attn_states))
-        attn_states *= tf.expand_dims(g, 2)
 
     return tf.concat([support, attn_states], 2)
