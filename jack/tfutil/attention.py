@@ -47,12 +47,12 @@ def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=Tru
     return dot_attention(seq1 * v, seq2, len2, with_sentinel)
 
 
-def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinal=True):
+def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinel=True):
     hidden1 = tf.layers.dense(seq1, hidden_dim)
     hidden2 = tf.layers.dense(seq2, hidden_dim)
     hidden = tf.tile(tf.expand_dims(hidden1, 2), [1, 1, tf.shape(seq2)[1], -1]) + tf.expand_dims(hidden2, 1)
-    attn_scores = tf.layers.dense(activation(hidden), 1, use_bias=with_sentinal)
-    return apply_attention(tf.squeeze(attn_scores, 3), seq2, len2, seq1 is seq2, with_sentinal)
+    attn_scores = tf.layers.dense(activation(hidden), 1, use_bias=with_sentinel)
+    return apply_attention(tf.squeeze(attn_scores, 3), seq2, len2, seq1 is seq2, with_sentinel)
 
 
 def attention_softmax3d(values):
