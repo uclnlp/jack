@@ -21,10 +21,13 @@ model:
     layer_type: 'lstm'
     with_projection: True
     activation: 'relu'
+    residual: True
+
   - input: 'support'
     layer_type: 'lstm'
     with_projection: True
     activation: 'relu'
+    residual: True
 
   - input: 'support'
     dependent: 'question'
