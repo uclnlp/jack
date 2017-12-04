@@ -40,12 +40,12 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
             if activation:
                 out = activation_from_string(activation)(out)
         elif layer_type == 'self_attn':
-            outs = [sequence]
+            outs = []
             for i in range(num_attn_heads):
                 attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim, with_sentinel,
                                       activation_from_string(activation), name + str(i), reuse)
                 outs.append(attn)
-            out = tf.concat(outs, 2)
+            out = tf.concat(outs, 2) if num_layers > 1 else outs[0]
         else:
             raise ValueError("Unknown encoder type: %s" % layer_type)
     else:

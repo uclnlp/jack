@@ -37,10 +37,29 @@ model:
 
   - input: 'support'
     dependent: 'question'
-    layer_type: 'coattention'
+    layer_type: 'attention_matching'
     attn_type: 'bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
+
+  - input: 'support'
+    layer_type: 'word_in_question'
+  - input: 'support'
+    layer_type: 'lstm'  # the only application of a RNN
+    with_projection: True
+    activation: 'relu'
+    dropout: *dropout
+
+  - input: 'support'
+    output: 'support_1'
+    layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
+    attn_type: 'dot'
+    scaled: True
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    num_attn_heads: 1
+  - input: ['support', 'support_1']
+    output: 'support'
+    layer_type: 'concat'
 
   - input: 'support'
     layer_type: 'projection'
@@ -49,21 +68,8 @@ model:
     layer_type: 'conv'
     activation: 'relu'
     conv_width: 5
+    num_layers: 2
     residual: True
-    dropout: *dropout
-
-  - input: 'support'
-    layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
-    attn_type: 'bilinear'
-    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
-    num_attn_heads: 1
-
-  - input: 'support'
-    layer_type: 'word_in_question'
-  - input: 'support'
-    layer_type: 'lstm'  # the only application of a RNN
-    with_projection: True
-    activation: 'relu'
     dropout: *dropout
 
   answer_layer:
