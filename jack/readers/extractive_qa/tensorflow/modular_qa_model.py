@@ -63,7 +63,7 @@ class ModularQAModel(AbstractXQAModelModule):
                     tensors.is_eval,
                     lambda: inputs[out_key],
                     lambda: tf.nn.dropout(
-                        inputs[out_key], keep_prob, noise_shape=[1, 1, inputs[out_key].get_shape()[-1].value]))
+                        inputs[out_key], 1.0 - dropout, noise_shape=[1, 1, inputs[out_key].get_shape()[-1].value]))
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
