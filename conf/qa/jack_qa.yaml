@@ -19,7 +19,7 @@ dropout: &dropout 0.2
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
   encoder_layer:
-    - input: 'question'
+  - input: 'question'
     layer_type: 'conv_glu'
     activation: 'relu'
     conv_width: 5
