@@ -45,6 +45,8 @@ model:
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 3
   - input: 'support'
+    layer_type: 'word_in_question'
+  - input: 'support'
     layer_type: 'lstm'  # the only application of a RNN
     with_projection: True
     activation: 'relu'
