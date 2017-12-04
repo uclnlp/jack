@@ -15,18 +15,17 @@ reader_dir: './bidaf_reader'
 with_char_embeddings: True
 
 repr_dim: &dim 100
+dropout: &dropout 0.2
 
 model:
   encoder_layer:
   - input: 'question'
     repr_dim: *dim
     layer_type: 'lstm'
-    num_layers: 1
     with_projection: True # not in the original bidaf implementation, but helps
   - input: 'support'
     repr_dim: *dim
     layer_type: 'lstm'
-    num_layers: 1
     with_projection: True # not in the original bidaf implementation, but helps
   - input: 'support'
     dependent: 'question'
@@ -36,6 +35,8 @@ model:
     layer_type: 'lstm'
     with_projection: True # not in the original bidaf implementation, but helps
     num_layers: 2
+    dropout: *dropout
+
   answer_layer:
     layer_type: 'bidaf'
     max_span_size: 16

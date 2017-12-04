@@ -57,7 +57,7 @@ class ModularQAModel(AbstractXQAModelModule):
                 inputs[out_key] = encoder(inputs[key], inputs_length[key], **layer)
             inputs_length[out_key] = inputs_length[key]
             inputs_mapping[out_key] = inputs_mapping[key]
-            dropout = layer.get('dropout', shared_resources.config.get("dropout", 0.0))
+            dropout = layer.get('dropout', 0.0)
             if dropout > 0.0:
                 inputs[out_key] = tf.cond(
                     tensors.is_eval,
