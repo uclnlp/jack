@@ -1,5 +1,5 @@
 description: >
-  BiDAF reader implementation as described in https://arxiv.org/abs/1611.01603.
+  BiDAF reader implementation as described in https://arxiv.org/abs/1611.01603. This is a slightly adapted version.
 
 parent_config: './conf/modular_qa.yaml'
 
@@ -21,16 +21,19 @@ model:
   - repr_dim: *dim
     layer_type: 'lstm'
     num_layers: 1
+    with_projection: True # not in the original bidaf implementation, cut helps
   support_layer:
   - repr_dim: *dim
     layer_type: 'lstm'
     num_layers: 1
+    with_projection: True # not in the original bidaf implementation, cut helps
   interaction_layer:
     layer_type: 'bidaf'
     encoder:
     - repr_dim: *dim
       layer_type: 'lstm'
-      num_layers: 1
+      with_projection: True # not in the original bidaf implementation, cut helps
+      num_layers: 2
   answer_layer:
     layer_type: 'bidaf'
     max_span_size: 16
