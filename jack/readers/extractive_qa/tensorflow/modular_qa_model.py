@@ -24,32 +24,41 @@ class ModularQAModel(AbstractXQAModelModule):
         )
 
         model = shared_resources.config['model']
+        repr_dim = shared_resources.config['repr_dim']
 
         with tf.variable_scope('contextual_encoder'):
             for i, layer in enumerate(model['question_layer']):
                 if 'name' not in layer:
                     layer['name'] = 'question_%d' % i
+                if 'repr_dim' not in layer:
+                    layer['repr_dim'] = repr_dim
                 encoded_question = encoder(encoded_question, tensors.question_length, **layer)
             for i, layer in enumerate(model['support_layer']):
                 if 'name' not in layer:
                     layer['name'] = 'support_%d' % i
+                if 'repr_dim' not in layer:
+                    layer['repr_dim'] = repr_dim
                 encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
         with tf.variable_scope('interaction'):
-            interaction_layer_module = model.get('interaction_layer')
-            if interaction_layer:
+            interaction_layer_config = model.get('interaction_layer')
+            if interaction_layer_config:
+                if 'repr_dim' not in interaction_layer_config:
+                    interaction_layer_config['repr_dim'] = repr_dim
                 encoded_support = interaction_layer(
                     encoded_support, tensors.support_length, encoded_question, tensors.question_length,
-                    tensors.support2question, layer_type=interaction_layer_module['layer_type'],
-                    attn_type=interaction_layer_module.get('attn_type', 'diagonal_bilinear'),
-                    scaled=interaction_layer_module.get('scaled', True),
-                    name=interaction_layer_module.get('name', 'interaction_attention'),
+                    tensors.support2question, layer_type=interaction_layer_config['layer_type'],
+                    attn_type=interaction_layer_config.get('attn_type', 'diagonal_bilinear'),
+                    scaled=interaction_layer_config.get('scaled', True),
+                    name=interaction_layer_config.get('name', 'interaction_attention'),
                 )
 
         with tf.variable_scope('encoder'):
             for i, layer in enumerate(model.get('encoder_layer', [])):
                 if 'name' not in layer:
                     layer['name'] = 'encoder_%d' % i
+                if 'repr_dim' not in layer:
+                    layer['repr_dim'] = repr_dim
                 encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
         encoded_question, encoded_support = tf.cond(
@@ -62,6 +71,8 @@ class ModularQAModel(AbstractXQAModelModule):
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
+            if 'repr_dim' not in answer_layer_config:
+                answer_layer_config['repr_dim'] = repr_dim
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                 answer_layer(encoded_question, tensors.question_length, encoded_support,
                              tensors.support_length,
