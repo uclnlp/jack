@@ -258,7 +258,5 @@ def bidaf_answer_layer(encoded_support_start, encoded_support_end, support_lengt
     support_mask = misc.mask_for_lengths(support_length)
     start_scores = start_scores + support_mask
     end_scores = end_scores + support_mask
-    start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-        compute_spans(start_scores, end_scores, answer2support, is_eval,
-                      support2question, beam_size=beam_size, max_span_size=max_span_size)
-    return start_scores, end_scores, doc_idx, predicted_end_pointer, predicted_start_pointer
+    return compute_spans(start_scores, end_scores, answer2support, is_eval,
+                         support2question, beam_size=beam_size, max_span_size=max_span_size)
