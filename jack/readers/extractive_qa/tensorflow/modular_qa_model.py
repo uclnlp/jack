@@ -42,6 +42,7 @@ class ModularQAModel(AbstractXQAModelModule):
 
             if layer['layer_type'] == 'concat':
                 inputs[out_key] = tf.concat([inputs[k] for k in key], 2)
+                continue
             if 'name' not in layer:
                 layer['name'] = '_'.join([str(i), layer['input'], layer['layer_type']])
             if 'repr_dim' not in layer:
