@@ -1,7 +1,7 @@
 description: >
   BiDAF reader implementation as described in https://arxiv.org/abs/1611.01603. This is a slightly adapted version.
 
-parent_config: './conf/modular_qa.yaml'
+parent_config: './conf/qa/modular_qa.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
 name: 'bidaf_reader'
