@@ -13,7 +13,7 @@ seed: 1337
 reader_dir: './jack_qa_reader'
 
 with_char_embeddings: True
-
+word_in_question_feature: True  # concatenated with output after interaction layer
 repr_dim: 100
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead

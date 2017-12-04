@@ -52,6 +52,10 @@ class ModularQAModel(AbstractXQAModelModule):
                     scaled=interaction_layer_config.get('scaled', True),
                     name=interaction_layer_config.get('name', 'interaction_attention'),
                 )
+        if shared_resources.config.get('word_in_question', False):
+            # add 2x wiq to keep dimensionality even, otherwise FusedLSTM complains...
+            encoded_support = tf.concat([encoded_support,
+                                         tf.stack([tensors.word_in_question, tensors.word_in_question], 2)], 2)
 
         with tf.variable_scope('encoder'):
             for i, layer in enumerate(model.get('encoder_layer', [])):

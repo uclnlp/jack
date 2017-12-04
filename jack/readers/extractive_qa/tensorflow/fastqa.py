@@ -8,6 +8,7 @@ from jack.readers.extractive_qa.tensorflow.answer_layer import conditional_answe
 from jack.tfutil import misc
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
+from jack.tfutil.sequence_encoder import encoder
 
 
 class FastQAModule(AbstractXQAModelModule):
@@ -82,11 +83,12 @@ class FastQAModule(AbstractXQAModelModule):
             emb_support_ext = tf.concat([emb_support, support_features], 2)
 
             # encode question and support
-            encoder = shared_resources.config.get('encoder', 'lstm').lower()
-            if encoder in ['lstm', 'sru', 'gru']:
-                size = size + 2 if encoder == 'sru' else size  # to allow for use of residual in SRU
-                encoded_question = self.encoder(size, emb_question_ext, tensors.question_length, encoder)
-                encoded_support = self.encoder(size, emb_support_ext, tensors.support_length, encoder, reuse=True)
+            encoder_type = shared_resources.config.get('encoder', 'lstm').lower()
+            if encoder_type in ['lstm', 'sru', 'gru']:
+                size = size + 2 if encoder_type == 'sru' else size  # to allow for use of residual in SRU
+                encoded_question = encoder(emb_question_ext, tensors.question_length, size, layer_type=encoder_type)
+                encoded_support = encoder(emb_support_ext, tensors.support_length, size, layer_type=encoder_type,
+                                          reuse=True)
                 projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
                 encoded_question = tf.layers.dense(encoded_question, size, tf.tanh, use_bias=False,
                                                    kernel_initializer=projection_initializer,

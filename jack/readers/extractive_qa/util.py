@@ -47,6 +47,7 @@ def prepare_data(qa_setting: QASetting,
     question_tokens, question_ids, question_length, question_lemmas, _ = preprocessing.nlp_preprocess(
         question, vocab, lowercase=lowercase, use_spacy=spacy_nlp,
         lemmatize=lemmatize, with_lemmas=with_lemmas, with_tokens_offsets=False)
+    question_tokens_set = set(t.lower() for t in question_tokens)
 
     preprocessed_supports = [
         preprocessing.nlp_preprocess(
@@ -76,7 +77,7 @@ def prepare_data(qa_setting: QASetting,
             all_word_in_question.append([])
             for token in support_tokens:
                 all_word_in_question[-1].append(
-                    float(token in question_tokens and (not wiq_contentword or token.isalnum())))
+                    float(token.lower() in question_tokens_set and (not wiq_contentword or token.isalnum())))
 
     all_answer_spans = []
     for doc_idx, support_tokens in enumerate(all_support_tokens):
