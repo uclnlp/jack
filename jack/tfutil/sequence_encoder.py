@@ -1,11 +1,18 @@
+import logging
+
 import numpy as np
 import tensorflow as tf
 
+from jack.tfutil import attention
 from jack.tfutil import rnn
+from jack.tfutil.activations import activation_from_string
+
+logger = logging.getLogger(__name__)
 
 
 def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1, conv_width=3,
-            dilations=None, reuse=False, with_projection=False, residual=False, name='encoder'):
+            dilations=None, reuse=False, residual=False, attn_type=None, scaled=False, activation=None,
+            with_projection=False, name='encoder'):
     if num_layers == 1:
         if layer_type == 'lstm':
             out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
@@ -18,18 +25,30 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
         elif layer_type == 'gldr':
             out = gated_linear_dilated_residual_network(
                 repr_dim, sequence, dilations, conv_width, name, reuse)
-        elif layer_type == 'convolution':
-            out = gated_linear_convnet(repr_dim, sequence, num_layers, conv_width, name, reuse)
+        elif layer_type == 'glu_conv':
+            out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
         elif layer_type == 'projection':
             out = tf.layers.dense(sequence, repr_dim, name=name)
+            if activation:
+                out = activation_from_string(activation)(out)
+        elif layer_type == 'self_attn':
+            out = self_attention(sequence, seq_length, attn_type, scaled, repr_dim, activation_from_string(activation),
+                                 name, reuse)[2]
+            out = tf.concat([sequence, out], 2)
         else:
-            raise ValueError("Unknown encoder type: %s" % type)
+            raise ValueError("Unknown encoder type: %s" % layer_type)
     else:
         out = encoder(sequence, seq_length, repr_dim, layer_type, num_layers - 1, conv_width,
-                      dilations, reuse, with_projection, name)
+                      dilations, reuse, False, attn_type, scaled, activation, with_projection, name)
         out = encoder(out, seq_length, repr_dim, layer_type, 1, conv_width,
-                      dilations, reuse, with_projection, name + str(num_layers - 1))
+                      dilations, reuse, False, attn_type, scaled, activation, with_projection,
+                      name + str(num_layers - 1), )
     if residual:
+        if out.get_shape()[-1].value != sequence.get_shape()[-1].value:
+            logging.error('Residual connection only possible if input to sequence encoder %s of type %s has same '
+                          'dimension (%d) as output (%d).' % (name, layer_type, sequence.get_shape()[-1].value,
+                                                              out.get_shape()[-1].value))
+            raise RuntimeError()
         out += sequence
     return out
 
@@ -120,3 +139,19 @@ def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_line
         for i in range(num_layers):
             output = _convolutional_block_glu_block(output, out_size, width=width, name="conv_%d" % i)
     return output
+
+
+# Self attention layers
+def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=None, activation=None,
+                   name='self_attention', reuse=False):
+    with tf.variable_scope(name, reuse):
+        if attn_type == 'bilinear':
+            return attention.bilinear_attention(inputs, inputs, lengths, scaled)
+        elif attn_type == 'dot':
+            return attention.dot_attention(inputs, inputs, lengths, scaled)
+        elif attn_type == 'diagonal_bilinear':
+            return attention.diagonal_bilinear_attention(inputs, inputs, lengths, scaled)
+        elif attn_type == 'mlp':
+            return attention.mlp_attention(repr_dim, activation, inputs, inputs, lengths)
+        else:
+            raise ValueError("Unknown attention type: %s" % attn_type)

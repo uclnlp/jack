@@ -98,7 +98,7 @@ with_char_embeddings: True
 prune: False
 
 # Directory to write reader to
-model_dir: null
+reader_dir: null
 
 # interval for logging eta, training loss, etc
 log_interval: 100

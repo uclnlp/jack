@@ -19,26 +19,33 @@ class ModularQAModel(AbstractXQAModelModule):
 
         with tf.variable_scope('encoder'):
             for i, layer in enumerate(model['question_layer']):
-                encoded_question = encoder(encoded_question, tensors.question_length,
-                                           name='question_%d' % i, **layer)
+                if 'name' not in layer:
+                    layer['name'] = 'question_%d' % i
+                encoded_question = encoder(encoded_question, tensors.question_length, **layer)
             for i, layer in enumerate(model['support_layer']):
-                encoded_support = encoder(encoded_support, tensors.support_length,
-                                          name='support_%d' % i, **layer)
+                if 'name' not in layer:
+                    layer['name'] = 'support_%d' % i
+                encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
-        with tf.variable_scope('interaction'):
+        with tf.variable_scope('interaction_layer'):
             interaction_layer_module = model.get('interaction_layer')
             if interaction_layer:
                 encoded_support = interaction_layer(
                     encoded_support, tensors.support_length, encoded_question, tensors.question_length,
-                    tensors.support2question, layer_type=interaction_layer_module['layer_type'])
+                    tensors.support2question, layer_type=interaction_layer_module['layer_type'],
+                    attn_type=interaction_layer_module.get('attn_type', 'diagonal_bilinear'),
+                    scaled=interaction_layer_module.get('scaled', True),
+                    name=interaction_layer_module.get('name', 'interaction_attention'),
+                )
                 for i, layer in enumerate(interaction_layer_module.get('encoder', [])):
-                    encoded_support = encoder(encoded_support, tensors.support_length,
-                                              name='encoder_%d' % i, **layer)
+                    if 'name' not in layer:
+                        layer['name'] = 'encoder_%d' % i
+                    encoded_support = encoder(encoded_support, tensors.support_length, **layer)
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-                answer_layer(size, encoded_question, tensors.question_length, encoded_support,
+                answer_layer(encoded_question, tensors.question_length, encoded_support,
                              tensors.support_length,
                              tensors.support2question, tensors.answer2support, tensors.is_eval,
                              tensors.correct_start, **answer_layer_config)
@@ -48,34 +55,38 @@ class ModularQAModel(AbstractXQAModelModule):
         return TensorPort.to_mapping(self.output_ports, (start_scores, end_scores, span))
 
     def embedding_layer(self, shared_resources, tensors):
-        # embedding layer
-        input_size = shared_resources.config["repr_dim_input"]
-        size = shared_resources.config["repr_dim"]
-        with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
-        # 1. char embeddings + word embeddings
-        # set shapes for inputs
-        tensors.emb_question.set_shape([None, None, input_size])
-        tensors.emb_support.set_shape([None, None, input_size])
-        emb_question = tensors.emb_question
-        emb_support = tensors.emb_support
-        # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
-        if with_char_embeddings:
-            # compute combined embeddings
-            [char_emb_question, char_emb_support] = conv_char_embedding(
-                len(shared_resources.char_vocab), size, tensors.word_chars, tensors.word_char_length,
-                [tensors.question_words, tensors.support_words])
-            # 3. cat
-            emb_question = tf.concat([emb_question, char_emb_question], 2)
-            emb_support = tf.concat([emb_support, char_emb_support], 2)
+        with tf.variable_scope('embedding_layer') as vs:
+            # embedding layer
+            input_size = shared_resources.config["repr_dim_input"]
+            size = shared_resources.config["repr_dim"]
+            with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
+            # 1. char embeddings + word embeddings
+            # set shapes for inputs
+            tensors.emb_question.set_shape([None, None, input_size])
+            tensors.emb_support.set_shape([None, None, input_size])
+            emb_question = tensors.emb_question
+            emb_support = tensors.emb_support
+            # 1. + 2a. + 2b. 2a. char embeddings + conv + max pooling
+            if with_char_embeddings:
+                # compute combined embeddings
+                [char_emb_question, char_emb_support] = conv_char_embedding(
+                    len(shared_resources.char_vocab), size, tensors.word_chars, tensors.word_char_length,
+                    [tensors.question_words, tensors.support_words])
+                # 3. cat
+                emb_question = tf.concat([emb_question, char_emb_question], 2)
+                emb_support = tf.concat([emb_support, char_emb_support], 2)
+                # apply projection
+                emb_question = tf.layers.dense(emb_question, size, tf.tanh, name='projection')
+                # highway layer to allow for interaction between concatenated embeddings
+                # 3. highway
+                emb_question = highway_network(emb_question, 1, scope='embedding_highway')
+                vs.reuse_variables()
+                emb_support = tf.layers.dense(emb_support, size, tf.tanh, name='projection')
+                emb_support = highway_network(emb_support, 1, scope='embedding_highway')
+            else:
+                # apply projection
+                emb_support = tf.layers.dense(emb_support, size, tf.tanh, name='projection')
+                vs.reuse_variables()
+                emb_question = tf.layers.dense(emb_question, size, tf.tanh, name='projection')
 
-            # highway layer to allow for interaction between concatenated embeddings
-            # 3. highway
-            # following bidaf notation here  (qq=question, xx=support)
-            emb_question = highway_network(emb_question, 2, scope='question_highway')
-            emb_support = highway_network(emb_support, 2, scope='support_highway')
-        else:
-            # apply projection
-            emb_support = tf.layers.dense(emb_support, size, tf.tanh)
-            emb_question = tf.layers.dense(emb_question, size, tf.tanh)
-
-        return emb_question, emb_support
+            return emb_question, emb_support

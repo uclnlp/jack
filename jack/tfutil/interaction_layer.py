@@ -1,16 +1,20 @@
 import tensorflow as tf
 
+from jack.tfutil import attention
 from jack.tfutil.misc import mask_for_lengths
 
 
 def interaction_layer(support, support_length, question, question_length, support2question,
-                      layer_type='attention_matching'):
-    if layer_type == 'attention_matching':
-        return attention_matching_layer(support, support_length, question, question_length, support2question)
-    elif layer_type == 'bidaf':
-        return bidaf_layer(support, support_length, question, question_length, support2question)
-    else:
-        raise ValueError("Unknown interaction type: %s" % layer_type)
+                      layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True,
+                      name='interaction_layer', reuse=False):
+    with tf.variable_scope(name, reuse):
+        if layer_type == 'attention_matching':
+            return attention_matching_layer(support, support_length, question, question_length, support2question,
+                                            attn_type, scaled)
+        elif layer_type == 'bidaf':
+            return bidaf_layer(support, support_length, question, question_length, support2question)
+        else:
+            raise ValueError("Unknown interaction type: %s" % layer_type)
 
 
 def bidaf_layer(support, support_length, question, question_length, support2question):
@@ -46,23 +50,19 @@ def bidaf_layer(support, support_length, question, question_length, support2ques
     return tf.concat([support, question_weighted, support * question_weighted, support * support_weighted], 2)
 
 
-def attention_matching_layer(size, support, support_length, question, question_length, support2question):
+def attention_matching_layer(support, support_length, question, question_length, support2question,
+                             attn_type='diagonal_bilinear', scaled=True):
     """Encodes support conditioned on question, e.g., using word-by-word attention."""
-    question = tf.gather(question, support2question)
+    if attn_type == 'bilinear':
+        _, _, attn_states = attention.bilinear_attention(support, question, question_length, scaled)
+    elif attn_type == 'dot':
+        _, _, attn_states = attention.dot_attention(support, question, question_length, scaled)
+    elif attn_type == 'diagonal_bilinear':
+        _, _, attn_states = attention.diagonal_bilinear_attention(support, question, question_length, scaled)
+    elif attn_type == 'mlp':
+        _, _, attn_states = attention.mlp_attention(support.get_shape()[-1].value, tf.nn.relu, support, question,
+                                                    question_length)
+    else:
+        raise ValueError("Unknown attention type: %s" % attn_type)
 
-    # a_i,j= w1 * s_i + w2 * q_j + w3 * q_j * s_i
-    w_3 = tf.get_variable("w3", [size, 1])
-    question_mul = question * tf.reshape(w_3, [1, 1, size])
-
-    # a = [batch, support_length, question_length]
-    a = (tf.einsum('ijk,ilk->ijl', support, question_mul) +
-         tf.layers.dense(support, 1) + tf.reshape(tf.layers.dense(question, 1), [-1, 1, tf.shape(question)[1]]))
-
-    a += tf.expand_dims(mask_for_lengths(support_length), 2)
-    a += tf.expand_dims(mask_for_lengths(question_length), 1)
-
-    # support to question attention
-    att_question = tf.nn.softmax(a, 2)  # softmax over question for each support token
-    question_weighted = tf.einsum('ijl,ilk->ijk', att_question, question)
-
-    return tf.concat([support, question_weighted], 2)
+    return tf.concat([support, attn_states], 2)

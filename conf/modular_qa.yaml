@@ -1,7 +1,9 @@
 description: >
-  FastQA configuration to train model on SQuAD as described in https://arxiv.org/abs/1703.04816.
+  Modular QA Reader base configuration.
 
 parent_config: './conf/jack.yaml'
+
+reader: 'modular_qa_reader'
 
 # loader to use in experiment
 loader: 'squad'
@@ -33,24 +35,33 @@ lowercase: False
 learning_rate_decay: 0.8
 
 # 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
-loss: 'max'
+loss: 'sum'
 
 with_char_embeddings: True
 model:
-    question_layer: null  # list of encoder modules
-    support_layer: null  # list of encoder modules
-    interaction_layer:
-      layer_type: null  # 'bidaf', 'attention_matching'
-      encoder:  # list of encoder modules that take support aligned with question as input
-    answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
+  question_layer: null  # list of encoder modules
+  support_layer: null  # list of encoder modules
+  interaction_layer:
+    layer_type: null  # 'bidaf', 'attention_matching'
+    encoder:  # list of encoder modules that take support aligned with question as input
+  answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
 
 
 # encoder modules can be selected as wanted and are defined by the following keys
 # * repr_dim - dimensionality of output
-# * layer_type - 'lstm', 'gru', 'sru', 'gldr' (gated linear dilated residual network), 'convolution', 'projection'
+# * layer_type - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
+#                CONVs: 'gldr' (gated linear dilated residual network), 'glu_conv' (convolution with gated linear unit)
+#                MISC: 'projection' (linear projection), 'self_attn'
 # * residual - whether this encoder should be residually employed
 # * num_layers number of times this is consecutively
-# 'convolution' requires another parameter, 'conv_width' (3 by default)
+# 'glu_conv' requires another parameter, 'conv_width' (3 by default)
 # 'gldr' requires another parameters, 'conv_width' (3 by default) and 'dilations'
 # (a list of dilations for each layer of the gldr network)
+# 'projection' has additional 'activation' attribute which can be 'relu', 'tanh','sigmoid', etc (everything in tf.nn)
+# 'self_attn' support attn types: 'dot', 'bilinear', 'diagonal_bilinear', 'mlp'
+# 'dot', 'bilinear', 'diagonal_bilinear' have additional scale attribute which scales attn scores by sqrt of repr_dim
+# of input states, it is recommended to use it for 'dot' and 'diagonal_bilinear'
+# 'mlp' has additional 'repr_dim' and 'activation' property for the dimensionality and activation of the hidden layer
+#
+# You can reuse encoders (i.e., their parameters) by giving them the same name and set 'reuse: True'
 

@@ -13,7 +13,7 @@ seed: 1337
 loader: 'squad'
 
 # where to store the reader
-model_dir: './fastqa_reader'
+reader_dir: './fastqa_reader'
 
 # How large the support should be. Can be used for cutting or filtering QA examples
 max_support_length: -1

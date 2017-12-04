@@ -1,45 +1,44 @@
 description: >
   BiDAF reader implementation as described in https://arxiv.org/abs/1611.01603.
 
-parent_config: './conf/jack.yaml'
+parent_config: './conf/modular_qa.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
-reader: 'bidaf_reader'
+name: 'bidaf_reader'
 
 # fixed experiment seed
 seed: 1337
 
 # where to store the reader
-model_dir: './bidaf_reader'
+reader_dir: './bidaf_reader'
 
 with_char_embeddings: True
 
 repr_dim: &dim 100
 
-
 model:
-    question_layer:
-      - repr_dim: *dim
-        layer_type: 'lstm'
-        num_layers: '1'
-    support_layer:
-      - repr_dim: *dim
-        layer_type: 'lstm'
-        num_layers: '1'
-    interaction_layer:
-      layer_type: 'bidaf'
-      encoder:
-          - repr_dim: *dim
-            layer_type: 'lstm'
-            num_layers: 1
-    answer_layer:
-      layer_type: 'bidaf'
-      max_span_size: 16
+  question_layer:
+  - repr_dim: *dim
+    layer_type: 'lstm'
+    num_layers: 1
+  support_layer:
+  - repr_dim: *dim
+    layer_type: 'lstm'
+    num_layers: 1
+  interaction_layer:
+    layer_type: 'bidaf'
+    encoder:
+    - repr_dim: *dim
+      layer_type: 'lstm'
+      num_layers: 1
+  answer_layer:
+    layer_type: 'bidaf'
+    max_span_size: 16
+    repr_dim: *dim
+    encoder:  #only needed for bidaf answer layer
       repr_dim: *dim
-      encoder:  #only needed for bidaf answer layer
-        repr_dim: *dim
-        layer_type: 'lstm'
-        num_layers: 1
+      layer_type: 'lstm'
+      num_layers: 1
 
 
 
