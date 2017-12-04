@@ -17,20 +17,22 @@ with_char_embeddings: True
 repr_dim: &dim 100
 
 model:
-  question_layer:
-  - repr_dim: *dim
-    layer_type: 'lstm'
-    num_layers: 1
-    with_projection: True # not in the original bidaf implementation, but helps
-  support_layer:
-  - repr_dim: *dim
-    layer_type: 'lstm'
-    num_layers: 1
-    with_projection: True # not in the original bidaf implementation, but helps
-  interaction_layer:
-    layer_type: 'bidaf'
   encoder_layer:
-  - repr_dim: *dim
+  - input: 'question'
+    repr_dim: *dim
+    layer_type: 'lstm'
+    num_layers: 1
+    with_projection: True # not in the original bidaf implementation, but helps
+  - input: 'support'
+    repr_dim: *dim
+    layer_type: 'lstm'
+    num_layers: 1
+    with_projection: True # not in the original bidaf implementation, but helps
+  - input: 'support'
+    dependent: 'question'
+    layer_type: 'bidaf'
+  - input: 'support'
+    repr_dim: *dim
     layer_type: 'lstm'
     with_projection: True # not in the original bidaf implementation, but helps
     num_layers: 2

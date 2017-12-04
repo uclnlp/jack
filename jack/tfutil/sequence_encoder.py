@@ -16,17 +16,23 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
     if num_layers == 1:
         if layer_type == 'lstm':
             out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
+            if activation:
+                out = activation_from_string(activation)(out)
         elif layer_type == 'sru':
             with_residual = sequence.get_shape()[2].value == repr_dim
             out = bi_sru(repr_dim, sequence, seq_length, with_residual, name, reuse, with_projection)
+            if activation:
+                out = activation_from_string(activation)(out)
         elif layer_type == 'gru':
             out = bi_rnn(repr_dim, tf.contrib.rnn.BlockGRUCell(repr_dim), sequence,
                          seq_length, name, reuse, with_projection)
+            if activation:
+                out = activation_from_string(activation)(out)
         elif layer_type == 'gldr':
             out = gated_linear_dilated_residual_network(
                 repr_dim, sequence, dilations, conv_width, name, reuse)
-        elif layer_type == 'glu_conv':
-            out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
+        elif layer_type == 'conv':
+            out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
         elif layer_type == 'projection':
             out = tf.layers.dense(sequence, repr_dim, name=name)
             if activation:
@@ -85,6 +91,23 @@ def bi_sru(size, sequence, seq_length, with_residual=True, name='bi_sru', reuse=
 
 # Convolution Encoders
 
+def convnet(out_size, inputs, num_layers, width=3, activation=tf.nn.relu, name='convnet', reuse=False):
+    with tf.variable_scope(name, reuse=reuse):
+        # dim reduction
+        output = inputs
+        for i in range(num_layers):
+            output = _convolutional_block(output, out_size, width=width, name="conv_%d" % i)
+    return output
+
+
+def _convolutional_block(inputs, out_channels, width=3, name='conv', activation=tf.nn.relu):
+    channels = inputs.get_shape()[2].value
+    # [filter_height, filter_width, in_channels, out_channels]
+    f = tf.get_variable(name + '_filter', [width, channels, out_channels])
+    output = tf.nn.conv1d(inputs, f, 1, padding='SAME', name=name)
+    return activation(output)
+
+
 # following implementation of fast encoding in https://openreview.net/pdf?id=HJRV1ZZAW
 def _residual_dilated_convolution_block(inputs, dilation=1, width=3, name="dilated_conv"):
     # [filter_height, filter_width, in_channels, out_channels]
@@ -92,11 +115,11 @@ def _residual_dilated_convolution_block(inputs, dilation=1, width=3, name="dilat
     channels = inputs.get_shape()[2].value
     for i in range(2):
         # [filter_height, filter_width, in_channels, out_channels]
-        output = _convolutional_block_glu_block(output, channels, dilation, width, name=name + '_' + str(i))
+        output = _convolutional_glu_block(output, channels, dilation, width, name=name + '_' + str(i))
     return output + inputs
 
 
-def _convolutional_block_glu_block(inputs, out_channels, dilation=1, width=3, name='dilated_conv'):
+def _convolutional_glu_block(inputs, out_channels, dilation=1, width=3, name='dilated_conv'):
     channels = inputs.get_shape()[2].value
     # [filter_height, filter_width, in_channels, out_channels]
     f = tf.get_variable(name + '_filter', [1, width, channels, out_channels * 2])
@@ -120,7 +143,7 @@ def gated_linear_dilated_residual_network(out_size, inputs, dilations, width=3, 
     """
     with tf.variable_scope(name, reuse=reuse):
         # dim reduction
-        output = _convolutional_block_glu_block(inputs, out_size, name='conv_dim_reduction')
+        output = _convolutional_glu_block(inputs, out_size, name='conv_dim_reduction')
         for i, d in enumerate(dilations):
             output = _residual_dilated_convolution_block(output, d, width, name='dilated_conv_%d' % i)
     return output
@@ -141,7 +164,7 @@ def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_line
         # dim reduction
         output = inputs
         for i in range(num_layers):
-            output = _convolutional_block_glu_block(output, out_size, width=width, name="conv_%d" % i)
+            output = _convolutional_glu_block(output, out_size, width=width, name="conv_%d" % i)
     return output
 
 

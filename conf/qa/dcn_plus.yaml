@@ -1,0 +1,47 @@
+description: >
+  DCN model (https://arxiv.org/pdf/1711.00106.pdf). Slight change is that we make use of a simpler answer layer.
+
+parent_config: './conf/qa/modular_qa.yaml'
+
+name: 'dcn_plus_reader'
+
+# fixed experiment seed
+seed: 1337
+
+# where to store the reader
+reader_dir: './dcn_plus_reader'
+
+with_char_embeddings: True
+repr_dim: &dim 100
+
+# To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
+model:
+  encoder_layer:
+  - input: 'question'
+    layer_type: 'lstm'
+  - input: 'question'
+    layer_type: 'projection'
+    activation: 'tanh'
+  - input: 'support'
+    layer_type: 'lstm'
+    with_projection: True
+
+  # compute 2-layer coattention
+  - layer_type: 'coattention'
+    input: 'support'
+    dependent: 'question'
+    num_layers: 2
+    encoder:
+      layer_type: 'lstm'
+      repr_dim: *dim
+      with_projection: True
+    attn_type: 'dot'
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    scaled: True
+  - input: 'support'
+    layer_type: 'lstm'  # the only application of a RNN
+    with_projection: True
+    num_layers: 1
+  answer_layer:
+    layer_type: 'bilinear'
+    max_span_size: 16

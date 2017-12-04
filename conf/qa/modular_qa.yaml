@@ -41,22 +41,20 @@ loss: 'sum'
 
 with_char_embeddings: True
 model:
-  question_layer: null  # list of encoder modules
-  support_layer: null  # list of encoder modules
-  interaction_layer:
-    layer_type: null  # 'bidaf', 'attention_matching'
-  encoder_layer: null  # list of encoder modules that take support aligned with question as input
+  encoder_layer: null  # list of encoder modules with input key ('question' or 'support' in beginning)
   answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
 
 
 # encoder modules can be selected as wanted and are defined by the following keys
+# * input - required, string indicating what input to encode (starts with possibilities 'question' or 'support')
+# * output - optional, set to input by default but can be overwritten to something else => after defining a new output key it can be used later as input somewhere else
 # * repr_dim - dimensionality of output
 # * layer_type - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
-#                CONVs: 'gldr' (gated linear dilated residual network), 'glu_conv' (convolution with gated linear unit)
+#                CONVs: 'gldr' (gated linear dilated residual network), 'conv' (convolution)
 #                MISC: 'projection' (linear projection), 'self_attn'
 # * residual - whether this encoder should be residually employed
 # * num_layers number of times this is consecutively
-# 'glu_conv' requires another parameter, 'conv_width' (3 by default)
+# 'conv' requires another parameter, 'conv_width' (3 by default) and can have and 'activation'
 # 'gldr' requires another parameters, 'conv_width' (3 by default) and 'dilations'
 # (a list of dilations for each layer of the gldr network)
 # 'projection' has additional 'activation' attribute which can be 'relu', 'tanh','sigmoid', etc (everything in tf.nn)

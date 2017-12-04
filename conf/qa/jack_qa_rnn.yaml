@@ -1,0 +1,56 @@
+description: >
+  Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible.
+
+parent_config: './conf/qa/modular_qa.yaml'
+
+name: 'jack_qa_reader'
+
+# fixed experiment seed
+seed: 1337
+
+# where to store the reader
+reader_dir: './jack_qa_reader'
+
+with_char_embeddings: True
+repr_dim: 150
+
+# To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
+model:
+  encoder_layer:
+  - input: 'question'
+    layer_type: 'lstm'
+    with_projection: True
+    activation: 'relu'
+  - input: 'support'
+    layer_type: 'lstm'
+    with_projection: True
+    activation: 'relu'
+
+  - input: 'support'
+    dependent: 'question'
+    layer_type: 'coattention'
+    attn_type: 'diagonal_bilinear'
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    scaled: True
+
+  - input: 'support'
+    layer_type: 'lstm'
+    with_projection: True
+    activation: 'relu'
+  - input: 'support'
+    layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
+    attn_type: 'bilinear'
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    num_attn_heads: 3
+  - input: 'support'
+    layer_type: 'lstm'  # the only application of a RNN
+    with_projection: True
+    activation: relu
+  - input: 'support'
+    layer_type: 'conv'  # another residual convnet with receptive field of 3 to recognize
+    activation: 'relu'
+    conv_width: 3
+    residual: True
+  answer_layer:
+    layer_type: 'bilinear'
+    max_span_size: 16

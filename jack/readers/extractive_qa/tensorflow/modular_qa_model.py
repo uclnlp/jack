@@ -19,62 +19,54 @@ class ModularQAModel(AbstractXQAModelModule):
             tensors.is_eval,
             lambda: (encoded_question, encoded_support),
             lambda: (
-            tf.nn.dropout(encoded_question, keep_prob, noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
-            tf.nn.dropout(encoded_support, keep_prob, noise_shape=[1, 1, encoded_support.get_shape()[-1].value]))
+                tf.nn.dropout(encoded_question, keep_prob, noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
+                tf.nn.dropout(encoded_support, keep_prob, noise_shape=[1, 1, encoded_support.get_shape()[-1].value]))
         )
 
         model = shared_resources.config['model']
         repr_dim = shared_resources.config['repr_dim']
 
-        with tf.variable_scope('contextual_encoder'):
-            for i, layer in enumerate(model['question_layer']):
-                if 'name' not in layer:
-                    layer['name'] = 'question_%d' % i
-                if 'repr_dim' not in layer:
-                    layer['repr_dim'] = repr_dim
-                encoded_question = encoder(encoded_question, tensors.question_length, **layer)
-            for i, layer in enumerate(model['support_layer']):
-                if 'name' not in layer:
-                    layer['name'] = 'support_%d' % i
-                if 'repr_dim' not in layer:
-                    layer['repr_dim'] = repr_dim
-                encoded_support = encoder(encoded_support, tensors.support_length, **layer)
+        inputs = {'question': encoded_question, 'support': encoded_support}
+        inputs_length = {'question': tensors.question_length, 'support': tensors.support_length}
+        inputs_mapping = {'question': None, 'support': tensors.support2question}
 
-        with tf.variable_scope('interaction'):
-            interaction_layer_config = model.get('interaction_layer')
-            if interaction_layer_config:
-                if 'repr_dim' not in interaction_layer_config:
-                    interaction_layer_config['repr_dim'] = repr_dim
-                encoded_support = interaction_layer(
-                    encoded_support, tensors.support_length, encoded_question, tensors.question_length,
-                    tensors.support2question, layer_type=interaction_layer_config['layer_type'],
-                    attn_type=interaction_layer_config.get('attn_type', 'diagonal_bilinear'),
-                    scaled=interaction_layer_config.get('scaled', True),
-                    name=interaction_layer_config.get('name', 'interaction_attention'),
-                )
-        if shared_resources.config.get('word_in_question', False):
-            # add 2x wiq to keep dimensionality even, otherwise FusedLSTM complains...
-            encoded_support = tf.concat([encoded_support,
-                                         tf.stack([tensors.word_in_question, tensors.word_in_question], 2)], 2)
+        for i, layer in enumerate(model['encoder_layer']):
+            key = layer['input']
+            out_key = layer.get('output', key)
+            if layer['layer_type'] == 'word_in_question':
+                key = layer['input']
+                # add 2x wiq to keep dimensionality even, otherwise FusedLSTM complains...
+                inputs[out_key] = tf.concat([inputs[key],
+                                             tf.stack([tensors.word_in_question, tensors.word_in_question], 2)], 2)
+                continue
 
-        with tf.variable_scope('encoder'):
-            for i, layer in enumerate(model.get('encoder_layer', [])):
-                if 'name' not in layer:
-                    layer['name'] = 'encoder_%d' % i
-                if 'repr_dim' not in layer:
-                    layer['repr_dim'] = repr_dim
-                encoded_support = encoder(encoded_support, tensors.support_length, **layer)
-
-        encoded_question, encoded_support = tf.cond(
-            tensors.is_eval,
-            lambda: (encoded_question, encoded_support),
-            lambda: (
-            tf.nn.dropout(encoded_question, keep_prob, noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
-            tf.nn.dropout(encoded_support, keep_prob, noise_shape=[1, 1, encoded_support.get_shape()[-1].value]))
-        )
+            if layer['layer_type'] == 'concat':
+                inputs[out_key] = tf.concat([inputs[k] for k in key], 2)
+            if 'name' not in layer:
+                layer['name'] = '_'.join([str(i), layer['input'], layer['layer_type']])
+            if 'repr_dim' not in layer:
+                layer['repr_dim'] = repr_dim
+            if 'dependent' in layer:
+                dep_key = layer['dependent']
+                inputs[out_key] = interaction_layer(
+                    inputs[key], inputs_length[key],
+                    inputs[dep_key], inputs_length[dep_key],
+                    inputs_mapping[key], **layer)
+            else:
+                inputs[out_key] = encoder(inputs[key], inputs_length[key], **layer)
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
+            encoded_question = inputs[answer_layer_config.get('question', 'question')]
+            encoded_support = inputs[answer_layer_config.get('support', 'support')]
+            encoded_question, encoded_support = tf.cond(
+                tensors.is_eval,
+                lambda: (encoded_question, encoded_support),
+                lambda: (tf.nn.dropout(encoded_question, keep_prob,
+                                       noise_shape=[1, 1, encoded_question.get_shape()[-1].value]),
+                         tf.nn.dropout(encoded_support, keep_prob,
+                                       noise_shape=[1, 1, encoded_support.get_shape()[-1].value])))
+
             if 'repr_dim' not in answer_layer_config:
                 answer_layer_config['repr_dim'] = repr_dim
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \

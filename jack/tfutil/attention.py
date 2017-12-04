@@ -11,18 +11,19 @@ def attention_softmax(attn_scores, length=None):
     return tf.nn.softmax(attn_scores)
 
 
-def apply_attention(attn_scores, states, length, is_self=False, with_sentinel=True):
+def apply_attention(attn_scores, states, length, is_self=False, with_sentinel=True, reuse=False):
     attn_scores += tf.expand_dims(misc.mask_for_lengths(length, tf.shape(attn_scores)[2]), 1)
     if is_self:
         # exclude attending to state itself
         attn_scores += tf.expand_dims(tf.diag(tf.fill([tf.shape(attn_scores)[1]], -1e6)), 0)
     if with_sentinel:
-        s = tf.get_variable('sentinal_score', [1, 1, 1], tf.float32, tf.zeros_initializer())
+        with tf.variable_scope('sentinel', reuse=reuse):
+            s = tf.get_variable('score', [1, 1, 1], tf.float32, tf.zeros_initializer())
         s = tf.tile(s, [tf.shape(attn_scores)[0], tf.shape(attn_scores)[1], 1])
-        attn_scores = tf.concat([s, attn_scores], 2)
-    attn_probs = tf.nn.softmax(attn_scores)
-    if with_sentinel:
+        attn_probs = tf.nn.softmax(tf.concat([s, attn_scores], 2))
         attn_probs = attn_probs[:, :, 1:]
+    else:
+        attn_probs = tf.nn.softmax(attn_scores)
     attn_states = tf.einsum('abd,adc->abc', attn_probs, states)
     return attn_scores, attn_probs, attn_states
 
@@ -42,7 +43,7 @@ def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True):
 
 
 def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True):
-    v = tf.get_variable('attn_weight', [1, 1, seq2.get_shape()[-1].value], tf.float32,
+    v = tf.get_variable('attn_weight', [1, 1, seq1.get_shape()[-1].value], tf.float32,
                         initializer=tf.ones_initializer())
     return dot_attention(seq1 * v, seq2, len2, with_sentinel)
 
@@ -53,6 +54,15 @@ def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sent
     hidden = tf.tile(tf.expand_dims(hidden1, 2), [1, 1, tf.shape(seq2)[1], -1]) + tf.expand_dims(hidden2, 1)
     attn_scores = tf.layers.dense(activation(hidden), 1, use_bias=with_sentinel)
     return apply_attention(tf.squeeze(attn_scores, 3), seq2, len2, seq1 is seq2, with_sentinel)
+
+
+def coattention(seq1, len1, seq2, len2, scaled=True, with_sentinel=True, attn_fn=dot_attention):
+    attn_scores, attn_probs1, attn_states1 = attn_fn(seq1, seq2, len2, scaled, with_sentinel)
+    _, _, attn_states2 = apply_attention(
+        tf.transpose(attn_scores, [0, 2, 1]), seq1, len1, seq1 is seq2, with_sentinel, reuse=True)
+    co_attn_state = tf.einsum('abd,adc->abc', attn_probs1, attn_states2)
+
+    return attn_scores, attn_probs1, attn_states1, attn_states2, co_attn_state
 
 
 def attention_softmax3d(values):

@@ -2,7 +2,7 @@ description: >
   Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible. This
   model is a bit more lightweight than jack_qa.
 
-parent_config: './conf/modular_qa.yaml'
+parent_config: './conf/qa/modular_qa.yaml'
 
 name: 'jack_qa_reader'
 
@@ -18,33 +18,38 @@ repr_dim: 100
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
-  question_layer:  # saving computation by running conv nets here, receptive field is 10 tokens
-  - layer_type: 'glu_conv'
-    conv_width: 5
-    num_layers: 2
-    residual: True
-  support_layer:   # saving computation by running conv nets here, receptive field is 10 tokens
-  - layer_type: 'glu_conv'
-    conv_width: 5
-    num_layers: 2
-    residual: True
-  interaction_layer:  # saving computation by running mostly conv nets here
-    layer_type: 'attention_matching'
-    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
-    attn_type: 'diagonal_bilinear'
-    scaled: True
   encoder_layer:
-  - layer_type: 'glu_conv'
+  - input: 'question'
+    layer_type: 'conv'
+    activation: 'relu'
     conv_width: 5
-    num_layers: 1
-    name: 'glu_conv_interaction_1'
-  - layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
+    num_layers: 2
+  - input: 'support'
+    layer_type: 'conv'
+    activation: 'relu'
+    conv_width: 5
+    num_layers: 2
+
+  - input: 'support'
+    dependent: 'question'
+    layer_type: 'coattention'
+    attn_type: 'diagonal_bilinear'
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    scaled: True
+
+  - input: 'support'
+    layer_type: 'conv'
+    activation: 'relu'
+    conv_width: 5
+  - input: 'support'
+    layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
     attn_type: 'bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 1
-  - layer_type: 'lstm'  # the only application of a RNN
+  - input: 'support'
+    layer_type: 'lstm'  # the only application of a RNN
     with_projection: True
-    num_layers: 1
+    activation: 'relu'
   answer_layer:
     layer_type: 'bilinear'
     max_span_size: 16
