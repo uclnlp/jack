@@ -48,11 +48,11 @@ $ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQ
 or shorter, using our prepared config:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/fastqa.yaml'
+$ python3 bin/jack-train.py with config='./conf/qa/fastqa.yaml'
 ```
 
 You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
-together your own model. There are examples in `conf/` (e.g., `bidaf.yaml` or our own creation `jack_qa[_light].yaml`).
+together your own model. There are examples in `conf/qa/` (e.g., `bidaf.yaml` or our own creation `jack_qa[_light].yaml`).
 **We recommend using one of our own creations `jack_qa[_light].yaml` which are both fast while achieving very good
 results.**
 

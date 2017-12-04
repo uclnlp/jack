@@ -35,6 +35,7 @@ model:
     attn_type: 'diagonal_bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
+
   - input: 'support'
     layer_type: 'conv'
     activation: 'relu'

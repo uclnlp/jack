@@ -51,7 +51,7 @@ model:
 # * repr_dim - dimensionality of output
 # * layer_type - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
 #                CONVs: 'gldr' (gated linear dilated residual network), 'conv' (convolution)
-#                MISC: 'projection' (linear projection), 'self_attn'
+#                MISC: 'projection' (linear projection), 'self_attn', 'concat' (use 'input' to define list of keys to concatenate)
 # * residual - whether this encoder should be residually employed
 # * num_layers number of times this is consecutively
 # 'conv' requires another parameter, 'conv_width' (3 by default) and can have and 'activation'
