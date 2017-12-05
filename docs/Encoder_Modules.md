@@ -33,9 +33,10 @@ There are 5 starting keys `support` (embedded support), `question` (embedded que
 * `activation`: can be set if projection is used
 
 ### Convolutions
-* `module`: `conv`, `conv_glu` (gated linear unit)
+* `module`: `conv`, `conv_glu` ([gated linear unit](https://arxiv.org/pdf/1612.08083.pdf)), 'gldr' ([gated linear dilated residual network](https://openreview.net/pdf?id=HJRV1ZZAW))
 * `conv_width`: width of the convolution
 * `activation`: can be set if not `glu`
+* `dilations`: list of dilations corresponding to the number of layers in `gldr`
 
 ### Self Attention
 * `module`: `self_attn`
