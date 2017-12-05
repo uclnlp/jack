@@ -52,11 +52,13 @@ model:
   - input: 'question'
     module: 'lstm'
     name: 'contextual_encoding'
-    with_projection: True # not in the original bidaf implementation, but helps
+    with_projection: True # not in the original bidaf implementation, but help
+    dropout: *dropout
   - input: 'support'
     module: 'lstm'
     with_projection: True # not in the original bidaf implementation, but helps
     name: 'contextual_encoding' # shared encoding at this point helps
+    dropout: *dropout
 
   # Attention Encoding
   - input: 'support'
@@ -67,6 +69,7 @@ model:
     module: 'lstm'
     with_projection: True # not in the original bidaf implementation, but helps
     num_layers: 2
+    dropout: *dropout
 
   answer_layer:
     module: 'bidaf'
@@ -75,4 +78,5 @@ model:
     encoder:  # only needed for bidaf answer layer
       repr_dim: *dim
       module: 'lstm'
-      num_layers: 1
+      dropout: *dropout
+

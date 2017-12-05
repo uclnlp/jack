@@ -240,7 +240,7 @@ class TFReader(JTReader):
         else:
             min_op = optimizer.minimize(loss, global_step)
 
-        variable_size = lambda v: reduce(lambda x, y: x * y, v.get_shape().as_list())
+        variable_size = lambda v: reduce(lambda x, y: x * y, v.get_shape().as_list()) if v.get_shape() else 1
         num_params = sum(variable_size(v) for v in self.model_module.train_variables)
         logger.info("Number of parameters: %d" % num_params)
 

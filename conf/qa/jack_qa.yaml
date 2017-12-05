@@ -32,7 +32,7 @@ model:
   - input: 'support'
     name: 'embedding_projection'
     module: 'dense'
-    activation: 'relu'
+    activation: 'tanh'
     dropout: *dropout
   # Question
   - input: ['question', 'char_question']
@@ -44,7 +44,7 @@ model:
   - input: 'question'
     name: 'embedding_projection'  # use same network as support
     module: 'dense'
-    activation: 'relu'
+    activation: 'tanh'
     dropout: *dropout
 
   # Shared Contextual Encoding
@@ -54,12 +54,14 @@ model:
     num_layers: 2
     name: 'contextual_encoding'
     residual: True
+    dropout: *dropout
   - input: 'question'
     module: 'conv_glu'
     conv_width: 5
     num_layers: 2
     name: 'contextual_encoding'  # use same network as support
     residual: True
+    dropout: *dropout
 
   # Self Attention
   - input: 'support'
@@ -79,25 +81,27 @@ model:
     scaled: True
 
   # BiLSTM
-  - input: ['support', 'support_self', 'word_in_question', 'word_in_question']  # 2x wiq because lstm impl likes even inputs
+  - input: ['support', 'support_self']  # 2x wiq because lstm impl likes even inputs
     output: 'support'
     module: 'concat'
   - input: 'support'
     module: 'lstm'  # the only application of a RNN
     with_projection: True
-    activation: 'relu'
+    activation: 'tanh'
+    dropout: *dropout
 
   - input: 'support'
-    module: 'conv_glu'
+    module: 'conv'
+    activation: 'tanh'
     conv_width: 5
-    num_layers: 2
+    num_layers: 1
     residual: True
 
   # question encoding for answer layer
   - input: 'question'
     module: 'lstm'  # the only application of a RNN
     with_projection: True
-    activation: 'relu'
+    activation: 'tanh'
 
   answer_layer:
     module: 'bilinear'
