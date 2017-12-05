@@ -17,14 +17,44 @@ repr_dim: &dim 100
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
   encoder_layer:
+  # Embedding computation
+  # Support
+  - input: ['support', 'char_support']
+    output: 'support'
+    module: 'concat'
+  - input: 'support'
+    name: 'embedding_highway'
+    module: 'highway'
+    num_layers: 2
+  - input: 'support'
+    name: 'embedding_projection'
+    module: 'projection'
+    activation: 'relu'
+    dropout: *dropout
+
+  # Question
+  - input: ['question', 'char_question']
+    output: 'question'
+    module: 'concat'
+  - input: 'question'
+    name: 'embedding_highway'  # use same network as support
+    module: 'highway'
+    num_layers: 2
+  - input: 'question'
+    name: 'embedding_projection'
+    module: 'projection'
+    activation: 'relu'
+    dropout: *dropout
+
+  # Contextual Encoding
   - input: 'question'
     module: 'lstm'
-  - input: 'question'
-    module: 'projection'
-    activation: 'tanh'
+    name: 'contextual_encoding'
+    with_projection: True
   - input: 'support'
     module: 'lstm'
-    with_projection: True
+    with_projection: True # not in the original dcn+ implementation, but helps
+    name: 'contextual_encoding'
 
   # compute 2-layer coattention
   - module: 'coattention'
