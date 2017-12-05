@@ -9,6 +9,11 @@ this document.
 
 
 ### Implementing new Models
+New models can be stuck together using only the configuration file. All our model implementations except FastQA are
+defined using our `ModularQAModel`. Building Blocks are explained [here](/docs/Encoder_Modules.md).
+Example configs can be found in `conf/qa`. However, if you think your fancy model cannot be defined like this please
+keep on reading.
+
 In preparation it is advised to at least go through the
 [Implementing_a_new_model.ipynb](/notebooks/Implementing_a_new_model.ipynb) to understand the basics behind Jacks modular
 design and how to use it to implement new models.
@@ -42,11 +47,13 @@ InputModule.
 
 ### Supported Models
 
-By the time of writing, Jack supports 2 implementations: [FastQA][fastqa], [BiDAF][bidaf] (and its convolutional version). 
-Ready-to-use configurations for training such models can be found in the `conf/` directory.
+By the time of writing, Jack supports the following implementations: [FastQA][fastqa], [BiDAF][bidaf] and [DCN+][dcn+],
+as well ass our own creation JackQA, which aims at being resource friendly while retaining good performance. 
+Ready-to-use configurations for training such models can be found in the `conf/qa` directory.
 
 [fastqa]: https://arxiv.org/abs/1703.04816
 [bidaf]: https://arxiv.org/abs/1611.01603
+[dcn+]: https://arxiv.org/abs/1711.00106
 
 ### Supported Datasets
 

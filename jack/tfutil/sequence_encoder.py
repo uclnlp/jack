@@ -36,7 +36,7 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, con
             out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
         elif module == 'conv_glu':
             out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
-        elif module == 'projection':
+        elif module == 'dense':
             out = tf.layers.dense(sequence, repr_dim, name=name, reuse=reuse)
             if activation:
                 out = activation_from_string(activation)(out)

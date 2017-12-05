@@ -28,7 +28,7 @@ model:
     num_layers: 2
   - input: 'support'
     name: 'embedding_projection'
-    module: 'projection'
+    module: 'dense'
     activation: 'relu'
     dropout: *dropout
 
@@ -42,7 +42,7 @@ model:
     num_layers: 2
   - input: 'question'
     name: 'embedding_projection'
-    module: 'projection'
+    module: 'dense'
     activation: 'relu'
     dropout: *dropout
 

@@ -52,9 +52,10 @@ $ python3 bin/jack-train.py with config='./conf/qa/fastqa.yaml'
 ```
 
 You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
-together your own model. There are examples in `conf/qa/` (e.g., `bidaf.yaml` or our own creation `jack_qa[_light].yaml`).
-**We recommend using one of our own creations `jack_qa[_light].yaml` which are both fast while achieving very good
-results.**
+together your own model. There are examples in `conf/qa/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
+**We recommend using one of our own creations `jack_qa.yaml` which are both fast while achieving very good
+results.** These models are defined solely in the config. This is possible by using our `ModularQAModel`. See the 
+configs as examples and look at our [documentation](/jack/Encoder_Modules.md) for more information.
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
 [summaries][tf_summaries] to a provided path (here `.tb/fastqa`). Your summaries are automatically

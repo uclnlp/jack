@@ -31,7 +31,7 @@ model:
     module: 'highway'
   - input: 'support'
     name: 'embedding_projection'
-    module: 'projection'
+    module: 'dense'
     activation: 'relu'
     dropout: *dropout
   # Question
@@ -43,7 +43,7 @@ model:
     module: 'highway'
   - input: 'question'
     name: 'embedding_projection'  # use same network as support
-    module: 'projection'
+    module: 'dense'
     activation: 'relu'
     dropout: *dropout
 
@@ -93,7 +93,7 @@ model:
     module: 'concat'
 
   - input: 'support'
-    module: 'projection'
+    module: 'dense'
     activation: 'relu'
   - input: 'support'
     module: 'conv'
