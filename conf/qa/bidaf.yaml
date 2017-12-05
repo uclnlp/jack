@@ -28,11 +28,6 @@ model:
     name: 'embedding_highway'
     module: 'highway'
     num_layers: 2
-  - input: 'support'
-    name: 'embedding_projection'
-    module: 'dense'
-    activation: 'relu'
-    dropout: *dropout
 
   # Question
   - input: ['question', 'char_question']
@@ -42,11 +37,6 @@ model:
     name: 'embedding_highway'  # use same network as support
     module: 'highway'
     num_layers: 2
-  - input: 'question'
-    name: 'embedding_projection'
-    module: 'dense'
-    activation: 'relu'
-    dropout: *dropout
 
   # Contextual Encoding
   - input: 'question'
