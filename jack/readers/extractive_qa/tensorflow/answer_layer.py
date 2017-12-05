@@ -7,34 +7,34 @@ from jack.tfutil.segment import segment_top_k
 
 def answer_layer(encoded_question, question_length, encoded_support, support_length,
                  support2question, answer2support, is_eval, correct_start=None, beam_size=1, max_span_size=10000,
-                 encoder=None, layer_type='bilinear', repr_dim=100):
-    if layer_type == 'bilinear':
+                 encoder=None, module='bilinear', repr_dim=100):
+    if module == 'bilinear':
         return bilinear_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
             support2question, answer2support, is_eval, beam_size, max_span_size)
-    elif layer_type == 'mlp':
+    elif module == 'mlp':
         return mlp_answer_layer(repr_dim, encoded_question, question_length, encoded_support, support_length,
                                 support2question, answer2support, is_eval, beam_size, max_span_size)
-    elif layer_type == 'conditional':
+    elif module == 'conditional':
         return conditional_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
             correct_start, support2question, answer2support, is_eval, beam_size, max_span_size)
-    elif layer_type == 'conditional_bilinear':
+    elif module == 'conditional_bilinear':
         return conditional_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
             correct_start, support2question, answer2support, is_eval, beam_size, max_span_size, bilinear=True)
-    elif layer_type == 'conditional_bilinear':
+    elif module == 'conditional_bilinear':
         return conditional_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
             correct_start, support2question, answer2support, is_eval, beam_size, max_span_size, bilinear=True)
-    elif layer_type == 'bidaf':
+    elif module == 'bidaf':
         encoded_support_end = sequence_encoder.encoder(
             encoded_support, support_length, name='encoded_support_end', **encoder)
         encoded_support_end = tf.concat([encoded_support, encoded_support_end], 2)
         return bidaf_answer_layer(encoded_support, encoded_support_end, support_length,
                                   support2question, answer2support, is_eval, beam_size=1, max_span_size=10000)
     else:
-        raise ValueError("Unknown answer layer type: %s" % layer_type)
+        raise ValueError("Unknown answer layer type: %s" % module)
 
 
 def compute_question_state(encoded_question, question_length):

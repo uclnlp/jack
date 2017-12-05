@@ -86,8 +86,8 @@ class FastQAModule(AbstractXQAModelModule):
             encoder_type = shared_resources.config.get('encoder', 'lstm').lower()
             if encoder_type in ['lstm', 'sru', 'gru']:
                 size = size + 2 if encoder_type == 'sru' else size  # to allow for use of residual in SRU
-                encoded_question = encoder(emb_question_ext, tensors.question_length, size, layer_type=encoder_type)
-                encoded_support = encoder(emb_support_ext, tensors.support_length, size, layer_type=encoder_type,
+                encoded_question = encoder(emb_question_ext, tensors.question_length, size, module=encoder_type)
+                encoded_support = encoder(emb_support_ext, tensors.support_length, size, module=encoder_type,
                                           reuse=True)
                 projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
                 encoded_question = tf.layers.dense(encoded_question, size, tf.tanh, use_bias=False,

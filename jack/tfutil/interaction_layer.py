@@ -6,22 +6,22 @@ from jack.tfutil.misc import mask_for_lengths
 
 
 def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2,
-                      layer_type='attention_matching', attn_type='bilinear_diagonal', scaled=True, with_sentinel=False,
+                      module='attention_matching', attn_type='bilinear_diagonal', scaled=True, with_sentinel=False,
                       name='interaction_layer', reuse=False, num_layers=1, encoder=None, **kwargs):
     with tf.variable_scope(name, reuse=reuse):
         if seq1_to_seq2 is not None:
             seq2 = tf.gather(seq2, seq1_to_seq2)
             seq2_length = tf.gather(seq2_length, seq1_to_seq2)
-        if layer_type == 'attention_matching':
+        if module == 'attention_matching':
             return attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
                                             attn_type, scaled, with_sentinel)
-        elif layer_type == 'bidaf':
+        elif module == 'bidaf':
             return bidaf_layer(seq1, seq1_length, seq2, seq2_length)
-        elif layer_type == 'coattention':
+        elif module == 'coattention':
             return coattention_layer(
                 seq1, seq1_length, seq2, seq2_length, attn_type, scaled, with_sentinel, num_layers, encoder)
         else:
-            raise ValueError("Unknown interaction type: %s" % layer_type)
+            raise ValueError("Unknown interaction type: %s" % module)
 
 
 def bidaf_layer(seq1, seq1_length, seq2, seq2_length):

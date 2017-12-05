@@ -18,30 +18,30 @@ repr_dim: &dim 100
 model:
   encoder_layer:
   - input: 'question'
-    layer_type: 'lstm'
+    module: 'lstm'
   - input: 'question'
-    layer_type: 'projection'
+    module: 'projection'
     activation: 'tanh'
   - input: 'support'
-    layer_type: 'lstm'
+    module: 'lstm'
     with_projection: True
 
   # compute 2-layer coattention
-  - layer_type: 'coattention'
+  - module: 'coattention'
     input: 'support'
     dependent: 'question'
     num_layers: 2
     encoder:
-      layer_type: 'lstm'
+      module: 'lstm'
       repr_dim: *dim
       with_projection: True
     attn_type: 'dot'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
   - input: 'support'
-    layer_type: 'lstm'  # the only application of a RNN
+    module: 'lstm'  # the only application of a RNN
     with_projection: True
     num_layers: 1
   answer_layer:
-    layer_type: 'bilinear'
+    module: 'bilinear'
     max_span_size: 16

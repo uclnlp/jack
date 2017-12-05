@@ -1,5 +1,6 @@
 description: >
-  Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible.
+  Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible. This
+  model is a bit more lightweight than jack_qa.
 
 parent_config: './conf/qa/modular_qa.yaml'
 
@@ -12,69 +13,101 @@ seed: 1337
 reader_dir: './jack_qa_reader'
 
 with_char_embeddings: True
-repr_dim: 150
-dropout: &dropout 0.2
+word_in_question: True  # concatenated with output after interaction layer
 
+repr_dim: 100
+dropout: &dropout 0.2
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
   encoder_layer:
-  - input: 'question'
-    layer_type: 'conv_glu'
-    conv_width: 5
-    num_layers: 2
-    residual: True
-
-  - input: 'support'
-    layer_type: 'conv_glu'
-    conv_width: 5
-    num_layers: 2
-    residual: True
-
-  - input: 'support'
-    dependent: 'question'
-    layer_type: 'attention_matching'
-    attn_type: 'bilinear'
-    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
-    scaled: True
-
-  - input: ['support', 'word_in_question', 'word_in_question']  # 2x wiq because lstm impl likes even inputs
+  # Shared Embedding Processing
+  # Support
+  - input: ['support', 'char_support']
     output: 'support'
-    layer_type: 'concat'
+    module: 'concat'
   - input: 'support'
-    layer_type: 'lstm'  # the only application of a RNN
-    with_projection: True
+    name: 'embedding_highway'
+    module: 'highway'
+  - input: 'support'
+    name: 'embedding_projection'
+    module: 'projection'
+    activation: 'relu'
+    dropout: *dropout
+  # Question
+  - input: ['question', 'char_question']
+    output: 'question'
+    module: 'concat'
+  - input: 'question'
+    name: 'embedding_highway'  # use same network as support
+    module: 'highway'
+  - input: 'question'
+    name: 'embedding_projection'  # use same network as support
+    module: 'projection'
     activation: 'relu'
     dropout: *dropout
 
+  # Shared Contextual Encoding
+  - input: 'support'
+    module: 'conv'
+    activation: 'relu'
+    conv_width: 5
+    num_layers: 2
+    name: 'contextual_encoding'
+    residual: True
+  - input: 'question'
+    module: 'conv'
+    activation: 'relu'
+    conv_width: 5
+    num_layers: 2
+    name: 'contextual_encoding'  # use same network as support
+    residual: True
+
+  # Attention
+  - input: 'support'
+    dependent: 'question'
+    module: 'attention_matching'
+    attn_type: 'diagonal_bilinear'
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    scaled: True
+
+  # BiLSTM
+  - input: ['support', 'word_in_question', 'word_in_question']  # 2x wiq because lstm impl likes even inputs
+    output: 'support'
+    module: 'concat'
+  - input: 'support'
+    module: 'lstm'  # the only application of a RNN
+    with_projection: True
+    activation: 'relu'
+
+  # Self Attention
   - input: 'support'
     output: 'support_1'
-    layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
+    module: 'self_attn'
     attn_type: 'dot'
     scaled: True
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
-  - input: 'support'
-    output: 'support_2'
-    layer_type: 'self_attn'  # concatenates attention weighted state(s) with state at particular position
-    attn_type: 'bilinear'
-    scaled: True
-    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
-    num_attn_heads: 2
-  - input: ['support', 'support_1', 'support_2']
+    num_attn_heads: 1
+  - input: ['support', 'support_1']
     output: 'support'
-    layer_type: 'concat'
+    module: 'concat'
 
   - input: 'support'
-    layer_type: 'projection'
+    module: 'projection'
     activation: 'relu'
   - input: 'support'
-    layer_type: 'conv'
+    module: 'conv'
     activation: 'relu'
     conv_width: 5
-    num_layers: 3
+    num_layers: 2
     residual: True
-    dropout: *dropout
+
+  # question encoding
+  - input: 'question'
+    module: 'lstm'  # the only application of a RNN
+    with_projection: True
+    activation: 'relu'
 
   answer_layer:
-    layer_type: 'bilinear'
+    module: 'bilinear'
     max_span_size: 16

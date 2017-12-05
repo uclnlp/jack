@@ -49,7 +49,7 @@ model:
 # * input - required, string indicating what input to encode (starts with possibilities 'question' or 'support')
 # * output - optional, set to input by default but can be overwritten to something else => after defining a new output key it can be used later as input somewhere else
 # * repr_dim - dimensionality of output
-# * layer_type - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
+# * module - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
 #                CONVs: 'gldr' (gated linear dilated residual network), 'conv' (convolution)
 #                MISC: 'projection' (linear projection), 'self_attn', 'concat' (use 'input' to define list of keys to concatenate)
 # * residual - whether this encoder should be residually employed

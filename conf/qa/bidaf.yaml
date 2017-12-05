@@ -19,34 +19,60 @@ dropout: &dropout 0.2
 
 model:
   encoder_layer:
-  - input: 'question'
-    repr_dim: *dim
-    layer_type: 'lstm'
-    with_projection: True # not in the original bidaf implementation, but helps
+  # Embedding computation
+  # Support
+  - input: ['support', 'char_support']
+    output: 'support'
+    module: 'concat'
   - input: 'support'
-    repr_dim: *dim
-    layer_type: 'lstm'
-    with_projection: True # not in the original bidaf implementation, but helps
-  - input: 'support'
-    dependent: 'question'
-    layer_type: 'bidaf'
-  - input: 'support'
-    repr_dim: *dim
-    layer_type: 'lstm'
-    with_projection: True # not in the original bidaf implementation, but helps
+    name: 'embedding_highway'
+    module: 'highway'
     num_layers: 2
+  - input: 'support'
+    name: 'embedding_projection'
+    module: 'projection'
+    activation: 'relu'
     dropout: *dropout
 
+  # Question
+  - input: ['question', 'char_question']
+    output: 'question'
+    module: 'concat'
+  - input: 'question'
+    name: 'embedding_highway'  # use same network as support
+    module: 'highway'
+    num_layers: 2
+  - input: 'question'
+    name: 'embedding_projection'
+    module: 'projection'
+    activation: 'relu'
+    dropout: *dropout
+
+  # Contextual Encoding
+  - input: 'question'
+    module: 'lstm'
+    name: 'contextual_encoding'
+    with_projection: True # not in the original bidaf implementation, but helps
+  - input: 'support'
+    module: 'lstm'
+    with_projection: True # not in the original bidaf implementation, but helps
+    name: 'contextual_encoding' # shared encoding at this point helps
+
+  # Attention Encoding
+  - input: 'support'
+    dependent: 'question'
+    module: 'bidaf'
+
+  - input: 'support'
+    module: 'lstm'
+    with_projection: True # not in the original bidaf implementation, but helps
+    num_layers: 2
+
   answer_layer:
-    layer_type: 'bidaf'
+    module: 'bidaf'
     max_span_size: 16
     repr_dim: *dim
     encoder:  # only needed for bidaf answer layer
       repr_dim: *dim
-      layer_type: 'lstm'
+      module: 'lstm'
       num_layers: 1
-
-
-
-
-

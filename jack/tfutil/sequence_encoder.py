@@ -6,40 +6,43 @@ import tensorflow as tf
 from jack.tfutil import attention
 from jack.tfutil import rnn
 from jack.tfutil.activations import activation_from_string
+from jack.tfutil.highway import highway_network
 
 logger = logging.getLogger(__name__)
 
 
-def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1, conv_width=3,
+def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, conv_width=3,
             dilations=None, reuse=False, residual=False, attn_type=None, num_attn_heads=1, scaled=False,
             activation=None, with_sentinel=False, with_projection=False, name='encoder', **kwargs):
     if num_layers == 1:
-        if layer_type == 'lstm':
+        if module == 'lstm':
             out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
             if activation:
                 out = activation_from_string(activation)(out)
-        elif layer_type == 'sru':
+        elif module == 'sru':
             with_residual = sequence.get_shape()[2].value == repr_dim
             out = bi_sru(repr_dim, sequence, seq_length, with_residual, name, reuse, with_projection)
             if activation:
                 out = activation_from_string(activation)(out)
-        elif layer_type == 'gru':
+        elif module == 'gru':
             out = bi_rnn(repr_dim, tf.contrib.rnn.BlockGRUCell(repr_dim), sequence,
                          seq_length, name, reuse, with_projection)
             if activation:
                 out = activation_from_string(activation)(out)
-        elif layer_type == 'gldr':
+        elif module == 'gldr':
             out = gated_linear_dilated_residual_network(
                 repr_dim, sequence, dilations, conv_width, name, reuse)
-        elif layer_type == 'conv':
+        elif module == 'conv':
             out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
-        elif layer_type == 'conv_glu':
+        elif module == 'conv_glu':
             out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
-        elif layer_type == 'projection':
-            out = tf.layers.dense(sequence, repr_dim, name=name)
+        elif module == 'projection':
+            out = tf.layers.dense(sequence, repr_dim, name=name, reuse=reuse)
             if activation:
                 out = activation_from_string(activation)(out)
-        elif layer_type == 'self_attn':
+        elif module == 'highway':
+            out = highway_network(sequence, num_layers, activation_from_string(activation), name=name, reuse=reuse)
+        elif module == 'self_attn':
             outs = []
             for i in range(num_attn_heads):
                 attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim, with_sentinel,
@@ -47,18 +50,18 @@ def encoder(sequence, seq_length, repr_dim=100, layer_type='lstm', num_layers=1,
                 outs.append(attn)
             out = tf.concat(outs, 2) if num_layers > 1 else outs[0]
         else:
-            raise ValueError("Unknown encoder type: %s" % layer_type)
+            raise ValueError("Unknown encoder type: %s" % module)
     else:
-        out = encoder(sequence, seq_length, repr_dim, layer_type, num_layers - 1, conv_width,
+        out = encoder(sequence, seq_length, repr_dim, module, num_layers - 1, conv_width,
                       dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_sentinel,
                       with_projection, name)
-        out = encoder(out, seq_length, repr_dim, layer_type, 1, conv_width,
+        out = encoder(out, seq_length, repr_dim, module, 1, conv_width,
                       dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_sentinel,
                       with_projection, name + str(num_layers - 1))
     if residual:
         if out.get_shape()[-1].value != sequence.get_shape()[-1].value:
             logging.error('Residual connection only possible if input to sequence encoder %s of type %s has same '
-                          'dimension (%d) as output (%d).' % (name, layer_type, sequence.get_shape()[-1].value,
+                          'dimension (%d) as output (%d).' % (name, module, sequence.get_shape()[-1].value,
                                                               out.get_shape()[-1].value))
             raise RuntimeError()
         out += sequence

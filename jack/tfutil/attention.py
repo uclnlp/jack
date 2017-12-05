@@ -37,6 +37,8 @@ def dot_attention(seq1, seq2, len2, scaled=True, with_sentinel=True):
 
 def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True):
     attn_scores = tf.einsum('abc,adc->abd', tf.layers.dense(seq1, seq2.get_shape()[-1].value, use_bias=False), seq2)
+    attn_scores += tf.expand_dims(tf.layers.dense(seq1, 1, use_bias=False), 2)
+    attn_scores += tf.expand_dims(tf.layers.dense(seq2, 1, use_bias=False), 1)
     if scaled:
         attn_scores /= math.sqrt(float(seq1.get_shape()[-1].value))
     return apply_attention(attn_scores, seq2, len2, seq1 is seq2, with_sentinel)
@@ -45,7 +47,12 @@ def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True):
 def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True):
     v = tf.get_variable('attn_weight', [1, 1, seq1.get_shape()[-1].value], tf.float32,
                         initializer=tf.ones_initializer())
-    return dot_attention(seq1 * v, seq2, len2, with_sentinel)
+    attn_scores = tf.einsum('abc,adc->abd', v * seq1, seq2)
+    attn_scores += tf.layers.dense(seq1, 1, use_bias=False)
+    attn_scores += tf.transpose(tf.layers.dense(seq2, 1, use_bias=False), [0, 2, 1])
+    if scaled:
+        attn_scores /= math.sqrt(float(seq1.get_shape()[-1].value))
+    return apply_attention(attn_scores, seq2, len2, seq1 is seq2, with_sentinel)
 
 
 def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinel=True):
