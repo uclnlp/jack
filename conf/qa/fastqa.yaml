@@ -34,7 +34,7 @@ embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
 
-repr_dim: 300
+repr_dim: 150
 
 epochs: 20
 
