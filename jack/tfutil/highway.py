@@ -14,7 +14,7 @@ def highway_layer(inputs, activation, name=None):
         return out
 
 
-def highway_network(inputs, num_layers, activation, name=None, reuse=False):
+def highway_network(inputs, num_layers, activation=tf.tanh, name=None, reuse=False):
     with tf.variable_scope(name or "highway_network", reuse=reuse):
         prev = inputs
         cur = None
