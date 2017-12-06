@@ -40,7 +40,8 @@ def side_effect(metrics, _):
     logger.info("#####################################")
     return 0.0
 
-test_eval_hook = eval_hooks[reader.shared_resources.config["model"]](
+
+test_eval_hook = eval_hooks[reader.shared_resources.config["reader"]](
     reader, dataset, FLAGS.batch_size, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 
