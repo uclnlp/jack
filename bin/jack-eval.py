@@ -18,7 +18,7 @@ tf.app.flags.DEFINE_string('dataset', None, 'dataset file')
 tf.app.flags.DEFINE_string('loader', 'jack', 'name of loader')
 tf.app.flags.DEFINE_string('model_dir', None, 'directory to saved model')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
-tf.app.flags.DEFINE_string('overwrite', '', 'json string that overwrites configuration.')
+tf.app.flags.DEFINE_string('overwrite', '{}', 'json string that overwrites configuration.')
 
 FLAGS = tf.app.flags.FLAGS
 
