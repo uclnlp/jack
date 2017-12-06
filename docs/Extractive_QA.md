@@ -6,17 +6,22 @@ in our framework.
 
 ### Pre-trained Models
 
-We list trained models with scores, relative speeds and number of parameters for models trained on SQuAD and evaluated 
-on SQuAD Dev.
+We list trained models with scores, relative speeds and number of parameters for models.
+ 
+#### SQuAD (Devset results)
 
-| Model         |  F1  | Exact | Speed | Params in M | Download |
-|---------------|------|-------|-------|-------------|----------|
-| BiDAF         | 77.8 | 68.5  |  1.0  |   2.02      |   TBD    |
-| FastQA        |      |       |  2.2  |   0.95      |   TBD    |
-| JackQA Light  | 78.4 | 68.7  |  2.0  |   1.17      |   TBD    |
-| JackQA        |      |       |  1.5  |   2.24      |   TBD    |
-| JackQA RNN    |      |       |  1.1  |   2.93      |   TBD    |
+| Model         |  F1  | Exact  | Speed | Params in M  | Download        |
+|---------------|------|--------|-------|--------------|-----------------|
+| BiDAF         | 77.8 |  68.5  |  1.0  |     2.02     | [bidaf]         |
+| FastQA        | 77.4 |  67.4  |  2.2  |     0.95     | [fastqa]        |
+| JackQA Light  | 78.4 |  68.7  |  2.0  |     1.17     | [jackqa light]  |
+| JackQA        | 78.4 |  68.7  |  1.5  |     2.24     | [jackqa]        |
 
+
+[bidaf]: https://www.dropbox.com/s/63zkes18juan7wa/bidaf.zip?dl=1
+[fastqa]: https://www.dropbox.com/s/qb796uljoqj0lvo/fastqa.zip?dl=1
+[jackqa light]: https://www.dropbox.com/s/061y88hcq62az63/jack_qa_light.zip?dl=1
+[jackqa]: https://www.dropbox.com/s/36b6tju9engorgc/jack_qa.zip?dl=1
 
 ### Implementing new Models
 
