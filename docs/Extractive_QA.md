@@ -4,11 +4,24 @@ Extractive or document question answering aims at finding a span `(document_inde
 to a given question. It assumes that such documents are given apriori. We call supporting documents simply the "support"
 in our framework.
 
-Please make sure that you roughly [understand Jack](/docs/Understanding_Jack_the_Reader.md) before going on with
-this document.
+### Pre-trained Models
+
+We list trained models with scores, relative speeds and number of parameters.
+
+| Model         | SQuAD F1 | SQuAD Exact | Speed | Download |
+|---------------|----------|-------------|-------|----------|
+| BiDAF         |   77.8   |     68.5    |  1.0  |   TBD    |
+| FastQA        |          |             |       |   TBD    |
+| JackQALight   |   78.4   |     68.7    |  2.0  |   TBD    |
+| JackQA        |   |   |   |   |
+| JackQARNN     |   |   |   |   |
 
 
 ### Implementing new Models
+
+Please make sure that you roughly [understand Jack](/docs/Understanding_Jack_the_Reader.md) before going on with
+this document.
+
 New models can be stuck together using only the configuration file. All our model implementations except FastQA are
 defined using our `ModularQAModel`. Building Blocks are explained [here](/docs/Encoder_Modules.md).
 Example configs can be found in `conf/qa`. However, if you think your fancy model cannot be defined like this please
