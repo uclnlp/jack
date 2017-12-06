@@ -51,12 +51,6 @@ or shorter, using our prepared config:
 $ python3 bin/jack-train.py with config='./conf/qa/fastqa.yaml'
 ```
 
-You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
-together your own model. There are examples in `conf/qa/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
-**We recommend using one of our own creations `jack_qa.yaml` which are both fast while achieving very good
-results.** These models are defined solely in the config. This is possible by using our `ModularQAModel`. See the 
-configs as examples and look at our [documentation](/docs/Encoder_Modules.md) for more information.
-
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
 [summaries][tf_summaries] to a provided path (here `.tb/fastqa`). Your summaries are automatically
 fetched in the train loop, so all you need to do is write them in your TF model code.
@@ -64,6 +58,13 @@ fetched in the train loop, so all you need to do is write them in your TF model 
 A copy of the model is written into the `reader_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
+
+You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
+together your own model. There are examples in `conf/qa/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
+**We recommend using one of our own creations `jack_qa*.yaml` which are both fast while achieving very good
+results.** These models are defined solely in the configs, i.e., there is not implementation in code.
+This is possible through our `ModularQAModel`.
+For more information on extractive question answering please have a look [here](/docs/Extractive_QA.md).
 
 If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
 
@@ -94,11 +95,6 @@ answers = fastqa_reader([QASetting(
 [fastqa]: https://arxiv.org/abs/1703.04816
 [showcase]: notebooks/Showcasing_Jack.ipynb
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
-
-#### Implementing your own Model
-
-After you managed to get already implemented models running you can of course go ahead and implement your own models.
-Take a look at the more detailed documentation for extractive QA [here](/docs/Extractive_QA.md).
 
 
 ### Recognizing Textual Entailment on SNLI

@@ -6,15 +6,16 @@ in our framework.
 
 ### Pre-trained Models
 
-We list trained models with scores, relative speeds and number of parameters.
+We list trained models with scores, relative speeds and number of parameters for models trained on SQuAD and evaluated 
+on SQuAD Dev.
 
-| Model         | SQuAD F1 | SQuAD Exact | Speed | Download |
-|---------------|----------|-------------|-------|----------|
-| BiDAF         |   77.8   |     68.5    |  1.0  |   TBD    |
-| FastQA        |          |             |       |   TBD    |
-| JackQALight   |   78.4   |     68.7    |  2.0  |   TBD    |
-| JackQA        |   |   |   |   |
-| JackQARNN     |   |   |   |   |
+| Model         |  F1  | Exact | Speed | Params in M | Download |
+|---------------|------|-------|-------|-------------|----------|
+| BiDAF         | 77.8 | 68.5  |  1.0  |   2.02      |   TBD    |
+| FastQA        |      |       |  2.2  |   0.95      |   TBD    |
+| JackQA Light  | 78.4 | 68.7  |  2.0  |   1.17      |   TBD    |
+| JackQA        |      |       |  1.5  |   2.24      |   TBD    |
+| JackQA RNN    |      |       |  1.1  |   2.93      |   TBD    |
 
 
 ### Implementing new Models
@@ -23,7 +24,7 @@ Please make sure that you roughly [understand Jack](/docs/Understanding_Jack_the
 this document.
 
 New models can be stuck together using only the configuration file. All our model implementations except FastQA are
-defined using our `ModularQAModel`. Building Blocks are explained [here](/docs/Encoder_Modules.md).
+defined using our `ModularQAModel`. Possible modules are explained in more detail [here](/docs/Encoder_Modules.md).
 Example configs can be found in `conf/qa`. However, if you think your fancy model cannot be defined like this please
 keep on reading.
 
@@ -34,15 +35,15 @@ design and how to use it to implement new models.
 Jack contains implementations for extractive question answering in the [extractive_qa](/jack/readers/extractive_qa)
 package. They include reusable modules defined in [extractive_qa/shared.py](/jack/readers/extractive_qa/shared.py),
 e.g., `XQAInputModule`, `XQAOutputModule` and an `AbstractXQAModelModule`. This makes it very easy to implement new
-models, because all you need to implement is a single function, see for instance [FastQA](/jack/readers/extractive_qa/fastqa.py)
-or [BiDAF](/jack/readers/extractive_qa/fastqa.py). After implementing your model you merely need to register it in 
+models, because all you need to implement is a single function, see for instance [FastQA](/jack/readers/extractive_qa/fastqa.py). 
+After implementing your model you merely need to register it in 
 [implementations.py](/jack/readers/implementations.py). After that you are ready to train your model using the function
-name (`new_xqa_reader`) you specified in the `implementations.py` file as value for the `model` flag in you
-configuration. You can of course reuse existing configs (e.g., `fastqa.yaml`) and overwrite the model flag on the
+name (`new_xqa_reader`) you specified in the `implementations.py` file as value for the `reader` flag in you
+configuration. You can of course reuse existing configs (e.g., `fastqa.yaml`) and overwrite the `reader` flag on the
 command line, e.g., with the following command:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/fastqa.yaml' model=new_xqa_reader
+$ python3 bin/jack-train.py with config='./conf/fastqa.yaml' reader=new_xqa_reader
 ```
 
 ### Extractive QA InputModule Implementation
