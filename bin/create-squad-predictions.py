@@ -32,7 +32,7 @@ dataset = loaders[FLAGS.loader](FLAGS.file)
 
 logger.info("Start!")
 answers = reader.process_dataset(dataset, FLAGS.batch_size, debug=True)
-results = {dataset[i][0].id: a[0].text for i, a in enumerate(answers)}
+results = {dataset[i][0].id: a.text for i, a in enumerate(answers)}
 with open(FLAGS.out, "w") as out_file:
     json.dump(results, out_file)
 
