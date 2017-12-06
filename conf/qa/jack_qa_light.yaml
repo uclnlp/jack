@@ -1,0 +1,108 @@
+description: >
+  Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible. This
+  model is a bit more lightweight than jack_qa.
+
+parent_config: './conf/qa/modular_qa.yaml'
+
+name: 'jack_qa_reader'
+
+# fixed experiment seed
+seed: 1337
+
+# where to store the reader
+reader_dir: './jack_qa_reader'
+
+with_char_embeddings: True
+word_in_question: True  # concatenated with output after interaction layer
+
+repr_dim: 100
+dropout: &dropout 0.2
+
+# To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
+model:
+  encoder_layer:
+  # Shared Embedding Processing
+  # Support
+  - input: ['support', 'char_support']
+    output: 'support'
+    module: 'concat'
+  - input: 'support'
+    name: 'embedding_highway'
+    module: 'highway'
+  - input: 'support'
+    name: 'embedding_projection'
+    module: 'dense'
+    activation: 'tanh'
+    dropout: *dropout
+  # Question
+  - input: ['question', 'char_question']
+    output: 'question'
+    module: 'concat'
+  - input: 'question'
+    name: 'embedding_highway'  # use same network as support
+    module: 'highway'
+  - input: 'question'
+    name: 'embedding_projection'  # use same network as support
+    module: 'dense'
+    activation: 'tanh'
+    dropout: *dropout
+
+  # Shared Contextual Encoding
+  - input: 'support'
+    module: 'conv_glu'
+    conv_width: 5
+    num_layers: 2
+    name: 'contextual_encoding'
+    residual: True
+    dropout: *dropout
+  - input: 'question'
+    module: 'conv_glu'
+    conv_width: 5
+    num_layers: 2
+    name: 'contextual_encoding'  # use same network as support
+    residual: True
+    dropout: *dropout
+
+  # Attention
+  - input: 'support'
+    dependent: 'question'
+    module: 'attention_matching'
+    attn_type: 'diagonal_bilinear'
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    scaled: True
+
+  # BiLSTM
+  - input: 'support'
+    module: 'lstm'  # the only application of a RNN
+    with_projection: True
+    activation: 'tanh'
+    dropout: *dropout
+
+  # Self Attention
+  - input: 'support'
+    output: 'support_self'
+    module: 'self_attn'
+    attn_type: 'diagonal_bilinear'
+    scaled: True
+    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
+    num_attn_heads: 1
+  - input: ['support', 'support_self']
+    output: 'support_self'
+    module: 'concat'
+  - input: 'support_self'
+    module: 'dense'
+    activation: 'tanh'
+    dropout: *dropout
+
+  - input: ['support', 'support_self']
+    output: 'support'
+    module: 'add'
+  - input: 'support'
+    module: 'conv_glu'
+    conv_width: 5
+    num_layers: 1
+    residual: True
+
+  answer_layer:
+    module: 'bilinear'
+    max_span_size: 16
