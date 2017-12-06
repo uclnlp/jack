@@ -75,8 +75,8 @@ def main(batch_size,
          learning_rate_decay,
          log_interval,
          validation_interval,
-         model,
-         model_dir,
+         reader,
+         reader_dir,
          seed,
          tensorboard_folder,
          test,
@@ -127,28 +127,11 @@ def main(batch_size,
 
     # name defaults to name of the model
     if 'name' not in parsed_config or parsed_config['name'] is None:
-        parsed_config['name'] = model
+        parsed_config['name'] = reader
 
     shared_resources = SharedResources(vocab, parsed_config)
-    reader = readers.readers[model](shared_resources)
+    jtreader = readers.readers[reader](shared_resources)
 
     checkpoint()
 
-    configuration = {
-        'seed': seed,
-        'clip_value': clip_value,
-        'batch_size': batch_size,
-        'epochs': epochs,
-        'l2': l2,
-        'optimizer': optimizer,
-        'learning_rate': learning_rate,
-        'learning_rate_decay': learning_rate_decay,
-        'log_interval': log_interval,
-        'validation_interval': validation_interval,
-        'tensorboard_folder': tensorboard_folder,
-        'model': model,
-        'model_dir': model_dir,
-        'write_metrics_to': write_metrics_to
-    }
-
-    jtrain(reader, train_data, test_data, dev_data, configuration, debug=debug)
+    jtrain(jtreader, train_data, test_data, dev_data, parsed_config, debug=debug)

@@ -4,7 +4,7 @@ description: >
 parent_config: './conf/jack.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
-model: 'fastqa_reader'
+reader: 'fastqa_reader'
 
 # fixed experiment seed
 seed: 1337
@@ -13,7 +13,7 @@ seed: 1337
 loader: 'squad'
 
 # where to store the reader
-model_dir: './fastqa_reader'
+reader_dir: './fastqa_reader'
 
 # How large the support should be. Can be used for cutting or filtering QA examples
 max_support_length: -1
@@ -34,7 +34,7 @@ embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
 
-repr_dim: 300
+repr_dim: 150
 
 epochs: 20
 

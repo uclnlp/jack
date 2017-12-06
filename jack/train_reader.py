@@ -35,19 +35,20 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
     l2 = configuration.get('l2')
     optimizer = configuration.get('optimizer')
     learning_rate = configuration.get('learning_rate')
+    min_learning_rate = configuration.get('min_learning_rate')
     learning_rate_decay = configuration.get('learning_rate_decay')
     log_interval = configuration.get('log_interval')
     validation_interval = configuration.get('validation_interval')
     tensorboard_folder = configuration.get('tensorboard_folder')
-    model = configuration.get('model')
-    model_dir = configuration.get('model_dir')
+    reader_type = configuration.get('reader')
+    reader_dir = configuration.get('reader_dir')
     write_metrics_to = configuration.get('write_metrics_to')
 
     if clip_value != 0.0:
         clip_value = - abs(clip_value), abs(clip_value)
 
     learning_rate = tf.get_variable("learning_rate", initializer=learning_rate, dtype=tf.float32, trainable=False)
-    lr_decay_op = learning_rate.assign(learning_rate_decay * learning_rate)
+    lr_decay_op = learning_rate.assign(tf.maximum(learning_rate_decay * learning_rate, min_learning_rate))
 
     name_to_optimizer = {
         'gd': tf.train.GradientDescentOptimizer,
@@ -75,7 +76,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
              ETAHook(reader, iter_interval, int(math.ceil(len(train_data) / batch_size)), epochs),
              ExamplesPerSecHook(reader, batch_size, iter_interval, sw)]
 
-    preferred_metric, best_metric = readers.eval_hooks[model].preferred_metric_and_initial_score()
+    preferred_metric, best_metric = readers.eval_hooks[reader_type].preferred_metric_and_initial_score()
 
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""
@@ -83,17 +84,17 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
         if prev_metric is not None and m < prev_metric:
             reader.session.run(lr_decay_op)
             logger.info("Decayed learning rate to: %.5f" % reader.session.run(learning_rate))
-        elif m > best_metric[0] and model_dir is not None:
+        elif m > best_metric[0] and reader_dir is not None:
             best_metric[0] = m
-            if prev_metric is None:  # store whole model only at beginning of training
-                reader.store(model_dir)
+            if prev_metric is None:  # store whole reader_type only at beginning of training
+                reader.store(reader_dir)
             else:
-                reader.model_module.store(os.path.join(model_dir, "model_module"))
-            logger.info("Saving model to: %s" % model_dir)
+                reader.model_module.store(os.path.join(reader_dir, "model_module"))
+            logger.info("Saving reader_type to: %s" % reader_dir)
         return m
 
-    # this is the standard hook for the model
-    hooks.append(readers.eval_hooks[model](
+    # this is the standard hook for the reader_type
+    hooks.append(readers.eval_hooks[reader_type](
         reader, dev_data, batch_size, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
@@ -103,12 +104,12 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
     reader.train(tf_optimizer, train_data, batch_size, max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
-    # Test final model
-    if test_data is not None and model_dir is not None:
-        test_eval_hook = readers.eval_hooks[model](
+    # Test final reader_type
+    if test_data is not None and reader_dir is not None:
+        test_eval_hook = readers.eval_hooks[reader_type](
             reader, test_data, batch_size, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
-        reader.load(model_dir)
+        reader.load(reader_dir)
         test_eval_hook.at_test_time(1)
 
 
@@ -130,8 +131,8 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
     log_interval = configuration.get('log_interval')
     validation_interval = configuration.get('validation_interval')
     tensorboard_folder = configuration.get('tensorboard_folder')
-    model = configuration.get('model')
-    model_dir = configuration.get('model_dir')
+    model = configuration.get('reader')
+    reader_dir = configuration.get('reader_dir')
     write_metrics_to = configuration.get('write_metrics_to')
 
     # need setup here already :(
@@ -177,13 +178,13 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
             for param_group in torch_optimizer.param_groups:
                 param_group['lr'] *= learning_rate_decay
                 logger.info("Decayed learning rate to: %.5f" % param_group['lr'])
-        elif m > best_metric[0] and model_dir is not None:
+        elif m > best_metric[0] and reader_dir is not None:
             best_metric[0] = m
             if prev_metric is None:  # store whole model only at beginning of training
-                reader.store(model_dir)
+                reader.store(reader_dir)
             else:
-                reader.model_module.store(os.path.join(model_dir, "model_module"))
-            logger.info("Saving model to: %s" % model_dir)
+                reader.model_module.store(os.path.join(reader_dir, "model_module"))
+            logger.info("Saving model to: %s" % reader_dir)
         return m
 
     # this is the standard hook for the model
@@ -198,9 +199,9 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
                  l2=l2, clip=clip_value)
 
     # Test final model
-    if test_data is not None and model_dir is not None:
+    if test_data is not None and reader_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
             reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
-        reader.load(model_dir)
+        reader.load(reader_dir)
         test_eval_hook.at_test_time(1)

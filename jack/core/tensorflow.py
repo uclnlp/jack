@@ -174,6 +174,7 @@ class TFModelModule(ModelModule):
         result = {ph: mapping[port] for port, ph in self.placeholders.items() if port in mapping}
         return result
 
+
 class TFReader(JTReader):
     """Tensorflow implementation of JTReader.
 
@@ -240,7 +241,7 @@ class TFReader(JTReader):
         else:
             min_op = optimizer.minimize(loss, global_step)
 
-        variable_size = lambda v: reduce(lambda x, y: x * y, v.get_shape().as_list())
+        variable_size = lambda v: reduce(lambda x, y: x * y, v.get_shape().as_list()) if v.get_shape() else 1
         num_params = sum(variable_size(v) for v in self.model_module.train_variables)
         logger.info("Number of parameters: %d" % num_params)
 

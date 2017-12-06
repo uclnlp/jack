@@ -4,7 +4,7 @@ description: >
   Train and Evaluate a Machine Reader
 
 # Reader model to use, see jack/readers/implementations.py for options
-model: null
+reader: null
 
 # name of this reader, serves as kind of a namespace for created parameters, defaults to name of the model
 name: null
@@ -67,6 +67,9 @@ optimizer: 'adam'
 # Learning rate, default 0.001
 learning_rate: 0.001
 
+# Minimum learning rate, default 0.001
+min_learning_rate: 0.0001
+
 # Learning rate decay, default 1 (disabled)
 learning_rate_decay: 1
 
@@ -101,7 +104,7 @@ prune: False
 max_num_support: null
 
 # Directory to write reader to
-model_dir: null
+reader_dir: null
 
 # interval for logging eta, training loss, etc
 log_interval: 100

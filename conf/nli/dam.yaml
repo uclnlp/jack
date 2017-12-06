@@ -4,7 +4,7 @@ description: >
 parent_config: './conf/snli.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
-model: 'dam_snli_reader'
+reader: 'dam_snli_reader'
 
 # fixed experiment seed
 seed: 1337

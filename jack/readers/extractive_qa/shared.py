@@ -211,7 +211,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         offsets = [offsets for a in annotations for offsets in a.token_offsets]
         support2question = [i for i, a in enumerate(annotations) for _ in a.support_tokens]
 
-        word_chars, word_lengths, word_ids = \
+        word_chars, word_lengths, word_ids, vocab, rev_vocab = \
             preprocessing.unique_words_with_chars(q_tokenized + s_tokenized, self.char_vocab)
 
         # aligns with support2question, used in output module to get correct index to original set of supports
@@ -243,6 +243,8 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_offsets: offsets,
             XQAPorts.selected_support: selected_support,
+            '__vocab': vocab,
+            '__rev_vocab': rev_vocab,
         }
 
         if with_answers:

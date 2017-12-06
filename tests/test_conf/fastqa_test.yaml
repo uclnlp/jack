@@ -8,7 +8,7 @@ name: "fastqa_reader"
 seed: 1337
 
 # where to store the reader
-model_dir: './tests/test_results/fastqa_reader_test'
+reader_dir: './tests/test_results/fastqa_reader_test'
 
 # How large the support should be. Can be used for cutting or filtering QA examples
 max_support_length: -1
@@ -26,7 +26,7 @@ dev: 'data/SQuAD/snippet.jtr.json'
 test: null
 
 # Reading model to use
-model: 'fastqa_reader'
+reader: 'fastqa_reader'
 
 # [word2vec] or [glove] format of embeddings to be loaded
 embedding_format: 'glove'

@@ -1,7 +1,40 @@
 import tensorflow as tf
 
 from jack.tfutil import misc
+from jack.tfutil import sequence_encoder
 from jack.tfutil.segment import segment_top_k
+
+
+def answer_layer(encoded_question, question_length, encoded_support, support_length,
+                 support2question, answer2support, is_eval, correct_start=None, beam_size=1, max_span_size=10000,
+                 encoder=None, module='bilinear', repr_dim=100):
+    if module == 'bilinear':
+        return bilinear_answer_layer(
+            repr_dim, encoded_question, question_length, encoded_support, support_length,
+            support2question, answer2support, is_eval, beam_size, max_span_size)
+    elif module == 'mlp':
+        return mlp_answer_layer(repr_dim, encoded_question, question_length, encoded_support, support_length,
+                                support2question, answer2support, is_eval, beam_size, max_span_size)
+    elif module == 'conditional':
+        return conditional_answer_layer(
+            repr_dim, encoded_question, question_length, encoded_support, support_length,
+            correct_start, support2question, answer2support, is_eval, beam_size, max_span_size)
+    elif module == 'conditional_bilinear':
+        return conditional_answer_layer(
+            repr_dim, encoded_question, question_length, encoded_support, support_length,
+            correct_start, support2question, answer2support, is_eval, beam_size, max_span_size, bilinear=True)
+    elif module == 'conditional_bilinear':
+        return conditional_answer_layer(
+            repr_dim, encoded_question, question_length, encoded_support, support_length,
+            correct_start, support2question, answer2support, is_eval, beam_size, max_span_size, bilinear=True)
+    elif module == 'bidaf':
+        encoded_support_end = sequence_encoder.encoder(
+            encoded_support, support_length, name='encoded_support_end', **encoder)
+        encoded_support_end = tf.concat([encoded_support, encoded_support_end], 2)
+        return bidaf_answer_layer(encoded_support, encoded_support_end, support_length,
+                                  support2question, answer2support, is_eval, beam_size=1, max_span_size=10000)
+    else:
+        raise ValueError("Unknown answer layer type: %s" % module)
 
 
 def compute_question_state(encoded_question, question_length):
@@ -214,3 +247,16 @@ def conditional_answer_layer(size, encoded_question, question_length, encoded_su
                 tf.gather(doc_idx_for_support, doc_idx_flat), start_pointer, predicted_ends)
 
     return tf.cond(is_eval, eval, train)
+
+
+def bidaf_answer_layer(encoded_support_start, encoded_support_end, support_length,
+                       support2question, answer2support, is_eval, beam_size=1, max_span_size=10000):
+    # BiLSTM(M) = M^2 = encoded_support_end
+    start_scores = tf.squeeze(tf.layers.dense(encoded_support_start, 1, use_bias=False), 2)
+    end_scores = tf.squeeze(tf.layers.dense(encoded_support_end, 1, use_bias=False), 2)
+    # mask out-of-bounds slots by adding -1000
+    support_mask = misc.mask_for_lengths(support_length)
+    start_scores = start_scores + support_mask
+    end_scores = end_scores + support_mask
+    return compute_spans(start_scores, end_scores, answer2support, is_eval,
+                         support2question, beam_size=beam_size, max_span_size=max_span_size)

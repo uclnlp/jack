@@ -161,7 +161,8 @@ def stack_and_pad(values: List[Union[np.ndarray, int, float]], pad=0) -> np.ndar
 
 
 def unique_words_with_chars(tokens, char_vocab, char_limit=20):
-    unique_words_set = dict()
+    vocab = dict()
+    rev_vocab = list()
     unique_words = list()
     unique_word_lengths = list()
     token2unique = list()
@@ -169,11 +170,12 @@ def unique_words_with_chars(tokens, char_vocab, char_limit=20):
     for j in range(len(tokens)):
         t2u = list()
         for w in tokens[j]:
-            if w not in unique_words_set:
+            if w not in vocab:
                 unique_word_lengths.append(min(char_limit, len(w)))
                 unique_words.append([char_vocab.get(c, 0) for c in w[:char_limit]])
-                unique_words_set[w] = len(unique_words_set)
-            t2u.append(unique_words_set[w])
+                vocab[w] = len(vocab)
+                rev_vocab.append(w)
+            t2u.append(vocab[w])
         token2unique.append(t2u)
 
-    return unique_words, unique_word_lengths, token2unique
+    return unique_words, unique_word_lengths, token2unique, vocab, rev_vocab

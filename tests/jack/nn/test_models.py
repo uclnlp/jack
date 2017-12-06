@@ -22,18 +22,14 @@ models2dataset['dam_snli_reader'] = 'SNLI'
 models2dataset['esim_snli_reader'] = 'SNLI'
 models2dataset['cbilstm_snli_reader'] = 'SNLI'
 models2dataset['fastqa_reader'] = 'squad'
-models2dataset['bidaf_reader'] = 'squad'
 
-overfit_epochs = {'SNLI': 15, 'SNLI_stream' : 15, 'squad': 15}
-small_data_epochs = {'SNLI': 5, 'SNLI_stream' : 5, 'squad': 10}
+overfit_epochs = {'SNLI': 15, 'SNLI_stream': 15, 'squad': 15}
+small_data_epochs = {'SNLI': 5, 'SNLI_stream': 5, 'squad': 10}
 
 modelspecifics = {
     'fastqa_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50' +
-                      ' embedding_file=tests/test_data/glove.500.50d.txt' +
-                      ' embedding_format=glove'),
-    'bidaf_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50' +
-                      ' embedding_file=tests/test_data/glove.500.50d.txt' +
-                      ' embedding_format=glove epochs={0}'.format(2 if is_small_data else 5))
+                                            ' embedding_file=tests/test_data/glove.500.50d.txt' +
+                                            ' embedding_format=glove')
 }
 
 ids = []
@@ -48,11 +44,11 @@ def generate_test_data():
             testdata.append([model, epochs, use_small_data, dataset])
 
 
-def get_string_for_test(model_name, epochs, use_small_data, dataset):
+def get_string_for_test(reader_name, epochs, use_small_data, dataset):
     '''Creates a name for each test, so the output of PyTest is readable'''
-    return ('model_name={0}, '
+    return ('reader_name={0}, '
             'epochs={1}, run_type={2}, '
-            'dataset={3}').format(model_name,
+            'dataset={3}').format(reader_name,
                                   epochs,
                                   ('smalldata' if use_small_data else 'overfit'), dataset)
 
@@ -67,11 +63,11 @@ generate_test_data()
 generate_names()
 
 
-@pytest.mark.parametrize("model_name, epochs, use_small_data, dataset", testdata, ids=ids)
-def test_model(model_name, epochs, use_small_data, dataset):
+@pytest.mark.parametrize("reader_name, epochs, use_small_data, dataset", testdata, ids=ids)
+def test_model(reader_name, epochs, use_small_data, dataset):
     '''Tests a model via training_pipeline.py by comparing with expected_result.txt
     Args:
-        model_name (string): The model name as defined in the
+        reader_name (string): The model name as defined in the
                    training_pipeline.py dictionary.
         epochs (int=5): Some models need more time to overfit data; increase
                this the case of overfitting problems.
@@ -83,7 +79,7 @@ def test_model(model_name, epochs, use_small_data, dataset):
     Returns: None
     '''
     # Setup paths and filenames for the expected_results file
-    test_result_path = join(SMALLDATA_PATH if use_small_data else OVERFIT_PATH, dataset, model_name)
+    test_result_path = join(SMALLDATA_PATH if use_small_data else OVERFIT_PATH, dataset, reader_name)
     metric_filepath = join(test_result_path, datetime_test_result_filename())
 
     # create dir if it does not exists
@@ -101,16 +97,16 @@ def test_model(model_name, epochs, use_small_data, dataset):
         test_file = 'tests/test_data/{0}/test.json'.format(dataset)
 
     # Setup the process call command
-    cmd = 'CUDA_VISIBLE_DEVICES=-1 ' # we only test on the CPU
-    cmd += "python3 ./bin/jack-train.py with train={0} dev={1} test={2}" .format(train_file, dev_file, test_file,)
+    cmd = 'CUDA_VISIBLE_DEVICES=-1 '  # we only test on the CPU
+    cmd += "python3 ./bin/jack-train.py with train={0} dev={1} test={2}".format(train_file, dev_file, test_file, )
     cmd += ' write_metrics_to={0}'.format(metric_filepath)
-    cmd += ' model={0}'.format(model_name)
+    cmd += ' reader={0}'.format(reader_name)
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' learning_rate_decay=1.0'
-    if model_name in modelspecifics:
+    if reader_name in modelspecifics:
         # this is a function which takes use_small_data as argument
-        cmd += modelspecifics[model_name](use_small_data)
-    print('command: '+cmd)
+        cmd += modelspecifics[reader_name](use_small_data)
+    print('command: ' + cmd)
     # Execute command and wait for results
     t0 = time.time()
     try:

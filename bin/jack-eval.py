@@ -18,7 +18,7 @@ tf.app.flags.DEFINE_string('dataset', None, 'dataset file')
 tf.app.flags.DEFINE_string('loader', 'jack', 'name of loader')
 tf.app.flags.DEFINE_string('model_dir', None, 'directory to saved model')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
-tf.app.flags.DEFINE_string('overwrite', '', 'json string that overwrites configuration.')
+tf.app.flags.DEFINE_string('overwrite', '{}', 'json string that overwrites configuration.')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -40,7 +40,8 @@ def side_effect(metrics, _):
     logger.info("#####################################")
     return 0.0
 
-test_eval_hook = eval_hooks[reader.shared_resources.config["model"]](
+
+test_eval_hook = eval_hooks[reader.shared_resources.config["reader"]](
     reader, dataset, FLAGS.batch_size, epoch_interval=1, side_effect=side_effect)
 test_eval_hook.at_test_time(1)
 

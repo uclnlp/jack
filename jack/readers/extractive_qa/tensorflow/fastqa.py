@@ -3,29 +3,15 @@ This file contains FastQA specific modules and ports
 """
 
 from jack.core import *
-from jack.readers.extractive_qa.tensorflow.answer_layer import conditional_answer_layer, bilinear_answer_layer
-from jack.readers.extractive_qa.shared import XQAPorts
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
+from jack.readers.extractive_qa.tensorflow.answer_layer import conditional_answer_layer, bilinear_answer_layer
 from jack.tfutil import misc
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
+from jack.tfutil.sequence_encoder import encoder
 
 
 class FastQAModule(AbstractXQAModelModule):
-    _input_ports = [XQAPorts.emb_question, XQAPorts.question_length,
-                    XQAPorts.emb_support, XQAPorts.support_length, XQAPorts.support2question,
-                    # char embedding inputs
-                    XQAPorts.word_chars, XQAPorts.word_char_length,
-                    XQAPorts.question_words, XQAPorts.support_words,
-                    # feature input
-                    XQAPorts.word_in_question,
-                    # optional input, provided only during training
-                    XQAPorts.correct_start, XQAPorts.answer2support_training,
-                    XQAPorts.is_eval]
-
-    @property
-    def input_ports(self):
-        return self._input_ports
 
     def create_output(self, shared_resources, input_tensors):
         tensors = TensorPortTensors(input_tensors)
@@ -97,11 +83,12 @@ class FastQAModule(AbstractXQAModelModule):
             emb_support_ext = tf.concat([emb_support, support_features], 2)
 
             # encode question and support
-            encoder = shared_resources.config.get('encoder', 'lstm').lower()
-            if encoder in ['lstm', 'sru', 'gru']:
-                size = size + 2 if encoder == 'sru' else size  # to allow for use of residual in SRU
-                encoded_question = self.rnn_encoder(size, emb_question_ext, tensors.question_length, encoder)
-                encoded_support = self.rnn_encoder(size, emb_support_ext, tensors.support_length, encoder, reuse=True)
+            encoder_type = shared_resources.config.get('encoder', 'lstm').lower()
+            if encoder_type in ['lstm', 'sru', 'gru']:
+                size = size + 2 if encoder_type == 'sru' else size  # to allow for use of residual in SRU
+                encoded_question = encoder(emb_question_ext, tensors.question_length, size, module=encoder_type)
+                encoded_support = encoder(emb_support_ext, tensors.support_length, size, module=encoder_type,
+                                          reuse=True)
                 projection_initializer = tf.constant_initializer(np.concatenate([np.eye(size), np.eye(size)]))
                 encoded_question = tf.layers.dense(encoded_question, size, tf.tanh, use_bias=False,
                                                    kernel_initializer=projection_initializer,

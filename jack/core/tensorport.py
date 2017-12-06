@@ -168,7 +168,7 @@ class Ports:
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
 
-        support = TensorPort(tf.int32, [None, None], "multiple_support",
+        support = TensorPort(tf.int32, [None, None], "support",
                              "Represents instances with single support documents",
                              "[batch_size, max_num_tokens]")
 

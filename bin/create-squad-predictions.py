@@ -1,56 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
+import logging
 import os
 import sys
 
-import json
-
 import tensorflow as tf
 
-from jack.data_structures import jtr_to_qasetting
-from jack.io.SQuAD2jtr import convert_squad
-from jack.io.embeddings import load_embeddings
-from jack.readers import readers
-from jack.util.vocab import Vocab
-
-import logging
+from jack.io.load import loaders
+from jack.readers.implementations import reader_from_file
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 logging.basicConfig(level=logging.INFO)
 
 tf.app.flags.DEFINE_string('file', None, 'dataset file')
-tf.app.flags.DEFINE_string('dataset_type', 'squad', 'either squad or jack')
-tf.app.flags.DEFINE_string('model', None, 'Name of the reader')
-tf.app.flags.DEFINE_string('model_dir', None, 'directory to saved model')
-tf.app.flags.DEFINE_string('embedding_path', None, 'path to embeddings')
-tf.app.flags.DEFINE_string('embedding_format', 'glove', 'embeddings format')
-tf.app.flags.DEFINE_string('device', "/cpu:0", 'device to use')
+tf.app.flags.DEFINE_string('loader', 'squad', 'either squad or jack')
+tf.app.flags.DEFINE_string('reader_dir', None, 'directory to saved model')
 tf.app.flags.DEFINE_string('out', "results.json", 'Result file path.')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
-tf.app.flags.DEFINE_integer('beam_size', 1, 'beam size')
-tf.app.flags.DEFINE_string('kwargs', '{}', 'additional reader-specific configurations')
+tf.app.flags.DEFINE_string('overwrite', '{}', 'json string that can overwrite configuration.')
 
 FLAGS = tf.app.flags.FLAGS
 
-logger.info("Loading embeddings from {}...".format(FLAGS.embedding_path))
-emb = load_embeddings(FLAGS.embedding_path, FLAGS.embedding_format)
-vocab = Vocab(emb=emb, init_from_embeddings=True)
+logger.info("Creating and loading reader from {}...".format(FLAGS.reader_dir))
+config = {"max_support_length": None}
+config.update(json.loads(FLAGS.overwrite))
+reader = reader_from_file(FLAGS.reader_dir, **config)
 
-logger.info("Creating and loading reader from {}...".format(FLAGS.model_dir))
-config = {"beam_size": FLAGS.beam_size, 'batch_size': FLAGS.batch_size, "max_support_length": None}
-config.update(json.loads(FLAGS.kwargs))
-reader = readers[FLAGS.model](vocab, config)
-with tf.device(FLAGS.device):
-    reader.load_and_setup(FLAGS.model_dir)
-
-if FLAGS.dataset_type == "squad":
-    dataset_jtr = convert_squad(FLAGS.file)
-else:
-    with open(FLAGS.file) as f:
-        dataset_jtr = json.load(f)
-
-dataset = jtr_to_qasetting(dataset_jtr)
+dataset = loaders[FLAGS.loader](FLAGS.file)
 
 logger.info("Start!")
 answers = reader.process_dataset(dataset, FLAGS.batch_size, debug=True)

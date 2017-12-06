@@ -45,7 +45,7 @@ def reader_from_file(reader_dir: str, **kwargs):
     shared_resources.load(os.path.join(reader_dir, "shared_resources"))
     if kwargs:
         shared_resources.config.update(kwargs)
-    reader = readers[shared_resources.config["model"]](shared_resources)
+    reader = readers[shared_resources.config["reader"]](shared_resources)
     reader.load_and_setup_modules(reader_dir)
     return reader
 
@@ -80,14 +80,14 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 
 @extractive_qa_reader
-def bidaf_reader(resources_or_conf: Union[dict, SharedResources] = None):
+def modular_qa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA model as described in https://arxiv.org/abs/1703.04816 (extractive qa model)."""
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
-    from jack.readers.extractive_qa.tensorflow.bidaf import BiDAF
+    from jack.readers.extractive_qa.tensorflow.modular_qa_model import ModularQAModel
     shared_resources = create_shared_resources(resources_or_conf)
 
     input_module = XQAInputModule(shared_resources)
-    model_module = BiDAF(shared_resources)
+    model_module = ModularQAModel(shared_resources)
     output_module = XQAOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 

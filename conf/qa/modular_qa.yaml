@@ -1,0 +1,68 @@
+description: >
+  Modular QA Reader base configuration.
+
+parent_config: './conf/jack.yaml'
+
+reader: 'modular_qa_reader'
+
+# loader to use in experiment
+loader: 'squad'
+
+# How large the support should be. Can be used for cutting or filtering QA examples
+max_support_length: -1
+
+train: 'data/SQuAD/train-v1.1.json'
+dev: 'data/SQuAD/dev-v1.1.json'
+test: null
+
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
+embedding_format: 'memory_map_dir'
+
+# embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
+
+# Use fixed vocab of pretrained embeddings
+vocab_from_embeddings: True
+
+epochs: 20
+
+dropout: 0.2
+
+batch_size: 64
+
+lowercase: False
+
+learning_rate: 0.001
+min_learning_rate: 0.0001
+learning_rate_decay: 0.5
+
+# 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
+loss: 'sum'
+
+with_char_embeddings: True
+model:
+  encoder_layer: null  # list of encoder modules with input key ('question' or 'support' in beginning)
+  answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
+
+
+# encoder modules can be selected as wanted and are defined by the following keys
+# * input - required, string indicating what input to encode (starts with possibilities 'question' or 'support')
+# * output - optional, set to input by default but can be overwritten to something else => after defining a new output key it can be used later as input somewhere else
+# * repr_dim - dimensionality of output
+# * module - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
+#                CONVs: 'gldr' (gated linear dilated residual network), 'conv' (convolution)
+#                MISC: 'projection' (linear projection), 'self_attn', 'concat' (use 'input' to define list of keys to concatenate)
+# * residual - whether this encoder should be residually employed
+# * num_layers number of times this is consecutively
+# 'conv' requires another parameter, 'conv_width' (3 by default) and can have and 'activation'
+# 'gldr' requires another parameters, 'conv_width' (3 by default) and 'dilations'
+# (a list of dilations for each layer of the gldr network)
+# 'projection' has additional 'activation' attribute which can be 'relu', 'tanh','sigmoid', etc (everything in tf.nn)
+# 'self_attn' support attn types: 'dot', 'bilinear', 'diagonal_bilinear', 'mlp'
+# 'dot', 'bilinear', 'diagonal_bilinear' have additional scale attribute which scales attn scores by sqrt of repr_dim
+# of input states, it is recommended to use it for 'dot' and 'diagonal_bilinear'
+# 'mlp' has additional 'repr_dim' and 'activation' property for the dimensionality and activation of the hidden layer
+# you can set the number of parallel attention heads using num_attn_heads
+#
+# You can reuse encoders (i.e., their parameters) by giving them the same name and set 'reuse: True'
+
