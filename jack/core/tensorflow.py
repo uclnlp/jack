@@ -174,6 +174,7 @@ class TFModelModule(ModelModule):
         result = {ph: mapping[port] for port, ph in self.placeholders.items() if port in mapping}
         return result
 
+
 class TFReader(JTReader):
     """Tensorflow implementation of JTReader.
 

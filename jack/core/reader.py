@@ -98,14 +98,17 @@ class JTReader:
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
+        if debug:
+            logger.setLevel(logging.DEBUG)
         logger.debug("Setting up batches...")
         batches = self.input_module.batch_generator(dataset, batch_size, is_eval=True)
         answers = list()
         logger.debug("Start answering...")
         for j, batch in enumerate(batches):
             output_module_input = self.model_module(batch, self.output_module.input_ports)
-            answers.extend(self.output_module(
-                output_module_input, *[output_module_input[p] for p in self.output_module.input_ports]))
+            questions = [q for q, a in dataset[j * batch_size:(j + 1) * batch_size]]
+            answers.extend(a[0] for a in self.output_module(
+                questions, *[output_module_input[p] for p in self.output_module.input_ports]))
             if debug:
                 logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
         return answers
