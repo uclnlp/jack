@@ -98,6 +98,8 @@ model:
     module: 'concat'
   - input: 'support_self'
     module: 'lstm'
+    with_projection: True
+    activation: 'tanh'
     dropout: *dropout
 
   - input: ['support', 'support_self']
