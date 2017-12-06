@@ -70,10 +70,8 @@ model:
     attn_type: 'diagonal_bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
-
-  # BiLSTM
   - input: 'support'
-    module: 'lstm'  # the only application of a RNN
+    module: 'dense'
     with_projection: True
     activation: 'tanh'
     dropout: *dropout
@@ -87,16 +85,16 @@ model:
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 1
   - input: ['support', 'support_self']
-    output: 'support_self'
+    output: 'support'
     module: 'concat'
-  - input: 'support_self'
-    module: 'dense'
+
+  # BiLSTM
+  - input: 'support'
+    module: 'lstm'  # the only application of a RNN
+    with_projection: True
     activation: 'tanh'
     dropout: *dropout
 
-  - input: ['support', 'support_self']
-    output: 'support'
-    module: 'add'
   - input: 'support'
     module: 'conv_glu'
     conv_width: 5

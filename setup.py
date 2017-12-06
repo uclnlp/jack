@@ -7,20 +7,16 @@ from setuptools.command.install import install as _install
 
 
 def spacy_download_en():
-    import spacy
-    try:
-        spacy.load('en')
-    except:
-        import subprocess
-        args = ['python3 -m spacy download en']
-        subprocess.call(args, shell=True)
+    import subprocess
+    args = ['python3 -m spacy download en']
+    subprocess.call(args, shell=True)
 
 
 def install_torch():
     import subprocess
     import sys
     if sys.version_info < (3, 6):
-        args = ['pip3 install http://download.pytorch.org/whl/cu75/torch-0.2.0.post3-cp35-cp35m-manylinux1_x86_64.whl']
+        args = ['pip3 install http://download.pytorch.org/whl/cu80/torch-0.2.0.post3-cp35-cp35m-manylinux1_x86_64.whl']
     else:
         args = ['pip3 install http://download.pytorch.org/whl/cu80/torch-0.2.0.post3-cp36-cp36m-manylinux1_x86_64.whl']
     subprocess.call(args, shell=True)
@@ -33,6 +29,7 @@ class Install(_install):
     def run(self):
         _install.do_egg_install(self)
         spacy_download_en()
+        install_torch()
         _install.run(self)
 
 
@@ -42,6 +39,7 @@ class Develop(_develop):
 
     def run(self):
         spacy_download_en()
+        install_torch()
         _develop.run(self)
 
 
