@@ -27,21 +27,15 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 outputs_mapping[out_key] = outputs_mapping[key[0]]
                 if module['module'] == 'concat':
                     outputs[out_key] = tf.concat([outputs[k] for k in key], 2, name=module['name'])
-                    outputs_length[out_key] = outputs_length[key]
-                    outputs_mapping[out_key] = outputs_mapping[key]
                     continue
                 if module['module'] == 'add':
                     outputs[out_key] = tf.add_n([outputs[k] for k in key], name=module['name'])
-                    outputs_length[out_key] = outputs_length[key]
-                    outputs_mapping[out_key] = outputs_mapping[key]
                     continue
                 if module['module'] == 'mul':
                     o = outputs[key[0]]
                     for k in key[1:-1]:
                         o *= outputs[k]
                     outputs[out_key] = tf.multiply(o, key[-1], name=module['name'])
-                    outputs_length[out_key] = outputs_length[key]
-                    outputs_mapping[out_key] = outputs_mapping[key]
                     continue
                 if module['module'] == 'weighted_add':
                     bias = module.get('bias', 0.0)
