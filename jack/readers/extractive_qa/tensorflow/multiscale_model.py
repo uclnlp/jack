@@ -3,15 +3,14 @@ This file contains FastQA specific modules and ports
 """
 
 from jack.core import *
-from jack.readers.extractive_qa.tensorflow.answer_layer import conditional_answer_layer, bilinear_answer_layer, \
-    compute_question_state, compute_spans
 from jack.readers.extractive_qa.shared import XQAPorts, get_answer_and_span
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
+from jack.readers.extractive_qa.tensorflow.answer_layer import compute_question_state, compute_spans
 from jack.tfutil import misc
+from jack.tfutil import sequence_encoder
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.highway import highway_network
-from jack.tfutil.segment import segment_top_k, segment_softmax
-from jack.tfutil.sequence_encoder import multi_scale_birnn_encoder
+from jack.tfutil.segment import segment_softmax
 
 
 class MultiscalePorts:
@@ -113,10 +112,11 @@ class MultiscaleQA(AbstractXQAModelModule):
             emb_support_ext = tf.concat([emb_support, support_features], 2)
 
             # encode question and support
-            encoded_question = self.rnn_encoder(size, emb_question_ext, tensors.question_length, 'gru',
-                                                with_projection=True)
+            encoded_question = sequence_encoder.bi_rnn(
+                size, tf.contrib.rnn.GRUBlockCell(size), emb_question_ext, tensors.question_length,
+                with_projection=True)
             num_layers = shared_resources.config["num_layers"]
-            encoded_support_fw, encoded_support_bw, segm_indicator = multi_scale_birnn_encoder(
+            encoded_support_fw, encoded_support_bw, segm_indicator = sequence_encoder.multi_scale_birnn_encoder(
                 size, shared_resources.config["num_layers"],
                 tf.contrib.rnn.GRUBlockCell(size), emb_support_ext, tensors.support_length)
 

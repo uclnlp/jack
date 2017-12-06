@@ -29,7 +29,6 @@ class Install(_install):
     def run(self):
         _install.do_egg_install(self)
         spacy_download_en()
-        install_torch()
         _install.run(self)
 
 
@@ -39,7 +38,6 @@ class Develop(_develop):
 
     def run(self):
         spacy_download_en()
-        install_torch()
         _develop.run(self)
 
 

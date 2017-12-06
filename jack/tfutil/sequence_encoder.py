@@ -189,3 +189,128 @@ def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=
             raise ValueError("Unknown attention type: %s" % attn_type)
 
     return attn_states
+
+
+# Multi-scale encoder
+def multi_scale_birnn_encoder(size, num_layers, cell, sequence, seq_length, name='multiscale_rnn', reuse=False):
+    with tf.variable_scope(name, reuse=reuse):
+        # first use conv net which is important for scale detection
+        inputs = _convolutional_block_glu_block(sequence, size, width=5)
+
+        multi_cell = MultiscaleRNNCell(num_layers, cell, 1.0)
+        fused_rnn = tf.contrib.rnn.FusedRNNCellAdaptor(multi_cell, use_dynamic_rnn=True)
+        inputs = tf.transpose(inputs, [1, 0, 2])
+        outputs_fw, state_fw = fused_rnn(inputs, sequence_length=seq_length, dtype=tf.float32, scope="FW")
+
+        outputs_z = outputs_fw[:, :, -num_layers + 1:]
+        outputs_fw = outputs_fw[:, :, :-num_layers + 1]
+        outputs_fw = tf.transpose(outputs_fw, [1, 0, 2])
+        outputs_fw = tf.reshape(outputs_fw, tf.unstack(tf.shape(outputs_fw)[:2]) + [num_layers, cell.output_size])
+
+        rev_outputs_z = tf.reverse_sequence(outputs_z, seq_length, seq_axis=0, batch_axis=1)
+        # shift by one to the right
+        rev_outputs_z = tf.concat([rev_outputs_z[1:], tf.ones([1, tf.shape(rev_outputs_z)[1], num_layers - 1])], 0)
+
+        # backward rnn with given structure
+        multi_cell = MultiscaleRNNCell(num_layers, cell, 1.0, z_given=True)
+        fused_rnn = tf.contrib.rnn.FusedRNNCellAdaptor(multi_cell, use_dynamic_rnn=True)
+        inputs = tf.concat([inputs, rev_outputs_z], 2)
+        outputs_bw, _ = fused_rnn(inputs, sequence_length=seq_length, dtype=tf.float32, scope="BW")
+        outputs_bw = tf.reverse_sequence(outputs_bw, seq_length, seq_axis=0, batch_axis=1)
+        outputs_bw = tf.transpose(outputs_bw, [1, 0, 2])
+        outputs_bw = tf.reshape(outputs_bw, tf.unstack(tf.shape(outputs_bw)[:2]) + [num_layers, cell.output_size])
+
+        outputs_z = tf.concat([tf.ones([tf.shape(outputs_z)[0], tf.shape(outputs_z)[1], 1]), outputs_z], 2)
+        # last should always be considered a one, to finish segments
+        outputs_z = tf.reverse_sequence(
+            tf.concat([tf.ones([1, tf.shape(outputs_z)[1], num_layers]),
+                       tf.reverse_sequence(outputs_z, seq_length - 1, seq_dim=0, batch_dim=1)], 0),
+            seq_length, seq_dim=0, batch_dim=1)[:-1, :, :]
+
+    return outputs_fw, outputs_bw, tf.transpose(outputs_z, [1, 0, 2])
+
+
+class MultiscaleRNNCell(tf.nn.rnn_cell.RNNCell):
+    def __init__(self, num_layers, cell, slope, z_given=False):
+        """
+        Args:
+            num_layers: number of layers
+            cell: cell
+        """
+        self._cell = cell
+        self._num_layers = num_layers
+        self._slope = slope
+        self._z_given = z_given
+
+    @property
+    def output_size(self):
+        if self._z_given:
+            return self._cell.output_size * self._num_layers
+        else:
+            return self._cell.output_size * self._num_layers + self._num_layers - 1
+
+    def zero_state(self, batch_size, dtype):
+        return ([self._cell.zero_state(batch_size, dtype) for _ in range(self._num_layers)],
+                [tf.zeros([batch_size, self._cell.output_size], dtype) for _ in range(self._num_layers)],
+                tf.ones([batch_size, self._num_layers - 1]))
+
+    @property
+    def state_size(self):
+        return ([self._cell.state_size for _ in range(self._num_layers)],
+                [self._cell.output_size for _ in range(self._num_layers)],
+                self._num_layers - 1)
+
+    def __call__(self, inputs, state, scope=None):
+        state, old_outputs, old_z = state
+        old_z = tf.split(old_z, self._num_layers - 1, 1)
+        state = list(state)
+        with tf.variable_scope(scope or 'MultiscaleRNNCell'):
+            if self._z_given:
+                new_z = tf.split(inputs[:, -self._num_layers + 1:], self._num_layers - 1, 1)
+                inputs = inputs[:, :-self._num_layers + 1]
+            else:
+                new_z = []
+            bottom_up = [inputs]
+            top_down = old_outputs
+            new_states = []
+            for i in range(self._num_layers):
+                if i < self._num_layers - 1:
+                    inputs = tf.concat([top_down[i + 1], bottom_up[i]], 1)
+                    flush = old_z[i]
+                else:
+                    inputs = bottom_up[i]
+                    flush = 1.0
+                not_flush = 1.0 - flush
+                update, copy = (not_flush * new_z[i - 1], not_flush * (1.0 - new_z[i - 1])) if i > 0 else (
+                    not_flush, 0.0)
+
+                # keep old state if not flush
+                state[i] = tf.contrib.framework.nest.map_structure(lambda t: not_flush * t, state[i])
+                out, new_state = self._cell(inputs, state[i], scope='cell_' + str(i))
+                new_state_flat = tf.contrib.framework.nest.flatten(new_state)
+                state_flat = tf.contrib.framework.nest.flatten(state[i])
+                for j, (new_s, s) in enumerate(zip(new_state_flat, state_flat)):
+                    state_flat[j] = (update + flush) * new_s + copy * s
+                new_state = tf.contrib.framework.nest.pack_sequence_as(state[i], state_flat)
+                out = copy * old_outputs[i] + (1 - copy) * out
+                bottom_up.append(out)
+                new_states.append(new_state)
+                if not self._z_given and i < self._num_layers - 1:
+                    z = _straightthrough_gate(tf.concat([inputs, old_outputs[i]], 1), self._slope)
+                    new_z.append(z if i == 0 else tf.where(new_z[i - 1] > 0, z, new_z[i - 1]))
+
+        new_z = tf.concat(new_z, 1)
+        if self._z_given:
+            return tf.concat(bottom_up[1:], 1), (new_states, bottom_up[1:], new_z)
+        else:
+            bottom_up.append(new_z)
+            return tf.concat(bottom_up[1:], 1), (new_states, bottom_up[1:-1], new_z)
+
+
+def _straightthrough_gate(h, slope):
+    tf.contrib.distributions.Rel
+    g = tf.layers.dense(h, 1)  # , tf.sigmoid)
+    g = tf.maximum(0.0, tf.minimum(1.0, (slope * g + 1.0) / 2.0))
+    # bound function with straight through estimator
+    g = tf.where(g > 0.5, g + tf.stop_gradient(1.0 - g), g - tf.stop_gradient(g))
+    return g
