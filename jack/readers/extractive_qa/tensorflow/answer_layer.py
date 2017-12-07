@@ -51,6 +51,7 @@ def bilinear_answer_layer(size, encoded_question, question_length, encoded_suppo
                           max_span_size=10000):
     """Answer layer for multiple paragraph QA."""
     # computing single time attention over question
+    size = encoded_support.get_shape()[-1].value
     question_state = compute_question_state(encoded_question, question_length)
 
     # compute logits
