@@ -6,7 +6,7 @@ in our framework.
 
 ### Pre-trained Models
 
-We list trained models with scores, relative speeds and number of parameters for models.
+We list trained models with scores, relative speeds and number of parameters.
  
 #### SQuAD (Devset results)
 
@@ -15,7 +15,7 @@ We list trained models with scores, relative speeds and number of parameters for
 | BiDAF         | 77.8 |  68.5  |  1.0  |     2.02     | [bidaf]         |
 | FastQA        | 77.4 |  67.4  |  2.2  |     0.95     | [fastqa]        |
 | JackQA Light  | 79.5 |  69.7  |  2.0  |     1.17     | [jackqa light]  |
-| JackQA        | TBD  |  TBD   |  1.5  |     2.24     | [jackqa]        |
+| JackQA        | 79.4 |  70.3  |  1.5  |     2.24     | [jackqa]        |
 
 
 [bidaf]: https://www.dropbox.com/s/63zkes18juan7wa/bidaf.zip?dl=1
