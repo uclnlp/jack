@@ -7,7 +7,7 @@ from jack.tfutil.segment import segment_top_k
 
 def answer_layer(encoded_question, question_length, encoded_support, support_length,
                  support2question, answer2support, is_eval, correct_start=None, beam_size=1, max_span_size=10000,
-                 encoder=None, module='bilinear', repr_dim=100):
+                 encoder=None, module='bilinear', repr_dim=100, **kwargs):
     if module == 'bilinear':
         return bilinear_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
