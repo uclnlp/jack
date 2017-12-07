@@ -30,6 +30,7 @@ model:
     name: 'embedding_highway'
     module: 'highway'
   - input: 'support'
+    output: 'emb_support'
     name: 'embedding_projection'
     module: 'dense'
     activation: 'tanh'
@@ -42,58 +43,71 @@ model:
     name: 'embedding_highway'  # use same network as support
     module: 'highway'
   - input: 'question'
+    output: 'emb_question'
     name: 'embedding_projection'  # use same network as support
     module: 'dense'
     activation: 'tanh'
     dropout: *dropout
 
-  # Shared Contextual Encoding
-  - input: 'support'
+    # Shared Contextual Encoding
+  - input: 'emb_support'
+    output: 'support'
     module: 'conv_glu'
     conv_width: 5
     num_layers: 2
     name: 'contextual_encoding'
-    residual: True
     dropout: *dropout
-  - input: 'question'
+  - input: 'emb_question'
+    output: 'question'
     module: 'conv_glu'
     conv_width: 5
     num_layers: 2
     name: 'contextual_encoding'  # use same network as support
-    residual: True
     dropout: *dropout
 
+  - input: ['emb_question', 'question']
+    output: 'enc_question'
+    module: 'concat'
+  - input: ['emb_support', 'support']
+    output: 'enc_support'
+    module: 'concat'
+
   # Attention
-  - input: 'support'
-    dependent: 'question'
+  - input: 'enc_support'
+    dependent: 'enc_question'
+    output: 'support'
     module: 'attention_matching'
     attn_type: 'diagonal_bilinear'
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     scaled: True
   - input: 'support'
+    output: 'support_self'
     module: 'dense'
-    with_projection: True
     activation: 'tanh'
-    dropout: *dropout
 
   # Self Attention
-  - input: 'support'
-    output: 'support_self'
+  - input: 'support_self'
+    output: 'support_self1'
     module: 'self_attn'
     attn_type: 'diagonal_bilinear'
     scaled: True
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 1
-  - input: 'support'
+  - input: 'support_self'
     output: 'support_self2'
     module: 'self_attn'
     attn_type: 'bilinear'
     scaled: True
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 2
-  - input: ['support', 'support_self', 'support_self2']
+
+  - input: ['support', 'support_self1', 'support_self2']
     output: 'support'
     module: 'concat'
+  - input: 'support'
+    module: 'dense'
+    activation: 'relu'
+    dropout: *dropout
 
   # BiLSTM
   - input: 'support'
