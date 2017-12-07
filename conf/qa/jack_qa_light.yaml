@@ -114,5 +114,7 @@ model:
     residual: True
 
   answer_layer:
+    support: 'support'
+    question: 'enc_question'
     module: 'bilinear'
     max_span_size: 16
