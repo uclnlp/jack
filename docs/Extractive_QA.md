@@ -14,8 +14,8 @@ We list trained models with scores, relative speeds and number of parameters.
 |---------------|------|--------|-------|--------------|-----------------|
 | BiDAF         | 77.8 |  68.5  |  1.0  |     2.02     | [bidaf]         |
 | FastQA        | 77.4 |  67.4  |  2.2  |     0.95     | [fastqa]        |
-| JackQA Light  | 79.6 |  69.9  |  2.0  |     1.17     | [jackqa light]  |
-| JackQA        | 80.1 |  70.9  |  1.5  |     2.24     | [jackqa]        |
+| JackQA Light  | 79.6 |  69.9  |  2.0  |     1.18     | [jackqa light]  |
+| JackQA        | 80.1 |  70.9  |  1.5  |     2.26     | [jackqa]        |
 
 
 [bidaf]: https://www.dropbox.com/s/63zkes18juan7wa/bidaf.zip?dl=1
