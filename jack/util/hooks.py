@@ -11,12 +11,12 @@ from typing import List, Tuple, Mapping
 import numpy as np
 import progressbar
 import tensorflow as tf
-from sklearn.metrics import f1_score
 
 from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader
 from jack.core.tensorflow import TFReader
 from jack.core.tensorport import TensorPort, Ports
+from jack.eval.extractive_qa_eval import *
 
 logger = logging.getLogger(__name__)
 
@@ -303,7 +303,8 @@ class EvalHook(TraceHook):
         raise NotImplementedError
 
     @abstractmethod
-    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
+    def apply_metrics(self, inputs: List[Tuple[QASetting, List[Answer]]], tensors: Mapping[TensorPort, np.ndarray]) \
+            -> Mapping[str, float]:
         """Returns: dict from metric name to float"""
         raise NotImplementedError
 
@@ -324,8 +325,9 @@ class EvalHook(TraceHook):
             max_value=len(self._dataset) // self._batch_size + 1,
             widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
         for i, batch in bar(enumerate(self._batches)):
+            inputs = self._dataset[i * self._batch_size:(i + 1) * self._batch_size]
             predictions = self.reader.model_module(batch, self._ports)
-            m = self.apply_metrics(predictions)
+            m = self.apply_metrics(inputs, predictions)
             for k in self._metrics:
                 metrics[k].append(m[k])
 
@@ -374,7 +376,7 @@ class XQAEvalHook(EvalHook):
         self._target_answer_span_port = target_answer_span_port
         self._answer2support_port = answer2support_port
         self._support2question_port = support2question_port
-        ports = [predicted_answer_span_port, target_answer_span_port, answer2support_port, support2question_port]
+        ports = reader.output_module.input_ports
         super().__init__(reader, dataset, batch_size, ports, iter_interval, epoch_interval, metrics, summary_writer,
                          write_metrics_to, info, side_effect)
 
@@ -386,45 +388,18 @@ class XQAEvalHook(EvalHook):
     def preferred_metric_and_initial_score():
         return 'f1', [0.0]
 
-    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
-        correct_spans = tensors[self._target_answer_span_port]
-        predicted_spans = tensors[self._predicted_answer_span_port]
-        correct_answer2support = tensors[self._answer2support_port]
-        support2question = tensors[self._support2question_port]
+    def apply_metrics(self, inputs: List[Tuple[QASetting, List[Answer]]], tensors: Mapping[TensorPort, np.ndarray]) \
+            -> Mapping[str, float]:
+        qs = [q for q, a in inputs]
+        p_answers = self.reader.output_module(qs, *(tensors[p] for p in self.reader.output_module.input_ports))
 
-        def len_np_or_list(v):
-            if isinstance(v, list):
-                return len(v)
-            else:
-                return v.shape[0]
+        f1 = exact_match = 0
+        for pa, (q, ass) in zip(p_answers, inputs):
+            ground_truth = [a.text for a in ass]
+            f1 += metric_max_over_ground_truths(f1_score, pa[0].text, ground_truth)
+            exact_match += metric_max_over_ground_truths(exact_match_score, pa[0].text, ground_truth)
 
-        acc_f1 = 0.0
-        acc_exact = 0.0
-        k = 0
-        for i in range(len_np_or_list(predicted_spans)):
-            f1, exact = 0.0, 0.0
-            doc_idx, p_start, p_end = predicted_spans[i][0], predicted_spans[i][1], predicted_spans[i][2]
-            while k < len_np_or_list(correct_spans) and support2question[correct_answer2support[k]] == i:
-                c_doc_idx, c_start, c_end = correct_answer2support[k], correct_spans[k][0], correct_spans[k][1]
-                if c_doc_idx != doc_idx:
-                    if p_start == c_start and p_end == c_end:
-                        f1 = 1.0
-                        exact = 1.0
-                    elif f1 < 1.0:
-                        total = float(c_end - c_start + 1)
-                        missed_from_start = float(p_start - c_start)
-                        missed_from_end = float(c_end - p_end)
-                        tp = total - min(total, max(0, missed_from_start) + max(0, missed_from_end))
-                        fp = max(0, -missed_from_start) + max(0, -missed_from_end)
-                        recall = tp / total
-                        precision = tp / (tp + fp + 1e-10)
-                        f1 = max(f1, 2.0 * precision * recall / (precision + recall + 1e-10))
-                k += 1
-
-            acc_f1 += f1
-            acc_exact += exact
-
-        return {"f1": acc_f1, "exact": acc_exact}
+        return {"f1": f1, "exact": exact_match}
 
 
 class ClassificationEvalHook(EvalHook):
@@ -448,7 +423,8 @@ class ClassificationEvalHook(EvalHook):
     def preferred_metric_and_initial_score():
         return 'Accuracy', [0.0]
 
-    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
+    def apply_metrics(self, inputs: List[Tuple[QASetting, List[Answer]]], tensors: Mapping[TensorPort, np.ndarray]) \
+            -> Mapping[str, float]:
         labels = tensors[self._target_index_port]
         predictions = tensors[self._predicted_index_port]
 
@@ -476,7 +452,8 @@ class KBPEvalHook(EvalHook):
     def preferred_metric_and_initial_score():
         return 'log_p', [float('-inf')]
 
-    def apply_metrics(self, tensors: Mapping[TensorPort, np.ndarray]) -> Mapping[str, float]:
+    def apply_metrics(self, inputs: List[Tuple[QASetting, List[Answer]]], tensors: Mapping[TensorPort, np.ndarray]) \
+            -> Mapping[str, float]:
         loss = tensors[Ports.loss]
         return {"log_p": -np.sum(loss)}
 
