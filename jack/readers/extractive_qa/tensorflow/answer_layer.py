@@ -84,7 +84,7 @@ def mlp_answer_layer(size, encoded_question, question_length, encoded_support, s
     hidden = tf.layers.dense(
         static_input, 2 * size, use_bias=False, name="hidden_2") + tf.expand_dims(hidden, 1)
 
-    hidden_start, hidden_end = tf.split(hidden, 2, 2)
+    hidden_start, hidden_end = tf.split(tf.nn.relu(hidden), 2, 2)
 
     support_mask = misc.mask_for_lengths(support_length)
 
