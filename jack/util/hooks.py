@@ -11,6 +11,7 @@ from typing import List, Tuple, Mapping
 import numpy as np
 import progressbar
 import tensorflow as tf
+from sklearn import metrics
 
 from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader
@@ -430,7 +431,7 @@ class ClassificationEvalHook(EvalHook):
 
         labels_np = np.array(labels)
         acc_exact = np.sum(np.equal(labels_np, predictions))
-        acc_f1 = f1_score(labels_np, predictions, average='macro') * labels_np.shape[0]
+        acc_f1 = metrics.f1_score(labels_np, predictions, average='macro') * labels_np.shape[0]
 
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
 

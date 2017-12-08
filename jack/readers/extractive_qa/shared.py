@@ -24,18 +24,10 @@ class XQAPorts:
     support2question = Ports.Input.support2question
 
     # but also ids, for char-based embeddings
-    word_chars = TensorPort(tf.int32, [None, None], "word_chars",
-                            "Represents questions using symbol vectors",
-                            "[U, max_num_chars]")
-    word_char_length = TensorPort(tf.int32, [None], "word_char_length",
-                                  "Represents questions using symbol vectors",
-                                  "[U]")
-    question_words = TensorPort(tf.int32, [None, None], "question_words",
-                                "Represents support using symbol vectors indexing defined word chars.",
-                                "[batch_size, max_num_question_tokens]")
-    support_words = TensorPort(tf.int32, [None, None], "support_words",
-                               "Represents support using symbol vectors indexing defined word chars",
-                               "[batch_size, max_num_support_tokens, max]")
+    word_chars = Ports.Input.word_chars
+    word_char_length = Ports.Input.word_char_length
+    question_words = Ports.Input.question_words
+    support_words = Ports.Input.support_words
 
     is_eval = Ports.is_eval
 

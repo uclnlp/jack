@@ -107,25 +107,6 @@ def fastqa_reader_torch(resources_or_conf: Union[dict, SharedResources] = None):
 
 
 @nli_reader
-def cbilstm_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """
-    Creates a SNLI reader instance (multiple choice qa model).
-    This particular reader uses a conditional Bidirectional LSTM, as described in [1].
-
-    [1] Tim Rocktäschel et al. - Reasoning about Entailment with Neural Attention. ICLR 2016
-    """
-    from jack.readers.multiple_choice.shared import SingleSupportFixedClassInputs
-    from jack.readers.natural_language_inference.bilstm import PairOfBiLSTMOverSupportAndQuestionModel
-    from jack.readers.multiple_choice.shared import SimpleMCOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = SingleSupportFixedClassInputs(shared_resources)
-    model_module = PairOfBiLSTMOverSupportAndQuestionModel(shared_resources)
-    output_module = SimpleMCOutputModule(shared_resources)
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@nli_reader
 def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a SNLI reader instance (multiple choice qa model).
 
@@ -133,32 +114,27 @@ def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
     """
-    from jack.readers.multiple_choice.shared import SingleSupportFixedClassInputs
+    from jack.readers.multiple_choice.shared import MultipleChoiceSingleSupportInputModule
     from jack.readers.natural_language_inference.decomposable_attention import DecomposableAttentionModel
     from jack.readers.multiple_choice.shared import SimpleMCOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
-    input_module = SingleSupportFixedClassInputs(shared_resources)
+    input_module = MultipleChoiceSingleSupportInputModule(shared_resources)
     model_module = DecomposableAttentionModel(shared_resources)
     output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
 @nli_reader
-def esim_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a SNLI reader instance (multiple choice qa model).
-
-    This particular reader uses an Enhanced LSTM Model (ESIM), as described in [1].
-
-    [1] Qian Chen et al. - Enhanced LSTM for Natural Language Inference. ACL 2017
-    """
-    from jack.readers.multiple_choice.shared import SingleSupportFixedClassInputs
-    from jack.readers.natural_language_inference.esim import ESIMModel
+def modular_nli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a Modular NLI reader instance. Model defined in config."""
+    from jack.readers.multiple_choice.shared import MultipleChoiceSingleSupportInputModule
+    from jack.readers.natural_language_inference.modular_nli_model import ModularNLIModel
     from jack.readers.multiple_choice.shared import SimpleMCOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
 
-    input_module = SingleSupportFixedClassInputs(shared_resources)
-    model_module = ESIMModel(shared_resources)
+    input_module = MultipleChoiceSingleSupportInputModule(shared_resources)
+    model_module = ModularNLIModel(shared_resources)
     output_module = SimpleMCOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
 

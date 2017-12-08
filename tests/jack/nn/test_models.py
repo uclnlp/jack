@@ -19,8 +19,6 @@ SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 
 models2dataset = {}
 models2dataset['dam_snli_reader'] = 'SNLI'
-models2dataset['esim_snli_reader'] = 'SNLI'
-models2dataset['cbilstm_snli_reader'] = 'SNLI'
 models2dataset['fastqa_reader'] = 'squad'
 
 overfit_epochs = {'SNLI': 15, 'SNLI_stream': 15, 'squad': 15}

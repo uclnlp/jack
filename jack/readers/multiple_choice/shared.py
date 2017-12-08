@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABCMeta
+from typing import NamedTuple
 
 import progressbar
 
@@ -11,7 +12,6 @@ from jack.readers.multiple_choice import util
 from jack.util import preprocessing
 from jack.util.map import numpify
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -19,26 +19,34 @@ class SingleSupportFixedClassForward(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def forward_pass(self, shared_resources, embedded_question, q_lengths, embedded_support, s_lengths, num_classes):
-        '''Takes a single support and question and produces logits'''
+    def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors):
+        """Takes a single support and question and produces logits"""
         raise NotImplementedError
 
 
-class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClassForward):
+class AbstractSingleSupportMCModel(TFModelModule, SingleSupportFixedClassForward):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
         self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
-        super(AbstractSingleSupportFixedClassModel, self).__init__(shared_resources)
+        super(AbstractSingleSupportMCModel, self).__init__(shared_resources)
 
     @property
     def input_ports(self) -> List[TensorPort]:
         if self.shared_resources.config.get("vocab_from_embeddings", False):
             return [Ports.Input.emb_support, Ports.Input.emb_question,
-                    Ports.Input.support_length, Ports.Input.question_length]
+                    Ports.Input.support_length, Ports.Input.question_length,
+                    # character information
+                    Ports.Input.word_chars, Ports.Input.word_char_length,
+                    Ports.Input.question_words, Ports.Input.support_words,
+                    Ports.is_eval]
         else:
             return [Ports.Input.support, Ports.Input.question,
-                    Ports.Input.support_length, Ports.Input.question_length]
+                    Ports.Input.support_length, Ports.Input.question_length,
+                    # character information
+                    Ports.Input.word_chars, Ports.Input.word_char_length,
+                    Ports.Input.question_words, Ports.Input.support_words,
+                    Ports.is_eval]
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -80,10 +88,8 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
         embedded_question.set_shape([None, None, input_size])
         embedded_support.set_shape([None, None, input_size])
 
-        logits = self.forward_pass(shared_resources,
-                                   embedded_question, tensors.question_length,
-                                   embedded_support, tensors.support_length,
-                                   shared_resources.config['answer_size'])
+        logits = self.forward_pass(shared_resources, embedded_question, embedded_support,
+                                   shared_resources.config['answer_size'], tensors)
 
         predictions = tf.argmax(logits, 1, name='prediction')
 
@@ -99,7 +105,19 @@ class AbstractSingleSupportFixedClassModel(TFModelModule, SingleSupportFixedClas
         }
 
 
-class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
+MCAnnotation = NamedTuple('MCAnnotation', [
+    ('question_tokens', List[str]),
+    ('question_ids', List[int]),
+    ('question_length', int),
+    ('support_tokens', List[List[str]]),
+    ('support_ids', List[List[int]]),
+    ('support_length', List[int]),
+    ('answer', Optional[int]),
+    ('id', Optional[int]),
+])
+
+
+class MultipleChoiceSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
 
@@ -113,73 +131,100 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
         if self.shared_resources.config.get("vocab_from_embeddings", False):
             return [Ports.Input.emb_support,
                     Ports.Input.emb_question, Ports.Input.support_length,
-                    Ports.Input.question_length, Ports.Input.sample_id]
+                    Ports.Input.question_length, Ports.Input.sample_id,
+                    # character information
+                    Ports.Input.word_chars, Ports.Input.word_char_length,
+                    Ports.Input.question_words, Ports.Input.support_words,
+                    Ports.is_eval]
         else:
             return [Ports.Input.support,
                     Ports.Input.question, Ports.Input.support_length,
-                    Ports.Input.question_length, Ports.Input.sample_id]
+                    Ports.Input.question_length, Ports.Input.sample_id,
+                    # character information
+                    Ports.Input.word_chars, Ports.Input.word_char_length,
+                    Ports.Input.question_words, Ports.Input.support_words,
+                    Ports.is_eval]
 
-    def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
-                   is_eval: bool = False) -> List[Mapping[str, any]]:
-        it = enumerate(questions)
+    def preprocess(self, questions: List[QASetting],
+                   answers: Optional[List[List[Answer]]] = None,
+                   is_eval: bool = False) -> List[MCAnnotation]:
+        if answers is None:
+            answers = [None] * len(questions)
+        preprocessed = []
         if len(questions) > 1000:
             bar = progressbar.ProgressBar(
                 max_value=len(questions),
                 widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
-            it = bar(enumerate(questions))
-        preprocessed = list()
-        for i, qa in it:
-            _, token_ids, length, _, _ = preprocessing.nlp_preprocess(
-                qa.question, self.shared_resources.vocab, lowercase=self.shared_resources.config.get('lowercase', True))
-            _, s_token_ids, s_length, _, _ = preprocessing.nlp_preprocess(
-                qa.support[0], self.shared_resources.vocab,
-                lowercase=self.shared_resources.config.get('lowercase', True))
-
-            preprocessed.append({
-                'supports': s_token_ids,
-                'question': token_ids,
-                'support_lengths': s_length,
-                'question_lengths': length,
-                'ids': i,
-            })
-            if answers is not None:
-                preprocessed[-1]["answers"] = self.shared_resources.answer_vocab(answers[i][0].text)
+            for i, (q, a) in bar(enumerate(zip(questions, answers))):
+                preprocessed.append(self.preprocess_instance(i, q, a))
+        else:
+            for i, (q, a) in enumerate(zip(questions, answers)):
+                preprocessed.append(self.preprocess_instance(i, q, a))
 
         return preprocessed
 
-    def create_batch(self, annotations: List[Mapping[str, any]],
+    def preprocess_instance(self, idd: int, question: QASetting,
+                            answers: Optional[List[Answer]] = None) -> MCAnnotation:
+        has_answers = answers is not None
+
+        q_tokenized, q_ids, q_length, _, _ = preprocessing.nlp_preprocess(
+            question.question, self.shared_resources.vocab,
+            lowercase=self.shared_resources.config.get('lowercase', True))
+        s_tokenized, s_ids, s_length, _, _ = preprocessing.nlp_preprocess(
+            question.support[0], self.shared_resources.vocab,
+            lowercase=self.shared_resources.config.get('lowercase', True))
+
+        return MCAnnotation(
+            question_tokens=q_tokenized,
+            question_ids=q_ids,
+            question_length=q_length,
+            support_tokens=s_tokenized,
+            support_ids=s_ids,
+            support_length=s_length,
+            answer=self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
+            id=idd
+        )
+
+    def create_batch(self, annotations: List[MCAnnotation],
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
-        q_lengths = [a["question_lengths"] for a in annotations]
-        s_lengths = [a["support_lengths"] for a in annotations]
+        # also add character information
+        word_chars, word_lengths, tokens, vocab, rev_vocab = \
+            preprocessing.unique_words_with_chars(
+                [a.question_tokens for a in annotations] + [a.support_tokens for a in annotations],
+                self.shared_resources.char_vocab)
+        question_words, support_words = tokens[:len(annotations)], tokens[len(annotations):]
+
+        q_lengths = [a.question_length for a in annotations]
+        s_lengths = [a.support_length for a in annotations]
+        xy_dict = {
+            Ports.Input.question_length: q_lengths,
+            Ports.Input.support_length: s_lengths,
+            Ports.Input.sample_id: [a.id for a in annotations],
+            Ports.Input.word_chars: word_chars,
+            Ports.Input.word_char_length: word_lengths,
+            Ports.Input.question_words: question_words,
+            Ports.Input.support_words: support_words,
+            Ports.is_eval: is_eval
+        }
+
         if self.shared_resources.config.get("vocab_from_embeddings", False):
             emb_support = np.zeros([len(annotations), max(s_lengths), self.emb_matrix.shape[1]])
             emb_question = np.zeros([len(annotations), max(q_lengths), self.emb_matrix.shape[1]])
             for i, a in enumerate(annotations):
-                for j, k in enumerate(a["supports"]):
+                for j, k in enumerate(a.support_ids):
                     emb_support[i, j] = self._get_emb(k)
-                for j, k in enumerate(a["question"]):
+                for j, k in enumerate(a.question_ids):
                     emb_question[i, j] = self._get_emb(k)
 
-            xy_dict = {
-                Ports.Input.emb_support: emb_support,
-                Ports.Input.emb_question: emb_question,
-                Ports.Input.question_length: q_lengths,
-                Ports.Input.support_length: s_lengths,
-                Ports.Input.sample_id: [a['ids'] for a in annotations]
-            }
+            xy_dict[Ports.Input.emb_support] = emb_support
+            xy_dict[Ports.Input.emb_question] = emb_question
         else:
-            xy_dict = {
-                Ports.Input.support: [a["supports"] for a in annotations],
-                Ports.Input.question: [a["question"] for a in annotations],
-                Ports.Input.question_length: [a["question_lengths"] for a in annotations],
-                Ports.Input.support_length: [a['support_lengths'] for a in annotations],
-                Ports.Input.sample_id: [a['ids'] for a in annotations]
-            }
+            xy_dict[Ports.Input.support] = [a.support_ids for a in annotations]
+            xy_dict[Ports.Input.question] = [a.question_ids for a in annotations]
 
-        if "answers" in annotations[0]:
-            xy_dict[Ports.Target.target_index] = [a["answers"] for a in annotations]
-        return numpify(xy_dict, keys=[Ports.Input.support, Ports.Input.question,
-                                      Ports.Input.question_length, Ports.Input.support_length])
+        if with_answers:
+            xy_dict[Ports.Target.target_index] = [a.answer for a in annotations]
+        return numpify(xy_dict)
 
     def _get_emb(self, idx):
         if idx < self.emb_matrix.shape[0]:
@@ -210,6 +255,7 @@ class SingleSupportFixedClassInputs(OnlineInputModule[Mapping[str, any]]):
             self.shared_resources.answer_vocab = util.create_answer_vocab(answers=(a for _, ass in data for a in ass))
             self.shared_resources.answer_vocab.freeze()
         self.shared_resources.config['answer_size'] = len(self.shared_resources.answer_vocab)
+        self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
 
 class SimpleMCOutputModule(OutputModule):
@@ -237,69 +283,3 @@ class SimpleMCOutputModule(OutputModule):
                 ans = Answer(question.atomic_candidates[winning_index], score=score)
             result.append(ans)
         return result
-
-
-class MisclassificationOutputModule(OutputModule):
-    def __init__(self, interval, limit=100):
-        self.lower, self.upper = interval
-        self.limit = limit
-        self.i = 0
-        self.setup()
-
-    @property
-    def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.logits,
-                Ports.Prediction.candidate_index,
-                Ports.Target.target_index,
-                Ports.Input.sample_id]
-
-    def __call__(self, inputs: List[QASetting],
-                 logits,
-                 candidate_idx,
-                 labels,
-                 sample_ids) -> List[Answer]:
-        if self.i >= self.limit:
-            return
-
-        class2idx = {}
-        idx2class = {}
-
-        def softmax(x):
-            """Compute softmax values for each sets of scores in x."""
-            e_x = np.exp(x - np.max(x, 1).reshape(-1, 1))
-            return e_x / e_x.sum(1).reshape(-1, 1)
-
-        logits = softmax(logits)
-        num_classes = logits.shape[1]
-        for i, (right_idx, predicted_idx) in enumerate(zip(labels, candidate_idx)):
-            data_idx = sample_ids[i]
-            qa, answer = inputs[data_idx]
-            answer = answer[0]
-            if answer.text not in class2idx:
-                class2idx[answer.text] = right_idx
-                idx2class[right_idx] = answer.text
-            if len(class2idx) < num_classes:
-                continue
-            if self.i >= self.limit:
-                continue
-            if right_idx == predicted_idx:
-                continue
-            score = logits[i][right_idx]
-            if self.lower < score < self.upper:
-                self.i += 1
-                logger.info('Question: {0}'.format(qa.question))
-                logger.info('Support: {0}'.format(qa.support[0]))
-                logger.info('Answer: {0}'.format(answer.text))
-                logger.info('Predicted class: {0}'.format(idx2class[predicted_idx]))
-
-                predictions_str = str([(idx2class[b], a) for a, b in zip(logits[i], range(num_classes))])
-                logger.info('Predictions: {0}'.format(predictions_str))
-
-    def setup(self):
-        pass
-
-    def store(self, path):
-        pass
-
-    def load(self, path):
-        pass

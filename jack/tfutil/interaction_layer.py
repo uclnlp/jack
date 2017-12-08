@@ -7,21 +7,25 @@ from jack.tfutil.misc import mask_for_lengths
 
 def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2,
                       module='attention_matching', attn_type='bilinear_diagonal', scaled=True, with_sentinel=False,
-                      name='interaction_layer', reuse=False, num_layers=1, encoder=None, **kwargs):
+                      name='interaction_layer', reuse=False, num_layers=1, encoder=None, concat=True, **kwargs):
     with tf.variable_scope(name, reuse=reuse):
         if seq1_to_seq2 is not None:
             seq2 = tf.gather(seq2, seq1_to_seq2)
             seq2_length = tf.gather(seq2_length, seq1_to_seq2)
         if module == 'attention_matching':
-            return attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
-                                            attn_type, scaled, with_sentinel)
+            out = attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
+                                           attn_type, scaled, with_sentinel)
         elif module == 'bidaf':
-            return bidaf_layer(seq1, seq1_length, seq2, seq2_length)
+            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length)
         elif module == 'coattention':
-            return coattention_layer(
+            out = coattention_layer(
                 seq1, seq1_length, seq2, seq2_length, attn_type, scaled, with_sentinel, num_layers, encoder)
         else:
             raise ValueError("Unknown interaction type: %s" % module)
+
+    if concat:
+        out = tf.concat([seq1, out], 2)
+    return out
 
 
 def bidaf_layer(seq1, seq1_length, seq2, seq2_length):
@@ -37,7 +41,7 @@ def bidaf_layer(seq1, seq1_length, seq2, seq2_length):
     seq1_weighted = tf.expand_dims(seq1_weighted, 1)
     seq1_weighted = tf.tile(seq1_weighted, [1, tf.shape(seq1)[1], 1])
 
-    return tf.concat([seq1, seq2_weighted, seq1 * seq2_weighted, seq1 * seq1_weighted], 2)
+    return tf.concat([seq2_weighted, seq1 * seq2_weighted, seq1 * seq1_weighted], 2)
 
 
 def attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
@@ -56,7 +60,7 @@ def attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
     else:
         raise ValueError("Unknown attention type: %s" % attn_type)
 
-    return tf.concat([seq1, attn_states], 2)
+    return attn_states
 
 
 def coattention_layer(seq1, seq1_length, seq2, seq2_length,
@@ -76,9 +80,9 @@ def coattention_layer(seq1, seq1_length, seq2, seq2_length,
         seq1, seq1_length, seq2, seq2_length, scaled, with_sentinel, attn_fun)
 
     if num_layers < 2:
-        out = tf.concat([seq1, attn_states1, co_attn_state], 2)
+        out = tf.concat([attn_states1, co_attn_state], 2)
     else:
-        seq1, attn_states1, attn_states2, co_attn_state = [seq1], [attn_states1], [attn_states2], [co_attn_state]
+        seq1, attn_states1, attn_states2, co_attn_state = [], [attn_states1], [attn_states2], [co_attn_state]
         for i in range(1, num_layers):
             with tf.variable_scope(str(i)):
                 enc_1 = sequence_encoder.encoder(

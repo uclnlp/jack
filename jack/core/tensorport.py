@@ -212,6 +212,20 @@ class Ports:
                                        "Represents the embedded question",
                                        "[Q, max_num_question_tokens, N]")
 
+        # character based information
+        word_chars = TensorPort(tf.int32, [None, None], "word_chars",
+                                "Represents questions using symbol vectors",
+                                "[U, max_num_chars]")
+        word_char_length = TensorPort(tf.int32, [None], "word_char_length",
+                                      "Represents questions using symbol vectors",
+                                      "[U]")
+        question_words = TensorPort(tf.int32, [None, None], "question_words",
+                                    "Represents support using symbol vectors indexing defined word chars.",
+                                    "[batch_size, max_num_question_tokens]")
+        support_words = TensorPort(tf.int32, [None, None], "support_words",
+                                   "Represents support using symbol vectors indexing defined word chars",
+                                   "[batch_size, max_num_support_tokens, max]")
+
         # Number of questions in batch is Q, number of supports is S, number of answers is A, number of candidates is C.
         # Typical input ports such as support, candidates, answers are defined together with individual mapping ports.
         # This allows for more flexibility when numbers can vary between questions.

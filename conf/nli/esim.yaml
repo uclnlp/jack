@@ -1,0 +1,117 @@
+description: >
+  A configuration inheriting from the default jack.yaml
+
+parent_config: './conf/nli/modular_nli.yaml'
+
+name: 'esim_reader'
+
+# fixed experiment seed
+seed: 1337
+
+repr_dim: 200
+dropout: &dropout 0.2
+
+model:
+  encoder_layer:
+  # Shared Embedding Processing
+  # Support
+  - input: ['support', 'char_support']
+    output: 'support'
+    module: 'concat'
+  - input: 'support'
+    name: 'embedding_highway'
+    module: 'highway'
+  - input: 'support'
+    output: 'emb_support'
+    name: 'embedding_projection'
+    module: 'dense'
+    activation: 'relu'
+    dropout: *dropout
+  # Question
+  - input: ['question', 'char_question']
+    output: 'question'
+    module: 'concat'
+  - input: 'question'
+    name: 'embedding_highway'  # use same network as support
+    module: 'highway'
+  - input: 'question'
+    output: 'emb_question'
+    name: 'embedding_projection'  # use same network as support
+    module: 'dense'
+    activation: 'relu'
+    dropout: *dropout
+
+  # ESIM
+  # BiLSTM
+  - input: 'question'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'encoder'
+    dropout: *dropout
+  # BiLSTM
+  - input: 'support'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'encoder'
+    dropout: *dropout
+
+  # Attention
+  - input: 'support'
+    dependent: 'question'
+    output: 'question_attn'
+    module: 'attention_matching'
+    attn_type: 'dot'
+    concat: False
+  - input: 'question'
+    dependent: 'support'
+    output: 'support_attn'
+    module: 'attention_matching'
+    attn_type: 'dot'
+    concat: False
+
+  - input: ['support', 'question_attn']
+    output: 'support_mul'
+    module: 'mul'
+  - input: ['support', 'question_attn']
+    output: 'support_sub'
+    module: 'sub'
+  - input: ['support', 'question_attn', 'support_mul', 'support_sub']
+    output: 'support'
+    module: 'concat'
+  - input: 'support'
+    module: 'dense'
+    activation: 'relu'
+
+  - input: ['question', 'support_attn']
+    output: 'question_mul'
+    module: 'mul'
+  - input: ['question', 'support_attn']
+    output: 'question_sub'
+    module: 'sub'
+  - input: ['question', 'support_attn', 'question_mul', 'question_sub']
+    output: 'question'
+    module: 'concat'
+  - input: 'question'
+    module: 'dense'
+    activation: 'relu'
+
+  # inference composition
+  # BiLSTM
+  - input: 'question'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'composition'
+    dropout: *dropout
+  # BiLSTM
+  - input: 'support'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'composition'
+    dropout: *dropout
+
+  prediction_layer:
+    module: 'max_avg_mlp'

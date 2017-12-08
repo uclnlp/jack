@@ -120,10 +120,13 @@ $ python3 bin/jack-train.py with reader='dam_snli_reader' loader=snli train='dat
 or the short version:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/dam.yaml' reader=dam_snli_reader reader_dir='./dam_reader'
+$ python3 bin/jack-train.py with config='./conf/dam.yaml'
 ```
 
-Note, you can easily change the model to one of the other implemented NLI readers (e.g., `cbilstm_snli_reader`, `esim_snli_reader`)
+Note, you can easily change the model to one of the other implemented NLI readers. Just checkout our configurations in
+`conf/nli/`. You will find for instance an `ESIM` reader (`esim.yaml`) which is realized using our `ModularNLIReader`, 
+similar to question answering. You can quickly stick together your own model in a config like that. Available modules
+can be found [here](/docs/Encoder_Modules.md)
 
 Note, you can add a flag `tensorboard_folder=.tb/dam_reader` to write tensorboard
 summaries to a provided path (here `.tb/dam_reader`).

@@ -58,6 +58,7 @@ These modules typically concatenate the input with some interaction states. Thes
 
 * `input`: key referring to sequence for which to compute interactions
 * `dependent`: interaction partner
+* `concat`: concatenates input with output of this module (default: True)
 * `modules`: `attention_matching`, `bidaf`, `coattention`
 * `attn_type`: `mlp`, `bilinear`, `diagonal_bilinear`, `dot`
 * `scaled`: if `True` use scale attention score by sqrt of dimensionality of states used for attention

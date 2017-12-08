@@ -6,26 +6,23 @@ from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
 
-from jack.readers.multiple_choice.shared import AbstractSingleSupportFixedClassModel
+from jack.readers.multiple_choice.shared import AbstractSingleSupportMCModel
 from jack.tfutil.attention import attention_softmax3d
 from jack.tfutil.masking import mask_3d
 
 logger = logging.getLogger(__name__)
 
 
-class DecomposableAttentionModel(AbstractSingleSupportFixedClassModel):
-    def forward_pass(self, shared_resources,
-                     embedded_question, question_length,
-                     embedded_support, support_length,
-                     num_classes):
+class DecomposableAttentionModel(AbstractSingleSupportMCModel):
+    def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
 
         model_kwargs = {
             'sequence1': embedded_question,
-            'sequence1_length': question_length,
+            'sequence1_length': tensors.question_length,
             'sequence2': embedded_support,
-            'sequence2_length': support_length,
+            'sequence2_length': tensors.support_length,
             'representation_size': shared_resources.config['repr_dim'],
             'dropout_keep_prob': 1.0 - shared_resources.config.get('dropout', 0),
             'use_masking': True,
