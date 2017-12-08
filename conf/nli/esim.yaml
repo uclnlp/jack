@@ -13,47 +13,44 @@ dropout: &dropout 0.2
 
 model:
   encoder_layer:
-  # question -> hypothesis
-  # support -> premise
-
   # Shared Embedding Processing
   # Support
-  - input: ['support', 'char_support']
-    output: 'support'
+  - input: ['premise', 'char_premise']
+    output: 'premise'
     module: 'concat'
-  - input: 'support'
+  - input: 'premise'
     name: 'embedding_highway'
     module: 'highway'
-  - input: 'support'
-    output: 'emb_support'
+  - input: 'premise'
+    output: 'emb_premise'
     name: 'embedding_projection'
     module: 'dense'
     activation: 'relu'
     dropout: *dropout
   # Question
-  - input: ['question', 'char_question']
-    output: 'question'
+  - input: ['hypothesis', 'char_hypothesis']
+    output: 'hypothesis'
     module: 'concat'
-  - input: 'question'
-    name: 'embedding_highway'  # use same network as support
+  - input: 'hypothesis'
+    name: 'embedding_highway'  # use same network as premise
     module: 'highway'
-  - input: 'question'
-    output: 'emb_question'
-    name: 'embedding_projection'  # use same network as support
+  - input: 'hypothesis'
+    output: 'emb_hypothesis'
+    name: 'embedding_projection'  # use same network as premise
     module: 'dense'
     activation: 'relu'
     dropout: *dropout
 
   # ESIM
   # BiLSTM
-  - input: 'question'
+  - input: 'hypothesis'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'relu'
     name: 'encoder'
     dropout: *dropout
   # BiLSTM
-  - input: 'support'
+  - input: 'premise'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'relu'
@@ -61,55 +58,55 @@ model:
     dropout: *dropout
 
   # Attention
-  - input: 'support'
-    dependent: 'question'
-    output: 'question_attn'
+  - input: 'premise'
+    dependent: 'hypothesis'
+    output: 'hypothesis_attn'
     module: 'attention_matching'
     attn_type: 'dot'
     concat: False
-  - input: 'question'
-    dependent: 'support'
-    output: 'support_attn'
+  - input: 'hypothesis'
+    dependent: 'premise'
+    output: 'premise_attn'
     module: 'attention_matching'
     attn_type: 'dot'
     concat: False
 
-  - input: ['support', 'question_attn']
-    output: 'support_mul'
+  - input: ['premise', 'hypothesis_attn']
+    output: 'premise_mul'
     module: 'mul'
-  - input: ['support', 'question_attn']
-    output: 'support_sub'
+  - input: ['premise', 'hypothesis_attn']
+    output: 'premise_sub'
     module: 'sub'
-  - input: ['support', 'question_attn', 'support_mul', 'support_sub']
-    output: 'support'
+  - input: ['premise', 'hypothesis_attn', 'premise_mul', 'premise_sub']
+    output: 'premise'
     module: 'concat'
-  - input: 'support'
+  - input: 'premise'
     module: 'dense'
     activation: 'relu'
 
-  - input: ['question', 'support_attn']
-    output: 'question_mul'
+  - input: ['hypothesis', 'premise_attn']
+    output: 'hypothesis_mul'
     module: 'mul'
-  - input: ['question', 'support_attn']
-    output: 'question_sub'
+  - input: ['hypothesis', 'premise_attn']
+    output: 'hypothesis_sub'
     module: 'sub'
-  - input: ['question', 'support_attn', 'question_mul', 'question_sub']
-    output: 'question'
+  - input: ['hypothesis', 'premise_attn', 'hypothesis_mul', 'hypothesis_sub']
+    output: 'hypothesis'
     module: 'concat'
-  - input: 'question'
+  - input: 'hypothesis'
     module: 'dense'
     activation: 'relu'
 
   # inference composition
   # BiLSTM
-  - input: 'question'
+  - input: 'hypothesis'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'relu'
     name: 'composition'
     dropout: *dropout
   # BiLSTM
-  - input: 'support'
+  - input: 'premise'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'relu'

@@ -18,11 +18,11 @@ class ModularNLIModel(AbstractSingleSupportMCModel):
         tensors.emb_question.set_shape([None, None, input_size])
         tensors.emb_support.set_shape([None, None, input_size])
 
-        inputs = {'question': embedded_question, 'support': embedded_support,
-                  'char_question': char_emb_question, 'char_support': char_emb_support}
-        inputs_length = {'question': tensors.question_length, 'support': tensors.support_length,
-                         'char_question': tensors.question_length, 'char_support': tensors.support_length}
-        inputs_mapping = {'question': None, 'support': None, 'char_support': None}
+        inputs = {'hypothesis': embedded_question, 'premise': embedded_support,
+                  'char_hypothesis': char_emb_question, 'char_premise': char_emb_support}
+        inputs_length = {'hypothesis': tensors.question_length, 'premise': tensors.support_length,
+                         'char_hypothesis': tensors.question_length, 'char_premise': tensors.support_length}
+        inputs_mapping = {'hypothesis': None, 'premise': None, 'char_premise': None, 'char_hypothesis': None}
 
         encoder_config = model['encoder_layer']
         encoded, _, _ = modular_encoder(
@@ -30,8 +30,8 @@ class ModularNLIModel(AbstractSingleSupportMCModel):
 
         with tf.variable_scope('prediction_layer'):
             answer_layer_config = model['prediction_layer']
-            encoded_question = encoded[answer_layer_config.get('question', 'question')]
-            encoded_support = encoded[answer_layer_config.get('support', 'support')]
+            encoded_question = encoded[answer_layer_config.get('hypothesis', 'hypothesis')]
+            encoded_support = encoded[answer_layer_config.get('premise', 'premise')]
 
             if 'repr_dim' not in answer_layer_config:
                 answer_layer_config['repr_dim'] = repr_dim
