@@ -13,6 +13,9 @@ dropout: &dropout 0.2
 
 model:
   encoder_layer:
+  # question -> hypothesis
+  # support -> premise
+
   # Shared Embedding Processing
   # Support
   - input: ['support', 'char_support']
