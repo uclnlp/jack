@@ -99,6 +99,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         assert isinstance(shared_vocab_config, SharedResources), \
             "shared_resources for FastQAInputModule must be an instance of SharedResources"
         self.shared_resources = shared_vocab_config
+        self._rng = random.Random(1)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
@@ -158,7 +159,8 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
         max_num_support = self.config.get("max_num_support")  # take all per default
         if max_num_support is not None and len(question.support) > max_num_support:
-            # subsample by TF-IDF
+            # take 2 * the number of max supports by TF-IDF (we subsample to max_num_support in create batch)
+            # following https://arxiv.org/pdf/1710.10723.pdf
             q_freqs = defaultdict(float)
             freqs = defaultdict(float)
             for w, i in zip(q_tokenized, q_ids):
@@ -205,17 +207,32 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         q_tokenized = [a.question_tokens for a in annotations]
         question_lengths = [a.question_length for a in annotations]
 
-        s_tokenized = [ts for a in annotations for ts in a.support_tokens]
-        support_lengths = [l for a in annotations for l in a.support_length]
-        wiq = [wiq for a in annotations for wiq in a.word_in_question]
-        offsets = [offsets for a in annotations for offsets in a.token_offsets]
-        support2question = [i for i, a in enumerate(annotations) for _ in a.support_tokens]
+        max_num_support = self.config.get("max_num_support")  # take all per default
+        s_tokenized = []
+        support_lengths = []
+        wiq = []
+        offsets = []
+        support2question = []
+        # aligns with support2question, used in output module to get correct index to original set of supports
+        selected_support = []
+        for j, a in enumerate(annotations):
+            if max_num_support is not None and len(a.support_tokens) > max(1, max_num_support // 2) and not is_eval:
+                # always take first (the best) and sample from rest during training, only consider half to speed
+                # things up. Following https://arxiv.org/pdf/1710.10723.pdf we sample half during training
+                selected = self._rng.sample(range(1, len(a.support_tokens)), max(1, max_num_support // 2) - 1)
+                selected = set([0] + selected)
+            else:
+                selected = set(range(len(a.support_tokens)))
+            for s in selected:
+                s_tokenized.append(a.support_tokens[s])
+                support_lengths.append(a.support_length[s])
+                wiq.append(a.word_in_question[s])
+                offsets.append(a.token_offsets[s])
+                selected_support.append(a.selected_supports[s])
+                support2question.append(j)
 
         word_chars, word_lengths, word_ids, vocab, rev_vocab = \
             preprocessing.unique_words_with_chars(q_tokenized + s_tokenized, self.char_vocab)
-
-        # aligns with support2question, used in output module to get correct index to original set of supports
-        selected_support = [selected for a in annotations for selected in a.selected_supports]
 
         emb_support = np.zeros([len(support_lengths), max(support_lengths), self.vocab.emb_length])
         emb_question = np.zeros([len(question_lengths), max(question_lengths), self.vocab.emb_length])
