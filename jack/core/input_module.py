@@ -186,7 +186,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
         logger.info("OnlineInputModule pre-processes data on-the-fly in first epoch and caches results for subsequent "
                     "epochs! That means, first epoch might be slower.")
-        use_file = len(dataset) > 10000
+        use_file = len(dataset) > 100000
         if use_file:
             cache_dir = os.environ.get('JACK_TEMP', tempfile.gettempdir())
             db = FileCache('jack_the_reader', app_cache_dir=cache_dir)
