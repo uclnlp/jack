@@ -172,6 +172,16 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         """Whether to shuffle the dataset in batch_annotations(). Default is noe is_eval."""
         return not is_eval
 
+    def preprocess_if_necessary(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
+                                is_eval: bool = False):
+        if questions[0].annotation is None and isinstance(questions[0].annotation, AnnotationType):
+            annotations = self.preprocess(questions, answers, is_eval)
+            for q, a in zip(questions, annotations):
+                q.annotation = a
+            return annotations
+        else:
+            return [q.annotation for q in questions]
+
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """Preprocesses all qa_settings, returns a single batch with all instances."""
 

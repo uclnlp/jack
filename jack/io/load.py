@@ -33,7 +33,7 @@ def load_jack(path, max_count=None):
     with open(path) as f:
         jtr_data = json.load(f)
 
-    return jtr_to_qasetting(jtr_data, max_count)
+    return jack_to_qasetting(jtr_data, max_count)
 
 
 @_register('squad')
@@ -49,7 +49,7 @@ def load_squad(path, max_count=None):
     """
     # We load to jtr dict and convert to qa settings for now
     jtr_data = convert_squad(path)
-    return jtr_to_qasetting(jtr_data, max_count)
+    return jack_to_qasetting(jtr_data, max_count)
 
 
 @_register('snli')
@@ -65,4 +65,4 @@ def load_snli(path, max_count=None):
     """
     # We load to jtr dict and convert to qa settings for now
     jtr_data = convert_snli(path)
-    return jtr_to_qasetting(jtr_data, max_count)
+    return jack_to_qasetting(jtr_data, max_count)
