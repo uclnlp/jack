@@ -261,11 +261,11 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         }
 
         if with_answers:
-            spans = [s for a in annotations for spans_per_support in a.answer_spans for s in spans_per_support]
+            spans = [s for a in all_spans for spans_per_support in a for s in spans_per_support]
             span2support = []
             support_idx = 0
-            for a in annotations:
-                for spans_per_support in a.answer_spans:
+            for a in all_spans:
+                for spans_per_support in a:
                     span2support.extend([support_idx] * len(spans_per_support))
                     support_idx += 1
             output.update({
