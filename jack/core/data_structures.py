@@ -62,7 +62,42 @@ class QASetting:
         self.atomic_candidates = atomic_candidates
         self.support = support
         self.question = question
-        self.__annotation = None
+        self.annotation = None
+
+
+class QASettingDB:
+    """
+    Representation of a single question answering problem. It primarily consists of a question,
+    a list of support documents, and optionally, some set of candidate answers.
+    """
+
+    def __init__(self, id: str, dic):
+        self.id = id
+        self._dic = dic
+
+    @property
+    def candidate_spans(self):
+        return self._dic[self.id].get('candidate_spans')
+
+    @property
+    def atomic_candidates(self):
+        return self._dic[self.id].get('atomic_candidates')
+
+    @property
+    def seq_candidates(self):
+        return self._dic[self.id].get('seq_candidates')
+
+    @property
+    def support(self):
+        return self._dic[self.id].get('support')
+
+    @property
+    def support(self):
+        return self._dic[self.id].get('question')
+
+    @property
+    def annotation(self):
+        return self._dic[self.id].get('annotation')
 
     @property
     def annotation(self):

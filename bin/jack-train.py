@@ -4,7 +4,9 @@
 import logging
 import os
 import os.path as path
+import shutil
 import sys
+import tempfile
 from time import time
 
 from sacred import Experiment
@@ -85,6 +87,15 @@ def main(batch_size,
          write_metrics_to):
     logger.info("TRAINING")
 
+    if 'JACK_TEMP' not in os.environ:
+        jack_temp = os.path.join(tempfile.gettempdir(), 'jack')
+        os.environ['JACK_TEMP'] = jack_temp
+        logger.info("JACK_TEMP not set, setting it to %s. Might be used for caching." % jack_temp)
+    else:
+        jack_temp = os.environ['JACK_TEMP']
+    if not os.path.exists(jack_temp):
+        os.mkdir(jack_temp)
+
     if experiments_db is not None:
         ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
 
@@ -134,4 +145,8 @@ def main(batch_size,
 
     checkpoint()
 
-    jtrain(jtreader, train_data, test_data, dev_data, parsed_config, debug=debug)
+    try:
+        jtrain(jtreader, train_data, test_data, dev_data, parsed_config, debug=debug)
+    finally:  # clean up temporary dir
+        if os.path.exists(jack_temp):
+            shutil.rmtree(jack_temp)

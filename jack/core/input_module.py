@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import random
+import tempfile
 from abc import abstractmethod
 from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
 
 import numpy as np
+from fcache.cache import FileCache
 
 from jack.core.data_structures import QASetting, Answer
 from jack.core.tensorport import TensorPort
@@ -151,7 +154,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         raise NotImplementedError
 
-    def batch_annotations(self, annotations: List[AnnotationType], batch_size, is_eval: bool):
+    def _batch_questions(self, questions: List[Tuple[QASetting, List[Answer]]], batch_size, is_eval: bool):
         """Optionally shuffles and batches annotations.
 
         By default, all annotations are shuffled (if self.shuffle(is_eval) and
@@ -165,22 +168,12 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         Returns: Batch iterator
         """
-        rng = _rng if self.shuffle(is_eval) else None
-        return shuffle_and_batch(annotations, batch_size, rng)
+        rng = _rng if self._shuffle(is_eval) else None
+        return shuffle_and_batch(questions, batch_size, rng)
 
-    def shuffle(self, is_eval: bool) -> bool:
+    def _shuffle(self, is_eval: bool) -> bool:
         """Whether to shuffle the dataset in batch_annotations(). Default is noe is_eval."""
         return not is_eval
-
-    def preprocess_if_necessary(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
-                                is_eval: bool = False):
-        if questions[0].annotation is None and isinstance(questions[0].annotation, AnnotationType):
-            annotations = self.preprocess(questions, answers, is_eval)
-            for q, a in zip(questions, annotations):
-                q.annotation = a
-            return annotations
-        else:
-            return [q.annotation for q in questions]
 
     def __call__(self, qa_settings: List[QASetting]) -> Mapping[TensorPort, np.ndarray]:
         """Preprocesses all qa_settings, returns a single batch with all instances."""
@@ -188,14 +181,32 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         annotations = self.preprocess(qa_settings, answers=None, is_eval=True)
         return self.create_batch(annotations, is_eval=True, with_answers=False)
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
+    def batch_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
-        questions, answers = zip(*dataset)
-        annotations = self.preprocess(questions, answers, is_eval=is_eval)
-
+        logger.info("OnlineInputModule pre-processes data on-the-fly in first epoch and caches results for subsequent "
+                    "epochs! That means, first epoch might be slower.")
+        use_file = len(dataset) > 10000
+        if use_file:
+            cache_dir = os.environ.get('JACK_TEMP', tempfile.gettempdir())
+            db = FileCache('jack_the_reader', app_cache_dir=cache_dir)
+            logger.info("Large dataset -> Caching temporary preprocessed data in %s. You can change cache dir using the"
+                        " JACK_TEMP environment variable in your config/commandline." % db.cache_dir)
+        else:
+            db = dict()
+        preprocessed = set()
         def make_generator():
-            for annotation_batch in self.batch_annotations(annotations, batch_size, is_eval):
-                yield self.create_batch(annotation_batch, is_eval, True)
+            for i, batch in enumerate(self._batch_questions(dataset, batch_size, is_eval)):
+                questions, answers = zip(*batch)
+                if questions[0].id not in preprocessed:
+                    annots = self.preprocess(questions, answers)
+                    preprocessed.update(q.id for q in questions)
+                    db.update(zip([q.id for q in questions], annots))
+                    if use_file and i % 100 == 0:  # sync only every 100 batches
+                        db.sync()
+                else:
+                    annots = [db[q.id] for q in questions]
+
+                yield self.create_batch(annots, is_eval, True)
 
         return GeneratorWithRestart(make_generator)
