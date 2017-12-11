@@ -205,9 +205,12 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         wiq = []
         offsets = []
         support2question = []
+        support_ids = []
         # aligns with support2question, used in output module to get correct index to original set of supports
         selected_support = []
-        for j, a in enumerate(annotations):
+        all_spans = []
+        for i, a in enumerate(annotations):
+            all_spans.append([])
             if max_num_support is not None and len(a.support_tokens) > max(1, max_num_support // 2) and not is_eval:
                 # always take first (the best) and sample from rest during training, only consider half to speed
                 # things up. Following https://arxiv.org/pdf/1710.10723.pdf we sample half during training
@@ -221,7 +224,10 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                 wiq.append(a.word_in_question[s])
                 offsets.append(a.token_offsets[s])
                 selected_support.append(a.selected_supports[s])
-                support2question.append(j)
+                support_ids.append(a.support_ids[s])
+                support2question.append(i)
+                if with_answers:
+                    all_spans[-1].append(a.answer_spans[s])
 
         word_chars, word_lengths, word_ids, vocab, rev_vocab = \
             preprocessing.unique_words_with_chars(q_tokenized + s_tokenized, self.char_vocab)
@@ -229,14 +235,12 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         emb_support = np.zeros([len(support_lengths), max(support_lengths), self.vocab.emb_length])
         emb_question = np.zeros([len(question_lengths), max(question_lengths), self.vocab.emb_length])
 
-        k = 0
         for i, a in enumerate(annotations):
             for j, q_id in enumerate(a.question_ids):
                 emb_question[i, j] = self._get_emb(q_id)
-            for s_ids in a.support_ids:
-                for j, s_id in enumerate(s_ids):
-                    emb_support[k, j] = self._get_emb(s_id)
-                k += 1
+        for k, s_ids in enumerate(support_ids):
+            for j, s_id in enumerate(s_ids):
+                emb_support[k, j] = self._get_emb(s_id)
 
         output = {
             XQAPorts.word_chars: word_chars,
