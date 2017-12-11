@@ -196,10 +196,15 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
             db = dict()
         preprocessed = set()
         def make_generator():
+            running_idx = 0
             for i, batch in enumerate(self._batch_questions(dataset, batch_size, is_eval)):
                 questions, answers = zip(*batch)
                 if questions[0].id not in preprocessed:
                     annots = self.preprocess(questions, answers)
+                    if questions[0].id is None:  # make sure there is an id, if not we set it here
+                        for q in questions:
+                            q.id = running_idx
+                            running_idx += 1
                     preprocessed.update(q.id for q in questions)
                     db.update(zip([q.id for q in questions], annots))
                     if use_file and i % 100 == 0:  # sync only every 100 batches
