@@ -7,8 +7,8 @@ import tempfile
 from abc import abstractmethod
 from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
 
+import diskcache as dc
 import numpy as np
-from fcache.cache import FileCache
 
 from jack.core.data_structures import QASetting, Answer
 from jack.core.tensorport import TensorPort
@@ -186,12 +186,13 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
         logger.info("OnlineInputModule pre-processes data on-the-fly in first epoch and caches results for subsequent "
                     "epochs! That means, first epoch might be slower.")
-        use_file = len(dataset) > 100000
-        if use_file:
-            cache_dir = os.environ.get('JACK_TEMP', tempfile.gettempdir())
-            db = FileCache('jack_the_reader', app_cache_dir=cache_dir)
+        use_cache = len(dataset) > 1
+        if use_cache:
+            cache_dir = os.path.join(os.environ.get('JACK_TEMP', tempfile.gettempdir()), 'cache')
+            db = dc.FanoutCache(cache_dir)
+            db.reset('cull_limit', 0)
             logger.info("Large dataset -> Caching temporary preprocessed data in %s. You can change cache dir using the"
-                        " JACK_TEMP environment variable in your config/commandline." % db.cache_dir)
+                        " JACK_TEMP environment variable in your config/commandline." % cache_dir)
         else:
             db = dict()
         preprocessed = set()
@@ -203,12 +204,12 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
                     annots = self.preprocess(questions, answers)
                     if questions[0].id is None:  # make sure there is an id, if not we set it here
                         for q in questions:
-                            q.id = running_idx
-                            running_idx += 1
-                    preprocessed.update(q.id for q in questions)
-                    db.update(zip([q.id for q in questions], annots))
-                    if use_file and i % 100 == 0:  # sync only every 100 batches
-                        db.sync()
+                            if q.id is None:
+                                q.id = running_idx
+                                running_idx += 1
+                    for q, a in zip(questions, annots):
+                        preprocessed.add(q.id)
+                        db[q.id] = a
                 else:
                     annots = [db[q.id] for q in questions]
 

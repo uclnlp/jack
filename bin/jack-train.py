@@ -7,6 +7,7 @@ import os.path as path
 import shutil
 import sys
 import tempfile
+import uuid
 from time import time
 
 from sacred import Experiment
@@ -88,7 +89,7 @@ def main(batch_size,
     logger.info("TRAINING")
 
     if 'JACK_TEMP' not in os.environ:
-        jack_temp = os.path.join(tempfile.gettempdir(), 'jack')
+        jack_temp = os.path.join(tempfile.gettempdir(), 'jack', str(uuid.uuid4()))
         os.environ['JACK_TEMP'] = jack_temp
         logger.info("JACK_TEMP not set, setting it to %s. Might be used for caching." % jack_temp)
     else:
