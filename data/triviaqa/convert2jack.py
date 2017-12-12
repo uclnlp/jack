@@ -37,7 +37,15 @@ def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens
     for doc in docs:
         doc_tokens = corpus.get_document(doc.doc_id)
         doc_tokens_flat = [t for p in doc_tokens for s in p for t in s]
-        doc_paragraph_tokens = [[t for s in p for t in s] for p in doc_tokens]
+        paragraph = []
+        doc_paragraph_tokens = [paragraph]
+        for p in doc_tokens:
+            for s in p:
+                if len(s) + len(paragraph) > max_tokens:
+                    paragraph = list(s)
+                    doc_paragraph_tokens.append(paragraph)
+                else:
+                    paragraph.extend(s)
 
         # merge many small paragraphs
         new_paragraph_tokens = [doc_paragraph_tokens[0]]
@@ -165,12 +173,12 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         max_paragraphs = int(sys.argv[2])
     else:
-        max_paragraphs = 4
+        max_paragraphs = 6
 
     if len(sys.argv) > 3:
         max_tokens = int(sys.argv[3])
     else:
-        max_tokens = 400
+        max_tokens = 600
 
     triviaqa_prepro = os.environ['TRIVIAQA_HOME'] + '/preprocessed'
 

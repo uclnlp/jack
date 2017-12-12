@@ -28,13 +28,13 @@ export PYTHONPATH=data/triviaqa/document-qa:$PYTHONPATH
 
 echo "Third-party preprocessing..."
 python3 data/triviaqa/document-qa/docqa/triviaqa/evidence_corpus.py -n $N
-#python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py wiki --n_processes $N
+python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py wiki --n_processes $N
 python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py web --n_processes $N
 
 echo "Converting to Jack format..."
 python3 data/triviaqa/convert2jack.py $N
 
 echo "Removing data/triviaqa/document-qa repository, since it is not needed anymore."
-rm -r data/triviaqa/document-qa
+rm -rf data/triviaqa/document-qa
 
 echo "Find prepared datasets in data/triviaqa/web. If you want, you can safely remove $DOWNLOADPATH/triviaqa-rc now."
