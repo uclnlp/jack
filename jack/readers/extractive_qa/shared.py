@@ -156,16 +156,16 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             # following https://arxiv.org/pdf/1710.10723.pdf
             q_freqs = defaultdict(float)
             freqs = defaultdict(float)
-            for w, i in zip(q_tokenized, q_ids):
+            for w in q_tokenized:
                 if w.isalnum():
-                    q_freqs[i] += 1.0
-                    freqs[i] += 1.0
+                    q_freqs[w] += 1.0
+                    freqs[w] += 1.0
             d_freqs = []
-            for i, s in enumerate(s_ids):
+            for i, s in enumerate(s_tokenized):
                 d_freqs.append(defaultdict(float))
-                for j in s:
-                    freqs[j] += 1.0
-                    d_freqs[-1][j] += 1.0
+                for w in s:
+                    freqs[w] += 1.0
+                    d_freqs[-1][w] += 1.0
             scores = []
             for i, d_freq in enumerate(d_freqs):
                 sqr_sum = math.sqrt(sum(v / freqs[k] * v / freqs[k] for k, v in d_freq.items())) + 1e-6

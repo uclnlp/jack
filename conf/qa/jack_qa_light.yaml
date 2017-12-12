@@ -17,6 +17,7 @@ word_in_question: True  # concatenated with output after interaction layer
 
 repr_dim: 100
 dropout: &dropout 0.2
+max_span_size: 16
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
@@ -117,4 +118,3 @@ model:
     support: 'support'
     question: 'enc_question'
     module: 'bilinear'
-    max_span_size: 16

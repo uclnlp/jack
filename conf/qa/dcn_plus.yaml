@@ -13,6 +13,7 @@ reader_dir: './dcn_plus_reader'
 
 with_char_embeddings: True
 repr_dim: &dim 100
+max_span_size: 16
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
@@ -74,4 +75,3 @@ model:
     num_layers: 1
   answer_layer:
     module: 'bilinear'
-    max_span_size: 16
