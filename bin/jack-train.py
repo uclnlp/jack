@@ -95,7 +95,7 @@ def main(batch_size,
     else:
         jack_temp = os.environ['JACK_TEMP']
     if not os.path.exists(jack_temp):
-        os.mkdir(jack_temp)
+        os.makedirs(jack_temp)
 
     if experiments_db is not None:
         ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
