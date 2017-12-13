@@ -32,8 +32,10 @@ python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py wiki --n_p
 python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py web --n_processes $N
 
 echo "Converting to Jack format..."
+# We only extract the top (tf/idf) 6 paragraphs (merged/split to maximum of 600 tokens each) to save disk space.
+# In case you want all paragraphs, change 6 to -1.
 python3 data/triviaqa/convert2jack.py web $N 6 600
-python3 data/triviaqa/convert2jack.py wiki $N -1 400
+python3 data/triviaqa/convert2jack.py wiki $N 6 600
 
 echo "Removing data/triviaqa/document-qa repository, since it is not needed anymore."
 rm -rf data/triviaqa/document-qa
