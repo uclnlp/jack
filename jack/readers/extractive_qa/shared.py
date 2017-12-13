@@ -202,7 +202,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                 is_done = False
                 any_answer = any(a.answer_spans)
                 # sample until there is at least one possible answer (if any)
-                while is_done:
+                while not is_done:
                     selected = self._rng.sample(range(0, len(a.support_tokens) + 1), num_training_paragraphs + 1)
                     if 0 in selected and 1 in selected:
                         selected = [s - 1 for s in selected if s > 0]
