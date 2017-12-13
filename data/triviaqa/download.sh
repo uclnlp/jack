@@ -32,9 +32,10 @@ python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py wiki --n_p
 python3 data/triviaqa/document-qa/docqa/triviaqa/build_span_corpus.py web --n_processes $N
 
 echo "Converting to Jack format..."
-python3 data/triviaqa/convert2jack.py $N
+python3 data/triviaqa/convert2jack.py web $N 6 600
+python3 data/triviaqa/convert2jack.py wiki $N -1 400
 
 echo "Removing data/triviaqa/document-qa repository, since it is not needed anymore."
 rm -rf data/triviaqa/document-qa
 
-echo "Find prepared datasets in data/triviaqa/web. If you want, you can safely remove $DOWNLOADPATH/triviaqa-rc now."
+echo "Find prepared datasets in data/triviaqa/. If you want, you can safely remove $DOWNLOADPATH/triviaqa-rc now."
