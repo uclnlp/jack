@@ -3,7 +3,7 @@ echo "You can set parallelism up with the first argument and the working dir wit
 
 #set parallelism
 if [ $# -lt 1 ]; then
-    N=1
+    N=`nproc --all`
 else
     N=$1
 fi
