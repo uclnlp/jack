@@ -1,7 +1,7 @@
 description: >
   Abstract QA configuration.
 
-parent_config: './conf/qa/qa.yaml'
+parent_config: './conf/jack.yaml'
 
 # loader to use in experiment
 loader: 'squad'
