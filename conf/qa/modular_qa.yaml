@@ -1,43 +1,9 @@
 description: >
   Modular QA Reader base configuration.
 
-parent_config: './conf/jack.yaml'
+parent_config: './conf/qa/abstract_qa.yaml'
 
 reader: 'modular_qa_reader'
-
-# loader to use in experiment
-loader: 'squad'
-
-# How large the support should be. Can be used for cutting or filtering QA examples
-max_support_length: -1
-
-train: 'data/SQuAD/train-v1.1.json'
-dev: 'data/SQuAD/dev-v1.1.json'
-test: null
-
-# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
-embedding_format: 'memory_map_dir'
-
-# embeddings to be loaded
-embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
-
-# Use fixed vocab of pretrained embeddings
-vocab_from_embeddings: True
-
-epochs: 20
-
-dropout: 0.2
-
-batch_size: 64
-
-lowercase: False
-
-learning_rate: 0.001
-min_learning_rate: 0.0001
-learning_rate_decay: 0.5
-
-# 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
-loss: 'sum'
 
 with_char_embeddings: True
 model:

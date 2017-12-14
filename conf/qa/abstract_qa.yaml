@@ -1,0 +1,44 @@
+description: >
+  Abstract QA configuration.
+
+parent_config: './conf/qa/qa.yaml'
+
+# loader to use in experiment
+loader: 'squad'
+
+# How large the support should be. Can be used for cutting or filtering QA examples
+max_support_length: -1
+
+train: 'data/SQuAD/train-v1.1.json'
+dev: 'data/SQuAD/dev-v1.1.json'
+test: null
+
+# [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
+embedding_format: 'memory_map_dir'
+
+# embeddings to be loaded
+embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
+
+# Use fixed vocab of pretrained embeddings
+vocab_from_embeddings: True
+
+epochs: 20
+
+dropout: 0.2
+
+batch_size: 64
+
+lowercase: False
+
+# default take all, if set to >0 will be used to select only the top supports based on tf idf with question
+max_num_support: -1
+# set to -1 if you want to use all during training (which will of course demand more training time)
+# paragraphs are subsampled from the top `max_num_support`, the best paragraph is sampled twice as likely as rest
+max_training_support: 2
+
+learning_rate: 0.001
+min_learning_rate: 0.0001
+learning_rate_decay: 0.5
+
+# 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
+loss: 'sum'
