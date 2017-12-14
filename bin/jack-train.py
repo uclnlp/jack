@@ -61,31 +61,20 @@ logging.basicConfig(level=logging.INFO)
 
 
 @ex.automain
-def main(batch_size,
-         clip_value,
-         config,
+def main(config,
          loader,
          debug,
          debug_examples,
-         dev,
          embedding_file,
          embedding_format,
          experiments_db,
-         epochs,
-         l2,
-         optimizer,
-         learning_rate,
-         learning_rate_decay,
-         log_interval,
-         validation_interval,
          reader,
-         reader_dir,
-         seed,
-         tensorboard_folder,
-         test,
          train,
-         vocab_from_embeddings,
-         write_metrics_to):
+         num_train_examples,
+         dev,
+         num_dev_examples,
+         test,
+         vocab_from_embeddings):
     logger.info("TRAINING")
 
     if 'JACK_TEMP' not in os.environ:
@@ -116,8 +105,8 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
-        train_data = loaders[loader](train)
-        dev_data = loaders[loader](dev)
+        train_data = loaders[loader](train, num_train_examples)
+        dev_data = loaders[loader](dev, num_dev_examples)
         test_data = loaders[loader](test) if test else None
 
         logger.info('loaded train/dev/test data')

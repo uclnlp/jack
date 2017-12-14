@@ -17,21 +17,24 @@ def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens
         doc_paragraph_tokens = [[t for s in p for t in s] for p in doc_tokens]
 
         # merge many small paragraphs
-        new_paragraph_tokens = [[]]
-        for s in doc_paragraph_tokens:
-            if len(new_paragraph_tokens[-1]) + len(s) >= max_tokens and len(new_paragraph_tokens[-1]) > 0:
-                # start new paragraph
-                if len(s) >= max_tokens:
-                    while s:
-                        new_paragraph_tokens.append(s[:max_tokens])
-                        s = s[max_tokens:]
+        if max_tokens > 0:
+            new_paragraph_tokens = [[]]
+            for s in doc_paragraph_tokens:
+                if len(new_paragraph_tokens[-1]) + len(s) >= max_tokens and len(new_paragraph_tokens[-1]) > 0:
+                    # start new paragraph
+                    if len(s) >= max_tokens:
+                        while s:
+                            new_paragraph_tokens.append(s[:max_tokens])
+                            s = s[max_tokens:]
+                    else:
+                        new_paragraph_tokens.append(s)
                 else:
-                    new_paragraph_tokens.append(s)
-            else:
-                # merge with recent paragraph
-                if len(new_paragraph_tokens[-1]) > 0:
-                    new_paragraph_tokens[-1].append(separator)
-                new_paragraph_tokens[-1].extend(s)
+                    # merge with recent paragraph
+                    if len(new_paragraph_tokens[-1]) > 0:
+                        new_paragraph_tokens[-1].append(separator)
+                    new_paragraph_tokens[-1].extend(s)
+        else:
+            new_paragraph_tokens = doc_paragraph_tokens
         paragraph_tokens.extend(new_paragraph_tokens)
 
         p_idx_flat = [i for i, p in enumerate(new_paragraph_tokens) for t in p if t != separator]
@@ -91,7 +94,7 @@ def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens
 def convert_triviaqa(triviaqa_question, corpus, max_num_support, max_tokens, is_web):
     question = " ".join(triviaqa_question.question)
     if is_web:
-        for doc in triviaqa_question.web_docs:
+        for doc in triviaqa_question.web_docs + triviaqa_question.entity_docs:
             supports, answers = extract_support(triviaqa_question, [doc], corpus, max_num_support, max_tokens)
             filename = corpus.file_id_map[doc.doc_id]
             question_id = triviaqa_question.question_id + '--' + filename[4:] + ".txt"
@@ -153,40 +156,25 @@ if __name__ == '__main__':
     if len(sys.argv) > 3:
         max_paragraphs = int(sys.argv[3])
     else:
-        max_paragraphs = 6
+        max_paragraphs = -1
 
     if len(sys.argv) > 4:
         max_tokens = int(sys.argv[4])
     else:
-        max_tokens = 600
+        max_tokens = -1
 
     triviaqa_prepro = os.environ['TRIVIAQA_HOME'] + '/preprocessed'
 
-    is_web = dataset == 'web'
+    is_web = dataset.startswith('web')
+    dataset, split = dataset.split('-')
 
     ds = os.path.join(triviaqa_prepro, 'triviaqa/', dataset)
     with open(ds + "/file_map.json") as f:
         filemap = json.load(f)
 
-    fn = '%s-dev.json' % dataset
+    fn = '%s-%s.json' % (dataset, split)
     print("Converting %s..." % fn)
-    new_ds = convert_dataset(os.path.join(ds, 'dev.pkl'), filemap, fn, num_processes,
-                             max_paragraphs, max_tokens, is_web)
-    with open('data/triviaqa/%s' % fn, 'w') as f:
-        json.dump(new_ds, f)
-    del new_ds
-
-    fn = '%s-test.json' % dataset
-    print("Converting %s..." % fn)
-    new_ds = convert_dataset(os.path.join(ds, 'test.pkl'), filemap, fn, num_processes,
-                             max_paragraphs, max_tokens, is_web)
-    with open('data/triviaqa/%s' % fn, 'w') as f:
-        json.dump(new_ds, f)
-    del new_ds
-
-    fn = '%s-train.json' % dataset
-    print("Converting %s..." % fn)
-    new_ds = convert_dataset(os.path.join(ds, 'train.pkl'), filemap, fn, num_processes,
+    new_ds = convert_dataset(os.path.join(ds, split + '.pkl'), filemap, fn, num_processes,
                              max_paragraphs, max_tokens, is_web)
     with open('data/triviaqa/%s' % fn, 'w') as f:
         json.dump(new_ds, f)

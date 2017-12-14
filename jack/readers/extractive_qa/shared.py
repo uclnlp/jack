@@ -149,10 +149,11 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             question, answers, self.vocab, self.config.get("lowercase", False),
             with_answers=has_answers, max_support_length=self.config.get("max_support_length", None))
 
-        max_num_support = self.config.get("max_num_support")  # take all per default
-        if max_num_support is not None and len(question.support) > max_num_support:
-            # take max supports by TF-IDF (we subsample to max_num_support in create batch)
-            # following https://arxiv.org/pdf/1710.10723.pdf
+        max_num_support = self.config.get("max_num_support", len(question.support))  # take all per default
+
+        # take max supports by TF-IDF (we subsample to max_num_support in create batch)
+        # following https://arxiv.org/pdf/1710.10723.pdf
+        if len(question.support) > 1:
             scores = sort_by_tfidf(' '.join(q_tokenized), [' '.join(s) for s in s_tokenized])
             selected_supports = [s_idx for s_idx, _ in scores[:max_num_support]]
             s_tokenized = [s_tokenized[s_idx] for s_idx in selected_supports]
@@ -195,7 +196,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         all_spans = []
         for i, a in enumerate(annotations):
             all_spans.append([])
-            if max_num_support is not None and len(a.support_tokens) > 2 and not is_eval:
+            if len(a.support_tokens) > 2 and not is_eval:
                 # sample only 2 paragraphs and take first with double probability (the best) to speed
                 # things up. Following https://arxiv.org/pdf/1710.10723.pdf
                 num_training_paragraphs = self.config.get('num_training_paragraphs', 2)

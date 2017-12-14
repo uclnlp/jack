@@ -18,20 +18,26 @@ debug: False
 # If in debug mode, how many examples should be used (default 10)
 debug_examples: 10
 
+# Batch size for training data, default 128
+batch_size: 128
+
 # training file
 train: null
+
+# number of examples to train on (default is all)
+num_train_examples: null
 
 # dev file
 dev: null
 
+# Batch size for development data, defaults to batch_size when set to null
+dev_batch_size: null
+
+# number of examples to validate on (default is all)
+num_dev_examples: null
+
 # test file
 test: null
-
-# Batch size for training data, default 128
-batch_size: 128
-
-# Batch size for development data, default 128
-dev_batch_size: 128
 
 # Size of the input representation (embeddings), is automatically overwritten when pre-trained embeddings are provided
 repr_dim_input: 128
