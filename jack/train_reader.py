@@ -23,7 +23,7 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
 def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
     import tensorflow as tf
 
-    seed = configuration.get('seed')
+    seed = configuration.get('seed', 0)
 
     # make everything deterministic
     random.seed(seed)
@@ -31,6 +31,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
 
     clip_value = configuration.get('clip_value')
     batch_size = configuration.get('batch_size')
+    dev_batch_size = configuration.get('batch_size') or batch_size
     epochs = configuration.get('epochs')
     l2 = configuration.get('l2')
     optimizer = configuration.get('optimizer')
@@ -95,7 +96,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
 
     # this is the standard hook for the reader_type
     hooks.append(readers.eval_hooks[reader_type](
-        reader, dev_data, batch_size, summary_writer=sw, side_effect=side_effect,
+        reader, dev_data, dev_batch_size, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
         epoch_interval=(1 if validation_interval is None else None),
         write_metrics_to=write_metrics_to))

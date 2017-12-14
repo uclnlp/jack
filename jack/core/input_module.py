@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import random
+import tempfile
 from abc import abstractmethod
 from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
 
+import diskcache as dc
 import numpy as np
 
 from jack.core.data_structures import QASetting, Answer
@@ -151,7 +154,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         raise NotImplementedError
 
-    def batch_annotations(self, annotations: List[AnnotationType], batch_size, is_eval: bool):
+    def _batch_questions(self, questions: List[Tuple[QASetting, List[Answer]]], batch_size, is_eval: bool):
         """Optionally shuffles and batches annotations.
 
         By default, all annotations are shuffled (if self.shuffle(is_eval) and
@@ -165,10 +168,10 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         Returns: Batch iterator
         """
-        rng = _rng if self.shuffle(is_eval) else None
-        return shuffle_and_batch(annotations, batch_size, rng)
+        rng = _rng if self._shuffle(is_eval) else None
+        return shuffle_and_batch(questions, batch_size, rng)
 
-    def shuffle(self, is_eval: bool) -> bool:
+    def _shuffle(self, is_eval: bool) -> bool:
         """Whether to shuffle the dataset in batch_annotations(). Default is noe is_eval."""
         return not is_eval
 
@@ -178,14 +181,38 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         annotations = self.preprocess(qa_settings, answers=None, is_eval=True)
         return self.create_batch(annotations, is_eval=True, with_answers=False)
 
-    def batch_generator(self, dataset: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
+    def batch_generator(self, dataset: List[Tuple[QASetting, List[Answer]]], batch_size: int, is_eval: bool) \
             -> Iterable[Mapping[TensorPort, np.ndarray]]:
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
-        questions, answers = zip(*dataset)
-        annotations = self.preprocess(questions, answers, is_eval=is_eval)
-
+        logger.info("OnlineInputModule pre-processes data on-the-fly in first epoch and caches results for subsequent "
+                    "epochs! That means, first epoch might be slower.")
+        use_cache = len(dataset) > 100000
+        if use_cache:
+            cache_dir = os.path.join(os.environ.get('JACK_TEMP', tempfile.gettempdir()), 'cache')
+            db = dc.FanoutCache(cache_dir)
+            db.reset('cull_limit', 0)
+            logger.info("Large dataset -> Caching temporary preprocessed data in %s. You can change cache dir using the"
+                        " JACK_TEMP environment variable in your config/commandline." % cache_dir)
+        else:
+            db = dict()
+        preprocessed = set()
         def make_generator():
-            for annotation_batch in self.batch_annotations(annotations, batch_size, is_eval):
-                yield self.create_batch(annotation_batch, is_eval, True)
+            running_idx = 0
+            for i, batch in enumerate(self._batch_questions(dataset, batch_size, is_eval)):
+                questions, answers = zip(*batch)
+                if questions[0].id not in preprocessed:
+                    annots = self.preprocess(questions, answers)
+                    if questions[0].id is None:  # make sure there is an id, if not we set it here
+                        for q in questions:
+                            if q.id is None:
+                                q.id = running_idx
+                                running_idx += 1
+                    for q, a in zip(questions, annots):
+                        preprocessed.add(q.id)
+                        db[q.id] = a
+                else:
+                    annots = [db[q.id] for q in questions]
+
+                yield self.create_batch(annots, is_eval, True)
 
         return GeneratorWithRestart(make_generator)

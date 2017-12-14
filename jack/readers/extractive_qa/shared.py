@@ -2,7 +2,6 @@
 This file contains reusable modules for extractive QA models and ports
 """
 import sys
-from collections import defaultdict
 from typing import NamedTuple
 
 import progressbar
@@ -11,6 +10,7 @@ from jack.core import *
 from jack.readers.extractive_qa.util import prepare_data
 from jack.util import preprocessing
 from jack.util.map import numpify
+from jack.util.preprocessing import sort_by_tfidf
 
 logger = logging.getLogger(__name__)
 
@@ -149,28 +149,13 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             question, answers, self.vocab, self.config.get("lowercase", False),
             with_answers=has_answers, max_support_length=self.config.get("max_support_length", None))
 
-        max_num_support = self.config.get("max_num_support")  # take all per default
-        if max_num_support is not None and len(question.support) > max_num_support:
-            # take 2 * the number of max supports by TF-IDF (we subsample to max_num_support in create batch)
-            # following https://arxiv.org/pdf/1710.10723.pdf
-            q_freqs = defaultdict(float)
-            freqs = defaultdict(float)
-            for w, i in zip(q_tokenized, q_ids):
-                if w.isalnum():
-                    q_freqs[i] += 1.0
-                    freqs[i] += 1.0
-            d_freqs = []
-            for i, s in enumerate(s_ids):
-                d_freqs.append(defaultdict(float))
-                for j in s:
-                    freqs[j] += 1.0
-                    d_freqs[-1][j] += 1.0
-            scores = []
-            for i, d_freq in enumerate(d_freqs):
-                score = sum(v / freqs[k] * d_freq.get(k, 0.0) / freqs[k] for k, v in q_freqs.items())
-                scores.append((i, score))
+        max_num_support = self.config.get("max_num_support", len(question.support))  # take all per default
 
-            selected_supports = [s_idx for s_idx, _ in sorted(scores, key=lambda x: -x[1])[:max_num_support]]
+        # take max supports by TF-IDF (we subsample to max_num_support in create batch)
+        # following https://arxiv.org/pdf/1710.10723.pdf
+        if len(question.support) > 1:
+            scores = sort_by_tfidf(' '.join(q_tokenized), [' '.join(s) for s in s_tokenized])
+            selected_supports = [s_idx for s_idx, _ in scores[:max_num_support]]
             s_tokenized = [s_tokenized[s_idx] for s_idx in selected_supports]
             s_ids = [s_ids[s_idx] for s_idx in selected_supports]
             s_length = [s_length[s_idx] for s_idx in selected_supports]
@@ -211,11 +196,20 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
         all_spans = []
         for i, a in enumerate(annotations):
             all_spans.append([])
-            if max_num_support is not None and len(a.support_tokens) > max(1, max_num_support // 2) and not is_eval:
-                # always take first (the best) and sample from rest during training, only consider half to speed
-                # things up. Following https://arxiv.org/pdf/1710.10723.pdf we sample half during training
-                selected = self._rng.sample(range(1, len(a.support_tokens)), max(1, max_num_support // 2) - 1)
-                selected = set([0] + selected)
+            if len(a.support_tokens) > 2 and not is_eval:
+                # sample only 2 paragraphs and take first with double probability (the best) to speed
+                # things up. Following https://arxiv.org/pdf/1710.10723.pdf
+                num_training_paragraphs = self.config.get('num_training_paragraphs', 2)
+                is_done = False
+                any_answer = any(a.answer_spans)
+                # sample until there is at least one possible answer (if any)
+                while not is_done:
+                    selected = self._rng.sample(range(0, len(a.support_tokens) + 1), num_training_paragraphs + 1)
+                    if 0 in selected and 1 in selected:
+                        selected = [s - 1 for s in selected if s > 0]
+                    else:
+                        selected = [max(0, s - 1) for s in selected[:num_training_paragraphs]]
+                    is_done = not any_answer or any(a.answer_spans[s] for s in selected)
             else:
                 selected = set(range(len(a.support_tokens)))
             for s in selected:

@@ -62,9 +62,54 @@ class QASetting:
         self.atomic_candidates = atomic_candidates
         self.support = support
         self.question = question
+        self.annotation = None
 
 
-def _jtr_to_qasetting(instance, value, global_candidates):
+class QASettingDB:
+    """
+    Representation of a single question answering problem. It primarily consists of a question,
+    a list of support documents, and optionally, some set of candidate answers.
+    """
+
+    def __init__(self, id: str, dic):
+        self.id = id
+        self._dic = dic
+
+    @property
+    def candidate_spans(self):
+        return self._dic[self.id].get('candidate_spans')
+
+    @property
+    def atomic_candidates(self):
+        return self._dic[self.id].get('atomic_candidates')
+
+    @property
+    def seq_candidates(self):
+        return self._dic[self.id].get('seq_candidates')
+
+    @property
+    def support(self):
+        return self._dic[self.id].get('support')
+
+    @property
+    def support(self):
+        return self._dic[self.id].get('question')
+
+    @property
+    def annotation(self):
+        return self._dic[self.id].get('annotation')
+
+    @property
+    def annotation(self):
+        """Annotations can be set by InputModules after pre-processing."""
+        return self.__annotation
+
+    @annotation.setter
+    def annotation(self, x):
+        self.__annotation = x
+
+
+def _jack_to_qasetting(instance, value, global_candidates):
     support = [value(s) for s in instance["support"]] if "support" in instance else None
     for question_instance in instance["questions"]:
         question = value(question_instance['question'])
@@ -78,9 +123,9 @@ def _jtr_to_qasetting(instance, value, global_candidates):
         yield QASetting(question, support, atomic_candidates=candidates, id=idd), answers
 
 
-def jtr_to_qasetting(jtr_data, max_count=None):
+def jack_to_qasetting(jtr_data, max_count=None):
     """
-    Converts a python dictionary in JTR format to a QASetting.
+    Converts a python dictionary in Jack format to a QASetting.
     Args:
         jtr_data: dictionary extracted from jack json file.
         max_count: maximal number of instances to load.
@@ -95,5 +140,5 @@ def jtr_to_qasetting(jtr_data, max_count=None):
     global_candidates = [value(c) for c in jtr_data['globals']['candidates']] if 'globals' in jtr_data else None
 
     ans = [(inp, answer) for i in jtr_data["instances"]
-           for inp, answer in _jtr_to_qasetting(i, value, global_candidates)][:max_count]
-    return ans[:max_count]
+           for inp, answer in _jack_to_qasetting(i, value, global_candidates)][:max_count]
+    return ans

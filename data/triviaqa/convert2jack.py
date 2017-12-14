@@ -1,32 +1,9 @@
-import math
 import os
 import pickle
 import sys
-from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 
-
-def selected_by_tfidf_cosine(question, supports):
-    q_freqs = defaultdict(float)
-    freqs = defaultdict(float)
-    for w in question:
-        if w.isalnum():
-            q_freqs[w.lower()] += 1.0
-            freqs[w.lower()] += 1.0
-    d_freqs = []
-    for i, support in enumerate(supports):
-        d_freqs.append(defaultdict(float))
-        for w in support:
-            w = w.lower()
-            freqs[w] += 1.0
-            d_freqs[-1][w] += 1.0
-    scores = []
-    for i, d_freq in enumerate(d_freqs):
-        sqr_sum = math.sqrt(sum(v / freqs[k] * v / freqs[k] for k, v in d_freq.items())) + 1e-6
-        score = sum(d_freq.get(k, 0.0) / freqs[k] * v / freqs[k] for k, v in q_freqs.items()) / sqr_sum
-        scores.append((i, score))
-    sorted_supports = [s_idx for s_idx, _ in sorted(scores, key=lambda x: -x[1])]
-    return sorted_supports
+from jack.util.preprocessing import sort_by_tfidf
 
 
 def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens):
@@ -40,13 +17,24 @@ def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens
         doc_paragraph_tokens = [[t for s in p for t in s] for p in doc_tokens]
 
         # merge many small paragraphs
-        new_paragraph_tokens = [doc_paragraph_tokens[0]]
-        for s in doc_paragraph_tokens[1:]:
-            if len(new_paragraph_tokens[-1]) + len(s) >= max_tokens:
-                new_paragraph_tokens.append(s)
-            else:
-                new_paragraph_tokens[-1].append(separator)
-                new_paragraph_tokens[-1].extend(s)
+        if max_tokens > 0:
+            new_paragraph_tokens = [[]]
+            for s in doc_paragraph_tokens:
+                if len(new_paragraph_tokens[-1]) + len(s) >= max_tokens and len(new_paragraph_tokens[-1]) > 0:
+                    # start new paragraph
+                    if len(s) >= max_tokens:
+                        while s:
+                            new_paragraph_tokens.append(s[:max_tokens])
+                            s = s[max_tokens:]
+                    else:
+                        new_paragraph_tokens.append(s)
+                else:
+                    # merge with recent paragraph
+                    if len(new_paragraph_tokens[-1]) > 0:
+                        new_paragraph_tokens[-1].append(separator)
+                    new_paragraph_tokens[-1].extend(s)
+        else:
+            new_paragraph_tokens = doc_paragraph_tokens
         paragraph_tokens.extend(new_paragraph_tokens)
 
         p_idx_flat = [i for i, p in enumerate(new_paragraph_tokens) for t in p if t != separator]
@@ -77,8 +65,9 @@ def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens
                 })
         del doc_tokens, p_idx_flat, doc_tokens_flat
 
-    if len(supports) > max_num_support:
-        sorted_supports = selected_by_tfidf_cosine(triviaqa_question.question, paragraph_tokens)
+    if max_num_support > 0 and len(supports) > max_num_support:
+        sorted_supports = sort_by_tfidf(" ".join(triviaqa_question.question), [' '.join(p) for p in paragraph_tokens])
+        sorted_supports = [i for i, _ in sorted_supports]
         sorted_supports_rev = {v: k for k, v in enumerate(sorted_supports)}
         if answers:
             min_answer_rev = min(sorted_supports_rev[a['doc_idx']] for a in answers)
@@ -105,7 +94,7 @@ def extract_support(triviaqa_question, docs, corpus, max_num_support, max_tokens
 def convert_triviaqa(triviaqa_question, corpus, max_num_support, max_tokens, is_web):
     question = " ".join(triviaqa_question.question)
     if is_web:
-        for doc in triviaqa_question.web_docs:
+        for doc in triviaqa_question.web_docs + triviaqa_question.entity_docs:
             supports, answers = extract_support(triviaqa_question, [doc], corpus, max_num_support, max_tokens)
             filename = corpus.file_id_map[doc.doc_id]
             question_id = triviaqa_question.question_id + '--' + filename[4:] + ".txt"
@@ -157,70 +146,35 @@ if __name__ == '__main__':
     from docqa.triviaqa.evidence_corpus import TriviaQaEvidenceCorpusTxt
     import json
 
-    if len(sys.argv) > 1:
-        num_processes = int(sys.argv[1])
+    dataset = sys.argv[1]
+
+    if len(sys.argv) > 2:
+        num_processes = int(sys.argv[2])
     else:
         num_processes = 1
 
-    if len(sys.argv) > 2:
-        max_paragraphs = int(sys.argv[2])
-    else:
-        max_paragraphs = 4
-
     if len(sys.argv) > 3:
-        max_tokens = int(sys.argv[3])
+        max_paragraphs = int(sys.argv[3])
     else:
-        max_tokens = 400
+        max_paragraphs = -1
+
+    if len(sys.argv) > 4:
+        max_tokens = int(sys.argv[4])
+    else:
+        max_tokens = -1
 
     triviaqa_prepro = os.environ['TRIVIAQA_HOME'] + '/preprocessed'
 
-    wiki = os.path.join(triviaqa_prepro, 'triviaqa/wiki')
-    with open(wiki + "/file_map.json") as f:
+    is_web = dataset.startswith('web')
+    dataset, split = dataset.split('-')
+
+    ds = os.path.join(triviaqa_prepro, 'triviaqa/', dataset)
+    with open(ds + "/file_map.json") as f:
         filemap = json.load(f)
 
-    print("Converting wiki-dev...")
-    dev_wiki = convert_dataset(os.path.join(wiki, 'dev.pkl'), filemap, 'wiki-dev.json', num_processes,
-                               max_paragraphs, max_tokens, is_web=False)
-    with open('data/triviaqa/wiki_dev.json', 'w') as f:
-        json.dump(dev_wiki, f)
-    del dev_wiki
-
-    # for some obscure reason the third party conversion script does not create wiki-test
-    # print("Converting wiki-test...")
-    # test_wiki = convert_dataset(os.path.join(wiki, 'test.pkl'), filemap, 'wiki-test.json', num_processes,
-    #                            max_paragraphs, max_tokens, is_web=False)
-    # with open('data/triviaqa/wiki_test.json', 'w') as f:
-    #     json.dump(test_wiki, f)
-    # del test_wiki
-
-    print("Converting wiki-train...")
-    train_wiki = convert_dataset(os.path.join(wiki, 'train.pkl'), filemap, 'wiki-train.json', num_processes,
-                                 max_paragraphs, max_tokens, is_web=False)
-    with open('data/triviaqa/wiki_train.json', 'w') as f:
-        json.dump(train_wiki, f)
-    del train_wiki
-
-    web = os.path.join(triviaqa_prepro, 'triviaqa/web')
-    with open(web + "/file_map.json") as f:
-        filemap = json.load(f)
-
-    print("Converting web-dev...")
-    dev_web = convert_dataset(os.path.join(web, 'dev.pkl'), filemap, 'web-dev.json', num_processes,
-                              max_paragraphs, max_tokens)
-    with open('data/triviaqa/web_dev.json', 'w') as f:
-        json.dump(dev_web, f)
-    del dev_web
-
-    print("Converting web-test...")
-    test_web = convert_dataset(os.path.join(web, 'test.pkl'), filemap, 'web-test.json', num_processes,
-                               max_paragraphs, max_tokens)
-    with open('data/triviaqa/web_test.json', 'w') as f:
-        json.dump(test_web, f)
-    del test_web
-
-    print("Converting web-train...")
-    train_web = convert_dataset(os.path.join(web, 'train.pkl'), filemap, 'web-train.json', num_processes,
-                                max_paragraphs, max_tokens)
-    with open('data/triviaqa/web_train.json', 'w') as f:
-        json.dump(train_web, f)
-    del train_web
+    fn = '%s-%s.json' % (dataset, split)
+    print("Converting %s..." % fn)
+    new_ds = convert_dataset(os.path.join(ds, split + '.pkl'), filemap, fn, num_processes,
+                             max_paragraphs, max_tokens, is_web)
+    with open('data/triviaqa/%s' % fn, 'w') as f:
+        json.dump(new_ds, f)

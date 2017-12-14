@@ -42,6 +42,8 @@ class ModularQAModel(AbstractXQAModelModule):
 
             if 'repr_dim' not in answer_layer_config:
                 answer_layer_config['repr_dim'] = repr_dim
+            if 'max_span_size' not in answer_layer_config:
+                answer_layer_config['max_span_size'] = shared_resources.config.get('max_span_size', 16)
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                 answer_layer(encoded_question, tensors.question_length, encoded_support,
                              tensors.support_length,

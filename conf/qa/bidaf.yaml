@@ -16,6 +16,7 @@ with_char_embeddings: True
 
 repr_dim: &dim 100
 dropout: &dropout 0.2
+max_span_size: 16
 
 model:
   encoder_layer:
@@ -63,7 +64,6 @@ model:
 
   answer_layer:
     module: 'bidaf'
-    max_span_size: 16
     repr_dim: *dim
     encoder:  # only needed for bidaf answer layer
       repr_dim: *dim

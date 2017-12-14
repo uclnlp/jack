@@ -4,6 +4,9 @@ import re
 from typing import Mapping, List, Any, Union, Tuple, Optional
 
 import numpy as np
+import spacy
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import pairwise_distances
 
 from jack.util.vocab import Vocab
 
@@ -179,3 +182,17 @@ def unique_words_with_chars(tokens, char_vocab, char_limit=20):
         token2unique.append(t2u)
 
     return unique_words, unique_word_lengths, token2unique, vocab, rev_vocab
+
+
+def sort_by_tfidf(question, paragraphs):
+    tfidf = TfidfVectorizer(strip_accents="unicode", stop_words=spacy.en.STOP_WORDS)
+    try:
+        para_features = tfidf.fit_transform(paragraphs)
+        q_features = tfidf.transform([question])
+    except ValueError:
+        return []
+
+    dists = pairwise_distances(q_features, para_features, "cosine").ravel()
+    sorted_ix = np.lexsort((paragraphs, dists))  # in case of ties, use the earlier paragraph
+
+    return [(i, 1.0 - dists[i]) for i in sorted_ix]

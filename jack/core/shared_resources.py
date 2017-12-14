@@ -6,6 +6,7 @@ dict. Shared resources are also used later to setup an already saved reader.
 
 import os
 import pickle
+import yaml
 
 from jack.util.vocab import Vocab
 
@@ -41,10 +42,12 @@ class SharedResources:
         """
         vocabs = [(k, v) for k, v in self.__dict__.items() if isinstance(v, Vocab)]
         with open(path, 'wb') as f:
-            remaining = {k: v for k, v in self.__dict__.items() if not isinstance(v, Vocab)}
+            remaining = {k: v for k, v in self.__dict__.items() if not isinstance(v, Vocab) and not k == 'config'}
             pickle.dump(remaining, f, pickle.HIGHEST_PROTOCOL)
         for k, v in vocabs:
             v.store(path + '_' + k)
+        with open(path + '_config.yaml', 'w') as f:
+            yaml.dump(self.config, f)
 
     def load(self, path):
         """
@@ -55,9 +58,14 @@ class SharedResources:
         if os.path.exists(path):
             with open(path, 'rb') as f:
                 self.__dict__.update(pickle.load(f))
-        for f in os.listdir(os.path.dirname(path)):
-            if f.startswith(os.path.basename(path) + '_') and os.path.isdir(os.path.join(os.path.dirname(path), f)):
+        dirname = os.path.dirname(path)
+        for f in os.listdir(dirname):
+            if f.startswith(os.path.basename(path) + '_'):
                 key = f[len(os.path.basename(path) + '_'):]
-                v = Vocab()
-                v.load(path + '_' + key)
-                self.__dict__[key] = v
+                if key == 'config.yaml':
+                    with open(os.path.join(dirname, f), 'r') as f:
+                        self.config = yaml.load(f)
+                elif os.path.isdir(os.path.join(dirname, f)):
+                    v = Vocab()
+                    v.load(path + '_' + key)
+                    self.__dict__[key] = v

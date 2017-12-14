@@ -4,7 +4,10 @@
 import logging
 import os
 import os.path as path
+import shutil
 import sys
+import tempfile
+import uuid
 from time import time
 
 from sacred import Experiment
@@ -58,32 +61,30 @@ logging.basicConfig(level=logging.INFO)
 
 
 @ex.automain
-def main(batch_size,
-         clip_value,
-         config,
+def main(config,
          loader,
          debug,
          debug_examples,
-         dev,
          embedding_file,
          embedding_format,
          experiments_db,
-         epochs,
-         l2,
-         optimizer,
-         learning_rate,
-         learning_rate_decay,
-         log_interval,
-         validation_interval,
          reader,
-         reader_dir,
-         seed,
-         tensorboard_folder,
-         test,
          train,
-         vocab_from_embeddings,
-         write_metrics_to):
+         num_train_examples,
+         dev,
+         num_dev_examples,
+         test,
+         vocab_from_embeddings):
     logger.info("TRAINING")
+
+    if 'JACK_TEMP' not in os.environ:
+        jack_temp = os.path.join(tempfile.gettempdir(), 'jack', str(uuid.uuid4()))
+        os.environ['JACK_TEMP'] = jack_temp
+        logger.info("JACK_TEMP not set, setting it to %s. Might be used for caching." % jack_temp)
+    else:
+        jack_temp = os.environ['JACK_TEMP']
+    if not os.path.exists(jack_temp):
+        os.makedirs(jack_temp)
 
     if experiments_db is not None:
         ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
@@ -104,8 +105,8 @@ def main(batch_size,
         else:
             embeddings = Embeddings(None, None)
     else:
-        train_data = loaders[loader](train)
-        dev_data = loaders[loader](dev)
+        train_data = loaders[loader](train, num_train_examples)
+        dev_data = loaders[loader](dev, num_dev_examples)
         test_data = loaders[loader](test) if test else None
 
         logger.info('loaded train/dev/test data')
@@ -134,4 +135,8 @@ def main(batch_size,
 
     checkpoint()
 
-    jtrain(jtreader, train_data, test_data, dev_data, parsed_config, debug=debug)
+    try:
+        jtrain(jtreader, train_data, test_data, dev_data, parsed_config, debug=debug)
+    finally:  # clean up temporary dir
+        if os.path.exists(jack_temp):
+            shutil.rmtree(jack_temp)
