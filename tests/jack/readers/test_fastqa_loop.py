@@ -36,7 +36,7 @@ def test_fastqa():
 
     input_module = XQAInputModule(shared_resources)
     model_module = FastQAModule(shared_resources)
-    output_module = XQAOutputModule(shared_resources)
+    output_module = XQAOutputModule()
 
     reader = TFReader(shared_resources, input_module, model_module, output_module)
     reader.setup_from_data(data, is_training=True)
