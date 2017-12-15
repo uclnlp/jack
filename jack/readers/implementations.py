@@ -75,7 +75,7 @@ def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = XQAInputModule(shared_resources)
     model_module = FastQAModule(shared_resources)
-    output_module = XQAOutputModule(shared_resources)
+    output_module = XQAOutputModule()
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -88,7 +88,7 @@ def modular_qa_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = XQAInputModule(shared_resources)
     model_module = ModularQAModel(shared_resources)
-    output_module = XQAOutputModule(shared_resources)
+    output_module = XQAOutputModule()
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 
@@ -102,7 +102,7 @@ def fastqa_reader_torch(resources_or_conf: Union[dict, SharedResources] = None):
 
     input_module = XQAInputModule(shared_resources)
     model_module = FastQAPyTorchModelModule(shared_resources)
-    output_module = XQAOutputModule(shared_resources)
+    output_module = XQAOutputModule()
     return PyTorchReader(shared_resources, input_module, model_module, output_module)
 
 
