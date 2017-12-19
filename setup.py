@@ -27,8 +27,8 @@ def install_torch():
 
 
 class Install(_install):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     super(Install, self).__init__(*args, **kwargs)
 
     def run(self):
         _install.do_egg_install(self)
@@ -37,8 +37,8 @@ class Install(_install):
 
 
 class Develop(_develop):
-    def __init__(self):
-        super().__init__()
+    # def __init__(self, *args, **kwargs):
+    #    super(Develop, self).__init__(*args, **kwargs)
 
     def run(self):
         spacy_download_en()
