@@ -190,13 +190,14 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
         logger.info("OnlineInputModule pre-processes data on-the-fly in first epoch and caches results for subsequent "
                     "epochs! That means, first epoch might be slower.")
-        use_cache = self.shared_resources.config.get('file_cache', False)
+        # only cache training data on file
+        use_cache = not is_eval and self.shared_resources.config.get('file_cache', False)
         if use_cache:
             cache_dir = os.path.join(os.environ.get('JACK_TEMP', tempfile.gettempdir()), 'cache')
-            db = dc.FanoutCache(cache_dir)
+            db = dc.Cache(cache_dir)
             db.reset('cull_limit', 0)
-            logger.info("Large dataset -> Caching temporary preprocessed data in %s. You can change cache dir using the"
-                        " JACK_TEMP environment variable in your config/commandline." % cache_dir)
+            logger.info("Caching temporary preprocessed data in %s. You can change cache dir using the"
+                        " JACK_TEMP environment variable which defaults to /tmp/jack." % cache_dir)
         else:
             db = dict()
         preprocessed = set()
