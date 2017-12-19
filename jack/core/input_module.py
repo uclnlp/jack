@@ -10,8 +10,8 @@ from typing import Iterable, Tuple, List, Mapping, TypeVar, Generic, Optional
 import diskcache as dc
 import numpy as np
 
-from jack.core import SharedResources
 from jack.core.data_structures import QASetting, Answer
+from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import TensorPort
 from jack.util.batch import shuffle_and_batch, GeneratorWithRestart
 
@@ -190,7 +190,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
         """Preprocesses all instances, batches & shuffles them and generates batches in dicts."""
         logger.info("OnlineInputModule pre-processes data on-the-fly in first epoch and caches results for subsequent "
                     "epochs! That means, first epoch might be slower.")
-        use_cache = self.shared_resources.config.get('file_cache', False) and len(dataset) > 100000
+        use_cache = self.shared_resources.config.get('file_cache', False)
         if use_cache:
             cache_dir = os.path.join(os.environ.get('JACK_TEMP', tempfile.gettempdir()), 'cache')
             db = dc.FanoutCache(cache_dir)
