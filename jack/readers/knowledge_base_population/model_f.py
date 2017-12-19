@@ -59,7 +59,8 @@ def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
 
 
 class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
-    def setup(self):
+    def __init__(self, shared_resources: SharedResources):
+        super().__init__(shared_resources)
         self.all_candidates = False
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
