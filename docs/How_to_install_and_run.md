@@ -3,18 +3,24 @@
 ## Install jack and test your installation
 
 The installing procedure currently has three plus one steps:
-  1. Install Tensorflow
-  2. Run `setup.py`
+  1. Install TensorFlow
+  2. Run `pip install`
   3. Test your install
   4. (Optional) install missing dependencies
 
-#### 1. Install Tensorflow
+#### 1. Install TensorFlow
   - Requirements: Python3, [pip3](http://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3)
-  - GPU requirements: [CUDA 8.0](https://developer.nvidia.com/cuda-downloads) and cuDNN (you need to register with NVIDIA)
   - Follow the TensorFlow [installation guide](https://www.tensorflow.org/get_started/os_setup)
 
-#### 2. Run `setup.py`
-  - Run in the main directory: `$ sudo python3 setup.py install`
+#### 2. Run `pip install`
+  - Run in the main directory:
+```
+jack$ sudo python3 -m pip install -e .[tf]
+```
+  - In case you want GPU support:
+```
+jack$ sudo python3 -m pip install -e .[tf_gpu]
+```
 
 #### 3. If you run in some problems with missing libraries
   - Run in the main directory `$ make test` to test the core functionality of jack
