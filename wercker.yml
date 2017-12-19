@@ -30,4 +30,4 @@ build:
     - script:
         name: Code coverage upload
         code: |
-            codecov
+          codecov
