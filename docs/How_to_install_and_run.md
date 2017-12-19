@@ -3,13 +3,14 @@
 ## Install jack and test your installation
 
 The installing procedure currently has three plus one steps:
-  1. Install TensorFlow
+  1. Install dependencies
   2. Run `pip install`
   3. Test your install
   4. (Optional) install missing dependencies
 
-#### 1. Install TensorFlow
+#### 1. Install dependencies
   - Requirements: Python3, [pip3](http://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3)
+  - `sudo python3 -m pip install -r requirements.txt --upgrade`
   - Follow the TensorFlow [installation guide](https://www.tensorflow.org/get_started/os_setup)
 
 #### 2. Run `pip install`
