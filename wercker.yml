@@ -11,8 +11,9 @@ build:
         code: |
           sudo apt-get update
           sudo apt-get -y install libtk8.6
-          pip3 install --upgrade -r requirements.txt
-          python3 setup.py install
+
+          pip install --upgrade -r requirements.txt
+          pip install -e .[tf]
 
     - script:
         name: echo python information
@@ -29,4 +30,4 @@ build:
     - script:
         name: Code coverage upload
         code: |
-            codecov
+          codecov
