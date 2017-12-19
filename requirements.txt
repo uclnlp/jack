@@ -13,7 +13,6 @@ pyyaml
 progressbar2
 spacy
 diskcache
-
 pytest
 pytest-runner
 pytest-xdist
