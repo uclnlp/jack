@@ -14,7 +14,7 @@ dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 # SNLI test file
 test: 'data/SNLI/snli_1.0/snli_1.0_test.jsonl'
 
-epochs: 20
+epochs: 1000
 
 repr_dim: 300
 
