@@ -118,8 +118,6 @@ MCAnnotation = NamedTuple('MCAnnotation', [
 
 
 class MultipleChoiceSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
-    def __init__(self, shared_resources):
-        self.shared_resources = shared_resources
 
     @property
     def training_ports(self) -> List[TensorPort]:

@@ -130,3 +130,6 @@ loader: 'jack'
 # ADVANCED: if we want to (partially) initialize from a pretrained reader we can use the following option
 # Note: make sure that the variable names and shapes will match
 pretrained_model: null
+
+# cache preprocessed data on file in $JACK_TEMP/SOME_UUID/cache, if false caches in RAM
+file_cache: False

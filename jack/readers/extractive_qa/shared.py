@@ -87,17 +87,12 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.token_offsets, XQAPorts.selected_support]
     _training_ports = [XQAPorts.answer_span, XQAPorts.answer2support_training]
 
-    def __init__(self, shared_vocab_config):
-        assert isinstance(shared_vocab_config, SharedResources), \
-            "shared_resources for FastQAInputModule must be an instance of SharedResources"
-        self.shared_resources = shared_vocab_config
-        self._rng = random.Random(1)
-
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
         self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
     def setup(self):
+        self._rng = random.Random(1)
         self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
         if self.vocab.emb is None:
