@@ -11,10 +11,10 @@ sacred
 sqlalchemy
 pyyaml
 progressbar2
-spacy==1.9
+spacy
 diskcache
 
-pytest==3.3.0
+pytest
 pytest-runner
 pytest-xdist
 pytest-pep8
