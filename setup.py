@@ -46,7 +46,12 @@ class Develop(_develop):
 
 
 with open('requirements.txt', 'r') as f:
-    requirements = [l for l in f.readlines() if not l.startswith('http://')]
+    install_requires = [l for l in f.readlines() if not l.startswith('http://')]
+
+extras_require = {
+    'tf': ['tensorflow>=1.4.0'],
+    'tf_gpu': ['tensorflow-gpu>=1.4.0']
+}
 
 setup(name='jack',
       version='0.1.0',
@@ -61,13 +66,10 @@ setup(name='jack',
           'install': Install,
           'develop': Develop
       },
-      install_requires=requirements,
-      extras_require={
-          'tensorflow': ['tensorflow>=1.4.0'],
-          'tensorflow_gpu': ['tensorflow-gpu>=1.4.0'],
-      },
-      setup_requires=requirements,
-      tests_require=requirements,
+      install_requires=install_requires,
+      extras_require=extras_require,
+      setup_requires=install_requires,
+      tests_require=install_requires,
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
