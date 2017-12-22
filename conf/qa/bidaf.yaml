@@ -10,7 +10,7 @@ name: 'bidaf_reader'
 seed: 1337
 
 # where to store the reader
-reader_dir: './bidaf_reader'
+save_dir: './bidaf_reader'
 
 with_char_embeddings: True
 

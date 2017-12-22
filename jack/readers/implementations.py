@@ -40,13 +40,21 @@ def kbp_reader(f):
     return f
 
 
-def reader_from_file(reader_dir: str, **kwargs):
+def reader_from_file(load_dir: str, **kwargs):
+    """
+    Load a reader from a checkpoint.
+
+    Args:
+        load_dir: folder containing the reader being loaded.
+
+    Returns: a reader.
+    """
     shared_resources = create_shared_resources()
-    shared_resources.load(os.path.join(reader_dir, "shared_resources"))
+    shared_resources.load(os.path.join(load_dir, "shared_resources"))
     if kwargs:
         shared_resources.config.update(kwargs)
     reader = readers[shared_resources.config["reader"]](shared_resources)
-    reader.load_and_setup_modules(reader_dir)
+    reader.load_and_setup_modules(load_dir)
     return reader
 
 

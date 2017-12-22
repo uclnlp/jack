@@ -110,7 +110,7 @@ prune: False
 max_num_support: null
 
 # Directory to write reader to
-reader_dir: null
+save_dir: null
 
 # interval for logging eta, training loss, etc
 log_interval: 100

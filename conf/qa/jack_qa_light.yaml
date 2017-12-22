@@ -10,7 +10,7 @@ name: 'jack_qa_reader'
 seed: 1337
 
 # where to store the reader
-reader_dir: './jack_qa_reader'
+save_dir: './jack_qa_reader'
 
 with_char_embeddings: True
 word_in_question: True  # concatenated with output after interaction layer
