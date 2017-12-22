@@ -47,7 +47,7 @@ def reader_from_file(load_dir: str, **kwargs):
     Args:
         load_dir: folder containing the reader being loaded.
 
-    Returns: reader.
+    Returns: a reader.
     """
     shared_resources = create_shared_resources()
     shared_resources.load(os.path.join(load_dir, "shared_resources"))
