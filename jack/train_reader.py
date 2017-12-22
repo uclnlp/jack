@@ -42,7 +42,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
     validation_interval = configuration.get('validation_interval')
     tensorboard_folder = configuration.get('tensorboard_folder')
     reader_type = configuration.get('reader')
-    reader_dir = configuration.get('reader_dir')
+    save_dir = configuration.get('save_dir')
     write_metrics_to = configuration.get('write_metrics_to')
 
     if clip_value != 0.0:
@@ -85,13 +85,13 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
         if prev_metric is not None and m < prev_metric:
             reader.session.run(lr_decay_op)
             logger.info("Decayed learning rate to: %.5f" % reader.session.run(learning_rate))
-        elif m > best_metric[0] and reader_dir is not None:
+        elif m > best_metric[0] and save_dir is not None:
             best_metric[0] = m
             if prev_metric is None:  # store whole reader_type only at beginning of training
-                reader.store(reader_dir)
+                reader.store(save_dir)
             else:
-                reader.model_module.store(os.path.join(reader_dir, "model_module"))
-            logger.info("Saving reader_type to: %s" % reader_dir)
+                reader.model_module.store(os.path.join(save_dir, "model_module"))
+            logger.info("Saving reader_type to: %s" % save_dir)
         return m
 
     # this is the standard hook for the reader_type
@@ -106,11 +106,11 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
 
     # Test final reader_type
-    if test_data is not None and reader_dir is not None:
+    if test_data is not None and save_dir is not None:
         test_eval_hook = readers.eval_hooks[reader_type](
             reader, test_data, batch_size, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
-        reader.load(reader_dir)
+        reader.load(save_dir)
         test_eval_hook.at_test_time(1)
 
 
@@ -133,7 +133,7 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
     validation_interval = configuration.get('validation_interval')
     tensorboard_folder = configuration.get('tensorboard_folder')
     model = configuration.get('reader')
-    reader_dir = configuration.get('reader_dir')
+    save_dir = configuration.get('save_dir')
     write_metrics_to = configuration.get('write_metrics_to')
 
     # need setup here already :(
@@ -179,13 +179,13 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
             for param_group in torch_optimizer.param_groups:
                 param_group['lr'] *= learning_rate_decay
                 logger.info("Decayed learning rate to: %.5f" % param_group['lr'])
-        elif m > best_metric[0] and reader_dir is not None:
+        elif m > best_metric[0] and save_dir is not None:
             best_metric[0] = m
             if prev_metric is None:  # store whole model only at beginning of training
-                reader.store(reader_dir)
+                reader.store(save_dir)
             else:
-                reader.model_module.store(os.path.join(reader_dir, "model_module"))
-            logger.info("Saving model to: %s" % reader_dir)
+                reader.model_module.store(os.path.join(save_dir, "model_module"))
+            logger.info("Saving model to: %s" % save_dir)
         return m
 
     # this is the standard hook for the model
@@ -200,9 +200,9 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
                  l2=l2, clip=clip_value)
 
     # Test final model
-    if test_data is not None and reader_dir is not None:
+    if test_data is not None and save_dir is not None:
         test_eval_hook = readers.eval_hooks[model](
             reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
 
-        reader.load(reader_dir)
+        reader.load(save_dir)
         test_eval_hook.at_test_time(1)

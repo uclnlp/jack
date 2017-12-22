@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import os
 import sys
@@ -118,14 +120,14 @@ class TFModelModule(ModelModule):
         self.tf_session.run([v.initializer for v in self.variables])
 
         # Sometimes we want to initialize (partially) with a pre-trained model
-        init_model = self.shared_resources.config.get('pretrained_model')
-        if is_training and init_model is not None:
-            if not init_model.endswith('model_module'):
+        load_dir = self.shared_resources.config.get('load_dir')
+        if is_training and load_dir is not None:
+            if not load_dir.endswith('model_module'):
                 # path to a reader was provided
-                init_model = os.path.join(init_model, 'model_module')
+                load_dir = os.path.join(load_dir, 'model_module')
             # get all variables in the checkpoint file
             from tensorflow.python import pywrap_tensorflow
-            reader = pywrap_tensorflow.NewCheckpointReader(init_model)
+            reader = pywrap_tensorflow.NewCheckpointReader(load_dir)
             init_vars = []
             for n in reader.get_variable_to_shape_map().keys():
                 found = False
@@ -138,7 +140,7 @@ class TFModelModule(ModelModule):
                     logger.warn("Could not find variable", n, "in computation graph to restore from pretrained model.")
 
             saver = tf.train.Saver(init_vars)
-            saver.restore(self.tf_session, init_model)
+            saver.restore(self.tf_session, load_dir)
 
     @property
     def placeholders(self) -> Mapping[TensorPort, tf.Tensor]:

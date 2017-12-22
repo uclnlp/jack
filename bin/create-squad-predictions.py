@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 tf.app.flags.DEFINE_string('file', None, 'dataset file')
 tf.app.flags.DEFINE_string('loader', 'squad', 'either squad or jack')
-tf.app.flags.DEFINE_string('reader_dir', None, 'directory to saved model')
+tf.app.flags.DEFINE_string('save_dir', None, 'directory to saved model')
 tf.app.flags.DEFINE_string('out', "results.json", 'Result file path.')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'batch size')
 tf.app.flags.DEFINE_string('overwrite', '{}', 'json string that can overwrite configuration.')
@@ -26,7 +26,7 @@ FLAGS = tf.app.flags.FLAGS
 logger.info("Creating and loading reader from {}...".format(FLAGS.reader_dir))
 config = {"max_support_length": None}
 config.update(json.loads(FLAGS.overwrite))
-reader = reader_from_file(FLAGS.reader_dir, **config)
+reader = reader_from_file(FLAGS.save_dir, **config)
 
 dataset = loaders[FLAGS.loader](FLAGS.file)
 
