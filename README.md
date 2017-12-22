@@ -41,7 +41,7 @@ Train a [FastQA][fastqa] model:
 
 ```bash
 $ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQuAD/dev-v1.1.json' reader='fastqa_reader' \
-> repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' reader_dir='./fastqa_reader' epochs=20 \
+> repr_dim=300 dropout=0.5 batch_size=64 seed=1337 loader='squad' save_dir='./fastqa_reader' epochs=20 \
 > with_char_embeddings=True embedding_format='memory_map_dir' embedding_file='data/GloVe/glove.840B.300d.memory_map_dir' vocab_from_embeddings=True
 ```
 
@@ -55,7 +55,7 @@ Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tens
 [summaries][tf_summaries] to a provided path (here `.tb/fastqa`). Your summaries are automatically
 fetched in the train loop, so all you need to do is write them in your TF model code.
 
-A copy of the model is written into the `reader_dir` directory after each
+A copy of the model is written into the `save_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
@@ -113,7 +113,7 @@ Then, for instance, train a [Decomposable Attention Model][dam]
 ```bash
 $ python3 bin/jack-train.py with reader='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
 > dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' \
-> reader_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=64 \
+> save_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=64 \
 > embedding_format='memory_map_dir' embedding_file='data/GloVe/glove.840B.300d.memory_map_dir' vocab_from_embeddings=True
 ```
 
@@ -131,7 +131,7 @@ can be found [here](/docs/Encoder_Modules.md).
 Note, you can add a flag `tensorboard_folder=.tb/dam_reader` to write tensorboard
 summaries to a provided path (here `.tb/dam_reader`).
 
-A copy of the model is written into the `reader_dir` directory after each
+A copy of the model is written into the `save_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
