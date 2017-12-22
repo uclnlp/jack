@@ -278,10 +278,7 @@ def _np_softmax(x):
 def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_support):
     doc_idx = selected_support[doc_idx]
     char_start = token_offsets[start]
-    if end < len(token_offsets) - 1:
-        char_end = token_offsets[end + 1]
-    else:
-        char_end = len(question.support[doc_idx])
+    char_end = token_offsets[end + 1] if end < len(token_offsets) - 1 else len(question.support[doc_idx])
     answer = question.support[doc_idx][char_start: char_end]
     answer = answer.rstrip()
     char_end = char_start + len(answer)
@@ -289,12 +286,10 @@ def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_s
 
 
 class XQAOutputModule(OutputModule):
-
     def __call__(self, questions, span_prediction,
                  token_offsets, selected_support, support2question,
                  start_scores, end_scores):
         beam_size = span_prediction.shape[0] // len(questions)
-
         all_answers = []
         for k, q in enumerate(questions):
             answers = []
