@@ -5,7 +5,6 @@ parse
 pycorenlp
 scipy
 sklearn
-tensorflow>=1.4
 typing
 sacred
 sqlalchemy
