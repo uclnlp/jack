@@ -8,7 +8,7 @@ name: "fastqa_reader"
 seed: 1337
 
 # where to store the reader
-reader_dir: './tests/test_results/fastqa_reader_test'
+save_dir: './tests/test_results/fastqa_reader_test'
 
 # How large the support should be. Can be used for cutting or filtering QA examples
 max_support_length: -1

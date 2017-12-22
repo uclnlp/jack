@@ -9,7 +9,7 @@ name: 'dcn_plus_reader'
 seed: 1337
 
 # where to store the reader
-reader_dir: './dcn_plus_reader'
+save_dir: './dcn_plus_reader'
 
 with_char_embeddings: True
 repr_dim: &dim 100

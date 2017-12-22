@@ -10,7 +10,7 @@ reader: 'fastqa_reader'
 seed: 1337
 
 # where to store the reader
-reader_dir: './fastqa_reader'
+save_dir: './fastqa_reader'
 
 # 'lstm', 'gru', 'sru' (simple recurrent unit)
 encoder: 'lstm'
