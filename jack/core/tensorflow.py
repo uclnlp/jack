@@ -210,6 +210,7 @@ class TFReader(JTReader):
             l2: whether to use l2 regularization
             clip: whether to apply gradient clipping and at which value
             clip_op: operation to perform for clipping
+            summary_writer: summary writer
         """
         batches, loss, min_op, summaries = self._setup_training(
             batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs)
