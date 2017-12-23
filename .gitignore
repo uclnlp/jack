@@ -1,5 +1,6 @@
 # OSX specific
 .DS_Store
+__MACOSX
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -106,11 +107,10 @@ testresult_*
 # Snippets
 snippets/
 
+# Datasets
 data/WN18/*.tgz
 data/WN18/wordnet-mlj12
-
-tmp/
 tests/test_results/fastqa_reader_test/
 tests/test_results/dam_reader_test/
-
 data/GloVe/glove.840B.300d.*
+data/MultiNLI/multinli_1.0/
