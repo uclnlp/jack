@@ -1,7 +1,7 @@
 description: >
   A configuration inheriting from the default jack.yaml
 
-parent_config: './conf/nli/modular_nli.yaml'
+parent_config: './conf/snli/modular_nli.yaml'
 
 name: 'esim_reader'
 
