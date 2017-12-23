@@ -1,0 +1,117 @@
+description: >
+  A configuration inheriting from the default jack.yaml
+
+parent_config: './conf/snli/modular_nli.yaml'
+
+name: 'esim_reader'
+
+# fixed experiment seed
+seed: 1337
+
+repr_dim: 200
+dropout: &dropout 0.2
+
+model:
+  encoder_layer:
+  # Shared Embedding Processing
+  # Support
+  - input: ['premise', 'char_premise']
+    output: 'premise'
+    module: 'concat'
+  - input: 'premise'
+    name: 'embedding_highway'
+    module: 'highway'
+  - input: 'premise'
+    output: 'emb_premise'
+    name: 'embedding_projection'
+    module: 'dense'
+    activation: 'relu'
+    dropout: *dropout
+  # Question
+  - input: ['hypothesis', 'char_hypothesis']
+    output: 'hypothesis'
+    module: 'concat'
+  - input: 'hypothesis'
+    name: 'embedding_highway'  # use same network as premise
+    module: 'highway'
+  - input: 'hypothesis'
+    output: 'emb_hypothesis'
+    name: 'embedding_projection'  # use same network as premise
+    module: 'dense'
+    activation: 'relu'
+    dropout: *dropout
+
+  # ESIM
+  # BiLSTM
+  - input: 'hypothesis'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'encoder'
+    dropout: *dropout
+  # BiLSTM
+  - input: 'premise'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'encoder'
+    dropout: *dropout
+
+  # Attention
+  - input: 'premise'
+    dependent: 'hypothesis'
+    output: 'hypothesis_attn'
+    module: 'attention_matching'
+    attn_type: 'dot'
+    concat: False
+  - input: 'hypothesis'
+    dependent: 'premise'
+    output: 'premise_attn'
+    module: 'attention_matching'
+    attn_type: 'dot'
+    concat: False
+
+  - input: ['premise', 'hypothesis_attn']
+    output: 'premise_mul'
+    module: 'mul'
+  - input: ['premise', 'hypothesis_attn']
+    output: 'premise_sub'
+    module: 'sub'
+  - input: ['premise', 'hypothesis_attn', 'premise_mul', 'premise_sub']
+    output: 'premise'
+    module: 'concat'
+  - input: 'premise'
+    module: 'dense'
+    activation: 'relu'
+
+  - input: ['hypothesis', 'premise_attn']
+    output: 'hypothesis_mul'
+    module: 'mul'
+  - input: ['hypothesis', 'premise_attn']
+    output: 'hypothesis_sub'
+    module: 'sub'
+  - input: ['hypothesis', 'premise_attn', 'hypothesis_mul', 'hypothesis_sub']
+    output: 'hypothesis'
+    module: 'concat'
+  - input: 'hypothesis'
+    module: 'dense'
+    activation: 'relu'
+
+  # inference composition
+  # BiLSTM
+  - input: 'hypothesis'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'composition'
+    dropout: *dropout
+  # BiLSTM
+  - input: 'premise'
+    module: 'lstm'
+    with_projection: True  # not in original model but helps
+    activation: 'relu'
+    name: 'composition'
+    dropout: *dropout
+
+  prediction_layer:
+    module: 'max_avg_mlp'

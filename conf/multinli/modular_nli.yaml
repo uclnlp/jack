@@ -1,0 +1,37 @@
+description: >
+  A configuration inheriting from the default jack.yaml
+
+parent_config: './conf/snli/nli.yaml'
+
+# Reader model to use, see jack/readers/implementations.py for options
+reader: 'modular_nli_reader'
+
+with_char_embeddings: True
+model:
+  encoder_layer: null  # list of encoder modules with input key ('question' or 'support' in beginning)
+  prediction_layer: null  # 'max_avg_mlp' (h_max, h_avg, p_max, p_avg), 'max_mlp' (h_max, p_max), 'max_interaction_mlp' (h_max, p_max, h_max - p_max, h+max * p_max)
+
+# encoder modules can be selected as wanted and are defined by the following keys
+# * input - required, string indicating what input to encode (starts with possibilities 'question' or 'support')
+# * output - optional, set to input by default but can be overwritten to something else => after defining a new output key it can be used later as input somewhere else
+# * repr_dim - dimensionality of output
+# * module - BiRNNs: 'lstm', 'gru', 'sru'  ('with_projection: True' will also employ a projection layer on top of the BiRNNs which is recommended)
+#                CONVs: 'gldr' (gated linear dilated residual network), 'conv' (convolution)
+#                MISC: 'projection' (linear projection), 'self_attn', 'concat' (use 'input' to define list of keys to concatenate)
+# * residual - whether this encoder should be residually employed
+# * num_layers number of times this is consecutively
+# 'conv' requires another parameter, 'conv_width' (3 by default) and can have and 'activation'
+# 'gldr' requires another parameters, 'conv_width' (3 by default) and 'dilations'
+# (a list of dilations for each layer of the gldr network)
+# 'projection' has additional 'activation' attribute which can be 'relu', 'tanh','sigmoid', etc (everything in tf.nn)
+# 'self_attn' support attn types: 'dot', 'bilinear', 'diagonal_bilinear', 'mlp'
+# 'dot', 'bilinear', 'diagonal_bilinear' have additional scale attribute which scales attn scores by sqrt of repr_dim
+# of input states, it is recommended to use it for 'dot' and 'diagonal_bilinear'
+# 'mlp' has additional 'repr_dim' and 'activation' property for the dimensionality and activation of the hidden layer
+# you can set the number of parallel attention heads using num_attn_heads
+#
+# You can reuse encoders (i.e., their parameters) by giving them the same name and set 'reuse: True'
+
+
+
+
