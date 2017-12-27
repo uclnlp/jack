@@ -12,8 +12,8 @@ build:
           sudo apt-get update
           sudo apt-get -y install libtk8.6
 
-          pip install --upgrade -r requirements.txt
-          pip install -e .[tf]
+          # pip install --upgrade -r requirements.txt
+          pip install -e .[tf] --upgrade
 
     - script:
         name: echo python information
