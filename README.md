@@ -28,7 +28,13 @@ model.
 
 ### Extractive Question Answering on SQuAD
 
-First, download SQuAD and GloVe embeddings:
+First, install the framework:
+
+```bash
+$ python3 -m pip install -e .[tf]
+```
+
+Then, download the SQuAD dataset, and the GloVe word embeddings:
 
 ```bash
 $ ./data/SQuAD/download.sh
