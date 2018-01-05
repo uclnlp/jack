@@ -2,4 +2,6 @@ parent_config: ['./conf/nli/multinli/abstract_multinli.yaml', './conf/nli/dam.ya
 
 # fixed experiment seed
 seed: 1337
+dropout: 0.2
+repr_dim: 200
 

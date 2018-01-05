@@ -4,16 +4,3 @@ description: >
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'dam_snli_reader'
 
-# fixed experiment seed
-seed: 1337
-
-repr_dim: 200
-
-epochs: 20
-
-dropout: 0.8
-
-batch_size: 32
-
-lowercase: False
-

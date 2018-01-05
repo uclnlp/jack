@@ -8,7 +8,7 @@ from jack.tfutil.sequence_encoder import encoder
 logger = logging.getLogger(__name__)
 
 
-def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, default_repr_dim, is_eval):
+def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, default_repr_dim, dropout, is_eval):
     outputs = dict(inputs)
     outputs_length = dict(inputs_length)
     outputs_mapping = dict(inputs_mapping)
@@ -54,13 +54,12 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 outputs[out_key] = interaction_layer(
                     outputs[key], outputs_length[key],
                     outputs[dep_key], outputs_length[dep_key],
-                    outputs_mapping[key], reuse=reuse, **module)
+                    outputs_mapping[key], reuse=reuse, repr_dim=default_repr_dim, **module)
             else:
                 outputs[out_key] = encoder(outputs[key], outputs_length[key], reuse=reuse, **module)
             outputs_length[out_key] = outputs_length[key]
             outputs_mapping[out_key] = outputs_mapping[key]
-            dropout = module.get('dropout', 0.0)
-            if dropout > 0.0:
+            if module.get('dropout', False):
                 outputs[out_key] = tf.cond(
                     is_eval,
                     lambda: outputs[out_key],

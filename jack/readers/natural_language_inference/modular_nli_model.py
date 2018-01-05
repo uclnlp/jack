@@ -15,6 +15,7 @@ class ModularNLIModel(AbstractSingleSupportMCModel):
         model = shared_resources.config['model']
         repr_dim = shared_resources.config['repr_dim']
         input_size = shared_resources.config["repr_dim_input"]
+        dropout = shared_resources.config.get("dropout")
         tensors.emb_question.set_shape([None, None, input_size])
         tensors.emb_support.set_shape([None, None, input_size])
 
@@ -26,7 +27,7 @@ class ModularNLIModel(AbstractSingleSupportMCModel):
 
         encoder_config = model['encoder_layer']
         encoded, _, _ = modular_encoder(
-            encoder_config, inputs, inputs_length, inputs_mapping, repr_dim, tensors.is_eval)
+            encoder_config, inputs, inputs_length, inputs_mapping, repr_dim, dropout, tensors.is_eval)
 
         with tf.variable_scope('prediction_layer'):
             answer_layer_config = model['prediction_layer']

@@ -14,8 +14,6 @@ save_dir: './bidaf_reader'
 
 with_char_embeddings: True
 
-repr_dim: &dim 100
-dropout: &dropout 0.2
 max_span_size: 16
 
 model:
@@ -44,12 +42,12 @@ model:
     module: 'lstm'
     name: 'contextual_encoding'
     with_projection: True # not in the original bidaf implementation, but help
-    dropout: *dropout
+    dropout: True
   - input: 'support'
     module: 'lstm'
     with_projection: True # not in the original bidaf implementation, but helps
     name: 'contextual_encoding' # shared encoding at this point helps
-    dropout: *dropout
+    dropout: True
 
   # Attention Encoding
   - input: 'support'
@@ -60,13 +58,11 @@ model:
     module: 'lstm'
     with_projection: True # not in the original bidaf implementation, but helps
     num_layers: 2
-    dropout: *dropout
+    dropout: True
 
   answer_layer:
     module: 'bidaf'
-    repr_dim: *dim
     encoder:  # only needed for bidaf answer layer
-      repr_dim: *dim
       module: 'lstm'
-      dropout: *dropout
+      dropout: True
 

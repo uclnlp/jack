@@ -5,57 +5,25 @@ parent_config: './conf/nli/modular_nli.yaml'
 
 name: 'esim_reader'
 
-# fixed experiment seed
-seed: 1337
-
-repr_dim: 200
-dropout: &dropout 0.2
-
 model:
   encoder_layer:
   # Shared Embedding Processing
-  # Support
-  - input: ['premise', 'char_premise']
-    output: 'premise'
-    module: 'concat'
-  - input: 'premise'
-    name: 'embedding_highway'
-    module: 'highway'
-  - input: 'premise'
-    output: 'emb_premise'
-    name: 'embedding_projection'
-    module: 'dense'
-    activation: 'relu'
-    dropout: *dropout
-  # Question
-  - input: ['hypothesis', 'char_hypothesis']
-    output: 'hypothesis'
-    module: 'concat'
-  - input: 'hypothesis'
-    name: 'embedding_highway'  # use same network as premise
-    module: 'highway'
-  - input: 'hypothesis'
-    output: 'emb_hypothesis'
-    name: 'embedding_projection'  # use same network as premise
-    module: 'dense'
-    activation: 'relu'
-    dropout: *dropout
 
   # ESIM
   # BiLSTM
   - input: 'hypothesis'
     module: 'lstm'
     with_projection: True  # not in original model but helps
-    activation: 'relu'
+    activation: 'tanh'
     name: 'encoder'
-    dropout: *dropout
+    dropout: True
   # BiLSTM
   - input: 'premise'
     module: 'lstm'
     with_projection: True  # not in original model but helps
-    activation: 'relu'
+    activation: 'tanh'
     name: 'encoder'
-    dropout: *dropout
+    dropout: True
 
   # Attention
   - input: 'premise'
@@ -101,17 +69,13 @@ model:
   # BiLSTM
   - input: 'hypothesis'
     module: 'lstm'
-    with_projection: True  # not in original model but helps
-    activation: 'relu'
     name: 'composition'
-    dropout: *dropout
+    dropout: True
   # BiLSTM
   - input: 'premise'
     module: 'lstm'
-    with_projection: True  # not in original model but helps
-    activation: 'relu'
     name: 'composition'
-    dropout: *dropout
+    dropout: True
 
   prediction_layer:
     module: 'max_avg_mlp'

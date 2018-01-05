@@ -13,11 +13,7 @@ seed: 1337
 save_dir: './jack_qa_reader'
 
 with_char_embeddings: True
-word_in_question: True  # concatenated with output after interaction layer
 
-repr_dim: 100
-dropout: &dropout 0.2
-max_span_size: 16
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
@@ -35,7 +31,7 @@ model:
     name: 'embedding_projection'
     module: 'dense'
     activation: 'tanh'
-    dropout: *dropout
+    dropout: True
   # Question
   - input: ['question', 'char_question']
     output: 'question'
@@ -48,7 +44,7 @@ model:
     name: 'embedding_projection'  # use same network as support
     module: 'dense'
     activation: 'tanh'
-    dropout: *dropout
+    dropout: True
 
     # Shared Contextual Encoding
   - input: 'emb_support'
@@ -57,14 +53,14 @@ model:
     conv_width: 5
     num_layers: 2
     name: 'contextual_encoding'
-    dropout: *dropout
+    dropout: True
   - input: 'emb_question'
     output: 'question'
     module: 'conv_glu'
     conv_width: 5
     num_layers: 2
     name: 'contextual_encoding'  # use same network as support
-    dropout: *dropout
+    dropout: True
 
   - input: ['emb_question', 'question']
     output: 'enc_question'
@@ -99,14 +95,14 @@ model:
   - input: 'support'
     module: 'dense'
     activation: 'relu'
-    dropout: *dropout
+    dropout: True
 
   # BiLSTM
   - input: 'support'
     module: 'lstm'  # the only application of a RNN
     with_projection: True
     activation: 'tanh'
-    dropout: *dropout
+    dropout: True
 
   - input: 'support'
     module: 'conv_glu'

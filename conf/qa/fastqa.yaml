@@ -14,7 +14,6 @@ save_dir: './fastqa_reader'
 encoder: 'lstm'
 with_char_embeddings: True
 
-max_span_size: 16
 # 'conditional' (original fastqa, end score conditioned on predicted start), 'conditional_bilinear', 'bilinear'
 # bilinear has shown best performance
 answer_layer: bilinear

@@ -1,0 +1,5 @@
+parent_config: ['./conf/qa/fastqa.yaml', './conf/qa/triviaqa/wiki/abstract_triviaqa.yaml']
+seed: 1337
+
+repr_dim: 150
+dropout: 0.2
