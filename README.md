@@ -31,8 +31,8 @@ model.
 First, download SQuAD and GloVe embeddings:
 
 ```bash
-$ data/SQuAD/download.sh
-$ data/GloVe/download.sh
+$ ./data/SQuAD/download.sh
+$ ./data/GloVe/download.sh
 $ # Although we support native glove format it is recommended to use a memory mapped format which allows to load embeddings only as needed.
 $ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
 ```
