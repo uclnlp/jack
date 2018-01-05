@@ -80,8 +80,6 @@ def main(config,
          test,
          vocab_from_embeddings):
     logger.info("TRAINING")
-    parsed_config = ex.current_run.config
-    ex.run('print_config', config_updates=parsed_config)
 
     if 'JACK_TEMP' not in os.environ:
         jack_temp = os.path.join(tempfile.gettempdir(), 'jack', str(uuid.uuid4()))

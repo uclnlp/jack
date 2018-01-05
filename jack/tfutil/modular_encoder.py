@@ -54,7 +54,7 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 outputs[out_key] = interaction_layer(
                     outputs[key], outputs_length[key],
                     outputs[dep_key], outputs_length[dep_key],
-                    outputs_mapping[key], reuse=reuse, repr_dim=default_repr_dim, **module)
+                    outputs_mapping[key], reuse=reuse, **module)
             else:
                 outputs[out_key] = encoder(outputs[key], outputs_length[key], reuse=reuse, **module)
             outputs_length[out_key] = outputs_length[key]
