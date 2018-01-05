@@ -7,23 +7,18 @@ name: 'esim_reader'
 
 model:
   encoder_layer:
-  # Shared Embedding Processing
-
-  # ESIM
   # BiLSTM
   - input: 'hypothesis'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'tanh'
     name: 'encoder'
-    dropout: True
   # BiLSTM
   - input: 'premise'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'tanh'
     name: 'encoder'
-    dropout: True
 
   # Attention
   - input: 'premise'
@@ -51,6 +46,7 @@ model:
   - input: 'premise'
     module: 'dense'
     activation: 'relu'
+    dropout: True
 
   - input: ['hypothesis', 'premise_attn']
     output: 'hypothesis_mul'
@@ -64,18 +60,18 @@ model:
   - input: 'hypothesis'
     module: 'dense'
     activation: 'relu'
+    dropout: True
 
   # inference composition
   # BiLSTM
   - input: 'hypothesis'
     module: 'lstm'
     name: 'composition'
-    dropout: True
+
   # BiLSTM
   - input: 'premise'
     module: 'lstm'
     name: 'composition'
-    dropout: True
 
   prediction_layer:
     module: 'max_avg_mlp'
