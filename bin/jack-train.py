@@ -30,19 +30,23 @@ else:
     path = "./conf/jack.yaml"
 
 
-def fetch_parents(current_path, parents=[]):
+def fetch_parents(current_path):
     tmp_ex = Experiment('jack')
-    tmp_ex.add_config(current_path)
-    if "parent_config" in tmp_ex.configurations[0]._conf:
-        return fetch_parents(tmp_ex.configurations[0]._conf["parent_config"], [current_path] + parents)
-    else:
-        return [current_path] + parents
+    if not isinstance(current_path, list):
+        current_path = [current_path]
+    all_paths = list(current_path)
+    for p in current_path:
+        tmp_ex.add_config(p)
+        if "parent_config" in tmp_ex.configurations[-1]._conf:
+            all_paths = fetch_parents(tmp_ex.configurations[-1]._conf["parent_config"]) + all_paths
+    return all_paths
+
 
 configs = fetch_parents(path)
 logger.info("Loading {}".format(configs))
 ex = Experiment('jack')
-for path in configs:
-    ex.add_config(path)
+for c_path in configs:
+    ex.add_config(c_path)
 
 
 class Duration(object):
@@ -76,6 +80,8 @@ def main(config,
          test,
          vocab_from_embeddings):
     logger.info("TRAINING")
+    parsed_config = ex.current_run.config
+    ex.run('print_config', config_updates=parsed_config)
 
     if 'JACK_TEMP' not in os.environ:
         jack_temp = os.path.join(tempfile.gettempdir(), 'jack', str(uuid.uuid4()))

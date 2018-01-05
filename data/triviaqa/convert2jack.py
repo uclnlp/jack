@@ -103,8 +103,7 @@ def convert_triviaqa(triviaqa_question, corpus, max_num_support, max_tokens, is_
                    "support": supports}
         for doc in triviaqa_question.entity_docs:
             supports, answers = extract_support(triviaqa_question, [doc], corpus, max_num_support, max_tokens)
-            filename = corpus.file_id_map[doc.doc_id]
-            question_id = triviaqa_question.question_id + '--' + filename[filename.rindex('/') + 1] + ".txt"
+            question_id = triviaqa_question.question_id + '--' + doc.title.replace(' ', '_') + ".txt"
             yield {"questions": [{"answers": answers,
                                   "question": {"text": question, "id": question_id}}],
                    "support": supports}

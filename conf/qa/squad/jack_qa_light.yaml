@@ -1,0 +1,2 @@
+parent_config: ['./conf/qa/jack_qa_light.yaml', './conf/qa/squad/abstract_squad.yaml']
+seed: 1337

@@ -1,0 +1,5 @@
+parent_config: ['./conf/nli/multinli/abstract_multinli.yaml', './conf/nli/dam.yaml']
+
+# fixed experiment seed
+seed: 1337
+

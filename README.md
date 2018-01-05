@@ -54,7 +54,7 @@ $ python3 bin/jack-train.py with train='data/SQuAD/train-v1.1.json' dev='data/SQ
 or shorter, using our prepared config:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/qa/fastqa.yaml'
+$ python3 bin/jack-train.py with config='./conf/qa/squad/fastqa.yaml'
 ```
 
 Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
@@ -66,7 +66,7 @@ training epoch when performance improves. These can be loaded using the commands
 [the showcase notebook][showcase].
 
 You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
-together your own model. There are examples in `conf/qa/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
+together your own model. There are examples in `conf/qa/squad/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
 **We recommend using one of our own creations `jack_qa*.yaml` which are both fast while achieving very good
 results.** These models are defined solely in the configs, i.e., there is not implementation in code.
 This is possible through our `ModularQAModel`.
@@ -126,11 +126,11 @@ $ python3 bin/jack-train.py with reader='dam_snli_reader' loader=snli train='dat
 or the short version:
 
 ```bash
-$ python3 bin/jack-train.py with config='./conf/snli/dam.yaml'
+$ python3 bin/jack-train.py with config='./conf/nli/snli/dam.yaml'
 ```
 
 Note, you can easily change the model to one of the other implemented NLI readers. Just checkout our configurations in
-`conf/snli/`. You will find for instance an `ESIM` reader (`esim.yaml`) which is realized using our `ModularNLIReader`, 
+`conf/nli/snli/`. You will find for instance an `ESIM` reader (`esim.yaml`) which is realized using our `ModularNLIReader`, 
 similar to question answering. You can quickly stick together your own model in a config like that. Available modules
 can be found [here](/docs/Encoder_Modules.md).
 

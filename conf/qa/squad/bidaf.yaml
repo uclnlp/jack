@@ -1,0 +1,2 @@
+parent_config: ['./conf/qa/bidaf.yaml', './conf/qa/squad/abstract_squad.yaml']
+seed: 1337

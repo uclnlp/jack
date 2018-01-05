@@ -1,18 +1,16 @@
-description: >
-  Basic multiple choice configuration.
 parent_config: './conf/jack.yaml'
 
 # loader for the dataset, ['jack', 'squad', 'snli'] are supported. For everything else convert to jtr format first.
 loader: snli
 
-# MultiNLI training file
-train: 'data/MultiNLI/multinli_1.0/multinli_1.0_train.jsonl'
+# SNLI training file
+train: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
 
-# MultiNLI dev file
-dev: 'data/MultiNLI/multinli_1.0/multinli_1.0_train.jsonl'
+# SNLI dev file
+dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
 
-# MultiNLI test file
-# test: 'data/MultiNLI/multinli_1.0/multinli_1.0_train.jsonl'
+# SNLI test file
+test: 'data/SNLI/snli_1.0/snli_1.0_test.jsonl'
 
 epochs: 20
 

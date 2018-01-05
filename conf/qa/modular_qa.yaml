@@ -1,8 +1,6 @@
 description: >
   Modular QA Reader base configuration.
 
-parent_config: './conf/qa/abstract_qa.yaml'
-
 reader: 'modular_qa_reader'
 
 with_char_embeddings: True

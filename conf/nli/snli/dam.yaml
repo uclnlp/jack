@@ -1,0 +1,4 @@
+parent_config: ['./conf/nli/dam.yaml', './conf/snli/abstract_snli.yaml']
+
+# fixed experiment seed
+seed: 1337

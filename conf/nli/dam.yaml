@@ -1,7 +1,5 @@
 description: >
-  A configuration inheriting from the default jack.yaml
-
-parent_config: './conf/snli/nli.yaml'
+  Decomposable Attention Model https://arxiv.org/abs/1703.04816
 
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'dam_snli_reader'

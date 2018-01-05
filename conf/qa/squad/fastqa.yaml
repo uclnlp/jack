@@ -1,0 +1,3 @@
+parent_config: ['./conf/qa/fastqa.yaml', './conf/qa/squad/abstract_squad.yaml']
+seed: 1337
+
