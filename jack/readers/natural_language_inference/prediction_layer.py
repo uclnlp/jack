@@ -9,6 +9,9 @@ def prediction_layer(hypothesis, hypothesis_length, premise, premise_length, num
     elif module == 'max_mlp':
         return max_pool_prediction_layer(
             repr_dim, num_classes, hypothesis, hypothesis_length, premise, premise_length, activation)
+    elif module == 'max_mlp_hypothesis':
+        return max_pool_prediction_layer_hypothesis(
+            repr_dim, num_classes, hypothesis, hypothesis_length, activation)
     elif module == 'max_interaction_mlp':
         return max_pool_interaction_prediction_layer(
             repr_dim, num_classes, hypothesis, hypothesis_length, premise, premise_length, activation)
@@ -66,6 +69,18 @@ def max_pool_interaction_prediction_layer(size, num_classes, hypothesis, hypothe
 
     inputs = tf.concat([p_max, h_max, p_max - h_max, p_max * h_max], 1)
     hidden = tf.layers.dense(inputs, size, activation)
+    logits = tf.layers.dense(hidden, num_classes)
+
+    return logits
+
+
+def max_pool_prediction_layer_hypothesis(size, num_classes, hypothesis, hypothesis_length, activation=tf.tanh):
+    h_mask = tf.sequence_mask(hypothesis_length, tf.shape(hypothesis)[1], dtype=tf.float32)
+    hypothesis *= tf.expand_dims(h_mask, 2)
+
+    h_max = tf.reduce_max(hypothesis, axis=1)
+
+    hidden = tf.layers.dense(h_max, size, activation)
     logits = tf.layers.dense(hidden, num_classes)
 
     return logits
