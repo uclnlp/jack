@@ -10,6 +10,9 @@ train: 'data/triviaqa/web-train.json'
 dev: 'data/triviaqa/web-dev.json'
 test: null
 
+# cache preprocessed examples on file in JACK_TEMP to avoid RAM problems
+file_cache: True
+
 # [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
 embedding_format: 'memory_map_dir'
 
