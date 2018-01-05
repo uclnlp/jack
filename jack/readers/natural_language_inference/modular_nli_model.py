@@ -1,12 +1,12 @@
 import tensorflow as tf
 
-from jack.readers.multiple_choice.shared import AbstractSingleSupportMCModel
+from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
 from jack.readers.natural_language_inference import prediction_layer
 from jack.tfutil.embedding import conv_char_embedding
 from jack.tfutil.modular_encoder import modular_encoder
 
 
-class ModularNLIModel(AbstractSingleSupportMCModel):
+class ModularNLIModel(AbstractSingleSupportClassificationModel):
     def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors):
         [char_emb_question, char_emb_support] = conv_char_embedding(
             len(shared_resources.char_vocab), shared_resources.config['repr_dim'], tensors.word_chars,

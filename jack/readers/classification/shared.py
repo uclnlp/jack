@@ -8,7 +8,7 @@ import progressbar
 from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
-from jack.readers.multiple_choice import util
+from jack.readers.classification import util
 from jack.util import preprocessing
 from jack.util.map import numpify
 
@@ -24,12 +24,12 @@ class SingleSupportFixedClassForward(object):
         raise NotImplementedError
 
 
-class AbstractSingleSupportMCModel(TFModelModule, SingleSupportFixedClassForward):
+class AbstractSingleSupportClassificationModel(TFModelModule, SingleSupportFixedClassForward):
     def __init__(self, shared_resources):
         self.shared_resources = shared_resources
         self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
-        super(AbstractSingleSupportMCModel, self).__init__(shared_resources)
+        super(AbstractSingleSupportClassificationModel, self).__init__(shared_resources)
 
     @property
     def input_ports(self) -> List[TensorPort]:
@@ -117,7 +117,7 @@ MCAnnotation = NamedTuple('MCAnnotation', [
 ])
 
 
-class MultipleChoiceSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
+class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
 
     @property
     def training_ports(self) -> List[TensorPort]:
@@ -250,13 +250,14 @@ class MultipleChoiceSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
                         self.shared_resources.embeddings[i] = e
 
         if not hasattr(self.shared_resources, 'answer_vocab') or not self.shared_resources.answer_vocab.frozen:
-            self.shared_resources.answer_vocab = util.create_answer_vocab(answers=(a for _, ass in data for a in ass))
+            self.shared_resources.answer_vocab = util.create_answer_vocab(
+                qa_settings=(q for q, _ in data), answers=(a for _, ass in data for a in ass))
             self.shared_resources.answer_vocab.freeze()
         self.shared_resources.config['answer_size'] = len(self.shared_resources.answer_vocab)
         self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
 
-class SimpleMCOutputModule(OutputModule):
+class SimpleClassificationOutputModule(OutputModule):
     def __init__(self, shared_resources=None):
         self._shared_resources = shared_resources
 

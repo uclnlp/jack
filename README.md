@@ -153,7 +153,7 @@ answers = dam_reader([QASetting(
 )])
 ```
 
-[dam]: https://arxiv.org/abs/1703.04816
+[dam]: https://arxiv.org/abs/1606.01933
 
 # Support
 We are thankful for support from:

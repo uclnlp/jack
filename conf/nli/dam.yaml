@@ -1,5 +1,5 @@
 description: >
-  Decomposable Attention Model https://arxiv.org/abs/1703.04816
+  Decomposable Attention Model https://arxiv.org/abs/1606.01933
 
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'dam_snli_reader'

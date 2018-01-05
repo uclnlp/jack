@@ -101,6 +101,7 @@ def test_model(reader_name, epochs, use_small_data, dataset):
     cmd += ' reader={0}'.format(reader_name)
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' learning_rate_decay=1.0'
+    cmd += ' save_dir=null'
     if reader_name in modelspecifics:
         # this is a function which takes use_small_data as argument
         cmd += modelspecifics[reader_name](use_small_data)

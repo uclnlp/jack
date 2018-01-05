@@ -9,8 +9,9 @@ def create_answer_vocab(qa_settings: Iterable[QASetting] = None, answers: Iterab
     vocab = Vocab(unk=None)
     if qa_settings is not None:
         for qa in qa_settings:
-            for c in qa.atomic_candidates:
-                vocab(c)
+            if qa.atomic_candidates:
+                for c in qa.atomic_candidates:
+                    vocab(c)
     if answers is not None:
         for a in answers:
             vocab(a.text)

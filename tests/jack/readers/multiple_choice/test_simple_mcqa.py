@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from jack.readers.multiple_choice.shared import *
+from jack.readers.classification.shared import *
 
 from jack.util.vocab import Vocab
 
@@ -12,7 +12,7 @@ def test_single_support_fixed_class_inputs():
         (QASetting("Where is the cat?", ["the cat is on the mat."]), [Answer("mat")])
     ]
     shared_resources = SharedResources(Vocab(), {})
-    input_module = MultipleChoiceSingleSupportInputModule(shared_resources)
+    input_module = ClassificationSingleSupportInputModule(shared_resources)
     input_module.setup_from_data(data_set)
 
     assert len(input_module.shared_resources.answer_vocab) == 1
