@@ -1,4 +1,4 @@
-parent_config: ['./conf/nli/esim.yaml', './conf/nli/multi/abstract_multinli.yaml']
+parent_config: ['./conf/nli/esim.yaml', './conf/nli/multinli/abstract_multinli.yaml']
 
 # fixed experiment seed
 seed: 1337
