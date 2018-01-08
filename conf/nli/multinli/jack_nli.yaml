@@ -1,6 +1,0 @@
-parent_config: ['./conf/nli/jack_nli.yaml', './conf/nli/multinli/abstract_multinli.yaml']
-
-# fixed experiment seed
-seed: 1337
-dropout: 0.5
-repr_dim: 300

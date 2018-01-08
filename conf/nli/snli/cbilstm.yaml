@@ -1,0 +1,6 @@
+parent_config: ['./conf/nli/cbilstm.yaml', './conf/nli/snli/abstract_snli.yaml']
+
+# fixed experiment seed
+seed: 1337
+dropout: 0.5
+repr_dim: 300

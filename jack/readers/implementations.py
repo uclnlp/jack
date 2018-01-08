@@ -74,30 +74,30 @@ def create_shared_resources(resources_or_config: Union[dict, SharedResources] = 
         return SharedResources(config=resources_or_config)
 
 
+# Question Answering
+
+
+def _tf_extractive_qa_reader(model_module_constructor, resources_or_conf: Union[dict, SharedResources]):
+    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+    input_module = XQAInputModule(shared_resources)
+    model_module = model_module_constructor(shared_resources)
+    output_module = XQAOutputModule()
+    return TFReader(shared_resources, input_module, model_module, output_module)
+
+
 @extractive_qa_reader
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.tensorflow.fastqa import FastQAModule
-    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = XQAInputModule(shared_resources)
-    model_module = FastQAModule(shared_resources)
-    output_module = XQAOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
+    _tf_extractive_qa_reader(FastQAModule, resources_or_conf)
 
 
 @extractive_qa_reader
 def modular_qa_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a FastQA model as described in https://arxiv.org/abs/1703.04816 (extractive qa model)."""
-    from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
+    """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.tensorflow.modular_qa_model import ModularQAModel
-    shared_resources = create_shared_resources(resources_or_conf)
-
-    input_module = XQAInputModule(shared_resources)
-    model_module = ModularQAModel(shared_resources)
-    output_module = XQAOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
+    _tf_extractive_qa_reader(ModularQAModel, resources_or_conf)
 
 
 @extractive_qa_reader
@@ -107,44 +107,50 @@ def fastqa_reader_torch(resources_or_conf: Union[dict, SharedResources] = None):
     from jack.readers.extractive_qa.shared import XQAInputModule, XQAOutputModule
     from jack.core.torch import PyTorchReader
     shared_resources = create_shared_resources(resources_or_conf)
-
     input_module = XQAInputModule(shared_resources)
     model_module = FastQAPyTorchModelModule(shared_resources)
     output_module = XQAOutputModule()
     return PyTorchReader(shared_resources, input_module, model_module, output_module)
 
 
-@nli_reader
-def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a SNLI reader instance (multiple choice qa model).
+# Natural Language Inference
 
-    This particular reader uses a Decomposable Attention Model, as described in [1].
 
-    [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
-    """
+def _tf_nli_reader(model_module_constructor, resources_or_conf: Union[dict, SharedResources] = None):
     from jack.readers.classification.shared import ClassificationSingleSupportInputModule
-    from jack.readers.natural_language_inference.decomposable_attention import DecomposableAttentionModel
     from jack.readers.classification.shared import SimpleClassificationOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
-
     input_module = ClassificationSingleSupportInputModule(shared_resources)
-    model_module = DecomposableAttentionModel(shared_resources)
+    model_module = model_module_constructor(shared_resources)
     output_module = SimpleClassificationOutputModule(shared_resources)
     return TFReader(shared_resources, input_module, model_module, output_module)
+
+
+@nli_reader
+def dam_snli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a NLI reader instance.
+    This particular reader uses a Decomposable Attention Model, as described in [1].
+    [1] Ankur P. Parikh et al. - A Decomposable Attention Model for Natural Language Inference. EMNLP 2016
+    """
+    from jack.readers.natural_language_inference.decomposable_attention import DecomposableAttentionModel
+    return _tf_nli_reader(DecomposableAttentionModel, resources_or_conf)
+
+
+@nli_reader
+def cbilstm_nli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    """Creates a NLI reader based on conditional BiLSTMs."""
+    from jack.readers.natural_language_inference.conditional_bilstm import ConditionalBiLSTMClassificationModel
+    return _tf_nli_reader(ConditionalBiLSTMClassificationModel, resources_or_conf)
 
 
 @nli_reader
 def modular_nli_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a Modular NLI reader instance. Model defined in config."""
-    from jack.readers.classification.shared import ClassificationSingleSupportInputModule
     from jack.readers.natural_language_inference.modular_nli_model import ModularNLIModel
-    from jack.readers.classification.shared import SimpleClassificationOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
+    return _tf_nli_reader(ModularNLIModel, resources_or_conf)
 
-    input_module = ClassificationSingleSupportInputModule(shared_resources)
-    model_module = ModularNLIModel(shared_resources)
-    output_module = SimpleClassificationOutputModule(shared_resources)
-    return TFReader(shared_resources, input_module, model_module, output_module)
+
+# Link Prediction/Knowledge Base Population Models
 
 
 @kbp_reader
