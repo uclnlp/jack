@@ -13,12 +13,15 @@ model:
     with_projection: True  # not in original model but helps
     activation: 'tanh'
     name: 'encoder'
+    dropout: True
+
   # BiLSTM
   - input: 'premise'
     module: 'lstm'
     with_projection: True  # not in original model but helps
     activation: 'tanh'
     name: 'encoder'
+    dropout: True
 
   # Attention
   - input: 'premise'

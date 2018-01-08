@@ -88,11 +88,11 @@ def test_model(reader_name, epochs, use_small_data, dataset):
     if not use_small_data:
         train_file = 'tests/test_data/{0}/overfit.json'.format(dataset)
         dev_file = train_file
-        test_file = train_file
+        test_file = None
     else:
         train_file = 'tests/test_data/{0}/train.json'.format(dataset)
         dev_file = 'tests/test_data/{0}/dev.json'.format(dataset)
-        test_file = 'tests/test_data/{0}/test.json'.format(dataset)
+        test_file = None
 
     # Setup the process call command
     cmd = 'CUDA_VISIBLE_DEVICES=-1 '  # we only test on the CPU
@@ -101,6 +101,7 @@ def test_model(reader_name, epochs, use_small_data, dataset):
     cmd += ' reader={0}'.format(reader_name)
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' learning_rate_decay=1.0'
+    cmd += ' save_dir=None'
     if reader_name in modelspecifics:
         # this is a function which takes use_small_data as argument
         cmd += modelspecifics[reader_name](use_small_data)
