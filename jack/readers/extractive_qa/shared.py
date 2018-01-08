@@ -257,7 +257,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                     span2support.extend([support_idx] * len(spans_per_support))
                     support_idx += 1
             output.update({
-                XQAPorts.answer_span: [span for span in spans],
+                XQAPorts.answer_span: [span for span in spans] if spans else np.zeros([0, 2], np.int32),
                 XQAPorts.correct_start: [] if is_eval else [span[0] for span in spans],
                 XQAPorts.answer2support_training: span2support,
             })

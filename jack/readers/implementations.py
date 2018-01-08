@@ -90,14 +90,14 @@ def _tf_extractive_qa_reader(model_module_constructor, resources_or_conf: Union[
 def fastqa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.tensorflow.fastqa import FastQAModule
-    _tf_extractive_qa_reader(FastQAModule, resources_or_conf)
+    return _tf_extractive_qa_reader(FastQAModule, resources_or_conf)
 
 
 @extractive_qa_reader
 def modular_qa_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a FastQA reader instance (extractive qa model)."""
     from jack.readers.extractive_qa.tensorflow.modular_qa_model import ModularQAModel
-    _tf_extractive_qa_reader(ModularQAModel, resources_or_conf)
+    return _tf_extractive_qa_reader(ModularQAModel, resources_or_conf)
 
 
 @extractive_qa_reader

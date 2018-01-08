@@ -59,15 +59,16 @@ def posnegsample(corpus, question_key, answer_key, candidate_key, sl):
 
 
 class ModelFInputModule(OnlineInputModule[Mapping[str, Any]]):
-    def __init__(self, shared_resources: SharedResources):
-        super().__init__(shared_resources)
-        self.all_candidates = False
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
+        self.all_candidates = False
         questions, answers = zip(*data)
         self.preprocess(questions, answers)
         self.shared_resources.vocab.freeze()
         return self.shared_resources
+
+    def setup(self):
+        self.all_candidates = False
 
     @property
     def training_ports(self) -> List[TensorPort]:

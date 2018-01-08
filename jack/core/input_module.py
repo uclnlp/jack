@@ -15,7 +15,6 @@ from jack.core.shared_resources import SharedResources
 from jack.core.tensorport import TensorPort
 from jack.util.batch import shuffle_and_batch, GeneratorWithRestart
 
-_rng = random.Random(1234)
 logger = logging.getLogger(__name__)
 
 
@@ -120,8 +119,9 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
     for your annotation, in order to get stronger typing.
     """
 
-    def __init__(self, shared_resources: SharedResources):
+    def __init__(self, shared_resources: SharedResources, seed=None):
         self.shared_resources = shared_resources
+        self._rng = random.Random(seed or random.randint(0, 9999))
 
     @abstractmethod
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
@@ -172,7 +172,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
 
         Returns: Batch iterator
         """
-        rng = _rng if self._shuffle(is_eval) else None
+        rng = self._rng if self._shuffle(is_eval) else None
         return shuffle_and_batch(questions, batch_size, rng)
 
     def _shuffle(self, is_eval: bool) -> bool:
