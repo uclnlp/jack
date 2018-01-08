@@ -4,3 +4,5 @@ parent_config: ['./conf/nli/esim.yaml', './conf/nli/snli/abstract_snli.yaml']
 seed: 1337
 dropout: 0.5
 repr_dim: 300
+
+validation_interval: 2000
