@@ -4,7 +4,7 @@ parent_config: ['./conf/nli/dam.yaml', './conf/nli/multinli/abstract_multinli.ya
 seed: 1337
 dropout: 0.2
 repr_dim: 300
-epochs: 200
+epochs: 100
 batch_size: 32
 optimizer: adagrad
 learning_rate: 0.05
