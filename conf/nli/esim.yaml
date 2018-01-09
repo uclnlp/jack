@@ -48,6 +48,7 @@ model:
     module: 'concat'
   - input: 'premise'
     module: 'dense'
+    name: 'projection'
     activation: 'relu'
     dropout: True
 
@@ -62,6 +63,7 @@ model:
     module: 'concat'
   - input: 'hypothesis'
     module: 'dense'
+    name: 'projection'
     activation: 'relu'
     dropout: True
 
@@ -78,3 +80,4 @@ model:
 
   prediction_layer:
     module: 'max_avg_mlp'
+    dropout: True

@@ -24,7 +24,7 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
             out_key = module.get('output', key)
             if module['module'] in ['concat', 'add', 'mul', 'weighted_add', 'sub']:
                 outputs_length[out_key] = outputs_length[key[0]]
-                outputs_mapping[out_key] = outputs_mapping[key[0]]
+                outputs_mapping[out_key] = outputs_mapping.get(key[0])
                 if module['module'] == 'concat':
                     outputs[out_key] = tf.concat([outputs[k] for k in key], 2, name=module['name'])
                     continue
@@ -54,11 +54,11 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 outputs[out_key] = interaction_layer(
                     outputs[key], outputs_length[key],
                     outputs[dep_key], outputs_length[dep_key],
-                    outputs_mapping[key], reuse=reuse, **module)
+                    outputs_mapping.get(key), reuse=reuse, **module)
             else:
                 outputs[out_key] = encoder(outputs[key], outputs_length[key], reuse=reuse, **module)
             outputs_length[out_key] = outputs_length[key]
-            outputs_mapping[out_key] = outputs_mapping[key]
+            outputs_mapping[out_key] = outputs_mapping.get(key)
             if module.get('dropout', False):
                 outputs[out_key] = tf.cond(
                     is_eval,
