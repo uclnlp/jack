@@ -2,7 +2,7 @@ parent_config: ['./conf/nli/esim.yaml', './conf/nli/snli/abstract_snli.yaml']
 
 # fixed experiment seed
 seed: 1337
-dropout: 0.5
+dropout: 0.2
 repr_dim: 300
 validation_interval: 2000
 learning_rate: 0.0004
