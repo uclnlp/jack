@@ -3,7 +3,7 @@ parent_config: ['./conf/nli/dam.yaml', './conf/nli/snli/abstract_snli.yaml']
 # fixed experiment seed
 seed: 1337
 dropout: 0.2
-repr_dim: 200
+repr_dim: 300
 epochs: 200
 batch_size: 32
 optimizer: adagrad
