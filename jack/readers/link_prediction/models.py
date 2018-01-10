@@ -18,9 +18,10 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
 
         self.entity_to_index = {entity: index for index, entity in enumerate(self.entity_set)}
         self.predicate_to_index = {predicate: index for index, predicate in enumerate(self.predicate_set)}
+        self.entity_to_index["UNK"] = len(self.entity_to_index)
 
-        self.shared_resources.config['entity_to_index'] = self.entity_to_index
-        self.shared_resources.config['predicate_to_index'] = self.predicate_to_index
+        self.shared_resources.entity_to_index = self.entity_to_index
+        self.shared_resources.predicate_to_index = self.predicate_to_index
 
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[List[int]]:
@@ -28,7 +29,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         triples = []
         for qa_setting in questions:
             s, p, o = qa_setting.question.split()
-            s_idx, o_idx = self.entity_to_index[s], self.entity_to_index[o]
+            s_idx = self.entity_to_index.get(s, self.entity_to_index["UNK"])
+            o_idx = self.entity_to_index.get(o, self.entity_to_index["UNK"])
             p_idx = self.predicate_to_index[p]
             triples.append([s_idx, p_idx, o_idx])
 
@@ -39,7 +41,7 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         triples = list(triples)
         if with_answers:
             target = [1] * len(triples)
-        if not is_eval:
+        if with_answers:
             for i in range(len(triples)):
                 s, p, o = triples[i]
                 for _ in range(self.shared_resources.config.get('num_negative', 1)):
@@ -47,9 +49,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
                     random_object_index = self._kbp_rng.randint(0, len(self.entity_to_index) - 1)
                     triples.append([random_subject_index, p, o])
                     triples.append([s, p, random_object_index])
-                    if with_answers:
-                        target.append(0)
-                        target.append(0)
+                    target.append(0)
+                    target.append(0)
 
         xy_dict = {Ports.Input.question: triples}
         if with_answers:
@@ -86,26 +87,21 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
     def training_output_ports(self) -> List[TensorPort]:
         return [Ports.loss]
 
-    def create_training_output(self, shared_resources: SharedResources,
-                               input_tensors) -> Mapping[TensorPort, tf.Tensor]:
+    def create_training_output(self, shared_resources: SharedResources, input_tensors) \
+            -> Mapping[TensorPort, tf.Tensor]:
         tensors = TensorPortTensors(input_tensors)
         losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=tensors.logits,
                                                          labels=tf.to_float(tensors.target_index))
         loss = tf.reduce_mean(losses, axis=0)
-        return {
-            Ports.loss: loss
-        }
+        return {Ports.loss: loss}
 
     def create_output(self, shared_resources: SharedResources, input_tensors) -> Mapping[TensorPort, tf.Tensor]:
         tensors = TensorPortTensors(input_tensors)
         with tf.variable_scope('knowledge_graph_embedding'):
             embedding_size = shared_resources.config['repr_dim']
 
-            entity_to_index = shared_resources.config['entity_to_index']
-            predicate_to_index = shared_resources.config['predicate_to_index']
-
-            nb_entities = len(entity_to_index)
-            nb_predicates = len(predicate_to_index)
+            nb_entities = len(shared_resources.entity_to_index)
+            nb_predicates = len(shared_resources.predicate_to_index)
 
             entity_embeddings = tf.get_variable('entity_embeddings',
                                                 [nb_entities, embedding_size],
@@ -124,7 +120,7 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
             predicate_emb = tf.nn.embedding_lookup(predicate_embeddings, predicate_idx)
             object_emb = tf.nn.embedding_lookup(entity_embeddings, object_idx, max_norm=1.0)
 
-            from jack.readers.knowledge_base_population import scores
+            from jack.readers.link_prediction import scores
             assert self.model_name is not None
 
             model_class = scores.get_function(self.model_name)

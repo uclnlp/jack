@@ -41,13 +41,14 @@ def kbp_reader(f):
 
 
 def reader_from_file(load_dir: str, **kwargs):
-    """
-    Load a reader from a checkpoint.
+    """Loads a reader from a file.
 
     Args:
-        load_dir: folder containing the reader being loaded.
+        load_dir: directory containing the reader being loaded.
+        kwargs: can be used to overwrite the reader configuration if necessary.
 
-    Returns: a reader.
+    Returns:
+        the reader.
     """
     shared_resources = create_shared_resources()
     shared_resources.load(os.path.join(load_dir, "shared_resources"))
@@ -156,7 +157,7 @@ def modular_nli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @kbp_reader
 def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a knowledge_base_population DistMult model."""
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+    from jack.readers.link_prediction.models import KnowledgeGraphEmbeddingInputModule, \
         KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
@@ -169,7 +170,7 @@ def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @kbp_reader
 def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a knowledge_base_population Complex model."""
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+    from jack.readers.link_prediction.models import KnowledgeGraphEmbeddingInputModule, \
         KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
@@ -182,7 +183,7 @@ def complex_reader(resources_or_conf: Union[dict, SharedResources] = None):
 @kbp_reader
 def transe_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """ Creates a knowledge_base_population TransE model."""
-    from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
+    from jack.readers.link_prediction.models import KnowledgeGraphEmbeddingInputModule, \
         KnowledgeGraphEmbeddingModelModule, \
         KnowledgeGraphEmbeddingOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
