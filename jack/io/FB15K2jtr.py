@@ -21,10 +21,10 @@ Training data:
 
 """
 
-from collections import defaultdict
+import argparse
 import gc
 import json
-import argparse
+from collections import defaultdict
 
 
 def load_fb15k_triples(path):
@@ -129,106 +129,76 @@ def get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation,
     return fact_neighbourhoods
 
 
-def convert_fb15k2(triples, neighbourhoods, unique_entities):
+def convert_fb15k(triples, neighbourhoods):
     """
     Converts into jack format.
     Args:
         triples: fact triples that should be converted.
         neighbourhoods: dictionary of supporting facts per triple
-        unique_entities: List of strings
 
     Returns:
         jack formatted fb15k data.
     """
-    # figure out cases with multiple possible true answers
-    multiple_answers_dict = defaultdict(set)
-    for triple in triples:
-        multiple_answers_dict[triple[:2]].add(triple[2])
-
     instances = []
     for i, triple in enumerate(triples):
         if not i % 1000:
             # print(i)
             gc.collect()
-        # correct answers for this (s,r,.) case
-        correct_answers = multiple_answers_dict[triple[:2]]
 
         # obtain supporting facts for this triple
-        neighbour_ids = neighbourhoods[i]
-        neighbour_triples = [triples[ID] for ID in neighbour_ids]
-
-        # create a single jack instance
+        neighbour_ids = neighbourhoods.get(i)
         qset_dict = {}
-        support_texts = [" ".join([str(s), str(r), str(o)]) for (s, r, o) in neighbour_triples]
+        if neighbour_ids:
+            neighbour_triples = [triples[ID] for ID in neighbour_ids]
+            qset_dict['support'] = [" ".join(t) for t in neighbour_triples]
 
-        qset_dict['support'] = [{'text': t} for t in support_texts]
         qset_dict['questions'] = [{
-            "question": " ".join([str(triple[0]), str(triple[1])]),  # subject and relation
-            "candidates": [],  # use global candidates instead.
-            "answers": [{'text': str(a)} for a in correct_answers]  # object
+            "question": " ".join(triple),  # subject and relation
+            "answers": ["True"]  # object
         }]
         instances.append(qset_dict)
 
     return {
-        'meta': 'FB15K with entity neighbours as supporting facts.',
-        'globals': {
-            'candidates': [{'text': str(i)} for (i, u) in enumerate(unique_entities)]
-        },
+        'meta': 'FB15K-237 dataset.',
         'instances': instances
     }
 
 
-def compress_triples(string_triples, unique_entities, unique_relations):
-    id_triples = []
-    dict_unique_entities = {elem: i for i, elem in enumerate(unique_entities)}
-    dict_unique_relations = {elem: i for i, elem in enumerate(unique_relations)}
-    for (s, r, o) in string_triples:
-        s_id = dict_unique_entities[s]
-        r_id = dict_unique_relations[r]
-        o_id = dict_unique_entities[o]
-        id_triples.append((s_id, r_id, o_id))
-    return id_triples
-
-
 def main():
-    parser = argparse.ArgumentParser(description='FB15K2 dataset to jack format converter.')
+    parser = argparse.ArgumentParser(description='FB15K to jack format converter.')
     #
     parser.add_argument('infile',
                         help="dataset path you're interested in, train/dev/test."
-                             "(e.g. data/FB15k/FB15k/freebase_mtr100_mte100-train.txt)")
-    parser.add_argument('reffile',
-                        help="reference file - use training set path here.")
+                             "(e.g. data/FB15k-237/Release/train.txt)")
     parser.add_argument('outfile',
-                        help="path to the jack format -generated output file (e.g. data/FB15K2/FB15k_train.jack.json)")
+                        help="path to the jack format -generated output file (e.g. data/FB15K-237/FB15k_train.jack.json)")
     # parser.add_argument('dataset', choices=['cnn', 'dailymail'],
     #                     help="which dataset to access: cnn or dailymail")
-    # parser.add_argument('split', choices=['train', 'dev', 'test'],
-    #                     help="which split of the dataset to io: train, dev or test")
+    parser.add_argument('--support', default='',
+                        help="use training set path here (e.g. data/FB15k-237/Release/train.txt)."
+                             "Default is not to create supporting facts.")
     args = parser.parse_args()
 
+    print("Loading data...")
     # load data from files into fact triples
     triples = load_fb15k_triples(args.infile)
-    reference_triples = load_fb15k_triples(args.reffile)
-
-    # unique entity and relation types in reference triples
-    unique_entities, unique_relations = \
-        extract_unique_entities_and_relations(reference_triples)
-    # represent string triples with numeric IDs for entities and relations
-    triples = compress_triples(triples, unique_entities, unique_relations)
-    reference_triples = compress_triples(reference_triples, unique_entities, unique_relations)
 
     # get neighbouring facts for each fact in triples
-    facts_per_entity = get_facts_per_entity(reference_triples)
-    facts_per_relation = get_facts_per_relation(reference_triples)
-    neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
+    if args.support:
+        print("Creating fact neighbourhoods as support...")
+        if args.infile == args.support:
+            reference_triples = triples
+        else:
+            reference_triples = load_fb15k_triples(args.support)
+        facts_per_entity = get_facts_per_entity(reference_triples)
+        facts_per_relation = get_facts_per_relation(reference_triples)
+        neighbourhoods = get_fact_neighbourhoods(triples, facts_per_entity, facts_per_relation)
+    else:
+        neighbourhoods = dict()
 
     # dump the entity and relation ids for understanding the jack contents.
-    with open('fb15k_entities_relations.json', 'w') as f:
-        d = {"unique_entities": unique_entities,
-             "unique_relations": unique_relations}
-        json.dump(d, f)
-
-    corpus = convert_fb15k2(triples, neighbourhoods, unique_entities)
+    print("Convert to json...")
+    corpus = convert_fb15k(triples, neighbourhoods)
     with open(args.outfile, 'w') as outfile:
         json.dump(corpus, outfile, indent=2)
 

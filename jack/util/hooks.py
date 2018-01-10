@@ -354,9 +354,6 @@ class EvalHook(TraceHook):
         if self._epoch_interval is not None and epoch % self._epoch_interval == 0:
             self.__call__(epoch)
 
-    def at_test_time(self, epoch):
-        self.__call__(epoch)
-
     def at_iteration_end(self, epoch: int, loss: float, **kwargs):
         self._iter += 1
         if self._iter_interval is not None and self._iter % self._iter_interval == 0:
@@ -456,103 +453,7 @@ class KBPEvalHook(EvalHook):
     def apply_metrics(self, inputs: List[Tuple[QASetting, List[Answer]]], tensors: Mapping[TensorPort, np.ndarray]) \
             -> Mapping[str, float]:
         loss = tensors[Ports.loss]
-        return {"log_p": -np.sum(loss)}
-
-    def at_test_time(self, epoch, vocab=None):
-        from scipy.stats import rankdata
-        from numpy import asarray
-
-        logger.info("Started test evaluation %s" % self._info)
-
-        if self._batches is None:
-            self.reader.input_module.all_candidates = True
-            self._batches = self.reader.input_module.batch_generator(self._dataset, self._batch_size, is_eval=True)
-            self.reader.input_module.all_candidates = False
-
-        def len_np_or_list(v):
-            if isinstance(v, list):
-                return len(v)
-            else:
-                return v.shape[0]
-
-        q_cand_scores = {}
-        q_cand_ids = {}
-        q_answers = {}
-        qa_scores = []
-        qa_ids = []
-        for i, batch in enumerate(self._batches):
-            predictions = self.reader.model_module(
-                batch, [Ports.Input.question, Ports.Target.target_index, Ports.Prediction.logits,
-                        Ports.Input.atomic_candidates])
-            correct_answers = predictions[Ports.Target.target_index]
-            logits = predictions[Ports.Prediction.logits]
-            candidate_ids = predictions[Ports.Input.atomic_candidates]
-            questions = predictions[Ports.Input.question]
-            for j in range(len_np_or_list(questions)):
-                q = questions[j][0]
-                q_cand_scores[q] = logits[j]
-                q_cand_ids[q] = candidate_ids[j]
-                if q not in q_answers:
-                    q_answers[q] = set()
-                q_answers[q].add(correct_answers[j])
-        for q in q_cand_ids:
-            for k, c in enumerate(q_cand_ids[q]):
-                qa = str(q) + "\t" + str(c)
-                qa_ids.append(qa)
-                qa_scores.append(q_cand_scores[q][k])
-        qa_ranks = rankdata(- asarray(qa_scores), method="min")
-        qa_rank = {}
-        for i, qa_id in enumerate(qa_ids):
-            qa_rank[qa_id] = qa_ranks[i]
-        mean_ap = 0
-        wmap = 0
-        qd = 0
-        md = 0
-        for q in q_answers:
-            cand_ranks = rankdata(- q_cand_scores[q], method="min")
-            ans_ranks = []
-            for a in q_answers[q]:
-                for c, cand in enumerate(q_cand_ids[q]):
-                    if a == cand and cand_ranks[c] <= 100:
-                        ans_ranks.append(cand_ranks[c])
-            av_p = 0
-            answers = 1
-            for r in sorted(ans_ranks):
-                p = answers / r
-                av_p = av_p + p
-                answers += 1
-            if len(ans_ranks) > 0:
-                wmap = wmap + av_p
-                md = md + len(ans_ranks)
-                av_p = av_p / len(ans_ranks)
-                res = '\t%s\t%s: %.3f (%d)' % (
-                    self.reader.shared_resources.vocab.get_sym(q), "Average Precision", av_p, len(q_answers[q]))
-                logger.info(res)
-                qd = qd + 1
-            else:
-                pass
-            mean_ap = mean_ap + av_p
-        q_answers_len = len(q_answers)
-        mean_ap = mean_ap / q_answers_len if q_answers_len else 0
-        wmap = wmap / md if md else 0
-        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
-        res += '\t%s: %.3f' % ("Mean Average Precision", mean_ap)
-        self.update_summary(self._iter, self._info + '_' + "Mean Average Precision", mean_ap)
-        if self._write_metrics_to is not None:
-            with open(self._write_metrics_to, 'a') as f:
-                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Mean Average Precision",
-                                                  np.round(mean_ap, 5)))
-        res += '\t' + self._info
-        logger.info(res)
-        res = "Epoch %d\tIter %d\ttotal %d" % (epoch, self._iter, self._total)
-        res += '\t%s: %.3f' % ("Weighted Mean Average Precision", wmap)
-        self.update_summary(self._iter, self._info + '_' + "Weighted Mean Average Precision", wmap)
-        if self._write_metrics_to is not None:
-            with open(self._write_metrics_to, 'a') as f:
-                f.write("{0} {1} {2:.5}\n".format(datetime.now(), self._info + '_' + "Weighted Mean Average Precision",
-                                                  np.round(wmap, 5)))
-        res += '\t' + self._info
-        logger.info(res)
+        return {"log_p": -loss * len(inputs)}
 
     def at_epoch_end(self, epoch: int, **kwargs):
         self.epoch += 1
