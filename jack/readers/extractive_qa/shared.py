@@ -288,7 +288,8 @@ def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_s
 class XQAOutputModule(OutputModule):
     def __call__(self, questions, span_prediction,
                  token_offsets, selected_support, support2question,
-                 start_scores, end_scores):
+                 start_scores, end_scores) -> Sequence[Sequence[Answer]]:
+        """Produces top-k answers for each question."""
         beam_size = span_prediction.shape[0] // len(questions)
         all_answers = []
         for k, q in enumerate(questions):

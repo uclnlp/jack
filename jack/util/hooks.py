@@ -39,7 +39,7 @@ class TrainingHook(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def at_iteration_end(self, epoch: int, loss: float, set_name = 'train', **kwargs):
+    def at_iteration_end(self, epoch: int, loss: float, set_name='train', **kwargs):
         raise NotImplementedError
 
 
@@ -81,7 +81,7 @@ class TraceHook(TFTrainingHook):
         import matplotlib.patches as mpatches
         import matplotlib.pyplot as plt
         from pylab import subplot
-        number_of_subplots=len(self.scores.keys())
+        number_of_subplots = len(self.scores.keys())
         colors = ['blue', 'green', 'orange']
         patches = []
         for plot_idx, metric in enumerate(self.scores):
@@ -89,8 +89,8 @@ class TraceHook(TFTrainingHook):
                 data = self.scores[metric][set_name][0]
                 time = self.scores[metric][set_name][1]
                 patches.append(mpatches.Patch(color=colors[i], label='{0} {1}'.format(set_name, metric)))
-                ax1 = subplot(number_of_subplots,1,plot_idx+1)
-                ax1.plot(time,data, label='{0}'.format(metric), color=colors[i])
+                ax1 = subplot(number_of_subplots, 1, plot_idx + 1)
+                ax1.plot(time, data, label='{0}'.format(metric), color=colors[i])
                 if ylim != None:
                     plt.ylim(ymin=ylim[0])
                     plt.ylim(ymax=ylim[1])
@@ -103,7 +103,7 @@ class TraceHook(TFTrainingHook):
     def add_to_history(self, score_dict, iter_value, epoch, set_name='train'):
         for metric in score_dict:
             if metric not in self.scores: self.scores[metric] = {}
-            if set_name not in self.scores[metric]: self.scores[metric][set_name] = [[],[],[]]
+            if set_name not in self.scores[metric]: self.scores[metric][set_name] = [[], [], []]
             self.scores[metric][set_name][0].append(score_dict[metric])
             self.scores[metric][set_name][1].append(iter_value)
             self.scores[metric][set_name][2].append(epoch)
@@ -115,12 +115,12 @@ class LossHook(TraceHook):
     def __init__(self, reader, iter_interval=None, summary_writer=None):
         super(LossHook, self).__init__(reader, summary_writer)
         self._iter_interval = iter_interval
-        self._acc_loss = { 'train' : 0.0 }
-        self._iter = { 'train' : 0 }
-        self._epoch_loss = { 'train' : 0.0 }
-        self._iter_epoch = { 'train' : 0 }
+        self._acc_loss = {'train': 0.0}
+        self._iter = {'train': 0}
+        self._epoch_loss = {'train': 0.0}
+        self._iter_epoch = {'train': 0}
 
-    def at_iteration_end(self, epoch, loss, set_name = 'train', **kwargs):
+    def at_iteration_end(self, epoch, loss, set_name='train', **kwargs):
         """Prints the loss, epoch, and #calls; adds it to the summary. Loss should be batch normalized."""
         if self._iter_interval is None: return loss
         if set_name not in self._acc_loss:
@@ -136,10 +136,10 @@ class LossHook(TraceHook):
 
         if not self._iter[set_name] == 0 and self._iter[set_name] % self._iter_interval == 0:
             loss = self._acc_loss[set_name] / self._iter_interval
-            super().add_to_history({'loss' : loss,},
-                    self._iter[set_name], epoch, set_name)
+            super().add_to_history({'loss': loss, },
+                                   self._iter[set_name], epoch, set_name)
             logger.info("Epoch {0}\tIter {1}\t{3} loss {2}".format(epoch,
-                self._iter[set_name], loss, set_name))
+                                                                   self._iter[set_name], loss, set_name))
             self.update_summary(self._iter[set_name], "{0} loss".format(set_name), loss)
             self._acc_loss[set_name] = 0
 
@@ -147,11 +147,11 @@ class LossHook(TraceHook):
 
         return ret
 
-    def at_epoch_end(self, epoch, set_name= 'train', **kwargs):
+    def at_epoch_end(self, epoch, set_name='train', **kwargs):
         if self._iter_interval is None:
             loss = self._acc_loss[set_name] / self._iter_interval[set_name]
             logger.info("Epoch {}\tIter {}\t{3} Loss {}".format(epoch,
-                self._iter, loss, set_name))
+                                                                self._iter, loss, set_name))
             self.update_summary(self._iter[set_name], "Loss", loss)
             self._epoch_loss[set_name] = 0
             self._iter_epoch[set_name] = 0
@@ -465,9 +465,9 @@ class KBPEvalHook(EvalHook):
         logger.info("Started test evaluation %s" % self._info)
 
         if self._batches is None:
-            self.reader.input_module.all_candidates=True
+            self.reader.input_module.all_candidates = True
             self._batches = self.reader.input_module.batch_generator(self._dataset, self._batch_size, is_eval=True)
-            self.reader.input_module.all_candidates=False
+            self.reader.input_module.all_candidates = False
 
         def len_np_or_list(v):
             if isinstance(v, list):
@@ -489,28 +489,28 @@ class KBPEvalHook(EvalHook):
             candidate_ids = predictions[Ports.Input.atomic_candidates]
             questions = predictions[Ports.Input.question]
             for j in range(len_np_or_list(questions)):
-                q=questions[j][0]
+                q = questions[j][0]
                 q_cand_scores[q] = logits[j]
                 q_cand_ids[q] = candidate_ids[j]
                 if q not in q_answers:
                     q_answers[q] = set()
                 q_answers[q].add(correct_answers[j])
         for q in q_cand_ids:
-            for k,c in enumerate(q_cand_ids[q]):
+            for k, c in enumerate(q_cand_ids[q]):
                 qa = str(q) + "\t" + str(c)
                 qa_ids.append(qa)
                 qa_scores.append(q_cand_scores[q][k])
         qa_ranks = rankdata(- asarray(qa_scores), method="min")
         qa_rank = {}
-        for i,qa_id in enumerate(qa_ids):
-            qa_rank[qa_id]=qa_ranks[i]
+        for i, qa_id in enumerate(qa_ids):
+            qa_rank[qa_id] = qa_ranks[i]
         mean_ap = 0
         wmap = 0
         qd = 0
         md = 0
         for q in q_answers:
             cand_ranks = rankdata(- q_cand_scores[q], method="min")
-            ans_ranks=[]
+            ans_ranks = []
             for a in q_answers[q]:
                 for c, cand in enumerate(q_cand_ids[q]):
                     if a == cand and cand_ranks[c] <= 100:
@@ -518,14 +518,15 @@ class KBPEvalHook(EvalHook):
             av_p = 0
             answers = 1
             for r in sorted(ans_ranks):
-                p = answers/r
-                av_p = av_p+p
+                p = answers / r
+                av_p = av_p + p
                 answers += 1
             if len(ans_ranks) > 0:
-                wmap = wmap+av_p
-                md = md+len(ans_ranks)
-                av_p = av_p/len(ans_ranks)
-                res = '\t%s\t%s: %.3f (%d)' % (self.reader.shared_resources.vocab.get_sym(q),"Average Precision", av_p,len(q_answers[q]))
+                wmap = wmap + av_p
+                md = md + len(ans_ranks)
+                av_p = av_p / len(ans_ranks)
+                res = '\t%s\t%s: %.3f (%d)' % (
+                    self.reader.shared_resources.vocab.get_sym(q), "Average Precision", av_p, len(q_answers[q]))
                 logger.info(res)
                 qd = qd + 1
             else:

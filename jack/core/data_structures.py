@@ -41,7 +41,7 @@ class QASetting:
                  question: str,
                  support: Sequence[str] = (),
                  id: str = None,
-                 atomic_candidates: Sequence[str] = None,
+                 candidates: Sequence[str] = None,
                  seq_candidates: Sequence[str] = None,
                  candidate_spans: Sequence[Tuple[int, int, int]] = None):
         """
@@ -49,64 +49,17 @@ class QASetting:
         Args:
             question: the question text.
             support: a sequence of support documents the answerer has access to when answering the question.
-            id: an identifier for the problem.
-            atomic_candidates: a list of candidate answer strings.
-            seq_candidates: REMOVEME
+            id: an identifier for this question setting.
+            candidates: a list of candidate answer strings.
             candidate_spans: for extractive QA, a sequence of candidate spans in the support documents.
             A span `(doc_index,start,end)` corresponds to a span in support document with index `doc_index`,
             with start position `start` and end position `end`.
         """
         self.id = id
         self.candidate_spans = candidate_spans
-        self.seq_candidates = seq_candidates
-        self.atomic_candidates = atomic_candidates
+        self.candidates = candidates
         self.support = support
         self.question = question
-        self.annotation = None
-
-
-class QASettingDB:
-    """
-    Representation of a single question answering problem. It primarily consists of a question,
-    a list of support documents, and optionally, some set of candidate answers.
-    """
-
-    def __init__(self, id: str, dic):
-        self.id = id
-        self._dic = dic
-
-    @property
-    def candidate_spans(self):
-        return self._dic[self.id].get('candidate_spans')
-
-    @property
-    def atomic_candidates(self):
-        return self._dic[self.id].get('atomic_candidates')
-
-    @property
-    def seq_candidates(self):
-        return self._dic[self.id].get('seq_candidates')
-
-    @property
-    def support(self):
-        return self._dic[self.id].get('support')
-
-    @property
-    def support(self):
-        return self._dic[self.id].get('question')
-
-    @property
-    def annotation(self):
-        return self._dic[self.id].get('annotation')
-
-    @property
-    def annotation(self):
-        """Annotations can be set by InputModules after pre-processing."""
-        return self.__annotation
-
-    @annotation.setter
-    def annotation(self, x):
-        self.__annotation = x
 
 
 def _jack_to_qasetting(instance, value, global_candidates):
@@ -120,7 +73,7 @@ def _jack_to_qasetting(instance, value, global_candidates):
             candidates = global_candidates
         answers = [Answer(value(c), value(c, 'span'), c.get('doc_idx', 0)) for c in
                    question_instance['answers']] if "answers" in question_instance else None
-        yield QASetting(question, support, atomic_candidates=candidates, id=idd), answers
+        yield QASetting(question, support, candidates=candidates, id=idd), answers
 
 
 def jack_to_qasetting(jtr_data, max_count=None):

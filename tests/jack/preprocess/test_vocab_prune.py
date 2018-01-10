@@ -10,7 +10,7 @@ def test_vocab():
     train_data = [
         QASetting(question='A person is training his horse for a competition.',
                   support=['A person on a horse jumps over a broken down airplane.'],
-                  atomic_candidates=['entailment', 'neutral', 'contradiction'])
+                  candidates=['entailment', 'neutral', 'contradiction'])
     ]
 
     print('build vocab based on train data')

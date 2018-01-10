@@ -2,11 +2,13 @@
 from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
-from jack.readers.knowledge_base_population.shared import KBPPorts
 from jack.util.map import numpify
 
 
 class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
+    def __init__(self, shared_resources):
+        self._kbp_rng = random.Random(123)
+        super(KnowledgeGraphEmbeddingInputModule, self).__init__(shared_resources)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         self.triples = [x[0].question.split() for x in data]
@@ -19,14 +21,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
 
         self.shared_resources.config['entity_to_index'] = self.entity_to_index
         self.shared_resources.config['predicate_to_index'] = self.predicate_to_index
-        return self.shared_resources
 
-    @property
-    def training_ports(self) -> List[TensorPort]:
-        return []
-
-    def preprocess(self, questions: List[QASetting],
-                   answers: Optional[List[List[Answer]]] = None,
+    def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[List[int]]:
         """Converts questions to triples."""
         triples = []
@@ -40,18 +36,33 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
 
     def create_batch(self, triples: List[List[int]],
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
-        batch_size = len(triples)
+        triples = list(triples)
+        if with_answers:
+            target = [1] * len(triples)
+        if not is_eval:
+            for i in range(len(triples)):
+                s, p, o = triples[i]
+                for _ in range(self.shared_resources.config.get('num_negative', 1)):
+                    random_subject_index = self._kbp_rng.randint(0, len(self.entity_to_index) - 1)
+                    random_object_index = self._kbp_rng.randint(0, len(self.entity_to_index) - 1)
+                    triples.append([random_subject_index, p, o])
+                    triples.append([s, p, random_object_index])
+                    if with_answers:
+                        target.append(0)
+                        target.append(0)
 
-        xy_dict = {
-            Ports.Input.multiple_support: [0] * batch_size,
-            Ports.Input.question: triples,
-            Ports.Input.atomic_candidates: [0] * batch_size
-        }
+        xy_dict = {Ports.Input.question: triples}
+        if with_answers:
+            xy_dict[Ports.Target.target_index] = target
         return numpify(xy_dict)
 
     @property
     def output_ports(self) -> List[TensorPort]:
         return [Ports.Input.question]
+
+    @property
+    def training_ports(self) -> List[TensorPort]:
+        return [Ports.Target.target_index]
 
 
 class KnowledgeGraphEmbeddingModelModule(TFModelModule):
@@ -65,91 +76,68 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
 
     @property
     def output_ports(self) -> List[TensorPort]:
-        return [KBPPorts.triple_logits]
+        return [Ports.Prediction.logits]
 
     @property
     def training_input_ports(self) -> List[TensorPort]:
-        return [Ports.Input.question, KBPPorts.triple_logits]
+        return [Ports.Target.target_index, Ports.Prediction.logits]
 
     @property
     def training_output_ports(self) -> List[TensorPort]:
-        return [Ports.loss, Ports.Prediction.logits]
+        return [Ports.loss]
 
     def create_training_output(self, shared_resources: SharedResources,
                                input_tensors) -> Mapping[TensorPort, tf.Tensor]:
         tensors = TensorPortTensors(input_tensors)
-        positive_labels = tf.ones_like(tensors.triple_logits)
-        nb_entities = len(self.entity_to_index)
-
-        random_subject_indices = tf.random_uniform(shape=(tf.shape(tensors.question)[0], 1),
-                                                   minval=0, maxval=nb_entities, dtype=tf.int32)
-        random_object_indices = tf.random_uniform(shape=(tf.shape(tensors.question)[0], 1),
-                                                  minval=0, maxval=nb_entities, dtype=tf.int32)
-
-        # question_corrupted_subjects[:, 0].assign(random_indices)
-        question_corrupted_subjects = tf.concat(values=[random_subject_indices, tensors.question[:, 1:]], axis=1)
-        question_corrupted_objects = tf.concat(values=[tensors.question[:, :2], random_object_indices], axis=1)
-
-        negative_subject_logits = self.forward_pass(shared_resources, question_corrupted_subjects)
-        negative_object_logits = self.forward_pass(shared_resources, question_corrupted_objects)
-
-        logits = tf.concat(values=[tensors.triple_logits, negative_subject_logits, negative_object_logits], axis=0)
-
-        negative_labels = tf.zeros_like(positive_labels)
-        labels = tf.concat(values=[positive_labels, negative_labels, negative_labels], axis=0)
-
-        losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+        losses = tf.nn.sigmoid_cross_entropy_with_logits(logits=tensors.logits,
+                                                         labels=tf.to_float(tensors.target_index))
         loss = tf.reduce_mean(losses, axis=0)
         return {
-            Ports.loss: loss,
-            Ports.Prediction.logits: logits
+            Ports.loss: loss
         }
 
     def create_output(self, shared_resources: SharedResources, input_tensors) -> Mapping[TensorPort, tf.Tensor]:
         tensors = TensorPortTensors(input_tensors)
         with tf.variable_scope('knowledge_graph_embedding'):
-            self.embedding_size = shared_resources.config['repr_dim']
+            embedding_size = shared_resources.config['repr_dim']
 
-            self.entity_to_index = shared_resources.config['entity_to_index']
-            self.predicate_to_index = shared_resources.config['predicate_to_index']
+            entity_to_index = shared_resources.config['entity_to_index']
+            predicate_to_index = shared_resources.config['predicate_to_index']
 
-            nb_entities = len(self.entity_to_index)
-            nb_predicates = len(self.predicate_to_index)
+            nb_entities = len(entity_to_index)
+            nb_predicates = len(predicate_to_index)
 
-            self.entity_embeddings = tf.get_variable('entity_embeddings',
-                                                     [nb_entities, self.embedding_size],
-                                                     initializer=tf.contrib.layers.xavier_initializer(),
-                                                     dtype='float32')
-            self.predicate_embeddings = tf.get_variable('predicate_embeddings',
-                                                        [nb_predicates, self.embedding_size],
-                                                        initializer=tf.contrib.layers.xavier_initializer(),
-                                                        dtype='float32')
+            entity_embeddings = tf.get_variable('entity_embeddings',
+                                                [nb_entities, embedding_size],
+                                                initializer=tf.contrib.layers.xavier_initializer(),
+                                                dtype='float32')
+            predicate_embeddings = tf.get_variable('predicate_embeddings',
+                                                   [nb_predicates, embedding_size],
+                                                   initializer=tf.contrib.layers.xavier_initializer(),
+                                                   dtype='float32')
 
-            logits = self.forward_pass(shared_resources, tensors.question)
+            subject_idx = tensors.question[:, 0]
+            predicate_idx = tensors.question[:, 1]
+            object_idx = tensors.question[:, 2]
+
+            subject_emb = tf.nn.embedding_lookup(entity_embeddings, subject_idx, max_norm=1.0)
+            predicate_emb = tf.nn.embedding_lookup(predicate_embeddings, predicate_idx)
+            object_emb = tf.nn.embedding_lookup(entity_embeddings, object_idx, max_norm=1.0)
+
+            from jack.readers.knowledge_base_population import scores
+            assert self.model_name is not None
+
+            model_class = scores.get_function(self.model_name)
+            model = model_class(
+                subject_embeddings=subject_emb,
+                predicate_embeddings=predicate_emb,
+                object_embeddings=object_emb)
+
+            logits = model()
 
         return {
-            KBPPorts.triple_logits: logits
+            Ports.Prediction.logits: logits
         }
-
-    def forward_pass(self, shared_resources, question):
-        subject_idx = question[:, 0]
-        predicate_idx = question[:, 1]
-        object_idx = question[:, 2]
-
-        subject_emb = tf.nn.embedding_lookup(self.entity_embeddings, subject_idx, max_norm=1.0)
-        predicate_emb = tf.nn.embedding_lookup(self.predicate_embeddings, predicate_idx)
-        object_emb = tf.nn.embedding_lookup(self.entity_embeddings, object_idx, max_norm=1.0)
-
-        from jack.readers.knowledge_base_population import scores
-        assert self.model_name is not None
-
-        model_class = scores.get_function(self.model_name)
-        model = model_class(
-            subject_embeddings=subject_emb,
-            predicate_embeddings=predicate_emb,
-            object_embeddings=object_emb)
-
-        return model()
 
 
 class KnowledgeGraphEmbeddingOutputModule(OutputModule):
@@ -158,7 +146,7 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
 
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [KBPPorts.triple_logits]
+        return [Ports.Prediction.logits]
 
     def __call__(self, inputs: Sequence[QASetting], logits: np.ndarray) -> Sequence[Answer]:
         # len(inputs) == batch size
@@ -166,5 +154,5 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
         results = []
         for index_in_batch, question in enumerate(inputs):
             score = logits[index_in_batch]
-            results.append(Answer(None, score=score))
+            results.append(Answer(question.question, score=score))
         return results

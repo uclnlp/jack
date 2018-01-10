@@ -39,7 +39,7 @@ def smoke_test(reader_name):
             question="Which is it?",
             support=["While b seems plausible, answer a is correct."],
             id="1",
-            atomic_candidates=["a", "b", "c"]),
+            candidates=["a", "b", "c"]),
          [Answer("a", (6, 6))])
     ]
     questions = [q for q, _ in data_set]

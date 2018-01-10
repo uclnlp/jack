@@ -279,6 +279,6 @@ class SimpleClassificationOutputModule(OutputModule):
             if self._shared_resources is not None and hasattr(self._shared_resources, 'answer_vocab'):
                 ans = Answer(self._shared_resources.answer_vocab.id2sym[winning_index], score=score)
             else:
-                ans = Answer(question.atomic_candidates[winning_index], score=score)
+                ans = Answer(question.candidates[winning_index], score=score)
             result.append(ans)
         return result

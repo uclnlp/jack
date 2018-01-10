@@ -154,17 +154,6 @@ def modular_nli_reader(resources_or_conf: Union[dict, SharedResources] = None):
 
 
 @kbp_reader
-def modelf_reader(resources_or_conf: Union[dict, SharedResources] = None):
-    """Creates a knowledge_base_population model F."""
-    from jack.readers.knowledge_base_population.model_f import ModelFInputModule, ModelFModelModule, ModelFOutputModule
-    shared_resources = create_shared_resources(resources_or_conf)
-    input_module = ModelFInputModule(shared_resources)
-    model_module = ModelFModelModule(shared_resources)
-    output_module = ModelFOutputModule()
-    return TFReader(shared_resources, input_module, model_module, output_module)
-
-
-@kbp_reader
 def distmult_reader(resources_or_conf: Union[dict, SharedResources] = None):
     """Creates a knowledge_base_population DistMult model."""
     from jack.readers.knowledge_base_population.models import KnowledgeGraphEmbeddingInputModule, \
