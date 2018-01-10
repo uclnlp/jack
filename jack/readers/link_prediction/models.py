@@ -11,17 +11,16 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         super(KnowledgeGraphEmbeddingInputModule, self).__init__(shared_resources)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
-        self.triples = [x[0].question.split() for x in data]
+        triples = [tuple(x[0].question.split()) for x in data]
 
-        self.entity_set = {s for [s, _, _] in self.triples} | {o for [_, _, o] in self.triples}
-        self.predicate_set = {p for [_, p, _] in self.triples}
+        entity_set = {s for [s, _, _] in triples} | {o for [_, _, o] in triples}
+        predicate_set = {p for [_, p, _] in triples}
 
-        self.entity_to_index = {entity: index for index, entity in enumerate(self.entity_set)}
-        self.predicate_to_index = {predicate: index for index, predicate in enumerate(self.predicate_set)}
-        self.entity_to_index["UNK"] = len(self.entity_to_index)
+        entity_to_index = {entity: index for index, entity in enumerate(entity_set)}
+        predicate_to_index = {predicate: index for index, predicate in enumerate(predicate_set)}
 
-        self.shared_resources.entity_to_index = self.entity_to_index
-        self.shared_resources.predicate_to_index = self.predicate_to_index
+        self.shared_resources.entity_to_index = entity_to_index
+        self.shared_resources.predicate_to_index = predicate_to_index
 
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[List[int]]:
@@ -29,9 +28,9 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         triples = []
         for qa_setting in questions:
             s, p, o = qa_setting.question.split()
-            s_idx = self.entity_to_index.get(s, self.entity_to_index["UNK"])
-            o_idx = self.entity_to_index.get(o, self.entity_to_index["UNK"])
-            p_idx = self.predicate_to_index[p]
+            s_idx = self.shared_resources.entity_to_index.get(s, len(self.shared_resources.entity_to_index))
+            o_idx = self.shared_resources.entity_to_index.get(o, len(self.shared_resources.entity_to_index))
+            p_idx = self.shared_resources.predicate_to_index[p]
             triples.append([s_idx, p_idx, o_idx])
 
         return triples
@@ -45,8 +44,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
             for i in range(len(triples)):
                 s, p, o = triples[i]
                 for _ in range(self.shared_resources.config.get('num_negative', 1)):
-                    random_subject_index = self._kbp_rng.randint(0, len(self.entity_to_index) - 1)
-                    random_object_index = self._kbp_rng.randint(0, len(self.entity_to_index) - 1)
+                    random_subject_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
+                    random_object_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
                     triples.append([random_subject_index, p, o])
                     triples.append([s, p, random_object_index])
                     target.append(0)
@@ -100,12 +99,11 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
         with tf.variable_scope('knowledge_graph_embedding'):
             embedding_size = shared_resources.config['repr_dim']
 
-            nb_entities = len(shared_resources.entity_to_index)
+            nb_entities = len(shared_resources.entity_to_index) + 1  # + 1 to allow for unknown entities
             nb_predicates = len(shared_resources.predicate_to_index)
 
             entity_embeddings = tf.get_variable('entity_embeddings',
                                                 [nb_entities, embedding_size],
-                                                initializer=tf.contrib.layers.xavier_initializer(),
                                                 dtype='float32')
             predicate_embeddings = tf.get_variable('predicate_embeddings',
                                                    [nb_predicates, embedding_size],

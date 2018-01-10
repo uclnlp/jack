@@ -71,7 +71,7 @@ def _jack_to_qasetting(instance, value, global_candidates):
             candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
         else:
             candidates = global_candidates
-        answers = [Answer(value(c), value(c, 'span'), c.get('doc_idx', 0)) for c in
+        answers = [Answer(value(c), value(c, 'span'), value(c, 'doc_idx', 0)) for c in
                    question_instance['answers']] if "answers" in question_instance else None
         yield QASetting(question, support, candidates=candidates, id=idd), answers
 
@@ -87,8 +87,8 @@ def jack_to_qasetting(jtr_data, max_count=None):
         list of QASetting
     """
 
-    def value(c, key="text"):
-        return c.get(key, None) if isinstance(c, dict) else c if key == 'text' else None
+    def value(c, key="text", default=None):
+        return c.get(key, default) if isinstance(c, dict) else c if key == 'text' else default
 
     global_candidates = [value(c) for c in jtr_data['globals']['candidates']] if 'globals' in jtr_data else None
 
