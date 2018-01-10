@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+import progressbar
 
 from jack.core import QASetting
 from jack.io.load import loaders
@@ -48,7 +49,10 @@ def compute_ranks(scoring_function, triples, entity_set, true_triples=None):
     subject_ranks, object_ranks = [], []
     subject_ranks_filtered, object_ranks_filtered = [], []
 
-    for s, p, o in triples:
+    bar = progressbar.ProgressBar(
+        max_value=len(triples),
+        widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
+    for s, p, o in bar(triples):
         subject_triples = [(s, p, o)] + [(x, p, o) for x in entity_set if x != s]
         object_triples = [(s, p, o)] + [(s, p, x) for x in entity_set if x != o]
 
