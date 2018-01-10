@@ -4,7 +4,44 @@ import logging
 
 import numpy as np
 
+from jack.core import QASetting
+from jack.io.load import loaders
+
 logger = logging.getLogger(__name__)
+
+
+def evaluate(reader, dataset, batch_size):
+    triples = {tuple(q.question.split()) for q, a in dataset if a[0].text == "True"}
+    entity_set = reader.shared_resources.entity_to_index
+
+    conf = reader.shared_resources.config
+    all_triples = set()
+    if conf.get('train'):
+        all_triples.update(tuple(qa.question.split()) for qa, a in loaders[conf['loader']](conf['train'])
+                           if a[0].text == "True")
+    if conf.get('dev'):
+        all_triples.update(tuple(qa.question.split()) for qa, a in loaders[conf['loader']](conf['dev'])
+                           if a[0].text == "True")
+    if conf.get('test'):
+        all_triples.update(tuple(qa.question.split()) for qa, a in loaders[conf['loader']](conf['test'])
+                           if a[0].text == "True")
+
+    def scoring_function(triples):
+        scores = []
+        for i in range(0, len(triples), batch_size):
+            batch_qas = [
+                QASetting(" ".join(triples[k]))
+                for k in range(i, min(len(triples), (i + batch_size)))]
+            if batch_qas:
+                for a in reader(batch_qas):
+                    scores.append(a.score)
+        return scores
+
+    ranks, filtered_ranks = compute_ranks(scoring_function, triples, entity_set, all_triples)
+    logger.info('========== Unfiltered Results ==========')
+    ranking_summary(ranks)
+    logger.info('\n\n========== Filtered Results ==========')
+    ranking_summary(filtered_ranks)
 
 
 def compute_ranks(scoring_function, triples, entity_set, true_triples=None):
