@@ -25,17 +25,22 @@ There are 5 starting keys `support` (embedded support), `question` (embedded que
 `char_support` (character embedded support), `char_question` (character embedded question),
 `word_in_question` (feature indicating that a word occurred in the question)
 
+### NLI
+There are 4 starting keys `premise` (embedded premise), `hypothesis` (embedded hypothesis),
+`char_support` (character embedded premise), `char_hypothesis` (character embedded hypothesis).
+Character based keys are only available if 'with_char_embeddings' flag is set to true in the config.
+
 # Sequence Encoders
 
 ### BiRNNs 
 * `module`: `lstm`, `gru`, `sru` (simple recurrent unit)
-* `with_projection`: employs projection after BiRNNs which is initialized to being the sum of the forward and backward state
-* `activation`: can be set if projection is used
+* `with_projection`: boolean; employs a linear projection after BiRNNs which is initialized to being the sum of the forward and backward state
+* `activation`: applicable if projection is used
 
 ### Convolutions
 * `module`: `conv`, `conv_glu` ([gated linear unit](https://arxiv.org/pdf/1612.08083.pdf)), 'gldr' ([gated linear dilated residual network](https://openreview.net/pdf?id=HJRV1ZZAW))
 * `conv_width`: width of the convolution
-* `activation`: can be set if not `glu`
+* `activation`: can be set to anything (only applicable if `conv` is chosen as module) 
 * `dilations`: list of dilations corresponding to the number of layers in `gldr`
 
 ### Self Attention
@@ -51,13 +56,13 @@ There are 5 starting keys `support` (embedded support), `question` (embedded que
 # Combination Modules
 * `input`: list of keys to combine
 * `output`: string, required
-* `module`: `concat`, `add`, `mul`, `weighted_add` (computes an element-wise sigmoid gate)
+* `module`: `concat`, `add`, `sub`, `mul`, `weighted_add` (computes an element-wise sigmoid gate g; result is g * input1 + (1-g) * input2)
 
 # Interaction Modules
 These modules typically concatenate the input with some interaction states. These are usually computed using attention.
 
 * `input`: key referring to sequence for which to compute interactions
-* `dependent`: interaction partner
+* `dependent`: key of the interaction partner
 * `concat`: concatenates input with output of this module (default: True)
 * `modules`: `attention_matching`, `bidaf`, `coattention`
 * `attn_type`: `mlp`, `bilinear`, `diagonal_bilinear`, `dot`
