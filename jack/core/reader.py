@@ -7,9 +7,12 @@ using a TensorFlow model into other tensors, and one that converts these tensors
 """
 
 import logging
+import math
 import os
 import shutil
 from typing import Iterable, List
+
+import progressbar
 
 from jack.core.data_structures import *
 from jack.core.input_module import InputModule
@@ -83,7 +86,7 @@ class JTReader:
         answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
         return answers
 
-    def process_dataset(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, debug=False):
+    def process_dataset(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, silent=True):
         """
         Similar to the call method, only that it works on a labeled dataset and applies batching. However, assumes
         that batches in input_module.batch_generator are processed in order and do not get shuffled during with
@@ -93,24 +96,26 @@ class JTReader:
             dataset:
             batch_size: note this information is needed here, but does not set the batch_size the model is using.
             This has to happen during setup/configuration.
-            debug: if true, logging counter
+            silent: if true, no output
 
         Returns:
             predicted outputs/answers to a given (labeled) dataset
         """
-        if debug:
-            logger.setLevel(logging.DEBUG)
-        logger.debug("Setting up batches...")
         batches = self.input_module.batch_generator(dataset, batch_size, is_eval=True)
         answers = list()
-        logger.debug("Start answering...")
-        for j, batch in enumerate(batches):
+        enumerator = enumerate(batches)
+        if not silent:
+            logger.info("Start answering...")
+            bar = progressbar.ProgressBar(
+                max_value=math.ceil(len(dataset) / batch_size),
+                widgets=[' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') '])
+            enumerator = bar(enumerator)
+        for j, batch in enumerator:
             output_module_input = self.model_module(batch, self.output_module.input_ports)
             questions = [q for q, a in dataset[j * batch_size:(j + 1) * batch_size]]
             answers.extend(a[0] for a in self.output_module(
                 questions, *[output_module_input[p] for p in self.output_module.input_ports]))
-            if debug:
-                logger.debug("{}/{} examples processed".format(len(answers), len(dataset)))
+
         return answers
 
     def train(self, optimizer, training_set: Iterable[Tuple[QASetting, List[Answer]]], batch_size: int,

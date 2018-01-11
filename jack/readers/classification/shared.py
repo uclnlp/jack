@@ -3,8 +3,6 @@
 from abc import ABCMeta
 from typing import NamedTuple
 
-import progressbar
-
 from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
@@ -280,5 +278,5 @@ class SimpleClassificationOutputModule(OutputModule):
                 ans = Answer(self._shared_resources.answer_vocab.id2sym[winning_index], score=score)
             else:
                 ans = Answer(question.candidates[winning_index], score=score)
-            result.append(ans)
+            result.append([ans])
         return result

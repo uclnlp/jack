@@ -22,7 +22,7 @@ class OutputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, inputs: Sequence[QASetting], *tensor_inputs: np.ndarray) -> Sequence[Answer]:
+    def __call__(self, inputs: Sequence[QASetting], *tensor_inputs: np.ndarray) -> Sequence[Sequence[Answer]]:
         """
         Process the tensors corresponding to the defined `input_ports` for a batch to produce a list of answers.
         The module has access to the original inputs.

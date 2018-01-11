@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import logging
 from abc import *
 from collections import defaultdict
 from datetime import datetime
@@ -17,7 +16,7 @@ from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader
 from jack.core.tensorflow import TFReader
 from jack.core.tensorport import TensorPort, Ports
-from jack.eval.extractive_qa_eval import *
+from jack.eval.extractive_qa import *
 
 logger = logging.getLogger(__name__)
 
@@ -433,7 +432,7 @@ class ClassificationEvalHook(EvalHook):
         return {"F1_macro": acc_f1, "Accuracy": acc_exact}
 
 
-class KBPEvalHook(EvalHook):
+class LinkPredictionEvalHook(EvalHook):
     def __init__(self, reader: JTReader, dataset: List[Tuple[QASetting, List[Answer]]], batch_size: int,
                  iter_interval=None, epoch_interval=1, metrics=None, summary_writer=None,
                  write_metrics_to=None, info="", side_effect=None, **kwargs):
