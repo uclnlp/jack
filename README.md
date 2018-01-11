@@ -97,6 +97,8 @@ answers = fastqa_reader([QASetting(
     question="To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
     support=[support]
 )])
+
+print(answers[0][0].text)
 ```
 [fastqa]: https://arxiv.org/abs/1703.04816
 [showcase]: notebooks/Showcasing_Jack.ipynb
@@ -151,6 +153,8 @@ answers = dam_reader([QASetting(
     question="The boy plays with the ball.",  # Hypothesis
     support=["The boy plays with the ball."]  # Premise
 )])
+
+print(answers[0][0].text)
 ```
 
 [dam]: https://arxiv.org/abs/1606.01933

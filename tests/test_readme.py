@@ -55,5 +55,5 @@ def test_readme_dam():
     )])
 
     assert answers[0] is not None
-    assert isinstance(answers[0].score, np.float32)
-    assert answers[0].text in atomic_candidates
+    assert isinstance(answers[0][0].score, np.float32)
+    assert answers[0][0].text in atomic_candidates
