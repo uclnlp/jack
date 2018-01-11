@@ -1,10 +1,10 @@
 # Encoder Modules
 
-We support modular composition of models for QA (and NLI soon). This means that you can stick together your models
-in a config only, *no need to touch code at all*. Browse through the config in `conf/` to get a feeling (note, not all
-implemented models are built like this). Each module is defined in the config by a [yaml](http://yaml.org/) block
-with predefined, module-specific properties, which are not applicable everywhere.
-The most general are listed in the following and the rest further down:
+We support modular composition of models for QA and NLI. This means that you can stick together your models
+in a config, *no need to touch code at all*. Browse through the configs in `conf/` to get a feeling (note, some
+models are implemented directly in code). Each module is defined in the config by a [yaml](http://yaml.org/) block
+with predefined, module-specific properties.
+The most general are listed in the following and the more specific ones further down:
 
 * `module`: type of this module
 * `name`: optional, name of the module; modules with the same name share parameters
