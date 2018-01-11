@@ -1,6 +1,24 @@
+import logging
 import re
 import string
 from collections import Counter
+
+logger = logging.getLogger(__name__)
+
+
+def evaluate(reader, dataset, batch_size):
+    answers = reader.process_dataset(dataset, batch_size, silent=False)
+
+    f1 = exact_match = 0
+    for pa, (q, ass) in zip(answers, dataset):
+        ground_truth = [a.text for a in ass]
+        f1 += metric_max_over_ground_truths(f1_score, pa.text, ground_truth)
+        exact_match += metric_max_over_ground_truths(exact_match_score, pa.text, ground_truth)
+
+    f1 /= len(answers)
+    exact_match /= len(answers)
+
+    return {'F1': f1, 'Exact': exact_match}
 
 
 def normalize_answer(s):

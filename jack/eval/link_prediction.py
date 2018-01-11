@@ -39,10 +39,10 @@ def evaluate(reader, dataset, batch_size):
         return scores
 
     ranks, filtered_ranks = compute_ranks(scoring_function, triples, entity_set, all_triples)
-    logger.info('========== Unfiltered Results ==========')
-    ranking_summary(ranks)
-    logger.info('\n\n========== Filtered Results ==========')
-    ranking_summary(filtered_ranks)
+    results = dict()
+    results['Unfiltered Results'] = ranking_summary(ranks)
+    results['Filtered Results'] = ranking_summary(filtered_ranks)
+    return results
 
 
 def compute_ranks(scoring_function, triples, entity_set, true_triples=None):
@@ -86,32 +86,26 @@ def compute_ranks(scoring_function, triples, entity_set, true_triples=None):
 
 
 def ranking_summary(res, n=10, tag=None):
-    dres = dict()
+    dres = {'subject': dict(), 'object': dict(), 'all': dict()}
 
-    dres['microlmean'] = np.mean(res[0])
-    dres['microlmedian'] = np.median(res[0])
-    dres['microlhits@n'] = np.mean(np.asarray(res[0]) <= n) * 100
-    dres['micrormean'] = np.mean(res[1])
-    dres['micrormedian'] = np.median(res[1])
-    dres['microrhits@n'] = np.mean(np.asarray(res[1]) <= n) * 100
+    dres['subject']['mean_rank'] = np.mean(res[0])
+    dres['subject']['median_rank'] = np.median(res[0])
+    dres['subject']['hits@1'] = np.mean(np.asarray(res[0]) <= 1)
+    dres['subject']['hits@' + str(n)] = np.mean(np.asarray(res[0]) <= n)
+    dres['object']['mean_rank'] = np.mean(res[1])
+    dres['object']['median_rank'] = np.median(res[1])
+    dres['object']['hits@1'] = np.mean(np.asarray(res[1]) <= 1)
+    dres['object']['hits@' + str(n)] = np.mean(np.asarray(res[1]) <= n)
 
     resg = res[0] + res[1]
 
-    dres['microgmean'] = np.mean(resg)
-    dres['microgmedian'] = np.median(resg)
-    dres['microghits@n'] = np.mean(np.asarray(resg) <= n) * 100
+    dres['all']['mean_rank'] = np.mean(resg)
+    dres['all']['median_rank'] = np.median(resg)
+    dres['all']['hits@1'] = np.mean(np.asarray(resg) <= 1)
+    dres['all']['hits@' + str(n)] = np.mean(np.asarray(resg) <= n)
 
-    dres['microlmrr'] = np.mean(1. / np.asarray(res[0]))
-    dres['micrormrr'] = np.mean(1. / np.asarray(res[1]))
-    dres['microgmrr'] = np.mean(1. / np.asarray(resg))
+    dres['subject']['mrr'] = np.mean(1. / np.asarray(res[0]))
+    dres['object']['mrr'] = np.mean(1. / np.asarray(res[1]))
+    dres['all']['mrr'] = np.mean(1. / np.asarray(resg))
 
-    logger.info('### MICRO (%s):' % tag)
-    logger.info('\t-- left   >> mean: %s, median: %s, mrr: %s, hits@%s: %s%%' %
-                (round(dres['microlmean'], 5), round(dres['microlmedian'], 5),
-                 round(dres['microlmrr'], 3), n, round(dres['microlhits@n'], 3)))
-    logger.info('\t-- right  >> mean: %s, median: %s, mrr: %s, hits@%s: %s%%' %
-                (round(dres['micrormean'], 5), round(dres['micrormedian'], 5),
-                 round(dres['micrormrr'], 3), n, round(dres['microrhits@n'], 3)))
-    logger.info('\t-- global >> mean: %s, median: %s, mrr: %s, hits@%s: %s%%' %
-                (round(dres['microgmean'], 5), round(dres['microgmedian'], 5),
-                 round(dres['microgmrr'], 3), n, round(dres['microghits@n'], 3)))
+    return dres
