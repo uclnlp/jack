@@ -153,8 +153,8 @@ def convert_fb15k(triples, neighbourhoods):
             qset_dict['support'] = [" ".join(t) for t in neighbour_triples]
 
         qset_dict['questions'] = [{
-            "question": " ".join(triple),  # subject and relation
-            "answers": ["True"]  # object
+            "question": " ".join(triple),
+            "answers": ["True"]
         }]
         instances.append(qset_dict)
 

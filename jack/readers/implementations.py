@@ -39,10 +39,10 @@ def nli_reader(f):
 
 
 def link_prediction_reader(f):
-    from jack.util.hooks import LinkPredictionEvalHook
+    from jack.util.hooks import LogProbEvalHook
     __reader(f)
     link_prediction_readers.setdefault(f.__name__, f)
-    eval_hooks.setdefault(f.__name__, LinkPredictionEvalHook)
+    eval_hooks.setdefault(f.__name__, LogProbEvalHook)
     return f
 
 
