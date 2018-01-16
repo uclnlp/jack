@@ -29,7 +29,7 @@ def apply_attention(attn_scores, states, length, is_self=False, with_sentinel=Tr
         attn_probs = softmax(attn_scores)
     attn_states = tf.einsum('abd,adc->abc', attn_probs, states)
     if seq2_to_seq1 is not None:
-        attn_states = tf.unsorted_segment_sum(attn_states, seq2_to_seq1)
+        attn_states = tf.unsorted_segment_sum(attn_states, seq2_to_seq1, tf.reduce_max(seq2_to_seq1) + 1)
     return attn_scores, attn_probs, attn_states
 
 
