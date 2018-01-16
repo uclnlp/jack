@@ -5,7 +5,7 @@ from jack.tfutil import sequence_encoder
 from jack.tfutil.misc import mask_for_lengths
 
 
-def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2,
+def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_to_seq1,
                       module='attention_matching', attn_type='bilinear_diagonal', scaled=True, with_sentinel=False,
                       name='interaction_layer', reuse=False, num_layers=1, encoder=None, concat=True,
                       repr_dim=None, **kwargs):
@@ -15,7 +15,7 @@ def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2,
             seq2_length = tf.gather(seq2_length, seq1_to_seq2)
         if module == 'attention_matching':
             out = attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
-                                           attn_type, scaled, with_sentinel)
+                                           attn_type, scaled, with_sentinel, seq2_to_seq1=seq2_to_seq1)
         elif module == 'bidaf':
             out = bidaf_layer(seq1, seq1_length, seq2, seq2_length)
         elif module == 'coattention':
@@ -31,10 +31,10 @@ def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2,
     return out
 
 
-def bidaf_layer(seq1, seq1_length, seq2, seq2_length):
+def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=None):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     attn_scores, attn_probs, seq2_weighted = attention.diagonal_bilinear_attention(
-        seq1, seq2, seq2_length, False)
+        seq1, seq2, seq2_length, False, seq2_to_seq1=seq2_to_seq1)
 
     attn_scores += tf.expand_dims(mask_for_lengths(seq1_length, tf.shape(attn_scores)[1]), 2)
 
@@ -48,18 +48,20 @@ def bidaf_layer(seq1, seq1_length, seq2, seq2_length):
 
 
 def attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
-                             attn_type='diagonal_bilinear', scaled=True, with_sentinel=False):
+                             attn_type='diagonal_bilinear', scaled=True, with_sentinel=False, seq2_to_seq1=None):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     if attn_type == 'bilinear':
-        _, _, attn_states = attention.bilinear_attention(seq1, seq2, seq2_length, scaled, with_sentinel)
+        _, _, attn_states = attention.bilinear_attention(seq1, seq2, seq2_length, scaled, with_sentinel,
+                                                         seq2_to_seq1=seq2_to_seq1)
     elif attn_type == 'dot':
-        _, _, attn_states = attention.dot_attention(seq1, seq2, seq2_length, scaled, with_sentinel)
+        _, _, attn_states = attention.dot_attention(seq1, seq2, seq2_length, scaled, with_sentinel,
+                                                    seq2_to_seq1=seq2_to_seq1)
     elif attn_type == 'diagonal_bilinear':
         _, _, attn_states = attention.diagonal_bilinear_attention(seq1, seq2, seq2_length, scaled,
-                                                                  with_sentinel)
+                                                                  with_sentinel, seq2_to_seq1=seq2_to_seq1)
     elif attn_type == 'mlp':
         _, _, attn_states = attention.mlp_attention(seq1.get_shape()[-1].value, tf.nn.relu, seq1, seq2,
-                                                    seq2_length, with_sentinel)
+                                                    seq2_length, with_sentinel, seq2_to_seq1=seq2_to_seq1)
     else:
         raise ValueError("Unknown attention type: %s" % attn_type)
 
@@ -67,7 +69,7 @@ def attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
 
 
 def coattention_layer(seq1, seq1_length, seq2, seq2_length,
-                      attn_type='diagonal_bilinear', scaled=True, with_sentinel=False,
+                      attn_type='diagonal_bilinear', scaled=True, with_sentinel=False, seq2_to_seq1=None,
                       num_layers=1, encoder=None):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     if attn_type == 'bilinear':
@@ -94,7 +96,7 @@ def coattention_layer(seq1, seq1_length, seq2, seq2_length,
                     attn_states2[-1], seq2_length, name='encoder2', **encoder)
                 seq1.append(enc_1)
                 _, _, new_attn_states1, new_attn_states2, new_co_attn_state = attention.coattention(
-                    enc_1, seq1_length, enc_2, seq2_length, scaled, with_sentinel, attn_fun)
+                    enc_1, seq1_length, enc_2, seq2_length, scaled, with_sentinel, attn_fun, seq2_to_seq1=seq2_to_seq1)
                 attn_states1.append(new_attn_states1)
                 attn_states2.append(new_attn_states2)
                 co_attn_state.append(new_co_attn_state)

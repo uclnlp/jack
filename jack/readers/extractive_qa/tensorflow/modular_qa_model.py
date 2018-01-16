@@ -36,8 +36,8 @@ class ModularQAModel(AbstractXQAModelModule):
 
         encoder_config = model['encoder_layer']
 
-        encoded, _, _ = modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, repr_dim, dropout,
-                                        tensors.is_eval)
+        encoded, lengths, mappings = modular_encoder(
+            encoder_config, inputs, inputs_length, inputs_mapping, repr_dim, dropout, tensors.is_eval)
 
         with tf.variable_scope('answer_layer'):
             answer_layer_config = model['answer_layer']
@@ -55,9 +55,10 @@ class ModularQAModel(AbstractXQAModelModule):
             self._beam_size_assign = lambda k: self.tf_session.run(beam_size_assign, {beam_size_p: k})
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
-                answer_layer(encoded_question, tensors.question_length, encoded_support,
-                             tensors.support_length,
-                             tensors.support2question, tensors.answer2support, tensors.is_eval,
+                answer_layer(encoded_question, lengths[answer_layer_config.get('question', 'question')],
+                             encoded_support, lengths[answer_layer_config.get('support', 'support')],
+                             mappings[answer_layer_config.get('support', 'support')],
+                             tensors.answer2support, tensors.is_eval,
                              tensors.correct_start, beam_size=beam_size, **answer_layer_config)
 
         span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
