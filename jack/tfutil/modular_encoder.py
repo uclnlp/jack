@@ -53,7 +53,7 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 dep_key = module['dependent']
                 inp = outputs[key]
                 inp_len = outputs_length[key]
-                if outputs_mapping.get(dep_key) and not outputs_mapping.get(key):
+                if outputs_mapping.get(dep_key) is not None and outputs_mapping.get(key) is None:
                     inp = tf.gather(inp, outputs_mapping.get(dep_key))
                     inp_len = tf.gather(inp_len, outputs_mapping.get(dep_key))
                 outputs[out_key] = interaction_layer(
