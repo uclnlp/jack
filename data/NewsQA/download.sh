@@ -33,3 +33,4 @@ mv newsqa/maluuba/newsqa/* .
 rm -r newsqa
 
 echo "Find resulting dataset in data/NewsQA/newsqa/maluuba/newsqa/[train,dev,test]_story_ids.csv and newsqa/maluuba/newsqa/split_data"
+echo "These can be used as input to the conversion scripts in jack/io/NewsQA2*.py"

@@ -51,8 +51,13 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 module['repr_dim'] = default_repr_dim
             if 'dependent' in module:
                 dep_key = module['dependent']
+                inp = outputs[key]
+                inp_len = outputs_length[key]
+                if outputs_mapping.get(dep_key):
+                    inp = tf.gather(inp, outputs_mapping.get(dep_key))
+                    inp_len = tf.gather(inp_len, outputs_mapping.get(dep_key))
                 outputs[out_key] = interaction_layer(
-                    outputs[key], outputs_length[key],
+                    inp, inp_len,
                     outputs[dep_key], outputs_length[dep_key],
                     outputs_mapping.get(key), reuse=reuse, **module)
             else:
