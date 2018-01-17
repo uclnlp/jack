@@ -45,8 +45,8 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, con
         elif module == 'self_attn':
             outs = []
             for i in range(num_attn_heads):
-                attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim, with_sentinel,
-                                      activation_from_string(activation), name + str(i), reuse)
+                attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim,
+                                      activation_from_string(activation), with_sentinel, name + str(i), reuse)
                 outs.append(attn)
             out = tf.concat(outs, 2) if num_layers > 1 else outs[0]
         else:
