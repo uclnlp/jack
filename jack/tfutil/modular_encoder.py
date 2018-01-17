@@ -52,6 +52,8 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 # auto-concat
                 new_key = '_'.join(key)
                 outputs[new_key] = tf.concat([outputs[k] for k in key], 2)
+                outputs_length[new_key] = outputs_length[key[0]]
+                outputs_mapping[new_key] = outputs_length[key[0]]
                 key = new_key
 
             if 'repr_dim' not in module:
