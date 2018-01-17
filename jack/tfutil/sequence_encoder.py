@@ -184,7 +184,7 @@ def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=
         elif attn_type == 'diagonal_bilinear':
             attn_states = attention.diagonal_bilinear_attention(inputs, inputs, lengths, scaled, with_sentinel)[2]
         elif attn_type == 'mlp':
-            attn_states = attention.mlp_attention(repr_dim, activation, inputs, inputs, lengths, with_sentinel)[2]
+            attn_states = attention.mlp_attention(repr_dim, inputs, inputs, lengths, activation, with_sentinel)[2]
         else:
             raise ValueError("Unknown attention type: %s" % attn_type)
 
