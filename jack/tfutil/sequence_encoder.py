@@ -13,44 +13,52 @@ logger = logging.getLogger(__name__)
 
 def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, conv_width=3,
             dilations=None, reuse=False, residual=False, attn_type=None, num_attn_heads=1, scaled=False,
-            activation=None, with_sentinel=False, with_projection=False, name='encoder', **kwargs):
+            activation=None, with_sentinel=False, with_projection=False, name='encoder', num_parallel=1, **kwargs):
     if num_layers == 1:
-        if module == 'lstm':
-            out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
-            if activation:
-                out = activation_from_string(activation)(out)
-        elif module == 'sru':
-            with_residual = sequence.get_shape()[2].value == repr_dim
-            out = bi_sru(repr_dim, sequence, seq_length, with_residual, name, reuse, with_projection)
-            if activation:
-                out = activation_from_string(activation)(out)
-        elif module == 'gru':
-            out = bi_rnn(repr_dim, tf.contrib.rnn.BlockGRUCell(repr_dim), sequence,
-                         seq_length, name, reuse, with_projection)
-            if activation:
-                out = activation_from_string(activation)(out)
-        elif module == 'gldr':
-            out = gated_linear_dilated_residual_network(
-                repr_dim, sequence, dilations, conv_width, name, reuse)
-        elif module == 'conv':
-            out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
-        elif module == 'conv_glu':
-            out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
-        elif module == 'dense':
-            out = tf.layers.dense(sequence, repr_dim, name=name, reuse=reuse)
-            if activation:
-                out = activation_from_string(activation)(out)
-        elif module == 'highway':
-            out = highway_network(sequence, num_layers, activation_from_string(activation), name=name, reuse=reuse)
-        elif module == 'self_attn':
-            outs = []
-            for i in range(num_attn_heads):
-                attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim,
-                                      activation_from_string(activation), with_sentinel, name + str(i), reuse)
-                outs.append(attn)
-            out = tf.concat(outs, 2) if num_layers > 1 else outs[0]
+        if num_parallel == 1:
+            if module == 'lstm':
+                out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
+                if activation:
+                    out = activation_from_string(activation)(out)
+            elif module == 'sru':
+                with_residual = sequence.get_shape()[2].value == repr_dim
+                out = bi_sru(repr_dim, sequence, seq_length, with_residual, name, reuse, with_projection)
+                if activation:
+                    out = activation_from_string(activation)(out)
+            elif module == 'gru':
+                out = bi_rnn(repr_dim, tf.contrib.rnn.BlockGRUCell(repr_dim), sequence,
+                             seq_length, name, reuse, with_projection)
+                if activation:
+                    out = activation_from_string(activation)(out)
+            elif module == 'gldr':
+                out = gated_linear_dilated_residual_network(
+                    repr_dim, sequence, dilations, conv_width, name, reuse)
+            elif module == 'conv':
+                out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
+            elif module == 'conv_glu':
+                out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
+            elif module == 'dense':
+                out = tf.layers.dense(sequence, repr_dim, name=name, reuse=reuse)
+                if activation:
+                    out = activation_from_string(activation)(out)
+            elif module == 'highway':
+                out = highway_network(sequence, num_layers, activation_from_string(activation), name=name, reuse=reuse)
+            elif module == 'self_attn':
+                outs = []
+                for i in range(num_attn_heads):
+                    attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim,
+                                          activation_from_string(activation), with_sentinel, name + str(i), reuse)
+                    outs.append(attn)
+                out = tf.concat(outs, 2) if num_layers > 1 else outs[0]
+            else:
+                raise ValueError("Unknown encoder type: %s" % module)
         else:
-            raise ValueError("Unknown encoder type: %s" % module)
+            outs = []
+            for i in range(num_parallel):
+                outs.append(encoder(sequence, seq_length, repr_dim, module, 1, conv_width,
+                                    dilations, reuse, False, attn_type, num_attn_heads, scaled, activation,
+                                    with_sentinel, with_projection, name + "_p" + str(i)))
+            return tf.concat(outs, 2)
     else:
         out = encoder(sequence, seq_length, repr_dim, module, num_layers - 1, conv_width,
                       dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_sentinel,
