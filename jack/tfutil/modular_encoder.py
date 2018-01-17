@@ -47,6 +47,13 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                     outputs[out_key] = tf.identity(g * outputs[key[0]] + (1.0 - g) * outputs[key[0]],
                                                    name=module['name'])
                     continue
+
+            if isinstance(key, list):
+                # auto-concat
+                new_key = '_'.join(key)
+                outputs[new_key] = tf.concat([outputs[k] for k in key], 2)
+                key = new_key
+
             if 'repr_dim' not in module:
                 module['repr_dim'] = default_repr_dim
             if 'dependent' in module:
