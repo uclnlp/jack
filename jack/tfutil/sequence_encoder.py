@@ -176,7 +176,7 @@ def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_line
 # Self attention layers
 def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=None, activation=None,
                    with_sentinel=False, name='self_attention', reuse=False):
-    with tf.variable_scope(name, reuse):
+    with tf.variable_scope(name, reuse=reuse):
         if attn_type == 'bilinear':
             attn_states = attention.bilinear_attention(inputs, inputs, lengths, scaled, with_sentinel)[2]
         elif attn_type == 'dot':
