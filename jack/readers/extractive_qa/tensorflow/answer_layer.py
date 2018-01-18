@@ -3,7 +3,7 @@ import tensorflow as tf
 from jack.tfutil import attention
 from jack.tfutil import misc
 from jack.tfutil import sequence_encoder
-from jack.tfutil.segment import segment_top_k
+from jack.tfutil.segment import segment_top_k, segment_softmax
 
 
 def answer_layer(encoded_question, question_length, encoded_support, support_length,
@@ -289,11 +289,17 @@ def san_answer_layer(size, encoded_question, question_length, encoded_support, s
             support_attn = tf.squeeze(support_attn, 1)
             question_state = cell(support_attn, question_state)[0]
 
-            hidden = tf.layers.dense(question_state, 2 * size, name="hidden")
-            hidden_start, hidden_end = tf.split(hidden, 2, 1)
+            hidden_start = tf.layers.dense(question_state, size, name="hidden_start")
 
             start_scores = tf.einsum('ik,ijk->ij', hidden_start, encoded_support)
             start_scores = start_scores + support_mask
+
+            start_probs = segment_softmax(start_scores, support2question)
+            start_states = tf.einsum('ij,ijk->ik', start_probs, encoded_support)
+            start_states = tf.unsorted_segment_sum(start_states, support2question, tf.shape(question_length)[0])
+            start_states = tf.gather(start_states, support2question)
+
+            hidden_end = tf.layers.dense(tf.concat([question_state, start_states], 1), size, name="hidden_end")
 
             end_scores = tf.einsum('ik,ijk->ij', hidden_end, encoded_support)
             end_scores = end_scores + support_mask
