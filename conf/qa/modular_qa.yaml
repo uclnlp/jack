@@ -6,7 +6,7 @@ reader: 'modular_qa_reader'
 with_char_embeddings: True
 model:
   encoder_layer: null  # list of encoder modules with input key ('question' or 'support' in beginning)
-  answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf'
+  answer_layer: null  # 'bilinear', 'mlp', 'conditional' (i.e., fastqa), 'conditional_bilinear', 'bidaf', 'san' (https://arxiv.org/pdf/1712.03556.pdf)
 
 
 # encoder modules can be selected as wanted and are defined by the following keys
