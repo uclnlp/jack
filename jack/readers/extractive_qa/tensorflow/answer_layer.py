@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from jack.tfutil import attention
 from jack.tfutil import misc
 from jack.tfutil import sequence_encoder
 from jack.tfutil.segment import segment_top_k
@@ -23,10 +24,10 @@ def answer_layer(encoded_question, question_length, encoded_support, support_len
         return conditional_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
             correct_start, support2question, answer2support, is_eval, beam_size, max_span_size, bilinear=True)
-    elif module == 'conditional_bilinear':
-        return conditional_answer_layer(
+    elif module == 'san':
+        return san_answer_layer(
             repr_dim, encoded_question, question_length, encoded_support, support_length,
-            correct_start, support2question, answer2support, is_eval, beam_size, max_span_size, bilinear=True)
+            support2question, answer2support, is_eval, beam_size, max_span_size, **kwargs)
     elif module == 'bidaf':
         if 'repr_dim' not in encoder:
             encoder['repr_dim'] = repr_dim
@@ -261,5 +262,52 @@ def bidaf_answer_layer(encoded_support_start, encoded_support_end, support_lengt
     support_mask = misc.mask_for_lengths(support_length)
     start_scores = start_scores + support_mask
     end_scores = end_scores + support_mask
+    return compute_spans(start_scores, end_scores, answer2support, is_eval,
+                         support2question, beam_size=beam_size, max_span_size=max_span_size)
+
+
+def san_answer_layer(size, encoded_question, question_length, encoded_support, support_length,
+                     support2question, answer2support, is_eval, beam_size=1, max_span_size=10000,
+                     num_steps=5, dropout=0.4, **kwargs):
+    question_state = compute_question_state(encoded_question, question_length)
+    question_state = tf.layers.dense(question_state, encoded_support.get_shape()[-1].value, tf.tanh)
+    question_state = tf.gather(question_state, support2question)
+
+    cell = tf.contrib.rnn.GRUBlockCell(size)
+
+    all_start_scores = []
+    all_end_scores = []
+
+    support_mask = misc.mask_for_lengths(support_length)
+
+    for i in range(num_steps):
+        with tf.variable_scope('SAN', reuse=i > 0):
+            question_state = tf.expand_dims(question_state, 1)
+            support_attn = attention.bilinear_attention(
+                question_state, encoded_support, support_length, False, False)[2]
+            question_state = tf.squeeze(question_state, 1)
+            support_attn = tf.squeeze(support_attn, 1)
+            question_state = cell(support_attn, question_state)[0]
+
+            hidden = tf.layers.dense(question_state, 2 * size, name="hidden")
+            hidden_start, hidden_end = tf.split(hidden, 2, 1)
+
+            start_scores = tf.einsum('ik,ijk->ij', hidden_start, encoded_support)
+            start_scores = start_scores + support_mask
+
+            end_scores = tf.einsum('ik,ijk->ij', hidden_end, encoded_support)
+            end_scores = end_scores + support_mask
+            all_start_scores.append(start_scores)
+            all_end_scores.append(end_scores)
+
+    all_start_scores = tf.stack(all_start_scores)
+    all_end_scores = tf.stack(all_end_scores)
+    dropout_mask = tf.nn.dropout(tf.ones([num_steps, 1, 1]), 1.0 - dropout)
+    all_start_scores = tf.cond(is_eval, lambda: all_start_scores * dropout_mask, lambda: all_start_scores)
+    all_end_scores = tf.cond(is_eval, lambda: all_end_scores * dropout_mask, lambda: all_end_scores)
+
+    start_scores = tf.reduce_mean(all_start_scores, axis=0)
+    end_scores = tf.reduce_mean(all_end_scores, axis=0)
+
     return compute_spans(start_scores, end_scores, answer2support, is_eval,
                          support2question, beam_size=beam_size, max_span_size=max_span_size)

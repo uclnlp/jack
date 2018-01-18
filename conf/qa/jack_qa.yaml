@@ -122,4 +122,6 @@ model:
   answer_layer:
     support: 'support'
     question: 'enc_question'
-    module: 'bilinear'
+    module: 'san'  # https://arxiv.org/pdf/1712.03556.pdf
+    dropout: 0.4
+    steps: 5
