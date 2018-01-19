@@ -19,12 +19,11 @@ embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: True
 
-epochs: 12
+epochs: 20
 
 dropout: 0.2
 
-batch_size: 32
-validation_interval: 1000
+batch_size: 64
 lowercase: False
 
 max_span_size: 16
