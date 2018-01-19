@@ -103,7 +103,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
 
     # Train
     reader.train(tf_optimizer, train_data, batch_size, max_epochs=epochs, hooks=hooks,
-                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value)
+                 l2=l2, clip=clip_value, clip_op=tf.clip_by_value, summary_writer=sw)
 
     # Test final reader_type
     if test_data is not None and save_dir is not None:
