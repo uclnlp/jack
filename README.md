@@ -78,7 +78,7 @@ If all of that is too cumbersome for you and you just want to play, why not down
 $ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
 $ data/GloVe/download.sh
 $ python3 ./bin/mmap-cli.py data/GloVe/glove.840B.300d.txt data/GloVe/glove.840B.300d.memory_map_dir 
-$ wget https://www.dropbox.com/s/qb796uljoqj0lvo/fastqa.zip?dl=1
+$ wget -O fastqa.zip https://www.dropbox.com/s/qb796uljoqj0lvo/fastqa.zip?dl=1
 $ unzip fastqa.zip && mv fastqa fastqa_reader
 ```
 
