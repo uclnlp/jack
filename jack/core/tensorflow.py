@@ -137,7 +137,7 @@ class TFModelModule(ModelModule):
                         init_vars.append(v)
                         break
                 if not found:
-                    logger.warn("Could not find variable", n, "in computation graph to restore from pretrained model.")
+                    logger.warn("Could not find variable %s in computation graph to restore from pretrained model." % n)
 
             saver = tf.train.Saver(init_vars)
             saver.restore(self.tf_session, load_dir)
