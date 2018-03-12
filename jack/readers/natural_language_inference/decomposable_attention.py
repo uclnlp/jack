@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
-    def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors):
+    def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors,
+                     has_bos_token=True):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
 
