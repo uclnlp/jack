@@ -125,7 +125,7 @@ def test_model(reader_name, epochs, use_small_data, dataset):
 
     for new, base in zip(new_results, expected_results):
         assert new[0] == base[0], "Different order of metrics!"
-        assert np.allclose([new[1]], [base[1]], atol=0.05), \
+        assert np.allclose([new[1]], [base[1]], atol=0.1), \
             "Metric value different from expected results!"
 
 
