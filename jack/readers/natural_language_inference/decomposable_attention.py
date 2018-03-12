@@ -4,6 +4,8 @@ import logging
 from abc import abstractmethod
 
 import numpy as np
+from numpy import linalg as LA
+
 import tensorflow as tf
 
 from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
@@ -14,9 +16,34 @@ logger = logging.getLogger(__name__)
 
 
 class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
-    def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors):
+    def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors,
+                     has_bos_token=True):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
+
+        if has_bos_token:
+            # batch_size = embedded_question.get_shape()[0]
+            emb_size = embedded_question.get_shape().as_list()[2]
+
+            bos_token_emb = tf.get_variable('bos_token_embedding',
+                                            shape=(1, 1, emb_size),
+                                            initializer=tf.initializers.random_uniform(),
+                                            trainable=False)
+
+            batch_size = tf.shape(embedded_question)[0]
+
+            t_bos_token_emb = tf.tile(
+                input=bos_token_emb,
+                multiples=[batch_size, 1, 1])
+
+            embedded_question = tf.concat(values=[t_bos_token_emb, embedded_question], axis=1)
+            embedded_support = tf.concat(values=[t_bos_token_emb, embedded_support], axis=1)
+
+            tensors.question_length += 1
+            tensors.support_length += 1
+
+        embedded_question = tf.nn.l2_normalize(x=embedded_question, axis=2)
+        embedded_support = tf.nn.l2_normalize(x=embedded_support, axis=2)
 
         model_kwargs = {
             'sequence1': embedded_question,
