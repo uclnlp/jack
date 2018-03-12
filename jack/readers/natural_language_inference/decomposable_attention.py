@@ -30,8 +30,6 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
                                             initializer=tf.initializers.random_uniform(),
                                             trainable=False)
 
-            bos_token_emb = tf.nn.l2_normalize(x=bos_token_emb, axis=2)
-
             batch_size = tf.shape(embedded_question)[0]
 
             t_bos_token_emb = tf.tile(
@@ -43,6 +41,9 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
 
             tensors.question_length += 1
             tensors.support_length += 1
+
+        embedded_question = tf.nn.l2_normalize(x=embedded_question, axis=2)
+        embedded_support = tf.nn.l2_normalize(x=embedded_support, axis=2)
 
         model_kwargs = {
             'sequence1': embedded_question,
