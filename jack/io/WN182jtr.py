@@ -165,8 +165,6 @@ def convert_wn18(triples, neighbourhoods):
 def main():
     parser = argparse.ArgumentParser(description='WN18 dataset to jack format converter.')
     #
-    parser = argparse.ArgumentParser(description='FB15K to jack format converter.')
-    #
     parser.add_argument('infile',
                         help="dataset path you're interested in, train/dev/test."
                              "(e.g. data/FB15k-237/Release/train.txt)")
