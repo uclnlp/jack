@@ -4,6 +4,8 @@ import logging
 from abc import abstractmethod
 
 import numpy as np
+from numpy import linalg as LA
+
 import tensorflow as tf
 
 from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
@@ -18,6 +20,26 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
                      has_bos_token=True):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
+
+        if has_bos_token:
+            batch_size = tf.shape(embedded_question)[0]
+            emb_size = tf.shape(embedded_question)[2]
+
+            rs = np.random.RandomState(0)
+            bos_token_emb_value = rs.uniform(low=0.0, high=0.0, size=(1, emb_size))
+            bos_token_emb = tf.get_variable('bos_token_embedding',
+                                            initializer=tf.constant(bos_token_emb_value),
+                                            trainable=False)
+
+            t_bos_token_emb = tf.tile(
+                input=tf.expand_dims(bos_token_emb, axis=0),
+                axis=0, multiples=[batch_size, 1, 1])
+
+            embedded_question = tf.concat(values=[t_bos_token_emb, embedded_question], axis=1)
+            embedded_support = tf.concat(values=[t_bos_token_emb, embedded_support], axis=1)
+
+            tensors.question_length += 1
+            tensors.support_length += 1
 
         model_kwargs = {
             'sequence1': embedded_question,
