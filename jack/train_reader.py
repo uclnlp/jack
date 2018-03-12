@@ -108,6 +108,25 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value, summary_writer=sw)
 
     # Test final reader_type
+    # XXX TODO - DO NOT DUPLICATE CODE!!!
+    if dev_data is not None and save_dir is not None:
+        reader.load(save_dir)
+        result_dict = evaluate_reader(reader, dev_data, batch_size)
+
+        def print_results(d, prefix=''):
+            for k, v in sorted(d.items(), key=lambda x: x[0]):
+                if isinstance(v, dict):
+                    print(prefix + k + ":")
+                    print_results(v, prefix + '\t')
+                elif '\n' in str(v):
+                    print(prefix + k + ":")
+                    print(str(v).replace('\n', '\n' + prefix + '\t'))
+                else:
+                    print(prefix + k + ":", str(v))
+
+        logger.info("############### Results on the Dev Set##############")
+        print_results(result_dict)
+
     if test_data is not None and save_dir is not None:
         reader.load(save_dir)
         result_dict = evaluate_reader(reader, test_data, batch_size)
@@ -123,7 +142,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
                 else:
                     print(prefix + k + ":", str(v))
 
-        logger.info("############### RESULTS ##############")
+        logger.info("############### Results on the Test Set##############")
         print_results(result_dict)
 
 
@@ -213,9 +232,39 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
                  l2=l2, clip=clip_value)
 
     # Test final model
-    if test_data is not None and save_dir is not None:
-        test_eval_hook = readers.eval_hooks[model](
-            reader, test_data, summary_writer=sw, epoch_interval=1, write_metrics_to=write_metrics_to)
-
+    # XXX TODO - DO NOT DUPLICATE CODE!!!
+    if dev_data is not None and save_dir is not None:
         reader.load(save_dir)
-        test_eval_hook.at_test_time(1)
+        result_dict = evaluate_reader(reader, dev_data, batch_size)
+
+        def print_results(d, prefix=''):
+            for k, v in sorted(d.items(), key=lambda x: x[0]):
+                if isinstance(v, dict):
+                    print(prefix + k + ":")
+                    print_results(v, prefix + '\t')
+                elif '\n' in str(v):
+                    print(prefix + k + ":")
+                    print(str(v).replace('\n', '\n' + prefix + '\t'))
+                else:
+                    print(prefix + k + ":", str(v))
+
+        logger.info("############### Results on the Dev Set##############")
+        print_results(result_dict)
+
+    if test_data is not None and save_dir is not None:
+        reader.load(save_dir)
+        result_dict = evaluate_reader(reader, test_data, batch_size)
+
+        def print_results(d, prefix=''):
+            for k, v in sorted(d.items(), key=lambda x: x[0]):
+                if isinstance(v, dict):
+                    print(prefix + k + ":")
+                    print_results(v, prefix + '\t')
+                elif '\n' in str(v):
+                    print(prefix + k + ":")
+                    print(str(v).replace('\n', '\n' + prefix + '\t'))
+                else:
+                    print(prefix + k + ":", str(v))
+
+        logger.info("############### Results on the Test Set##############")
+        print_results(result_dict)
