@@ -4,8 +4,6 @@ This file contains reusable modules for extractive QA models and ports
 import sys
 from typing import NamedTuple
 
-import progressbar
-
 from jack.core import *
 from jack.readers.extractive_qa.util import prepare_data
 from jack.util import preprocessing
