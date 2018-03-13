@@ -42,8 +42,8 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
             tensors.question_length += 1
             tensors.support_length += 1
 
-        embedded_question = tf.nn.l2_normalize(x=embedded_question, axis=2)
-        embedded_support = tf.nn.l2_normalize(x=embedded_support, axis=2)
+        embedded_question = tf.nn.l2_normalize(embedded_question, 2)
+        embedded_support = tf.nn.l2_normalize(embedded_support, 2)
 
         model_kwargs = {
             'sequence1': embedded_question,
