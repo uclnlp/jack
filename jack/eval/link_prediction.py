@@ -35,7 +35,7 @@ def evaluate(reader, dataset, batch_size):
                 for k in range(i, min(len(triples), (i + batch_size)))]
             if batch_qas:
                 for a in reader(batch_qas):
-                    print(a)
+                    print(type(a), a)
                     scores.append(a.score)
         return scores
 
