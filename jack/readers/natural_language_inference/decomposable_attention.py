@@ -4,7 +4,6 @@ import logging
 from abc import abstractmethod
 
 import numpy as np
-from numpy import linalg as LA
 
 import tensorflow as tf
 
