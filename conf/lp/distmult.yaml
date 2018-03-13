@@ -21,7 +21,7 @@ with_char_embeddings: False
 prune: False
 lowercase: False
 
-batch_size: 4096
+batch_size: 32
 optimizer: adam
 learning_rate: 0.001
 learning_rate_decay: 1
