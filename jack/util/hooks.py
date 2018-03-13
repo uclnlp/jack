@@ -7,6 +7,10 @@ from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
 
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+from pylab import subplot
+
 import numpy as np
 import progressbar
 import tensorflow as tf
@@ -77,9 +81,6 @@ class TraceHook(TFTrainingHook):
             self._summary_writer.add_summary(summary, current_step)
 
     def plot(self, ylim=None):
-        import matplotlib.patches as mpatches
-        import matplotlib.pyplot as plt
-        from pylab import subplot
         number_of_subplots = len(self.scores.keys())
         colors = ['blue', 'green', 'orange']
         patches = []
