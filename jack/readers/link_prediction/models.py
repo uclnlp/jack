@@ -6,6 +6,7 @@ from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
 from jack.util.map import numpify
+from jack.readers.link_prediction import scores
 
 
 class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
@@ -19,7 +20,7 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         entity_set = {s for [s, _, _] in triples} | {o for [_, _, o] in triples}
         predicate_set = {p for [_, p, _] in triples}
 
-        entity_to_index = {entity: index for index, entity in enumerate(entity_set)}
+        entity_to_index = {entity: index for index, entity in enumerate(entity_set, 1)}
         predicate_to_index = {predicate: index for index, predicate in enumerate(predicate_set)}
 
         self.shared_resources.entity_to_index = entity_to_index
@@ -31,8 +32,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         triples = []
         for qa_setting in questions:
             s, p, o = qa_setting.question.split()
-            s_idx = self.shared_resources.entity_to_index.get(s, len(self.shared_resources.entity_to_index))
-            o_idx = self.shared_resources.entity_to_index.get(o, len(self.shared_resources.entity_to_index))
+            s_idx = self.shared_resources.entity_to_index.get(s, 0)
+            o_idx = self.shared_resources.entity_to_index.get(o, 0)
             p_idx = self.shared_resources.predicate_to_index[p]
             triples.append([s_idx, p_idx, o_idx])
 
@@ -53,8 +54,6 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
 
                     random_subject_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
                     random_object_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
-
-                    print(random_subject_index, random_object_index)
 
                     _triples.append([random_subject_index, p, o])
                     _triples.append([s, p, random_object_index])
@@ -116,11 +115,12 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
             nb_predicates = len(shared_resources.predicate_to_index)
 
             entity_embeddings = tf.get_variable('entity_embeddings',
-                                                [nb_entities, embedding_size],
+                                                shape=[nb_entities, embedding_size],
+                                                initializer=tf.contrib.layers.xavier_initializer(),
                                                 dtype='float32')
 
             predicate_embeddings = tf.get_variable('predicate_embeddings',
-                                                   [nb_predicates, embedding_size],
+                                                   shape=[nb_predicates, embedding_size],
                                                    initializer=tf.contrib.layers.xavier_initializer(),
                                                    dtype='float32')
 
@@ -132,7 +132,6 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
             predicate_emb = tf.nn.embedding_lookup(predicate_embeddings, predicate_idx)
             object_emb = tf.nn.embedding_lookup(entity_embeddings, object_idx, max_norm=1.0)
 
-            from jack.readers.link_prediction import scores
             assert self.model_name is not None
 
             model_class = scores.get_function(self.model_name)
