@@ -1,8 +1,11 @@
 description: >
   DistMult - https://www.microsoft.com/en-us/research/publication/embedding-entities-and-relations-for-learning-and-inference-in-knowledge-bases/
 
-parent_config: './conf/jack.yaml'
+parent_config: 'conf/jack.yaml'
 loader: jack
+
+name: 'distmult'
+debug: False
 
 reader: 'distmult_reader'
 
@@ -13,8 +16,12 @@ test: 'data/WN18/test.jtr'
 seed: 1337
 epochs: 100
 repr_dim: 200
+num_negative: 1
+with_char_embeddings: False
+prune: False
+lowercase: False
 
-batch_size: 100
-optimizer: adagrad
-learning_rate: 0.1
-learning_rate_decay: 1.0
+batch_size: 4096
+optimizer: adam
+learning_rate: 0.001
+learning_rate_decay: 1
