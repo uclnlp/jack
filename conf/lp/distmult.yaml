@@ -14,7 +14,7 @@ seed: 1337
 epochs: 100
 repr_dim: 200
 
-batch_size: 32
+batch_size: 100
 optimizer: adagrad
 learning_rate: 0.1
 learning_rate_decay: 1.0

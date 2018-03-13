@@ -260,12 +260,14 @@ class TFReader(JTReader):
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
+
                 if summaries is not None:
                     step, sums, current_loss, _ = self.session.run(
                         [tf.train.get_global_step(), summaries, loss_op, optimization_op], feed_dict=feed_dict)
                     summary_writer.add_summary(sums, step)
                 else:
                     current_loss, _ = self.session.run([loss_op, optimization_op], feed_dict=feed_dict)
+
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
 
