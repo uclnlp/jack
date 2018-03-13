@@ -26,6 +26,10 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         self.shared_resources.entity_to_index = entity_to_index
         self.shared_resources.predicate_to_index = predicate_to_index
 
+        self.shared_resources.nb_entities = max(self.shared_resources.entity_to_index.values()) + 1
+        self.shared_resources.nb_predicates = max(self.shared_resources.predicate_to_index.values()) + 1
+
+
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[List[int]]:
         """Converts questions to triples."""
@@ -46,8 +50,8 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         if with_answers:
             target = [1] * len(_triples)
 
-        nb_entities = max(self.shared_resources.entity_to_index.values()) + 1
-        nb_predicates = max(self.shared_resources.predicate_to_index.values()) + 1
+        nb_entities = self.shared_resources.nb_entities
+        nb_predicates = self.shared_resources.nb_predicates
 
         if with_answers:
             for i in range(len(_triples)):
