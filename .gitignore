@@ -114,3 +114,6 @@ tests/test_results/fastqa_reader_test/
 tests/test_results/dam_reader_test/
 data/GloVe/glove.840B.300d.*
 data/MultiNLI/multinli_1.0/
+
+data/WN18/*.jtr
+data/WN18/wn18*
