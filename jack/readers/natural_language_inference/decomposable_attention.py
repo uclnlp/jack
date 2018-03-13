@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
     def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors,
-                     has_bos_token=True):
+                     has_bos_token=True, normalise_embeddings=True):
         # final states_fw_bw dimensions:
         # [[[batch, output dim], [batch, output_dim]]
 
@@ -42,8 +42,9 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
             tensors.question_length += 1
             tensors.support_length += 1
 
-        embedded_question = tf.nn.l2_normalize(embedded_question, 2)
-        embedded_support = tf.nn.l2_normalize(embedded_support, 2)
+        if normalise_embeddings:
+            embedded_question = tf.nn.l2_normalize(embedded_question, 2)
+            embedded_support = tf.nn.l2_normalize(embedded_support, 2)
 
         model_kwargs = {
             'sequence1': embedded_question,
