@@ -20,13 +20,13 @@ class TFModelModule(ModelModule):
     and define the ports.
     """
 
-    def __init__(self, shared_resources: SharedResources, sess=None):
+    def __init__(self, shared_resources: SharedResources, session=None):
         self.shared_resources = shared_resources
-        if sess is None:
+        if session is None:
             session_config = tf.ConfigProto(allow_soft_placement=True)
             session_config.gpu_options.allow_growth = True
-            sess = tf.Session(config=session_config)
-        self.tf_session = sess
+            session = tf.Session(config=session_config)
+        self.tf_session = session
         # will be set in setup
         self._tensors = None
         self._placeholders = None
