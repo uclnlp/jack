@@ -19,6 +19,9 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         entity_to_index = {entity: index for index, entity in enumerate(entity_set)}
         predicate_to_index = {predicate: index for index, predicate in enumerate(predicate_set)}
 
+        print(entity_to_index)
+        print(predicate_to_index)
+
         self.shared_resources.entity_to_index = entity_to_index
         self.shared_resources.predicate_to_index = predicate_to_index
 
@@ -43,6 +46,9 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         if with_answers:
             for i in range(len(triples)):
                 s, p, o = triples[i]
+
+                print('XXX', s, p, o)
+
                 for _ in range(self.shared_resources.config.get('num_negative', 1)):
                     random_subject_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
                     random_object_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
@@ -105,6 +111,7 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
             entity_embeddings = tf.get_variable('entity_embeddings',
                                                 [nb_entities, embedding_size],
                                                 dtype='float32')
+
             predicate_embeddings = tf.get_variable('predicate_embeddings',
                                                    [nb_predicates, embedding_size],
                                                    initializer=tf.contrib.layers.xavier_initializer(),
