@@ -6,6 +6,8 @@ import os
 import random
 import shutil
 
+import tensorflow as tf
+
 from jack import readers
 from jack.core.tensorflow import TFReader
 from jack.util.hooks import LossHook, ExamplesPerSecHook, ETAHook
@@ -35,8 +37,6 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
 
 
 def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
-    import tensorflow as tf
-
     seed = configuration.get('seed', 0)
 
     # make everything deterministic
@@ -120,7 +120,6 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value, summary_writer=sw)
 
     # Test final reader_type
-    # XXX TODO - DO NOT DUPLICATE CODE!!!
     if dev_data is not None and save_dir is not None:
         reader.load(save_dir)
         result_dict = evaluate_reader(reader, dev_data, batch_size)
@@ -222,7 +221,6 @@ def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, 
                  l2=l2, clip=clip_value)
 
     # Test final model
-    # XXX TODO - DO NOT DUPLICATE CODE!!!
     if dev_data is not None and save_dir is not None:
         reader.load(save_dir)
         result_dict = evaluate_reader(reader, dev_data, batch_size)

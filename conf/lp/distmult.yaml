@@ -1,0 +1,5 @@
+description: >
+  DistMult https://arxiv.org/abs/1606.01933
+
+reader: 'distmult_reader'
+
