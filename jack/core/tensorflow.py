@@ -119,6 +119,9 @@ class TFModelModule(ModelModule):
         self._variables = [v for v in tf.global_variables() if v not in old_variables]
         self.tf_session.run([v.initializer for v in self.variables])
 
+        for v in tf.trainable_variables():
+            logger.info('Trainable Variable: {}'.format(v))
+
         # Sometimes we want to initialize (partially) with a pre-trained model
         load_dir = self.shared_resources.config.get('load_dir')
         if is_training and load_dir is not None:

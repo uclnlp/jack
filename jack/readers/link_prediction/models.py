@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+import numpy as np
+
 from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
@@ -7,7 +10,7 @@ from jack.util.map import numpify
 
 class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
     def __init__(self, shared_resources):
-        self._kbp_rng = random.Random(123)
+        self._kbp_rng = np.random.RandomState(0)
         super(KnowledgeGraphEmbeddingInputModule, self).__init__(shared_resources)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
@@ -37,24 +40,33 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
 
     def create_batch(self, triples: List[List[int]],
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
-        triples = list(triples)
+        _triples = list(triples)
+
         if with_answers:
-            target = [1] * len(triples)
+            target = [1] * len(_triples)
+
         if with_answers:
-            for i in range(len(triples)):
+            for i in range(len(_triples)):
                 s, p, o = triples[i]
 
                 for _ in range(self.shared_resources.config.get('num_negative', 1)):
+
                     random_subject_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
                     random_object_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
-                    triples.append([random_subject_index, p, o])
-                    triples.append([s, p, random_object_index])
+
+                    print(random_subject_index, random_object_index)
+
+                    _triples.append([random_subject_index, p, o])
+                    _triples.append([s, p, random_object_index])
+
                     target.append(0)
                     target.append(0)
 
-        xy_dict = {Ports.Input.question: triples}
+        xy_dict = {Ports.Input.question: _triples}
+
         if with_answers:
             xy_dict[Ports.Target.target_index] = target
+
         return numpify(xy_dict)
 
     @property
