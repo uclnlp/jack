@@ -82,7 +82,7 @@ def main(argv):
 #$ -e /dev/null
 #$ -t 1-{}
 #$ -l mem=12G
-#$ -l h_rt=6:00:00
+#$ -l h_rt=12:00:00
 
 cd /home/ucacmin/workspace/jack
 
