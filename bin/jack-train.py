@@ -12,7 +12,6 @@ from time import time
 
 from sacred import Experiment
 from sacred.arg_parser import parse_args
-from sacred.observers import SqlObserver
 
 from jack import readers
 from jack import train as jtrain
@@ -71,7 +70,6 @@ def main(config,
          debug_examples,
          embedding_file,
          embedding_format,
-         experiments_db,
          reader,
          train,
          num_train_examples,
@@ -89,9 +87,6 @@ def main(config,
         jack_temp = os.environ['JACK_TEMP']
     if not os.path.exists(jack_temp):
         os.makedirs(jack_temp)
-
-    if experiments_db is not None:
-        ex.observers.append(SqlObserver.create('sqlite:///%s' % experiments_db))
 
     if debug:
         train_data = loaders[loader](train, debug_examples)
