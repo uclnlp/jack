@@ -20,7 +20,7 @@ def summary(configuration):
 
 
 def to_cmd(c):
-    command = 'python3 ./bin/pipeline_cardinality.py ' \
+    command = 'python3 ./bin/jack-train.py ' \
               'with config=conf/lp/distmult.yaml ' \
               'learning_rate={}' \
               ''.format(c['lr'])
