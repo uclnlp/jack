@@ -37,6 +37,7 @@ def train(reader, train_data, test_data, dev_data, configuration: dict, debug=Fa
 
 
 def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
+    import tensorflow as tf
     seed = configuration.get('seed', 0)
 
     # make everything deterministic
