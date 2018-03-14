@@ -12,6 +12,8 @@ from jack.eval import evaluate_reader
 from jack.io.load import loaders
 from jack.readers import reader_from_file
 
+from jack.train_reader import print_results
+
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 logging.basicConfig(level=logging.INFO)
 
@@ -35,18 +37,6 @@ if FLAGS.max_examples:
 
 logger.info("Start!")
 result_dict = evaluate_reader(reader, dataset, FLAGS.batch_size)
-
-
-def print_results(d, prefix=''):
-    for k, v in sorted(d.items(), key=lambda x: x[0]):
-        if isinstance(v, dict):
-            print(prefix + k + ":")
-            print_results(v, prefix + '\t')
-        elif '\n' in str(v):
-            print(prefix + k + ":")
-            print(str(v).replace('\n', '\n' + prefix + '\t'))
-        else:
-            print(prefix + k + ":", str(v))
 
 
 logger.info("############### RESULTS ##############")
