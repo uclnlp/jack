@@ -14,19 +14,20 @@
 
 To get started, please see [How to Install and Run][install] and then you may
 want to have a look at the [notebooks][notebooks].  Lastly, for a high-level explanation of the ideas and
-vision, see [Understanding Jack the Reader][understanding].
+vision, see [Understanding Jack the Reader][understanding]. There is also documentation on our
+[command line interface][cli] for training and evaluating models.
 
 [install]: docs/How_to_install_and_run.md
 [api]: https://uclmr.github.io/jack/
 [notebooks]: notebooks/
 [understanding]: docs/Understanding_Jack_the_Reader.md
+[cli]: docs/CLI.md
 
 # Quickstart Examples - Training and Usage of a Question Answering System
 
 To illustrate how jack works, we will show how to train a question answering
-model.
-
-### Question Answering on SQuAD
+model. It is probably best to setup a [virtual environment](https://docs.python.org/3/library/venv.html) to avoid
+clashes with system wide python library versions. A more comprehensive 
 
 First, install the framework:
 
@@ -55,18 +56,13 @@ or shorter, using our prepared config:
 $ python3 bin/jack-train.py with config='./conf/qa/squad/fastqa.yaml'
 ```
 
-Note, you can add a flag `tensorboard_folder=.tb/fastqa` to write arbitrary tensorboard
-[summaries][tf_summaries] to a provided path (here `.tb/fastqa`). Your summaries are automatically
-fetched in the train loop, so all you need to do is write them in your TF model code.
-
 A copy of the model is written into the `save_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
 [the showcase notebook][showcase].
 
 You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
 together your own model. There are examples in `conf/qa/squad/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
-**We recommend using one of our own creations `jack_qa*.yaml` which are both fast while achieving very good
-results.** These models are defined solely in the configs, i.e., there is not implementation in code.
+These models are defined solely in the configs, i.e., there is not implementation in code.
 This is possible through our `ModularQAModel`.
 For more information on extractive question answering please have a look [here](/docs/Extractive_QA.md).
 
@@ -101,59 +97,6 @@ print(answers[0][0].text)
 [showcase]: notebooks/Showcasing_Jack.ipynb
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 
-
-### Recognizing Textual Entailment on SNLI
-
-First, download SNLI
-
-```bash
-$ # we still need GloVe in memory mapped format, ignore the next 2 commands if already downloaded and transformed
-$ data/GloVe/download.sh
-$ ./data/SNLI/download.sh
-```
-
-Then, for instance, train a [Decomposable Attention Model][dam]
-
-```bash
-$ python3 bin/jack-train.py with reader='dam_snli_reader' loader=snli train='data/SNLI/snli_1.0/snli_1.0_train.jsonl' \
-> dev='data/SNLI/snli_1.0/snli_1.0_dev.jsonl' test='data/SNLI/snli_1.0/snli_1.0_test.jsonl' \
-> save_dir='./dam_reader' repr_dim=300 epochs=20 seed=1337 dropout=0.5 batch_size=64 \
-> embedding_format='memory_map_dir' embedding_file='data/GloVe/glove.840B.300d.memory_map_dir' vocab_from_embeddings=True
-```
-
-or the short version:
-
-```bash
-$ python3 bin/jack-train.py with config='./conf/nli/snli/dam.yaml'
-```
-
-Note, you can easily change the model to one of the other implemented NLI readers. Just checkout our configurations in
-`conf/nli/snli/`. You will find for instance an `ESIM` reader (`esim.yaml`) which is realized using our `ModularNLIReader`, 
-similar to question answering. You can quickly stick together your own model in a config like that. Available modules
-can be found [here](/docs/Encoder_Modules.md).
-
-Note, you can add a flag `tensorboard_folder=.tb/dam_reader` to write tensorboard
-summaries to a provided path (here `.tb/dam_reader`).
-
-A copy of the model is written into the `save_dir` directory after each
-training epoch when performance improves. These can be loaded using the commands below or see e.g.
-[the showcase notebook][showcase].
-
-```python
-from jack import readers
-from jack.core import QASetting
-
-dam_reader = readers.reader_from_file("./dam_reader")
-
-answers = dam_reader([QASetting(
-    question="The boy plays with the ball.",  # Hypothesis
-    support=["The boy plays with the ball."]  # Premise
-)])
-
-print(answers[0][0].text)
-```
-
-[dam]: https://arxiv.org/abs/1606.01933
 
 # Support
 We are thankful for support from:
