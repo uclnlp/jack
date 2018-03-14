@@ -1,4 +1,4 @@
-parent_config: ['./conf/qa/jack_qa_light.yaml', './conf/qa/triviaqa/wiki/abstract_triviaqa.yaml']
+parent_config: ['./conf/qa/jack_qa_light.yaml', './conf/qa/triviaqa/web/abstract_triviaqa.yaml']
 seed: 1337
 
 repr_dim: 100
