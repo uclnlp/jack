@@ -4,3 +4,4 @@ description: >
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'dam_snli_reader'
 
+normalize_embeddings: True
