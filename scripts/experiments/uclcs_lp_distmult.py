@@ -81,7 +81,7 @@ def main(argv):
 #$ -o /dev/null
 #$ -e /dev/null
 #$ -t 1-{}
-#$ -l h_vmem=12G,tmem=12G
+#$ -l h_vmem=8G,tmem=8G
 #$ -l h_rt=12:00:00
 
 cd /home/pminervi/workspace/jack
