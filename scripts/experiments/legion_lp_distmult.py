@@ -21,8 +21,8 @@ def summary(configuration):
 def to_cmd(c):
     command = 'python3 ./bin/jack-train.py ' \
               'with config=conf/lp/distmult.yaml ' \
-              'learning_rate={}' \
-              ''.format(c['lr'])
+              'learning_rate={} save_dir=/tmp/distmult_{}' \
+              ''.format(c['lr'], c['lr'])
     return command
 
 
