@@ -1,6 +1,6 @@
 # Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![codecov](https://codecov.io/gh/uclmr/jack/branch/master/graph/badge.svg?token=jbZrj9oSmi)](https://codecov.io/gh/uclmr/jack) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage) [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/uclmr/jack/blob/master/LICENSE)
 
-##### A reading comprehension framework.
+##### A machine reading comprehension framework.
 
 * All work and no play makes Jack a great frame*work*!
 * All work and no play makes Jack a great frame*work*!
@@ -26,7 +26,7 @@ vision, see [Understanding Jack the Reader][understanding].
 To illustrate how jack works, we will show how to train a question answering
 model.
 
-### Extractive Question Answering on SQuAD
+### Question Answering on SQuAD
 
 First, install the framework:
 
