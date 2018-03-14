@@ -115,7 +115,10 @@ tests/test_results/dam_reader_test/
 data/GloVe/glove.840B.300d.*
 data/MultiNLI/multinli_1.0/
 
-data/WN18/*.jtr
+data/WN18/train.jtr
+data/WN18/valid.jtr
+data/WN18/test.jtr
+
 data/WN18/wn18*
 
 saved_reader/
