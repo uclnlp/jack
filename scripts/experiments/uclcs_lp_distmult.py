@@ -28,7 +28,7 @@ def to_cmd(c):
 
 
 def to_logfile(c, path):
-    outfile = "%s/legion_lp_distmult.%s.log" % (path, summary(c).replace("/", "_"))
+    outfile = "%s/uclcs_lp_distmult.%s.log" % (path, summary(c).replace("/", "_"))
     return outfile
 
 
@@ -48,10 +48,10 @@ def main(argv):
 
     configurations = list(cartesian_product(hyperparameters_space_1))
 
-    path = '/home/ucacmin/Scratch/jack/scripts/experiments/logs/legion_lp_distmult/'
+    path = './scripts/experiments/logs/uclcs_lp_distmult/'
 
-    # Check that we are on the Legion cluster first
-    if os.path.exists('/home/ucacmin/'):
+    # Check that we are on the UCLCS cluster first
+    if os.path.exists('/home/pminervi/'):
         # If the folder that will contain logs does not exist, create it
         if not os.path.exists(path):
             os.makedirs(path)
@@ -64,7 +64,7 @@ def main(argv):
         if os.path.isfile(logfile):
             with open(logfile, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-                completed = 'Relation specific results' in content
+                completed = 'Test set results' in content
 
         if not completed:
             command_line = '{} > {} 2>&1'.format(to_cmd(cfg, _path=args.path), logfile)
@@ -74,17 +74,17 @@ def main(argv):
     sorted_command_lines = sorted(command_lines)
     nb_jobs = len(sorted_command_lines)
 
-    header = """#!/bin/bash -l
+    header = """#!/bin/bash
 
 #$ -cwd
 #$ -S /bin/bash
 #$ -o /dev/null
 #$ -e /dev/null
 #$ -t 1-{}
-#$ -l mem=12G
+#$ -l h_vmem=12G,tmem=12G
 #$ -l h_rt=6:00:00
 
-cd /home/ucacmin/workspace/jack
+cd /home/pminervi/workspace/jack
 
 """.format(nb_jobs)
 
