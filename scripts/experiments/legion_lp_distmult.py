@@ -67,7 +67,7 @@ def main(argv):
                 completed = 'Relation specific results' in content
 
         if not completed:
-            command_line = '{} > {} 2>&1'.format(to_cmd(cfg, _path=args.path), logfile)
+            command_line = '{} > {} 2>&1'.format(to_cmd(cfg), logfile)
             command_lines |= {command_line}
 
     # Sort command lines and remove duplicates
