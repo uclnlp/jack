@@ -6,7 +6,6 @@ import os
 import os.path
 
 import sys
-import argparse
 import logging
 
 
@@ -22,7 +21,7 @@ def summary(configuration):
 def to_cmd(c):
     command = 'python3 ./bin/jack-train.py ' \
               'with config=conf/lp/distmult.yaml ' \
-              'learning_rate={}' \
+              'learning_rate={} save_dir=None' \
               ''.format(c['lr'])
     return command
 
@@ -32,16 +31,7 @@ def to_logfile(c, path):
     return outfile
 
 
-def main(argv):
-    def formatter(prog):
-        return argparse.HelpFormatter(prog, max_help_position=100, width=200)
-
-    argparser = argparse.ArgumentParser('Generating experiments for the UCL cluster', formatter_class=formatter)
-    argparser.add_argument('--debug', '-D', action='store_true', help='Debug flag')
-    argparser.add_argument('--path', '-p', action='store', type=str, default=None, help='Path')
-
-    args = argparser.parse_args(argv)
-
+def main(_):
     hyperparameters_space_1 = dict(
         lr=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
     )
