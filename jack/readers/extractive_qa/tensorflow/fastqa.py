@@ -12,6 +12,8 @@ from jack.tfutil.sequence_encoder import encoder
 
 
 class FastQAModule(AbstractXQAModelModule):
+    def set_topk(self, k):
+        self._topk_assign(k)
 
     def create_output(self, shared_resources, input_tensors):
         tensors = TensorPortTensors(input_tensors)
@@ -100,13 +102,19 @@ class FastQAModule(AbstractXQAModelModule):
 
             answer_layer = shared_resources.config.get('answer_layer', 'conditional').lower()
 
+            topk = tf.get_variable(
+                'topk', initializer=shared_resources.config.get('topk', 1), dtype=tf.int32, trainable=False)
+            topk_p = tf.placeholder(tf.int32, [], 'beam_size_setter')
+            topk_assign = topk.assign(topk_p)
+            self._topk_assign = lambda k: self.tf_session.run(topk_assign, {topk_p: k})
+
             if answer_layer == 'conditional':
                 start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                     conditional_answer_layer(size, encoded_question, tensors.question_length, encoded_support,
                                              tensors.support_length,
                                              tensors.correct_start, tensors.support2question, tensors.answer2support,
                                              tensors.is_eval,
-                                             beam_size=shared_resources.config.get("beam_size", 1),
+                                             beam_size=topk,
                                              max_span_size=shared_resources.config.get("max_span_size", 10000))
             elif answer_layer == 'conditional_bilinear':
                 start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
@@ -114,7 +122,7 @@ class FastQAModule(AbstractXQAModelModule):
                                              tensors.support_length,
                                              tensors.correct_start, tensors.support2question, tensors.answer2support,
                                              tensors.is_eval,
-                                             beam_size=shared_resources.config.get("beam_size", 1),
+                                             beam_size=topk,
                                              max_span_size=shared_resources.config.get("max_span_size", 10000),
                                              bilinear=True)
             elif answer_layer == 'bilinear':
@@ -122,7 +130,7 @@ class FastQAModule(AbstractXQAModelModule):
                     bilinear_answer_layer(size, encoded_question, tensors.question_length, encoded_support,
                                           tensors.support_length,
                                           tensors.support2question, tensors.answer2support, tensors.is_eval,
-                                          beam_size=shared_resources.config.get("beam_size", 1),
+                                          beam_size=topk,
                                           max_span_size=shared_resources.config.get("max_span_size", 10000))
             else:
                 raise ValueError

@@ -15,9 +15,9 @@ def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_t
             seq2_length = tf.gather(seq2_length, seq1_to_seq2)
         if module == 'attention_matching':
             out = attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
-                                           attn_type, scaled, with_sentinel, seq2_to_seq1=seq2_to_seq1)
+                                           attn_type, scaled, with_sentinel, seq2_to_seq1)
         elif module == 'bidaf':
-            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=seq2_to_seq1)
+            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_to_seq1)
         elif module == 'coattention':
             if 'repr_dim' not in encoder:
                 encoder['repr_dim'] = repr_dim
@@ -32,7 +32,7 @@ def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_t
     return out
 
 
-def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=None):
+def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2=None, seq2_to_seq1=None):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     attn_scores, attn_probs, seq2_weighted = attention.diagonal_bilinear_attention(
         seq1, seq2, seq2_length, False, seq2_to_seq1=seq2_to_seq1)
@@ -40,7 +40,13 @@ def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=None):
     attn_scores += tf.expand_dims(mask_for_lengths(seq1_length, tf.shape(attn_scores)[1]), 2)
 
     max_seq1 = tf.reduce_max(attn_scores, 2)
-    seq1_attention = tf.nn.softmax(max_seq1, 1)
+    if seq1_to_seq2 is None:
+        seq1_attention = tf.nn.softmax(max_seq1, 1)
+    else:
+        segm_max_seq1 = tf.unsorted_segment_max(max_seq1, seq1_to_seq2, tf.reduce_max(seq1_to_seq2) + 1)
+        seq1_attention = tf.nn.softmax(segm_max_seq1, 1)
+        seq1_attention = tf.gather(seq1_attention, seq1_to_seq2)
+        seq1_attention.set_shape(max_seq1.get_shape())
     seq1_weighted = tf.einsum('ij,ijk->ik', seq1_attention, seq1)
     seq1_weighted = tf.expand_dims(seq1_weighted, 1)
     seq1_weighted = tf.tile(seq1_weighted, [1, tf.shape(seq1)[1], 1])

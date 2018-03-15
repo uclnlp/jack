@@ -8,8 +8,8 @@ from jack.tfutil.modular_encoder import modular_encoder
 
 
 class ModularQAModel(AbstractXQAModelModule):
-    def set_beam_size(self, k):
-        self._beam_size_assign(k)
+    def set_topk(self, k):
+        self._topk_assign(k)
 
     def create_output(self, shared_resources, input_tensors):
         tensors = TensorPortTensors(input_tensors)
@@ -48,18 +48,18 @@ class ModularQAModel(AbstractXQAModelModule):
                 answer_layer_config['repr_dim'] = repr_dim
             if 'max_span_size' not in answer_layer_config:
                 answer_layer_config['max_span_size'] = shared_resources.config.get('max_span_size', 16)
-            beam_size = tf.get_variable(
-                'beam_size', initializer=shared_resources.config.get('beam_size', 1), dtype=tf.int32, trainable=False)
-            beam_size_p = tf.placeholder(tf.int32, [], 'beam_size_setter')
-            beam_size_assign = beam_size.assign(beam_size_p)
-            self._beam_size_assign = lambda k: self.tf_session.run(beam_size_assign, {beam_size_p: k})
+            topk = tf.get_variable(
+                'topk', initializer=shared_resources.config.get('topk', 1), dtype=tf.int32, trainable=False)
+            topk_p = tf.placeholder(tf.int32, [], 'beam_size_setter')
+            topk_assign = topk.assign(topk_p)
+            self._topk_assign = lambda k: self.tf_session.run(topk_assign, {topk_p: k})
 
             start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
                 answer_layer(encoded_question, lengths[answer_layer_config.get('question', 'question')],
                              encoded_support, lengths[answer_layer_config.get('support', 'support')],
                              mappings[answer_layer_config.get('support', 'support')],
                              tensors.answer2support, tensors.is_eval,
-                             tensors.correct_start, beam_size=beam_size, **answer_layer_config)
+                             tensors.correct_start, beam_size=topk, **answer_layer_config)
 
         span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 
