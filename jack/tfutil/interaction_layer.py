@@ -17,12 +17,13 @@ def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_t
             out = attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
                                            attn_type, scaled, with_sentinel, seq2_to_seq1=seq2_to_seq1)
         elif module == 'bidaf':
-            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length)
+            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=seq2_to_seq1)
         elif module == 'coattention':
             if 'repr_dim' not in encoder:
                 encoder['repr_dim'] = repr_dim
             out = coattention_layer(
-                seq1, seq1_length, seq2, seq2_length, attn_type, scaled, with_sentinel, num_layers, encoder)
+                seq1, seq1_length, seq2, seq2_length, attn_type, scaled, with_sentinel, seq2_to_seq1, num_layers,
+                encoder)
         else:
             raise ValueError("Unknown interaction type: %s" % module)
 
