@@ -18,7 +18,7 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
 
     @staticmethod
     def _normalise(x, axis=-1):
-        res = tf.nn.l2_normalize(x, axis=axis)
+        res = tf.nn.l2_normalize(x, axis)
         return res
 
     def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors,
