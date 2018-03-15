@@ -21,8 +21,10 @@ def summary(configuration):
 def to_cmd(c):
     command = 'python3 ./bin/jack-train.py ' \
               'with config=conf/lp/distmult.yaml ' \
-              'learning_rate={} save_dir=/tmp/distmult_{}' \
-              ''.format(c['lr'], c['lr'])
+              'learning_rate={} repr_dim={} num_negative={} batch_size={} ' \
+              'save_dir=/tmp/distmult_{}_{}_{}_{}' \
+              ''.format(c['lr'], c['dim'], c['nn'], c['bs'],
+                        c['lr'], c['dim'], c['nn'], c['bs'])
     return command
 
 
@@ -33,7 +35,10 @@ def to_logfile(c, path):
 
 def main(_):
     hyperparameters_space_1 = dict(
-        lr=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+        lr=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
+        dim=[20, 50, 100, 150, 200, 250, 300],
+        nn=[1, 2, 4, 8, 16, 32, 64],
+        bs=[32, 64, 128, 256, 512, 1024]
     )
 
     configurations = list(cartesian_product(hyperparameters_space_1))
