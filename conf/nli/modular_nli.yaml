@@ -5,7 +5,7 @@ description: >
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'modular_nli_reader'
 
-with_char_embeddings: True
+with_char_embeddings: False
 model:
   encoder_layer: null  # list of encoder modules with input key ('question' or 'support' in beginning)
   prediction_layer: null  # 'max_avg_mlp' (h_max, h_avg, p_max, p_avg), 'max_mlp' (h_max, p_max), 'max_interaction_mlp' (h_max, p_max, h_max - p_max, h+max * p_max)
