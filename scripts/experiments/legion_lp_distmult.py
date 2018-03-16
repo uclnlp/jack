@@ -76,7 +76,7 @@ def main(_):
 #$ -o /dev/null
 #$ -e /dev/null
 #$ -t 1-{}
-#$ -l mem=8G
+#$ -l mem=6G
 #$ -l h_rt=12:00:00
 
 cd /home/ucacmin/workspace/jack
