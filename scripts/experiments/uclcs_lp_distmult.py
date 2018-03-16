@@ -59,7 +59,7 @@ def main(_):
         if os.path.isfile(logfile):
             with open(logfile, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-                completed = 'Test set results' in content
+                completed = 'hits@10' in content
 
         if not completed:
             command_line = '{} > {} 2>&1'.format(to_cmd(cfg), logfile)
