@@ -100,8 +100,7 @@ class AbstractSingleSupportClassificationModel(TFModelModule, SingleSupportFixed
         tensors = TensorPortTensors(input_tensors)
         return {
             Ports.loss: tf.losses.sparse_softmax_cross_entropy(logits=tensors.logits,
-                                                               labels=tensors.target_index,
-                                                               reduction=tf.losses.Reduction.MEAN)
+                                                               labels=tensors.target_index)
         }
 
 
