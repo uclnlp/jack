@@ -20,16 +20,16 @@ def summary(configuration):
 
 def to_cmd(c):
     command = 'python3 ./bin/jack-train.py ' \
-              'with config=conf/lp/distmult.yaml ' \
+              'with config=conf/lp/complex.yaml ' \
               'learning_rate={} repr_dim={} num_negative={} batch_size={} ' \
-              'save_dir=/tmp/distmult_{}_{}_{}_{}' \
+              'save_dir=/tmp/complex_{}_{}_{}_{}' \
               ''.format(c['lr'], c['dim'], c['nn'], c['bs'],
                         c['lr'], c['dim'], c['nn'], c['bs'])
     return command
 
 
 def to_logfile(c, path):
-    outfile = "%s/legion_lp_distmult.%s.log" % (path, summary(c).replace("/", "_"))
+    outfile = "%s/uclcs_lp_complex.%s.log" % (path, summary(c).replace("/", "_"))
     return outfile
 
 
@@ -43,10 +43,10 @@ def main(_):
 
     configurations = list(cartesian_product(hyperparameters_space_1))
 
-    path = '/home/ucacmin/Scratch/jack/scripts/experiments/logs/legion_lp_distmult/'
+    path = './scripts/experiments/logs/uclcs_lp_complex/'
 
-    # Check that we are on the Legion cluster first
-    if os.path.exists('/home/ucacmin/'):
+    # Check that we are on the UCLCS cluster first
+    if os.path.exists('/home/pminervi/'):
         # If the folder that will contain logs does not exist, create it
         if not os.path.exists(path):
             os.makedirs(path)
@@ -69,17 +69,17 @@ def main(_):
     sorted_command_lines = sorted(command_lines)
     nb_jobs = len(sorted_command_lines)
 
-    header = """#!/bin/bash -l
+    header = """#!/bin/bash
 
 #$ -cwd
 #$ -S /bin/bash
 #$ -o /dev/null
 #$ -e /dev/null
 #$ -t 1-{}
-#$ -l mem=6G
+#$ -l h_vmem=6G,tmem=6G
 #$ -l h_rt=12:00:00
 
-cd /home/ucacmin/workspace/jack
+cd /home/pminervi/workspace/jack
 
 """.format(nb_jobs)
 

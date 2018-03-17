@@ -35,10 +35,10 @@ def to_logfile(c, path):
 
 def main(_):
     hyperparameters_space_1 = dict(
-        lr=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
-        dim=[20, 50, 100, 150, 200, 250, 300],
-        nn=[1, 2, 4, 8, 16, 32, 64],
-        bs=[32, 64, 128, 256, 512, 1024]
+        lr=[0.001, 0.005, 0.01, 0.05, 0.1],
+        dim=[100, 150, 200, 250],
+        nn=[1, 2, 4, 8, 16],
+        bs=[32, 64, 128, 256]
     )
 
     configurations = list(cartesian_product(hyperparameters_space_1))
@@ -59,7 +59,7 @@ def main(_):
         if os.path.isfile(logfile):
             with open(logfile, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-                completed = 'Test set results' in content
+                completed = 'hits@10' in content
 
         if not completed:
             command_line = '{} > {} 2>&1'.format(to_cmd(cfg), logfile)
@@ -76,7 +76,7 @@ def main(_):
 #$ -o /dev/null
 #$ -e /dev/null
 #$ -t 1-{}
-#$ -l h_vmem=8G,tmem=8G
+#$ -l h_vmem=6G,tmem=6G
 #$ -l h_rt=12:00:00
 
 cd /home/pminervi/workspace/jack
