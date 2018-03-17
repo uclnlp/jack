@@ -240,10 +240,10 @@ class TFReader(JTReader):
             gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                             for grad, var in gradients if grad]
+                             for grad, var in gradients if grad is not None]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
-                             for grad, var in gradients if grad]
+                             for grad, var in gradients if grad is not None]
             min_op = optimizer.apply_gradients(gradients, global_step)
         else:
             min_op = optimizer.minimize(loss, global_step)
