@@ -70,12 +70,13 @@ class AbstractSingleSupportClassificationModel(TFModelModule, SingleSupportFixed
         tensors = TensorPortTensors(input_tensors)
         if not shared_resources.config.get("vocab_from_embeddings", False):
             if hasattr(shared_resources, 'embeddings'):
-                e = tf.constant(shared_resources.embeddings, tf.float32)
+                e = shared_resources.embeddings
+                e = tf.get_variable("embeddings", e.shape, tf.float32, initializer=tf.constant_initializer(e),
+                                    trainable=shared_resources.config.get('train_pretrain', False))
             else:
                 vocab_size = len(shared_resources.vocab)
-                e = tf.get_variable("embeddings", [vocab_size, input_size],
-                                    initializer=tf.random_normal_initializer(0.0, 0.1),
-                                    trainable=True, dtype="float32")
+                e = tf.get_variable("embeddings", [vocab_size, input_size], tf.float32,
+                                    initializer=tf.random_normal_initializer(0.0, 0.1), trainable=True)
 
             embedded_question = tf.nn.embedding_lookup(e, question)
             embedded_support = tf.nn.embedding_lookup(e, support)

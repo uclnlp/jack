@@ -51,21 +51,11 @@ vocab_from_embeddings: False
 # Continue training pretrained embeddings together with model parameters
 train_pretrain: False
 
-# Normalize pretrained embeddings, default True (randomly initialized embeddings have expected unit norm too)
-normalize_pretrain: False
-
 # [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
 embedding_format: null
 
 # embeddings to be loaded
 embedding_file: null
-
-vocab_maxsize: 1000000000000
-
-vocab_minfreq: 2
-
-# Should there be separate vocabularies for questions, supports, candidates and answers. This needs to be set to True for candidate-based methods
-vocab_sep: True
 
 # Optimizer, default Adam
 optimizer: 'adam'
@@ -77,7 +67,7 @@ learning_rate: 0.001
 min_learning_rate: 0.0001
 
 # Learning rate decay, default 1 (disabled)
-learning_rate_decay: 1
+learning_rate_decay: 1.0
 
 # L2 regularization weight, default 0.0
 l2: 0.0
@@ -103,9 +93,6 @@ write_metrics_to: null
 # Use also character based embeddings in readers which support it
 with_char_embeddings: True
 
-# If the vocabulary should be pruned to the most frequent words
-prune: False
-
 # maximum number of supports to consider (as scored by tf idf against question in extractive QA for instance)
 max_num_support: null
 
@@ -121,15 +108,12 @@ lowercase: True
 # path to output directory
 output_dir: './out/'
 
-# path to SQLite DB for storing experiments
-experiments_db: './out/experiments.db'
-
 # loader for the dataset, ['jack', 'squad', 'snli'] are supported. For everything else convert to jtr format first.
 loader: 'jack'
 
 # ADVANCED: if we want to (partially) initialize from a pretrained reader we can use the following option
 # Note: make sure that the variable names and shapes will match
-pretrained_model: null
+load_dir: null
 
 # cache preprocessed data on file in $JACK_TEMP/SOME_UUID/cache, if false caches in RAM
 file_cache: False

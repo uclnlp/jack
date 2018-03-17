@@ -43,8 +43,8 @@ with open('requirements.txt', 'r') as f:
     install_requires = [l for l in f.readlines() if not l.startswith('http://')]
 
 extras_require = {
-    'tf': ['tensorflow>=1.4.0'],
-    'tf_gpu': ['tensorflow-gpu>=1.4.0']
+    'tf': ['tensorflow==1.4.0'],
+    'tf_gpu': ['tensorflow-gpu==1.4.0']
 }
 
 setup(name='jack',
