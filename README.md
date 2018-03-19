@@ -25,11 +25,11 @@ browse.
 [cli]: docs/CLI.md
 [docs]: docs/
 
-# Dedicated Task Documentation and Pre-trained Models
+## Dedicated Task Documentation and Pre-trained Models
  
 * [Question Answering](/docs/Extractive_QA.md)
 
-# Quickstart Examples - Training and Usage of a Question Answering System
+## Quickstart Examples - Training and Usage of a Question Answering System
 
 To illustrate how jack works, we will show how to train a question answering
 model. It is probably best to setup a [virtual environment](https://docs.python.org/3/library/venv.html) to avoid
@@ -103,7 +103,7 @@ print(answers[0][0].text)
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 
 
-# Support
+## Support
 We are thankful for support from:
 
 <a href="http://mr.cs.ucl.ac.uk/"><img src="http://mr.cs.ucl.ac.uk/images/uclmr_logo_round.png" width="100px"></a>
@@ -115,7 +115,7 @@ We are thankful for support from:
 <a href="http://www.pgafamilyfoundation.org"><img src="https://portlandmercado.files.wordpress.com/2013/02/pgaff_pms.jpg" width="100px"></a>
 <a href="http://summa-project.eu/"><img src="http://summa-project.eu/wp-content/uploads/2017/04/summalogofinal.png" width="100px"></a>
 
-# Developer guidelines
+## Developer guidelines
 
 - [Comply with the PEP 8 Style Guide][pep8]
 - Make sure all your code runs from the top level directory, e.g.:
