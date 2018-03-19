@@ -27,9 +27,9 @@ browse.
 
 ## Dedicated Task Documentation and Pre-trained Models
  
-* [Question Answering](/docs/Extractive_QA.md)
-* [Natural Language Inference](/docs/Natural_Language_Inference.md)
-* [Link Prediction for Automatic Knowledge Base Completion](/docs/Link_Prediction.md)
+* [Question Answering](/docs/tasks/Extractive_QA.md)
+* [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
+* [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
 
 ## Quickstart Examples - Training and Usage of a Question Answering System
 

@@ -35,11 +35,11 @@ We list trained models with scores, relative speeds and number of parameters.
 
 | Model         |  F1  | Exact  | Speed | Params in M  | Download          |
 |---------------|------|--------|-------|--------------|-------------------|
-| FastQA        | 64.1 | 59.9   |  1.00 |    0.95      | [fastqa_tqa_web]  |
-| BiDAF         | 58.1 | 53.8   |  0.45 |    2.02      | [bidaf_tqa_web]   |
-| JackQA        | 65.5 | 61.0   |  0.87 |    1.18      | [jackqa_tqa_web]  |
+| FastQA        | 64.8 | 59.6   |  1.00 |    0.95      | [fastqa_tqa_web]  |
+| BiDAF         | 58.3 | 53.0   |  0.45 |    2.02      | [bidaf_tqa_web]   |
+| JackQA        | 66.1 | 60.6   |  0.87 |    1.18      | [jackqa_tqa_web]  |
 
-[bidaf_tqa_web]: https://www.dropbox.com/s/lsy8z9zuzb24gvc/bidaf.zip?dl=0
+[bidaf_tqa_web]: https://www.dropbox.com/s/lsy8z9zuzb24gvc/bidaf.zip?dl=1
 [fastqa_tqa_web]: https://www.dropbox.com/s/nqwvv29gmo5zzm2/fastqa.zip?dl=1
 [jackqa_tqa_web]: https://www.dropbox.com/s/9ntnylqjdvwie7h/jack_qa.zip?dl=1
 
