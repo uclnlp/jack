@@ -24,8 +24,8 @@ We list trained models with scores, relative speeds and number of parameters.
 
 | Model         |  F1  | Exact  | Speed | Params in M  | Download          |
 |---------------|------|--------|-------|--------------|-------------------|
-| FastQA        | 63.7 |  58.7  |  1.00  |     0.95     | [fastqa_tqa_wiki] |
-| JackQA        | 65.4 |  60.3  |  1.11  |     1.18     | [jackqa_tqa_wiki] |
+| FastQA        | 63.7 |  58.7  |  1.00  |     0.95     | [fastqa][fastqa_tqa_wiki] |
+| JackQA        | 65.4 |  60.3  |  1.11  |     1.18     | [jackqa][jackqa_tqa_wiki] |
 
 <!---[bidaf_tqa_wiki]: ---> 
 [fastqa_tqa_wiki]: https://www.dropbox.com/s/cf8ymjtxu3o02wb/fastqa.zip?dl=1
@@ -35,9 +35,9 @@ We list trained models with scores, relative speeds and number of parameters.
 
 | Model         |  F1  | Exact  | Speed | Params in M  | Download          |
 |---------------|------|--------|-------|--------------|-------------------|
-| FastQA        | 64.8 | 59.6   |  1.00 |    0.95      | [fastqa_tqa_web]  |
-| BiDAF         | 58.3 | 53.0   |  0.45 |    2.02      | [bidaf_tqa_web]   |
-| JackQA        | 66.1 | 60.6   |  0.87 |    1.18      | [jackqa_tqa_web]  |
+| FastQA        | 64.8 | 59.6   |  1.00 |    0.95      | [fastqa][fastqa_tqa_web]  |
+| BiDAF         | 58.3 | 53.0   |  0.45 |    2.02      | [bidaf][bidaf_tqa_web]   |
+| JackQA        | 66.1 | 60.6   |  0.87 |    1.18      | [jackqa][jackqa_tqa_web]  |
 
 [bidaf_tqa_web]: https://www.dropbox.com/s/lsy8z9zuzb24gvc/bidaf.zip?dl=1
 [fastqa_tqa_web]: https://www.dropbox.com/s/nqwvv29gmo5zzm2/fastqa.zip?dl=1
