@@ -9,7 +9,7 @@ their compatibility when combined to form a `JTReader`.
 
 ## Pre-defined Ports
 
-jack offers a number of pre-defined ports in [tensorport.py](/jack/core/tensorport.py) (see below for a code snippet) that cover specific QA application scenarios. 
+Jack offers a number of pre-defined ports in [tensorport.py](/jack/core/tensorport.py) (see below for a code snippet) that cover specific QA application scenarios. 
 They include ports for multiple-choice, extractive and generative QA settings. 
 
 Depending on the actual task and setting, different ways of treating the input can be imagined. In case of multiple-choice QA with a fixed number C of 

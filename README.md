@@ -13,17 +13,25 @@
 **Jack the Reader** -- or **jack**, for short -- is a framework for building an testing models on a variety of tasks that require *reading comprehension*.
 
 To get started, please see [How to Install and Run][install] and then you may
-want to have a look at the [notebooks][notebooks].  Lastly, for a high-level explanation of the ideas and
+want to have a look at the [notebooks][notebooks]. For a high-level explanation of the ideas and
 vision, see [Understanding Jack the Reader][understanding]. There is also documentation on our
-[command line interface][cli] for training and evaluating models.
+[command line interface][cli] for training and evaluating models. There is also other [documentation][docs] for you to 
+browse.
 
 [install]: docs/How_to_install_and_run.md
 [api]: https://uclmr.github.io/jack/
 [notebooks]: notebooks/
 [understanding]: docs/Understanding_Jack_the_Reader.md
 [cli]: docs/CLI.md
+[docs]: docs/
 
-# Quickstart Examples - Training and Usage of a Question Answering System
+## Dedicated Task Documentation and Pre-trained Models
+ 
+* [Question Answering](/docs/tasks/Extractive_QA.md)
+* [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
+* [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
+
+## Quickstart Examples - Training and Usage of a Question Answering System
 
 To illustrate how jack works, we will show how to train a question answering
 model. It is probably best to setup a [virtual environment](https://docs.python.org/3/library/venv.html) to avoid
@@ -64,7 +72,6 @@ You want to train another model? No problem, we have a fairly modular QAModel im
 together your own model. There are examples in `conf/qa/squad/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
 These models are defined solely in the configs, i.e., there is not implementation in code.
 This is possible through our `ModularQAModel`.
-For more information on extractive question answering please have a look [here](/docs/Extractive_QA.md).
 
 If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
 
@@ -98,7 +105,7 @@ print(answers[0][0].text)
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 
 
-# Support
+## Support
 We are thankful for support from:
 
 <a href="http://mr.cs.ucl.ac.uk/"><img src="http://mr.cs.ucl.ac.uk/images/uclmr_logo_round.png" width="100px"></a>
@@ -110,7 +117,7 @@ We are thankful for support from:
 <a href="http://www.pgafamilyfoundation.org"><img src="https://portlandmercado.files.wordpress.com/2013/02/pgaff_pms.jpg" width="100px"></a>
 <a href="http://summa-project.eu/"><img src="http://summa-project.eu/wp-content/uploads/2017/04/summalogofinal.png" width="100px"></a>
 
-# Developer guidelines
+## Developer guidelines
 
 - [Comply with the PEP 8 Style Guide][pep8]
 - Make sure all your code runs from the top level directory, e.g.:

@@ -1,6 +1,5 @@
 description: >
-  Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible. This
-  model is a bit more lightweight than jack_qa.
+  Our optimized Jack QA reader which tries to keep up with SotA while being as resource friendly as possible.
 
 parent_config: './conf/qa/modular_qa.yaml'
 
@@ -13,6 +12,7 @@ seed: 1337
 save_dir: './jack_qa_reader'
 
 with_char_embeddings: True
+
 
 # To be fast we have to restrict the use of RNNs as much as possible and use convolutions instead
 model:
@@ -83,21 +83,12 @@ model:
 
   # Self Attention
   - input: 'support_self'
-    output: 'support_self1'
     module: 'self_attn'
     attn_type: 'diagonal_bilinear'
     scaled: True
     with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
     num_attn_heads: 1
-  - input: 'support_self'
-    output: 'support_self2'
-    module: 'self_attn'
-    attn_type: 'bilinear'
-    scaled: True
-    with_sentinel: True  # we gate the attention with an additional scalar sentinel because what we retrieve might actually not be what we were looking for because (softmax) attn always retrieves something
-    num_attn_heads: 2
-
-  - input: ['support', 'support_self1', 'support_self2']
+  - input: ['support', 'support_self']
     output: 'support'
     module: 'concat'
   - input: 'support'
@@ -117,7 +108,6 @@ model:
     conv_width: 5
     num_layers: 1
     residual: True
-
 
   answer_layer:
     support: 'support'
