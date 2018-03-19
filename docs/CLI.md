@@ -62,7 +62,7 @@ $ python3 bin/jack-train.py save_config with config=conf/fastqa.yaml l2=0.001
 format for datasets that are not natively supported.
 * `learning_rate_decay`: multiplicative learning rate decay whenever dev set performance drops (default 1.0, i.e., no decay).
 * `save_dir`: where to save the model when it improves on dev set (default: 'saved_reader'). 
-* `load_dir`: load pretrained model (partially) before training
+* `load_dir`: load pretrained model before training (partially, i.e., the pre-trained model can contain only a subset of the total parameters)
 * `validation_interval`: number of mini-batches between validation on dev set (-1 by default, that is, after each epoch)
 * `batch_size`: size of mini-batches to train on
 
@@ -80,7 +80,7 @@ $ data/GloVe/download.sh
 After training we usually want to properly evaluate our model on test data. This can be done through the
 `bin/jack-eval.py` CLI. Flags are:
 
-* `--save_dir`: path to your saved reader
+* `--load_dir`: path to your saved reader
 * `--dataset`: path to dataset to evaluate on
 * `--loader`: loader for the dataset (default: 'jack')
 * `--batch_size`: batch_size to use when processing the dataset

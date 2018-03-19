@@ -12,16 +12,36 @@ We list trained models with scores, relative speeds and number of parameters.
 
 | Model         |  F1  | Exact  | Speed | Params in M  | Download        |
 |---------------|------|--------|-------|--------------|-----------------|
-| BiDAF         | 77.8 |  68.5  |  1.0  |     2.02     | [bidaf]         |
-| FastQA        | 77.4 |  67.4  |  2.2  |     0.95     | [fastqa]        |
-| JackQA Light  | 79.6 |  69.9  |  2.0  |     1.18     | [jackqa light]  |
-| JackQA        | 80.1 |  70.9  |  1.5  |     2.26     | [jackqa]        |
-
+| FastQA        | 77.4 |  67.4  |  1.00  |     0.95     | [fastqa]        |
+| BiDAF         | 77.8 |  68.5  |  0.45  |     2.02     | [bidaf]         |
+| JackQA        | 79.6 |  69.9  |  0.92  |     1.18     | [jackqa]  |
 
 [bidaf]: https://www.dropbox.com/s/63zkes18juan7wa/bidaf.zip?dl=1
 [fastqa]: https://www.dropbox.com/s/qb796uljoqj0lvo/fastqa.zip?dl=1
-[jackqa light]: https://www.dropbox.com/s/061y88hcq62az63/jack_qa_light.zip?dl=1
-[jackqa]: https://www.dropbox.com/s/36b6tju9engorgc/jack_qa.zip?dl=1
+[jackqa]: https://www.dropbox.com/s/061y88hcq62az63/jack_qa.zip?dl=1
+
+#### TriviaQA Wiki (Devset results)
+
+| Model         |  F1  | Exact  | Speed | Params in M  | Download          |
+|---------------|------|--------|-------|--------------|-------------------|
+| FastQA        | 63.7 |  58.7  |  1.00  |     0.95     | [fastqa_tqa_wiki] |
+| JackQA        | 65.4 |  60.3  |  1.11  |     1.18     | [jackqa_tqa_wiki] |
+
+<!---[bidaf_tqa_wiki]: ---> 
+[fastqa_tqa_wiki]: https://www.dropbox.com/s/cf8ymjtxu3o02wb/fastqa.zip?dl=1
+[jackqa_tqa_wiki]: https://www.dropbox.com/s/e96cox9dqaanbyw/jack_qa.zip?dl=1
+
+#### TriviaQA Web (Devset results)
+
+| Model         |  F1  | Exact  | Speed | Params in M  | Download          |
+|---------------|------|--------|-------|--------------|-------------------|
+| FastQA        | 64.1 | 59.9   |  1.00 |    0.95      | [fastqa_tqa_web]  |
+| BiDAF         | 58.1 | 53.8   |  0.45 |    2.02      | [bidaf_tqa_web]   |
+| JackQA        | 65.5 | 61.0   |  0.87 |    1.18      | [jackqa_tqa_web]  |
+
+[bidaf_tqa_web]: https://www.dropbox.com/s/lsy8z9zuzb24gvc/bidaf.zip?dl=0
+[fastqa_tqa_web]: https://www.dropbox.com/s/nqwvv29gmo5zzm2/fastqa.zip?dl=1
+[jackqa_tqa_web]: https://www.dropbox.com/s/9ntnylqjdvwie7h/jack_qa.zip?dl=1
 
 ### Implementing new Models
 
