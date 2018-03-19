@@ -1,0 +1,27 @@
+description: >
+  DistMult - https://www.microsoft.com/en-us/research/publication/embedding-entities-and-relations-for-learning-and-inference-in-knowledge-bases/
+
+parent_config: 'conf/jack.yaml'
+loader: jack
+
+name: 'transe'
+debug: False
+
+reader: 'transe_reader'
+
+train: 'data/WN18RR/train.jtr'
+dev: 'data/WN18RR/valid.jtr'
+test: 'data/WN18RR/test.jtr'
+
+seed: 1337
+epochs: 100
+repr_dim: 200
+num_negative: 1
+with_char_embeddings: False
+prune: False
+lowercase: False
+
+batch_size: 32
+optimizer: adam
+learning_rate: 0.005
+learning_rate_decay: 1
