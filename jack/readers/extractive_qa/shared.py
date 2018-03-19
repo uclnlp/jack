@@ -44,9 +44,9 @@ class XQAPorts:
     start_scores = Ports.Prediction.start_scores
     end_scores = Ports.Prediction.end_scores
     span_prediction = Ports.Prediction.answer_span
-    token_offsets = TensorPort(tf.int32, [None, None, 2], "token_offsets",
-                               "Document and character index of tokens in support.",
-                               "[S, support_length, 2]")
+    token_offsets = TensorPort(tf.int32, [None, None], "token_offsets",
+                               "Character index of tokens in support.",
+                               "[S, support_length]")
     selected_support = TensorPort(tf.int32, [None], "selected_support",
                                   "Selected support based on TF IDF with question", "[num_support]")
 
