@@ -13,15 +13,21 @@
 **Jack the Reader** -- or **jack**, for short -- is a framework for building an testing models on a variety of tasks that require *reading comprehension*.
 
 To get started, please see [How to Install and Run][install] and then you may
-want to have a look at the [notebooks][notebooks].  Lastly, for a high-level explanation of the ideas and
+want to have a look at the [notebooks][notebooks]. For a high-level explanation of the ideas and
 vision, see [Understanding Jack the Reader][understanding]. There is also documentation on our
-[command line interface][cli] for training and evaluating models.
+[command line interface][cli] for training and evaluating models. There is also other [documentation][docs] for you to 
+browse.
 
 [install]: docs/How_to_install_and_run.md
 [api]: https://uclmr.github.io/jack/
 [notebooks]: notebooks/
 [understanding]: docs/Understanding_Jack_the_Reader.md
 [cli]: docs/CLI.md
+[docs]: docs/
+
+# Dedicated Task Documentation and Pre-trained Models
+ 
+* [Question Answering](/docs/Extractive_QA.md)
 
 # Quickstart Examples - Training and Usage of a Question Answering System
 
@@ -64,7 +70,6 @@ You want to train another model? No problem, we have a fairly modular QAModel im
 together your own model. There are examples in `conf/qa/squad/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
 These models are defined solely in the configs, i.e., there is not implementation in code.
 This is possible through our `ModularQAModel`.
-For more information on extractive question answering please have a look [here](/docs/Extractive_QA.md).
 
 If all of that is too cumbersome for you and you just want to play, why not downloading a pretrained model:
 

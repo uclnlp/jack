@@ -14,7 +14,7 @@ from jack.readers.implementations import reader_from_file
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 logging.basicConfig(level=logging.INFO)
 
-tf.app.flags.DEFINE_string('file', None, 'dataset file')
+tf.app.flags.DEFINE_string('dataset', None, 'dataset file')
 tf.app.flags.DEFINE_string('loader', 'squad', 'either squad or jack')
 tf.app.flags.DEFINE_string('load_dir', None, 'directory to saved model')
 tf.app.flags.DEFINE_string('out', "results.json", 'Result file path.')
