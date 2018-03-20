@@ -8,11 +8,9 @@ import sys
 
 import tensorflow as tf
 
-from jack.eval import evaluate_reader
+from jack.eval import evaluate_reader, pretty_print_results
 from jack.io.load import loaders
 from jack.readers import reader_from_file
-
-from jack.train_reader import print_results
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 logging.basicConfig(level=logging.INFO)
@@ -40,4 +38,4 @@ result_dict = evaluate_reader(reader, dataset, FLAGS.batch_size)
 
 
 logger.info("############### RESULTS ##############")
-print_results(result_dict)
+pretty_print_results(result_dict)

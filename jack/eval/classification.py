@@ -31,11 +31,12 @@ def evaluate(reader, dataset, batch_size):
             confusion_matrix_string.append(ct)
             confusion_matrix_string.append(' ' * (max_class - len(ct)))
         confusion_matrix_string.append('\n')
-        precision[c1] = confusion_matrix[c1][c1] / sum(p[c1] for p in confusion_matrix.values())
-        recall[c1] = confusion_matrix[c1][c1] / sum(confusion_matrix[c1].values())
-        f1[c1] = 2 * precision[c1] * recall[c1] / (precision[c1] + recall[c1])
+        precision[c1] = confusion_matrix[c1][c1] / max(1.0, sum(p[c1] for p in confusion_matrix.values()))
+        recall[c1] = confusion_matrix[c1][c1] / max(1.0, sum(confusion_matrix[c1].values()))
+        f1[c1] = 2 * precision[c1] * recall[c1] / max(1.0, precision[c1] + recall[c1])
 
-    accuracy = sum(confusion_matrix[c][c] for c in classes) / sum(sum(vs.values()) for vs in confusion_matrix.values())
+    accuracy = sum(confusion_matrix[c][c] for c in classes) / max(
+        1.0, sum(sum(vs.values()) for vs in confusion_matrix.values()))
 
     return {
         'Accuracy': accuracy,
