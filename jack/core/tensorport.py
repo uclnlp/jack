@@ -17,6 +17,9 @@ except ImportError as e:
 
 logger = logging.getLogger(__name__)
 
+_allowed_torch = {np.dtype(np.int8), np.dtype(np.int16), np.dtype(np.int32), np.dtype(np.int64),
+                  np.dtype(np.float16), np.dtype(np.float32), np.dtype(np.float64)}
+
 
 class TensorPort:
     """A TensorPort defines an input or output tensor for a modules.
@@ -28,25 +31,25 @@ class TensorPort:
         """Create a new TensorPort.
 
         Args:
-            dtype: the (TF) data type of the port.
+            dtype: the (numpy) data type of the port.
             shape: the shape of the tensor.
             name: the name of this port (should be a valid TF name)
             doc_string: a documentation string associated with this port
             shape_string: a string of the form [size_1,size_2,size_3] where size_i is a text describing the
                 size of the tensor's dimension i (such as "number of batches").
         """
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
         self.shape = shape
         self.name = name
         self.__doc__ = doc_string
         self.shape_string = shape_string
 
-    def create_placeholder(self):
+    def create_tf_placeholder(self):
         """Convenience method that produces a placeholder of the type and shape defined by the port.
 
         Returns: a placeholder of same type, shape and name.
         """
-        return tf.placeholder(self.dtype, self.shape, self.name)
+        return tf.placeholder(tf.as_dtype(self.dtype), self.shape, self.name)
 
     def create_torch_variable(self, value, gpu=False):
         """Convenience method that produces a tensor given the value of the defined type.
@@ -59,13 +62,13 @@ class TensorPort:
             return value
         if not torch.is_tensor(value):
             if not isinstance(value, np.ndarray):
-                value = np.array(value, dtype=self.dtype.as_numpy_dtype)
+                value = np.array(value, dtype=self.dtype)
             else:
-                value = value.astype(self.dtype.as_numpy_dtype)
+                value = value.astype(self.dtype)
             if value.size == 0:
                 return value
-            allowed = [tf.int16, tf.int32, tf.int64, tf.float16, tf.float32, tf.float64, tf.int8]
-            if self.dtype in allowed:
+
+            if self.dtype in _allowed_torch:
                 value = torch.autograd.Variable(torch.from_numpy(value))
         else:
             value = torch.autograd.Variable(value)
@@ -73,7 +76,8 @@ class TensorPort:
             value = value.cuda()
         return value
 
-    def torch_to_numpy(self, value):
+    @staticmethod
+    def torch_to_numpy(value):
         """Convenience method that produces a tensor given the value of the defined type.
 
         Returns: a torch tensor of same type.
@@ -121,11 +125,12 @@ class TensorPortWithDefault(TensorPort):
     TensorPort that also defines a default value.
     """
 
-    def __init__(self, default_value, dtype, shape, name, doc_string=None, shape_string=None):
+    def __init__(self, default_value, shape, name, doc_string=None, shape_string=None):
+        """Default value must be a numpy array."""
         self.default_value = default_value
-        super().__init__(dtype, shape, name, doc_string=doc_string, shape_string=shape_string)
+        super().__init__(default_value.dtype, shape, name, doc_string=doc_string, shape_string=shape_string)
 
-    def create_placeholder(self):
+    def create_tf_placeholder(self):
         """Creates a TF placeholder_with_default.
 
         Convenience method that produces a constant of the type, value and shape defined by the port.
@@ -133,7 +138,7 @@ class TensorPortWithDefault(TensorPort):
         as if it was a placeholder.
         """
         ph = tf.placeholder_with_default(self.default_value, self.shape, self.name)
-        if ph.dtype != self.dtype:
+        if ph.dtype != tf.as_dtype(self.dtype):
             logger.warning(
                 "Placeholder {} with default of type {} created for TensorPort with type {}!".format(self.name,
                                                                                                      ph.dtype,
@@ -153,76 +158,72 @@ class Ports:
     to define their input or output, respectively.
     """
 
-    loss = TensorPort(tf.float32, [None], "loss",
+    loss = TensorPort(np.float32, [None], "loss",
                       "Represents loss on each instance in the batch",
                       "[batch_size]")
-    keep_prob = TensorPortWithDefault(1.0, tf.float32, [], "keep_prob",
+    keep_prob = TensorPortWithDefault(np.array(1.0, np.float32), [], "keep_prob",
                                       "scalar representing keep probability when using dropout",
                                       "[]")
-    is_eval = TensorPortWithDefault(True, tf.bool, [], "is_eval",
+    is_eval = TensorPortWithDefault(np.array(True), [], "is_eval",
                                     "boolean that determines whether input is eval or training.",
                                     "[]")
 
     class Input:
-        question = TensorPort(tf.int32, [None, None], "question",
+        question = TensorPort(np.int32, [None, None], "question",
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
 
-        support = TensorPort(tf.int32, [None, None], "support",
+        support = TensorPort(np.int32, [None, None], "support",
                              "Represents instances with single support documents",
                              "[batch_size, max_num_tokens]")
 
-        multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
+        multiple_support = TensorPort(np.int32, [None, None, None], "multiple_support",
                                       ("Represents instances with multiple support documents",
                                        " or single instances with extra dimension set to 1"),
                                       "[batch_size, max_num_support, max_num_tokens]")
 
-        atomic_candidates = TensorPort(tf.int32, [None, None], "atomic_candidates",
+        atomic_candidates = TensorPort(np.int32, [None, None], "atomic_candidates",
                                        ("Represents candidate choices using single symbols. ",
                                         "This could be a list of entities from global entities ",
                                         "for example atomic_candidates = [e1, e7, e83] from ",
                                         "global_entities = [e1, e2, e3, ..., eN-1, eN"),
                                        "[batch_size, num_candidates]")
 
-        sample_id = TensorPort(tf.int32, [None], "sample_id",
+        sample_id = TensorPort(np.int32, [None], "sample_id",
                                "Maps this sample to the index in the input data",
                                "[batch_size]")
 
-        sample_str_id = TensorPort(tf.string, [None], "sample_str_id",
-                                   "Maps this sample to the index in the input data",
-                                   "[batch_size]")
-
-        muliple_support_length = TensorPort(tf.int32, [None, None], "muliple_support_length",
+        muliple_support_length = TensorPort(np.int32, [None, None], "muliple_support_length",
                                             "Represents length of supports in each support in batch",
                                             "[batch_size, num_supports]")
 
-        support_length = TensorPort(tf.int32, [None], "support_length",
+        support_length = TensorPort(np.int32, [None], "support_length",
                                     "Represents length of supports in batch",
                                     "[batch_size]")
 
-        question_length = TensorPort(tf.int32, [None], "question_length",
+        question_length = TensorPort(np.int32, [None], "question_length",
                                      "Represents length of questions in batch",
                                      "[batch_size]")
 
-        emb_support = TensorPort(tf.float32, [None, None, None], "emb_support",
+        emb_support = TensorPort(np.float32, [None, None, None], "emb_support",
                                       "Represents the embedded support",
                                       "[S, max_num_tokens, N]")
 
-        emb_question = TensorPort(tf.float32, [None, None, None], "emb_question",
+        emb_question = TensorPort(np.float32, [None, None, None], "emb_question",
                                        "Represents the embedded question",
                                        "[Q, max_num_question_tokens, N]")
 
         # character based information
-        word_chars = TensorPort(tf.int32, [None, None], "word_chars",
+        word_chars = TensorPort(np.int32, [None, None], "word_chars",
                                 "Represents questions using symbol vectors",
                                 "[U, max_num_chars]")
-        word_char_length = TensorPort(tf.int32, [None], "word_char_length",
+        word_char_length = TensorPort(np.int32, [None], "word_char_length",
                                       "Represents questions using symbol vectors",
                                       "[U]")
-        question_words = TensorPort(tf.int32, [None, None], "question_words",
+        question_words = TensorPort(np.int32, [None, None], "question_words",
                                     "Represents support using symbol vectors indexing defined word chars.",
                                     "[batch_size, max_num_question_tokens]")
-        support_words = TensorPort(tf.int32, [None, None], "support_words",
+        support_words = TensorPort(np.int32, [None, None], "support_words",
                                    "Represents support using symbol vectors indexing defined word chars",
                                    "[batch_size, max_num_support_tokens, max]")
 
@@ -230,78 +231,78 @@ class Ports:
         # Typical input ports such as support, candidates, answers are defined together with individual mapping ports.
         # This allows for more flexibility when numbers can vary between questions.
 
-        support2question = TensorPort(tf.int32, [None], "support2question",
+        support2question = TensorPort(np.int32, [None], "support2question",
                                       "Represents mapping to question idx per support",
                                       "[S]")
-        candidate2question = TensorPort(tf.int32, [None], "candidate2question",
+        candidate2question = TensorPort(np.int32, [None], "candidate2question",
                                         "Represents mapping to question idx per candidate",
                                         "[C]")
-        answer2support = TensorPortWithDefault([0], tf.int32, [None], "answer2support",
+        answer2support = TensorPortWithDefault(np.array([0], np.int32), [None], "answer2support",
                                                "Represents mapping to support idx per answer", "[A]")
-        atomic_candidates1D = TensorPort(tf.int32, [None], "candidates1D",
+        atomic_candidates1D = TensorPort(np.int32, [None], "candidates1D",
                                          "Represents candidate choices using single symbols",
                                          "[C]")
 
-        seq_candidates = TensorPort(tf.int32, [None, None], "seq_candidates",
+        seq_candidates = TensorPort(np.int32, [None, None], "seq_candidates",
                                     "Represents candidate choices using single symbols",
                                     "[C, max_num_tokens]")
 
         # MISC intermediate ports that might come in handy
         # -embeddings
-        embedded_seq_candidates = TensorPort(tf.float32, [None, None, None], "embedded_seq_candidates_flat",
+        embedded_seq_candidates = TensorPort(np.float32, [None, None, None], "embedded_seq_candidates_flat",
                                              "Represents the embedded sequential candidates",
                                              "[C, max_num_tokens, N]")
 
-        embedded_candidates = TensorPort(tf.float32, [None, None], "embedded_candidates_flat",
+        embedded_candidates = TensorPort(np.float32, [None, None], "embedded_candidates_flat",
                                          "Represents the embedded candidates",
                                          "[C, N]")
 
     class Prediction:
-        logits = TensorPort(tf.float32, [None, None], "logits",
+        logits = TensorPort(np.float32, [None, None], "logits",
                             "Represents output scores for each candidate",
                             "[C, num_candidates]")
 
-        candidate_index = TensorPort(tf.float32, [None], "candidate_idx",
+        candidate_index = TensorPort(np.float32, [None], "candidate_idx",
                                      "Represents answer as a single index",
                                      "[C]")
 
-        candidate_scores = TensorPort(tf.float32, [None], "candidate_scores_flat",
+        candidate_scores = TensorPort(np.float32, [None], "candidate_scores_flat",
                                       "Represents output scores for each candidate",
                                       "[C]")
 
-        candidate_idx = TensorPort(tf.float32, [None], "candidate_predictions_flat",
+        candidate_idx = TensorPort(np.float32, [None], "candidate_predictions_flat",
                                    "Represents groundtruth candidate labels, usually 1 or 0",
                                    "[C]")
 
         # extractive QA
-        start_scores = TensorPort(tf.float32, [None, None], "start_scores",
+        start_scores = TensorPort(np.float32, [None, None], "start_scores",
                                   "Represents start scores for each support sequence",
                                   "[S, max_num_tokens]")
 
-        end_scores = TensorPort(tf.float32, [None, None], "end_scores",
+        end_scores = TensorPort(np.float32, [None, None], "end_scores",
                                 "Represents end scores for each support sequence",
                                 "[S, max_num_tokens]")
 
-        answer_span = TensorPort(tf.int32, [None, 3], "answer_span_prediction",
+        answer_span = TensorPort(np.int32, [None, 3], "answer_span",
                                  "Represents answer as a (doc_idx, start, end) span", "[A, 3]")
 
         # generative QA
-        generative_symbol_scores = TensorPort(tf.int32, [None, None, None], "symbol_scores",
+        generative_symbol_scores = TensorPort(np.int32, [None, None, None], "symbol_scores",
                                               "Represents symbol scores for each possible "
                                               "sequential answer given during training",
                                               "[A, max_num_tokens, vocab_len]")
 
-        generative_symbols = TensorPort(tf.int32, [None, None], "symbol_prediction",
+        generative_symbols = TensorPort(np.int32, [None, None], "symbol_prediction",
                                         "Represents symbol sequence for each possible "
                                         "answer target_indexpredicted by the model",
                                         "[A, max_num_tokens]")
 
     class Target:
-        candidate_1hot = TensorPort(tf.float32, [None, None], "candidate_targets",
+        candidate_1hot = TensorPort(np.float32, [None, None], "candidate_targets",
                                     "Represents target (0/1) values for each candidate",
                                     "[batch_size, num_candidates]")
 
-        target_index = TensorPort(tf.int32, [None], "target_index",
+        target_index = TensorPort(np.int32, [None], "target_index",
                                   ("Represents symbol id of target candidate. ",
                                    "This can either be an index into a full list of candidates,",
                                    " which is fixed, or an index into a partial list of ",
@@ -309,14 +310,14 @@ class Ports:
                                    "from a list of many candidates"),
                                   "[batch_size]")
 
-        answer_span = TensorPort(tf.int32, [None, 2], "answer_span",
+        answer_span = TensorPort(np.int32, [None, 2], "answer_span_target",
                                  "Represents answer as a (start, end) span", "[A, 2]")
 
-        seq_answer = TensorPort(tf.int32, [None, None], "answer_seq_target",
+        seq_answer = TensorPort(np.int32, [None, None], "answer_seq_target",
                                 "Represents answer as a sequence of symbols",
                                 "[A, max_num_tokens]")
 
-        symbols = TensorPort(tf.int32, [None, None], "symbol_targets",
+        symbols = TensorPort(np.int32, [None, None], "symbol_targets",
                              "Represents symbols for each possible target answer sequence",
                              "[A, max_num_tokens]")
 
@@ -344,9 +345,3 @@ class TensorPortTensors:
         Returns: the tensor associated with the tensor port of the given name.
         """
         return self.name_to_tensor[item]
-
-    def __getitem__(self, item):
-        return self.name_to_tensor[item]
-
-    def get(self, item):
-        return self.name_to_tensor.get(item)

@@ -42,11 +42,12 @@ own which, in some cases, will even be necessary.
 
 ```python
 from jack.core.tensorport import Tensorport
-question = TensorPort(tf.int32, [None, None], "question",
+import numpy as np
+question = TensorPort(np.int32, [None, None], "question",
                       "Represents questions using symbol vectors",
                       "[batch_size, max_num_question_tokens]")
 
-multiple_support = TensorPort(tf.int32, [None, None, None], "multiple_support",
+multiple_support = TensorPort(np.int32, [None, None, None], "multiple_support",
                               ("Represents instances with multiple support documents",
                                " or single instances with extra dimension set to 1"),
                               "[batch_size, max_num_support, max_num_tokens]")
