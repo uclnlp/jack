@@ -100,8 +100,7 @@ class AbstractSingleSupportClassificationModel(TFModelModule, SingleSupportFixed
     def create_training_output(self, shared_resources: SharedResources, input_tensors):
         tensors = TensorPortTensors(input_tensors)
         return {
-            Ports.loss: tf.losses.sparse_softmax_cross_entropy(logits=tensors.logits,
-                                                               labels=tensors.target_index)
+            Ports.loss: tf.losses.sparse_softmax_cross_entropy(logits=tensors.logits, labels=tensors.target_index)
         }
 
 
@@ -268,12 +267,13 @@ class SimpleClassificationOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: List[QASetting], logits: np.ndarray) -> List[Answer]:
+    def __call__(self, questions: List[QASetting], tensors: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
+        logits = tensors[Ports.Prediction.logits]
         winning_indices = np.argmax(logits, axis=1)
         result = []
-        for index_in_batch, question in enumerate(inputs):
+        for index_in_batch, question in enumerate(questions):
             winning_index = winning_indices[index_in_batch]
             score = logits[index_in_batch, winning_index]
             if self._shared_resources is not None and hasattr(self._shared_resources, 'answer_vocab'):

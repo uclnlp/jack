@@ -5,7 +5,7 @@ produced at the input and/or output of each module, thus defining a kind of sign
 flexibility when (re-)using modules in different combinations.
 """
 import logging
-from typing import Mapping, Sequence
+from typing import Mapping, Sequence, Any
 
 import numpy as np
 import tensorflow as tf
@@ -327,7 +327,7 @@ class TensorPortTensors:
     by `x.foo` instead of `x['foo']` calls.
     """
 
-    def __init__(self, mapping: Mapping[TensorPort, tf.Tensor]):
+    def __init__(self, mapping: Mapping[TensorPort, Any]):
         """
         Create a wrapping based on the passed in mapping/dictionary.
         Args:
@@ -344,3 +344,9 @@ class TensorPortTensors:
         Returns: the tensor associated with the tensor port of the given name.
         """
         return self.name_to_tensor[item]
+
+    def __getitem__(self, item):
+        return self.name_to_tensor[item]
+
+    def get(self, item):
+        return self.name_to_tensor.get(item)

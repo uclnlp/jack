@@ -284,29 +284,29 @@ def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_s
 
 
 class XQAOutputModule(OutputModule):
-    def __call__(self, questions, span_prediction,
-                 token_offsets, selected_support, support2question,
-                 start_scores, end_scores) -> Sequence[Sequence[Answer]]:
-        """Produces top-k answers for each question."""
-        beam_size = span_prediction.shape[0] // len(questions)
-        all_answers = []
-        for k, q in enumerate(questions):
-            answers = []
-            doc_idx_map = [i for i, q_id in enumerate(support2question) if q_id == k]
-            for j in range(beam_size):
-                i = k * beam_size + j
-                doc_idx, start, end = span_prediction[i]
-                score = start_scores[doc_idx_map[doc_idx], start]
-                answer, doc_idx, span = get_answer_and_span(
-                    q, doc_idx, start, end, token_offsets[doc_idx_map[doc_idx]],
-                    [i for q_id, i in zip(support2question, selected_support) if q_id == k])
-                answers.append(Answer(answer, span=span, doc_idx=doc_idx, score=score))
-            all_answers.append(answers)
-
-        return all_answers
-
     @property
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.answer_span, XQAPorts.token_offsets,
                 XQAPorts.selected_support, XQAPorts.support2question,
                 Ports.Prediction.start_scores, Ports.Prediction.end_scores]
+
+    def __call__(self, questions: List[QASetting], tensors: Mapping[TensorPort, np.ndarray]) \
+            -> Sequence[Sequence[Answer]]:
+        """Produces top-k answers for each question."""
+        tensors = TensorPortTensors(tensors)
+        beam_size = tensors.span_prediction.shape[0] // len(questions)
+        all_answers = []
+        for k, q in enumerate(questions):
+            answers = []
+            doc_idx_map = [i for i, q_id in enumerate(tensors.support2question) if q_id == k]
+            for j in range(beam_size):
+                i = k * beam_size + j
+                doc_idx, start, end = tensors.span_prediction[i]
+                score = tensors.start_scores[doc_idx_map[doc_idx], start]
+                answer, doc_idx, span = get_answer_and_span(
+                    q, doc_idx, start, end, tensors.token_offsets[doc_idx_map[doc_idx]],
+                    [i for q_id, i in zip(tensors.support2question, tensors.selected_support) if q_id == k])
+                answers.append(Answer(answer, span=span, doc_idx=doc_idx, score=score))
+            all_answers.append(answers)
+
+        return all_answers

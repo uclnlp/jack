@@ -111,8 +111,7 @@ class TFModelModule(ModelModule):
                                           if p not in self._placeholders and p not in self._tensors)
                 self._tensors.update(self._placeholders)
                 input_target_tensors = {p: self._tensors.get(p, None) for p in self.training_input_ports}
-                training_output_tensors = self.create_training_output(
-                    self.shared_resources, {port: input_target_tensors[port] for port in self.training_input_ports})
+                training_output_tensors = self.create_training_output(self.shared_resources, input_target_tensors)
                 self._tensors.update(training_output_tensors)
         self._training_variables = [v for v in tf.trainable_variables() if v not in old_train_variables]
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
