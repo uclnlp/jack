@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import abstractmethod
-from typing import Sequence
+from typing import Sequence, Mapping
 
 import numpy as np
 
@@ -22,12 +22,13 @@ class OutputModule:
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, inputs: Sequence[QASetting], *tensor_inputs: np.ndarray) -> Sequence[Sequence[Answer]]:
+    def __call__(self, questions: Sequence[QASetting], tensors: Mapping[TensorPort, np.array]) \
+            -> Sequence[Answer]:
         """
         Process the tensors corresponding to the defined `input_ports` for a batch to produce a list of answers.
         The module has access to the original inputs.
         Args:
-            inputs:
+            questions:
             prediction:
 
         Returns:
