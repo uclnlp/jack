@@ -121,7 +121,7 @@ class TFModelModule(ModelModule):
 
         for var in tf.global_variables():
             is_trainable = var in tf.trainable_variables()
-            logger.info('Variable: {} (Trainable: {})'.format(var, is_trainable))
+            logger.debug('Variable: {} (Trainable: {})'.format(var, is_trainable))
 
         # Sometimes we want to initialize (partially) with a pre-trained model
         load_dir = self.shared_resources.config.get('load_dir')
