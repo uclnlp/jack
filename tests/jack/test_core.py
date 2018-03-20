@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from jack.core import SharedResources
 from jack.io.embeddings import load_embeddings
 from jack.util.vocab import Vocab

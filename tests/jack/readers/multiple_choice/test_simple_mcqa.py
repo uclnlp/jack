@@ -36,8 +36,3 @@ def test_single_support_fixed_class_inputs():
     expected_question_ids = [[shared_resources.vocab.get_id(sym) for sym in expected_question]]
     assert np.array_equal(actual_question_ids, expected_question_ids)
     assert first_instance[Ports.Input.question_length][0] == len(expected_question)
-
-    # print(tensor_data_set)
-
-
-test_single_support_fixed_class_inputs()
