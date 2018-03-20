@@ -58,6 +58,3 @@ def test_serialization():
             reader_instance.load(temp_dir_path)
 
             assert reader_instance is not None
-
-
-test_serialization()
