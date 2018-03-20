@@ -59,7 +59,7 @@ class ModularQAModel(AbstractXQAModelModule):
                              encoded_support, lengths[answer_layer_config.get('support', 'support')],
                              mappings[answer_layer_config.get('support', 'support')],
                              tensors.answer2support, tensors.is_eval,
-                             tensors.correct_start, beam_size=topk, **answer_layer_config)
+                             tensors.correct_start, topk=topk, **answer_layer_config)
 
         span = tf.stack([doc_idx, predicted_start_pointer, predicted_end_pointer], 1)
 

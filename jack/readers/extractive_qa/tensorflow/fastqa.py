@@ -114,7 +114,7 @@ class FastQAModule(AbstractXQAModelModule):
                                              tensors.support_length,
                                              tensors.correct_start, tensors.support2question, tensors.answer2support,
                                              tensors.is_eval,
-                                             beam_size=topk,
+                                             topk=topk,
                                              max_span_size=shared_resources.config.get("max_span_size", 10000))
             elif answer_layer == 'conditional_bilinear':
                 start_scores, end_scores, doc_idx, predicted_start_pointer, predicted_end_pointer = \
@@ -122,7 +122,7 @@ class FastQAModule(AbstractXQAModelModule):
                                              tensors.support_length,
                                              tensors.correct_start, tensors.support2question, tensors.answer2support,
                                              tensors.is_eval,
-                                             beam_size=topk,
+                                             topk=topk,
                                              max_span_size=shared_resources.config.get("max_span_size", 10000),
                                              bilinear=True)
             elif answer_layer == 'bilinear':
@@ -130,7 +130,7 @@ class FastQAModule(AbstractXQAModelModule):
                     bilinear_answer_layer(size, encoded_question, tensors.question_length, encoded_support,
                                           tensors.support_length,
                                           tensors.support2question, tensors.answer2support, tensors.is_eval,
-                                          beam_size=topk,
+                                          topk=topk,
                                           max_span_size=shared_resources.config.get("max_span_size", 10000))
             else:
                 raise ValueError
