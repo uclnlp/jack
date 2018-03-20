@@ -4,10 +4,10 @@ description: >
 parent_config: 'conf/jack.yaml'
 loader: jack
 
-name: 'distmult'
+name: 'transe'
 debug: False
 
-reader: 'distmult_reader'
+reader: 'transe_reader'
 
 train: 'data/WN18/train.jtr'
 dev: 'data/WN18/valid.jtr'
@@ -21,7 +21,7 @@ with_char_embeddings: False
 prune: False
 lowercase: False
 
-batch_size: 8192
+batch_size: 32
 optimizer: adam
 learning_rate: 0.005
 learning_rate_decay: 1

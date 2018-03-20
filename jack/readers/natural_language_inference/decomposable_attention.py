@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
+
     def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors,
                      has_bos_token=True):
         # final states_fw_bw dimensions:
@@ -77,7 +78,7 @@ class BaseDecomposableAttentionModel:
         raise NotImplementedError
 
     def __init__(self, sequence1, sequence1_length, sequence2, sequence2_length,
-                 nb_classes=3, reuse=False, use_masking=False, init_std_dev=0.01, *args, **kwargs):
+                 nb_classes=3, reuse=False, use_masking=True, init_std_dev=0.01, *args, **kwargs):
         self.init_std_dev = init_std_dev
         self.nb_classes = nb_classes
 
@@ -132,7 +133,7 @@ class BaseDecomposableAttentionModel:
             return self.logits
 
     def attend(self, sequence1, sequence2,
-               sequence1_lengths=None, sequence2_lengths=None, use_masking=False, reuse=False):
+               sequence1_lengths=None, sequence2_lengths=None, use_masking=True, reuse=False):
         """
         Attend phase.
 
@@ -196,7 +197,7 @@ class BaseDecomposableAttentionModel:
         return transformed_sentence_and_alignment
 
     def aggregate(self, v1, v2, num_classes,
-                  v1_lengths=None, v2_lengths=None, use_masking=False, reuse=False):
+                  v1_lengths=None, v2_lengths=None, use_masking=True, reuse=False):
         """
         Aggregate phase.
 

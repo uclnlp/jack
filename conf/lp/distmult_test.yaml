@@ -9,19 +9,19 @@ debug: False
 
 reader: 'distmult_reader'
 
-train: 'data/WN18/train.jtr'
-dev: 'data/WN18/valid.jtr'
-test: 'data/WN18/test.jtr'
+train: 'data/WN18/snippet.jtr'
+dev: 'data/WN18/snippet.jtr'
+test: 'data/WN18/snippet.jtr'
 
 seed: 1337
 epochs: 100
-repr_dim: 200
+repr_dim: 20
 num_negative: 1
 with_char_embeddings: False
 prune: False
 lowercase: False
 
-batch_size: 8192
+batch_size: 32
 optimizer: adam
 learning_rate: 0.005
 learning_rate_decay: 1

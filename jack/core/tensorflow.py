@@ -20,13 +20,13 @@ class TFModelModule(ModelModule):
     and define the ports.
     """
 
-    def __init__(self, shared_resources: SharedResources, sess=None):
+    def __init__(self, shared_resources: SharedResources, session=None):
         self.shared_resources = shared_resources
-        if sess is None:
+        if session is None:
             session_config = tf.ConfigProto(allow_soft_placement=True)
             session_config.gpu_options.allow_growth = True
-            sess = tf.Session(config=session_config)
-        self.tf_session = sess
+            session = tf.Session(config=session_config)
+        self.tf_session = session
         # will be set in setup
         self._tensors = None
         self._placeholders = None
@@ -118,6 +118,10 @@ class TFModelModule(ModelModule):
         self._saver = tf.train.Saver(self._training_variables, max_to_keep=1)
         self._variables = [v for v in tf.global_variables() if v not in old_variables]
         self.tf_session.run([v.initializer for v in self.variables])
+
+        for var in tf.global_variables():
+            is_trainable = var in tf.trainable_variables()
+            logger.info('Variable: {} (Trainable: {})'.format(var, is_trainable))
 
         # Sometimes we want to initialize (partially) with a pre-trained model
         load_dir = self.shared_resources.config.get('load_dir')
@@ -236,10 +240,10 @@ class TFReader(JTReader):
             gradients = optimizer.compute_gradients(loss)
             if clip_op == tf.clip_by_value:
                 gradients = [(tf.clip_by_value(grad, clip[0], clip[1]), var)
-                             for grad, var in gradients if grad]
+                             for grad, var in gradients if grad is not None]
             elif clip_op == tf.clip_by_norm:
                 gradients = [(tf.clip_by_norm(grad, clip), var)
-                             for grad, var in gradients if grad]
+                             for grad, var in gradients if grad is not None]
             min_op = optimizer.apply_gradients(gradients, global_step)
         else:
             min_op = optimizer.minimize(loss, global_step)
@@ -257,12 +261,14 @@ class TFReader(JTReader):
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 feed_dict = self.model_module.convert_to_feed_dict(batch)
+
                 if summaries is not None:
                     step, sums, current_loss, _ = self.session.run(
                         [tf.train.get_global_step(), summaries, loss_op, optimization_op], feed_dict=feed_dict)
                     summary_writer.add_summary(sums, step)
                 else:
                     current_loss, _ = self.session.run([loss_op, optimization_op], feed_dict=feed_dict)
+
                 for hook in hooks:
                     hook.at_iteration_end(i, current_loss, set_name='train')
 

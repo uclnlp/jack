@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
+
+import numpy as np
+
 from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
 from jack.util.map import numpify
+from jack.readers.link_prediction import scores
 
 
 class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
     def __init__(self, shared_resources):
-        self._kbp_rng = random.Random(123)
+        self._kbp_rng = np.random.RandomState(0)
         super(KnowledgeGraphEmbeddingInputModule, self).__init__(shared_resources)
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
@@ -16,11 +20,15 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         entity_set = {s for [s, _, _] in triples} | {o for [_, _, o] in triples}
         predicate_set = {p for [_, p, _] in triples}
 
-        entity_to_index = {entity: index for index, entity in enumerate(entity_set)}
-        predicate_to_index = {predicate: index for index, predicate in enumerate(predicate_set)}
+        entity_to_index = {entity: index for index, entity in enumerate(entity_set, start=1)}
+        predicate_to_index = {predicate: index for index, predicate in enumerate(predicate_set, start=1)}
 
         self.shared_resources.entity_to_index = entity_to_index
         self.shared_resources.predicate_to_index = predicate_to_index
+
+        self.shared_resources.nb_entities = max(self.shared_resources.entity_to_index.values()) + 1
+        self.shared_resources.nb_predicates = max(self.shared_resources.predicate_to_index.values()) + 1
+
 
     def preprocess(self, questions: List[QASetting], answers: Optional[List[List[Answer]]] = None,
                    is_eval: bool = False) -> List[List[int]]:
@@ -28,32 +36,43 @@ class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
         triples = []
         for qa_setting in questions:
             s, p, o = qa_setting.question.split()
-            s_idx = self.shared_resources.entity_to_index.get(s, len(self.shared_resources.entity_to_index))
-            o_idx = self.shared_resources.entity_to_index.get(o, len(self.shared_resources.entity_to_index))
-            p_idx = self.shared_resources.predicate_to_index[p]
+            s_idx = self.shared_resources.entity_to_index.get(s, 0)
+            o_idx = self.shared_resources.entity_to_index.get(o, 0)
+            p_idx = self.shared_resources.predicate_to_index.get(p, 0)
             triples.append([s_idx, p_idx, o_idx])
 
         return triples
 
     def create_batch(self, triples: List[List[int]],
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
-        triples = list(triples)
+        _triples = list(triples)
+
         if with_answers:
-            target = [1] * len(triples)
+            target = [1] * len(_triples)
+
+        nb_entities = self.shared_resources.nb_entities
+        nb_predicates = self.shared_resources.nb_predicates
+
         if with_answers:
-            for i in range(len(triples)):
+            for i in range(len(_triples)):
                 s, p, o = triples[i]
+
                 for _ in range(self.shared_resources.config.get('num_negative', 1)):
-                    random_subject_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
-                    random_object_index = self._kbp_rng.randint(0, len(self.shared_resources.entity_to_index) - 1)
-                    triples.append([random_subject_index, p, o])
-                    triples.append([s, p, random_object_index])
+
+                    random_subject_index = self._kbp_rng.randint(0, nb_entities)
+                    random_object_index = self._kbp_rng.randint(0, nb_predicates)
+
+                    _triples.append([random_subject_index, p, o])
+                    _triples.append([s, p, random_object_index])
+
                     target.append(0)
                     target.append(0)
 
-        xy_dict = {Ports.Input.question: triples}
+        xy_dict = {Ports.Input.question: _triples}
+
         if with_answers:
             xy_dict[Ports.Target.target_index] = target
+
         return numpify(xy_dict)
 
     @property
@@ -99,14 +118,16 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
         with tf.variable_scope('knowledge_graph_embedding'):
             embedding_size = shared_resources.config['repr_dim']
 
-            nb_entities = len(shared_resources.entity_to_index) + 1  # + 1 to allow for unknown entities
-            nb_predicates = len(shared_resources.predicate_to_index)
+            nb_entities = max(shared_resources.entity_to_index.values()) + 1
+            nb_predicates = max(shared_resources.predicate_to_index.values()) + 1
 
             entity_embeddings = tf.get_variable('entity_embeddings',
-                                                [nb_entities, embedding_size],
+                                                shape=[nb_entities, embedding_size],
+                                                initializer=tf.contrib.layers.xavier_initializer(),
                                                 dtype='float32')
+
             predicate_embeddings = tf.get_variable('predicate_embeddings',
-                                                   [nb_predicates, embedding_size],
+                                                   shape=[nb_predicates, embedding_size],
                                                    initializer=tf.contrib.layers.xavier_initializer(),
                                                    dtype='float32')
 
@@ -118,7 +139,6 @@ class KnowledgeGraphEmbeddingModelModule(TFModelModule):
             predicate_emb = tf.nn.embedding_lookup(predicate_embeddings, predicate_idx)
             object_emb = tf.nn.embedding_lookup(entity_embeddings, object_idx, max_norm=1.0)
 
-            from jack.readers.link_prediction import scores
             assert self.model_name is not None
 
             model_class = scores.get_function(self.model_name)

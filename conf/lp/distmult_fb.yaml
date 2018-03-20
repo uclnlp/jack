@@ -9,9 +9,9 @@ debug: False
 
 reader: 'distmult_reader'
 
-train: 'data/WN18/train.jtr'
-dev: 'data/WN18/valid.jtr'
-test: 'data/WN18/test.jtr'
+train: 'data/FB15k-237/train.jtr'
+dev: 'data/FB15k-237/valid.jtr'
+test: 'data/FB15k-237/test.jtr'
 
 seed: 1337
 epochs: 100
