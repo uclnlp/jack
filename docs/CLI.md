@@ -18,10 +18,10 @@ For instance, `./conf/qa/squad/fastqa.yaml` inherits and overrides parameters of
 ### Selecting a Config
 
 Paths to configs are passed in the command line.
-For example, the following runs Jack with the `conf/fastqa.yaml` config.
+For example, the following runs Jack with the `conf/qa/squad/fastqa.yaml` config.
 
 ```shell
-$ python3 bin/jack-train.py with config=conf/fastqa.yaml
+$ python3 bin/jack-train.py with config=conf/qa/squad/fastqa.yaml
 ```
 
 If no `config` is specified, the default configuration `conf/jack.yaml` is used.
@@ -40,7 +40,7 @@ $ python3 bin/jack-train.py with l2=0.001  # equivalent
 Passing `print_config` to the reader shows the config that is used.
 
 ```shell
-$ python3 bin/jack-train.py print_config with config=conf/fastqa.yaml l2=0.001
+$ python3 bin/jack-train.py print_config with config=conf/qa/squad/fastqa.yaml l2=0.001
 ```
 
 Note that configuration parameters that are overridden using the command line are highlighted in blue.
@@ -68,7 +68,7 @@ format for datasets that are not natively supported.
 
 ## Notes
 
-Examples in this file require Downloading the training data and GloVe embeddings
+There are many predefined configs that you can use for training out of the box after downloading the required resources. We also provide several pretrained models that you can find within the dedicated task [documentation](./docs/tasks). Examples in this file require downloading the training data and GloVe embeddings
 
 ```shell
 $ data/SQuAD/download.sh
