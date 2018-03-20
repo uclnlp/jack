@@ -134,7 +134,8 @@ class FastQAPyTorchModule(nn.Module):
         wiq_w = torch.matmul(emb_question * v_wiqw, emb_support.transpose(1, 2))
         # [B, L_q, L_s]
         wiq_w = wiq_w + support_mask.unsqueeze(1)
-        wiq_w = F.softmax(wiq_w.view(batch_size * max_question_length, -1)).view(batch_size, max_question_length, -1)
+        wiq_w = F.softmax(
+            wiq_w.view(batch_size * max_question_length, -1), dim=1).view(batch_size, max_question_length, -1)
         # [B, L_s]
         wiq_w = torch.matmul(question_binary_mask.unsqueeze(1), wiq_w).squeeze(1)
 
@@ -203,7 +204,7 @@ class FastQAAnswerModule(nn.Module):
         attention_scores = self._linear_question_attention(encoded_question)
         q_mask = misc.mask_for_lengths(question_length)
         attention_scores = attention_scores.squeeze(2) + q_mask
-        question_attention_weights = F.softmax(attention_scores)
+        question_attention_weights = F.softmax(attention_scores, dim=1)
         question_state = torch.matmul(question_attention_weights.unsqueeze(1),
                                       encoded_question).squeeze(1)
 
