@@ -83,7 +83,7 @@ class JTReader:
         """
         batch = self.input_module(inputs)
         output_module_input = self.model_module(batch, self.output_module.input_ports)
-        answers = self.output_module(inputs, *[output_module_input[p] for p in self.output_module.input_ports])
+        answers = self.output_module(inputs, {p: output_module_input[p] for p in self.output_module.input_ports})
         return answers
 
     def process_dataset(self, dataset: Sequence[Tuple[QASetting, Answer]], batch_size: int, silent=True):
@@ -114,7 +114,7 @@ class JTReader:
             output_module_input = self.model_module(batch, self.output_module.input_ports)
             questions = [q for q, a in dataset[j * batch_size:(j + 1) * batch_size]]
             answers.extend(a[0] for a in self.output_module(
-                questions, *[output_module_input[p] for p in self.output_module.input_ports]))
+                questions, {p: output_module_input[p] for p in self.output_module.input_ports}))
 
         return answers
 

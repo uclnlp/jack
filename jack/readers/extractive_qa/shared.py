@@ -30,12 +30,12 @@ class XQAPorts:
     is_eval = Ports.is_eval
 
     # This feature is model specific and thus, not part of the conventional Ports
-    word_in_question = TensorPort(tf.float32, [None, None], "word_in_question",
+    word_in_question = TensorPort(np.float32, [None, None], "word_in_question",
                                   "Represents a 1/0 feature for all context tokens denoting"
                                   " whether it is part of the question or not",
                                   "[Q, support_length]")
 
-    correct_start = TensorPortWithDefault(np.array([0], np.int32), tf.int32, [None], "correct_start",
+    correct_start = TensorPortWithDefault(np.array([0], np.int32), [None], "correct_start",
                                           "Represents the correct start of the span which is given to the"
                                           "model during training for use to predicting end.",
                                           "[A]")
@@ -43,16 +43,16 @@ class XQAPorts:
     # output ports
     start_scores = Ports.Prediction.start_scores
     end_scores = Ports.Prediction.end_scores
-    span_prediction = Ports.Prediction.answer_span
-    token_offsets = TensorPort(tf.int32, [None, None], "token_offsets",
+    answer_span = Ports.Prediction.answer_span
+    token_offsets = TensorPort(np.int32, [None, None], "token_offsets",
                                "Character index of tokens in support.",
                                "[S, support_length]")
-    selected_support = TensorPort(tf.int32, [None], "selected_support",
+    selected_support = TensorPort(np.int32, [None], "selected_support",
                                   "Selected support based on TF IDF with question", "[num_support]")
 
     # ports used during training
     answer2support_training = Ports.Input.answer2support
-    answer_span = Ports.Target.answer_span
+    answer_span_target = Ports.Target.answer_span
 
 
 XQAAnnotation = NamedTuple('XQAAnnotation', [
@@ -83,7 +83,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.is_eval,
                      # for output module
                      XQAPorts.token_offsets, XQAPorts.selected_support]
-    _training_ports = [XQAPorts.answer_span, XQAPorts.answer2support_training]
+    _training_ports = [XQAPorts.answer_span_target, XQAPorts.answer2support_training]
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
@@ -255,7 +255,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                     span2support.extend([support_idx] * len(spans_per_support))
                     support_idx += 1
             output.update({
-                XQAPorts.answer_span: [span for span in spans] if spans else np.zeros([0, 2], np.int32),
+                XQAPorts.answer_span_target: [span for span in spans] if spans else np.zeros([0, 2], np.int32),
                 XQAPorts.correct_start: [] if is_eval else [span[0] for span in spans],
                 XQAPorts.answer2support_training: span2support,
             })
@@ -286,22 +286,21 @@ def get_answer_and_span(question, doc_idx, start, end, token_offsets, selected_s
 class XQAOutputModule(OutputModule):
     @property
     def input_ports(self) -> List[TensorPort]:
-        return [Ports.Prediction.answer_span, XQAPorts.token_offsets,
+        return [XQAPorts.answer_span, XQAPorts.token_offsets,
                 XQAPorts.selected_support, XQAPorts.support2question,
-                Ports.Prediction.start_scores, Ports.Prediction.end_scores]
+                XQAPorts.start_scores, XQAPorts.end_scores]
 
-    def __call__(self, questions: List[QASetting], tensors: Mapping[TensorPort, np.ndarray]) \
-            -> Sequence[Sequence[Answer]]:
+    def __call__(self, questions, tensors: Mapping[TensorPort, np.ndarray]) -> Sequence[Sequence[Answer]]:
         """Produces top-k answers for each question."""
         tensors = TensorPortTensors(tensors)
-        beam_size = tensors.span_prediction.shape[0] // len(questions)
+        beam_size = tensors.answer_span.shape[0] // len(questions)
         all_answers = []
         for k, q in enumerate(questions):
             answers = []
             doc_idx_map = [i for i, q_id in enumerate(tensors.support2question) if q_id == k]
             for j in range(beam_size):
                 i = k * beam_size + j
-                doc_idx, start, end = tensors.span_prediction[i]
+                doc_idx, start, end = tensors.answer_span[i]
                 score = tensors.start_scores[doc_idx_map[doc_idx], start]
                 answer, doc_idx, span = get_answer_and_span(
                     q, doc_idx, start, end, tensors.token_offsets[doc_idx_map[doc_idx]],
@@ -310,3 +309,4 @@ class XQAOutputModule(OutputModule):
             all_answers.append(answers)
 
         return all_answers
+

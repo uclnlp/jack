@@ -160,8 +160,8 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, questions: Sequence[QASetting], tensors: Mapping[TensorPort, np.array]) -> Sequence[
-        Sequence[Answer]]:
+    def __call__(self, questions: Sequence[QASetting], tensors: Mapping[TensorPort, np.array]) \
+            -> Sequence[Sequence[Answer]]:
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
         logits = tensors[Ports.Prediction.logits]

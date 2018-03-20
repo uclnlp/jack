@@ -19,9 +19,9 @@ class AbstractXQAModelModule(TFModelModule):
                     XQAPorts.is_eval]
 
     _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                     XQAPorts.span_prediction]
+                     XQAPorts.answer_span]
     _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                             XQAPorts.answer_span, XQAPorts.answer2support_training, XQAPorts.support2question]
+                             XQAPorts.answer_span_target, XQAPorts.answer2support_training, XQAPorts.support2question]
     _training_output_ports = [Ports.loss]
 
     @property
@@ -44,7 +44,7 @@ class AbstractXQAModelModule(TFModelModule):
         tensors = TensorPortTensors(input_tensors)
         return {
             Ports.loss: xqa_crossentropy_loss(tensors.start_scores, tensors.end_scores,
-                                              tensors.answer_span, tensors.answer2support,
+                                              tensors.answer_span_target, tensors.answer2support,
                                               tensors.support2question,
                                               use_sum=shared_resources.config.get('loss', 'sum') == 'sum')
         }
