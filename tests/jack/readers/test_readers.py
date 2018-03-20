@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 """Smoke test: train all readers for one iteration & run inference."""
+
 from functools import partial
 
 import numpy as np

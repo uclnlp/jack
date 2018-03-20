@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from jack.core import QASetting, Answer
 from jack.readers.extractive_qa.util import prepare_data
 from jack.util.vocab import Vocab
