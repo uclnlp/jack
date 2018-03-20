@@ -16,16 +16,16 @@ class XQAMinCrossentropyLossModule(nn.Module):
         batch_size2 = start_scores.data.shape[0]
         is_aligned = batch_size1 == batch_size2
 
-        start_scores = start_scores if is_aligned else torch.index_select(start_scores, 0, answer_to_question)
-        end_scores = end_scores if is_aligned else torch.index_select(end_scores, 0, answer_to_question)
+        start_scores = start_scores if is_aligned else torch.index_select(start_scores, dim=0, index=answer_to_question)
+        end_scores = end_scores if is_aligned else torch.index_select(end_scores, dim=0, index=answer_to_question)
 
         partitioned_loss = []
         for i, j in enumerate(answer_to_question):
             j = j.data[0]
             while j >= len(partitioned_loss):
                 partitioned_loss.append([])
-            loss = -torch.index_select(F.log_softmax(start_scores[i]), 0, start[i])
-            loss -= torch.index_select(F.log_softmax(end_scores[i]), 0, end[i])
+            loss = -torch.index_select(F.log_softmax(start_scores[i], dim=0), dim=0, index=start[i])
+            loss -= torch.index_select(F.log_softmax(end_scores[i], dim=0), dim=0, index=end[i])
             partitioned_loss[j].append(loss)
 
         for j, l in enumerate(partitioned_loss):

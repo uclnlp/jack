@@ -133,7 +133,8 @@ class PyTorchReader(reader.JTReader):
         for i in range(1, max_epochs + 1):
             for j, batch in enumerate(batches):
                 for p, v in batch.items():
-                    batch[p] = p.create_torch_variable(batch[p], gpu=torch.cuda.device_count() > 0)
+                    if isinstance(p, TensorPort):
+                        batch[p] = p.create_torch_variable(v, gpu=torch.cuda.device_count() > 0)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
