@@ -8,7 +8,7 @@ class ConditionalBiLSTMClassificationModel(AbstractSingleSupportClassificationMo
     def forward_pass(self, shared_resources, embedded_question, embedded_support, num_classes, tensors):
         # question - hypothesis; support - premise
         repr_dim = shared_resources.config['repr_dim']
-        dropout = shared_resources.config.get("dropout")
+        dropout = shared_resources.config.get("dropout", 0.0)
 
         with tf.variable_scope('embedding_projection') as vs:
             embedded_question = tf.layers.dense(embedded_question, repr_dim, tf.tanh, name='projection')
