@@ -35,22 +35,3 @@ def load_fasttext(stream, vocab=None):
     # lookup.resize([len(word2idx), dim])
     logger.info('Loading fastText vectors completed.')
     return word2idx, lookup
-
-
-if __name__ == "__main__":
-    pickle_tokens = False
-
-    import zipfile
-
-    with zipfile.ZipFile('../data/GloVe/glove.840B.300d.zip') as zf:
-        with zf.open('glove.840B.300d.txt', 'r') as f:
-            from jack.io.embeddings import load_glove
-
-            vocab, lookup = load_glove(f)
-
-            # pickle token set
-            if pickle_tokens:
-                import pickle
-
-                glove_words = set(vocab.get_all_words())
-                pickle.dump(glove_words, open('./data/glove_tokens.pickle', 'wb'))
