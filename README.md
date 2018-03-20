@@ -13,17 +13,23 @@
 **Jack the Reader** -- or **jack**, for short -- is a framework for building an testing models on a variety of tasks that require *reading comprehension*.
 
 To get started, please see [How to Install and Run][install] and then you may
-want to have a look at the [notebooks][notebooks]. For a high-level explanation of the ideas and
-vision, see [Understanding Jack the Reader][understanding]. There is also documentation on our
-[command line interface][cli] for training and evaluating models. There is also other [documentation][docs] for you to 
-browse.
+want to have a look at the [notebooks] to familiarize yourself with the framework.
+There is documentation on our [command line interface][cli] for actually **training and evaluating models**.
+For a high-level explanation of the ideas and vision, see [Understanding Jack the Reader][understanding].
 
 [install]: docs/How_to_install_and_run.md
 [api]: https://uclmr.github.io/jack/
 [notebooks]: notebooks/
 [understanding]: docs/Understanding_Jack_the_Reader.md
 [cli]: docs/CLI.md
-[docs]: docs/
+
+## Supported ML Backends
+
+We currently support [TensorFlow](http://tensorflow.org/) and [PyTorch](http://pytorch.org/).
+Readers can be implemented using both. Input and output modules (i.e., pre- and post-processing) is independent of the 
+ML backend and can thus be reused across backends.
+Though most models are implemented in TensorFlow by reusing the cumbersome pre- and post-processing it is easy to
+quickly build new readers in PyTorch as well. 
 
 ## Dedicated Task Documentation and Pre-trained Models
  
@@ -66,7 +72,7 @@ $ python3 bin/jack-train.py with config='./conf/qa/squad/fastqa.yaml'
 
 A copy of the model is written into the `save_dir` directory after each
 training epoch when performance improves. These can be loaded using the commands below or see e.g.
-[the showcase notebook][showcase].
+[quickstart].
 
 You want to train another model? No problem, we have a fairly modular QAModel implementation which allows you to stick
 together your own model. There are examples in `conf/qa/squad/` (e.g., `bidaf.yaml` or our own creation `jack_qa.yaml`).
@@ -101,9 +107,8 @@ answers = fastqa_reader([QASetting(
 print(answers[0][0].text)
 ```
 [fastqa]: https://arxiv.org/abs/1703.04816
-[showcase]: notebooks/Showcasing_Jack.ipynb
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
-
+[quick_start]: notebooks/quick_start.ipynb
 
 ## Support
 We are thankful for support from:
