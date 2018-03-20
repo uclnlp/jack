@@ -26,8 +26,8 @@ For a high-level explanation of the ideas and vision, see [Understanding Jack th
 ## Supported ML Backends
 
 We currently support [TensorFlow](http://tensorflow.org/) and [PyTorch](http://pytorch.org/).
-Readers can be implemented using both. Input and output modules (i.e., pre- and post-processing) is independent of the 
-ML backend and can thus be reused across backends.
+Readers can be implemented using both. Input and output modules (i.e., pre- and post-processing) are independent of the 
+ML backend and can thus be reused for model modules that either backend.
 Though most models are implemented in TensorFlow by reusing the cumbersome pre- and post-processing it is easy to
 quickly build new readers in PyTorch as well. 
 
