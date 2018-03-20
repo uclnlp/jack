@@ -256,6 +256,12 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
         self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
 
+def _np_softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
+
+
 class SimpleClassificationOutputModule(OutputModule):
     def __init__(self, shared_resources=None):
         self._shared_resources = shared_resources
@@ -275,7 +281,7 @@ class SimpleClassificationOutputModule(OutputModule):
         result = []
         for index_in_batch, question in enumerate(questions):
             winning_index = winning_indices[index_in_batch]
-            score = logits[index_in_batch, winning_index]
+            score = _np_softmax(logits[index_in_batch])[winning_index]
             if self._shared_resources is not None and hasattr(self._shared_resources, 'answer_vocab'):
                 ans = Answer(self._shared_resources.answer_vocab.id2sym[winning_index], score=score)
             else:

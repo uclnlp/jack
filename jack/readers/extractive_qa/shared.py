@@ -293,18 +293,19 @@ class XQAOutputModule(OutputModule):
     def __call__(self, questions, tensors: Mapping[TensorPort, np.ndarray]) -> Sequence[Sequence[Answer]]:
         """Produces top-k answers for each question."""
         tensors = TensorPortTensors(tensors)
-        beam_size = tensors.answer_span.shape[0] // len(questions)
+        topk = tensors.answer_span.shape[0] // len(questions)
         all_answers = []
-        for k, q in enumerate(questions):
+        for n, q in enumerate(questions):
             answers = []
-            doc_idx_map = [i for i, q_id in enumerate(tensors.support2question) if q_id == k]
-            for j in range(beam_size):
-                i = k * beam_size + j
+            doc_idx_map = [i for i, q_id in enumerate(tensors.support2question) if q_id == n]
+            for j in range(topk):
+                i = n * topk + j
                 doc_idx, start, end = tensors.answer_span[i]
-                score = tensors.start_scores[doc_idx_map[doc_idx], start]
+                score = (_np_softmax(tensors.start_scores[doc_idx_map[doc_idx]])[start] *
+                         _np_softmax(tensors.end_scores[doc_idx_map[doc_idx]])[end])
                 answer, doc_idx, span = get_answer_and_span(
                     q, doc_idx, start, end, tensors.token_offsets[doc_idx_map[doc_idx]],
-                    [i for q_id, i in zip(tensors.support2question, tensors.selected_support) if q_id == k])
+                    [i for q_id, i in zip(tensors.support2question, tensors.selected_support) if q_id == n])
                 answers.append(Answer(answer, span=span, doc_idx=doc_idx, score=score))
             all_answers.append(answers)
 

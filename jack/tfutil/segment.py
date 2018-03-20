@@ -94,7 +94,7 @@ def segment_top_k(input, segment_ids, k):
     segment_idx needs to be sorted.
 
     Returns:
-        [num_segments, k]- tensors rows, columns, scores for best k results for each segment
+        [num_segments, k]- tensors for rows, columns, scores of best k results in each segment
     """
 
     with tf.name_scope("segment_top_k"):
