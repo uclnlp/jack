@@ -32,12 +32,18 @@ def test_serialization():
             config['repr_dim'] = 50
         elif reader in {cbilstm_nli_reader, dam_snli_reader}:
             data = loaders['snli']('tests/test_data/SNLI/1000_samples_snli_1.0_train.jsonl')
+
             embeddings = load_embeddings("data/GloVe/glove.the.50d.txt", 'glove')
             vocab = Vocab(emb=embeddings, init_from_embeddings=True)
             config['repr_dim_input'] = 50
             config['repr_dim'] = 50
         elif reader in {fastqa_reader}:
-            data = loaders['squad']('tests/test_data/squad/snippet_jtr.json')
+            data = loaders['squad']('data/SQuAD/snippet.json')
+
+            embeddings = load_embeddings("data/GloVe/glove.the.50d.txt", 'glove')
+            vocab = Vocab(emb=embeddings, init_from_embeddings=True)
+            config['repr_dim_input'] = 50
+            config['repr_dim'] = 50
 
         if data is not None:
             tf.reset_default_graph()
@@ -50,6 +56,8 @@ def test_serialization():
             reader_instance.store(temp_dir_path)
 
             reader_instance.load(temp_dir_path)
+
+            assert reader_instance is not None
 
 
 test_serialization()
