@@ -68,7 +68,7 @@ format for datasets that are not natively supported.
 
 ## Notes
 
-There are many predefined configs that you can use for training out of the box after downloading the required resources. We also provide several pretrained models that you can find within the dedicated task [documentation](./docs/tasks). Examples in this file require downloading the training data and GloVe embeddings
+There are many predefined configs that you can use for training out of the box after downloading the required resources. We also provide several pretrained models that you can find within the dedicated task [documentation](./tasks). Examples in this file require downloading the training data and GloVe embeddings
 
 ```shell
 $ data/SQuAD/download.sh
