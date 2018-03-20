@@ -35,10 +35,10 @@ def to_logfile(c, path):
 
 def main(_):
     hyperparameters_space_1 = dict(
-        lr=[0.001, 0.005, 0.01, 0.05, 0.1],
+        lr=[0.001, 0.005, 0.01],
         dim=[100, 150, 200, 250, 300, 350],
         nn=[1, 2, 4, 8, 16],
-        bs=[8, 16, 32, 64, 128, 256]
+        bs=[32, 64, 128, 256]
     )
 
     configurations = list(cartesian_product(hyperparameters_space_1))
