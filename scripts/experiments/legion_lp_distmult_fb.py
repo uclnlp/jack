@@ -20,16 +20,16 @@ def summary(configuration):
 
 def to_cmd(c):
     command = 'python3 ./bin/jack-train.py ' \
-              'with config=conf/lp/distmult.yaml ' \
+              'with config=conf/lp/distmult_fb.yaml ' \
               'learning_rate={} repr_dim={} num_negative={} batch_size={} ' \
-              'save_dir=/tmp/distmult_{}_{}_{}_{}' \
+              'save_dir=/tmp/distmult_fb_{}_{}_{}_{}' \
               ''.format(c['lr'], c['dim'], c['nn'], c['bs'],
                         c['lr'], c['dim'], c['nn'], c['bs'])
     return command
 
 
 def to_logfile(c, path):
-    outfile = "%s/legion_lp_distmult.%s.log" % (path, summary(c).replace("/", "_"))
+    outfile = "%s/legion_lp_distmult_fb.%s.log" % (path, summary(c).replace("/", "_"))
     return outfile
 
 
@@ -43,7 +43,7 @@ def main(_):
 
     configurations = list(cartesian_product(hyperparameters_space_1))
 
-    path = '/home/ucacmin/Scratch/jack/scripts/experiments/logs/legion_lp_distmult/'
+    path = '/home/ucacmin/Scratch/jack/scripts/experiments/logs/legion_lp_distmult_fb/'
 
     # Check that we are on the Legion cluster first
     if os.path.exists('/home/ucacmin/'):
