@@ -29,9 +29,9 @@ class FastQAPyTorchModelModule(PyTorchModelModule):
                     XQAPorts.is_eval]
 
     _output_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                     XQAPorts.span_prediction]
+                     XQAPorts.answer_span]
     _training_input_ports = [XQAPorts.start_scores, XQAPorts.end_scores,
-                             XQAPorts.answer_span, XQAPorts.answer2support_training]
+                             XQAPorts.answer_span_target, XQAPorts.answer2support_training]
     _training_output_ports = [Ports.loss]
 
     @property

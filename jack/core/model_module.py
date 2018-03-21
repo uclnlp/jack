@@ -36,7 +36,7 @@ class ModelModule:
     @property
     @abstractmethod
     def output_ports(self) -> Sequence[TensorPort]:
-        """Returns: Definition of the output ports of this module."""
+        """Returns: Definition of the output ports of this module (predictions made by this model)."""
         raise NotImplementedError
 
     @property
@@ -55,7 +55,7 @@ class ModelModule:
     @property
     @abstractmethod
     def training_output_ports(self) -> Sequence[TensorPort]:
-        """Returns: Definition of the output ports provided during training for this module."""
+        """Returns: Definition of the output ports provided during training for this module (usually just the loss)."""
         raise NotImplementedError
 
     @abstractmethod

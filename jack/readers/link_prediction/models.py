@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
-
 from jack.core import *
 from jack.core.data_structures import *
 from jack.core.tensorflow import TFModelModule
-from jack.util.map import numpify
 from jack.readers.link_prediction import scores
+from jack.util.map import numpify
 
 
 class KnowledgeGraphEmbeddingInputModule(OnlineInputModule[List[List[int]]]):
@@ -162,11 +160,13 @@ class KnowledgeGraphEmbeddingOutputModule(OutputModule):
     def input_ports(self) -> List[TensorPort]:
         return [Ports.Prediction.logits]
 
-    def __call__(self, inputs: Sequence[QASetting], logits: np.ndarray) -> Sequence[Sequence[Answer]]:
+    def __call__(self, questions: Sequence[QASetting], tensors: Mapping[TensorPort, np.array]) \
+            -> Sequence[Sequence[Answer]]:
         # len(inputs) == batch size
         # logits: [batch_size, max_num_candidates]
+        logits = tensors[Ports.Prediction.logits]
         results = []
-        for index_in_batch, question in enumerate(inputs):
+        for index_in_batch, question in enumerate(questions):
             score = logits[index_in_batch]
             results.append([Answer(question.question, score=score)])
         return results

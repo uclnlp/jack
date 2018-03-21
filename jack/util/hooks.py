@@ -9,11 +9,10 @@ from typing import List, Tuple, Mapping
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from pylab import subplot
-
 import numpy as np
 import progressbar
 import tensorflow as tf
+from pylab import subplot
 from sklearn import metrics
 
 from jack.core.data_structures import QASetting, Answer
@@ -389,7 +388,7 @@ class XQAEvalHook(EvalHook):
     def apply_metrics(self, inputs: List[Tuple[QASetting, List[Answer]]], tensors: Mapping[TensorPort, np.ndarray]) \
             -> Mapping[str, float]:
         qs = [q for q, a in inputs]
-        p_answers = self.reader.output_module(qs, *(tensors[p] for p in self.reader.output_module.input_ports))
+        p_answers = self.reader.output_module(qs, {p: tensors[p] for p in self.reader.output_module.input_ports})
 
         f1 = exact_match = 0
         for pa, (q, ass) in zip(p_answers, inputs):
