@@ -14,4 +14,6 @@ class QAPrettyPrint:
         
         text = pre_highlight + _highlight(highlight) + post_highlight
         return text.replace('\n', '<br>')
-        
+
+def print_nli(premise, hypothesis, label):
+	print('{}\t--({})-->\t{}'.format(premise, label, hypothesis))
