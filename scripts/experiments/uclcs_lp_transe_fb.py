@@ -19,7 +19,7 @@ def summary(configuration):
 
 
 def to_cmd(c):
-    command = 'python3 ./bin/jack-train.py ' \
+    command = 'PYTHONPATH=. apy ./bin/jack-train.py ' \
               'with config=conf/lp/transe_fb.yaml ' \
               'learning_rate={} repr_dim={} num_negative={} batch_size={} ' \
               'save_dir=/tmp/transe_fb_{}_{}_{}_{}' \
