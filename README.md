@@ -1,6 +1,6 @@
 # Jack the Reader [![Wercker build badge][wercker_badge]][wercker] [![codecov](https://codecov.io/gh/uclmr/jack/branch/master/graph/badge.svg?token=jbZrj9oSmi)](https://codecov.io/gh/uclmr/jack) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jack-the-reader/Lobby?source=orgpage) [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/uclmr/jack/blob/master/LICENSE)
 
-##### A machine reading comprehension framework.
+##### A Machine Reading Comprehension framework.
 
 * All work and no play makes Jack a great frame*work*!
 * All work and no play makes Jack a great frame*work*!
@@ -10,13 +10,20 @@
 [wercker]: https://app.wercker.com/project/byKey/8ed61192a5b16769a41dc24c30a3bc6a
 [heres_johnny]: https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg
 
-**Jack the Reader** -- or **jack**, for short -- is a framework for building an testing models on a variety of tasks that require *reading comprehension*.
+**Jack the Reader** - or **jack**, for short - is a framework for building and using models on a variety of tasks that require *reading comprehension*.
 
-To get started, please see [How to Install and Run][install] and then you may
-want to have a look at the [notebooks] to familiarize yourself with the framework.
+## Installation
+To install Jack, please see [How to Install and Run][install]. 
+
+## Quick Start & Tutorials
+We provide ipython notebooks with tutorials on Jack. For the quickest start, you can begin [here][quickstart]. If you're interested in training a model yourself, see [this tutorial][model_training], and if you'd like to implement a new model yourself, [this notebook][implementation] gives you a tutorial that explains this process in more detail.
+
 There is documentation on our [command line interface][cli] for actually **training and evaluating models**.
 For a high-level explanation of the ideas and vision, see [Understanding Jack the Reader][understanding].
 
+[quickstart]: notebooks/quick_start.ipynb
+[model_training]: notebooks/model_training.ipynb
+[implementation]: notebooks/model_implementation.ipynb
 [install]: docs/How_to_install_and_run.md
 [api]: https://uclmr.github.io/jack/
 [notebooks]: notebooks/
