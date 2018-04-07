@@ -113,14 +113,14 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
         result_dict = evaluate_reader(reader, dev_data, batch_size)
 
         logger.info("############### Results on the Dev Set##############")
-        print_results(result_dict)
+        pretty_print_results(result_dict)
 
     if test_data is not None and save_dir is not None:
         reader.load(save_dir)
         result_dict = evaluate_reader(reader, test_data, batch_size)
 
         logger.info("############### Results on the Test Set##############")
-        print_results(result_dict)
+        pretty_print_results(result_dict)
 
 
 def train_pytorch(reader, train_data, test_data, dev_data, configuration: dict, debug=False):
