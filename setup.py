@@ -16,16 +16,6 @@ def spacy_download_en():
         subprocess.call(args, shell=True)
 
 
-def install_torch():
-    import subprocess
-    import sys
-    if sys.version_info < (3, 6):
-        args = ['pip3 install http://download.pytorch.org/whl/cu75/torch-0.2.0.post3-cp35-cp35m-manylinux1_x86_64.whl']
-    else:
-        args = ['pip3 install http://download.pytorch.org/whl/cu80/torch-0.2.0.post3-cp36-cp36m-manylinux1_x86_64.whl']
-    subprocess.call(args, shell=True)
-
-
 class Install(_install):
     def run(self):
         _install.do_egg_install(self)
@@ -44,7 +34,8 @@ with open('requirements.txt', 'r') as f:
 
 extras_require = {
     'tf': ['tensorflow==1.4.0'],
-    'tf_gpu': ['tensorflow-gpu==1.4.0']
+    'tf_gpu': ['tensorflow-gpu==1.4.0'],
+    'torch': ['torch']
 }
 
 setup(name='jack',
