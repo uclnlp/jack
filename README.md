@@ -15,21 +15,6 @@
 ## Installation
 To install Jack, please see [How to Install and Run][install]. 
 
-## Quick Start & Tutorials
-We provide ipython notebooks with tutorials on Jack. For the quickest start, you can begin [here][quickstart]. If you're interested in training a model yourself, see [this tutorial][model_training], and if you'd like to implement a new model yourself, [this notebook][implementation] gives you a tutorial that explains this process in more detail.
-
-There is documentation on our [command line interface][cli] for actually **training and evaluating models**.
-For a high-level explanation of the ideas and vision, see [Understanding Jack the Reader][understanding].
-
-[quickstart]: notebooks/quick_start.ipynb
-[model_training]: notebooks/model_training.ipynb
-[implementation]: notebooks/model_implementation.ipynb
-[install]: docs/How_to_install_and_run.md
-[api]: https://uclmr.github.io/jack/
-[notebooks]: notebooks/
-[understanding]: docs/Understanding_Jack_the_Reader.md
-[cli]: docs/CLI.md
-
 ## Supported ML Backends
 
 We currently support [TensorFlow](http://tensorflow.org/) and [PyTorch](http://pytorch.org/).
@@ -44,11 +29,28 @@ quickly build new readers in PyTorch as well.
 * [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
 * [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
 
-## Quickstart Examples - Training and Usage of a Question Answering System
+## Quickstart - Training and Usage of a QA System
 
+### Coding Tutorials - Notebooks & CLI
+We provide ipython notebooks with tutorials on Jack. For the quickest start, you can begin [here][quickstart]. If you're interested in training a model yourself, see [this tutorial][model_training], and if you'd like to implement a new model yourself, [this notebook][implementation] gives you a tutorial that explains this process in more detail.
+
+There is documentation on our [command-line interface][cli] for actually **training and evaluating models**.
+For a high-level explanation of the ideas and vision, see [Understanding Jack the Reader][understanding].
+
+[quickstart]: notebooks/quick_start.ipynb
+[model_training]: notebooks/model_training.ipynb
+[implementation]: notebooks/model_implementation.ipynb
+[install]: docs/How_to_install_and_run.md
+[api]: https://uclmr.github.io/jack/
+[notebooks]: notebooks/
+[understanding]: docs/Understanding_Jack_the_Reader.md
+[cli]: docs/CLI.md
+
+### Command-line Training and Usage of a QA System
 To illustrate how jack works, we will show how to train a question answering
-model. It is probably best to setup a [virtual environment](https://docs.python.org/3/library/venv.html) to avoid
-clashes with system wide python library versions. A more comprehensive 
+model using our [command-line interface][cli] which is analoguous for other tasks (browse [conf/](./conf/) for existing task-dataset configurations).
+It is probably best to setup a [virtual environment](https://docs.python.org/3/library/venv.html) to avoid
+clashes with system wide python library versions.
 
 First, install the framework:
 
@@ -116,6 +118,7 @@ print(answers[0][0].text)
 [fastqa]: https://arxiv.org/abs/1703.04816
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 [quick_start]: notebooks/quick_start.ipynb
+[cli]: docs/CLI.md
 
 ## Support
 We are thankful for support from:
