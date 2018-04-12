@@ -29,7 +29,7 @@ quickly build new readers in PyTorch as well.
 * [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
 * [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
 
-## Quickstart - Training and Usage of a QA System
+## Quickstart
 
 ### Coding Tutorials - Notebooks & CLI
 We provide ipython notebooks with tutorials on Jack. For the quickest start, you can begin [here][quickstart]. If you're interested in training a model yourself, see [this tutorial][model_training], and if you'd like to implement a new model yourself, [this notebook][implementation] gives you a tutorial that explains this process in more detail.
