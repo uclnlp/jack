@@ -32,7 +32,7 @@ quickly build new readers in PyTorch as well.
 ## Quickstart
 
 ### Coding Tutorials - Notebooks & CLI
-We provide ipython notebooks with tutorials on Jack. For the quickest start, you can begin [here][quickstart]. If you're interested in training a model yourself, see [this tutorial][model_training], and if you'd like to implement a new model yourself, [this notebook][implementation] gives you a tutorial that explains this process in more detail.
+We provide ipython notebooks with tutorials on Jack. For the quickest start, you can begin [here][quickstart]. If you're interested in training a model yourself from code, see [this tutorial][model_training] (we recommend the command-line, see below), and if you'd like to implement a new model yourself, [this notebook][implementation] gives you a tutorial that explains this process in more detail.
 
 There is documentation on our [command-line interface][cli] for actually **training and evaluating models**.
 For a high-level explanation of the ideas and vision, see [Understanding Jack the Reader][understanding].
