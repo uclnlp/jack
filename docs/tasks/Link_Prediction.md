@@ -1,37 +1,36 @@
 # Link Prediction
 
-A Knowledge Graph is a set of *(s, p, o)* triples, where *s, o* denote the *subject* and *object* of the triple, and *p* 
-denotes its *predicate*: each *(s, p, o)* triple denotes a fact, represented as a relationship of type *p* between 
-entities *s* and *o*, such as (London, capital of, UK).
+A Knowledge Graph is a set of *(s, p, o)* triples, where *s, o* denote the *subject* and *object* of the triple, and *p*  denotes its *predicate*: each *(s, p, o)* triple denotes a fact, represented as a relationship of type *p* between entities *s* and *o*, such as (London, capital of, UK).
+
 The *Link Prediction* task consists in identifying missing *(s, p, o)* triples that are likely to encode true facts.
 
-### Pre-trained Models
 
- 
-#### SNLI
+#### WN18
 
-| Model         |  Accuracy  |  Download       |
-|---------------|------------|-----------------|
-| DAM           |            |     [dam]       |
-| ESIM          |            |     [esim]      |
+| Model         |  MRR       |     Hits@3     |     Hits@10    |
+|---------------|------------|----------------|----------------|
+| DistMult      | 0.822      | 0.914          | 0.936          |
+| Complex       | 0.941      | 0.936          | 0.947          |
 
-[dam]:
-[esim]:
+#### WN18RR
 
-#### MultiNLI
+| Model         |  MRR       |     Hits@3     |     Hits@10    |
+|---------------|------------|----------------|----------------|
+| DistMult      | 0.430      | 0.443          | 0.490          |
+| Complex       | 0.440      | 0.461          | 0.510          |
 
-| Model         |  Matched   |  Mismatched  |  Download       |
-|---------------|------------|--------------|-----------------|
-| DAM           |            |              |     [dam_mnli]  |
-| ESIM          |            |              |     [esim_mnli] |
+#### FB15k-237
 
-[dam_mnli]:
-[esim_mnli]:
-
+| Model         |  MRR       |     Hits@3     |     Hits@10    |
+|---------------|------------|----------------|----------------|
+| DistMult      | 0.241      | 0.263          | 0.419          |
+| Complex       | 0.247      | 0.275          | 0.428          |
 
 ### Implementing new Models
 
-TODO
+A Neural Link Prediction model is fully defined by its scoring function.
+
+In *Jack*, such scoring functions are defined in https://github.com/uclmr/jack/blob/master/jack/readers/link_prediction/scores.py
 
 ### Supported Models
 
