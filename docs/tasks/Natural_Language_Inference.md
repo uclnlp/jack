@@ -16,16 +16,3 @@ The answer candidates to this question are the three possible outcomes or classe
 
 [dam]: http://data.neuralnoise.com/jack/natural_language_inference/dam.zip
 [esim]: http://data.neuralnoise.com/jack/natural_language_inference/esim.zip
-
-
-### Implementing new Models
-
-TODO
-
-### Supported Models
-
-TODO
-
-### Supported Datasets
-
-TODO
