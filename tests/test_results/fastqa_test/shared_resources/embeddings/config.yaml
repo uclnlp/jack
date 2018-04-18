@@ -1,0 +1,1 @@
+{emb_format: glove, embedding_file: tests/test_data/glove.840B.300d_top256.txt}

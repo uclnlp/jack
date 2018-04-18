@@ -23,7 +23,7 @@ class FastQAModule(AbstractXQAModelModule):
             max_question_length = tf.reduce_max(tensors.question_length)
             support_mask = misc.mask_for_lengths(tensors.support_length)
 
-            input_size = shared_resources.config["repr_dim_input"]
+            input_size = shared_resources.embeddings.shape[-1]
             size = shared_resources.config["repr_dim"]
             with_char_embeddings = shared_resources.config.get("with_char_embeddings", False)
 
@@ -37,7 +37,7 @@ class FastQAModule(AbstractXQAModelModule):
                 # compute combined embeddings
                 [char_emb_question, char_emb_support] = conv_char_embedding(
                     len(shared_resources.char_vocab), size, tensors.word_chars, tensors.word_char_length,
-                    [tensors.question_words, tensors.support_words])
+                    [tensors.question_batch_words, tensors.support_batch_words])
 
                 emb_question = tf.concat([emb_question, char_emb_question], 2)
                 emb_support = tf.concat([emb_support, char_emb_support], 2)

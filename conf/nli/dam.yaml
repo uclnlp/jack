@@ -1,6 +1,8 @@
 description: >
   Decomposable Attention Model https://arxiv.org/abs/1606.01933
 
+parent_config: './conf/jack.yaml'
+
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'dam_snli_reader'
 

@@ -30,8 +30,8 @@ def build_vocab(questions):
                 vocab[t] = len(vocab)
     embeddings = Embeddings(vocab, np.random.random([len(vocab), 10]))
 
-    vocab = Vocab(emb=embeddings, init_from_embeddings=True)
-    return vocab
+    vocab = Vocab(vocab=embeddings.vocabulary)
+    return vocab, embeddings
 
 
 def smoke_test(reader_name):
@@ -46,11 +46,8 @@ def smoke_test(reader_name):
          [Answer("a", (6, 6))])
     ]
     questions = [q for q, _ in data_set]
-
-    shared_resources = SharedResources(build_vocab(questions), {"repr_dim": 10,
-                                                                "repr_dim_input": 10,
-                                                                "dropout": 0.5,
-                                                                "batch_size": 1})
+    v, e = build_vocab(questions)
+    shared_resources = SharedResources(v, {"repr_dim": 10, "dropout": 0.5}, e)
     tf.reset_default_graph()
     reader = readers.readers[reader_name](shared_resources)
     if isinstance(reader, TFReader):

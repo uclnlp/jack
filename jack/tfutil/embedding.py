@@ -5,7 +5,7 @@ import tensorflow as tf
 from jack.tfutil import misc
 
 
-def conv_char_embedding(num_chars, size, word_chars, word_lengths, word_sequences=None,
+def conv_char_embedding(num_chars, repr_dim, word_chars, word_lengths, word_sequences=None,
                         conv_width=5, emb_initializer=tf.random_normal_initializer(0.0, 0.1), scope=None):
     """Build simple convolutional character based embeddings for words with a fixed filter and size.
 
@@ -18,7 +18,7 @@ def conv_char_embedding(num_chars, size, word_chars, word_lengths, word_sequence
 
     with tf.variable_scope(scope or "char_embeddings"):
         char_embedding_matrix = \
-            tf.get_variable("char_embedding_matrix", shape=(num_chars, size),
+            tf.get_variable("char_embedding_matrix", shape=(num_chars, repr_dim),
                             initializer=emb_initializer, trainable=True)
 
         max_word_length = tf.reduce_max(word_lengths)
@@ -26,8 +26,8 @@ def conv_char_embedding(num_chars, size, word_chars, word_lengths, word_sequence
 
         with tf.variable_scope("conv"):
             # create filter like this to get fan-in and fan-out right for initializers depending on those
-            filter = tf.get_variable("filter", [conv_width * size, size])
-            filter_reshaped = tf.reshape(filter, [conv_width, size, size])
+            filter = tf.get_variable("filter", [conv_width * repr_dim, repr_dim])
+            filter_reshaped = tf.reshape(filter, [conv_width, repr_dim, repr_dim])
             # [B, T, S + pad_right]
             conv_out = tf.nn.conv1d(embedded_chars, filter_reshaped, 1, "VALID")
             conv_mask = tf.expand_dims(misc.mask_for_lengths(word_lengths, max_length=max_word_length), 2)

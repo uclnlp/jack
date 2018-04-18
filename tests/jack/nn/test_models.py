@@ -18,16 +18,33 @@ SMALLDATA_PATH = './tests/test_results/smalldata_test/'
 # test_data/dataset-name/overfit.json
 
 models2dataset = {}
-models2dataset['dam_snli_reader'] = 'SNLI'
-models2dataset['fastqa_reader'] = 'squad'
+models2dataset['esim'] = 'SNLI'
+models2dataset['dam'] = 'SNLI'
+models2dataset['fastqa'] = 'squad'
+# models2dataset['jackqa'] = 'squad'
 
-overfit_epochs = {'SNLI': 15, 'SNLI_stream': 15, 'squad': 15}
-small_data_epochs = {'SNLI': 5, 'SNLI_stream': 5, 'squad': 10}
+models2config = {}
+models2config['esim'] = './conf/nli/esim.yaml'
+models2config['dam'] = './conf/nli/dam.yaml'
+models2config['fastqa'] = './conf/qa/fastqa.yaml'
+models2config['jackqa'] = './conf/qa/jackqa.yaml'
+
+overfit_epochs = {'SNLI': 15, 'squad': 15}
+small_data_epochs = {'SNLI': 5, 'squad': 10}
 
 modelspecifics = {
-    'fastqa_reader': lambda is_small_data: (' repr_dim=32 repr_dim_input=50' +
-                                            ' embedding_file=tests/test_data/glove.500.50d.txt' +
-                                            ' embedding_format=glove')
+    'fastqa': lambda is_small_data: (' embedding_file=tests/test_data/glove.500.50d.txt' +
+                                     ' embedding_format=glove' +
+                                     ' vocab_from_embeddings=True'),
+    'jackqa': lambda is_small_data: (' embedding_file=tests/test_data/glove.500.50d.txt' +
+                                     ' embedding_format=glove' +
+                                     ' vocab_from_embeddings=True'),
+    'dam': lambda is_small_data: (' embedding_file=tests/test_data/glove.500.50d.txt' +
+                                  ' embedding_format=glove' +
+                                  ' vocab_from_embeddings=True'),
+    'esim': lambda is_small_data: (' embedding_file=tests/test_data/glove.500.50d.txt' +
+                                   ' embedding_format=glove' +
+                                   ' vocab_from_embeddings=True'),
 }
 
 ids = []
@@ -36,17 +53,17 @@ testdata = []
 
 def generate_test_data():
     '''Creates all permutations of models and datasets as tests.'''
-    for model, dataset in models2dataset.items():
+    for reader, dataset in models2dataset.items():
         for use_small_data in [False, True]:
             epochs = small_data_epochs[dataset] if use_small_data else overfit_epochs[dataset]
-            testdata.append([model, epochs, use_small_data, dataset])
+            testdata.append([reader, epochs, use_small_data, dataset])
 
 
-def get_string_for_test(reader_name, epochs, use_small_data, dataset):
+def get_string_for_test(reader, epochs, use_small_data, dataset):
     '''Creates a name for each test, so the output of PyTest is readable'''
-    return ('reader_name={0}, '
+    return ('reader={0}, '
             'epochs={1}, run_type={2}, '
-            'dataset={3}').format(reader_name,
+            'dataset={3}').format(reader,
                                   epochs,
                                   ('smalldata' if use_small_data else 'overfit'), dataset)
 
@@ -61,12 +78,11 @@ generate_test_data()
 generate_names()
 
 
-@pytest.mark.parametrize("reader_name, epochs, use_small_data, dataset", testdata, ids=ids)
-def test_model(reader_name, epochs, use_small_data, dataset):
+@pytest.mark.parametrize("reader, epochs, use_small_data, dataset", testdata, ids=ids)
+def test_model(reader, epochs, use_small_data, dataset):
     '''Tests a model via training_pipeline.py by comparing with expected_result.txt
     Args:
-        reader_name (string): The model name as defined in the
-                   training_pipeline.py dictionary.
+        reader (string): The reader
         epochs (int=5): Some models need more time to overfit data; increase
                this the case of overfitting problems.
         use_small_data (bool=False): Switches between 'overfit' and 'smalldata'
@@ -77,7 +93,7 @@ def test_model(reader_name, epochs, use_small_data, dataset):
     Returns: None
     '''
     # Setup paths and filenames for the expected_results file
-    test_result_path = join(SMALLDATA_PATH if use_small_data else OVERFIT_PATH, dataset, reader_name)
+    test_result_path = join(SMALLDATA_PATH if use_small_data else OVERFIT_PATH, dataset, reader)
     metric_filepath = join(test_result_path, datetime_test_result_filename())
 
     # create dir if it does not exists
@@ -96,15 +112,19 @@ def test_model(reader_name, epochs, use_small_data, dataset):
 
     # Setup the process call command
     cmd = 'CUDA_VISIBLE_DEVICES=-1 '  # we only test on the CPU
-    cmd += "python3 ./bin/jack-train.py with train={0} dev={1} test={2}".format(train_file, dev_file, test_file, )
+    cmd += 'python3 ./bin/jack-train.py with'
+    cmd += ' config={0}'.format(models2config[reader])
+    cmd += ' train={0} dev={1} test={2}'.format(train_file, dev_file, test_file, )
     cmd += ' write_metrics_to={0}'.format(metric_filepath)
-    cmd += ' reader={0}'.format(reader_name)
     cmd += ' epochs={0}'.format(epochs)
     cmd += ' learning_rate_decay=1.0'
+    cmd += ' learning_rate=0.01'
+    cmd += ' repr_dim=32'
     cmd += ' save_dir=None'
-    if reader_name in modelspecifics:
+    cmd += ' validation_interval=-1'
+    if reader in modelspecifics:
         # this is a function which takes use_small_data as argument
-        cmd += modelspecifics[reader_name](use_small_data)
+        cmd += modelspecifics[reader](use_small_data)
     print('command: ' + cmd)
     # Execute command and wait for results
     t0 = time.time()

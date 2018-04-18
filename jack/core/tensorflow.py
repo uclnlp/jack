@@ -222,7 +222,9 @@ class TFReader(JTReader):
         self._train_loop(min_op, loss, batches, hooks, max_epochs, summaries, summary_writer, **kwargs)
 
     def _setup_training(self, batch_size, clip, optimizer, training_set, summary_writer, l2, clip_op, **kwargs):
-        global_step = tf.train.create_global_step()
+        global_step = tf.train.get_global_step()
+        if global_step is None:
+            global_step = tf.train.create_global_step()
         if not self._is_setup:
             # First setup shared resources, e.g., vocabulary. This depends on the input module.
             logger.info("Setting up model...")

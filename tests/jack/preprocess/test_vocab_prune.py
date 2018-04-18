@@ -16,14 +16,14 @@ def test_vocab():
     print('build vocab based on train data')
     train_vocab = preprocessing.fill_vocab(train_data)
     train_vocab.freeze()
-    pprint(train_vocab.sym2freqs)
-    pprint(train_vocab.sym2id)
+    pprint(train_vocab._sym2freqs)
+    pprint(train_vocab._sym2id)
 
     MIN_VOCAB_FREQ, MAX_VOCAB_CNT = 2, 10
     train_vocab = train_vocab.prune(MIN_VOCAB_FREQ, MAX_VOCAB_CNT)
 
-    pprint(train_vocab.sym2freqs)
-    pprint(train_vocab.sym2id)
+    pprint(train_vocab._sym2freqs)
+    pprint(train_vocab._sym2id)
 
     print('encode train data')
     train_data = preprocessing.nlp_preprocess(train_data[0].question, train_vocab)[0]

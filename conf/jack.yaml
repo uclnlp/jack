@@ -39,17 +39,14 @@ num_dev_examples: null
 # test file
 test: null
 
-# Size of the input representation (embeddings), is automatically overwritten when pre-trained embeddings are provided
-repr_dim_input: 128
-
 # Size of the hidden representations, default 128
 repr_dim: 128
 
 # Use fixed vocab of pretrained embeddings
 vocab_from_embeddings: False
 
-# Continue training pretrained embeddings together with model parameters
-train_pretrain: False
+# use task-specific embeddings if size bigger than 0
+repr_dim_task_embedding: 0
 
 # [word2vec], [glove] or [memory_map_dir] format of embeddings to be loaded
 embedding_format: null

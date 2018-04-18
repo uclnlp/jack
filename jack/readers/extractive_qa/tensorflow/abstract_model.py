@@ -11,7 +11,7 @@ class AbstractXQAModelModule(TFModelModule):
                     XQAPorts.emb_support, XQAPorts.support_length, XQAPorts.support2question,
                     # char embedding inputs
                     XQAPorts.word_chars, XQAPorts.word_char_length,
-                    XQAPorts.question_words, XQAPorts.support_words,
+                    XQAPorts.question_batch_words, XQAPorts.support_batch_words,
                     # feature input
                     XQAPorts.word_in_question,
                     # optional input, provided only during training

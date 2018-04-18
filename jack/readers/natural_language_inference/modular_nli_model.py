@@ -15,7 +15,7 @@ class ModularNLIModel(AbstractSingleSupportClassificationModel):
         if shared_resources.config.get('with_char_embeddings'):
             [char_emb_question, char_emb_support] = conv_char_embedding(
                 len(shared_resources.char_vocab), shared_resources.config['repr_dim'], tensors.word_chars,
-                tensors.word_char_length, [tensors.question_words, tensors.support_words])
+                tensors.word_char_length, [tensors.question_batch_words, tensors.support_batch_words])
             inputs = {'hypothesis': embedded_question, 'premise': embedded_support,
                       'char_hypothesis': char_emb_question, 'char_premise': char_emb_support}
             inputs_length = {'hypothesis': tensors.question_length, 'premise': tensors.support_length,

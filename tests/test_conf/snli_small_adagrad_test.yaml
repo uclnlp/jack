@@ -8,7 +8,6 @@ dev: 'data/SNLI/snippet.jtr_v1.json'
 test: 'data/SNLI/snippet.jtr_v1.json'
 
 epochs: 20
-repr_dim_input: 200
 optimizer: 'adagrad'
 learning_rate: 0.001
 batch_size: 32

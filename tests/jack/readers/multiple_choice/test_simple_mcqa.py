@@ -14,6 +14,7 @@ def test_single_support_fixed_class_inputs():
     shared_resources = SharedResources(Vocab(), {})
     input_module = ClassificationSingleSupportInputModule(shared_resources)
     input_module.setup_from_data(data_set)
+    input_module.setup()
 
     assert len(input_module.shared_resources.answer_vocab) == 1
     assert len(input_module.shared_resources.vocab) == 9

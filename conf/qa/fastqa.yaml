@@ -1,6 +1,8 @@
 description: >
   FastQA configuration to train model on SQuAD as described in https://arxiv.org/abs/1703.04816.
 
+parent_config: './conf/jack.yaml'
+
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'fastqa_reader'
 

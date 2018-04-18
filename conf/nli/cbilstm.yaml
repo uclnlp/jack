@@ -2,5 +2,7 @@ description: >
   Conditional BiLSTM, processes premise with BiLSTM conditioned on processed hypothesis. Max pooling over the processed
   premise states is used prior to classification.
 
+parent_config: './conf/jack.yaml'
+
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'cbilstm_nli_reader'
