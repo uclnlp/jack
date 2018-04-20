@@ -6,6 +6,8 @@ The answer candidates to this question are the three possible outcomes or classe
 
 ### Pre-trained Models
 
+Note, model were trained with **TensorFlow 1.4** and will (for some TF related reasons) not work for later versions.
+
 
 #### SNLI
 

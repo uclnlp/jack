@@ -6,7 +6,8 @@ in our framework.
 
 ### Pre-trained Models
 
-We list trained models with scores, relative speeds and number of parameters.
+We list trained models with scores, relative speeds and number of parameters. Note, they were trained with **TensorFlow
+ 1.4** and will (for some TF related reasons) not work for later versions.
  
 #### SQuAD (Devset results)
 

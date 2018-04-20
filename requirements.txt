@@ -2,7 +2,6 @@ jsonschema
 matplotlib
 numpy
 parse
-pycorenlp
 scipy
 sklearn
 typing

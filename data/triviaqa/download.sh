@@ -21,7 +21,7 @@ if [ ! -d $TRIVIAQA_HOME ]; then
     tar xf $DOWNLOADPATH/triviaqa-rc.tar.gz -C $DOWNLOADPATH
 fi
 
-git clone https://github.com/allenai/document-qa.git data/triviaqa/document-qa
+git clone https://github.com/dirkweissenborn/document-qa.git data/triviaqa/document-qa
 
 cp data/triviaqa/config.py data/triviaqa/document-qa/docqa/
 export PYTHONPATH=data/triviaqa/document-qa:$PYTHONPATH
