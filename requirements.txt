@@ -10,7 +10,7 @@ sacred
 sqlalchemy
 pyyaml
 progressbar2
-spacy
+spacy==1.9
 diskcache
 pytest
 pytest-runner
