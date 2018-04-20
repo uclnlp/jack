@@ -24,11 +24,11 @@ tf.app.flags.DEFINE_string('overwrite', '{}', 'json string that overwrites confi
 
 FLAGS = tf.app.flags.FLAGS
 
-logger.info("Creating and loading reader from {}...".format(FLAGS.save_dir))
+logger.info("Creating and loading reader from {}...".format(FLAGS.load_dir))
 
 kwargs = json.loads(FLAGS.overwrite)
 
-reader = reader_from_file(FLAGS.save_dir, **kwargs)
+reader = reader_from_file(FLAGS.load_dir, **kwargs)
 dataset = loaders[FLAGS.loader](FLAGS.dataset)
 if FLAGS.max_examples:
     dataset = dataset[:FLAGS.max_examples]
