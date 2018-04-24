@@ -47,7 +47,7 @@ $ ./data/GloVe/download.sh
 
 ## Models & Training
 
-Find model configurations in [./projects/knowledge_integration/conf].
+Find model configurations in [conf/](/projects/knowledge_integration/conf).
 
 ### QA
 
