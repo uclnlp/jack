@@ -3,8 +3,7 @@ description: >
 
 parent_config: './conf/jack.yaml'
 
-
-assertion_dir: '/data/assertion_shelve'
+assertion_dir: 'data/knowledge_integration/knowledge_store'
 assertion_limit: 20
 assertion_sources: ['conceptnet']
 
@@ -17,15 +16,13 @@ reading_module:
 
 seed: 1337
 
-reader: 'cbilstm_nli_assertion_seeking_generating_reader'
-
-reader_dir: './cbilstm_nli_assertion_seeking_generating_reader'
+reader: 'cbilstm_nli_assertion_reader'
+save_dir: './cbilstm_nli_assertion_reader'
 
 loader: snli
 
-train: 'data/SNLI/snli_1.0/snli_1.0_train.jsonl'
-dev: 'data/SNLI/snli_1.0/snli_1.0_dev.jsonl'
-test: 'data/SNLI/snli_1.0/snli_1.0_test.jsonl'
+train: 'data/MultiNLI/multinli_1.0/multinli_1.0_train.jsonl'
+dev: 'data/MultiNLI/multinli_1.0/multinli_1.0_dev.jsonl'
 
 embedding_format: 'memory_map_dir'
 embedding_file: 'data/GloVe/glove.840B.300d.memory_map_dir'
@@ -36,7 +33,4 @@ with_char_embeddings: True
 repr_dim: 300
 epochs: 20
 dropout: 0.2
-batch_size: 16
-
-generator: null
-name: null
+batch_size: 128
