@@ -59,7 +59,7 @@ class ModelModule:
         raise NotImplementedError
 
     @abstractmethod
-    def setup(self, is_training=True):
+    def setup(self, is_training=True, reuse=False):
         """Sets up the module."""
         raise NotImplementedError
 

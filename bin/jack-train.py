@@ -20,6 +20,8 @@ from jack.io.embeddings.embeddings import load_embeddings, Embeddings
 from jack.io.load import loaders
 from jack.util.vocab import Vocab
 
+# register knowledge integration models
+
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
 parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])

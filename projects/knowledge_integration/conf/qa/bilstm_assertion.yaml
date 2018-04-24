@@ -1,0 +1,45 @@
+description: >
+  BiLSTM with assertions.
+
+parent_config: './conf/qa/squad/abstract_squad.yaml'
+
+name: 'bilstm_assertion_reader'
+reader: 'modular_assertion_qa_reader'
+
+assertion_dir: 'data/knowledge_integration/knowledge_store'
+assertion_limit: 50
+assertion_sources: ['conceptnet']
+no_reading: False
+
+heuristic: 'pair'
+
+reading_module:
+- input: 'text'
+  module: 'lstm'
+  name: 'reading'
+  with_projection: True
+  activation: 'relu'
+
+dropout: 0.2
+repr_dim: 150
+max_span_size: 16
+
+model:
+  encoder_layer:
+
+  - input: 'support'
+    module: 'lstm'
+    name: 'encoder'
+    activation: 'tanh'
+    with_projection: True
+    dropout: True
+
+  - input: 'question'
+    module: 'lstm'
+    name: 'encoder'
+    with_projection: True
+    activation: 'tanh'
+    dropout: True
+
+  answer_layer:
+    module: 'mlp'

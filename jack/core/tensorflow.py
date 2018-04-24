@@ -88,7 +88,7 @@ class TFModelModule(ModelModule):
         """
         raise NotImplementedError
 
-    def setup(self, is_training=True):
+    def setup(self, is_training=True, reuse=False):
         """Sets up the module.
 
         This usually involves creating the actual tensorflow graph. It is expected to be called after the input module
@@ -98,7 +98,7 @@ class TFModelModule(ModelModule):
         old_variables = tf.global_variables()
 
         with tf.variable_scope(self.shared_resources.config.get("name", "jtreader"),
-                               initializer=tf.contrib.layers.xavier_initializer()):
+                               initializer=tf.contrib.layers.xavier_initializer(), reuse=reuse):
             self._tensors = {p: p.create_tf_placeholder() for p in self.input_ports}
             output_tensors = self.create_output(
                 self.shared_resources, {port: self._tensors[port] for port in self.input_ports})

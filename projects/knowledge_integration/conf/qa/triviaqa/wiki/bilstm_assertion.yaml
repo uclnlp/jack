@@ -1,0 +1,9 @@
+description: >
+  BiLSTM with assertions.
+
+parent_config: ['./projects/knowledge_integration/conf/qa/bilstm_assertion.yaml', './conf/qa/triviaqa/wiki/abstract_triviaqa.yaml']
+
+# fixed experiment seed
+seed: 1337
+dropout: 0.2
+repr_dim: 150

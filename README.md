@@ -120,6 +120,11 @@ print(answers[0][0].text)
 [quick_start]: notebooks/quick_start.ipynb
 [cli]: docs/CLI.md
 
+
+## Projects
+
+* [Integration of Knowledge into neural NLU systems](/projects/knowledge_integration)
+
 ## Support
 We are thankful for support from:
 
