@@ -29,6 +29,10 @@ quickly build new readers in PyTorch as well.
 * [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
 * [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
 
+## Projects
+
+* [Integration of Knowledge into neural NLU systems](/projects/knowledge_integration)
+
 ## Quickstart
 
 ### Coding Tutorials - Notebooks & CLI
@@ -119,11 +123,6 @@ print(answers[0][0].text)
 [tf_summaries]: https://www.tensorflow.org/get_started/summaries_and_tensorboard
 [quick_start]: notebooks/quick_start.ipynb
 [cli]: docs/CLI.md
-
-
-## Projects
-
-* [Integration of Knowledge into neural NLU systems](/projects/knowledge_integration)
 
 ## Support
 We are thankful for support from:
