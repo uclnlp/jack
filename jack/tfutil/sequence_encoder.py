@@ -26,7 +26,7 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, con
                 if activation:
                     out = activation_from_string(activation)(out)
             elif module == 'gru':
-                out = bi_rnn(repr_dim, tf.contrib.rnn.BlockGRUCell(repr_dim), sequence,
+                out = bi_rnn(repr_dim, tf.contrib.rnn.GRUBlockCell(repr_dim), sequence,
                              seq_length, name, reuse, with_projection)
                 if activation:
                     out = activation_from_string(activation)(out)
