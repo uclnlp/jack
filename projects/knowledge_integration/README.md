@@ -2,8 +2,9 @@
 
 This project is an open source implementation for the paper:
 
-[**Dynamic Integration of Background Knowledge in Neural NLU Systems.**](https://arxiv.org/abs/1706.02596)
-*Dirk Weissenborn, Tomáš Kočiský, Chris Dyer.*
+*Dynamic Integration of Background Knowledge in Neural NLU Systems.* </br>
+Dirk Weissenborn, Tomáš Kočiský, Chris Dyer.</br>
+[ArXiv](https://arxiv.org/abs/1706.02596)
 
 It is fully integrated into JACK and thus training/evaluation scripts, notebooks, etc., work with these implementations.
 
