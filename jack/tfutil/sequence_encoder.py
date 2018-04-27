@@ -67,7 +67,7 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, reu
             out += sequence
 
         if layer_norm:
-            out = tf.contrib.layers.layer_norm(sequence, scope=name + '_layernorm')
+            out = tf.contrib.layers.layer_norm(out, scope=name + '_layernorm')
     else:
         out = encoder(sequence, seq_length, repr_dim, module, num_layers - 1, reuse, residual,
                       activation, layer_norm, name, **kwargs)
