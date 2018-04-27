@@ -88,8 +88,7 @@ def _get_query_key_value(seq1, seq2, key_value_attn):
         with tf.variable_scope('key_value_projection') as vs:
             key = tf.layers.dense(seq2, seq2.get_shape()[-1].value, name='key')
             value = tf.layers.dense(seq2, seq2.get_shape()[-1].value, name='value')
-            vs.reuse_variables()
-            query = tf.layers.dense(seq1, seq1.get_shape()[-1].value, name='key') if not seq1 is seq2 else key
+            query = tf.layers.dense(seq1, seq1.get_shape()[-1].value, name='query')
         return query, key, value
     else:
         return seq1, seq2, seq2
