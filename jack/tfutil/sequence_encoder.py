@@ -188,7 +188,7 @@ def positional_encoding(inputs, lengths, repr_dim, **kwargs):
     pos = tf.reshape(tf.range(0.0, tf.to_float(tf.reduce_max(lengths)), dtype=tf.float32), [-1, 1])
     i = np.arange(0, repr_dim, 2, np.float32)
     denom = np.reshape(np.power(10000.0, i / repr_dim), [1, -1])
-    enc = tf.expand_dims(tf.concat([tf.sin(pos / denom), tf.cos(pos / denom)], 0), 0)
+    enc = tf.expand_dims(tf.concat([tf.sin(pos / denom), tf.cos(pos / denom)], 1), 0)
     return inputs + tf.tile(enc, [tf.shape(inputs)[0], 1, 1])
 
 
