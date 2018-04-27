@@ -11,73 +11,75 @@ from jack.tfutil.highway import highway_network
 logger = logging.getLogger(__name__)
 
 
-def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, conv_width=3,
-            dilations=None, reuse=False, residual=False, attn_type=None, num_attn_heads=1, scaled=False,
-            activation=None, with_sentinel=False, with_projection=False, name='encoder', num_parallel=1, **kwargs):
+def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, reuse=None, residual=False,
+            activation=None, layer_norm=False, name='encoder', **kwargs):
     if num_layers == 1:
-        if num_parallel == 1:
-            if module == 'lstm':
-                out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, with_projection)
-                if activation:
-                    out = activation_from_string(activation)(out)
-            elif module == 'sru':
-                with_residual = sequence.get_shape()[2].value == repr_dim
-                out = bi_sru(repr_dim, sequence, seq_length, with_residual, name, reuse, with_projection)
-                if activation:
-                    out = activation_from_string(activation)(out)
-            elif module == 'gru':
-                out = bi_rnn(repr_dim, tf.contrib.rnn.GRUBlockCell(repr_dim), sequence,
-                             seq_length, name, reuse, with_projection)
-                if activation:
-                    out = activation_from_string(activation)(out)
-            elif module == 'gldr':
-                out = gated_linear_dilated_residual_network(
-                    repr_dim, sequence, dilations, conv_width, name, reuse)
-            elif module == 'conv':
-                out = convnet(repr_dim, sequence, 1, conv_width, activation_from_string(activation), name, reuse)
-            elif module == 'conv_glu':
-                out = gated_linear_convnet(repr_dim, sequence, 1, conv_width, name, reuse)
-            elif module == 'dense':
-                out = tf.layers.dense(sequence, repr_dim, name=name, reuse=reuse)
-                if activation:
-                    out = activation_from_string(activation)(out)
-            elif module == 'highway':
-                out = highway_network(sequence, num_layers, activation_from_string(activation), name=name, reuse=reuse)
-            elif module == 'self_attn':
-                outs = []
-                for i in range(num_attn_heads):
-                    attn = self_attention(sequence, seq_length, attn_type, scaled, repr_dim,
-                                          activation_from_string(activation), with_sentinel, name + str(i), reuse)
-                    outs.append(attn)
-                out = tf.concat(outs, 2) if num_layers > 1 else outs[0]
-            else:
-                raise ValueError("Unknown encoder type: %s" % module)
-        else:
+        if module == 'lstm':
+            out = bi_lstm(repr_dim, sequence, seq_length, name, reuse, **kwargs)
+            if activation:
+                out = activation_from_string(activation)(out)
+        elif module == 'sru':
+            with_residual = sequence.get_shape()[2].value == repr_dim
+            out = bi_sru(repr_dim, sequence, seq_length, with_residual, name=name, reuse=reuse, **kwargs)
+            if activation:
+                out = activation_from_string(activation)(out)
+        elif module == 'rnn':
+            out = bi_rnn(repr_dim, tf.nn.rnn_cell.BasicRNNCell(repr_dim, activation_from_string(activation)), sequence,
+                         seq_length, name=name, reuse=reuse, **kwargs)
+        elif module == 'gru':
+            out = bi_rnn(repr_dim, tf.contrib.rnn.GRUBlockCell(repr_dim), sequence,
+                         seq_length, name, reuse, **kwargs)
+            if activation:
+                out = activation_from_string(activation)(out)
+        elif module == 'gldr':
+            out = gated_linear_dilated_residual_network(
+                repr_dim, sequence, name=name, reuse=reuse, **kwargs)
+        elif module == 'conv':
+            out = convnet(repr_dim, sequence, 1, activation=activation_from_string(activation), name=name, reuse=reuse,
+                          **kwargs)
+        elif module == 'conv_glu':
+            out = gated_linear_convnet(repr_dim, sequence, 1, name=name, reuse=reuse, **kwargs)
+        elif module == 'dense':
+            out = tf.layers.dense(sequence, repr_dim, name=name, reuse=reuse)
+            if activation:
+                out = activation_from_string(activation)(out)
+        elif module == 'highway':
+            out = highway_network(sequence, num_layers, activation_from_string(activation), name=name, reuse=reuse)
+        elif module == 'self_attn':
             outs = []
-            for i in range(num_parallel):
-                outs.append(encoder(sequence, seq_length, repr_dim, module, 1, conv_width,
-                                    dilations, reuse, False, attn_type, num_attn_heads, scaled, activation,
-                                    with_sentinel, with_projection, name + "_p" + str(i)))
-            return tf.concat(outs, 2)
+            num_attn = kwargs.get('num_attn_heads', 1)
+            for i in range(num_attn):
+                attn = self_attention(sequence, seq_length, repr_dim=repr_dim,
+                                      name=name + str(i), reuse=reuse, **kwargs)
+                outs.append(attn)
+            out = tf.concat(outs, 2) if num_attn > 1 else outs[0]
+        elif module == 'positional_encoding':
+            out = positional_encoding(sequence, seq_length, repr_dim)
+        else:
+            raise ValueError("Unknown encoder type: %s" % module)
+
+        if residual:
+            if out.get_shape()[-1].value != sequence.get_shape()[-1].value:
+                logging.error('Residual connection only possible if input to sequence encoder %s of type %s has same '
+                              'dimension (%d) as output (%d).' % (name, module, sequence.get_shape()[-1].value,
+                                                                  out.get_shape()[-1].value))
+                raise RuntimeError()
+            out += sequence
+
+        if layer_norm:
+            out = tf.contrib.layers.layer_norm(sequence, scope=name + '_layernorm')
     else:
-        out = encoder(sequence, seq_length, repr_dim, module, num_layers - 1, conv_width,
-                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_sentinel,
-                      with_projection, name)
-        out = encoder(out, seq_length, repr_dim, module, 1, conv_width,
-                      dilations, reuse, False, attn_type, num_attn_heads, scaled, activation, with_sentinel,
-                      with_projection, name + str(num_layers - 1))
-    if residual:
-        if out.get_shape()[-1].value != sequence.get_shape()[-1].value:
-            logging.error('Residual connection only possible if input to sequence encoder %s of type %s has same '
-                          'dimension (%d) as output (%d).' % (name, module, sequence.get_shape()[-1].value,
-                                                              out.get_shape()[-1].value))
-            raise RuntimeError()
-        out += sequence
+        out = encoder(sequence, seq_length, repr_dim, module, num_layers - 1, reuse, residual,
+                      activation, layer_norm, name, **kwargs)
+
+        out = encoder(out, seq_length, repr_dim, module, 1, reuse, residual, activation, layer_norm,
+                      name + str(num_layers - 1), **kwargs)
+
     return out
 
 
 # RNN Encoders
-def _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse=False, with_projection=False):
+def _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse=None, with_projection=False):
     with tf.variable_scope(name, reuse=reuse):
         output = rnn.fused_birnn(fused_rnn, sequence, seq_length, dtype=tf.float32, scope='rnn')[0]
         output = tf.concat(output, 2)
@@ -87,16 +89,16 @@ def _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse=False, with_proje
     return output
 
 
-def bi_lstm(size, sequence, seq_length, name='bilstm', reuse=False, with_projection=False):
+def bi_lstm(size, sequence, seq_length, name='bilstm', reuse=None, with_projection=False, **kwargs):
     return _bi_rnn(size, tf.contrib.rnn.LSTMBlockFusedCell(size), sequence, seq_length, name, reuse, with_projection)
 
 
-def bi_rnn(size, rnn_cell, sequence, seq_length, name='bi_rnn', reuse=False, with_projection=False):
+def bi_rnn(size, rnn_cell, sequence, seq_length, name='bi_rnn', reuse=None, with_projection=False, **kwargs):
     fused_rnn = tf.contrib.rnn.FusedRNNCellAdaptor(rnn_cell, use_dynamic_rnn=True)
     return _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse, with_projection)
 
 
-def bi_sru(size, sequence, seq_length, with_residual=True, name='bi_sru', reuse=False, with_projection=False):
+def bi_sru(size, sequence, seq_length, with_residual=True, name='bi_sru', reuse=None, with_projection=False, **kwargs):
     """Simple Recurrent Unit, very fast.  https://openreview.net/pdf?id=rJBiunlAW."""
     fused_rnn = rnn.SRUFusedRNN(size, with_residual)
     return _bi_rnn(size, fused_rnn, sequence, seq_length, name, reuse, with_projection)
@@ -104,7 +106,7 @@ def bi_sru(size, sequence, seq_length, with_residual=True, name='bi_sru', reuse=
 
 # Convolution Encoders
 
-def convnet(out_size, inputs, num_layers, width=3, activation=tf.nn.relu, name='convnet', reuse=False):
+def convnet(out_size, inputs, num_layers, width=3, activation=tf.nn.relu, name='convnet', reuse=None, **kwargs):
     with tf.variable_scope(name, reuse=reuse):
         # dim reduction
         output = inputs
@@ -143,7 +145,8 @@ def _convolutional_glu_block(inputs, out_channels, dilation=1, width=3, name='di
     return output
 
 
-def gated_linear_dilated_residual_network(out_size, inputs, dilations, width=3, name='gldr_network', reuse=False):
+def gated_linear_dilated_residual_network(out_size, inputs, dilations, width=3, name='gldr_network', reuse=None,
+                                          **kwargs):
     """Follows https://openreview.net/pdf?id=HJRV1ZZAW.
 
     Args:
@@ -162,7 +165,7 @@ def gated_linear_dilated_residual_network(out_size, inputs, dilations, width=3, 
     return output
 
 
-def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_linear_convnet', reuse=False):
+def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_linear_convnet', reuse=None, **kwargs):
     """Follows https://openreview.net/pdf?id=HJRV1ZZAW.
 
     Args:
@@ -181,18 +184,32 @@ def gated_linear_convnet(out_size, inputs, num_layers, width=3, name='gated_line
     return output
 
 
+def positional_encoding(inputs, lengths, repr_dim, **kwargs):
+    pos = tf.reshape(tf.range(0.0, tf.to_float(tf.reduce_max(lengths)), dtype=tf.float32), [-1, 1])
+    i = np.arange(0, repr_dim, 2, np.float32)
+    denom = np.reshape(np.exp(10000.0, i / repr_dim), [1, -1])
+    enc = tf.expand_dims(tf.concat([tf.sin(pos / denom), tf.cos(pos / denom)], 0), 0)
+    return tf.concat([inputs, tf.tile(enc, [tf.shape(inputs)[0], 1, 1])], 2)
+
+
 # Self attention layers
 def self_attention(inputs, lengths, attn_type='bilinear', scaled=True, repr_dim=None, activation=None,
-                   with_sentinel=False, name='self_attention', reuse=False):
-    with tf.variable_scope(name, reuse=reuse):
+                   key_value_attn=False, with_sentinel=False, name='self_attention', reuse=None, **kwargs):
+    with tf.variable_scope(name, reuse):
         if attn_type == 'bilinear':
-            attn_states = attention.bilinear_attention(inputs, inputs, lengths, scaled, with_sentinel)[2]
+            attn_states = attention.bilinear_attention(
+                inputs, inputs, lengths, scaled, with_sentinel, key_value_attn=key_value_attn)[2]
         elif attn_type == 'dot':
-            attn_states = attention.dot_attention(inputs, inputs, lengths, scaled, with_sentinel)[2]
+            attn_states = attention.dot_attention(
+                inputs, inputs, lengths, scaled, with_sentinel, key_value_attn=key_value_attn)[2]
         elif attn_type == 'diagonal_bilinear':
-            attn_states = attention.diagonal_bilinear_attention(inputs, inputs, lengths, scaled, with_sentinel)[2]
+            attn_states = \
+                attention.diagonal_bilinear_attention(
+                    inputs, inputs, lengths, scaled, with_sentinel, key_value_attn=key_value_attn)[2]
         elif attn_type == 'mlp':
-            attn_states = attention.mlp_attention(repr_dim, inputs, inputs, lengths, activation, with_sentinel)[2]
+            attn_states = \
+                attention.mlp_attention(
+                    repr_dim, activation, inputs, inputs, lengths, with_sentinel, key_value_attn=key_value_attn)[2]
         else:
             raise ValueError("Unknown attention type: %s" % attn_type)
 
