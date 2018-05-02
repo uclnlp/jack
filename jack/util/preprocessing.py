@@ -184,15 +184,15 @@ def unique_words_with_chars(tokens, char_vocab, char_limit=20):
     return unique_words, unique_word_lengths, token2unique, vocab, rev_vocab
 
 
-def sort_by_tfidf(question, paragraphs):
+def sort_by_tfidf(reference, candidates):
     tfidf = TfidfVectorizer(strip_accents="unicode", stop_words=spacy.en.STOP_WORDS, decode_error='replace')
     try:
-        para_features = tfidf.fit_transform(paragraphs)
-        q_features = tfidf.transform([question])
+        para_features = tfidf.fit_transform(candidates)
+        q_features = tfidf.transform([reference])
     except ValueError:
-        return [(i, 0.0) for i in range(len(paragraphs))]
+        return [(i, 0.0) for i in range(len(candidates))]
 
     dists = pairwise_distances(q_features, para_features, "cosine").ravel()
-    sorted_ix = np.lexsort((paragraphs, dists))  # in case of ties, use the earlier paragraph
+    sorted_ix = np.lexsort((candidates, dists))  # in case of ties, use the earlier paragraph
 
     return [(i, 1.0 - dists[i]) for i in sorted_ix]

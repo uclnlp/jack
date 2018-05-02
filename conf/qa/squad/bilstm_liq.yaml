@@ -1,0 +1,5 @@
+parent_config: ['./conf/qa/bilstm_liq.yaml', './conf/qa/squad/abstract_squad.yaml']
+seed: 1337
+
+repr_dim: 300
+dropout: 0.2

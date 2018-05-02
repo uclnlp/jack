@@ -42,7 +42,7 @@ learning_rate: 0.001
 min_learning_rate: 0.0001
 learning_rate_decay: 0.5
 validation_interval: 2000
-num_dev_examples=1000
+num_dev_examples: 1000
 
 # 'sum' (loss for summed prob. over all possible gold answer spans), 'max' (loss for best span)
 loss: 'sum'

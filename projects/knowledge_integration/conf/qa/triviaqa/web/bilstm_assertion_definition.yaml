@@ -1,0 +1,13 @@
+description: >
+  BiLSTM with assertions.
+
+parent_config: ['./projects/knowledge_integration/conf/qa/triviaqa/wiki/bilstm_assertion.yaml', './conf/qa/triviaqa/wiki/abstract_triviaqa.yaml']
+
+name: 'bilstm_assertion_definition_reader'
+reader: 'modular_assertion_definition_qa_reader'
+
+topk: 16
+
+# fraction of training batches where we extract definitions (1.0 means all, 0.0 means never)
+# can be lowered to speed up training, because using defintions requires running model twice
+training_fraction_with_definition: 0.3

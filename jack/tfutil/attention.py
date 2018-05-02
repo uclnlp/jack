@@ -33,48 +33,65 @@ def apply_attention(attn_scores, states, length, is_self=False, with_sentinel=Tr
     return attn_scores, attn_probs, attn_states
 
 
-def dot_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None):
+def dot_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, key_value_attn=False):
+    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
     if seq2_to_seq1 is not None:
-        seq1 = tf.gather(seq1, seq2_to_seq1)
-    attn_scores = tf.einsum('abc,adc->abd', seq1, seq2)
+        query = tf.gather(query, seq2_to_seq1)
+    attn_scores = tf.einsum('abc,adc->abd', query, key)
     if scaled:
-        attn_scores /= tf.sqrt(float(seq1.get_shape()[-1].value))
-    return apply_attention(attn_scores, seq2, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
+        attn_scores /= tf.sqrt(float(query.get_shape()[-1].value))
+    return apply_attention(attn_scores, value, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
 
 
-def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None):
+def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, key_value_attn=False):
+    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
     if seq2_to_seq1 is not None:
-        seq1 = tf.gather(seq1, seq2_to_seq1)
-    attn_scores = tf.einsum('abc,adc->abd', tf.layers.dense(seq1, seq2.get_shape()[-1].value, use_bias=False), seq2)
-    attn_scores += tf.layers.dense(seq1, 1, use_bias=False)
-    attn_scores += tf.transpose(tf.layers.dense(seq2, 1, use_bias=False), [0, 2, 1])
+        query = tf.gather(query, seq2_to_seq1)
+    attn_scores = tf.einsum('abc,adc->abd', tf.layers.dense(query, key.get_shape()[-1].value, use_bias=False), key)
+    attn_scores += tf.layers.dense(query, 1, use_bias=False)
+    attn_scores += tf.transpose(tf.layers.dense(key, 1, use_bias=False), [0, 2, 1])
     if scaled:
-        attn_scores /= math.sqrt(float(seq1.get_shape()[-1].value))
-    return apply_attention(attn_scores, seq2, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
+        attn_scores /= math.sqrt(float(query.get_shape()[-1].value))
+    return apply_attention(attn_scores, value, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
 
 
-def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None):
+def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None,
+                                key_value_attn=False):
+    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
     if seq2_to_seq1 is not None:
-        seq1 = tf.gather(seq1, seq2_to_seq1)
-    v = tf.get_variable('attn_weight', [1, 1, seq1.get_shape()[-1].value], tf.float32,
+        query = tf.gather(query, seq2_to_seq1)
+    v = tf.get_variable('attn_weight', [1, 1, query.get_shape()[-1].value], tf.float32,
                         initializer=tf.ones_initializer())
-    attn_scores = tf.einsum('abc,adc->abd', v * seq1, seq2)
-    attn_scores += tf.layers.dense(seq1, 1, use_bias=False)
-    attn_scores += tf.transpose(tf.layers.dense(seq2, 1, use_bias=False), [0, 2, 1])
+    attn_scores = tf.einsum('abc,adc->abd', v * query, key)
+    attn_scores += tf.layers.dense(query, 1, use_bias=False)
+    attn_scores += tf.transpose(tf.layers.dense(key, 1, use_bias=False), [0, 2, 1])
     if scaled:
-        attn_scores /= math.sqrt(float(seq1.get_shape()[-1].value))
-    return apply_attention(attn_scores, seq2, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
+        attn_scores /= math.sqrt(float(query.get_shape()[-1].value))
+    return apply_attention(attn_scores, value, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
 
 
-def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinel=True, seq2_to_seq1=None):
+def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinel=True, seq2_to_seq1=None,
+                  key_value_attn=False):
+    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
     if seq2_to_seq1 is not None:
-        seq1 = tf.gather(seq1, seq2_to_seq1)
-    hidden1 = tf.layers.dense(seq1, hidden_dim)
-    hidden2 = tf.layers.dense(seq2, hidden_dim)
-    hidden = tf.expand_dims(hidden1, 2) + tf.expand_dims(hidden2, 1)
+        query = tf.gather(query, seq2_to_seq1)
+    hidden1 = tf.layers.dense(query, hidden_dim)
+    hidden2 = tf.layers.dense(key, hidden_dim)
+    hidden = tf.tile(tf.expand_dims(hidden1, 2), [1, 1, tf.shape(key)[1], -1]) + tf.expand_dims(hidden2, 1)
     attn_scores = tf.layers.dense(activation(hidden), 1, use_bias=with_sentinel)
-    return apply_attention(tf.squeeze(attn_scores, 3), seq2, len2, seq1 is seq2, with_sentinel,
+    return apply_attention(tf.squeeze(attn_scores, 3), value, len2, seq1 is seq2, with_sentinel,
                            seq2_to_seq1=seq2_to_seq1)
+
+
+def _get_query_key_value(seq1, seq2, key_value_attn):
+    if key_value_attn:
+        with tf.variable_scope('key_value_projection') as vs:
+            key = tf.layers.dense(seq2, seq2.get_shape()[-1].value, name='key')
+            value = tf.layers.dense(seq2, seq2.get_shape()[-1].value, name='value')
+            query = tf.layers.dense(seq1, seq1.get_shape()[-1].value, name='query')
+        return query, key, value
+    else:
+        return seq1, seq2, seq2
 
 
 def coattention(seq1, len1, seq2, len2, scaled=True, with_sentinel=True, attn_fn=dot_attention, seq2_to_seq1=None):

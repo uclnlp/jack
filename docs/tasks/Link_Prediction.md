@@ -32,10 +32,3 @@ A Neural Link Prediction model is fully defined by its scoring function.
 
 In *Jack*, such scoring functions are defined in https://github.com/uclmr/jack/blob/master/jack/readers/link_prediction/scores.py
 
-### Supported Models
-
-TODO
-
-### Supported Datasets
-
-TODO

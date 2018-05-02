@@ -64,9 +64,11 @@ class QASetting:
 
 def _jack_to_qasetting(instance, value, global_candidates):
     support = [value(s) for s in instance["support"]] if "support" in instance else None
+    idd = value(instance, 'id')
     for question_instance in instance["questions"]:
         question = value(question_instance['question'])
-        idd = value(question_instance['question'], 'id')
+        idd = value(question_instance, 'id') or idd
+        idd = value(question_instance['question'], 'id') or idd
         if global_candidates is None:
             candidates = [value(c) for c in question_instance['candidates']] if "candidates" in question_instance else None
         else:

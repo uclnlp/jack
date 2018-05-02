@@ -29,6 +29,10 @@ quickly build new readers in PyTorch as well.
 * [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
 * [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
 
+## Projects
+
+* [Integration of Knowledge into neural NLU systems](/projects/knowledge_integration)
+
 ## Quickstart
 
 ### Coding Tutorials - Notebooks & CLI

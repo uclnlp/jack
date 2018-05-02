@@ -6,28 +6,15 @@ The answer candidates to this question are the three possible outcomes or classe
 
 ### Pre-trained Models
 
+Note, model were trained with **TensorFlow 1.4** and will (for some TF related reasons) not work for later versions.
+
 
 #### SNLI
 
 | Model         |  Accuracy  | Download        |
 |---------------|------------|-----------------|
-| cBiLSTM       |  82.0      |  [cbilstm]  |
 | DAM           |  84.6      |  [dam]   |
 | ESIM          |  87.2      |  [esim]   |
 
-[cbilstm]:
 [dam]: http://data.neuralnoise.com/jack/natural_language_inference/dam.zip
 [esim]: http://data.neuralnoise.com/jack/natural_language_inference/esim.zip
-
-
-### Implementing new Models
-
-TODO
-
-### Supported Models
-
-TODO
-
-### Supported Datasets
-
-TODO
