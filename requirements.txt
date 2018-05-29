@@ -5,7 +5,7 @@ parse
 scipy
 sklearn
 typing
-sacred
+sacred==0.7.2
 sqlalchemy
 pyyaml
 progressbar2
