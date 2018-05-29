@@ -104,9 +104,9 @@ MCAnnotation = NamedTuple('MCAnnotation', [
     ('question_tokens', List[str]),
     ('question_ids', List[int]),
     ('question_length', int),
-    ('support_tokens', List[List[str]]),
-    ('support_ids', List[List[int]]),
-    ('support_length', List[int]),
+    ('support_tokens', List[str]),
+    ('support_ids', List[int]),
+    ('support_length', int),
     ('answer', Optional[int]),
     ('id', Optional[int]),
 ])

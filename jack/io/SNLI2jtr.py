@@ -33,12 +33,13 @@ def convert_snli(snli_file_jsonl):
 
 def __convert_snli_instance(instance):
     queb = {}
-    queb['id'] = instance['pairID']
-    queb['support'] = [
-        {'id': instance.get('captionID'), 'text': instance['sentence1']}]
-    queb['questions'] = [
-        {'question': instance['sentence2'],
-         'answers': [{'text': instance['gold_label']}]}]
+    if instance['gold_label'] in __candidate_labels:
+        queb['id'] = instance['pairID']
+        queb['support'] = [
+            {'id': instance.get('captionID'), 'text': instance['sentence1']}]
+        queb['questions'] = [
+            {'question': instance['sentence2'],
+             'answers': [{'text': instance['gold_label']}]}]
     return queb
 
 
