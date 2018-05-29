@@ -6,24 +6,21 @@ from jack.tfutil.misc import mask_for_lengths
 
 
 def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_to_seq1,
-                      module='attention_matching', attn_type='bilinear_diagonal', scaled=True, with_sentinel=False,
-                      name='interaction_layer', reuse=False, num_layers=1, encoder=None, concat=True,
+                      module='attention_matching', name='interaction_layer', reuse=False, concat=True,
                       repr_dim=None, **kwargs):
     with tf.variable_scope(name, reuse=reuse):
         if seq1_to_seq2 is not None:
             seq2 = tf.gather(seq2, seq1_to_seq2)
             seq2_length = tf.gather(seq2_length, seq1_to_seq2)
         if module == 'attention_matching':
-            out = attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
-                                           attn_type, scaled, with_sentinel, seq2_to_seq1)
+            out = attention_matching_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1, **kwargs)
         elif module == 'bidaf':
-            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_to_seq1)
+            out = bidaf_layer(seq1, seq1_length, seq2, seq2_length, **kwargs)
         elif module == 'coattention':
-            if 'repr_dim' not in encoder:
-                encoder['repr_dim'] = repr_dim
+            if kwargs.get('encoder') and 'repr_dim' not in kwargs['encoder']:
+                kwargs['encoder']['repr_dim'] = repr_dim
             out = coattention_layer(
-                seq1, seq1_length, seq2, seq2_length, attn_type, scaled, with_sentinel, seq2_to_seq1, num_layers,
-                encoder)
+                seq1, seq1_length, seq2, seq2_length, **kwargs)
         else:
             raise ValueError("Unknown interaction type: %s" % module)
 
@@ -32,7 +29,7 @@ def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_t
     return out
 
 
-def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2=None, seq2_to_seq1=None):
+def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=None, **kwargs):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     attn_scores, attn_probs, seq2_weighted = attention.diagonal_bilinear_attention(
         seq1, seq2, seq2_length, False, seq2_to_seq1=seq2_to_seq1)
@@ -40,13 +37,7 @@ def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2=None, seq2_to
     attn_scores += tf.expand_dims(mask_for_lengths(seq1_length, tf.shape(attn_scores)[1]), 2)
 
     max_seq1 = tf.reduce_max(attn_scores, 2)
-    if seq1_to_seq2 is None:
-        seq1_attention = tf.nn.softmax(max_seq1, 1)
-    else:
-        segm_max_seq1 = tf.unsorted_segment_max(max_seq1, seq1_to_seq2, tf.reduce_max(seq1_to_seq2) + 1)
-        seq1_attention = tf.nn.softmax(segm_max_seq1, 1)
-        seq1_attention = tf.gather(seq1_attention, seq1_to_seq2)
-        seq1_attention.set_shape(max_seq1.get_shape())
+    seq1_attention = tf.nn.softmax(max_seq1, 1)
     seq1_weighted = tf.einsum('ij,ijk->ik', seq1_attention, seq1)
     seq1_weighted = tf.expand_dims(seq1_weighted, 1)
     seq1_weighted = tf.tile(seq1_weighted, [1, tf.shape(seq1)[1], 1])
@@ -54,8 +45,9 @@ def bidaf_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2=None, seq2_to
     return tf.concat([seq2_weighted, seq1 * seq2_weighted, seq1 * seq1_weighted], 2)
 
 
-def attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
-                             attn_type='diagonal_bilinear', scaled=True, with_sentinel=False, seq2_to_seq1=None):
+def attention_matching_layer(seq1, seq1_length, seq2, seq2_length, seq2_to_seq1=None,
+                             attn_type='diagonal_bilinear', key_value_attn=False,
+                             scaled=True, with_sentinel=False, repr_dim=None, **kwargs):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     if attn_type == 'bilinear':
         _, _, attn_states = attention.bilinear_attention(seq1, seq2, seq2_length, scaled, with_sentinel,
@@ -77,7 +69,7 @@ def attention_matching_layer(seq1, seq1_length, seq2, seq2_length,
 
 def coattention_layer(seq1, seq1_length, seq2, seq2_length,
                       attn_type='diagonal_bilinear', scaled=True, with_sentinel=False, seq2_to_seq1=None,
-                      num_layers=1, encoder=None):
+                      num_layers=1, encoder=None, **kwargs):
     """Encodes seq1 conditioned on seq2, e.g., using word-by-word attention."""
     if attn_type == 'bilinear':
         attn_fun = attention.bilinear_attention
@@ -108,6 +100,5 @@ def coattention_layer(seq1, seq1_length, seq2, seq2_length,
                 attn_states2.append(new_attn_states2)
                 co_attn_state.append(new_co_attn_state)
         out = tf.concat(seq1 + attn_states1 + co_attn_state, 2)
-    # out.set_shape([None, None, (3 * num_layers - 1) * sum(s.get_shape()[-1].value for s in seq1) +
-    #               seq2.get_shape()[-1].value])
+
     return out

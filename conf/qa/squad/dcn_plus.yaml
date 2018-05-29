@@ -1,5 +1,0 @@
-parent_config: ['./conf/qa/dcn_plus.yaml', './conf/qa/squad/abstract_squad.yaml']
-seed: 1337
-
-repr_dim: 100
-dropout: 0.2

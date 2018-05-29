@@ -33,8 +33,8 @@ def apply_attention(attn_scores, states, length, is_self=False, with_sentinel=Tr
     return attn_scores, attn_probs, attn_states
 
 
-def dot_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, key_value_attn=False):
-    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
+def dot_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, **kwargs):
+    query, key, value = _get_query_key_value(seq1, seq2, **kwargs)
     if seq2_to_seq1 is not None:
         query = tf.gather(query, seq2_to_seq1)
     attn_scores = tf.einsum('abc,adc->abd', query, key)
@@ -43,8 +43,8 @@ def dot_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq
     return apply_attention(attn_scores, value, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
 
 
-def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, key_value_attn=False):
-    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
+def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, **kwargs):
+    query, key, value = _get_query_key_value(seq1, seq2, **kwargs)
     if seq2_to_seq1 is not None:
         query = tf.gather(query, seq2_to_seq1)
     attn_scores = tf.einsum('abc,adc->abd', tf.layers.dense(query, key.get_shape()[-1].value, use_bias=False), key)
@@ -55,9 +55,8 @@ def bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_t
     return apply_attention(attn_scores, value, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
 
 
-def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None,
-                                key_value_attn=False):
-    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
+def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=True, seq2_to_seq1=None, **kwargs):
+    query, key, value = _get_query_key_value(seq1, seq2, **kwargs)
     if seq2_to_seq1 is not None:
         query = tf.gather(query, seq2_to_seq1)
     v = tf.get_variable('attn_weight', [1, 1, query.get_shape()[-1].value], tf.float32,
@@ -70,9 +69,8 @@ def diagonal_bilinear_attention(seq1, seq2, len2, scaled=True, with_sentinel=Tru
     return apply_attention(attn_scores, value, len2, seq1 is seq2, with_sentinel, seq2_to_seq1=seq2_to_seq1)
 
 
-def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinel=True, seq2_to_seq1=None,
-                  key_value_attn=False):
-    query, key, value = _get_query_key_value(seq1, seq2, key_value_attn)
+def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sentinel=True, seq2_to_seq1=None, **kwargs):
+    query, key, value = _get_query_key_value(seq1, seq2, **kwargs)
     if seq2_to_seq1 is not None:
         query = tf.gather(query, seq2_to_seq1)
     hidden1 = tf.layers.dense(query, hidden_dim)
@@ -83,12 +81,13 @@ def mlp_attention(hidden_dim, seq1, seq2, len2, activation=tf.nn.relu, with_sent
                            seq2_to_seq1=seq2_to_seq1)
 
 
-def _get_query_key_value(seq1, seq2, key_value_attn):
+def _get_query_key_value(seq1, seq2, key_value_attn=False, repr_dim=None, **kwargs):
+    repr_dim = repr_dim or seq2.get_shape()[-1].value
     if key_value_attn:
         with tf.variable_scope('key_value_projection') as vs:
-            key = tf.layers.dense(seq2, seq2.get_shape()[-1].value, name='key')
-            value = tf.layers.dense(seq2, seq2.get_shape()[-1].value, name='value')
-            query = tf.layers.dense(seq1, seq1.get_shape()[-1].value, name='query')
+            key = tf.layers.dense(seq2, repr_dim, name='key')
+            value = tf.layers.dense(seq2, repr_dim, name='value')
+            query = tf.layers.dense(seq1, repr_dim, name='query')
         return query, key, value
     else:
         return seq1, seq2, seq2
