@@ -13,7 +13,7 @@
 **Jack the Reader** - or **jack**, for short - is a framework for building and using models on a variety of tasks that require *reading comprehension*.
 
 ## Installation
-To install Jack, please see [How to Install and Run][install]. 
+To install Jack, install requirements and [TensorFlow](http://tensorflow.org/). In case you want to use PyTorch for writing models, please install [PyTorch](http://pytorch.org/) as well.
 
 ## Supported ML Backends
 
