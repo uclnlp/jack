@@ -39,7 +39,7 @@ extras_require = {
 }
 
 setup(name='jack',
-      version='0.1.0',
+      version='0.2.0',
       description='Jack the Reader is a Python framework for Machine Reading',
       author='UCL Machine Reading',
       author_email='s.riedel@cs.ucl.ac.uk',
