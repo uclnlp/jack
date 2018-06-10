@@ -3,8 +3,8 @@ import tensorflow as tf
 from jack.core import TensorPortTensors, TensorPort
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
 from jack.readers.extractive_qa.tensorflow.answer_layer import answer_layer
-from jack.tfutil.embedding import conv_char_embedding
-from jack.tfutil.modular_encoder import modular_encoder
+from jack.util.tf.embedding import conv_char_embedding
+from jack.util.tf.modular_encoder import modular_encoder
 
 
 class ModularQAModel(AbstractXQAModelModule):

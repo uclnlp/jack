@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch.nn import functional
 
-from jack.torch_util import misc
+from jack.util.torch import misc
 
 
 class ConvCharEmbeddingModule(nn.Module):

@@ -1,8 +1,7 @@
 import tensorflow as tf
 
-from jack.tfutil import attention
-from jack.tfutil import sequence_encoder
-from jack.tfutil.misc import mask_for_lengths
+from jack.util.tf import attention, sequence_encoder
+from jack.util.tf.misc import mask_for_lengths
 
 
 def interaction_layer(seq1, seq1_length, seq2, seq2_length, seq1_to_seq2, seq2_to_seq1,

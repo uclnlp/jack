@@ -2,8 +2,8 @@ import tensorflow as tf
 
 from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
 from jack.readers.natural_language_inference import prediction_layer
-from jack.tfutil.embedding import conv_char_embedding
-from jack.tfutil.modular_encoder import modular_encoder
+from jack.util.tf.embedding import conv_char_embedding
+from jack.util.tf.modular_encoder import modular_encoder
 
 
 class ModularNLIModel(AbstractSingleSupportClassificationModel):

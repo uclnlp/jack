@@ -18,16 +18,23 @@ To install Jack, install requirements and [TensorFlow](http://tensorflow.org/). 
 ## Supported ML Backends
 
 We currently support [TensorFlow](http://tensorflow.org/) and [PyTorch](http://pytorch.org/).
-Readers can be implemented using both. Input and output modules (i.e., pre- and post-processing) are independent of the 
+Readers can be implemented using both. Input and output modules (i.e., pre- and post-processing) are independent of the
 ML backend and can thus be reused for model modules that either backend.
 Though most models are implemented in TensorFlow by reusing the cumbersome pre- and post-processing it is easy to
-quickly build new readers in PyTorch as well. 
+quickly build new readers in PyTorch as well.
 
-## Dedicated Task Documentation and Pre-trained Models
- 
-* [Question Answering](/docs/tasks/Extractive_QA.md)
-* [Natural Language Inference](/docs/tasks/Natural_Language_Inference.md)
-* [Link Prediction for Automatic Knowledge Base Completion](/docs/tasks/Link_Prediction.md)
+## Pre-trained Models
+
+Find pre-trained models [here](https://www.dropbox.com/sh/vnmc9pq4yrgl1sr/AAD7HVhGdpof2IgIifSZ6PEUa?dl=0).
+
+## Code Structure
+
+* `jack.core` - core abstractions used
+* `jack.readers` - implementations of models
+* `jack.eval` - task evaluation code
+* `jack.util` - utility code that is used throughout the framework, including shared ML code
+* `jack.io` - IO related code, including loading and dataset conversion scripts
+
 
 ## Projects
 
@@ -107,9 +114,9 @@ from jack.core import QASetting
 
 fastqa_reader = readers.reader_from_file("./fastqa_reader")
 
-support = """"It is a replica of the grotto at Lourdes, 
-France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. 
-At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), 
+support = """"It is a replica of the grotto at Lourdes,
+France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858.
+At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome),
 is a simple, modern stone statue of Mary."""
 
 answers = fastqa_reader([QASetting(

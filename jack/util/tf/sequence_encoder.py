@@ -3,10 +3,9 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-from jack.tfutil import attention
-from jack.tfutil import rnn
-from jack.tfutil.activations import activation_from_string
-from jack.tfutil.highway import highway_network
+from jack.util.tf import attention, rnn
+from jack.util.tf.activations import activation_from_string
+from jack.util.tf.highway import highway_network
 
 logger = logging.getLogger(__name__)
 

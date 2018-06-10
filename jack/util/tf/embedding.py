@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-from jack.tfutil import misc
+from jack.util.tf import misc
 
 
 def conv_char_embedding(num_chars, repr_dim, word_chars, word_lengths, word_sequences=None,

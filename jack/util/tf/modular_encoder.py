@@ -3,8 +3,8 @@ import logging
 
 import tensorflow as tf
 
-from jack.tfutil.interaction_layer import interaction_layer
-from jack.tfutil.sequence_encoder import encoder
+from jack.util.tf.interaction_layer import interaction_layer
+from jack.util.tf.sequence_encoder import encoder
 
 logger = logging.getLogger(__name__)
 

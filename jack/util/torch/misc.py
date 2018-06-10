@@ -1,6 +1,5 @@
 import torch
 from torch.autograd import Function
-from torch.autograd._functions import Max
 
 
 def mask_for_lengths(length, max_length=None, mask_right=True, value=-1e6):

@@ -7,8 +7,8 @@ import numpy as np
 import tensorflow as tf
 
 from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
-from jack.tfutil.attention import attention_softmax3d
-from jack.tfutil.masking import mask_3d
+from jack.util.tf.attention import attention_softmax3d
+from jack.util.tf.masking import mask_3d
 
 logger = logging.getLogger(__name__)
 

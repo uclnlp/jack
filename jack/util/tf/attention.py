@@ -3,8 +3,7 @@ import math
 
 import tensorflow as tf
 
-from jack.tfutil import misc
-from jack.tfutil import segment
+from jack.util.tf import segment, misc
 
 
 def attention_softmax(attn_scores, length=None):

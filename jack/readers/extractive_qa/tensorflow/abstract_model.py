@@ -3,7 +3,7 @@ from typing import Sequence
 from jack.core import Ports, TensorPort, TensorPortTensors
 from jack.core.tensorflow import TFModelModule
 from jack.readers.extractive_qa.shared import XQAPorts
-from jack.tfutil.xqa import xqa_crossentropy_loss
+from jack.util.tf.xqa import xqa_crossentropy_loss
 
 
 class AbstractXQAModelModule(TFModelModule):

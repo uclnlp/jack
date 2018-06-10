@@ -6,9 +6,9 @@ from jack.core import SharedResources
 from jack.core.tensorport import Ports
 from jack.core.torch import PyTorchModelModule
 from jack.readers.extractive_qa.shared import XQAPorts
-from jack.torch_util import embedding, misc, xqa
-from jack.torch_util.highway import Highway
-from jack.torch_util.rnn import BiLSTM
+from jack.util.torch import Highway
+from jack.util.torch import embedding, misc, xqa
+from jack.util.torch.rnn import BiLSTM
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):

@@ -5,10 +5,10 @@ This file contains FastQA specific modules and ports
 from jack.core import *
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
 from jack.readers.extractive_qa.tensorflow.answer_layer import conditional_answer_layer, bilinear_answer_layer
-from jack.tfutil import misc
-from jack.tfutil.embedding import conv_char_embedding
-from jack.tfutil.highway import highway_network
-from jack.tfutil.sequence_encoder import encoder
+from jack.util.tf import misc
+from jack.util.tf.embedding import conv_char_embedding
+from jack.util.tf.highway import highway_network
+from jack.util.tf.sequence_encoder import encoder
 
 
 class FastQAModule(AbstractXQAModelModule):

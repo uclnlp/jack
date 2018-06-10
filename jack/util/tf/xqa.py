@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-from jack.tfutil.segment import segment_softmax
+from jack.util.tf.segment import segment_softmax
 
 
 def xqa_crossentropy_loss(start_scores, end_scores, answer_span, answer2support, support2question, use_sum=True):

@@ -1,9 +1,7 @@
 import tensorflow as tf
 
-from jack.tfutil import attention
-from jack.tfutil import misc
-from jack.tfutil import sequence_encoder
-from jack.tfutil.segment import segment_top_k, segment_softmax
+from jack.util.tf import attention, sequence_encoder, misc
+from jack.util.tf.segment import segment_top_k, segment_softmax
 
 
 def answer_layer(encoded_question, question_length, encoded_support, support_length,
