@@ -10,10 +10,10 @@ from jack.core.shared_resources import SharedResources
 from jack.core.tensorflow import TFModelModule
 from jack.core.tensorport import Ports, TensorPort, TensorPortTensors
 from jack.readers.classification.util import create_answer_vocab
-from jack.tfutil import misc
-from jack.tfutil.rnn import fused_birnn
 from jack.util import preprocessing
 from jack.util.map import numpify
+from jack.util.tf import misc
+from jack.util.tf.rnn import fused_birnn
 from projects.knowledge_integration.knowledge_store import KnowledgeStore
 from projects.knowledge_integration.shared import AssertionMRPorts
 from projects.knowledge_integration.tfutil import embedding_refinement

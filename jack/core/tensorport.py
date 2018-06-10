@@ -220,12 +220,12 @@ class Ports:
         word_char_length = TensorPort(np.int32, [None], "word_char_length",
                                       "Represents questions using symbol vectors",
                                       "[U]")
-        question_words = TensorPort(np.int32, [None, None], "question_words",
-                                    "Represents support using symbol vectors indexing defined word chars.",
-                                    "[batch_size, max_num_question_tokens]")
-        support_words = TensorPort(np.int32, [None, None], "support_words",
-                                   "Represents support using symbol vectors indexing defined word chars",
-                                   "[batch_size, max_num_support_tokens, max]")
+        question_batch_words = TensorPort(np.int32, [None, None], "question_batch_words",
+                                          "Represents question using in-batch vocabulary.",
+                                          "[batch_size, max_num_question_tokens]")
+        support_batch_words = TensorPort(np.int32, [None, None], "support_batch_words",
+                                         "Represents support using in-batch vocabulary",
+                                         "[batch_size, max_num_support_tokens]")
 
         # Number of questions in batch is Q, number of supports is S, number of answers is A, number of candidates is C.
         # Typical input ports such as support, candidates, answers are defined together with individual mapping ports.

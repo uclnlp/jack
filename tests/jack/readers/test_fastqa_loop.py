@@ -21,18 +21,17 @@ def test_fastqa():
     embeddings = load_embeddings('./tests/test_data/glove.840B.300d_top256.txt', 'glove')
 
     # we need a vocabulary (with embeddings for our fastqa_reader, but this is not always necessary)
-    vocab = Vocab(emb=embeddings, init_from_embeddings=True)
+    vocab = Vocab(vocab=embeddings.vocabulary)
 
     # ... and a config
     config = {
         "batch_size": 1,
         "repr_dim": 10,
-        "repr_dim_input": embeddings.lookup.shape[1],
         "with_char_embeddings": True
     }
 
     # create/setup reader
-    shared_resources = SharedResources(vocab, config)
+    shared_resources = SharedResources(vocab, config, embeddings)
 
     input_module = XQAInputModule(shared_resources)
     model_module = FastQAModule(shared_resources)

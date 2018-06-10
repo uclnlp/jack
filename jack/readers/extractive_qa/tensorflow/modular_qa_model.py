@@ -3,8 +3,8 @@ import tensorflow as tf
 from jack.core import TensorPortTensors, TensorPort
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
 from jack.readers.extractive_qa.tensorflow.answer_layer import answer_layer
-from jack.tfutil.embedding import conv_char_embedding
-from jack.tfutil.modular_encoder import modular_encoder
+from jack.util.tf.embedding import conv_char_embedding
+from jack.util.tf.modular_encoder import modular_encoder
 
 
 class ModularQAModel(AbstractXQAModelModule):
@@ -16,11 +16,11 @@ class ModularQAModel(AbstractXQAModelModule):
 
         [char_emb_question, char_emb_support] = conv_char_embedding(
             len(shared_resources.char_vocab), shared_resources.config['repr_dim'], tensors.word_chars,
-            tensors.word_char_length, [tensors.question_words, tensors.support_words])
+            tensors.word_char_length, [tensors.question_batch_words, tensors.support_batch_words])
 
         model = shared_resources.config['model']
         repr_dim = shared_resources.config['repr_dim']
-        input_size = shared_resources.config["repr_dim_input"]
+        input_size = shared_resources.embeddings.shape[-1]
         dropout = shared_resources.config.get("dropout")
         tensors.emb_question.set_shape([None, None, input_size])
         tensors.emb_support.set_shape([None, None, input_size])

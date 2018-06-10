@@ -8,7 +8,6 @@ import shutil
 import sys
 import tempfile
 import uuid
-from time import time
 
 from sacred import Experiment
 from sacred.arg_parser import parse_args
@@ -16,7 +15,7 @@ from sacred.arg_parser import parse_args
 from jack import readers
 from jack import train as jtrain
 from jack.core.shared_resources import SharedResources
-from jack.io.embeddings.embeddings import load_embeddings, Embeddings
+from jack.io.embeddings.embeddings import load_embeddings
 from jack.io.load import loaders
 from jack.util.vocab import Vocab
 
@@ -24,7 +23,7 @@ from jack.util.vocab import Vocab
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 
-parsed_args = dict([x.split("=") for x in parse_args(sys.argv)["UPDATE"]])
+parsed_args = dict(x.split("=") for x in parse_args(sys.argv)["UPDATE"])
 if "config" in parsed_args:
     path = parsed_args["config"]
 else:
@@ -49,37 +48,29 @@ ex = Experiment('jack')
 for c_path in configs:
     ex.add_config(c_path)
 
-
-class Duration(object):
-    def __init__(self):
-        self.t0 = time()
-        self.t = time()
-
-    def __call__(self):
-        logger.info('Time since last checkpoint : {0:.2g}min'.format((time() - self.t) / 60.))
-        self.t = time()
-
-
-checkpoint = Duration()
-
 logging.basicConfig(level=logging.INFO)
 
 
 @ex.automain
-def main(config,
-         loader,
-         debug,
-         debug_examples,
-         embedding_file,
-         embedding_format,
-         reader,
-         train,
-         num_train_examples,
-         dev,
-         num_dev_examples,
-         test,
-         vocab_from_embeddings):
+def run(loader,
+        debug,
+        debug_examples,
+        embedding_file,
+        embedding_format,
+        repr_dim_task_embedding,
+        reader,
+        train,
+        num_train_examples,
+        dev,
+        num_dev_examples,
+        test,
+        vocab_from_embeddings,
+        **kwargs):
     logger.info("TRAINING")
+
+    # build JTReader
+    parsed_config = ex.current_run.config
+    ex.run('print_config', config_updates=parsed_config)
 
     if 'JACK_TEMP' not in os.environ:
         jack_temp = os.path.join(tempfile.gettempdir(), 'jack', str(uuid.uuid4()))
@@ -102,9 +93,8 @@ def main(config,
             emb_file = 'glove.6B.50d.txt'
             embeddings = load_embeddings(path.join('data', 'GloVe', emb_file), 'glove')
             logger.info('loaded pre-trained embeddings ({})'.format(emb_file))
-            ex.current_run.config["repr_dim_input"] = 50
         else:
-            embeddings = Embeddings(None, None)
+            embeddings = None
     else:
         train_data = loaders[loader](train, num_train_examples)
         dev_data = loaders[loader](dev, num_dev_examples)
@@ -114,27 +104,23 @@ def main(config,
         if embedding_file is not None and embedding_format is not None:
             embeddings = load_embeddings(embedding_file, embedding_format)
             logger.info('loaded pre-trained embeddings ({})'.format(embedding_file))
-            ex.current_run.config["repr_dim_input"] = embeddings.lookup[0].shape[0]
         else:
             embeddings = None
-            if ex.current_run.config["vocab_from_embeddings"]:
-                raise RuntimeError("If you want to create vocab from embeddings, embeddings have to be provided")
+            if vocab_from_embeddings:
+                raise ValueError("If you want to create vocab from embeddings, embeddings have to be provided")
 
-    vocab = Vocab(emb=embeddings, init_from_embeddings=vocab_from_embeddings)
+    vocab = Vocab(vocab=embeddings.vocabulary if vocab_from_embeddings and embeddings is not None else None)
 
-    # build JTReader
-    checkpoint()
-    parsed_config = ex.current_run.config
-    ex.run('print_config', config_updates=parsed_config)
+    if repr_dim_task_embedding < 1 and embeddings is None:
+        raise ValueError("Either provide pre-trained embeddings or set repr_dim_task_embedding > 0.")
+
 
     # name defaults to name of the model
     if 'name' not in parsed_config or parsed_config['name'] is None:
         parsed_config['name'] = reader
 
-    shared_resources = SharedResources(vocab, parsed_config)
+    shared_resources = SharedResources(vocab, parsed_config, embeddings)
     jtreader = readers.readers[reader](shared_resources)
-
-    checkpoint()
 
     try:
         jtrain(jtreader, train_data, test_data, dev_data, parsed_config, debug=debug)

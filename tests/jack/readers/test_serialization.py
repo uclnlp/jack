@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from jack.readers.implementations import *
-from jack.io.load import loaders
-from jack.io.embeddings import load_embeddings
-from jack.util.vocab import Vocab
+import tempfile
 
 import tensorflow as tf
 
-import tempfile
+from jack.io.embeddings import load_embeddings
+from jack.io.load import loaders
+from jack.readers.implementations import *
+from jack.util.vocab import Vocab
 
 
 def test_serialization():
@@ -34,21 +34,19 @@ def test_serialization():
             data = loaders['snli']('tests/test_data/SNLI/1000_samples_snli_1.0_train.jsonl')
 
             embeddings = load_embeddings("data/GloVe/glove.the.50d.txt", 'glove')
-            vocab = Vocab(emb=embeddings, init_from_embeddings=True)
-            config['repr_dim_input'] = 50
+            vocab = Vocab(vocab=embeddings.vocabulary)
             config['repr_dim'] = 50
         elif reader in {fastqa_reader}:
             data = loaders['squad']('data/SQuAD/snippet.json')
 
             embeddings = load_embeddings("data/GloVe/glove.the.50d.txt", 'glove')
-            vocab = Vocab(emb=embeddings, init_from_embeddings=True)
-            config['repr_dim_input'] = 50
+            vocab = Vocab(vocab=embeddings.vocabulary)
             config['repr_dim'] = 50
 
         if data is not None:
             tf.reset_default_graph()
 
-            shared_resources = SharedResources(vocab, config)
+            shared_resources = SharedResources(vocab, config, embeddings)
             reader_instance = reader(shared_resources)
             reader_instance.setup_from_data(data)
 

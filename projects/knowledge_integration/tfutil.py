@@ -1,8 +1,7 @@
 import tensorflow as tf
 
-from jack.tfutil import misc
-from jack.tfutil import modular_encoder
-from jack.tfutil.embedding import conv_char_embedding
+from jack.util.tf import modular_encoder, misc
+from jack.util.tf.embedding import conv_char_embedding
 
 
 def embedding_refinement(size, word_embeddings, sequence_module, reading_sequence, reading_sequence_2_batch,

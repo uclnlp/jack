@@ -1,5 +1,0 @@
-parent_config: ['./conf/qa/jack_qa.yaml', './conf/qa/triviaqa/wiki/abstract_triviaqa.yaml']
-seed: 1337
-
-repr_dim: 100
-dropout: 0.2

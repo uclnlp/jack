@@ -1,6 +1,8 @@
 description: >
   Modular QA Reader base configuration.
 
+parent_config: './conf/jack.yaml'
+
 reader: 'modular_qa_reader'
 
 with_char_embeddings: True

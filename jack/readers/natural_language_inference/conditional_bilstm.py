@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
-from jack.tfutil.rnn import fused_birnn
+from jack.util.tf.rnn import fused_birnn
 
 
 class ConditionalBiLSTMClassificationModel(AbstractSingleSupportClassificationModel):

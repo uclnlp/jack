@@ -6,22 +6,20 @@ from jack.core import SharedResources
 from jack.core.tensorport import Ports
 from jack.core.torch import PyTorchModelModule
 from jack.readers.extractive_qa.shared import XQAPorts
-from jack.torch_util import embedding, misc, xqa
-from jack.torch_util.highway import Highway
-from jack.torch_util.rnn import BiLSTM
+from jack.util.torch import Highway
+from jack.util.torch import embedding, misc, xqa
+from jack.util.torch.rnn import BiLSTM
 
 
 class FastQAPyTorchModelModule(PyTorchModelModule):
     """PyTorch implementation of FastQA."""
 
     # TODO: does not support multiparagraph yet
-
-
     _input_ports = [XQAPorts.emb_question, XQAPorts.question_length,
                     XQAPorts.emb_support, XQAPorts.support_length,
                     # char embedding inputs
                     XQAPorts.word_chars, XQAPorts.word_char_length,
-                    XQAPorts.question_words, XQAPorts.support_words,
+                    XQAPorts.question_batch_words, XQAPorts.support_batch_words,
                     # feature input
                     XQAPorts.word_in_question,
                     # optional input, provided only during training
@@ -61,7 +59,7 @@ class FastQAPyTorchModule(nn.Module):
     def __init__(self, shared_resources: SharedResources):
         super(FastQAPyTorchModule, self).__init__()
         self._shared_resources = shared_resources
-        input_size = shared_resources.config["repr_dim_input"]
+        input_size = shared_resources.embeddings.shape[-1]
         size = shared_resources.config["repr_dim"]
         self._size = size
         self._with_char_embeddings = self._shared_resources.config.get("with_char_embeddings", False)

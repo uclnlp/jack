@@ -205,7 +205,7 @@ class OnlineInputModule(InputModule, Generic[AnnotationType]):
             running_idx = 0
             for i, batch in enumerate(self._batch_questions(dataset, batch_size, is_eval)):
                 questions, answers = zip(*batch)
-                if questions[0].id not in preprocessed:
+                if any(q.id not in preprocessed for q in questions):
                     annots = self.preprocess(questions, answers)
                     if questions[0].id is None:  # make sure there is an id, if not we set it here
                         for q in questions:

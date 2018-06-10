@@ -33,7 +33,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
 
     clip_value = configuration.get('clip_value')
     batch_size = configuration.get('batch_size')
-    dev_batch_size = configuration.get('batch_size') or batch_size
+    dev_batch_size = configuration.get('dev_batch_size') or batch_size
     epochs = configuration.get('epochs')
     l2 = configuration.get('l2')
     optimizer = configuration.get('optimizer')

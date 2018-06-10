@@ -26,14 +26,13 @@ def test_fastqa():
     embeddings = Embeddings(vocab, np.random.random([len(vocab), 10]))
 
     # we need a vocabulary (with embeddings for our fastqa_reader, but this is not always necessary)
-    vocab = Vocab(emb=embeddings, init_from_embeddings=True)
+    vocab = Vocab(vocab=vocab)
 
     # ... and a config
-    config = {"batch_size": 1, "repr_dim": 10, "repr_dim_input": embeddings.lookup.shape[1],
-              "with_char_embeddings": True}
+    config = {"batch_size": 1, "repr_dim": 10, "with_char_embeddings": True}
 
     # create/setup reader
-    shared_resources = SharedResources(vocab, config)
+    shared_resources = SharedResources(vocab, config, embeddings)
     fastqa_reader = readers.fastqa_reader(shared_resources)
     fastqa_reader.setup_from_data(data)
 

@@ -1,7 +1,6 @@
 """
 This file contains reusable modules for extractive QA models and ports
 """
-import sys
 from typing import NamedTuple
 
 from jack.core import *
@@ -24,8 +23,8 @@ class XQAPorts:
     # but also ids, for char-based embeddings
     word_chars = Ports.Input.word_chars
     word_char_length = Ports.Input.word_char_length
-    question_words = Ports.Input.question_words
-    support_words = Ports.Input.support_words
+    question_batch_words = Ports.Input.question_batch_words
+    support_batch_words = Ports.Input.support_batch_words
 
     is_eval = Ports.is_eval
 
@@ -75,7 +74,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                      XQAPorts.support2question,
                      # char
                      XQAPorts.word_chars, XQAPorts.word_char_length,
-                     XQAPorts.question_words, XQAPorts.support_words,
+                     XQAPorts.question_batch_words, XQAPorts.support_batch_words,
                      # features
                      XQAPorts.word_in_question,
                      # optional, only during training
@@ -87,25 +86,19 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
     def setup_from_data(self, data: Iterable[Tuple[QASetting, List[Answer]]]):
         # create character vocab + word lengths + char ids per word
+        if not self.shared_resources.vocab.frozen:
+            preprocessing.fill_vocab((q for q, _ in data), self.shared_resources.vocab,
+                                     self.shared_resources.config.get("lowercase", False))
+            self.shared_resources.vocab.freeze()
         self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
     def setup(self):
         self._rng = random.Random(1)
         self.vocab = self.shared_resources.vocab
         self.config = self.shared_resources.config
-        if self.vocab.emb is None:
-            logger.error("XQAInputModule needs vocabulary setup from pre-trained embeddings."
-                         "Make sure to set vocab_from_embeddings=True.")
-            sys.exit(1)
-        self.emb_matrix = self.vocab.emb.lookup
-        self.default_vec = np.zeros([self.vocab.emb_length])
+        self.embeddings = self.shared_resources.embeddings
+        self.__default_vec = np.zeros([self.embeddings.shape[-1]])
         self.char_vocab = self.shared_resources.char_vocab
-
-    def _get_emb(self, idx):
-        if idx < self.emb_matrix.shape[0]:
-            return self.emb_matrix[idx]
-        else:
-            return self.default_vec
 
     @property
     def output_ports(self) -> List[TensorPort]:
@@ -215,24 +208,24 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
                 if with_answers:
                     all_spans[-1].append(a.answer_spans[s])
 
-        word_chars, word_lengths, word_ids, vocab, rev_vocab = \
+        word_chars, word_lengths, batch_word_ids, batch_vocab, batch_rev_vocab = \
             preprocessing.unique_words_with_chars(q_tokenized + s_tokenized, self.char_vocab)
 
-        emb_support = np.zeros([len(support_lengths), max(support_lengths), self.vocab.emb_length])
-        emb_question = np.zeros([len(question_lengths), max(question_lengths), self.vocab.emb_length])
+        emb_support = np.zeros([len(support_lengths), max(support_lengths), self.embeddings.shape[-1]])
+        emb_question = np.zeros([len(question_lengths), max(question_lengths), self.embeddings.shape[-1]])
 
         for i, a in enumerate(annotations):
-            for j, q_id in enumerate(a.question_ids):
-                emb_question[i, j] = self._get_emb(q_id)
-        for k, s_ids in enumerate(support_ids):
-            for j, s_id in enumerate(s_ids):
-                emb_support[k, j] = self._get_emb(s_id)
+            for j, t in enumerate(a.question_tokens):
+                emb_question[i, j] = self.embeddings.get(t, self.__default_vec)
+        for k, s_ids in enumerate(s_tokenized):
+            for j, t in enumerate(s_ids):
+                emb_support[k, j] = self.embeddings.get(t, self.__default_vec)
 
         output = {
             XQAPorts.word_chars: word_chars,
             XQAPorts.word_char_length: word_lengths,
-            XQAPorts.question_words: word_ids[:len(q_tokenized)],
-            XQAPorts.support_words: word_ids[len(q_tokenized):],
+            XQAPorts.question_batch_words: batch_word_ids[:len(q_tokenized)],
+            XQAPorts.support_batch_words: batch_word_ids[len(q_tokenized):],
             XQAPorts.emb_support: emb_support,
             XQAPorts.support_length: support_lengths,
             XQAPorts.emb_question: emb_question,
@@ -242,8 +235,8 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
             XQAPorts.is_eval: is_eval,
             XQAPorts.token_offsets: offsets,
             XQAPorts.selected_support: selected_support,
-            '__vocab': vocab,
-            '__rev_vocab': rev_vocab,
+            '__vocab': batch_vocab,
+            '__rev_vocab': batch_rev_vocab,
         }
 
         if with_answers:
@@ -262,7 +255,7 @@ class XQAInputModule(OnlineInputModule[XQAAnnotation]):
 
         # we can only numpify in here, because bucketing is not possible prior
         batch = numpify(output, keys=[XQAPorts.word_chars,
-                                      XQAPorts.question_words, XQAPorts.support_words,
+                                      XQAPorts.question_batch_words, XQAPorts.support_batch_words,
                                       XQAPorts.word_in_question, XQAPorts.token_offsets])
         return batch
 

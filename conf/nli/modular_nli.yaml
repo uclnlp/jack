@@ -1,6 +1,7 @@
 description: >
   A configuration inheriting from the default jack.yaml
 
+parent_config: './conf/jack.yaml'
 
 # Reader model to use, see jack/readers/implementations.py for options
 reader: 'modular_nli_reader'

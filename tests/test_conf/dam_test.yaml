@@ -24,6 +24,8 @@ reader: 'dam_snli_reader'
 
 repr_dim: 50
 
+repr_dim_task_embedding: 50
+
 max_epochs: 10
 
 dropout: 0

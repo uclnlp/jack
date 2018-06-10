@@ -13,7 +13,7 @@ from jack.util.vocab import Vocab
 
 def fill_vocab(qa_settings, vocab=None, lowercase=False, lemmatize=False, spacy_nlp=False):
     vocab = vocab or Vocab(unk=None)
-    assert not vocab.frozen, 'Filling frozen vocabs does not make a lot fo sense...'
+    assert not vocab._frozen, 'Filling frozen vocabs does not make a lot fo sense...'
     for qa_setting in qa_settings:
         nlp_preprocess(qa_setting.question, vocab, lowercase, lemmatize, use_spacy=spacy_nlp)
         for s in qa_setting.support:
@@ -45,7 +45,7 @@ def nlp_preprocess_all(qa_settings,
                        with_lemmas: bool = False,
                        with_tokens_offsets: bool = False,
                        use_spacy: bool = False):
-    assert not vocab.frozen, 'Filling frozen vocabs does not make a lot fo sense...'
+    assert not vocab._frozen, 'Filling frozen vocabs does not make a lot fo sense...'
     processed_questions = []
     processed_support = []
     for qa_setting in qa_settings:
@@ -113,12 +113,7 @@ def nlp_preprocess(text: str,
             token_offsets = token_to_char_offsets(text, tokens)
 
     length = len(tokens)
-
     ids = vocab(tokens)
-    # make sure ids are non-negative
-    if not vocab.frozen:
-        for i in range(len(ids)):
-            ids[i] = vocab.normalize(ids[i])
 
     return tokens, ids, length, lemmas, token_offsets
 
@@ -134,8 +129,8 @@ def transpose_dict_of_lists(dict_of_lists: Mapping[str, list], keys: List[str]) 
 def char_vocab_from_vocab(vocab):
     char_vocab = dict()
     char_vocab["PAD"] = 0
-    for i in range(max(vocab.id2sym.keys()) + 1):
-        w = vocab.id2sym.get(i)
+    for i in range(len(vocab)):
+        w = vocab.get_sym(i)
         if w is not None:
             for c in w:
                 if c not in char_vocab:

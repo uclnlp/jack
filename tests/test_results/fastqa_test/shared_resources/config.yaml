@@ -1,0 +1,12 @@
+{batch_size: 64, clip_value: 0.0, config: tests/test_conf/fastqa_test.yaml, debug: false,
+  debug_examples: 10, description: 'A configuration inheriting from the default jack.yaml
+
+    ', dev: data/SQuAD/snippet.jtr.json, dev_batch_size: null, dropout: 0, embedding_file: tests/test_data/glove.840B.300d_top256.txt,
+  embedding_format: glove, epochs: 5, file_cache: false, l2: 0.0, learning_rate: 0.001,
+  learning_rate_decay: 1.0, load_dir: null, loader: jack, log_interval: 100, lowercase: true,
+  max_epochs: 20, max_num_support: null, max_support_length: -1, min_learning_rate: 0.0001,
+  name: fastqa_reader, num_dev_examples: null, num_train_examples: null, optimizer: adam,
+  output_dir: ./out/, parent_config: ./conf/jack.yaml, reader: fastqa_reader, repr_dim: 300,
+  repr_dim_task_embedding: 0, save_dir: ./tests/test_results/fastqa_reader_test, seed: 1337,
+  tensorboard_folder: null, test: null, train: data/SQuAD/snippet.jtr.json, validation_interval: null,
+  vocab_from_embeddings: true, with_char_embeddings: true, write_metrics_to: null}

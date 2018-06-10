@@ -9,10 +9,10 @@ from jack.readers.extractive_qa.shared import XQAInputModule, XQAPorts
 from jack.readers.extractive_qa.tensorflow.abstract_model import AbstractXQAModelModule
 from jack.readers.extractive_qa.tensorflow.answer_layer import answer_layer
 from jack.readers.extractive_qa.util import prepare_data
-from jack.tfutil.modular_encoder import modular_encoder
 from jack.util import preprocessing
 from jack.util.map import numpify
 from jack.util.preprocessing import sort_by_tfidf
+from jack.util.tf.modular_encoder import modular_encoder
 from projects.knowledge_integration.knowledge_store import KnowledgeStore
 from projects.knowledge_integration.shared import AssertionMRPorts
 from projects.knowledge_integration.tfutil import embedding_refinement, word_with_char_embed

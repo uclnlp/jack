@@ -64,5 +64,4 @@ model:
     module: 'bidaf'
     encoder:  # only needed for bidaf answer layer
       module: 'lstm'
-      dropout: True
 

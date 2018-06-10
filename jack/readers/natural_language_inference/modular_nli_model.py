@@ -2,8 +2,8 @@ import tensorflow as tf
 
 from jack.readers.classification.shared import AbstractSingleSupportClassificationModel
 from jack.readers.natural_language_inference import prediction_layer
-from jack.tfutil.embedding import conv_char_embedding
-from jack.tfutil.modular_encoder import modular_encoder
+from jack.util.tf.embedding import conv_char_embedding
+from jack.util.tf.modular_encoder import modular_encoder
 
 
 class ModularNLIModel(AbstractSingleSupportClassificationModel):
@@ -15,7 +15,7 @@ class ModularNLIModel(AbstractSingleSupportClassificationModel):
         if shared_resources.config.get('with_char_embeddings'):
             [char_emb_question, char_emb_support] = conv_char_embedding(
                 len(shared_resources.char_vocab), shared_resources.config['repr_dim'], tensors.word_chars,
-                tensors.word_char_length, [tensors.question_words, tensors.support_words])
+                tensors.word_char_length, [tensors.question_batch_words, tensors.support_batch_words])
             inputs = {'hypothesis': embedded_question, 'premise': embedded_support,
                       'char_hypothesis': char_emb_question, 'char_premise': char_emb_support}
             inputs_length = {'hypothesis': tensors.question_length, 'premise': tensors.support_length,
