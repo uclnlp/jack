@@ -1,5 +1,4 @@
 jsonschema
-matplotlib
 numpy
 parse
 scipy

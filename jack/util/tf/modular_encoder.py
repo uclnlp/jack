@@ -88,7 +88,7 @@ def modular_encoder(encoder_config, inputs, inputs_length, inputs_mapping, defau
                 if module.get('dropout') is True:
                     # set dropout to default dropout
                     module['dropout'] = dropout
-                outputs[out_key] = encoder(outputs[key], outputs_length[key], reuse=reuse, **module)
+                outputs[out_key] = encoder(outputs[key], outputs_length[key], reuse=reuse, is_eval=is_eval, **module)
             outputs_length[out_key] = outputs_length[key]
             outputs_mapping[out_key] = outputs_mapping.get(key)
         except Exception as e:

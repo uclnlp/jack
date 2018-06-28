@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, reuse=None, residual=False,
-            activation=None, layer_norm=False, name='encoder', dropout=None, **kwargs):
+            activation=None, layer_norm=False, name='encoder', dropout=None, is_eval=True, **kwargs):
     if num_layers == 1:
         if layer_norm:
             with tf.variable_scope('layernorm', reuse=False) as vs:
@@ -77,7 +77,7 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, reu
 
             if dropout is not None:
                 out = tf.cond(
-                    tf.greater(dropout, 0.0),
+                    tf.logical_and(tf.greater(dropout, 0.0), is_eval),
                     lambda: tf.nn.dropout(out, 1.0 - dropout, noise_shape=[tf.shape(out)[0], 1, tf.shape(out)[-1]]),
                     lambda: out)
     else:

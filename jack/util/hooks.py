@@ -7,12 +7,9 @@ from time import strftime, localtime
 from time import time
 from typing import List, Tuple, Mapping
 
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import numpy as np
 import progressbar
 import tensorflow as tf
-from pylab import subplot
 
 from jack.core.data_structures import QASetting, Answer
 from jack.core.reader import JTReader
@@ -77,26 +74,6 @@ class TraceHook(TFTrainingHook):
                 tf.Summary.Value(tag=title, simple_value=value),
             ])
             self._summary_writer.add_summary(summary, current_step)
-
-    def plot(self, ylim=None):
-        number_of_subplots = len(self.scores.keys())
-        colors = ['blue', 'green', 'orange']
-        patches = []
-        for plot_idx, metric in enumerate(self.scores):
-            for i, set_name in enumerate(self.scores[metric].keys()):
-                data = self.scores[metric][set_name][0]
-                time = self.scores[metric][set_name][1]
-                patches.append(mpatches.Patch(color=colors[i], label='{0} {1}'.format(set_name, metric)))
-                ax1 = subplot(number_of_subplots, 1, plot_idx + 1)
-                ax1.plot(time, data, label='{0}'.format(metric), color=colors[i])
-                if ylim != None:
-                    plt.ylim(ymin=ylim[0])
-                    plt.ylim(ymax=ylim[1])
-                plt.xlabel('iter')
-                plt.ylabel('{0} {1}'.format(set_name, metric))
-        ax1.legend(handles=patches)
-
-        plt.show()
 
     def add_to_history(self, score_dict, iter_value, epoch, set_name='train'):
         for metric in score_dict:
