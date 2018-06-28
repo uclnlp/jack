@@ -30,7 +30,7 @@ def answer_layer(encoded_question, question_length, encoded_support, support_len
         if 'repr_dim' not in encoder:
             encoder['repr_dim'] = repr_dim
         encoded_support_end = sequence_encoder.encoder(
-            encoded_support, support_length, name='encoded_support_end', **encoder)
+            encoded_support, support_length, name='encoded_support_end', is_eval=is_eval, **encoder)
         encoded_support_end = tf.concat([encoded_support, encoded_support_end], 2)
         return bidaf_answer_layer(encoded_support, encoded_support_end, support_length,
                                   support2question, answer2support, is_eval, topk=1, max_span_size=10000)

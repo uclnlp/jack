@@ -82,10 +82,10 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, reu
                     lambda: out)
     else:
         out = encoder(sequence, seq_length, repr_dim, module, num_layers - 1, reuse, residual,
-                      activation, layer_norm, name, dropout=dropout, **kwargs)
+                      activation, layer_norm, name, dropout=dropout, is_eval=is_eval, **kwargs)
 
         out = encoder(out, seq_length, repr_dim, module, 1, reuse, residual, activation, layer_norm,
-                      name + str(num_layers - 1), dropout=dropout, **kwargs)
+                      name + str(num_layers - 1), dropout=dropout, is_eval=is_eval, **kwargs)
 
     return out
 
