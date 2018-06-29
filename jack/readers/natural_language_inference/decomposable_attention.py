@@ -46,7 +46,7 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
             embedded_support = tf.nn.l2_normalize(embedded_support, 2)
 
         dropout_rate = shared_resources.config.get('dropout', 0)
-        dropout_keep_prob = tf.cond(tf.logical_not(tensors.is_eval), 1.0 - dropout_rate, 0.0)
+        dropout_keep_prob = tf.cond(tf.logical_not(tensors.is_eval), lambda: 1.0 - dropout_rate, lambda: 0.0)
 
         model_kwargs = {
             'sequence1': embedded_question,
