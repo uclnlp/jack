@@ -77,7 +77,7 @@ def encoder(sequence, seq_length, repr_dim=100, module='lstm', num_layers=1, reu
 
             if dropout is not None:
                 out = tf.cond(
-                    tf.logical_and(tf.greater(dropout, 0.0), is_eval),
+                    tf.logical_and(tf.greater(dropout, 0.0), tf.logical_not(is_eval)),
                     lambda: tf.nn.dropout(out, 1.0 - dropout, noise_shape=[tf.shape(out)[0], 1, tf.shape(out)[-1]]),
                     lambda: out)
     else:
