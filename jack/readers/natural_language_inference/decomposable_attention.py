@@ -26,8 +26,7 @@ class DecomposableAttentionModel(AbstractSingleSupportClassificationModel):
 
             bos_token_emb = tf.get_variable('bos_token_embedding',
                                             shape=(1, 1, embedding_size),
-                                            initializer=tf.ones_initializer(),
-                                            trainable=False)
+                                            initializer=tf.ones_initializer())
 
             batch_size = tf.shape(embedded_question)[0]
 
