@@ -162,7 +162,7 @@ $ python3 bin/jack-train.py [..]
 @InProceedings{weissenborn2018jack,
 author    = {Dirk Weissenborn, Pasquale Minervini, Tim Dettmers, Isabelle Augenstein, Johannes Welbl, Tim Rocktäschel, Matko Bošnjak, Jeff Mitchell, Thomas Demeester, Pontus Stenetorp, Sebastian Riedel},
 title     = {{Jack the Reader – A Machine Reading Framework}},
-booktitle = {{Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (ACL) System Demonstrations}}
+booktitle = {{Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (ACL) System Demonstrations}},
 Month     = {July},
 year      = {2018},
 url       = {https://arxiv.org/abs/1806.08727}
