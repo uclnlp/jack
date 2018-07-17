@@ -10,9 +10,7 @@
 [wercker]: https://app.wercker.com/project/byKey/8ed61192a5b16769a41dc24c30a3bc6a
 [heres_johnny]: https://upload.wikimedia.org/wikipedia/en/b/bb/The_shining_heres_johnny.jpg
 
-**Jack the Reader** - or **jack**, for short - is a framework for building and using models on a variety of tasks that require *reading comprehension*.
-
-For more informations about the overall architecture, we refer to [Jack the Reader – A Machine Reading Framework](https://arxiv.org/abs/1806.08727) (ACL 2018).
+**Jack the Reader** - or **jack**, for short - is a framework for building and using models on a variety of tasks that require *reading comprehension*. For more informations about the overall architecture, we refer to [Jack the Reader – A Machine Reading Framework](https://arxiv.org/abs/1806.08727) (ACL 2018).
 
 ## Installation
 To install Jack, install requirements and [TensorFlow](http://tensorflow.org/). In case you want to use PyTorch for writing models, please install [PyTorch](http://pytorch.org/) as well.
