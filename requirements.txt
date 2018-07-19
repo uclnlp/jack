@@ -1,3 +1,4 @@
+cytoolz
 jsonschema
 numpy
 parse
