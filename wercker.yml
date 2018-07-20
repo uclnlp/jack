@@ -1,4 +1,4 @@
-box: python:3
+box: python:3.6
 
 no-response-timeout: 60
 command-timeout: 60
