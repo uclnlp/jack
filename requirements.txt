@@ -1,4 +1,5 @@
 cytoolz
+preshed
 jsonschema
 numpy
 parse
