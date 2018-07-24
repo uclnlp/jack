@@ -101,7 +101,8 @@ def _bi_rnn(size, fused_rnn, sequence, seq_length, with_projection=False):
 
 
 def bi_lstm(size, sequence, seq_length, with_projection=False, **kwargs):
-    return _bi_rnn(size, tf.contrib.rnn.LSTMBlockFusedCell(size), sequence, seq_length, with_projection)
+    fused_rnn = tf.contrib.rnn.LSTMBlockFusedCell(size)
+    return _bi_rnn(size, fused_rnn, sequence, seq_length, with_projection)
 
 
 def bi_rnn(size, rnn_cell, sequence, seq_length, with_projection=False, **kwargs):
