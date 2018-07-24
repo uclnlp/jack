@@ -38,9 +38,14 @@ extras_require = {
     'torch': ['torch']
 }
 
+with open("README.md", "r") as f:
+    long_description = f.read()
+
 setup(name='uclmr-jack',
-      version='0.2.0',
+      version='0.2.1',
       description='Jack the Reader is a Python framework for Machine Reading',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       author='UCL Machine Reading',
       author_email='s.riedel@cs.ucl.ac.uk',
       url='https://github.com/uclmr/jack',
