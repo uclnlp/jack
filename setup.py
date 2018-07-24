@@ -38,7 +38,7 @@ extras_require = {
     'torch': ['torch']
 }
 
-setup(name='jack',
+setup(name='uclmr-jack',
       version='0.2.0',
       description='Jack the Reader is a Python framework for Machine Reading',
       author='UCL Machine Reading',
