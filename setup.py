@@ -70,6 +70,7 @@ setup(name='uclmr-jack',
           'Programming Language :: Python :: 3.6',
           'Topic :: Software Development :: Libraries',
           'Topic :: Software Development :: Libraries :: Python Modules',
-          'Topic :: Scientific/Engineering :: Artificial Intelligence'
+          'Topic :: Scientific/Engineering :: Artificial Intelligence',
+          'Operating System :: OS Independent'
       ],
       keywords='tensorflow machine learning natural language processing question answering')
