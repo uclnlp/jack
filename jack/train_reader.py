@@ -83,20 +83,19 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
 
     def side_effect(metrics, prev_metric):
         """Returns: a state (in this case a metric) that is used as input for the next call"""
+        if prev_metric is None:  # store whole reader only at beginning of training
+            reader.store(save_dir)
         m = metrics[preferred_metric]
         if prev_metric is not None and m < prev_metric:
             reader.session.run(lr_decay_op)
             logger.info("Decayed learning rate to: %.5f" % reader.session.run(learning_rate))
         elif m > best_metric[0] and save_dir is not None:
             best_metric[0] = m
-            if prev_metric is None:  # store whole reader_type only at beginning of training
-                reader.store(save_dir)
-            else:
-                reader.model_module.store(os.path.join(save_dir, "model_module"))
-            logger.info("Saving reader_type to: %s" % save_dir)
+            reader.model_module.store(os.path.join(save_dir, "model_module"))
+            logger.info("Saving reader to: %s" % save_dir)
         return m
 
-    # this is the standard hook for the reader_type
+    # this is the standard hook for the reader
     hooks.append(readers.eval_hooks[reader_type](
         reader, dev_data, dev_batch_size, summary_writer=sw, side_effect=side_effect,
         iter_interval=validation_interval,
@@ -107,7 +106,7 @@ def train_tensorflow(reader, train_data, test_data, dev_data, configuration: dic
     reader.train(tf_optimizer, train_data, batch_size, max_epochs=epochs, hooks=hooks,
                  l2=l2, clip=clip_value, clip_op=tf.clip_by_value, summary_writer=sw)
 
-    # Test final reader_type
+    # Test final reader
     if dev_data is not None and save_dir is not None:
         reader.load(save_dir)
         result_dict = evaluate_reader(reader, dev_data, batch_size)
